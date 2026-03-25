@@ -1,0 +1,14 @@
+# Copy to platforms.yaml (gitignored if you store IDs only locally) or set env vars.
+# Agents read this for deployment context; keep non-secret identifiers only in git if desired.
+
+canvas:
+  api_url: "${CANVAS_API_URL}"
+  default_course_id: "${CANVAS_DEFAULT_COURSE_ID}"
+
+coursearc:
+  base_url: "${COURSEARC_BASE_URL}"
+  notes: "Authoring is usually in CourseArc UI; delivery to Canvas often via LTI 1.3 or SCORM."
+
+content_roots:
+  source: "course-content/courses"
+  staging_review: "course-content/staging"

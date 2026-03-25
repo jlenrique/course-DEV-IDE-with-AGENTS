@@ -1,0 +1,10 @@
+# Defaults agents and humans use when drafting course content (edit to match your programs).
+audience: "Adult learners, asynchronous online"
+voice: "Clear, direct, inclusive; avoid jargon without definition"
+accessibility:
+  presentations: "Sufficient contrast; alt text for images; captions for spoken audio"
+  structure: "Logical headings; one idea per slide where possible"
+review_gates:
+  - "Instructor accuracy pass"
+  - "Accessibility spot check"
+  - "Platform smoke test (Canvas module / LTI preview)"

@@ -1,0 +1,12 @@
+# Local secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Optional local-only drops (large media, exports)
+secrets/
+course-content/**/private/
+
+# OS / editor
+.DS_Store
+Thumbs.db

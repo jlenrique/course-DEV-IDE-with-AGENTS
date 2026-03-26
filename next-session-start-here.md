@@ -2,32 +2,49 @@
 
 ## Immediate Next Action
 
-**CRITICAL FIRST: Recast PRD and Architecture documents** to reflect BMad agent-based approach (agents as .md files + skills, NOT traditional code classes). Then complete story creation.
+**Complete story creation for Epic 1-4 (MVP)** using `bmad-create-epics-and-stories` step-03.
 
 ```
 # Priority sequence:
-1. Recast PRD and Architecture to reflect agent .md approach
-2. Complete story creation for Epic 1-4 (MVP)
-3. Run sprint planning
-4. Begin Epic 1 implementation
+1. Complete story creation for Epic 1-4 with acceptance criteria
+2. Run sprint planning (bmad-sprint-planning)
+3. Begin Epic 1: Create Cursor plugin structure + Python infrastructure
+4. Begin Epic 2: Create master orchestrator agent via bmad-agent-builder
 ```
 
-## Current Status - SOLUTIONING PHASE IN PROGRESS
+## Current Status - ALL DOCS RECAST AND HARMONIZED
 
-- **PRD**: ✅ COMPLETE (70 FRs, 25 NFRs) - needs recasting for agent .md approach
-- **Architecture**: ✅ COMPLETE (validated by Party Mode team) - needs recasting for agent .md approach
-- **Epic Structure**: ✅ APPROVED (10 epics, requirements extracted)
-- **Stories**: ⏳ IN PROGRESS (requirements extracted, story creation next)
+- **PRD**: ✅ COMPLETE & RECAST (70 FRs, agent .md approach)
+- **Architecture**: ✅ COMPLETE & RECAST (BMad Agent + Cursor Plugin patterns)
+- **Epic Structure**: ✅ APPROVED & RECAST (10 epics, bmad-agent-builder approach)
+- **Strategic Decisions**: ✅ RECAST (BMB module + Cursor plugin development)
+- **Project Context**: ✅ HARMONIZED (all docs aligned)
+- **Stories**: ⏳ IN PROGRESS (requirements extracted, epic structure approved, story creation next)
 - **Sprint Planning**: Not started
 
-## CRITICAL RECASTING NEEDED
+## Implementation Approach (Recast & Harmonized)
 
-Session ended with key realization: **agents are .md files** following BMad patterns, NOT traditional Python classes. The PRD and architecture docs contain code-heavy architectural descriptions that need to be recast to reflect:
-- Agents as .md files in specified project directories
-- Skills as .md files with supporting code for tool mastery
-- Python code as **supporting infrastructure** (API clients, state management, file ops)
-- Agent communication through skill invocation and coordination protocols
-- NOT traditional software architecture with class hierarchies
+### Agents
+- **Created via**: `bmad-agent-builder` six-phase conversational discovery process
+- **Format**: .md files in `agents/` directory following BMad SKILL.md standard
+- **Memory**: BMad sidecar pattern at `_bmad/memory/{skillName}-sidecar/`
+- **Integration**: Cursor plugin auto-discovery via `.cursor-plugin/plugin.json`
+
+### Skills
+- **Format**: SKILL.md directories under `skills/` with `references/` + `scripts/`
+- **Purpose**: Tool-specific capabilities bridging agent intelligence to code execution
+- **Integration**: Cursor plugin auto-discovery
+
+### Python Infrastructure
+- **Purpose**: Supporting code for API clients, state management, file operations
+- **Location**: `scripts/` for shared code, `skills/*/scripts/` for tool-specific code
+- **Pattern**: Following canvas_api_tools patterns with .env, .venv, requirements.txt
+
+### Cursor Plugin
+- **Manifest**: `.cursor-plugin/plugin.json` with auto-discovery configuration
+- **MCP**: `.mcp.json` bundled in plugin for tool server definitions
+- **Hooks**: `hooks/hooks.json` for event-driven automation
+- **Rules**: `rules/*.mdc` for persistent agent behavior guidance
 
 ## Hot-Start Context
 
@@ -36,30 +53,21 @@ Session ended with key realization: **agents are .md files** following BMad patt
 - Architecture: `_bmad-output/planning-artifacts/architecture.md`
 - Epics: `_bmad-output/planning-artifacts/epics.md`
 - Strategic Decisions: `_bmad-output/strategic-decisions-collaborative-intelligence.md`
-- Brainstorming: `_bmad-output/brainstorming/brainstorming-session-20260325-150802.md`
 - Workflow Status: `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
 - Sprint Status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
-### Key Architectural Decisions
-- **Conversational Orchestrator**: Master agent as single point of contact
-- **Parameter Intelligence**: Specialty agents master tool APIs with style guide integration
-- **Pre-Flight Checks**: MCP/API verification + tool doc scanning (Epic 1-2)
-- **Hybrid State**: YAML configs + SQLite runtime + learning databases
-- **Production Reporting**: Comprehensive run analysis with learning loop closure
-
-### Gotchas
-- Previous architecture docs describe agents as Python classes - THIS IS WRONG
-- Agents are .md files invoked like BMad agents
-- Skills provide tool mastery capabilities, some backed by Python code
-- Party Mode team validated architecture but recasting needed for agent .md approach
-- 70 FRs total (enhanced from original 49 during session)
+### Key Tools
+- `bmad-agent-builder` - Creates custom agents through conversational discovery
+- `bmad-create-epics-and-stories` - Story creation workflow (step-03 next)
+- `bmad-sprint-planning` - Sprint planning after stories complete
 
 ## Branch
-- **master** branch (no feature branches created yet)
+- **master** branch
 
 ## Next Phase Sequence
-1. **Recast PRD/Architecture** for agent .md approach
-2. **Complete story creation** (bmad-create-epics-and-stories step-03)
-3. **Sprint planning** (bmad-sprint-planning)
-4. **Begin Epic 1** implementation (bmad-dev-story)
-5. **C1M1 MVP validation** through complete production run
+1. **Complete story creation** (bmad-create-epics-and-stories step-03)
+2. **Sprint planning** (bmad-sprint-planning)
+3. **Epic 1**: Cursor plugin structure + Python infrastructure setup
+4. **Epic 2**: Master orchestrator agent creation via bmad-agent-builder
+5. **Epic 3**: Tool specialist agent creation via bmad-agent-builder
+6. **C1M1 MVP validation** through complete production run

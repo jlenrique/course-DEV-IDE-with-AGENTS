@@ -24,67 +24,77 @@ The project creates **"Collaborative Intelligence Infrastructure for Scaling Cre
 
 **✅ Phase 1: Reframed PRD Creation**
 - Tool: `bmad-create-prd`
-- Focus: Orchestration capabilities vs traditional features
-- Output: PRD for collaborative intelligence system
+- Focus: Orchestration capabilities with conversational interface emphasis
+- Output: PRD for collaborative intelligence system (70 FRs)
 
-**✅ Phase 2: Dual Architecture Design**
+**✅ Phase 2: BMad Agent + Cursor Plugin Architecture Design**
 - Tool: `bmad-create-architecture` 
-- Focus: Agent behavior patterns + Technical infrastructure coordination
-- **Environmental Infrastructure Emergence Point**: `.env`, Python configs, MCP patterns surface here
+- Focus: Agents as .md files + Cursor plugin packaging + BMad memory sidecars
+- **Key Discovery**: Agents follow BMad patterns, NOT traditional code architecture
 
-**✅ Phase 3: Hybrid Story Development**
-- Tool: `bmad-create-epics-and-stories`
-- Focus: Mix orchestration scenarios + traditional dev tasks
-- Include: Infrastructure setup, API development, testing frameworks
+**✅ Phase 3: Story Development Using bmad-agent-builder**
+- Tool: `bmad-create-epics-and-stories` → `bmad-agent-builder` for agent creation stories
+- Focus: Agent creation through six-phase discovery + supporting Python infrastructure
+- Include: Cursor plugin setup, agent .md creation, skill development, testing
 
 **✅ Phase 4: Sprint Planning & Implementation**
-- Tools: `bmad-sprint-planning` → `bmad-dev-story` → `bmad-code-review`
-- Integration: Traditional dev infrastructure stories naturally integrated
+- Tools: `bmad-sprint-planning` → `bmad-agent-builder` (for each agent) → `bmad-dev-story` (for infrastructure)
+- Integration: Agent .md creation via Builder + Python infrastructure via traditional dev
 
 ### **BMAD Module Selection**
 - **Core Modules**: ALL (orchestration needs diverse perspectives)
 - **BMM**: Heavy usage (agent coordination IS business process design)
 - **CIS**: Critical (building creative systems requires creative methodologies)
-- **Custom Skills**: MCP integration patterns as architecturally required
+- **BMB (Builder Module)**: **CRITICAL** - `bmad-agent-builder` creates all custom agents through conversational discovery
 
 ## Development Approach Redefinition
 
 ### **Stories Become**
 - **Traditional**: User feature requirements → Development tasks → Testing validation
-- **Orchestration**: Collaborative capability scenarios → Agent coordination design → Human-AI effectiveness validation
+- **Agent-Based**: Agent creation via `bmad-agent-builder` → Skill development → Memory sidecar configuration → Coordination testing
 
 ### **Testing Becomes**
 - **Traditional**: Unit tests → Integration tests → User acceptance
-- **Orchestration**: Agent behavior validation → MCP connectivity verification → End-to-end orchestration scenarios → Human workflow acceptance
+- **Agent-Based**: Agent invocation validation → Skill execution testing → Memory persistence verification → End-to-end orchestration scenarios → Human workflow acceptance
 
 ### **Dev Products Become**
 - **Traditional**: Features and applications
-- **Orchestration**: Agent behavior modules + Coordination patterns + Human-AI collaboration workflows
+- **Agent-Based**: Agent .md files + SKILL.md directories + Memory sidecars + Python scripts + Cursor plugin configuration
 
 ### **Acceptance Criteria Become**
 - **Traditional**: Feature functionality validation
-- **Orchestration**: Human-AI collaboration success metrics + Orchestration effectiveness measures
+- **Agent-Based**: Agent conversation effectiveness + Skill execution correctness + Memory learning validation + Human-AI collaboration success metrics
 
 ## Technical Infrastructure Strategy
 
-### **Dual-Mode Architecture**
-1. **Collaborative Intelligence Layer**: Agent coordination, workflows, human-AI handoff protocols
-2. **Traditional Development Layer**: Python APIs, MCP connectors, .env configurations, integration testing
+### **BMad Agent + Cursor Plugin Architecture**
+1. **Agent Intelligence Layer**: Agent .md files with personas, capabilities, and memory sidecars
+2. **Skills Capability Layer**: SKILL.md directories with progressive disclosure and Python scripts
+3. **Cursor Plugin Layer**: Native IDE integration with auto-discovery, hooks, and MCP bundling
+4. **Python Infrastructure Layer**: API clients, state management, and deterministic operations
 
-### **Environmental Requirements** (Architecture Phase Emergence)
+### **Repository Architecture**
 ```
-Orchestration Layer:
-├── agent-coordination/      # Agent behavior coordination logic
-├── skill-behaviors/         # Specialized agent capabilities 
-├── human-workflow-gates/    # Human-in-the-loop checkpoint systems
-└── orchestration-logic/     # Master coordinator intelligence
+Cursor Plugin Layer:
+├── .cursor-plugin/plugin.json  # Plugin manifest with auto-discovery
+├── .mcp.json                   # MCP server definitions
+├── hooks/hooks.json            # Event-driven automation
+└── rules/*.mdc                 # Agent behavior guidance
 
-Technical Infrastructure Layer:
-├── .env                     # API keys (Gamma, ElevenLabs, Canvas, etc.)
-├── requirements.txt         # Python dependencies for MCP connectors
-├── mcp-integrations/        # Tool manipulation APIs
-├── config/                  # Agent behavior configurations
-└── testing/                 # Orchestration validation scenarios
+Agent Intelligence Layer:
+├── agents/*.md                 # Custom agent .md files (BMad standard)
+└── _bmad/memory/*/             # Agent memory sidecars for learning
+
+Skills Capability Layer:
+├── skills/*/SKILL.md           # Tool-specific capabilities
+├── skills/*/references/        # Progressive disclosure content
+└── skills/*/scripts/           # Python code for API calls, file ops
+
+Python Infrastructure Layer:
+├── scripts/                    # Shared API clients, utilities
+├── state/config/*.yaml         # Human-readable configuration
+├── state/runtime/*.db          # SQLite coordination state
+└── requirements.txt            # Python dependencies
 ```
 
 ## Team Consensus Insights

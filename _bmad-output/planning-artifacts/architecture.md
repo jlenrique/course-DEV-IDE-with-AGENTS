@@ -67,42 +67,43 @@ Performance requirements specify agent coordination within 5-second response tim
 
 **Conversational Interface Framework**: Custom development required - no existing template provides conversational orchestrator interface capabilities essential for "general contractor" user experience.
 
-### Selected Starter: Hybrid Multi-Agent + Conversational Framework
+### Selected Approach: BMad Agent Builder + Cursor Plugin Architecture
 
 **Rationale for Selection:**
-Combines proven multi-agent coordination foundation (subagents-pydantic-ai) with professional Python packaging patterns (cookiecutter templates) while enabling conversational orchestrator innovation through custom development. Balances technical risk (leverage existing frameworks) with innovation focus (custom conversational interface and skills bridge).
+Agents are .md files created through BMad Agent Builder's six-phase conversational discovery process, packaged as a native Cursor IDE plugin. Python infrastructure provides supporting code for API clients and state management. This approach leverages proven BMad agent patterns while integrating natively with Cursor's plugin ecosystem.
 
-**Initialization Commands:**
+**Initialization Strategy:**
 
 ```bash
-# Multi-agent framework foundation
-pip install subagents-pydantic-ai
+# Python infrastructure for API clients and state management
+pip install subagents-pydantic-ai  # Multi-agent coordination support
+pip install -r requirements.txt     # Project dependencies
 
-# Traditional Python package structure  
-cookiecutter gh:woltapp/wolt-python-package-cookiecutter
+# Cursor plugin structure (created during Epic 1)
+# .cursor-plugin/plugin.json with auto-discovery of agents/, skills/, rules/
 
-# Custom conversational interface development
-# (No existing template - custom development required)
+# Agent creation (Epic 2+)
+# Invoke bmad-agent-builder for each custom agent through conversational discovery
 ```
 
-**Architectural Decisions Provided by Hybrid Approach:**
+**Architecture Foundation:**
 
-**Language & Runtime:**
-Python 3.10+ with asyncio-native multi-agent coordination, traditional pip packaging with virtual environment isolation, framework-agnostic approach enabling agent specialization flexibility.
+**Agent Implementation:**
+Custom agents created via `bmad-agent-builder` as .md files in `agents/` directory with YAML frontmatter, persona definitions, capability routing tables, and progressive disclosure references. Each agent follows BMad SKILL.md standard.
 
-**Agent Coordination Foundation:**
-subagents-pydantic-ai provides auto-mode execution (sync/async/auto), nested subagent capabilities, runtime agent creation, and parent-child communication protocols essential for collaborative intelligence.
+**Skills Implementation:**
+Tool-specific capabilities as SKILL.md directories under `skills/` with references/ for progressive disclosure, scripts/ for Python code execution (API clients, file operations), and assets/ for templates.
 
-**Package Structure:**
-Professional Python package organization following canvas_api_tools patterns with requirements.txt dependency management, .env configuration, and traditional pip installation.
+**Cursor Plugin Integration:**
+Native plugin packaging with `.cursor-plugin/plugin.json` manifest enabling auto-discovery of agents, skills, rules, and MCP servers. Hooks system provides event-driven coordination triggers.
 
-**Custom Innovation Components:**
-Conversational orchestrator interface, skills bridge framework for agent-code integration, and production intelligence reporting system require custom development as core differentiation components.
+**BMad Memory System:**
+Agent learning and expertise crystallization through BMad sidecar pattern (`_bmad/memory/{skillName}-sidecar/`) with index.md (essential context), patterns.md (learned preferences), chronology.md (session history), and access-boundaries.md (agent scope control).
 
-**Development Architecture:**
-Cursor IDE optimization with enhanced logging and debugging capabilities for agent coordination development, automated dependency verification, and development mode configuration.
+**Python Infrastructure:**
+Supporting code for API clients (Gamma, ElevenLabs, Canvas), state management (SQLite coordination, YAML configuration), and deterministic operations. Scripts invoked from agent skills when code execution is required.
 
-**Note:** Project initialization using hybrid approach combines proven frameworks (Epic 1) with custom innovation development (Epic 2) as first implementation priority.
+**Note:** Project initialization establishes Cursor plugin structure (Epic 1) then creates agents through bmad-agent-builder (Epic 2+).
 
 ## Core Architectural Decisions
 
@@ -125,25 +126,23 @@ Cursor IDE optimization with enhanced logging and debugging capabilities for age
 
 ### Conversational Interface Architecture
 
-**Primary Interface**: Cursor IDE Chat Integration with native agent SDK utilization for seamless development environment conversation experience.
+**Primary Interface**: Master orchestrator agent .md file loaded in Cursor IDE chat, providing conversational interface through native Cursor agent plugin integration.
 
-**Fallback Interface**: Terminal-based conversational mode for development debugging and system administration scenarios.
+**Agent Structure**: Master orchestrator defined as BMad-standard SKILL.md with persona, capabilities routing table, and memory sidecar for persistent conversation context and production learning.
 
-**Architecture Pattern**: Master orchestrator agent manages all conversation flow including run initiation, progress updates, user confirmation requests, work product review, and problem resolution through natural language interaction.
-
-**Implementation Framework**: Custom conversational orchestrator built on Cursor agent infrastructure with conversation state management and user intent parsing capabilities.
+**Coordination Pattern**: Orchestrator agent delegates to specialty agents through capability matching and skill invocation. All user interaction flows through orchestrator as single conversational point of contact.
 
 ### Agent-Code Integration Patterns
 
-**Execution Strategy**: Hybrid Execution Pattern optimizing performance and auditability through task complexity routing.
+**Skills as Bridge Layer**: SKILL.md files provide the interface between agent reasoning (.md intelligence) and code execution (Python scripts). Skills follow BMad progressive disclosure pattern:
+- `SKILL.md` → Agent identity and capability routing
+- `references/` → Detailed capability instructions loaded on demand
+- `scripts/` → Python code for API calls, file operations, state management
+- `assets/` → Templates and starter files for output generation
 
-**Simple Task Execution**: Direct Python function calls for file operations, state updates, and basic API interactions with immediate response and minimal overhead.
+**Script Execution**: Agents invoke Python scripts in `scripts/` directories for operations requiring code: API calls to Gamma/ElevenLabs/Canvas, SQLite state updates, file system operations, and deterministic validation. Scripts use PEP 723 for self-contained dependency declarations.
 
-**Complex Workflow Execution**: Event-driven execution for multi-stage coordination, learning pattern capture, and cross-agent collaboration with full audit trails and recovery capabilities.
-
-**Skills Bridge Framework**: Custom translation layer converting agent reasoning into structured Python code execution parameters with bidirectional result integration.
-
-**Implementation Pattern**: Skills framework routes execution based on task complexity while maintaining agent reasoning abstraction and systematic learning capture.
+**Cursor Hooks Integration**: Plugin hooks system provides event-driven automation: `sessionStart` for pre-flight checks, `afterFileEdit` for quality validation, `sessionEnd` for run reporting.
 
 ### State Management & Persistence
 
@@ -283,109 +282,141 @@ raise Exception("Failed")  # Should be: StructuredError(context, recovery_option
 
 ```
 course-DEV-IDE-with-AGENTS/
-├── README.md
-├── requirements.txt
-├── pyproject.toml
-├── .env.example
+├── .cursor-plugin/
+│   └── plugin.json                  # Cursor plugin manifest (auto-discovers agents/, skills/)
+├── .mcp.json                        # MCP server definitions for tool integrations
+├── .env.example                     # API keys template (Gamma, ElevenLabs, Canvas, etc.)
 ├── .gitignore
-├── setup.py
-├── orchestrator/
-│   ├── __init__.py
-│   ├── master_agent.py              # Main conversational orchestrator
-│   ├── conversation/
-│   │   ├── __init__.py
-│   │   ├── flow_manager.py          # Conversation state & flow
-│   │   ├── templates/               # YAML conversation templates
-│   │   └── cursor_integration.py    # Cursor IDE chat interface
-│   └── coordination/
-│       ├── __init__.py
-│       ├── agent_registry.py        # subagents-pydantic-ai coordination
-│       ├── workflow_manager.py      # Production run lifecycle
-│       └── state_manager.py         # SQLite + YAML state coordination
-├── skills/
-│   ├── __init__.py
-│   ├── base/
-│   │   ├── __init__.py
-│   │   ├── skill_base.py           # Abstract skill interface
-│   │   └── execution_bridge.py      # Hybrid execution patterns
-│   ├── gamma/
-│   │   ├── __init__.py
-│   │   ├── gamma_skill.py          # Gamma API integration
-│   │   └── templates/              # Gamma prompt templates
-│   ├── elevenlabs/
-│   │   ├── __init__.py
-│   │   ├── elevenlabs_skill.py     # Audio generation skill
-│   │   └── templates/              # Voice synthesis templates
-│   └── canvas/
-│       ├── __init__.py
-│       ├── canvas_skill.py         # Canvas LMS integration
-│       └── templates/              # Canvas deployment templates
+├── README.md
+├── requirements.txt                 # Python dependencies for scripts
+├── pyproject.toml
+│
+├── agents/                          # Custom agent .md files (Cursor auto-discovers)
+│   ├── master-orchestrator.md       # Main conversational orchestrator agent
+│   ├── gamma-specialist.md          # Gamma tool mastery agent
+│   ├── elevenlabs-specialist.md     # Audio generation specialist agent
+│   ├── canvas-specialist.md         # Canvas LMS deployment agent
+│   ├── content-creator.md           # Content structuring specialist agent
+│   ├── quality-reviewer.md          # Quality validation specialist agent
+│   └── assembly-coordinator.md      # Multi-tool assembly coordinator agent
+│
+├── skills/                          # SKILL.md directories (Cursor auto-discovers)
+│   ├── gamma-api-mastery/
+│   │   ├── SKILL.md                 # Gamma integration capability
+│   │   ├── references/              # Parameter templates, context optimization
+│   │   └── scripts/                 # Python API client for Gamma
+│   ├── elevenlabs-audio/
+│   │   ├── SKILL.md                 # Audio generation capability
+│   │   ├── references/              # Voice optimization, timing patterns
+│   │   └── scripts/                 # Python API client for ElevenLabs
+│   ├── canvas-deployment/
+│   │   ├── SKILL.md                 # Canvas integration capability
+│   │   ├── references/              # Deployment workflows, LMS patterns
+│   │   └── scripts/                 # Python API client for Canvas
+│   ├── production-coordination/
+│   │   ├── SKILL.md                 # Multi-agent coordination capability
+│   │   ├── references/              # Workflow patterns, handoff protocols
+│   │   └── scripts/                 # State management, run lifecycle Python code
+│   ├── quality-control/
+│   │   ├── SKILL.md                 # Quality validation capability
+│   │   ├── references/              # Quality standards, compliance rules
+│   │   └── scripts/                 # Accessibility checking, brand validation Python code
+│   ├── pre-flight-check/
+│   │   ├── SKILL.md                 # System validation capability
+│   │   ├── references/              # Diagnostic procedures, tool doc scanning
+│   │   └── scripts/                 # MCP/API connectivity verification Python code
+│   └── run-reporting/
+│       ├── SKILL.md                 # Production intelligence capability
+│       ├── references/              # Report templates, analysis patterns
+│       └── scripts/                 # Run analysis, optimization Python code
+│
+├── rules/                           # Cursor .mdc rules files
+│   └── course-content-agents.mdc    # Agent behavior guidance rules
+│
+├── hooks/
+│   └── hooks.json                   # Cursor event hooks (sessionStart, afterFileEdit, etc.)
+│
+├── commands/                        # Agent-executable commands
+│   └── start-production-run.md      # Production run initiation command
+│
 ├── state/
-│   ├── config/                     # YAML configuration files
-│   │   ├── course_context.yaml     # Course-level definitions
-│   │   ├── style_bible.yaml        # Brand and creative standards
-│   │   └── tool_policies.yaml      # Tool allocation policies
-│   ├── runtime/
-│   │   ├── coordination.db         # SQLite coordination state
-│   │   └── backup/                 # State backup procedures
-│   └── learning/
-│       ├── expertise_patterns.db   # Systematic learning capture
-│       └── optimization_insights.db # Workflow improvement data
-├── integrations/
-│   ├── __init__.py
-│   ├── mcp_clients/                # MCP integration patterns
-│   ├── api_clients/                # Direct API integrations
-│   └── tool_adapters/              # Tool-specific adapter patterns
-├── quality/
-│   ├── __init__.py
-│   ├── review_agents.py            # Automated quality review
-│   ├── compliance_checks.py        # Accessibility & standards
-│   └── brand_validation.py         # Style bible enforcement
-├── reporting/
-│   ├── __init__.py
-│   ├── run_analysis.py             # Production run reporting (FR50-52)
-│   ├── troubleshooting/            # ABC/DEF/GHI diagnostic system
-│   └── optimization_recommendations.py # Learning-based insights
+│   ├── config/                      # YAML configuration files (git-versioned)
+│   │   ├── course_context.yaml      # Course-level definitions
+│   │   ├── style_guide.yaml         # Brand standards + tool parameter preferences
+│   │   └── tool_policies.yaml       # Tool allocation policies
+│   └── runtime/
+│       ├── coordination.db          # SQLite coordination state (gitignored)
+│       └── backup/                  # State backup procedures
+│
+├── _bmad/memory/                    # BMad agent memory sidecars
+│   ├── master-orchestrator-sidecar/
+│   │   ├── index.md                 # Essential orchestrator context
+│   │   ├── access-boundaries.md     # Agent scope control
+│   │   ├── patterns.md              # Learned creative/production patterns
+│   │   └── chronology.md            # Session and run history
+│   ├── gamma-specialist-sidecar/    # Gamma agent learning memory
+│   ├── elevenlabs-specialist-sidecar/ # ElevenLabs agent learning memory
+│   └── [other agent sidecars]/
+│
+├── scripts/                         # Shared Python infrastructure
+│   ├── api_clients/                 # Tool API client libraries
+│   ├── state_management/            # SQLite + YAML state operations
+│   └── utilities/                   # Shared utility functions
+│
 ├── tests/
-│   ├── unit/                       # Unit tests by component
-│   ├── integration/                # Agent coordination tests
-│   ├── orchestration/              # End-to-end workflow tests
-│   └── fixtures/                   # Test data and mocks
-└── docs/
-    ├── architecture/               # Technical architecture docs
-    ├── agent-guides/               # Agent development documentation
-    └── troubleshooting/            # ABC/DEF/GHI troubleshooting guide
+│   ├── unit/                        # Unit tests for Python scripts
+│   ├── integration/                 # Agent coordination tests
+│   └── fixtures/                    # Test data and mocks
+│
+├── docs/
+│   ├── architecture/                # Technical architecture docs
+│   ├── agent-guides/                # Agent development documentation
+│   └── troubleshooting/             # ABC/DEF/GHI troubleshooting guide
+│
+└── resources/                       # Exemplars, policies, tool inventory
+    ├── exemplars/                   # Platform allocation matrices, style examples
+    ├── style-bible/                 # Master brand guidelines
+    └── tool-inventory/              # Tool capability catalogs
 ```
 
 ### Architectural Boundaries
 
-**API Boundaries:**
-- **Orchestrator API**: Cursor chat interface (`/orchestrator/conversation/cursor_integration.py`) + internal coordination endpoints (`/orchestrator/coordination/`)
-- **Skills Bridge API**: Agent reasoning → Python execution translation layer (`/skills/base/execution_bridge.py`)
-- **Tool Integration APIs**: MCP clients (`/integrations/mcp_clients/`) + direct API adapters (`/integrations/api_clients/`) with consistent error handling
-- **State Management API**: YAML configuration access (`/state/config/`) + SQLite runtime operations (`/state/runtime/coordination.db`)
+**Agent Boundaries:**
+- **Master Orchestrator**: `agents/master-orchestrator.md` manages all user conversation and delegates to specialists
+- **Specialty Agents**: `agents/{specialist}.md` files each own their tool domain with dedicated memory sidecars
+- **Agent Scope Control**: BMad `access-boundaries.md` in each sidecar defines read/write/deny zones per agent
 
-**Component Boundaries:**
-- **Conversation Management**: Isolated in `/orchestrator/conversation/` with clear state interfaces
-- **Agent Coordination**: Centralized in `/orchestrator/coordination/` with subagents-pydantic-ai backend
-- **Skills Framework**: Modular tool integrations with consistent base patterns (`/skills/base/`)
-- **Quality Control**: Independent validation layer (`/quality/`) with cross-component integration hooks
+**Skills Boundaries:**
+- **Tool Skills**: `skills/{tool}/` directories encapsulate tool-specific capabilities with SKILL.md routing, references/ for progressive disclosure, and scripts/ for Python code execution
+- **Coordination Skills**: `skills/production-coordination/` manages cross-agent workflow orchestration
+- **Quality Skills**: `skills/quality-control/` provides independent validation across all agent outputs
+
+**State Boundaries:**
+- **Configuration**: `state/config/*.yaml` for human-readable, git-versioned policies and preferences
+- **Runtime**: `state/runtime/coordination.db` for production run tracking (gitignored)
+- **Learning**: `_bmad/memory/*/patterns.md` for agent-specific expertise crystallization
+
+**Plugin Boundaries:**
+- **Cursor Plugin**: `.cursor-plugin/plugin.json` defines what Cursor auto-discovers
+- **MCP Integration**: `.mcp.json` defines available tool servers
+- **Hooks**: `hooks/hooks.json` defines event-driven automation triggers
 
 ### Requirements to Structure Mapping
 
 **Feature/Epic Mapping:**
 
-**Epic 1 (Repository Environment)** → `/state/config/`, `/tests/integration/`, root configuration files
-**Epic 2 (Master Agent Architecture)** → `/orchestrator/master_agent.py`, `/orchestrator/conversation/`, `/orchestrator/coordination/`
-**Epic 3 (Core Tool Integrations)** → `/skills/gamma/`, `/skills/elevenlabs/`, `/skills/canvas/`, `/integrations/`
-**Epic 4 (Workflow Coordination)** → `/orchestrator/coordination/workflow_manager.py`, `/state/runtime/`, `/reporting/run_analysis.py`
+**Epic 1 (Repository Environment)** → `.cursor-plugin/`, `.mcp.json`, `state/config/`, `requirements.txt`, `scripts/`
+**Epic 2 (Master Agent)** → `agents/master-orchestrator.md` (created via bmad-agent-builder), `_bmad/memory/master-orchestrator-sidecar/`, `skills/production-coordination/`
+**Epic 3 (Tool Integrations)** → `agents/{tool}-specialist.md` (created via bmad-agent-builder), `skills/gamma-api-mastery/`, `skills/elevenlabs-audio/`, `skills/canvas-deployment/`
+**Epic 4 (Workflow Coordination)** → `skills/production-coordination/`, `skills/run-reporting/`, `state/runtime/`, `_bmad/memory/*/patterns.md`
 
 **Cross-Cutting Concerns Mapping:**
 
-**Quality Control (FR23-27, FR48-49)** → `/quality/` with automated review agents and compliance checking systems
-**Production Intelligence (FR50-52)** → `/reporting/` with comprehensive run analysis and optimization insights  
-**Conversational Interface (FR53-60)** → `/orchestrator/conversation/` with Cursor integration and flow management
-**Expertise Management (FR18-22, FR42-44)** → `/skills/` framework + `/state/learning/` systematic capture systems
+**Quality Control (FR23-27, FR48-49)** → `agents/quality-reviewer.md` + `skills/quality-control/` with compliance scripts
+**Production Intelligence (FR50-52)** → `skills/run-reporting/` with analysis scripts and report templates
+**Conversational Interface (FR53-60)** → `agents/master-orchestrator.md` with Cursor plugin chat integration
+**Expertise Management (FR18-22, FR42-44)** → `_bmad/memory/*/patterns.md` + `state/config/style_guide.yaml` evolution
+**Pre-Flight Check (FR66-70)** → `skills/pre-flight-check/` + `hooks/hooks.json` sessionStart trigger
 
 ### Integration Points
 

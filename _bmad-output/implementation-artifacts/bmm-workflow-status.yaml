@@ -31,11 +31,13 @@ workflow_artifacts:
     status: "not-started"
 
 key_decisions:
-  - "Agents implemented as .md files following BMad pattern, not traditional code"
-  - "Agents use skills for tool mastery and code execution when needed"
+  - "Agents implemented as .md files following BMad pattern, created via bmad-agent-builder"
+  - "Skills as SKILL.md directories with references/ + scripts/ for tool mastery"
+  - "Cursor plugin packaging with auto-discovery of agents, skills, rules, hooks, MCP"
+  - "BMad memory sidecars for persistent agent learning and expertise crystallization"
   - "Master orchestrator provides conversational single-point-of-contact interface"
-  - "Parameter intelligence through specialty agent tool mastery + style guides"
-  - "Pre-flight check capability integrated into Epic 1-2"
-  - "PRD and architecture must be recast to reflect BMad agent approach vs traditional code"
+  - "Parameter intelligence through specialty agent tool mastery + style guide YAML"
+  - "Pre-flight check capability via Cursor hooks + pre-flight-check skill"
+  - "ALL PROJECT DOCS RECAST to reflect BMad agent + Cursor plugin approach"
 
-next_workflow_step: "Complete story creation, then recast PRD/architecture for BMad agent approach"
+next_workflow_step: "Complete story creation (bmad-create-epics-and-stories step-03)"

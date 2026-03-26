@@ -98,41 +98,38 @@ Target users: Individual educators and instructional designers seeking to scale 
 **Epic Sequence (Revised for Iterative Development):**
 
 **Epic 1: Repository Environment & Agent Infrastructure** (FOUNDATIONAL)
-- Agent development environment setup with MCP integration framework
-- API management and secure key handling across tool ecosystem  
-- Basic agent coordination protocols and communication architecture
-- Testing and validation infrastructure for agent collaboration
-- **Conversational Interface Infrastructure**: Chat interface development environment
-- **Orchestrator Development Framework**: Conversation flow testing and validation tools
-- **Pre-Flight Check Infrastructure**: MCP/API connectivity verification and tool capability scanning systems
-- **Documentation Intelligence**: Automated tool documentation monitoring for capability and status changes
+- Cursor plugin setup with `.cursor-plugin/plugin.json` manifest and auto-discovery configuration
+- Agent directory structure: `agents/`, `skills/`, `rules/`, `commands/`, `hooks/`
+- Python infrastructure: `.venv`, `requirements.txt`, `.env` for API keys (following canvas_api_tools patterns)
+- SQLite + YAML state management infrastructure with BMad memory sidecar directories
+- MCP integration via `.mcp.json` bundled in plugin
+- **Pre-Flight Check Infrastructure**: Hook-based MCP/API connectivity verification and tool documentation scanning
+- **Testing Framework**: Agent coordination validation and skill execution testing infrastructure
 
 **Epic 2: Master Agent Architecture & Development**
-- Core orchestration agent with workflow state management
-- Agent registry and capability discovery systems
-- Error handling, recovery mechanisms, and graceful degradation
-- **Conversational Intelligence Engine**: Natural language interface and dialogue management
-- **User Experience Orchestration**: Single point of contact for all user interactions
-- **Contextual Conversation Flow**: Proactive questioning, review presentation, decision routing
-- **Intelligent Abstraction**: Hide system complexity behind conversational interface
-- **Parameter Intelligence Coordination**: Specialty agent parameter mastery with style guide integration
-- **Contextual Parameter Learning**: Systematic capture and application of tool parameter preferences
-- **Tool Mastery Framework**: Complete API/MCP knowledge with intelligent parameter selection
-- **Pre-Flight Check Orchestration**: User-invokable system validation through conversational interface
-- **Tool Capability Intelligence**: Real-time tool documentation scanning and capability change detection
+- Create master orchestrator agent via `bmad-agent-builder` six-phase discovery process
+- Agent .md file with persona, conversational capabilities, and routing table to specialist agents
+- Memory sidecar for persistent orchestrator learning (production patterns, user preferences)
+- Cursor IDE chat integration as primary conversational interface
+- **Conversational Workflow Management**: Natural language run initiation, human checkpoints, work product review
+- **Parameter Intelligence Coordination**: Style guide integration with conversational elicitation
+- **Pre-Flight Check Orchestration**: User-invokable system validation through conversation
+- **Agent Coordination Protocols**: Capability matching and delegation to specialty agents
 
 **Epic 3: Core Tool Integrations** 
-- Gamma (slide generation), ElevenLabs (voiceover), basic Canvas integration
-- API pre-testing infrastructure with exponential fallback mechanisms
-- Tool capability intelligence and automatic connectivity verification
+- Create specialty agents via `bmad-agent-builder`: Gamma specialist, ElevenLabs specialist, Canvas specialist
+- Each agent as .md file with tool mastery persona and parameter intelligence
+- Skills (SKILL.md + references/ + scripts/) for each tool with API client Python code
+- Exponential fallback mechanisms in tool integration scripts
+- Tool capability parameter catalogs in style guide YAML format
 
 **Epic 4: Workflow Coordination & State Infrastructure**
-- Cross-run state persistence and course-level context memory
-- Production run lifecycle management and checkpoint recovery
-- Agent peer review protocols and quality gate coordination
-- **Production intelligence and comprehensive run reporting** with purpose achievement analysis
-- **Workflow optimization insights** and comparative run effectiveness measurement
-- **Learning loop closure** for systematic expertise crystallization validation
+- Cross-run state persistence using BMad memory sidecars + SQLite coordination database
+- Production run lifecycle management with YAML run context entities
+- Quality gate coordination through agent peer review skill invocation
+- **Production intelligence and comprehensive run reporting** via reporting skills with Python analytics scripts
+- **Workflow optimization insights** captured in agent memory sidecars
+- **Learning loop closure**: Agent sidecar pattern updates for systematic expertise crystallization
 
 **Production Validation**: **Complete Course 1, Module 1 recreation** through multi-agent production cycle using existing content as baseline. This real-world module provides concrete complexity requirements including Welcome video production, knowledge checks, discussion boards, multimedia integration (Freakonomics podcast, YouTube videos), and grading rubrics.
 
@@ -143,41 +140,41 @@ Target users: Individual educators and instructional designers seeking to scale 
 ### Growth Features (Post-MVP)
 
 **Epic 5: Unified Content Production Engine** 
-- Full visual asset pipeline with Vyond, Midjourney, CapCut integration
-- Multi-modal assembly coordination with sophisticated cross-platform optimization
-- Style orchestration with brand consistency enforcement across all tools
+- Create additional specialty agents via `bmad-agent-builder`: Vyond, Midjourney, CapCut specialists
+- Multi-modal assembly coordination skills with cross-tool handoff workflows
+- Style orchestration skill with brand consistency enforcement using style guide YAML
 
 **Epic 6: LMS Platform Integration & Delivery**
-- Complete CourseArc integration with LTI 1.3 compliance and SCORM packaging
-- Advanced Canvas integration with grading passback and analytics
-- Multi-platform deployment optimization and content format translation
+- Create CourseArc specialist agent via `bmad-agent-builder` with LTI 1.3 compliance knowledge
+- Enhanced Canvas specialist agent with grading passback and analytics capabilities
+- Platform deployment skills with content format translation and SCORM packaging scripts
 
 **Epic 7: Multi-Platform Intelligence Matrix**
-- Four-platform allocation logic (Canvas/CourseArc/Playbook/Qualtrics)  
-- Context-aware content type optimization and platform-specific routing
-- Seamless handoff choreography and user experience continuity
+- Platform allocation agent with four-platform decision intelligence (Canvas/CourseArc/Playbook/Qualtrics)
+- Context-aware routing skills with platform-specific optimization references
+- Handoff choreography patterns captured in coordination skills and agent memory
 
 **Epic 8: Tool Review & Optimization Intelligence**
-- Adaptive environment scanning with breakthrough tool detection
-- Policy crystallization engine that evolves tool allocation strategies
-- Cost-benefit optimization and strategic tool recommendation system
+- Tool review agent with adaptive environment scanning and documentation monitoring skills
+- Policy crystallization captured in agent memory sidecars and style guide YAML evolution
+- Cost-benefit optimization recommendations through production intelligence reporting
 
 ### Vision (Future)
 
 **Epic 9: Living Architecture Documentation System**
-- Self-improving documentation that evolves from production experience
-- Systematic knowledge crystallization with automatic pattern extraction
-- Agent training data enhancement through operational outcome analysis
+- Documentation agent with self-improving capability using BMad memory sidecar patterns
+- Systematic knowledge crystallization through agent memory pattern analysis and consolidation
+- Agent capability enhancement based on operational outcome analysis captured in chronology.md
 
 **Epic 10: Strategic Production Orchestration** 
-- Advanced multi-tool workflow reasoning with predictive optimization
-- Complex dependency management and resource allocation intelligence
-- Performance monitoring with systematic workflow improvement suggestions
+- Enhanced master orchestrator with predictive optimization skills based on accumulated production memory
+- Complex dependency management through evolved coordination protocols and agent communication patterns
+- Performance monitoring skills with systematic workflow improvement recommendations
 
 **Vision Completion: Full Collaborative Intelligence Infrastructure**
-- Complete "Party Mode on steroids" environment with persistent agent ecosystem
-- Systematic creative expertise scaling across unlimited course production scenarios  
-- Platform-agnostic intelligence with comprehensive tool capability registry and breakthrough detection
+- Complete "Party Mode on steroids" environment with persistent agent ecosystem using BMad memory sidecars
+- Systematic creative expertise scaling through agent memory patterns across unlimited production scenarios  
+- Platform-agnostic intelligence with comprehensive tool capability registry maintained by tool review agent
 
 ## User Journeys
 
@@ -325,59 +322,59 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 
 ### Project-Type Overview
 
-**Multi-Agent Orchestration Platform**: Python-based collaborative intelligence infrastructure optimized for Cursor IDE, following traditional Python packaging patterns with virtual environment management. Designed for greenfield course content production with sophisticated agent coordination and persistent state management.
+**Multi-Agent Orchestration Platform**: Agents implemented as .md files following BMad patterns, packaged as a Cursor IDE plugin with native agent/skill auto-discovery. Python infrastructure provides supporting code for API clients, state management, and tool manipulation. Built using `bmad-agent-builder` six-phase conversational discovery process for agent creation.
 
-### Technical Architecture Considerations
+### Technical Implementation Architecture
 
-**Implementation Foundation:**
-- **Primary Language**: Python with multi-language agent support capability
-- **Deployment Model**: Local development machine execution with traditional pip packaging and .venv isolation
-- **Framework Approach**: Framework-agnostic with flexibility for agent-specific technology choices
-- **IDE Optimization**: Cursor IDE integration as core environment configuration requirement
+**Agent Implementation Model:**
+- **Agents as .md files**: Custom agents defined in `agents/` directory with YAML frontmatter (name + description), following BMad SKILL.md standard with persona, activation, and capability routing
+- **Skills as SKILL.md**: Tool-specific capabilities in `skills/{tool}/SKILL.md` directories with progressive disclosure via `references/` subfolder
+- **Python infrastructure**: Supporting scripts in `scripts/` for API clients, state management, file operations, and deterministic operations requiring code execution
+- **Cursor Plugin Packaging**: `.cursor-plugin/plugin.json` manifest with auto-discovery of agents, skills, rules, and MCP servers
 
-**Agent Communication Architecture:**
-- **Event-Driven Messaging**: Asynchronous agent-to-agent communication protocols
-- **Canonical Documentation Pattern**: Following BMAD framework approach with predefined docs, databases, and data structures
-- **State Persistence**: Read/update patterns for shared resources with version control integration
+**Agent Creation Methodology:**
+- **BMad Agent Builder** (`bmad-agent-builder`): Six-phase conversational discovery process (Intent → Capabilities → Requirements → Draft → Build → Summary) for creating each custom agent
+- **Quality Optimization**: Builder's quality scan system for structural validation and prompt craft optimization
+- **Agent Memory System**: BMad sidecar pattern (`_bmad/memory/{skillName}-sidecar/`) for persistent agent learning with index.md, patterns.md, chronology.md, and access-boundaries.md
+
+**Cursor IDE Integration:**
+- **Plugin Structure**: Native Cursor plugin with agents/, skills/, rules/, commands/, hooks/ directories
+- **Hooks System**: Cursor event hooks for production coordination (sessionStart → pre-flight, afterFileEdit → quality validation, sessionEnd → run reporting)
+- **MCP Integration**: `.mcp.json` bundled in plugin for tool server definitions
+- **Rules System**: `.cursor/rules/*.mdc` files for persistent agent behavior guidance
 
 ### Core Entity Model (Critical Architecture Component)
 
 **Run-Defining Entities** (Beginning of Production Process):
-- **Course Context Entity**: Overall course definition, learning objectives, brand guidelines, platform requirements
-- **Module Context Entity**: Module-specific objectives, timeline, content types, assessment strategies  
-- **Asset Specification Entity**: Individual content piece requirements, format specifications, quality criteria
+- **Course Context Entity**: YAML file with overall course definition, learning objectives, brand guidelines, platform requirements
+- **Module Context Entity**: YAML file with module-specific objectives, timeline, content types, assessment strategies  
+- **Asset Specification Entity**: YAML file with individual content piece requirements, format specifications, quality criteria
 
 **Runtime Coordination Entities** (Used/Updated During Production):
-- **Production Run State**: Workflow progress, agent assignments, quality gate status, coordination checkpoints
-- **Agent Coordination Registry**: Current agent assignments, completion status, handoff protocols, peer review results
-- **Resource Version Tracking**: Asset evolution history, creative decision audit trail, quality validation records
+- **Production Run State**: SQLite database tracking workflow progress, agent assignments, quality gate status, coordination checkpoints
+- **Agent Memory Sidecars**: BMad sidecar directories for each active agent with learned patterns and session context
+- **Resource Version Tracking**: Git-versioned asset evolution history with creative decision audit trail
 
 **Run Completion Entities** (Final Version-Controlled Updates):
-- **Asset Release Manifest**: Final artifact specifications, deployment targets, quality certification
-- **Process Learning Capture**: Workflow effectiveness patterns, agent performance insights, optimization opportunities
-- **Course/Module Memory Update**: Persistent context for future production runs, creative pattern crystallization
+- **Asset Release Manifest**: YAML file with final artifact specifications, deployment targets, quality certification
+- **Process Learning Capture**: Agent sidecar pattern updates with workflow effectiveness patterns and optimization insights
+- **Course/Module Memory Update**: Persistent sidecar context for future production runs and creative pattern crystallization
 
-### Installation Methods
+### Agent Communication Architecture
 
-**Package Distribution**: Standard Python packaging following canvas_api_tools project pattern with requirements.txt dependency management and virtual environment isolation.
+**Inter-Agent Coordination**: Agents invoke each other through orchestrator coordination using BMad skill routing patterns. Master orchestrator maintains conversation state and delegates to specialty agents via capability matching.
 
-**Configuration Management**: Environment-specific setup with .env file patterns, API key management, and tool integration verification scripts.
+**Skills as Integration Bridge**: Skills provide the interface between agent reasoning (.md intelligence) and code execution (Python scripts for API calls, file operations, state management). Skills follow BMad progressive disclosure pattern with references/ for complex capabilities.
 
-### API Surface Design
-
-**Agent Coordination Protocols**: Event-driven messaging with standardized MCP integration patterns for tool manipulation and inter-agent communication.
-
-**State Management APIs**: CRUD operations for entity model with atomic updates, conflict resolution, and audit trail maintenance.
-
-**Tool Integration Framework**: Standardized patterns for Gamma, ElevenLabs, Canvas, Vyond API interactions with consistent error handling and retry mechanisms.
+**State Persistence**: Hybrid YAML configuration (human-readable, git-versioned) + SQLite runtime coordination (ACID transactions) + BMad memory sidecars (agent learning persistence).
 
 ### Documentation & Examples Strategy
 
-**Agent Behavior Configuration**: Template gallery for different agent specializations with configuration examples and customization guides.
+**Agent Behavior Configuration**: BMad Builder-generated agent .md files with persona, capabilities, and routing tables serving as self-documenting agent specifications.
 
-**Workflow Template Repository**: Production process patterns for different content types (presentations, assessments, videos) with step-by-step coordination examples.
+**Workflow Template Repository**: Production process patterns for different content types (presentations, assessments, videos) defined as skills with step-by-step coordination workflows.
 
-**Tool Integration Guides**: Comprehensive setup and usage documentation for each supported platform with troubleshooting and optimization recommendations.
+**Tool Integration Guides**: Skill-based documentation with parameter mastery references, context optimization patterns, and troubleshooting guidance.
 
 ## Project Scoping & Phased Development
 

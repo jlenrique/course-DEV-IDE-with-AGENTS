@@ -171,18 +171,37 @@ This document provides the complete epic and story breakdown for course-DEV-IDE-
 - Work product presentation through conversation with clear review and approval workflows
 - Error resolution and problem-solving through conversational guidance and recovery suggestions
 
-## Existing Epic Architecture (From Brainstorming)
+## Existing Epic Architecture (Recast for BMad Agent + Cursor Plugin Approach)
 
-**Epic 1: Repository Environment & Agent Infrastructure** (Enhanced with Pre-Flight)
-**Epic 2: Master Agent Architecture & Development** (Enhanced with Pre-Flight Orchestration)
+**Epic 1: Repository Environment & Agent Infrastructure** (FOUNDATIONAL)
+Cursor plugin setup, agent/skill directory structure, Python infrastructure, SQLite + YAML state management, MCP integration, pre-flight check infrastructure, testing framework.
+
+**Epic 2: Master Agent Architecture & Development**
+Create master orchestrator agent via `bmad-agent-builder`, Cursor chat integration, memory sidecar for persistent learning, conversational workflow management, parameter intelligence, pre-flight orchestration.
+
 **Epic 3: Core Tool Integrations** 
+Create specialty agents (Gamma, ElevenLabs, Canvas) via `bmad-agent-builder`, tool mastery skills with SKILL.md + references/ + scripts/, parameter catalogs in style guide YAML.
+
 **Epic 4: Workflow Coordination & State Infrastructure**
+Cross-run persistence via BMad memory sidecars + SQLite, production run lifecycle management, quality gate coordination, production intelligence and run reporting skills.
+
 **Epic 5: Unified Content Production Engine** 
+Additional specialty agents (Vyond, Midjourney, CapCut) via `bmad-agent-builder`, multi-modal assembly skills, style orchestration with brand consistency enforcement.
+
 **Epic 6: LMS Platform Integration & Delivery**
+CourseArc specialist agent, enhanced Canvas specialist, platform deployment skills with SCORM packaging scripts.
+
 **Epic 7: Multi-Platform Intelligence Matrix**
+Platform allocation agent with four-platform decision intelligence, context-aware routing skills, handoff choreography patterns.
+
 **Epic 8: Tool Review & Optimization Intelligence**
+Tool review agent with environment scanning and documentation monitoring skills, policy crystallization via agent memory sidecars.
+
 **Epic 9: Living Architecture Documentation System**
+Documentation agent with self-improving capability using BMad memory sidecar patterns, knowledge crystallization through pattern analysis.
+
 **Epic 10: Strategic Production Orchestration**
+Enhanced master orchestrator with predictive optimization skills, evolved coordination protocols, performance monitoring and improvement recommendations.
 
 {{requirements_coverage_map}}
 

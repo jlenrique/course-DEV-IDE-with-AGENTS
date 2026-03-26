@@ -103,11 +103,14 @@ resources/        # Exemplars, style bible, tool inventory
 - [x] **STORY CREATION COMPLETED**: 31 stories across 10 epics, 100% FR coverage validated
 - [x] **API-FIRST SEQUENCING**: API/MCP clients (Gamma, ElevenLabs, Canvas) built in Epic 1 before agent creation
 - [x] **TOOL UNIVERSE AUDIT**: 15 tools researched and classified (Tier 1-4), MCP servers configured, .env.example expanded
-- [x] **STORY 1.1 IMPLEMENTED**: Cursor plugin foundation — plugin.json, .mcp.json, hooks, directory structure
-- [x] **LIVE MCP VALIDATION**: Gamma and Canvas LMS verified in Cursor; deferred MCPs documented with current blockers
-- [x] **API SMOKE VALIDATION**: ElevenLabs and Qualtrics verified via direct smoke scripts despite MCP limitations
-- [x] **PRE-FLIGHT INPUTS PREPARED**: baseline heartbeat and targeted smoke scripts are now available for future Story 1.4 implementation
-- [ ] Sprint planning and development execution
+- [x] **EPIC 1 COMPLETE**: All 11 stories implemented, tested with live APIs, validated by Party Mode review team
+- [x] **STORY 1.1**: Cursor plugin foundation — plugin.json, .mcp.json, hooks, directory structure
+- [x] **STORY 1.2**: Python infrastructure — BaseAPIClient with retry/pagination/binary, utilities, venv
+- [x] **STORY 1.3**: State management — SQLite (3 tables), YAML configs (3 files), BMad memory sidecars (5 agents)
+- [x] **STORY 1.4**: Pre-flight check skill — SKILL.md + Python runner + doc scanner + 3 reference docs
+- [x] **STORIES 1.5-1.11**: Testing framework + 5 full-featured API clients (Gamma, ElevenLabs, Canvas, Qualtrics, Panopto) + Canva MCP config
+- [x] **LIVE API VALIDATION**: 117 tests pass against real services (Gamma, ElevenLabs, Canvas, Qualtrics), 3 skipped (Panopto — no creds)
+- [ ] Epic 2: Master Agent Architecture & Development
 
 ## Key Files
 

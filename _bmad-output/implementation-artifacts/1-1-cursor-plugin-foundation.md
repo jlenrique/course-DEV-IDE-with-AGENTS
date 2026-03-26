@@ -1,6 +1,6 @@
 # Story 1.1: Cursor Plugin Foundation & Repository Structure
 
-Status: review
+Status: done
 
 ## Story
 

@@ -1,0 +1,66 @@
+# Tool Policies — Run presets, quality gates, and fallback strategies.
+# Controls how strictly the system enforces quality at each production stage.
+
+run_presets:
+  explore:
+    description: "Rapid experimentation — minimal quality gates"
+    quality_threshold: 0.6
+    human_review: false
+    accessibility_check: false
+    brand_consistency_check: false
+
+  draft:
+    description: "Working draft — human review at key checkpoints"
+    quality_threshold: 0.7
+    human_review: true
+    accessibility_check: true
+    brand_consistency_check: false
+
+  production:
+    description: "Publication-ready — full quality pipeline"
+    quality_threshold: 0.9
+    human_review: true
+    accessibility_check: true
+    brand_consistency_check: true
+
+  regulated:
+    description: "Compliance-grade — strictest quality + audit trail"
+    quality_threshold: 0.95
+    human_review: true
+    accessibility_check: true
+    brand_consistency_check: true
+    compliance_check: true
+    audit_trail_required: true
+
+default_preset: "draft"
+
+# Quality gate configuration per production stage
+quality_gates:
+  content_structuring:
+    required: true
+    auto_pass_threshold: 0.8
+  slide_generation:
+    required: true
+    auto_pass_threshold: 0.85
+  voiceover_generation:
+    required: true
+    auto_pass_threshold: 0.8
+  assembly:
+    required: true
+    auto_pass_threshold: 0.9
+  final_review:
+    required: true
+    auto_pass_threshold: null   # Always requires human review
+
+# Fallback strategies when primary tool is unavailable
+fallback_strategies:
+  gamma_unavailable: "manual-slide-creation"
+  elevenlabs_unavailable: "defer-voiceover"
+  canvas_unavailable: "export-to-scorm"
+  qualtrics_unavailable: "canvas-native-quiz"
+
+# Retry configuration (matches architecture NFRs)
+retry_policy:
+  max_attempts: 3
+  backoff_delays_seconds: [2, 4, 8]
+  retryable_http_codes: [429, 500, 502, 503, 504]

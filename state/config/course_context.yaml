@@ -1,0 +1,27 @@
+# Course Context — Master template for course-level metadata.
+# Agents read this to align all content production decisions with course objectives.
+# Fill in per-course values; modules array grows as content is planned.
+
+course:
+  name: ""
+  code: ""
+  description: ""
+  institution: ""
+  audience: ""
+  audience_level: ""   # e.g. "graduate-professional", "undergraduate", "continuing-education"
+
+  learning_objectives:
+    # Top-level course outcomes (CLOs) — every module should trace back to these
+    - ""
+
+  modules:
+    # Populated per-module as production planning proceeds
+    # - id: "M1"
+    #   title: ""
+    #   learning_objectives: []
+    #   lessons: []
+    []
+
+  term: ""
+  delivery_mode: ""    # e.g. "online-asynchronous", "hybrid", "synchronous"
+  credits: null

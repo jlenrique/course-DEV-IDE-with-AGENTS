@@ -1,0 +1,16 @@
+# Core dependencies for collaborative intelligence infrastructure
+# Install: pip install -r requirements.txt
+
+# HTTP clients
+requests>=2.31,<3
+aiohttp>=3.9,<4
+
+# Configuration & validation
+python-dotenv>=1.0,<2
+pydantic>=2.7,<3
+pyyaml>=6.0,<7
+
+# Development & testing
+pytest>=8.0,<9
+pytest-asyncio>=0.23,<1
+ruff>=0.4,<1

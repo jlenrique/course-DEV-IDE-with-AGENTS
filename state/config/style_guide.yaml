@@ -1,0 +1,69 @@
+# Style Guide — Brand standards and tool parameter preferences.
+# Agents apply these automatically; users update through conversation with orchestrator.
+
+brand:
+  colors:
+    primary: ""
+    secondary: ""
+    accent: ""
+    background: ""
+    text: ""
+  fonts:
+    heading: ""
+    body: ""
+    code: ""
+  logo_path: ""
+  tone: ""             # e.g. "professional-warm", "academic-approachable"
+  audience_level: ""   # e.g. "physician", "graduate-student", "general-learner"
+
+accessibility:
+  wcag_level: "AA"
+  min_contrast_ratio: 4.5
+  alt_text_required: true
+  captions_required: true
+
+# --- Per-tool parameter preferences ---
+# Agents check these before generating content. Conversational elicitation
+# fills gaps; newly learned preferences are saved back here.
+
+tool_parameters:
+  gamma:
+    default_llm: ""         # e.g. "claude-3", "gpt-4o"
+    style: ""               # e.g. "professional-medical", "modern-clean"
+    format: ""              # e.g. "presentation", "document"
+    slides_per_section: null
+
+  elevenlabs:
+    default_voice_id: ""
+    stability: 0.5
+    similarity_boost: 0.75
+    style: 0.0
+    model_id: ""            # e.g. "eleven_multilingual_v2"
+    output_format: "mp3_44100_128"
+
+  canvas:
+    default_course_id: ""
+    default_module_position: "end"
+    publish_immediately: false
+
+  qualtrics:
+    default_survey_language: "EN"
+    question_numbering: true
+    progress_bar: true
+
+  canva:
+    brand_template_id: ""
+    default_design_type: ""
+
+  botpress:
+    default_bot_id: ""
+    language: "en"
+
+  wondercraft:
+    default_voice: ""
+    format: "podcast"
+
+  kling:
+    default_model: ""       # e.g. "kling-v3"
+    aspect_ratio: "16:9"
+    duration: 5

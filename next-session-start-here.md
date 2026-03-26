@@ -7,16 +7,18 @@
 ```
 # Priority sequence:
 1. Run sprint planning (bmad-sprint-planning)
-2. Begin Epic 1 Story 1.1: Cursor plugin foundation via bmad-dev-story
-3. Continue Epic 1 stories sequentially
-4. Begin Epic 2: Create master orchestrator agent via bmad-agent-builder
+2. Epic 1 Stories 1.1-1.3: Cursor plugin + Python infra + state management
+3. Epic 1 Stories 1.6-1.8: Build & test Gamma, ElevenLabs, Canvas API clients
+4. Epic 1 Stories 1.4-1.5: Pre-flight checks + testing framework
+5. Epic 2: Create master orchestrator agent via bmad-agent-builder
+6. Epic 3: Create tool specialist agents (using Epic 1 API clients)
 ```
 
 ## Current Status - SOLUTIONING PHASE COMPLETE
 
 - **PRD**: ✅ COMPLETE & RECAST (70 FRs, agent .md approach)
 - **Architecture**: ✅ COMPLETE & RECAST (BMad Agent + Cursor Plugin patterns)
-- **Epic Structure**: ✅ COMPLETE & VALIDATED (10 epics, 28 stories, 100% FR coverage)
+- **Epic Structure**: ✅ COMPLETE & VALIDATED (10 epics, 31 stories, 100% FR coverage, API-first sequencing)
 - **All Docs**: ✅ HARMONIZED (Cursor plugin + BMad Builder approach)
 - **Sprint Planning**: ⏳ NEXT
 - **Implementation**: Not started

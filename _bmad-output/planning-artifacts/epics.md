@@ -211,7 +211,7 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 |----|------|-------------|
 | FR1-6 | Epic 2 | Agent orchestration & coordination |
 | FR7-12 | Epic 4 | Production workflow management (core) |
-| FR13-17 | Epic 3 | Tool integration & API management |
+| FR13-17 | Epic 1 + Epic 3 | Tool integration (Epic 1: API clients; Epic 3: agent mastery skills) |
 | FR18-22 | Epic 3 | Skills & expertise management (foundation) |
 | FR23-27 | Epic 4 | Quality control & review |
 | FR28-32 | Epic 4 | Content & asset management |
@@ -227,7 +227,7 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 
 ## Epic List
 
-1. **Epic 1: Repository Environment & Agent Infrastructure** - Cursor plugin foundation, Python infrastructure, state management, pre-flight checks, testing
+1. **Epic 1: Repository Environment & Agent Infrastructure** - Cursor plugin foundation, Python infrastructure, state management, pre-flight checks, testing, **API/MCP integration for Gamma, ElevenLabs, Canvas**
 2. **Epic 2: Master Agent Architecture & Development** - Conversational orchestrator creation via bmad-agent-builder, coordination protocols, parameter intelligence
 3. **Epic 3: Core Tool Integrations** - Specialty agent creation (Gamma, ElevenLabs, Canvas) via bmad-agent-builder, tool mastery skills
 4. **Epic 4: Workflow Coordination & State Infrastructure** - Production run management, quality gates, run reporting, learning loop closure
@@ -330,6 +330,60 @@ So that agent coordination and skill execution can be validated during developme
 **And** development mode logging configuration provides enhanced agent coordination debugging output
 **And** `FR40` development mode capability is satisfied with configurable log levels
 
+### Story 1.6: Gamma API Integration & MCP Setup
+
+As a developer,
+I want a working Gamma API client and MCP configuration,
+So that agents and skills can generate slides through verified, tested tool connectivity.
+
+**Acceptance Criteria:**
+
+**Given** the Python infrastructure and .env API keys are configured
+**When** the Gamma API client is built and tested
+**Then** `scripts/api_clients/gamma_client.py` provides authenticated Gamma API access
+**And** slide generation can be triggered programmatically with configurable parameters (LLM choice, style, output format)
+**And** exponential backoff retry logic (3 attempts: 2s, 4s, 8s) handles API failures gracefully
+**And** MCP server configuration for Gamma is validated in `.mcp.json` (if Gamma MCP exists)
+**And** a working integration test demonstrates end-to-end slide generation from a text prompt
+**And** API response parsing extracts slide URLs, metadata, and status information
+**And** error handling provides clear diagnostic messages for authentication failures, rate limits, and service outages
+
+### Story 1.7: ElevenLabs API Integration
+
+As a developer,
+I want a working ElevenLabs API client for voice synthesis,
+So that agents and skills can generate voiceover audio through verified, tested connectivity.
+
+**Acceptance Criteria:**
+
+**Given** the Python infrastructure and .env API keys are configured
+**When** the ElevenLabs API client is built and tested
+**Then** `scripts/api_clients/elevenlabs_client.py` provides authenticated ElevenLabs API access
+**And** voice synthesis can be triggered with configurable parameters (voice ID, stability, clarity, style)
+**And** available voices can be listed and filtered programmatically
+**And** audio output is saved in standard formats (MP3, WAV) with timing metadata
+**And** exponential backoff retry logic handles API failures gracefully
+**And** a working integration test demonstrates end-to-end voiceover generation from text input
+**And** error handling provides clear diagnostics for quota limits, voice unavailability, and service issues
+
+### Story 1.8: Canvas API Integration
+
+As a developer,
+I want a working Canvas API client following canvas_api_tools patterns,
+So that agents and skills can deploy content to Canvas LMS through verified, tested connectivity.
+
+**Acceptance Criteria:**
+
+**Given** the Python infrastructure and .env API keys are configured (CANVAS_API_URL, CANVAS_ACCESS_TOKEN)
+**When** the Canvas API client is built and tested
+**Then** `scripts/api_clients/canvas_client.py` provides authenticated Canvas REST API access following canvas_api_tools patterns
+**And** module creation, page publishing, and quiz deployment operations work programmatically
+**And** course and module listing operations support content deployment workflows
+**And** exponential backoff retry logic and Canvas-specific rate limit handling are implemented
+**And** a working integration test demonstrates module creation and page publishing against a test Canvas instance
+**And** error handling provides clear diagnostics for authentication, permissions, and API rate limiting
+**And** the client respects institutional API policies and scoped token permissions
+
 ---
 
 ## Epic 2: Master Agent Architecture & Development
@@ -428,25 +482,26 @@ So that I can confirm all tools are operational before starting a production run
 
 **FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR61, FR62, FR63, FR64, FR65
 
-### Story 3.1: Gamma Specialist Agent & Skill
+### Story 3.1: Gamma Specialist Agent & Mastery Skill
 
 As a user,
-I want a Gamma specialist agent with complete API mastery and intelligent slide generation,
+I want a Gamma specialist agent with complete tool mastery and intelligent parameter management,
 So that presentation slides are created with optimal parameters matching my style preferences.
 
 **Acceptance Criteria:**
 
-**Given** the bmad-agent-builder creates `agents/gamma-specialist.md`
-**When** the Gamma specialist is invoked for slide generation
-**Then** the agent has complete knowledge of Gamma API parameters (LLM choice, style presets, output formats)
-**And** `skills/gamma-api-mastery/SKILL.md` provides tool integration capability with progressive disclosure references
-**And** `skills/gamma-api-mastery/scripts/` contains Python Gamma API client with authentication and retry logic
-**And** `skills/gamma-api-mastery/references/` contains parameter templates for different content types (medical presentations, assessments)
-**And** the agent reads style guide preferences and applies them automatically
-**And** exponential backoff retry (3 attempts: 2s, 4s, 8s) handles API failures gracefully
-**And** `_bmad/memory/gamma-specialist-sidecar/` captures successful parameter combinations
+**Given** the Gamma API client from Story 1.6 is working and `bmad-agent-builder` is available
+**When** the Gamma specialist agent is created through six-phase discovery
+**Then** `agents/gamma-specialist.md` exists with tool mastery persona and complete Gamma parameter knowledge
+**And** `skills/gamma-api-mastery/SKILL.md` provides tool integration capability routing to the existing API client
+**And** `skills/gamma-api-mastery/references/parameter-catalog.md` documents all Gamma API parameters with value ranges
+**And** `skills/gamma-api-mastery/references/context-optimization.md` contains parameter templates for different content types (medical presentations, assessments)
+**And** `skills/gamma-api-mastery/scripts/` imports and orchestrates the shared `scripts/api_clients/gamma_client.py`
+**And** the agent reads style guide preferences from `state/config/style_guide.yaml` and applies them automatically
+**And** `_bmad/memory/gamma-specialist-sidecar/` is initialized with index.md, patterns.md, and access-boundaries.md
+**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Gamma API → returns slides
 
-### Story 3.2: ElevenLabs Specialist Agent & Skill
+### Story 3.2: ElevenLabs Specialist Agent & Mastery Skill
 
 As a user,
 I want an ElevenLabs specialist agent with voice synthesis mastery and audio optimization,
@@ -454,17 +509,19 @@ So that natural voiceover is generated with optimal voice and timing parameters.
 
 **Acceptance Criteria:**
 
-**Given** the bmad-agent-builder creates `agents/elevenlabs-specialist.md`
-**When** the ElevenLabs specialist is invoked for voiceover generation
-**Then** the agent has complete knowledge of ElevenLabs API parameters (voice selection, stability, clarity, style)
-**And** `skills/elevenlabs-audio/SKILL.md` provides audio generation capability
-**And** `skills/elevenlabs-audio/scripts/` contains Python ElevenLabs API client with authentication and retry logic
-**And** `skills/elevenlabs-audio/references/` contains voice optimization patterns for medical education content
+**Given** the ElevenLabs API client from Story 1.7 is working and `bmad-agent-builder` is available
+**When** the ElevenLabs specialist agent is created through six-phase discovery
+**Then** `agents/elevenlabs-specialist.md` exists with audio production mastery persona
+**And** `skills/elevenlabs-audio/SKILL.md` provides audio generation capability routing to the existing API client
+**And** `skills/elevenlabs-audio/references/voice-catalog.md` documents available voices with characteristics
+**And** `skills/elevenlabs-audio/references/optimization-patterns.md` contains voice optimization for medical education
+**And** `skills/elevenlabs-audio/scripts/` imports and orchestrates the shared `scripts/api_clients/elevenlabs_client.py`
 **And** the agent reads style guide voice preferences and applies them automatically
 **And** generated audio includes timing metadata for slide synchronization
 **And** `_bmad/memory/elevenlabs-specialist-sidecar/` captures effective voice configurations
+**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls ElevenLabs → returns audio with metadata
 
-### Story 3.3: Canvas Specialist Agent & Skill
+### Story 3.3: Canvas Specialist Agent & Mastery Skill
 
 As a user,
 I want a Canvas specialist agent with LMS deployment mastery,
@@ -472,15 +529,17 @@ So that completed content is deployed to Canvas with proper module structure and
 
 **Acceptance Criteria:**
 
-**Given** the bmad-agent-builder creates `agents/canvas-specialist.md`
-**When** the Canvas specialist is invoked for content deployment
-**Then** the agent has knowledge of Canvas REST API for module creation, page publishing, and quiz deployment
-**And** `skills/canvas-deployment/SKILL.md` provides deployment capability
-**And** `skills/canvas-deployment/scripts/` contains Python Canvas API client following canvas_api_tools patterns
-**And** `skills/canvas-deployment/references/` contains deployment workflows for different content types
+**Given** the Canvas API client from Story 1.8 is working and `bmad-agent-builder` is available
+**When** the Canvas specialist agent is created through six-phase discovery
+**Then** `agents/canvas-specialist.md` exists with LMS deployment mastery persona
+**And** `skills/canvas-deployment/SKILL.md` provides deployment capability routing to the existing API client
+**And** `skills/canvas-deployment/references/deployment-workflows.md` contains workflows for different content types
+**And** `skills/canvas-deployment/references/institutional-requirements.md` documents Canvas-specific policies
+**And** `skills/canvas-deployment/scripts/` imports and orchestrates the shared `scripts/api_clients/canvas_client.py`
 **And** the agent validates accessibility compliance before deployment
 **And** deployment results include confirmation URLs and Canvas module structure verification
 **And** `_bmad/memory/canvas-specialist-sidecar/` captures deployment patterns and institutional requirements
+**And** an end-to-end test demonstrates: agent invoked → validates content → calls Canvas API → confirms deployment
 
 ### Story 3.4: Content Creator Agent & Quality Reviewer Agent
 
@@ -490,15 +549,16 @@ So that content structuring and systematic quality validation are handled by ded
 
 **Acceptance Criteria:**
 
-**Given** the bmad-agent-builder creates `agents/content-creator.md` and `agents/quality-reviewer.md`
-**When** the content creator is invoked for content structuring
-**Then** the agent structures content against learning objectives with instructional design expertise
+**Given** the bmad-agent-builder is available and state infrastructure from Epic 1 is working
+**When** the content creator and quality reviewer agents are created through six-phase discovery
+**Then** `agents/content-creator.md` structures content against learning objectives with instructional design expertise
 **And** the content creator applies pedagogical best practices (Bloom's taxonomy, engagement patterns)
-**When** the quality reviewer is invoked after any production stage
-**Then** the reviewer validates outputs against style guide, accessibility standards, and learning objective alignment
-**And** the reviewer provides structured feedback with pass/fail criteria and improvement suggestions
-**And** quality review results are logged to the production run audit trail
-**And** both agents have memory sidecars capturing learned patterns
+**And** `agents/quality-reviewer.md` validates outputs against style guide, accessibility standards, and learning objectives
+**And** the quality reviewer provides structured feedback with pass/fail criteria and improvement suggestions
+**And** `skills/quality-control/SKILL.md` provides quality validation capability with references for standards
+**And** `skills/quality-control/scripts/` contains Python accessibility checking and brand validation code
+**And** quality review results are logged to the production run audit trail in SQLite
+**And** both agents have memory sidecars capturing learned quality patterns
 
 ---
 

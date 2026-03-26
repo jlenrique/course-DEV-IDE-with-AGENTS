@@ -103,6 +103,7 @@ Target users: Individual educators and instructional designers seeking to scale 
 - Python infrastructure: `.venv`, `requirements.txt`, `.env` for API keys (following canvas_api_tools patterns)
 - SQLite + YAML state management infrastructure with BMad memory sidecar directories
 - MCP integration via `.mcp.json` bundled in plugin
+- **Core API/MCP Integration**: Built and tested API clients for Gamma, ElevenLabs, and Canvas with verified connectivity, retry logic, and error handling - available for all subsequent agent and skill development
 - **Pre-Flight Check Infrastructure**: Hook-based MCP/API connectivity verification and tool documentation scanning
 - **Testing Framework**: Agent coordination validation and skill execution testing infrastructure
 
@@ -116,12 +117,13 @@ Target users: Individual educators and instructional designers seeking to scale 
 - **Pre-Flight Check Orchestration**: User-invokable system validation through conversation
 - **Agent Coordination Protocols**: Capability matching and delegation to specialty agents
 
-**Epic 3: Core Tool Integrations** 
+**Epic 3: Core Tool Specialist Agents & Mastery Skills** 
 - Create specialty agents via `bmad-agent-builder`: Gamma specialist, ElevenLabs specialist, Canvas specialist
 - Each agent as .md file with tool mastery persona and parameter intelligence
-- Skills (SKILL.md + references/ + scripts/) for each tool with API client Python code
-- Exponential fallback mechanisms in tool integration scripts
-- Tool capability parameter catalogs in style guide YAML format
+- Mastery skills (SKILL.md + references/) that orchestrate the already-working API clients from Epic 1
+- Complete parameter catalogs with context-specific optimization patterns
+- Tool capability parameter preferences stored in style guide YAML format
+- Content creator and quality reviewer agents for instructional design and validation
 
 **Epic 4: Workflow Coordination & State Infrastructure**
 - Cross-run state persistence using BMad memory sidecars + SQLite coordination database

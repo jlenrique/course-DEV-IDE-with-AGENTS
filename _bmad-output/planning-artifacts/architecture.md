@@ -157,11 +157,12 @@ Supporting code for API clients (Gamma, ElevenLabs, Canvas), state management (S
 ### Decision Impact Analysis
 
 **Implementation Sequence:**
-1. SQLite + YAML configuration infrastructure (Epic 1)
-2. Cursor chat integration with conversational orchestrator (Epic 2)  
-3. Skills bridge framework with hybrid execution patterns (Epic 2)
-4. Tool integrations through established architecture patterns (Epic 3)
-5. Production intelligence leveraging state management foundation (Epic 4)
+1. Cursor plugin structure + SQLite + YAML configuration infrastructure (Epic 1, Stories 1.1-1.3)
+2. API/MCP integration: Gamma, ElevenLabs, Canvas clients built and tested (Epic 1, Stories 1.6-1.8)
+3. Pre-flight check + testing framework (Epic 1, Stories 1.4-1.5)
+4. Master orchestrator agent creation via bmad-agent-builder (Epic 2)
+5. Tool specialist agents with mastery skills orchestrating Epic 1 API clients (Epic 3)
+6. Production workflow coordination and intelligence reporting (Epic 4)
 
 **Cross-Component Dependencies:**
 Conversational interface requires agent coordination backend, agent coordination requires state persistence, state persistence enables learning systems, learning systems feed back into conversational intelligence improvements.
@@ -405,9 +406,9 @@ course-DEV-IDE-with-AGENTS/
 
 **Feature/Epic Mapping:**
 
-**Epic 1 (Repository Environment)** → `.cursor-plugin/`, `.mcp.json`, `state/config/`, `requirements.txt`, `scripts/`
+**Epic 1 (Repository Environment + API Integration)** → `.cursor-plugin/`, `.mcp.json`, `state/config/`, `requirements.txt`, `scripts/api_clients/` (Gamma, ElevenLabs, Canvas API clients built and tested here)
 **Epic 2 (Master Agent)** → `agents/master-orchestrator.md` (created via bmad-agent-builder), `_bmad/memory/master-orchestrator-sidecar/`, `skills/production-coordination/`
-**Epic 3 (Tool Integrations)** → `agents/{tool}-specialist.md` (created via bmad-agent-builder), `skills/gamma-api-mastery/`, `skills/elevenlabs-audio/`, `skills/canvas-deployment/`
+**Epic 3 (Tool Specialist Agents)** → `agents/{tool}-specialist.md` (created via bmad-agent-builder), mastery skills that orchestrate Epic 1 API clients: `skills/gamma-api-mastery/`, `skills/elevenlabs-audio/`, `skills/canvas-deployment/`
 **Epic 4 (Workflow Coordination)** → `skills/production-coordination/`, `skills/run-reporting/`, `state/runtime/`, `_bmad/memory/*/patterns.md`
 
 **Cross-Cutting Concerns Mapping:**

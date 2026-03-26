@@ -15,7 +15,7 @@ workflow_artifacts:
   prd:
     status: "completed"
     file: "_bmad-output/planning-artifacts/prd.md"
-    functional_requirements: 70
+    functional_requirements: 80
     nonfunctional_requirements: 25
   architecture:
     status: "completed"
@@ -23,8 +23,8 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "37 stories across 10 epics (6 added for expanded tool universe), 100% FR coverage"
-    stories_count: 37
+    note: "35 stories across 10 epics (Stories 2.6 + 3.7 added for run mode management and source wrangling), 100% FR coverage"
+    stories_count: 35
     epics_count: 10
   ux_design:
     status: "not-applicable"
@@ -32,7 +32,7 @@ workflow_artifacts:
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "37 stories across 10 epics tracked"
+    note: "35 stories across 10 epics tracked (Stories 2.6, 3.7 added March 26 Party Mode)"
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -47,9 +47,13 @@ key_decisions:
   - "Parameter intelligence through specialty agent tool mastery + style guide YAML"
   - "Pre-flight check capability via Cursor hooks + pre-flight-check skill"
   - "ALL PROJECT DOCS RECAST to reflect BMad agent + Cursor plugin approach"
-  - "Tool universe: 15 tools audited, tiered by API/MCP/manual access"
+  - "Tool universe: 17 tools audited, tiered by API/MCP/manual/local-FS access (Notion + Box Drive added)"
   - "MCP env-loader wrapper (run_mcp_from_env.cjs) keeps secrets out of versioned configs"
   - "Active Cursor MCPs limited to verified servers (Gamma, Canvas LMS)"
   - "ElevenLabs and Qualtrics: API-primary, MCP-deferred due to Cursor compatibility"
 
-next_workflow_step: "Epic 1 closed with retrospective. Proceed to Epic 2 (Master Agent Architecture)"
+  - "Ad-hoc/default run mode switch: gate on state management layer, agents unaware of mode"
+  - "Source wrangler capability: Notion API + Box Drive local FS, start as skill, may evolve to agent"
+  - "Notion confirmed Tier 1 (official MCP on npm, free API on all plans including free educator)"
+
+next_workflow_step: "Run bmad-create-story for Story 2.1 (Master Orchestrator Agent). Discovery answers refined by Party Mode coaching (March 26)."

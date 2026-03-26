@@ -2,20 +2,22 @@
 
 ## Immediate Next Action
 
-**Begin Epic 2: Master Agent Architecture.** Epic 1 is formally closed (Party Mode team review). Start with **Story 2.1** (Master Orchestrator Agent Creation).
+**Create Story 2.1 file, then build the Master Orchestrator agent.**
 
-**IMPORTANT: Agent creation stories require a Party Mode coaching session BEFORE running bmad-agent-builder.** The pre-built discovery answers in epics.md are a starting framework. The Party Mode team (Winston, Mary, John, Sally, Quinn) should coach the user through refining each phase's answers — the agent definitions need to be sophisticated and specific, not off-the-cuff.
+Discovery answers for Story 2.1 have been refined by Party Mode coaching (March 26, 2026 session). The answers now include run mode management (ad-hoc/default switch), source wrangling coordination (Notion + Box Drive), and medical education domain sharpening.
 
 ```
 # In a FRESH Cursor chat session:
-1. Run Party Mode coaching session for Story 2.1 discovery answers
-   - Team reviews/refines orchestrator identity, capabilities, principles, memory design
-   - User co-develops answers with expert coaching, not solo
-2. Run bmad-create-story for Story 2.1
-3. Use bmad-agent-builder with the refined discovery answers
-4. Run bmad-dev-story to implement Story 2.1
-5. Party Mode team validates the completed agent
+1. Run bmad-create-story for Story 2.1 (Master Orchestrator Agent Creation)
+   - Discovery answers are ready in epics.md (refined by Party Mode team)
+2. In a FRESH session: Run bmad-agent-builder with the refined discovery answers
+   - Six-phase process produces agents/master-orchestrator.md
+3. In a FRESH session: Run bmad-dev-story to implement Story 2.1
+   - Memory sidecars, test invocation, validation
+4. In a FRESH session: Party Mode team validates the completed agent
 ```
+
+**Before starting**: Set up Notion internal integration (notion.so/my-integrations), add token to `.env` as `NOTION_API_KEY`. Notion API is free on all plans including free educator accounts.
 
 ## Current Status — EPIC 1 COMPLETE
 
@@ -31,9 +33,23 @@
 - **Story 1.10 (Canva MCP)**: DONE — Config validation, blocker documented
 - **Story 1.11 (Panopto API)**: DONE — PanoptoClient with OAuth2, folders, sessions
 - **Epic 1**: COMPLETE (11/11 stories done, 117 tests pass, 3 skipped)
-- **Tool Universe**: 15 tools audited and classified
+- **Tool Universe**: 17 tools audited and classified (added Notion + Box Drive)
 - **Live MCPs**: Gamma (2 tools), Canvas LMS (54 tools) verified in Cursor
 - **API-verified**: ElevenLabs (45 voices), Qualtrics (authenticated), Wondercraft, Kling
+- **PRD expanded**: 80 FRs (was 70). Added FR71-FR80 for Source Wrangling + Run Mode Management
+- **New stories**: Story 2.6 (Run Mode Management), Story 3.7 (Source Wrangler — Notion + Box)
+
+### Party Mode Decisions (March 26, 2026 — Pre-Story 2.1 Session)
+
+**Three new capabilities agreed upon:**
+
+1. **Notion + Box Drive Integration** — Notion added as Tier 1 tool (API + MCP). Box Drive added as local filesystem source. Both feed a "source wrangler" capability for pulling course development notes into production context. Notion also supports write-back (feedback, readiness assessments). Story 3.7 created.
+
+2. **Run Mode Management (Ad-Hoc / Default)** — Binary ad-hoc/default mode switch for the Master Orchestrator. Ad-hoc mode suppresses state tracking and routes assets to scratch/staging. QA always runs. Future evolution to per-level modality matrix (course/module/lesson/asset × default/write-only/read-only/ad-hoc) deferred until ad-hoc is reliable. Story 2.6 created.
+
+3. **Source Wrangler** — New architectural component. Start as a skill (SKILL.md), may evolve to dedicated agent. Pulls from Notion API + Box Drive local path. The orchestrator delegates to it for production context enrichment. Includes NotionClient in `scripts/api_clients/`.
+
+**Architecture decision**: Ad-hoc switch is a gate on the state management layer, not on agents. Agents behave identically in both modes. The infrastructure handles routing (assets → scratch, state writes → suppressed).
 
 ## What's Working Right Now
 

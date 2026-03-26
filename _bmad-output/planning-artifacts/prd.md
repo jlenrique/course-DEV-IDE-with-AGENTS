@@ -113,9 +113,11 @@ Target users: Individual educators and instructional designers seeking to scale 
 - Memory sidecar for persistent orchestrator learning (production patterns, user preferences)
 - Cursor IDE chat integration as primary conversational interface
 - **Conversational Workflow Management**: Natural language run initiation, human checkpoints, work product review
+- **Run Mode Management**: Binary ad-hoc/default mode switch with natural language control; ad-hoc routes assets to scratch/staging with state tracking suppressed; QA always runs; future evolution to per-level modality matrix
 - **Parameter Intelligence Coordination**: Style guide integration with conversational elicitation
 - **Pre-Flight Check Orchestration**: User-invokable system validation through conversation
 - **Agent Coordination Protocols**: Capability matching and delegation to specialty agents
+- **Source Wrangling Coordination**: Orchestrator awareness of external reference sources (Notion, Box Drive) for production context enrichment
 
 **Epic 3: Core Tool Specialist Agents & Mastery Skills** 
 - Create specialty agents via `bmad-agent-builder`: Gamma specialist, ElevenLabs specialist, Canvas specialist
@@ -124,6 +126,7 @@ Target users: Individual educators and instructional designers seeking to scale 
 - Complete parameter catalogs with context-specific optimization patterns
 - Tool capability parameter preferences stored in style guide YAML format
 - Content creator and quality reviewer agents for instructional design and validation
+- **Source Wrangler**: Dedicated agent or skill for pulling reference materials from Notion (via API) and Box Drive (local filesystem), with feedback-writing capability to Notion; design decision (agent vs. skill) to be resolved during story creation
 
 **Epic 4: Workflow Coordination & State Infrastructure**
 - Cross-run state persistence using BMad memory sidecars + SQLite coordination database
@@ -450,9 +453,9 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - FR35: Users can configure run presets (explore, draft, production, regulated) with parameter overrides
 
 ### Tool Integration & API Management
-- FR13: System can integrate with external tools through MCP and direct API connections
+- FR13: System can integrate with external tools through MCP, direct API connections, and local filesystem access
 - FR14: System can verify API connectivity before production runs begin
-- FR15: Agents can manipulate tools (Gamma, ElevenLabs, Canvas) through standardized interfaces
+- FR15: Agents can manipulate tools (Gamma, ElevenLabs, Canvas, Notion) through standardized interfaces
 - FR16: System can handle tool API failures with retry mechanisms and graceful degradation
 - FR17: System can manage API keys and authentication across multiple tool integrations
 
@@ -521,6 +524,20 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - FR68: System can scan current tool documentation to detect API changes, new capabilities, or status modifications
 - FR69: Pre-flight check can identify potential issues and provide resolution guidance before production workflow initiation
 - FR70: System can update tool capability knowledge and parameter catalogs based on documentation intelligence scanning
+
+### Source Wrangling & External Reference Integration
+- FR71: System shall integrate with Notion API to read course development notes by database or page reference
+- FR72: System shall support writing feedback (readiness assessments, design recommendations) back to Notion pages
+- FR73: System shall read source materials from a configured local Box Drive path
+- FR74: System shall provide a source wrangling capability that pulls reference materials from configured external sources (Notion, Box Drive, future sources) into the production context
+
+### Run Mode Management
+- FR75: Master Orchestrator shall support a binary ad-hoc/default mode switch, settable and reportable via natural language conversation
+- FR76: In ad-hoc mode, all state-tracking writes (SQLite, YAML config, memory sidecars) shall be suppressed or redirected to scratch state
+- FR77: In ad-hoc mode, all produced assets shall route to a designated scratch/staging area separate from production paths
+- FR78: Quality assurance actions shall execute regardless of the current run mode
+- FR79: Mode switch shall persist within a session until explicitly changed by the user
+- FR80: System shall support future evolution to a per-level (course/module/lesson/asset) modality matrix with additional modes (write-only, read-only)
 
 ## Non-Functional Requirements
 

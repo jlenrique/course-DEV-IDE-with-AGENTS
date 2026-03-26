@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 3-Solutioning (PRD + Architecture COMPLETE, Story Creation IN PROGRESS)  
-**Architecture Status:** 10 Epics, 70 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach  
-**Implementation Status:** Ready for story creation and sprint planning
+**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 IN PROGRESS)
+**Architecture Status:** 10 Epics, 80 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 starting (Master Orchestrator Agent).
 
 ## Purpose
 
@@ -75,14 +75,15 @@ resources/        # Exemplars, style bible, tool inventory
 
 ## Tool Universe (Researched March 26, 2026)
 
-15 tools classified by programmatic access. Full details in `resources/tool-inventory/tool-access-matrix.md`.
+17 tools classified by programmatic access. Full details in `resources/tool-inventory/tool-access-matrix.md`.
 
 | Tier | Tools | Access |
 |------|-------|--------|
-| **Tier 1: API + MCP** | Gamma, ElevenLabs, Canvas LMS, Qualtrics, Canva | Platform capability: REST API and published MCP server |
+| **Tier 1: API + MCP** | Gamma, ElevenLabs, Canvas LMS, Qualtrics, Canva, Notion | Platform capability: REST API and published MCP server |
 | **Tier 2: API Only** | Botpress, Wondercraft, Kling, Panopto | REST API, no MCP server |
 | **Tier 3: Limited API** | Descript, Midjourney, CapCut | Early access / third-party only |
 | **Tier 4: Manual Only** | Vyond, CourseArc, Articulate (Storyline/Rise) | No usable programmatic access for this repo setup |
+| **Local FS** | Box Drive | Local filesystem via desktop sync client, no API needed |
 
 - **Live Cursor-verified MCP servers** in `.mcp.json` / `.cursor/mcp.json`: Gamma, Canvas LMS
 - **API-verified but MCP-deferred platforms**: ElevenLabs, Qualtrics
@@ -110,6 +111,10 @@ resources/        # Exemplars, style bible, tool inventory
 - [x] **STORY 1.4**: Pre-flight check skill — SKILL.md + Python runner + doc scanner + 3 reference docs
 - [x] **STORIES 1.5-1.11**: Testing framework + 5 full-featured API clients (Gamma, ElevenLabs, Canvas, Qualtrics, Panopto) + Canva MCP config
 - [x] **LIVE API VALIDATION**: 117 tests pass against real services (Gamma, ElevenLabs, Canvas, Qualtrics), 3 skipped (Panopto — no creds)
+- [x] **FR EXPANSION (Party Mode)**: 10 new FRs (FR71-FR80) added for Source Wrangling + Run Mode Management
+- [x] **TOOLS EXPANSION**: Notion (API + MCP, source wrangling) and Box Drive (local FS) added to tool universe (17 tools total)
+- [x] **SOURCE WRANGLER**: New architectural component for pulling reference materials from Notion/Box into production context; agent vs. skill design decision deferred to story creation
+- [x] **AD-HOC MODE**: Binary ad-hoc/default mode switch for Master Orchestrator; ad-hoc routes assets to scratch/staging, suppresses state tracking; QA always runs; future per-level modality matrix deferred
 - [ ] Epic 2: Master Agent Architecture & Development
 
 ## Key Files

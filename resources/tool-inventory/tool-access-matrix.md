@@ -12,6 +12,8 @@
 | **Canvas LMS** | LMS Platform | YES | YES (community) | — | REST API v1. MCP via `canvas-mcp-server` (54+ tools) |
 | **Qualtrics** | Surveys/Assessments | YES | YES (community) | — | REST API v3. API verified in this repo; MCP exists on GitHub, but is not npm-published and is not active here. |
 | **Canva** | Design/Graphics | YES | YES (official) | — | Connect API. Official remote MCP exists, but Cursor OAuth currently fails with invalid redirect URL in this setup. |
+| **Notion** | Course Dev Notes | YES | YES (community) | — | REST API. Internal integration token. Used for source wrangling (read notes, write feedback). |
+| **Box Drive** | Source Materials | — | — | LOCAL FS | Local Box Drive sync client. Agents read/write via configured folder path. No API key needed. |
 | **Botpress** | Chatbot | YES | — | — | REST API + Bot-as-Code SDK. PAT auth. |
 | **Wondercraft** | Audio Podcasting | YES | — | — | REST API. Paid plans. 5 concurrent jobs. |
 | **Vyond** | Video Animation | — | — | YES | API requires Enterprise plan. Zapier/Slack integrations are notification-only, not editing. |
@@ -80,6 +82,24 @@ These tools have both REST APIs and published MCP servers, enabling the richest 
 - **MCP Tools:** `create_design`, `export_design`, `get_design`, `list_designs`
 - **Note:** Some features require paid Canva plan
 - **Cursor Status in This Repo:** Connect API remains available, but the remote MCP is not active because Cursor's OAuth redirect URL is rejected by Canva in this setup.
+
+#### Notion
+- **API:** REST API at `api.notion.com/v1`
+- **Auth:** Internal integration token (`Authorization: Bearer {token}`)
+- **Setup:** Create integration at notion.so/my-integrations, share target pages/databases with integration. Free for all plans including free educator accounts.
+- **Key Endpoints:** `GET /v1/pages/{id}`, `GET /v1/databases/{id}/query`, `PATCH /v1/pages/{id}`, `POST /v1/blocks/{id}/children`
+- **MCP Server:** `@notionhq/notion-mcp-server` (official, by Notion, v2.2.1, 22 tools)
+- **MCP Install:** `npx -y @notionhq/notion-mcp-server` — uses `NOTION_TOKEN` env var
+- **Cursor Status in This Repo:** Confirmed Tier 1. Official MCP on npm, API free on all plans. Needs `run_mcp_from_env.cjs` mapping for Notion server.
+- **Use Case:** Source wrangling — pull course development notes into production context; write back readiness assessments and design feedback.
+- **Rate Limit:** 3 requests/second per integration
+
+#### Box Drive (Local Filesystem)
+- **Access:** Local folder path via Box Drive desktop sync client
+- **Auth:** None required (filesystem access)
+- **Configuration:** `BOX_DRIVE_PATH` in `.env` points to synced local folder
+- **Use Case:** Source wrangling -- read course materials, syllabi, design notes, exemplars from locally synced Box cloud storage
+- **Agent Strategy:** Agents read from configured path like any local directory. No API client needed. Source wrangler skill handles path resolution and file discovery.
 
 ### Tier 2 — API Access Only (No Published MCP)
 
@@ -208,6 +228,10 @@ QUALTRICS_USERNAME=
 
 # Canva — Design/Graphics (OAuth — handled by MCP server)
 # No API key needed; Canva MCP uses OAuth via browser
+
+# Notion — Course Development Notes
+NOTION_API_KEY=
+NOTION_ROOT_PAGE_ID=
 ```
 
 ### Required for Tier 2 Tools (API Only)
@@ -241,6 +265,13 @@ MIDJOURNEY_API_KEY=
 
 # CapCut — Video Editing (official API status unclear)
 CAPCUT_API_KEY=
+```
+
+### Local Filesystem Sources (No API Keys)
+
+```bash
+# Box Drive — Local sync path (no API key needed)
+BOX_DRIVE_PATH=C:\Users\YourUser\Box
 ```
 
 ### No API Keys Needed (Tier 4 — Manual Only)
@@ -300,4 +331,6 @@ Future Story 1.4 should use this repo's current validation hierarchy:
 | Wondercraft | `scripts/heartbeat_check.mjs` |
 | Kling | config presence + future JWT client check |
 | Canva | report OAuth redirect blocker in current Cursor setup |
+| Notion | API heartbeat (list accessible pages) |
+| Box Drive | verify `BOX_DRIVE_PATH` exists and is readable |
 | Vyond / CourseArc / Articulate | report manual workflow |

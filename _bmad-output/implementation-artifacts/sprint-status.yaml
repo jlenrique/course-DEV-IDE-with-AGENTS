@@ -64,6 +64,7 @@ development_status:
   2-3-agent-coordination-protocols: backlog
   2-4-parameter-intelligence: backlog
   2-5-pre-flight-check-orchestration: backlog
+  2-6-run-mode-management: backlog
   epic-2-retrospective: optional
 
   # === EPIC 3: Core Tool Specialist Agents & Mastery Skills ===
@@ -74,6 +75,7 @@ development_status:
   3-4-content-creator-quality-reviewer-agents: backlog
   3-5-qualtrics-specialist-agent: backlog
   3-6-canva-specialist-agent: backlog
+  3-7-source-wrangler-notion-box: backlog
   epic-3-retrospective: optional
 
   # === EPIC 4: Workflow Coordination & State Infrastructure ===

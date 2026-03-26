@@ -19,6 +19,8 @@ This document provides the complete epic and story breakdown for course-DEV-IDE-
 
 ### Functional Requirements
 
+**Note:** FR inventory expanded from 70 to 80 FRs (March 26, 2026 Party Mode session). Added Source Wrangling (FR71-74) and Run Mode Management (FR75-80).
+
 **Agent Orchestration & Coordination (6 FRs):**
 - FR1: Master orchestrator can coordinate multiple specialist agents through production workflows
 - FR2: Agents can communicate with each other through event-driven messaging protocols  
@@ -110,6 +112,20 @@ This document provides the complete epic and story breakdown for course-DEV-IDE-
 - FR68: System can scan current tool documentation to detect API changes, new capabilities, or status modifications
 - FR69: Pre-flight check can identify potential issues and provide resolution guidance before production workflow initiation
 - FR70: System can update tool capability knowledge and parameter catalogs based on documentation intelligence scanning
+
+**Source Wrangling & External Reference Integration (4 FRs):**
+- FR71: System shall integrate with Notion API to read course development notes by database or page reference
+- FR72: System shall support writing feedback (readiness assessments, design recommendations) back to Notion pages
+- FR73: System shall read source materials from a configured local Box Drive path
+- FR74: System shall provide a source wrangling capability that pulls reference materials from configured external sources (Notion, Box Drive, future sources) into the production context
+
+**Run Mode Management (6 FRs):**
+- FR75: Master Orchestrator shall support a binary ad-hoc/default mode switch, settable and reportable via natural language conversation
+- FR76: In ad-hoc mode, all state-tracking writes (SQLite, YAML config, memory sidecars) shall be suppressed or redirected to scratch state
+- FR77: In ad-hoc mode, all produced assets shall route to a designated scratch/staging area separate from production paths
+- FR78: Quality assurance actions shall execute regardless of the current run mode
+- FR79: Mode switch shall persist within a session until explicitly changed by the user
+- FR80: System shall support future evolution to a per-level (course/module/lesson/asset) modality matrix with additional modes (write-only, read-only)
 
 ### Non-Functional Requirements
 
@@ -224,12 +240,14 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 | FR53-60 | Epic 2 | Conversational orchestrator interface |
 | FR61-65 | Epic 3 | Parameter intelligence & tool mastery |
 | FR66-70 | Epic 1 | Pre-flight check & tool validation |
+| FR71-74 | Epic 3 | Source wrangling & external reference integration (Notion API, Box Drive, source wrangler agent/skill) |
+| FR75-80 | Epic 2 | Run mode management (ad-hoc/default switch, state suppression, scratch routing, QA always-on) |
 
 ## Epic List
 
 1. **Epic 1: Repository Environment & Agent Infrastructure** - Cursor plugin foundation, Python infrastructure, state management, pre-flight checks, testing, **API/MCP integration for Gamma, ElevenLabs, Canvas**
-2. **Epic 2: Master Agent Architecture & Development** - Conversational orchestrator creation via bmad-agent-builder, coordination protocols, parameter intelligence
-3. **Epic 3: Core Tool Integrations** - Specialty agent creation (Gamma, ElevenLabs, Canvas) via bmad-agent-builder, tool mastery skills
+2. **Epic 2: Master Agent Architecture & Development** - Conversational orchestrator creation via bmad-agent-builder, coordination protocols, parameter intelligence, **run mode management (ad-hoc/default switch)**
+3. **Epic 3: Core Tool Integrations** - Specialty agent creation (Gamma, ElevenLabs, Canvas) via bmad-agent-builder, tool mastery skills, **source wrangler (Notion + Box Drive)**
 4. **Epic 4: Workflow Coordination & State Infrastructure** - Production run management, quality gates, run reporting, learning loop closure
 5. **Epic 5: Unified Content Production Engine** - Additional tool agents, multi-modal assembly, style orchestration
 6. **Epic 6: LMS Platform Integration & Delivery** - CourseArc agent, enhanced Canvas, SCORM packaging
@@ -483,7 +501,7 @@ So that agents and skills can manage video content on the institutional Panopto 
 
 **Goal**: Users can converse with the master orchestrator agent to initiate, direct, and manage production runs through natural language interface with intelligent tool parameter management and pre-flight orchestration.
 
-**FRs covered:** FR1, FR2, FR3, FR4, FR5, FR6, FR53, FR54, FR55, FR56, FR57, FR58, FR59, FR60
+**FRs covered:** FR1, FR2, FR3, FR4, FR5, FR6, FR53, FR54, FR55, FR56, FR57, FR58, FR59, FR60, FR75, FR76, FR77, FR78, FR79, FR80
 
 ### Story 2.1: Master Orchestrator Agent Creation
 
@@ -491,23 +509,47 @@ As a user,
 I want a master orchestrator agent created via bmad-agent-builder,
 So that I have a conversational "general contractor" for all production workflow interactions.
 
-**bmad-agent-builder Discovery Answers** (Party Mode team pre-built responses for six-phase process):
+**bmad-agent-builder Discovery Answers** (Party Mode team refined responses — updated March 26, 2026):
 
 **Phase 1 - Intent Discovery:**
-Build a master orchestrator agent that serves as the single conversational point of contact for course content production. Users talk only to this agent. It understands production requests, plans multi-agent workflows, delegates to specialist agents, manages human checkpoints, and presents work products for review. It is the "general contractor" of a collaborative intelligence system for creating online course content.
+Build a master orchestrator agent that serves as the single conversational point of contact for health sciences / medical education course content production. Users talk only to this agent. It understands production requests, plans multi-agent workflows, delegates to specialist agents, manages human checkpoints, and presents work products for review. It is the "general contractor" of a collaborative intelligence system — the ringmaster of a three-ring circus of agents, skills, and tools — for creating online course content designed for physician and health professional audiences. The orchestrator operates in two modes: default (full-throttle production with complete state tracking) and ad-hoc (experimental sandbox with assets routed to scratch/staging and state tracking suppressed). Quality assurance runs in both modes.
 
 **Phase 2 - Capabilities Strategy:**
-Both internal capabilities and external skills. Internal: conversation management, production planning, intent parsing, progress reporting, human checkpoint coordination. External skills: production-coordination, pre-flight-check, run-reporting, parameter intelligence via style guide reading. External agents: delegates to gamma-specialist, elevenlabs-specialist, canvas-specialist, content-creator, quality-reviewer, assembly-coordinator.
+Both internal capabilities and external skills.
+
+*Internal capabilities:*
+- Conversation management and intent parsing
+- Production planning and workflow orchestration
+- Progress reporting and status summaries
+- Human checkpoint coordination (review gates, approval requests)
+- **Run mode management**: ad-hoc/default switch enforcement, mode state reporting, scratch routing control
+- Mode-aware greeting (report current mode, last session context, offer to continue or start fresh)
+
+*External skills (delegated to):*
+- `production-coordination` — workflow stage management
+- `pre-flight-check` — MCP/API connectivity verification and tool documentation scanning
+- `run-reporting` — production run analysis and effectiveness reports
+- `parameter-intelligence` — style guide reading/writing, parameter elicitation
+- **`source-wrangling`** — pull course development notes from Notion (API), read reference materials from Box Drive (local filesystem), write feedback to Notion pages
+
+*External agents (delegates to by capability matching):*
+- `gamma-specialist` — slide/presentation generation
+- `elevenlabs-specialist` — voice synthesis and audio production
+- `canvas-specialist` — LMS course structure, modules, assignments, quizzes
+- `content-creator` — instructional design and content drafting
+- `quality-reviewer` — quality assurance and standards validation
+- `assembly-coordinator` — multi-modal content assembly
+- Future: `qualtrics-specialist`, `canva-specialist`, `source-wrangler` (if elevated from skill to agent)
 
 **Phase 3 - Requirements:**
-- **Identity**: "Producer" - a trusted, experienced creative production general contractor
-- **Communication Style**: Clear, professional, proactive. Asks smart questions. Presents options with recommendations. Reports progress naturally. Never overwhelms with technical detail. Speaks like a seasoned creative director who respects the client's vision.
-- **Principles**: (1) User's creative vision drives all decisions. (2) Hide system complexity behind conversational ease. (3) Quality gates are non-negotiable but presented gracefully. (4) Learn from every production run. (5) Proactively surface decisions that need human judgment.
-- **Activation**: Interactive mode primary (Cursor IDE chat). Load config, load memory sidecar, greet user, offer to continue previous work or start new run.
-- **Memory**: Full sidecar with index.md (active production context, user preferences), patterns.md (learned production patterns, successful workflows, parameter preferences), chronology.md (production run history), access-boundaries.md (full read access to project, write to state/ and _bmad/memory/)
-- **Access Boundaries**: Read: entire project. Write: `state/`, `_bmad/memory/`, `agents/`, `skills/`. Deny: `.env`, `.cursor-plugin/plugin.json`
+- **Identity**: "Producer" — a trusted, experienced creative production general contractor for health sciences education. Understands that content serves physicians, nurses, and health professionals. Knows that instructional design choices (Bloom's taxonomy, clinical case integration, assessment alignment) are not optional flourishes but professional requirements. Treats the user as the creative director and domain expert; the Producer handles operational complexity.
+- **Communication Style**: Clear, professional, proactive. Asks smart questions. Presents options with recommendations. Reports progress naturally. Never overwhelms with technical detail. Speaks like a seasoned creative director who respects the client's vision and understands the medical education domain. On mode switches, confirms clearly: "Switching to ad-hoc mode. Assets go to staging scratch. State tracking paused. QA still active." On greeting, reports: current mode, last session context, outstanding work.
+- **Principles**: (1) User's creative vision drives all decisions. (2) Hide system complexity behind conversational ease. (3) Quality gates are non-negotiable but presented gracefully — in any mode. (4) Learn from every production run (in default mode). (5) Proactively surface decisions that need human judgment. (6) Respect the run mode switch as a hard enforcement boundary — never leak state writes in ad-hoc mode. (7) Proactively offer to pull source materials: "Want me to check your Notion notes for this module?"
+- **Activation**: Interactive mode primary (Cursor IDE chat). Load config, load memory sidecar, check current run mode, greet user with mode status and last session context, offer to continue previous work or start new run. If in ad-hoc mode, remind user on activation.
+- **Memory**: Full sidecar with index.md (active production context, user preferences, current run mode), patterns.md (learned production patterns, successful workflows, parameter preferences — only updated in default mode), chronology.md (production run history — only updated in default mode), access-boundaries.md (scope control per below)
+- **Access Boundaries**: Read: entire project, `BOX_DRIVE_PATH`. Write: `state/`, `_bmad/memory/`, `agents/`, `skills/`, `course-content/staging/ad-hoc/` (scratch area). Deny: `.env`, `.cursor-plugin/plugin.json`. In ad-hoc mode: write access to `course-content/staging/ad-hoc/` only; all other state writes suppressed.
 
-**Phase 4-6**: Draft, build, and validate the agent structure following these specifications.
+**Phase 4-6**: Draft, build, and validate the agent structure following these specifications. The coaching session should refine domain-specific language, validate the run mode enforcement patterns, and ensure the orchestrator's routing table is complete for all known capabilities.
 
 **Acceptance Criteria:**
 
@@ -587,13 +629,37 @@ So that I can confirm all tools are operational before starting a production run
 **And** the orchestrator recommends whether to proceed, wait, or work around issues
 **And** pre-flight results are logged for production run context
 
+### Story 2.6: Run Mode Management (Ad-Hoc / Default Switch)
+
+As a user,
+I want to switch the orchestrator between ad-hoc and default (full-throttle) mode via natural conversation,
+So that I can experiment freely without impacting production state, or work in full production mode with complete state tracking.
+
+**FRs covered:** FR75, FR76, FR77, FR78, FR79, FR80
+
+**Acceptance Criteria:**
+
+**Given** the user says "Let's work ad hoc until further notice" or equivalent natural language
+**When** the orchestrator processes the mode switch request
+**Then** the orchestrator sets a hard session-level switch to ad-hoc mode and confirms: "Switching to ad-hoc mode. Assets will go to staging scratch area. State tracking paused. QA still active. Say 'full throttle' or 'default mode' to switch back."
+**And** all produced assets route to `course-content/staging/ad-hoc/` (or timestamped scratch subdirectory)
+**And** all state-tracking writes (SQLite production run state, YAML config updates, memory sidecar writes) are suppressed
+**And** quality assurance actions continue to execute regardless of mode, with QA results stored alongside scratch assets
+**And** the mode switch persists within the session until explicitly changed by the user
+**And** the orchestrator can accurately report current mode state when asked: "What mode are we in?"
+**And** when the user says "Let's work full throttle" or "default mode," the orchestrator switches back and confirms
+**And** assets produced during ad-hoc mode remain in the scratch/staging area for manual promotion by the user
+**And** a promotion checklist fires QA gates when ad-hoc assets are promoted to production paths (future story)
+
+**Design Note:** This story implements Phase 1 of the modality matrix (binary switch). Future evolution (FR80) will add per-level granularity (course/module/lesson/asset) and additional modes (write-only, read-only). The switch is implemented as a gate on the state management layer -- agents behave identically in both modes; the infrastructure handles routing.
+
 ---
 
 ## Epic 3: Core Tool Integrations
 
 **Goal**: Users can leverage Gamma, ElevenLabs, and Canvas through intelligent specialty agents with complete tool mastery, parameter intelligence, and skills-based integration.
 
-**FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR61, FR62, FR63, FR64, FR65
+**FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR61, FR62, FR63, FR64, FR65, FR71, FR72, FR73, FR74
 
 ### Story 3.1: Gamma Specialist Agent & Mastery Skill
 
@@ -799,6 +865,28 @@ So that course graphics, infographics, and visual assets are created with profes
 **And** the agent reads style guide brand preferences and applies them to all design creation
 **And** `_bmad/memory/canva-specialist-sidecar/` is initialized for capturing design pattern effectiveness
 **And** an end-to-end test demonstrates: agent invoked → reads style guide → uses Canva MCP → returns design
+
+### Story 3.7: Source Wrangler — Notion & Box Drive Integration
+
+As a user,
+I want a source wrangling capability that pulls course development notes from Notion and reference materials from my local Box Drive into the production context,
+So that agents have access to my existing course planning materials without manual copy-paste.
+
+**FRs covered:** FR71, FR72, FR73, FR74
+
+**Design Decision (to be resolved during story creation):** Whether the source wrangler is implemented as a dedicated agent (via `bmad-agent-builder`) or as a skill (SKILL.md + scripts/). Factors: an agent brings its own persona, memory sidecar, and judgment about what to pull; a skill is lighter-weight and can be invoked by the orchestrator or any specialist. The Party Mode team recommends starting as a **skill** and evolving to a dedicated agent if the complexity warrants it.
+
+**Acceptance Criteria:**
+
+**Given** `NOTION_API_KEY` and `NOTION_ROOT_PAGE_ID` are configured in `.env`
+**When** the source wrangler is invoked (by orchestrator or directly) with a course/module reference
+**Then** the wrangler queries Notion API for matching course development notes and returns structured content
+**And** a `NotionClient` exists in `scripts/api_clients/` following the `BaseAPIClient` pattern with retry logic
+**And** the wrangler can read files from the configured `BOX_DRIVE_PATH` and surface relevant materials by course/module
+**And** retrieved materials are made available to the production context for other agents to reference
+**And** the wrangler can write feedback (readiness assessments, design tips) back to Notion pages
+**And** pre-flight checks verify Notion API connectivity and Box Drive path accessibility
+**And** a test demonstrates: wrangler invoked → pulls from Notion → reads from Box → materials available to orchestrator
 
 ---
 

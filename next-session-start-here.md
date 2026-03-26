@@ -2,16 +2,15 @@
 
 ## Immediate Next Action
 
-**Run Sprint Planning** using `bmad-sprint-planning` to organize 28 stories into development sprints.
+**Create Story 1.1** using `bmad-create-story` (sprint planning complete, sprint-status.yaml generated).
 
 ```
-# Priority sequence:
-1. Run sprint planning (bmad-sprint-planning)
-2. Epic 1 Stories 1.1-1.3: Cursor plugin + Python infra + state management
-3. Epic 1 Stories 1.6-1.8: Build & test Gamma, ElevenLabs, Canvas API clients
-4. Epic 1 Stories 1.4-1.5: Pre-flight checks + testing framework
-5. Epic 2: Create master orchestrator agent via bmad-agent-builder
-6. Epic 3: Create tool specialist agents (using Epic 1 API clients)
+# In a FRESH Cursor chat session:
+1. Run bmad-create-story (auto-discovers Story 1.1 from sprint-status.yaml)
+2. Review generated story file
+3. Run bmad-dev-story to implement Story 1.1
+4. Run bmad-code-review when complete
+5. Repeat for remaining Epic 1 stories
 ```
 
 ## Current Status - SOLUTIONING PHASE COMPLETE
@@ -55,4 +54,4 @@
 - `bmad-agent-builder` - Create custom agents (Epic 2-3)
 
 ## Branch
-- **master** branch
+- **epic1-foundation-infrastructure** (development branch, created from master)

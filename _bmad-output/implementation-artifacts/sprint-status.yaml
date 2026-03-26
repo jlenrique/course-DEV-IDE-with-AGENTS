@@ -1,58 +1,114 @@
-# Sprint Status
-# Last Updated: 2026-03-25
-# Phase: Pre-Sprint (Solutioning)
+# generated: 2026-03-25
+# last_updated: 2026-03-25
+# project: course-DEV-IDE-with-AGENTS
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
 
-sprint_status: "pre-sprint"
-note: "Epic/story creation in progress. Sprint planning not yet started."
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-epics:
-  epic_1:
-    title: "Repository Environment & Agent Infrastructure"
-    status: "backlog"
-    priority: 1
-    stories: "pending-creation"
-  epic_2:
-    title: "Master Agent Architecture & Development"
-    status: "backlog"
-    priority: 2
-    stories: "pending-creation"
-  epic_3:
-    title: "Core Tool Integrations"
-    status: "backlog"
-    priority: 3
-    stories: "pending-creation"
-  epic_4:
-    title: "Workflow Coordination & State Infrastructure"
-    status: "backlog"
-    priority: 4
-    stories: "pending-creation"
-  epic_5:
-    title: "Unified Content Production Engine"
-    status: "backlog"
-    priority: 5
-    stories: "pending-creation"
-  epic_6:
-    title: "LMS Platform Integration & Delivery"
-    status: "backlog"
-    priority: 6
-    stories: "pending-creation"
-  epic_7:
-    title: "Multi-Platform Intelligence Matrix"
-    status: "backlog"
-    priority: 7
-    stories: "pending-creation"
-  epic_8:
-    title: "Tool Review & Optimization Intelligence"
-    status: "backlog"
-    priority: 8
-    stories: "pending-creation"
-  epic_9:
-    title: "Living Architecture Documentation System"
-    status: "backlog"
-    priority: 9
-    stories: "pending-creation"
-  epic_10:
-    title: "Strategic Production Orchestration"
-    status: "backlog"
-    priority: 10
-    stories: "pending-creation"
+generated: 2026-03-25
+last_updated: 2026-03-25
+project: course-DEV-IDE-with-AGENTS
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # === EPIC 1: Repository Environment & Agent Infrastructure ===
+  epic-1: backlog
+  1-1-cursor-plugin-foundation: backlog
+  1-2-python-infrastructure: backlog
+  1-3-state-management-infrastructure: backlog
+  1-4-pre-flight-check-skill: backlog
+  1-5-testing-framework: backlog
+  1-6-gamma-api-integration: backlog
+  1-7-elevenlabs-api-integration: backlog
+  1-8-canvas-api-integration: backlog
+  epic-1-retrospective: optional
+
+  # === EPIC 2: Master Agent Architecture & Development ===
+  epic-2: backlog
+  2-1-master-orchestrator-agent-creation: backlog
+  2-2-conversational-workflow-management: backlog
+  2-3-agent-coordination-protocols: backlog
+  2-4-parameter-intelligence: backlog
+  2-5-pre-flight-check-orchestration: backlog
+  epic-2-retrospective: optional
+
+  # === EPIC 3: Core Tool Specialist Agents & Mastery Skills ===
+  epic-3: backlog
+  3-1-gamma-specialist-agent: backlog
+  3-2-elevenlabs-specialist-agent: backlog
+  3-3-canvas-specialist-agent: backlog
+  3-4-content-creator-quality-reviewer-agents: backlog
+  epic-3-retrospective: optional
+
+  # === EPIC 4: Workflow Coordination & State Infrastructure ===
+  epic-4: backlog
+  4-1-production-run-lifecycle: backlog
+  4-2-quality-gate-coordination: backlog
+  4-3-content-entity-management: backlog
+  4-4-production-intelligence-reporting: backlog
+  4-5-export-platform-deployment: backlog
+  epic-4-retrospective: optional
+
+  # === EPIC 5: Unified Content Production Engine ===
+  epic-5: backlog
+  5-1-expanded-tool-specialist-agents: backlog
+  5-2-multi-modal-assembly-coordination: backlog
+  5-3-style-orchestration-brand-consistency: backlog
+  epic-5-retrospective: optional
+
+  # === EPIC 6: LMS Platform Integration & Delivery ===
+  epic-6: backlog
+  6-1-coursearc-specialist-agent: backlog
+  6-2-enhanced-canvas-integration: backlog
+  epic-6-retrospective: optional
+
+  # === EPIC 7: Multi-Platform Intelligence Matrix ===
+  epic-7: backlog
+  7-1-platform-allocation-agent: backlog
+  epic-7-retrospective: optional
+
+  # === EPIC 8: Tool Review & Optimization Intelligence ===
+  epic-8: backlog
+  8-1-tool-review-agent: backlog
+  epic-8-retrospective: optional
+
+  # === EPIC 9: Living Architecture Documentation System ===
+  epic-9: backlog
+  9-1-self-improving-documentation-agent: backlog
+  epic-9-retrospective: optional
+
+  # === EPIC 10: Strategic Production Orchestration ===
+  epic-10: backlog
+  10-1-predictive-workflow-optimization: backlog
+  epic-10-retrospective: optional

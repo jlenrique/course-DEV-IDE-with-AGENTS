@@ -4,11 +4,17 @@
 
 **Begin Epic 2: Master Agent Architecture.** Epic 1 is formally closed (Party Mode team review). Start with **Story 2.1** (Master Orchestrator Agent Creation).
 
+**IMPORTANT: Agent creation stories require a Party Mode coaching session BEFORE running bmad-agent-builder.** The pre-built discovery answers in epics.md are a starting framework. The Party Mode team (Winston, Mary, John, Sally, Quinn) should coach the user through refining each phase's answers — the agent definitions need to be sophisticated and specific, not off-the-cuff.
+
 ```
 # In a FRESH Cursor chat session:
-1. Run bmad-create-story for Story 2.1 (Master Orchestrator Agent)
-2. Use bmad-agent-builder with pre-built discovery answers from epics.md
-3. Run bmad-dev-story to implement Story 2.1
+1. Run Party Mode coaching session for Story 2.1 discovery answers
+   - Team reviews/refines orchestrator identity, capabilities, principles, memory design
+   - User co-develops answers with expert coaching, not solo
+2. Run bmad-create-story for Story 2.1
+3. Use bmad-agent-builder with the refined discovery answers
+4. Run bmad-dev-story to implement Story 2.1
+5. Party Mode team validates the completed agent
 ```
 
 ## Current Status — EPIC 1 COMPLETE
@@ -70,9 +76,15 @@
 - `.env` is gitignored; `.env.example` is the safe template
 - `.cursor/mcp.json` uses `scripts/run_mcp_from_env.cjs` to load keys at runtime (no literal secrets in config)
 
+### Agent Creation Process (Epic 2+ pattern)
+For every story that creates a custom agent via `bmad-agent-builder`:
+1. **Party Mode coaching** — team refines discovery answers with the user before creation
+2. **bmad-agent-builder** — six-phase discovery using the refined answers
+3. **Party Mode validation** — team reviews the completed agent for accuracy and completeness
+The user has flagged that agent definitions need to be very sophisticated and specific — they need collaborative coaching, not solo off-the-cuff answers.
+
 ### Gotchas
 - PowerShell doesn't support `&&` chaining — use `;` instead
 - `.venv` is set up with Python 3.13 — activate with `.venv\Scripts\activate`
 - Run tests with `.venv\Scripts\python -m pytest tests/ -v`
 - Cursor MCP `env` field does NOT resolve `${VAR}` from .env files — that's why the wrapper script exists
-- Epic 2 stories use `bmad-agent-builder` — discovery answers are pre-built in epics.md for each agent

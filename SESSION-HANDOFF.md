@@ -41,6 +41,7 @@ Epic 2 is about creating the conversational "general contractor" agent that user
 - **BaseAPIClient DRY pattern pays off**: 5 tool clients built in minutes because auth, retry, pagination, and error handling are centralized.
 - **Dashed directory names + Python**: `skills/pre-flight-check/` required a `conftest.py` with `importlib` to make imports work. Future skills should consider underscore naming.
 - **PowerShell quirks**: Can't use `&&`, `if not exist`, or `cmd.exe` patterns. Use PowerShell-native syntax or semicolons.
+- **Agent creation needs coaching**: User flagged that bmad-agent-builder discovery answers need to be co-developed with Party Mode team coaching, not answered solo. The pre-built answers in epics.md are starting frameworks. Every agent creation story in Epic 2+ should begin with a Party Mode coaching session to refine identity, capabilities, principles, memory design, and access boundaries before running the builder.
 
 ## Validation Summary
 

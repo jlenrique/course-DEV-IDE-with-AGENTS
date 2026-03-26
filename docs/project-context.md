@@ -73,6 +73,24 @@ docs/             # Architecture + agent guides + troubleshooting
 resources/        # Exemplars, style bible, tool inventory
 ```
 
+## Tool Universe (Researched March 26, 2026)
+
+15 tools classified by programmatic access. Full details in `resources/tool-inventory/tool-access-matrix.md`.
+
+| Tier | Tools | Access |
+|------|-------|--------|
+| **Tier 1: API + MCP** | Gamma, ElevenLabs, Canvas LMS, Qualtrics, Canva | Platform capability: REST API and published MCP server |
+| **Tier 2: API Only** | Botpress, Wondercraft, Kling, Panopto | REST API, no MCP server |
+| **Tier 3: Limited API** | Descript, Midjourney, CapCut | Early access / third-party only |
+| **Tier 4: Manual Only** | Vyond, CourseArc, Articulate (Storyline/Rise) | No usable programmatic access for this repo setup |
+
+- **Live Cursor-verified MCP servers** in `.mcp.json` / `.cursor/mcp.json`: Gamma, Canvas LMS
+- **API-verified but MCP-deferred platforms**: ElevenLabs, Qualtrics
+- **Documented but currently deferred MCPs**: ElevenLabs (Cursor tool-name filtering), Canva (OAuth redirect rejection), Qualtrics (GitHub-only build step), Fetch (no usable surfaced tools in this setup), Brave Search (not enabled by default)
+- **User-level MCPs** already available: Playwright (browser automation), Ref (doc search/reading)
+- **API keys templated** in `.env.example`: All Tier 1-3 tools with documentation links
+- **Manual tools** require agent-guided workflows where agents provide specs and users execute in tool UI
+
 ## Current State
 
 - [x] Repository scaffolded with directory structure, .env.example, content standards  
@@ -84,6 +102,11 @@ resources/        # Exemplars, style bible, tool inventory
 - [x] **Strategic Decisions**: Party Mode team validated and recast for agent .md patterns
 - [x] **STORY CREATION COMPLETED**: 31 stories across 10 epics, 100% FR coverage validated
 - [x] **API-FIRST SEQUENCING**: API/MCP clients (Gamma, ElevenLabs, Canvas) built in Epic 1 before agent creation
+- [x] **TOOL UNIVERSE AUDIT**: 15 tools researched and classified (Tier 1-4), MCP servers configured, .env.example expanded
+- [x] **STORY 1.1 IMPLEMENTED**: Cursor plugin foundation — plugin.json, .mcp.json, hooks, directory structure
+- [x] **LIVE MCP VALIDATION**: Gamma and Canvas LMS verified in Cursor; deferred MCPs documented with current blockers
+- [x] **API SMOKE VALIDATION**: ElevenLabs and Qualtrics verified via direct smoke scripts despite MCP limitations
+- [x] **PRE-FLIGHT INPUTS PREPARED**: baseline heartbeat and targeted smoke scripts are now available for future Story 1.4 implementation
 - [ ] Sprint planning and development execution
 
 ## Key Files
@@ -93,6 +116,10 @@ resources/        # Exemplars, style bible, tool inventory
 - `_bmad-output/planning-artifacts/epics.md` - Epic breakdown with requirements (recast)
 - `_bmad-output/strategic-decisions-collaborative-intelligence.md` - Strategic decisions
 - `_bmad-output/brainstorming/brainstorming-session-20260325-150802.md` - Brainstorming session
+- `resources/tool-inventory/tool-access-matrix.md` - **Tool universe access matrix (15 tools)**
+- `scripts/heartbeat_check.mjs` - Baseline read-only API heartbeat across configured tools
+- `scripts/smoke_elevenlabs.mjs` - Focused ElevenLabs API smoke check
+- `scripts/smoke_qualtrics.mjs` - Focused Qualtrics API smoke check
 - `docs/agent-environment.md` - Agent/MCP guidance  
 - `docs/workflow/human-in-the-loop.md` - HIL procedure
 - `.cursor/rules/course-content-agents.mdc` - Cursor agent rules

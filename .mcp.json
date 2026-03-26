@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "gamma": {
+      "command": "node",
+      "args": ["scripts/run_mcp_from_env.cjs", "gamma"]
+    },
+    "canvas-lms": {
+      "command": "node",
+      "args": ["scripts/run_mcp_from_env.cjs", "canvas-lms"]
+    }
+  }
+}

@@ -1,12 +1,12 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-25
+# Last Updated: 2026-03-26
 
 current_phase: "4-implementation"
 phase_transitions:
   1-analysis: "completed"
   2-planning: "completed"
-  3-solutioning: "in-progress"
-  4-implementation: "not-started"
+  3-solutioning: "completed"
+  4-implementation: "in-progress"
 
 workflow_artifacts:
   brainstorming:
@@ -23,8 +23,8 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "28 stories across 10 epics, 100% FR coverage validated"
-    stories_count: 28
+    note: "37 stories across 10 epics (6 added for expanded tool universe), 100% FR coverage"
+    stories_count: 37
     epics_count: 10
   ux_design:
     status: "not-applicable"
@@ -32,7 +32,11 @@ workflow_artifacts:
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "31 stories across 10 epics tracked"
+    note: "37 stories across 10 epics tracked"
+  story_1_1:
+    status: "review"
+    file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
+    note: "Implemented, validated, post-review cleanup applied"
 
 key_decisions:
   - "Agents implemented as .md files following BMad pattern, created via bmad-agent-builder"
@@ -43,5 +47,9 @@ key_decisions:
   - "Parameter intelligence through specialty agent tool mastery + style guide YAML"
   - "Pre-flight check capability via Cursor hooks + pre-flight-check skill"
   - "ALL PROJECT DOCS RECAST to reflect BMad agent + Cursor plugin approach"
+  - "Tool universe: 15 tools audited, tiered by API/MCP/manual access"
+  - "MCP env-loader wrapper (run_mcp_from_env.cjs) keeps secrets out of versioned configs"
+  - "Active Cursor MCPs limited to verified servers (Gamma, Canvas LMS)"
+  - "ElevenLabs and Qualtrics: API-primary, MCP-deferred due to Cursor compatibility"
 
-next_workflow_step: "Sprint planning (bmad-sprint-planning)"
+next_workflow_step: "Story 1.1 code review completion, then Story 1.2 creation"

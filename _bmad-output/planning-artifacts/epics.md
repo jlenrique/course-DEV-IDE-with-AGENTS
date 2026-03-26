@@ -340,13 +340,22 @@ So that I know the system is ready before starting content creation.
 
 **Given** the pre-flight-check skill exists at `skills/pre-flight-check/SKILL.md`
 **When** the pre-flight check skill is invoked
-**Then** all configured MCP servers in `.mcp.json` are tested for connectivity
-**And** all API keys in `.env` are validated against their respective services with test calls
+**Then** all configured MCP servers in `.mcp.json` and `.cursor/mcp.json` are tested for connectivity and tool discovery
+**And** all API keys in `.env` are validated against their respective services with read-only test calls
+**And** `scripts/heartbeat_check.mjs` is incorporated as the baseline API readiness check
+**And** targeted smoke checks are run for API-primary / MCP-deferred tools, including:
+  - `scripts/smoke_elevenlabs.mjs`
+  - `scripts/smoke_qualtrics.mjs`
 **And** current tool documentation is scanned via Ref MCP for capability or status changes
 **And** a comprehensive readiness report is generated with pass/fail status per tool
+**And** the readiness report classifies each tool as one of:
+  - MCP-ready
+  - API-ready
+  - manual-only
+  - blocked/deferred
 **And** resolution guidance is provided for any failures detected
 **And** `skills/pre-flight-check/scripts/` contains Python connectivity verification code
-**And** `skills/pre-flight-check/references/` contains diagnostic procedures and tool doc scanning patterns
+**And** `skills/pre-flight-check/references/` contains diagnostic procedures, tool doc scanning patterns, and a matrix explaining when pre-flight should rely on MCP checks vs API smoke checks
 
 ### Story 1.5: Testing Framework & Development Mode
 
@@ -418,6 +427,55 @@ So that agents and skills can deploy content to Canvas LMS through verified, tes
 **And** a working integration test demonstrates module creation and page publishing against a test Canvas instance
 **And** error handling provides clear diagnostics for authentication, permissions, and API rate limiting
 **And** the client respects institutional API policies and scoped token permissions
+
+### Story 1.9: Qualtrics API/MCP Integration
+
+As a developer,
+I want a working Qualtrics API connection and MCP server configured,
+So that agents and skills can create and manage surveys, assessments, and data collection through verified, tested connectivity.
+
+**Acceptance Criteria:**
+
+**Given** the Python infrastructure and .env API keys are configured (QUALTRICS_API_TOKEN, QUALTRICS_BASE_URL)
+**When** the Qualtrics integration is built and tested
+**Then** `scripts/api_clients/qualtrics_client.py` provides authenticated Qualtrics REST API v3 access
+**And** survey creation, question management, and response export operations work programmatically
+**And** the Qualtrics MCP server (`qualtrics-mcp-server`) is validated in `.mcp.json` with correct environment variable mapping
+**And** exponential backoff retry logic handles API failures gracefully
+**And** a working integration test demonstrates survey listing and basic survey creation
+**And** error handling provides clear diagnostics for authentication failures, quota limits, and API errors
+
+### Story 1.10: Canva MCP Integration
+
+As a developer,
+I want the Canva MCP server configured and validated,
+So that agents and skills can create, export, and manage designs through the official Canva MCP.
+
+**Acceptance Criteria:**
+
+**Given** the Canva remote MCP server is configured in `.mcp.json` (url: `https://mcp.canva.com/mcp`)
+**When** the Canva MCP integration is validated
+**Then** the Canva MCP server connects and responds to tool discovery requests
+**And** OAuth authentication flow works through the MCP server's browser-based auth
+**And** `create_design`, `export_design`, `get_design`, and `list_designs` tools are available
+**And** a working integration test demonstrates design listing and basic design creation
+**And** error handling provides clear diagnostics for auth failures and API rate limits (20 req/min)
+
+### Story 1.11: Panopto API Integration
+
+As a developer,
+I want a working Panopto API client for video platform management,
+So that agents and skills can manage video content on the institutional Panopto instance through verified, tested connectivity.
+
+**Acceptance Criteria:**
+
+**Given** the Python infrastructure and .env credentials are configured (PANOPTO_BASE_URL, PANOPTO_CLIENT_ID, PANOPTO_CLIENT_SECRET)
+**When** the Panopto API client is built and tested
+**Then** `scripts/api_clients/panopto_client.py` provides authenticated Panopto REST API access with OAuth2
+**And** video listing, folder management, and metadata retrieval operations work programmatically
+**And** exponential backoff retry logic handles API failures gracefully
+**And** a working integration test demonstrates folder listing and video search
+**And** error handling provides clear diagnostics for authentication, permissions, and API errors
 
 ---
 
@@ -685,6 +743,63 @@ So that content structuring and systematic quality validation are handled by ded
 **And** Party Mode team reviews both completed agent structures for accuracy and completeness
 **And** test invocations confirm both agents respond in character and perform their specialized functions
 
+### Story 3.5: Qualtrics Specialist Agent & Mastery Skill
+
+As a user,
+I want a Qualtrics specialist agent with survey design mastery and assessment intelligence,
+So that course assessments, polls, and surveys are created with optimal parameters matching instructional objectives.
+
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build a Qualtrics specialist agent that masters survey and assessment creation for educational contexts. It knows every Qualtrics API parameter, understands which question types and flow logic work best for different assessment scenarios (knowledge checks, course evaluations, learning outcome measurement), and learns optimal configurations from each production run.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Assessment Architect" — a survey design expert who understands educational measurement
+- **Communication Style**: Precise, assessment-literate. Explains question design with pedagogical reasoning. Recommends survey structures aligned with learning objectives.
+- **Principles**: (1) Every assessment item must trace to a learning objective. (2) Question design supports valid measurement, not trick questions. (3) Style guide assessment preferences are baseline. (4) Learn which question configurations produce the best learner engagement and measurement validity.
+- **Memory**: Sidecar tracking effective question types, assessment-to-objective mappings, response quality patterns.
+- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references. Write: `_bmad/memory/qualtrics-specialist-sidecar/`, assessment output. Deny: `.env`, other agent sidecars.
+
+**Acceptance Criteria:**
+
+**Given** the Qualtrics API client from Story 1.9 is working and `bmad-agent-builder` is invoked with discovery answers above
+**When** the Qualtrics specialist agent is created through six-phase discovery
+**Then** `agents/qualtrics-specialist.md` exists with "Assessment Architect" persona and Qualtrics parameter knowledge
+**And** `skills/qualtrics-assessment/SKILL.md` provides assessment creation capability routing to the existing API client
+**And** `skills/qualtrics-assessment/references/question-catalog.md` documents question types with educational assessment suitability
+**And** `skills/qualtrics-assessment/scripts/` imports and orchestrates the shared `scripts/api_clients/qualtrics_client.py`
+**And** the agent reads style guide assessment preferences and applies them automatically
+**And** `_bmad/memory/qualtrics-specialist-sidecar/` is initialized for capturing assessment patterns
+**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Qualtrics API → returns survey
+
+### Story 3.6: Canva Specialist Agent & Design Mastery Skill
+
+As a user,
+I want a Canva specialist agent with design creation mastery via the Canva MCP,
+So that course graphics, infographics, and visual assets are created with professional design quality matching brand standards.
+
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build a Canva specialist agent that masters visual design creation for educational content. It leverages the Canva MCP's design tools, understands which templates and design patterns work best for different educational contexts (course banners, infographics, social media posts, handouts), and maintains brand consistency through style guide integration.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Visual Designer" — a graphic design expert who creates professional educational visuals
+- **Communication Style**: Visually oriented, describes design choices with clarity. Recommends templates and styles with brand reasoning.
+- **Principles**: (1) Every visual must serve instructional clarity. (2) Brand consistency across all course materials. (3) Accessibility standards (contrast, alt-text) are non-negotiable. (4) Style guide design preferences are always applied. (5) Learn which design patterns resonate with the target audience.
+- **Memory**: Sidecar tracking successful design patterns, brand application approaches, template effectiveness.
+- **Access Boundaries**: Read: `state/config/`, skill references. Write: `_bmad/memory/canva-specialist-sidecar/`, design output. Deny: `.env`, other agent sidecars.
+
+**Acceptance Criteria:**
+
+**Given** the Canva MCP from Story 1.10 is working and `bmad-agent-builder` is invoked with discovery answers above
+**When** the Canva specialist agent is created through six-phase discovery
+**Then** `agents/canva-specialist.md` exists with "Visual Designer" persona and Canva MCP tool mastery
+**And** `skills/canva-design/SKILL.md` provides design creation capability routing to the Canva MCP tools
+**And** `skills/canva-design/references/template-catalog.md` documents Canva templates suited for educational content
+**And** the agent reads style guide brand preferences and applies them to all design creation
+**And** `_bmad/memory/canva-specialist-sidecar/` is initialized for capturing design pattern effectiveness
+**And** an end-to-end test demonstrates: agent invoked → reads style guide → uses Canva MCP → returns design
+
 ---
 
 ## Epic 4: Workflow Coordination & State Infrastructure
@@ -833,6 +948,27 @@ So that every content piece maintains professional standards regardless of which
 **And** the quality reviewer validates brand consistency across multi-tool outputs
 **And** creative pattern libraries in agent memory capture successful brand applications
 **And** style guide evolves based on production outcomes and user feedback
+
+### Story 5.4: Tier 2 API Integrations (Botpress, Wondercraft, Vyond, Kling, Panopto)
+
+As a developer,
+I want API clients and specialist agents for the remaining Tier 2 tools in the tool universe,
+So that the full creative tool ecosystem is available for multi-modal content production.
+
+**Acceptance Criteria:**
+
+**Given** the Python infrastructure and .env API keys are configured for each Tier 2 tool
+**When** API clients are built and tested for each tool
+**Then** `scripts/api_clients/botpress_client.py` provides chatbot creation and management capabilities
+**And** `scripts/api_clients/wondercraft_client.py` provides AI podcast/audio generation capabilities
+**And** `scripts/api_clients/vyond_client.py` provides animation video creation capabilities
+**And** `scripts/api_clients/kling_client.py` provides AI video generation capabilities (text-to-video, image-to-video)
+**And** `scripts/api_clients/panopto_client.py` provides video platform management (if not completed in Story 1.11)
+**And** each client has exponential backoff retry logic and clear error diagnostics
+**And** integration tests demonstrate basic connectivity and operations for each tool
+**And** specialist agents are created via bmad-agent-builder for tools with sufficient API surface
+
+**Note:** This story may be split into individual stories during sprint planning based on priority and which tools are most needed for the MVP production workflow. Descript (early access), Midjourney (third-party only), and CapCut (unclear API) are deferred until their API access matures.
 
 ---
 

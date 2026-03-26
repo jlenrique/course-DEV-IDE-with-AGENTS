@@ -1,5 +1,7 @@
 ---
-stepsCompleted: [1]
+stepsCompleted: [1, 2, 3, 4]
+status: 'complete'
+completedAt: 'March 25, 2026'
 inputDocuments: [
   "_bmad-output/planning-artifacts/prd.md",
   "_bmad-output/planning-artifacts/architecture.md",
@@ -203,6 +205,565 @@ Documentation agent with self-improving capability using BMad memory sidecar pat
 **Epic 10: Strategic Production Orchestration**
 Enhanced master orchestrator with predictive optimization skills, evolved coordination protocols, performance monitoring and improvement recommendations.
 
-{{requirements_coverage_map}}
+### FR Coverage Map
 
-{{epics_list}}
+| FR | Epic | Description |
+|----|------|-------------|
+| FR1-6 | Epic 2 | Agent orchestration & coordination |
+| FR7-12 | Epic 4 | Production workflow management (core) |
+| FR13-17 | Epic 3 | Tool integration & API management |
+| FR18-22 | Epic 3 | Skills & expertise management (foundation) |
+| FR23-27 | Epic 4 | Quality control & review |
+| FR28-32 | Epic 4 | Content & asset management |
+| FR33-35 | Epic 4 | Production workflow (export, objectives, presets) |
+| FR36-41 | Epic 1 | System infrastructure & development |
+| FR42-44 | Epic 8 | Advanced expertise insights & recommendations |
+| FR45-47 | Epic 5 | Creative consistency & pattern libraries |
+| FR48-49 | Epic 4 | Compliance audit trails & accessibility enforcement |
+| FR50-52 | Epic 4 | Production intelligence & reporting |
+| FR53-60 | Epic 2 | Conversational orchestrator interface |
+| FR61-65 | Epic 3 | Parameter intelligence & tool mastery |
+| FR66-70 | Epic 1 | Pre-flight check & tool validation |
+
+## Epic List
+
+1. **Epic 1: Repository Environment & Agent Infrastructure** - Cursor plugin foundation, Python infrastructure, state management, pre-flight checks, testing
+2. **Epic 2: Master Agent Architecture & Development** - Conversational orchestrator creation via bmad-agent-builder, coordination protocols, parameter intelligence
+3. **Epic 3: Core Tool Integrations** - Specialty agent creation (Gamma, ElevenLabs, Canvas) via bmad-agent-builder, tool mastery skills
+4. **Epic 4: Workflow Coordination & State Infrastructure** - Production run management, quality gates, run reporting, learning loop closure
+5. **Epic 5: Unified Content Production Engine** - Additional tool agents, multi-modal assembly, style orchestration
+6. **Epic 6: LMS Platform Integration & Delivery** - CourseArc agent, enhanced Canvas, SCORM packaging
+7. **Epic 7: Multi-Platform Intelligence Matrix** - Platform allocation agent, routing intelligence
+8. **Epic 8: Tool Review & Optimization Intelligence** - Tool scanning agent, policy crystallization
+9. **Epic 9: Living Architecture Documentation System** - Self-improving documentation agent
+10. **Epic 10: Strategic Production Orchestration** - Enhanced orchestrator with predictive optimization
+
+---
+
+## Epic 1: Repository Environment & Agent Infrastructure
+
+**Goal**: Users can set up and validate the complete collaborative intelligence development environment with Cursor plugin structure, Python infrastructure, state management, and pre-flight checking capabilities.
+
+**FRs covered:** FR36, FR37, FR38, FR39, FR40, FR41, FR66, FR67, FR68, FR69, FR70
+
+### Story 1.1: Cursor Plugin Foundation & Repository Structure
+
+As a developer,
+I want the repository configured as a Cursor plugin with proper directory structure,
+So that agents, skills, rules, and MCP servers are auto-discovered by the IDE.
+
+**Acceptance Criteria:**
+
+**Given** a fresh clone of the repository
+**When** the developer opens it in Cursor IDE
+**Then** Cursor discovers the plugin via `.cursor-plugin/plugin.json` manifest
+**And** the `agents/`, `skills/`, `rules/`, `commands/`, `hooks/` directories exist with placeholder READMEs
+**And** `.mcp.json` defines available MCP tool servers for Gamma, ElevenLabs, Canvas
+**And** `hooks/hooks.json` defines event triggers for sessionStart and sessionEnd
+**And** `rules/course-content-agents.mdc` provides persistent agent behavior guidance
+
+### Story 1.2: Python Infrastructure & Environment Configuration
+
+As a developer,
+I want a Python development environment with API key management and dependency isolation,
+So that agent skills can execute Python scripts for tool integration and state management.
+
+**Acceptance Criteria:**
+
+**Given** the Cursor plugin structure exists
+**When** the developer runs environment setup
+**Then** a virtual environment is created with all dependencies from `requirements.txt`
+**And** `.env.example` documents all required API keys (Gamma, ElevenLabs, Canvas, Vyond, Midjourney, CapCut, Descript)
+**And** `scripts/api_clients/` contains base API client patterns following canvas_api_tools conventions
+**And** `scripts/utilities/` contains shared helper functions for file operations and logging
+**And** automated dependency verification confirms all packages install correctly
+
+### Story 1.3: State Management Infrastructure
+
+As a developer,
+I want SQLite database, YAML configuration files, and BMad memory sidecar directories initialized,
+So that agents have persistent state for coordination, configuration, and learning.
+
+**Acceptance Criteria:**
+
+**Given** the Python environment is configured
+**When** state infrastructure initialization script runs
+**Then** `state/config/course_context.yaml` exists with course-level template structure
+**And** `state/config/style_guide.yaml` exists with brand standards and tool parameter preference sections
+**And** `state/config/tool_policies.yaml` exists with tool allocation policy template
+**And** `state/runtime/coordination.db` SQLite database is created with production_runs, agent_coordination, and quality_gates tables
+**And** `_bmad/memory/` directory exists with placeholder structure for agent sidecars
+**And** backup scripts exist at `state/runtime/backup/` for disaster recovery
+
+### Story 1.4: Pre-Flight Check Skill
+
+As a user,
+I want a pre-flight check skill that verifies all MCPs, APIs, and tool capabilities before production runs,
+So that I know the system is ready before starting content creation.
+
+**Acceptance Criteria:**
+
+**Given** the pre-flight-check skill exists at `skills/pre-flight-check/SKILL.md`
+**When** the pre-flight check skill is invoked
+**Then** all configured MCP servers in `.mcp.json` are tested for connectivity
+**And** all API keys in `.env` are validated against their respective services with test calls
+**And** current tool documentation is scanned via Ref MCP for capability or status changes
+**And** a comprehensive readiness report is generated with pass/fail status per tool
+**And** resolution guidance is provided for any failures detected
+**And** `skills/pre-flight-check/scripts/` contains Python connectivity verification code
+**And** `skills/pre-flight-check/references/` contains diagnostic procedures and tool doc scanning patterns
+
+### Story 1.5: Testing Framework & Development Mode
+
+As a developer,
+I want testing infrastructure and development mode capabilities,
+So that agent coordination and skill execution can be validated during development.
+
+**Acceptance Criteria:**
+
+**Given** the testing framework is configured
+**When** tests are executed via `pytest`
+**Then** unit tests in `tests/unit/` validate Python API client scripts
+**And** unit tests validate SQLite state management operations
+**And** integration tests in `tests/integration/` validate skill invocation patterns
+**And** test fixtures in `tests/fixtures/` include mock API responses for Gamma, ElevenLabs, and Canvas
+**And** development mode logging configuration provides enhanced agent coordination debugging output
+**And** `FR40` development mode capability is satisfied with configurable log levels
+
+---
+
+## Epic 2: Master Agent Architecture & Development
+
+**Goal**: Users can converse with the master orchestrator agent to initiate, direct, and manage production runs through natural language interface with intelligent tool parameter management and pre-flight orchestration.
+
+**FRs covered:** FR1, FR2, FR3, FR4, FR5, FR6, FR53, FR54, FR55, FR56, FR57, FR58, FR59, FR60
+
+### Story 2.1: Master Orchestrator Agent Creation
+
+As a user,
+I want a master orchestrator agent created via bmad-agent-builder,
+So that I have a conversational "general contractor" for all production workflow interactions.
+
+**Acceptance Criteria:**
+
+**Given** the bmad-agent-builder skill is available
+**When** the master orchestrator agent is created through six-phase discovery
+**Then** `agents/master-orchestrator.md` exists with persona, identity, communication style, and principles
+**And** the agent has a capability routing table linking to production coordination, pre-flight check, and parameter intelligence skills
+**And** the agent's persona reflects "trusted general contractor" conversational style
+**And** the agent knows how to delegate to specialty agents by capability matching
+**And** `_bmad/memory/master-orchestrator-sidecar/` is initialized with index.md and access-boundaries.md
+
+### Story 2.2: Conversational Workflow Management
+
+As a user,
+I want the orchestrator to manage production runs through natural conversation,
+So that I can initiate, direct, and review content creation by talking to one agent.
+
+**Acceptance Criteria:**
+
+**Given** the master orchestrator agent is activated
+**When** a user says "Create the Welcome video for C1M1"
+**Then** the orchestrator parses intent and identifies required content type, module, and production requirements
+**And** the orchestrator creates a production plan with agent assignments and workflow stages
+**And** the orchestrator requests confirmation before proceeding: "Here's my plan. Shall I proceed?"
+**And** during production, the orchestrator presents work products for review at human checkpoint gates
+**And** the orchestrator reports progress conversationally: "Slides complete. Ready for voiceover. Want to review?"
+**And** the user can provide guidance, corrections, or approvals through natural conversation at any point
+
+### Story 2.3: Agent Coordination Protocols
+
+As a user,
+I want the orchestrator to coordinate specialist agents seamlessly,
+So that multi-agent production workflows execute without my managing individual agents.
+
+**Acceptance Criteria:**
+
+**Given** specialist agents exist in `agents/` directory
+**When** the orchestrator needs a specialist capability (slide creation, audio generation, etc.)
+**Then** the orchestrator identifies the appropriate specialist agent through capability matching
+**And** the orchestrator delegates tasks with full context from the production run state
+**And** specialist agent results flow back through the orchestrator for quality review
+**And** the orchestrator manages dependencies between stages (slides before voiceover, etc.)
+**And** coordination state is persisted in SQLite for recovery from interruptions
+**And** the orchestrator's memory sidecar captures coordination patterns for future optimization
+
+### Story 2.4: Parameter Intelligence & Style Guide Integration
+
+As a user,
+I want the orchestrator to manage tool parameters intelligently through style guides and conversation,
+So that I don't have to manually configure every tool parameter for each production run.
+
+**Acceptance Criteria:**
+
+**Given** `state/config/style_guide.yaml` contains tool parameter preferences
+**When** a production task requires tool-specific parameters (e.g., Gamma LLM choice, ElevenLabs voice)
+**Then** the orchestrator first checks style guide for established preferences
+**And** if parameters exist, applies them automatically with notification: "Using Claude-3 for medical content per your style guide"
+**And** if parameters are missing, elicits them conversationally with educational context and recommendations
+**And** newly elicited parameters are saved to the style guide with reasoning context
+**And** the user can override any parameter at any time through conversation
+**And** parameter effectiveness is tracked in the orchestrator's memory sidecar for future optimization
+
+### Story 2.5: Pre-Flight Check Orchestration
+
+As a user,
+I want to invoke pre-flight system validation through conversation with the orchestrator,
+So that I can confirm all tools are operational before starting a production run.
+
+**Acceptance Criteria:**
+
+**Given** the user says "Run pre-flight check" or "Are all tools ready?"
+**When** the orchestrator invokes the pre-flight-check skill
+**Then** the orchestrator presents results conversationally: "All systems green" or "Gamma API is down - here's what I suggest"
+**And** tool documentation changes are highlighted: "ElevenLabs added new voice options since last check"
+**And** the orchestrator recommends whether to proceed, wait, or work around issues
+**And** pre-flight results are logged for production run context
+
+---
+
+## Epic 3: Core Tool Integrations
+
+**Goal**: Users can leverage Gamma, ElevenLabs, and Canvas through intelligent specialty agents with complete tool mastery, parameter intelligence, and skills-based integration.
+
+**FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR61, FR62, FR63, FR64, FR65
+
+### Story 3.1: Gamma Specialist Agent & Skill
+
+As a user,
+I want a Gamma specialist agent with complete API mastery and intelligent slide generation,
+So that presentation slides are created with optimal parameters matching my style preferences.
+
+**Acceptance Criteria:**
+
+**Given** the bmad-agent-builder creates `agents/gamma-specialist.md`
+**When** the Gamma specialist is invoked for slide generation
+**Then** the agent has complete knowledge of Gamma API parameters (LLM choice, style presets, output formats)
+**And** `skills/gamma-api-mastery/SKILL.md` provides tool integration capability with progressive disclosure references
+**And** `skills/gamma-api-mastery/scripts/` contains Python Gamma API client with authentication and retry logic
+**And** `skills/gamma-api-mastery/references/` contains parameter templates for different content types (medical presentations, assessments)
+**And** the agent reads style guide preferences and applies them automatically
+**And** exponential backoff retry (3 attempts: 2s, 4s, 8s) handles API failures gracefully
+**And** `_bmad/memory/gamma-specialist-sidecar/` captures successful parameter combinations
+
+### Story 3.2: ElevenLabs Specialist Agent & Skill
+
+As a user,
+I want an ElevenLabs specialist agent with voice synthesis mastery and audio optimization,
+So that natural voiceover is generated with optimal voice and timing parameters.
+
+**Acceptance Criteria:**
+
+**Given** the bmad-agent-builder creates `agents/elevenlabs-specialist.md`
+**When** the ElevenLabs specialist is invoked for voiceover generation
+**Then** the agent has complete knowledge of ElevenLabs API parameters (voice selection, stability, clarity, style)
+**And** `skills/elevenlabs-audio/SKILL.md` provides audio generation capability
+**And** `skills/elevenlabs-audio/scripts/` contains Python ElevenLabs API client with authentication and retry logic
+**And** `skills/elevenlabs-audio/references/` contains voice optimization patterns for medical education content
+**And** the agent reads style guide voice preferences and applies them automatically
+**And** generated audio includes timing metadata for slide synchronization
+**And** `_bmad/memory/elevenlabs-specialist-sidecar/` captures effective voice configurations
+
+### Story 3.3: Canvas Specialist Agent & Skill
+
+As a user,
+I want a Canvas specialist agent with LMS deployment mastery,
+So that completed content is deployed to Canvas with proper module structure and accessibility compliance.
+
+**Acceptance Criteria:**
+
+**Given** the bmad-agent-builder creates `agents/canvas-specialist.md`
+**When** the Canvas specialist is invoked for content deployment
+**Then** the agent has knowledge of Canvas REST API for module creation, page publishing, and quiz deployment
+**And** `skills/canvas-deployment/SKILL.md` provides deployment capability
+**And** `skills/canvas-deployment/scripts/` contains Python Canvas API client following canvas_api_tools patterns
+**And** `skills/canvas-deployment/references/` contains deployment workflows for different content types
+**And** the agent validates accessibility compliance before deployment
+**And** deployment results include confirmation URLs and Canvas module structure verification
+**And** `_bmad/memory/canvas-specialist-sidecar/` captures deployment patterns and institutional requirements
+
+### Story 3.4: Content Creator Agent & Quality Reviewer Agent
+
+As a user,
+I want content creation and quality review specialist agents,
+So that content structuring and systematic quality validation are handled by dedicated agents.
+
+**Acceptance Criteria:**
+
+**Given** the bmad-agent-builder creates `agents/content-creator.md` and `agents/quality-reviewer.md`
+**When** the content creator is invoked for content structuring
+**Then** the agent structures content against learning objectives with instructional design expertise
+**And** the content creator applies pedagogical best practices (Bloom's taxonomy, engagement patterns)
+**When** the quality reviewer is invoked after any production stage
+**Then** the reviewer validates outputs against style guide, accessibility standards, and learning objective alignment
+**And** the reviewer provides structured feedback with pass/fail criteria and improvement suggestions
+**And** quality review results are logged to the production run audit trail
+**And** both agents have memory sidecars capturing learned patterns
+
+---
+
+## Epic 4: Workflow Coordination & State Infrastructure
+
+**Goal**: Users can execute persistent, recoverable production workflows with comprehensive run intelligence, quality gate coordination, and systematic learning capture.
+
+**FRs covered:** FR7, FR8, FR9, FR10, FR11, FR12, FR23, FR24, FR25, FR26, FR27, FR28, FR29, FR30, FR31, FR32, FR33, FR34, FR35, FR48, FR49, FR50, FR51, FR52
+
+### Story 4.1: Production Run Lifecycle Management
+
+As a user,
+I want complete production run lifecycle management with state persistence,
+So that production runs are tracked, recoverable, and provide context for quality and reporting.
+
+**Acceptance Criteria:**
+
+**Given** a production run is initiated through the orchestrator
+**When** the production coordination skill manages the run lifecycle
+**Then** `skills/production-coordination/scripts/` creates a production run record in SQLite with run ID, purpose, context, and status
+**And** YAML run context entities (course, module, asset specifications) are created in `state/config/`
+**And** each workflow stage completion updates the run state with timestamps and results
+**And** if a run is interrupted, it can be resumed from the last successful checkpoint
+**And** cross-run context links the current run to previous runs for the same course/module
+**And** run presets (explore, draft, production, regulated) configure quality gate strictness
+
+### Story 4.2: Quality Gate Coordination
+
+As a user,
+I want systematic quality gates with agent peer review and human checkpoints,
+So that content quality is validated at every production stage before proceeding.
+
+**Acceptance Criteria:**
+
+**Given** a production stage completes (slides created, audio generated, etc.)
+**When** the quality gate is triggered
+**Then** the quality reviewer agent validates output against style guide and quality standards
+**And** automated accessibility checks run via `skills/quality-control/scripts/`
+**And** if quality threshold is met, the workflow proceeds with notification to user
+**And** if quality threshold is not met, the orchestrator presents issues conversationally with options
+**And** human review checkpoints are triggered at designated decision points (creative direction, final approval)
+**And** all quality decisions are logged to the production run audit trail with reasoning context
+**And** the user can override quality decisions when creative judgment is required
+
+### Story 4.3: Content Entity Management & Learning Objective Alignment
+
+As a user,
+I want course, module, and asset entities managed throughout production with learning objective tracking,
+So that all content serves defined educational goals and maintains cross-module consistency.
+
+**Acceptance Criteria:**
+
+**Given** a production run has course and module context loaded
+**When** content is created or modified during the run
+**Then** asset evolution history is tracked with creative decision rationale in SQLite
+**And** learning objective alignment is validated against course/module objectives at each stage
+**And** brand guidelines and style standards from `state/config/style_guide.yaml` are enforced
+**And** release manifests are generated for final content deployment with quality certification
+**And** the user can update brand guidelines and creative policies through conversation with orchestrator
+
+### Story 4.4: Production Intelligence & Run Reporting
+
+As a user,
+I want comprehensive production run reports that capture effectiveness, bottlenecks, and optimization insights,
+So that the system learns and improves from each production run.
+
+**Acceptance Criteria:**
+
+**Given** a production run completes (successfully or with issues)
+**When** the run reporting skill generates the production report
+**Then** the report includes: run purpose, completion status, time per stage, quality gate results
+**And** stage-by-stage effectiveness analysis identifies what worked well and what didn't
+**And** bottleneck identification highlights stages that took longest or required most rework
+**And** optimization recommendations are generated based on run analysis
+**And** comparative analysis against previous runs shows improvement trends
+**And** the orchestrator presents the report conversationally: "Here's how the run went..."
+**And** learning insights are captured in agent memory sidecars for future workflow optimization
+
+### Story 4.5: Export & Platform Deployment Coordination
+
+As a user,
+I want completed content exported to target platforms with proper formatting,
+So that finished course assets reach Canvas, CourseArc, or other platforms ready for student access.
+
+**Acceptance Criteria:**
+
+**Given** content passes final quality review and user approval
+**When** export is initiated through the orchestrator
+**Then** the appropriate platform specialist agent handles deployment with platform-specific formatting
+**And** accessibility compliance is verified one final time before deployment
+**And** deployment confirmation includes platform URLs and module structure verification
+**And** the production run record is updated with deployment details and final status
+**And** the orchestrator confirms completion: "Module deployed to Canvas. Here's the link to verify."
+
+---
+
+## Epic 5: Unified Content Production Engine
+
+**Goal**: Users can create sophisticated multi-modal content through coordinated visual, audio, and assembly agent collaboration with expanded tool integration.
+
+**FRs covered:** FR45, FR46, FR47
+
+### Story 5.1: Expanded Tool Specialist Agents
+
+As a user,
+I want specialist agents for Vyond, Midjourney, and CapCut,
+So that the full creative tool ecosystem is available for multi-modal content production.
+
+**Acceptance Criteria:**
+
+**Given** bmad-agent-builder creates agents for each tool
+**When** expanded tool specialists are available
+**Then** `agents/vyond-specialist.md` provides animation production mastery
+**And** `agents/midjourney-specialist.md` provides image generation mastery
+**And** `agents/capcut-specialist.md` provides video assembly mastery
+**And** each agent has corresponding skill directory with SKILL.md, references/, and scripts/
+**And** each agent has a memory sidecar for learning effective parameter combinations
+**And** style guide includes parameter preferences sections for each new tool
+
+### Story 5.2: Multi-Modal Assembly Coordination
+
+As a user,
+I want an assembly coordinator agent that combines outputs from multiple tools into finished content,
+So that slides, voiceover, animations, and b-roll are assembled into professional presentations.
+
+**Acceptance Criteria:**
+
+**Given** individual content components exist (slides, audio, video, images)
+**When** the assembly coordinator manages final production
+**Then** `agents/assembly-coordinator.md` coordinates component integration with proper sequencing
+**And** the coordinator manages format translation between tool outputs (Gamma → Descript, etc.)
+**And** timing synchronization aligns audio with visual elements
+**And** the final assembly is export-ready for Descript or CapCut with all components organized
+**And** brand consistency is validated across all assembled components
+
+### Story 5.3: Style Orchestration & Brand Consistency
+
+As a user,
+I want systematic brand consistency enforcement across all tools and content types,
+So that every content piece maintains professional standards regardless of which tools created it.
+
+**Acceptance Criteria:**
+
+**Given** `state/config/style_guide.yaml` contains brand standards with tool-specific translations
+**When** any tool specialist agent creates content
+**Then** the agent applies style guide parameters automatically (colors, fonts, voice, imagery style)
+**And** the quality reviewer validates brand consistency across multi-tool outputs
+**And** creative pattern libraries in agent memory capture successful brand applications
+**And** style guide evolves based on production outcomes and user feedback
+
+---
+
+## Epic 6: LMS Platform Integration & Delivery
+
+**Goal**: Users can deploy content seamlessly to multiple educational platforms with automated formatting, compliance, and integration.
+
+### Story 6.1: CourseArc Specialist Agent & LTI Integration
+
+As a user,
+I want a CourseArc specialist agent with LTI 1.3 compliance knowledge,
+So that interactive content is deployed to CourseArc with proper embedding in Canvas.
+
+**Acceptance Criteria:**
+
+**Given** bmad-agent-builder creates `agents/coursearc-specialist.md`
+**When** content requires CourseArc deployment
+**Then** the agent manages LTI 1.3 integration with Canvas for seamless embedding
+**And** SCORM packaging scripts handle content export formatting
+**And** interactive content blocks (sorting, flip cards, drills) deploy correctly
+**And** WCAG 2.1 AA compliance is verified for all CourseArc content
+
+### Story 6.2: Enhanced Canvas Integration
+
+As a user,
+I want advanced Canvas integration with grading passback and analytics,
+So that assessments, discussion boards, and graded activities deploy with full LMS functionality.
+
+**Acceptance Criteria:**
+
+**Given** the Canvas specialist agent is enhanced
+**When** complex content types are deployed (quizzes with answer-level feedback, graded discussions)
+**Then** Canvas gradebook integration works with proper point values and rubrics
+**And** SpeedGrader compatibility is verified for all assessment types
+**And** analytics data flows correctly from Canvas to production reporting
+
+---
+
+## Epic 7: Multi-Platform Intelligence Matrix
+
+**Goal**: Users benefit from intelligent content routing to optimal platforms based on content type, learning objectives, and platform strengths.
+
+### Story 7.1: Platform Allocation Agent
+
+As a user,
+I want a platform allocation agent that recommends optimal placement across Canvas, CourseArc, Playbook, and Qualtrics,
+So that each content piece lands on the platform best suited for its instructional purpose.
+
+**Acceptance Criteria:**
+
+**Given** bmad-agent-builder creates a platform allocation specialist
+**When** content requires platform placement decisions
+**Then** the agent analyzes content type, grading requirements, interactivity needs, and accessibility requirements
+**And** recommendations reference the platform allocation matrix with reasoning
+**And** the orchestrator presents allocation decisions conversationally for user confirmation
+**And** allocation patterns are captured in agent memory for consistency
+
+---
+
+## Epic 8: Tool Review & Optimization Intelligence
+
+**Goal**: Users benefit from systematic tool environment monitoring and adaptive optimization recommendations.
+
+### Story 8.1: Tool Review Agent & Environment Scanning
+
+As a user,
+I want a tool review agent that monitors the tool ecosystem for changes and optimization opportunities,
+So that the system stays current with tool capabilities and identifies better approaches.
+
+**Acceptance Criteria:**
+
+**Given** bmad-agent-builder creates a tool review specialist
+**When** periodic tool review is triggered or user requests optimization analysis
+**Then** the agent scans tool documentation for API changes, new features, and capability updates
+**And** cost-benefit analysis identifies optimization opportunities across the tool stack
+**And** policy crystallization captures effective tool allocation strategies in style guide YAML
+**And** the orchestrator presents findings conversationally with actionable recommendations
+
+---
+
+## Epic 9: Living Architecture Documentation System
+
+**Goal**: System documentation evolves automatically from production experience, capturing institutional knowledge.
+
+### Story 9.1: Self-Improving Documentation Agent
+
+As a user,
+I want documentation that improves automatically based on production outcomes,
+So that operational knowledge is preserved and grows without manual documentation effort.
+
+**Acceptance Criteria:**
+
+**Given** bmad-agent-builder creates a documentation specialist
+**When** production runs complete and generate learning insights
+**Then** the agent analyzes patterns across production memory sidecars
+**And** documentation updates are proposed based on discovered patterns and optimizations
+**And** troubleshooting guides evolve based on actual issues encountered and resolved
+**And** agent capability documentation reflects current system state
+
+---
+
+## Epic 10: Strategic Production Orchestration
+
+**Goal**: Master orchestrator evolves with predictive optimization and sophisticated coordination capabilities.
+
+### Story 10.1: Predictive Workflow Optimization
+
+As a user,
+I want the orchestrator to predict optimal workflows based on accumulated production intelligence,
+So that each new production run is more efficient than the last.
+
+**Acceptance Criteria:**
+
+**Given** the orchestrator has memory from multiple production runs
+**When** a new production run is initiated
+**Then** the orchestrator suggests optimized workflow sequences based on similar past runs
+**And** predicted bottlenecks are identified with preemptive mitigation recommendations
+**And** resource allocation suggestions optimize tool usage and timing
+**And** the user can accept, modify, or override predictive recommendations through conversation

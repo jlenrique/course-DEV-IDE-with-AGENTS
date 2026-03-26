@@ -2,72 +2,55 @@
 
 ## Immediate Next Action
 
-**Complete story creation for Epic 1-4 (MVP)** using `bmad-create-epics-and-stories` step-03.
+**Run Sprint Planning** using `bmad-sprint-planning` to organize 28 stories into development sprints.
 
 ```
 # Priority sequence:
-1. Complete story creation for Epic 1-4 with acceptance criteria
-2. Run sprint planning (bmad-sprint-planning)
-3. Begin Epic 1: Create Cursor plugin structure + Python infrastructure
+1. Run sprint planning (bmad-sprint-planning)
+2. Begin Epic 1 Story 1.1: Cursor plugin foundation via bmad-dev-story
+3. Continue Epic 1 stories sequentially
 4. Begin Epic 2: Create master orchestrator agent via bmad-agent-builder
 ```
 
-## Current Status - ALL DOCS RECAST AND HARMONIZED
+## Current Status - SOLUTIONING PHASE COMPLETE
 
 - **PRD**: ✅ COMPLETE & RECAST (70 FRs, agent .md approach)
 - **Architecture**: ✅ COMPLETE & RECAST (BMad Agent + Cursor Plugin patterns)
-- **Epic Structure**: ✅ APPROVED & RECAST (10 epics, bmad-agent-builder approach)
-- **Strategic Decisions**: ✅ RECAST (BMB module + Cursor plugin development)
-- **Project Context**: ✅ HARMONIZED (all docs aligned)
-- **Stories**: ⏳ IN PROGRESS (requirements extracted, epic structure approved, story creation next)
-- **Sprint Planning**: Not started
+- **Epic Structure**: ✅ COMPLETE & VALIDATED (10 epics, 28 stories, 100% FR coverage)
+- **All Docs**: ✅ HARMONIZED (Cursor plugin + BMad Builder approach)
+- **Sprint Planning**: ⏳ NEXT
+- **Implementation**: Not started
 
-## Implementation Approach (Recast & Harmonized)
+## Implementation Approach
 
-### Agents
-- **Created via**: `bmad-agent-builder` six-phase conversational discovery process
-- **Format**: .md files in `agents/` directory following BMad SKILL.md standard
-- **Memory**: BMad sidecar pattern at `_bmad/memory/{skillName}-sidecar/`
-- **Integration**: Cursor plugin auto-discovery via `.cursor-plugin/plugin.json`
+### Agent Creation Pattern
+- Each custom agent created via `bmad-agent-builder` six-phase conversational discovery
+- Agents are .md files in `agents/` directory, auto-discovered by Cursor plugin
+- Memory sidecars at `_bmad/memory/{skillName}-sidecar/` for persistent learning
 
-### Skills
-- **Format**: SKILL.md directories under `skills/` with `references/` + `scripts/`
-- **Purpose**: Tool-specific capabilities bridging agent intelligence to code execution
-- **Integration**: Cursor plugin auto-discovery
+### Skills Development Pattern
+- SKILL.md directories under `skills/` with references/ + scripts/
+- Python code in scripts/ for API clients, state management, file operations
+- Progressive disclosure via references/ for complex capabilities
 
-### Python Infrastructure
-- **Purpose**: Supporting code for API clients, state management, file operations
-- **Location**: `scripts/` for shared code, `skills/*/scripts/` for tool-specific code
-- **Pattern**: Following canvas_api_tools patterns with .env, .venv, requirements.txt
-
-### Cursor Plugin
-- **Manifest**: `.cursor-plugin/plugin.json` with auto-discovery configuration
-- **MCP**: `.mcp.json` bundled in plugin for tool server definitions
-- **Hooks**: `hooks/hooks.json` for event-driven automation
-- **Rules**: `rules/*.mdc` for persistent agent behavior guidance
+### MVP Validation Target
+- Complete C1M1 (Course 1, Module 1) production run
+- 50% time improvement with quality maintained
+- Systematic expertise capture evident through agent memory evolution
 
 ## Hot-Start Context
 
 ### Key File Paths
 - PRD: `_bmad-output/planning-artifacts/prd.md`
 - Architecture: `_bmad-output/planning-artifacts/architecture.md`
-- Epics: `_bmad-output/planning-artifacts/epics.md`
-- Strategic Decisions: `_bmad-output/strategic-decisions-collaborative-intelligence.md`
+- Epics & Stories: `_bmad-output/planning-artifacts/epics.md`
 - Workflow Status: `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
 - Sprint Status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
-### Key Tools
-- `bmad-agent-builder` - Creates custom agents through conversational discovery
-- `bmad-create-epics-and-stories` - Story creation workflow (step-03 next)
-- `bmad-sprint-planning` - Sprint planning after stories complete
+### Key Tools for Next Session
+- `bmad-sprint-planning` - Organize stories into sprints
+- `bmad-dev-story` - Execute individual stories
+- `bmad-agent-builder` - Create custom agents (Epic 2-3)
 
 ## Branch
 - **master** branch
-
-## Next Phase Sequence
-1. **Complete story creation** (bmad-create-epics-and-stories step-03)
-2. **Sprint planning** (bmad-sprint-planning)
-3. **Epic 1**: Cursor plugin structure + Python infrastructure setup
-4. **Epic 2**: Master orchestrator agent creation via bmad-agent-builder
-5. **Epic 3**: Tool specialist agent creation via bmad-agent-builder
-6. **C1M1 MVP validation** through complete production run

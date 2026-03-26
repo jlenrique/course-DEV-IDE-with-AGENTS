@@ -21,9 +21,11 @@ workflow_artifacts:
     status: "completed"
     file: "_bmad-output/planning-artifacts/architecture.md"
   epics_and_stories:
-    status: "in-progress"
+    status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "Requirements extracted, epic structure approved, story creation pending"
+    note: "28 stories across 10 epics, 100% FR coverage validated"
+    stories_count: 28
+    epics_count: 10
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
@@ -40,4 +42,4 @@ key_decisions:
   - "Pre-flight check capability via Cursor hooks + pre-flight-check skill"
   - "ALL PROJECT DOCS RECAST to reflect BMad agent + Cursor plugin approach"
 
-next_workflow_step: "Complete story creation (bmad-create-epics-and-stories step-03)"
+next_workflow_step: "Sprint planning (bmad-sprint-planning)"

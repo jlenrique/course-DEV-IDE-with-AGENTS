@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-26
+# Last Updated: 2026-03-26 (session 3 — Story 2.1 DONE)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -37,6 +37,10 @@ workflow_artifacts:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
     note: "Implemented, validated, reviewed, completed"
+  story_2_1:
+    status: "done"
+    file: "skills/bmad-agent-marcus/SKILL.md"
+    note: "Agent built via bmad-agent-builder, quality scan passed (0 critical), interaction testing passed (12 scenarios), Party Mode validation complete"
 
 key_decisions:
   - "Agents implemented as .md files following BMad pattern, created via bmad-agent-builder"
@@ -56,4 +60,4 @@ key_decisions:
   - "Source wrangler capability: Notion API + Box Drive local FS, start as skill, may evolve to agent"
   - "Notion confirmed Tier 1 (official MCP on npm, free API on all plans including free educator)"
 
-next_workflow_step: "Run bmad-create-story for Story 2.1 (Master Orchestrator Agent). Discovery answers refined by Party Mode coaching (March 26)."
+next_workflow_step: "Epic 2 COMPLETE (6/6 stories done, 55 tests). Retrospective complete. Next: Epic 3 (Core Tool Specialist Agents & Mastery Skills) — start with bmad-create-story for Story 3.1 (Gamma Specialist Agent)."

@@ -1,0 +1,430 @@
+{
+  "scanner": "enhancement-opportunities",
+  "skill_path": "skills/bmad-agent-marcus",
+  "findings": [
+    {
+      "file": "references/init.md",
+      "severity": "high-opportunity",
+      "category": "journey-friction",
+      "title": "First-run onboarding asks 5 questions before delivering any value",
+      "detail": "Init discovery asks for user name, course context, style bible, exemplar library, and tool availability before Marcus can do anything. A first-timer who just wants to try Marcus hits an interrogation wall. They likely have none of this infrastructure yet and the experience becomes 'tell me about all these things you don't have.' This is the highest-friction entry point possible for a new user.",
+      "action": "Add a 'quick start' path: detect empty infrastructure and offer a zero-config demo flow. 'I see this is your first time. Want me to walk you through a sample production run so you can see how I work, or would you prefer to set up your course structure first?' Let first-timers experience value before committing to setup."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "high-opportunity",
+      "category": "experience-gap",
+      "title": "No mechanism to promote ad-hoc output to production",
+      "detail": "Ad-hoc mode routes everything to course-content/staging/ad-hoc/. Default mode uses course-content/staging/. If a user experiments in ad-hoc mode, produces something they love, and says 'actually, let's use this for real' — there is no documented path to promote the asset. The user is told to switch modes and reproduce the work, which is frustrating and wasteful.",
+      "action": "Add a 'promote to production' capability: when the user approves an ad-hoc artifact, Marcus offers to copy it to the production staging path, create the state records retroactively, and run it through the standard review gate. The artifact already exists — only the state tracking and routing need to change."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "high-opportunity",
+      "category": "edge-case",
+      "title": "Content type vocabulary is closed — unrecognized types hit a dead end",
+      "detail": "The content type vocabulary (lecture slides, case study, assessment, discussion prompt, video script, voiceover, infographic, interactive module) is exhaustive-by-design. But medical education produces many other artifact types: patient encounter simulations, OSCE checklists, clinical skills rubrics, podcast episodes, journal clubs, team-based learning activities. A user requesting any of these gets no mapping to specialists or workflows. Marcus has no fallback pattern for 'I don't recognize this content type but I can work with you to figure out the workflow.'",
+      "action": "Add a 'custom content type' fallback: when the request doesn't match known vocabulary, Marcus says 'I don't have a standard workflow for [X] yet, but let's design one together. What does the finished artifact look like? Which specialist skills would help produce it?' Then save the custom workflow to patterns.md for future reuse."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "high-opportunity",
+      "category": "assumption-risk",
+      "title": "Assumes user always wants to produce — no support for review, planning, or exploration modes",
+      "detail": "Marcus's intent parsing focuses entirely on 'what content type do you want to produce.' But users often come to Marcus wanting: 'show me what we have for Module 3,' 'help me plan the semester content calendar,' 'compare the two assessment approaches we discussed,' 'what's the status across all modules,' 'I need to restructure the course.' These are legitimate orchestrator-level requests that don't map to production runs.",
+      "action": "Expand intent parsing to recognize non-production intents: portfolio review ('show me what we've built'), planning ('help me plan'), analysis ('compare approaches'), status ('where are we across the whole course'), and restructuring ('I need to change the module order'). Map each to appropriate capabilities — some are progress-reporting, some need new reference docs."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "high-opportunity",
+      "category": "facilitative-pattern",
+      "title": "Missing capture-don't-interrupt pattern for tangential user mentions",
+      "detail": "During a production conversation, users frequently mention tangential needs: 'oh, I also need to update the syllabus,' 'remind me to check the exam dates,' 'we should eventually redo Module 1.' Marcus has no mechanism to capture these asides without derailing the current workflow. Without this, valuable user intentions are lost or the current production flow gets interrupted.",
+      "action": "Add a 'noted' capture mechanism to conversation management: when the user mentions something outside the current production scope, Marcus acknowledges ('Noted — I'll bring up the syllabus update after we finish these slides'), captures it in index.md as a pending item, and surfaces it at the next natural break point."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "high-opportunity",
+      "category": "autonomous-potential",
+      "title": "Architecture supports headless batch production but no pathway exists",
+      "detail": "Marcus's architecture cleanly separates judgment (agent layer) from execution (specialist agents) from connectivity (API clients). This three-layer separation means headless production is architecturally feasible: provide an input contract (course context + content type + scope + quality thresholds), let Marcus run the full production plan, and convert checkpoint gates to automated quality thresholds with human review happening post-batch. The current 6+ human gates per workflow would be reduced to a final batch review. This is the most impactful future capability for the automator archetype.",
+      "action": "Design a headless input contract: { course_context, content_type, module_scope, quality_thresholds, auto_approve_rules, style_bible_path, exemplar_path }. Tier checkpoint gates: auto-approve if quality score exceeds threshold, queue for human review otherwise. Output: artifact manifest + quality report + decision log. Start with simple content types (discussion prompts) where the quality gate is less subjective."
+    },
+    {
+      "file": "references/checkpoint-coord.md",
+      "severity": "medium-opportunity",
+      "category": "journey-friction",
+      "title": "No streamlined path for expert users who trust the workflow",
+      "detail": "After 50 production runs, an expert user knows the drill: outline → slides → review → approve. But Marcus still presents the full production plan, inserts all checkpoint gates, and waits for explicit approval at every stage. There's no 'trust mode' or 'expedited review' for experienced users who want to say 'just build it with the usual settings and show me the final output.'",
+      "action": "Add a 'confidence level' concept to production runs: for well-established workflows with high pattern confidence, Marcus can offer 'I'll run the standard workflow and come back with the finished product for your review. Just the final checkpoint. Sound good?' Collapse intermediate gates for trusted patterns while keeping the final review gate mandatory."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "No batch operations for multi-lesson production runs",
+      "detail": "Marcus processes production requests one at a time. An expert user who says 'build slides for all 6 lessons in Module 3' has no efficient path — Marcus would need to run 6 sequential production plans. For the automator archetype, this is the primary friction point: repetitive production across a module or course is common but unsupported at the orchestration level.",
+      "action": "Add batch production planning: when a user requests content for multiple lessons, Marcus builds a consolidated plan showing all runs, shared parameters, and per-lesson customizations. Present as a single approval with per-item override capability. Track batch progress as a group with individual and aggregate status."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "No 'repeat last run' shortcut for similar production requests",
+      "detail": "After building lecture slides for M3L1, building the same for M3L2 should be trivial — same content type, same specialist sequence, same style parameters, different lesson. But there's no explicit 'repeat with different scope' pattern. The user goes through full intent parsing and production planning again.",
+      "action": "Add template detection to production planning: when the current request closely matches a recent production run (same content type, same module, different lesson), Marcus offers 'This looks like the same setup as the M3L1 slides. Want me to use the same workflow and parameters, just for L2?' Pre-fill the production plan from the template."
+    },
+    {
+      "file": "references/progress-reporting.md",
+      "severity": "medium-opportunity",
+      "category": "experience-gap",
+      "title": "No session summary or portfolio view on exit",
+      "detail": "When a production session ends, there's no wrap-up. The user just stops talking. There's no 'here's everything we accomplished today,' no portfolio view of 'here's all content produced for Module 3,' and no course-level progress dashboard. The value Marcus delivers over time is invisible. This is classic success amnesia — the user forgets how much Marcus has done because there's no recap.",
+      "action": "Add natural session wrap-up: when the user signals they're done (or at long idle), Marcus offers a session summary: 'Great session! We produced: slide deck for M3L1 (approved), voiceover script for M3L2 (in review). Module 3 is now 57% complete. Anything else before we wrap?' Also add a 'show me the portfolio' capability for on-demand course-level progress."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "medium-opportunity",
+      "category": "delight-opportunity",
+      "title": "Pattern learning is invisible to the user — missed delight opportunity",
+      "detail": "Marcus learns patterns in patterns.md (preferred voices, common revision patterns, specialist performance notes) but never shows the user what he's learned. The user doesn't experience 'oh, Marcus remembered that I always want more clinical images.' This is invisible value — the learning improves output quality but the user doesn't know why or how, and can't correct wrong patterns.",
+      "action": "Periodically surface learned patterns: 'Based on our last 5 runs, I've noticed you prefer conversational tone for clinical cases and formal tone for assessments. I'll apply that going forward — let me know if it changes.' Also add a 'show me what you've learned' capability so the user can review and correct patterns."
+    },
+    {
+      "file": "references/memory-system.md",
+      "severity": "medium-opportunity",
+      "category": "assumption-risk",
+      "title": "Memory system assumes single-course scope — no multi-course support",
+      "detail": "The memory sidecar (index.md, patterns.md, chronology.md) stores production context without explicit course scoping. A faculty member who teaches Pharmacology AND Clinical Skills AND Histology would have pattern confusion: the voice preference for Pharmacology lectures might differ from Clinical Skills case studies. The course_context.yaml appears to be singular. Memory entries don't tag which course they belong to.",
+      "action": "Add course-level scoping to memory entries: patterns.md entries should include the course code. When Marcus loads patterns, filter by the active course context. Add multi-course support to index.md: track which course is 'active' and allow the user to switch course context explicitly."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "No partial restart — production plan is forward-only",
+      "detail": "The production plan sequences stages linearly with checkpoint gates. If the user approves stage 3 (slides) but then realizes the outline (stage 1) was wrong, there's no documented 'go back to stage 1' protocol. The production plan moves forward only. In practice, medical education content creation is highly iterative — professors frequently want to revisit earlier decisions after seeing downstream output.",
+      "action": "Add stage rollback to production coordination: when the user wants to revise an earlier stage, Marcus acknowledges the downstream impact ('Going back to the outline will invalidate the slides we approved. I'll re-queue the slide generation after you approve the revised outline. Sound good?'), rolls back the plan state, and re-sequences."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "medium-opportunity",
+      "category": "assumption-risk",
+      "title": "Assumes style bible and exemplar library exist and are well-formed",
+      "detail": "Marcus's production planning, specialist handoffs, and quality gates all reference the style bible and exemplar library. Principle 10 says 'always consult' them. The activation sequence re-reads them fresh. But what if they're empty, incomplete, malformed, or contradictory? Init.md acknowledges they might not exist, but the downstream workflow doesn't degrade gracefully — the specialist context envelope includes 'relevant style bible sections' as a required field.",
+      "action": "Define explicit 'no style bible' and 'no exemplar' degraded states: Marcus can still produce content but flags that brand consistency is at risk. Present degraded state clearly to user: 'No style bible found — I can still coordinate production, but visual consistency and brand standards won't be enforced. Want to create a style bible first, or proceed without?' Make style bible context optional in the specialist context envelope."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium-opportunity",
+      "category": "facilitative-pattern",
+      "title": "Missing pedagogical intent elicitation before production",
+      "detail": "Source prompting asks 'do you have Notion notes?' and 'want me to check Box Drive?' — these are logistics questions. Missing is the deeper soft-gate question: 'What learning experience do you envision for students in this lesson? What should they be able to DO after this?' This pedagogical intent shapes every downstream decision (Bloom's level, assessment type, case complexity) but is never explicitly elicited. Marcus assumes it's embedded in the learning objectives, but objectives are often mechanical and don't capture the instructor's vision.",
+      "action": "Add an 'intent elicitation' step before production planning: 'Before we build, tell me about the learning experience you're designing. What should students walk away able to do? Any specific clinical scenarios or concepts you want to anchor on?' Feed this into the content-creator context envelope alongside the formal learning objectives."
+    },
+    {
+      "file": "references/checkpoint-coord.md",
+      "severity": "medium-opportunity",
+      "category": "facilitative-pattern",
+      "title": "Quality review uses single lens — no parallel review perspectives",
+      "detail": "The quality-reviewer specialist validates against the style bible as a single rubric. But medical education content has multiple quality dimensions that benefit from parallel evaluation: accessibility compliance, clinical accuracy, pedagogical alignment (Bloom's), assessment validity, and brand consistency. Running these as a single serial review risks the reviewer optimizing for one dimension while missing others.",
+      "action": "Consider parallel review lenses within the quality-reviewer specialist: accessibility lens, clinical accuracy lens, pedagogical alignment lens, brand consistency lens. Present results as a multi-dimensional quality scorecard. This doesn't require multiple agents — it's a structured prompt pattern within the existing quality-reviewer."
+    },
+    {
+      "file": "references/mode-management.md",
+      "severity": "medium-opportunity",
+      "category": "delight-opportunity",
+      "title": "Missing 'planning mode' — third mode for semester-level content strategy",
+      "detail": "Marcus has default (production) and ad-hoc (experimental). Missing is a 'planning' mode where Marcus helps the user map out content strategy across an entire module or semester without producing anything. The user and Marcus would discuss: which lessons need which content types, what the production priority order is, where to reuse existing assets, what the timeline looks like. Currently this conversation would happen in default mode but wouldn't produce any artifacts or trigger any specialist agents.",
+      "action": "Add a lightweight 'planning' mode or extend conversation management to recognize planning-intent conversations: 'Sounds like you want to plan the full module before we produce anything. Let me map out what's needed...' Output a content strategy document (markdown) that serves as the production roadmap."
+    },
+    {
+      "file": "references/progress-reporting.md",
+      "severity": "medium-opportunity",
+      "category": "delight-opportunity",
+      "title": "Proactive cross-reference detection between production runs",
+      "detail": "Marcus treats each production run independently. But medical education content is deeply interconnected: a pharmacology concept in Module 2 may be prerequisite to a clinical case in Module 4, an assessment question might reference a lecture slide, a patient scenario might appear in multiple modules with increasing complexity. Marcus could detect these connections and surface them proactively.",
+      "action": "Add cross-reference awareness to production planning: when creating content for a lesson, scan existing content (via memory and staging) for related concepts. Surface connections: 'The medication interaction we covered in M2L3 is relevant here. Want me to reference it or build on it?' This leverages Marcus's unique position as the orchestrator who sees all content."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "Clarifying questions assume the user can answer them",
+      "detail": "When requests are ambiguous, Marcus asks clarifying questions: 'Did you mean Pharmacology or Clinical Skills?' But a new or confused user might not know how their course structure is represented in the system. They might not know module names, lesson identifiers, or even what content types they need. Marcus asks good questions but has no fallback for 'I don't know — show me what's available.'",
+      "action": "Add 'discovery' fallbacks to clarifying questions: when the user can't answer, Marcus offers to show the options. 'Not sure? Let me pull up the course structure — here are the modules and lessons I know about. Which one are we working on?' Use course_context.yaml to present navigable options instead of requiring the user to know identifiers."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "medium-opportunity",
+      "category": "assumption-risk",
+      "title": "Context window exhaustion risk for long production sessions",
+      "detail": "A complex production run (interactive module with 5 stages, each involving multiple specialist interactions, review gates, and revisions) could generate enormous context. Marcus re-reads style bible, exemplars, memory sidecar, and state on every activation. Add specialist output, user feedback, revision history, and the context window fills fast. There's no explicit strategy for context management within a long session.",
+      "action": "Add context window awareness: define a 'condensation protocol' for long sessions where Marcus summarizes completed stages into compact state records and releases the detailed context. The memory sidecar already has this concept (periodically condense patterns.md), but it needs to apply to in-session context as well."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "Shared/reused assets conflict with the asset-lesson pairing invariant",
+      "detail": "The asset-lesson pairing invariant says 'every educational artifact is paired with instructional context. No exceptions.' But medical education commonly reuses assets: a diagram of the cardiac conduction system might appear in Physiology, Pharmacology, and Clinical Skills modules. A case study might be the foundation for multiple lessons with different learning objectives. The invariant as stated doesn't account for one-to-many pairing.",
+      "action": "Clarify the invariant to support one-to-many pairing: an asset must have AT LEAST ONE instructional context, and when reused in additional contexts, each usage must have its own documented pairing (learning objectives, assessment alignment for that context). Add a 'reuse' workflow to conversation management: 'This diagram is already paired with M1L3. Want to create a secondary pairing for this module with its own learning objectives?'"
+    },
+    {
+      "file": "scripts/read-mode-state.py",
+      "severity": "low-opportunity",
+      "category": "edge-case",
+      "title": "read-mode-state.py doesn't actually read or set the run mode",
+      "detail": "The script reads production run state from SQLite but returns mode as hardcoded 'default'. There's no mode field in the database query, no mode state file, and no mechanism to actually store or retrieve the current run mode. Mode management in the reference doc describes mode switching but the infrastructure to persist mode state doesn't exist in the script.",
+      "action": "Add a mode column to the production_runs table or a separate mode_state table/file. The read-mode-state.py script should return the actual persisted mode, not a hardcoded default. This is likely a v2 infrastructure concern, but the gap between the mode management reference doc and the actual script capability should be documented."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "low-opportunity",
+      "category": "delight-opportunity",
+      "title": "No 'what can you do?' onboarding capability",
+      "detail": "Marcus has 6 internal capabilities, 5 external skills, and 8 specialist agents. But there's no guided capability tour for a new user. The first-timer archetype asks 'what can you help me with?' and Marcus would need to improvise an answer from the capability tables. A structured onboarding tour would accelerate adoption.",
+      "action": "Add a natural 'what I can do' response pattern: when a user asks about capabilities, Marcus presents them as production scenarios rather than capability tables. 'I can help you build slide decks, write case studies, create assessments, produce voiceovers, assemble interactive modules — basically anything your course needs. I'll handle the coordination with specialist tools. What are you working on?'"
+    },
+    {
+      "file": "references/source-prompting.md",
+      "severity": "low-opportunity",
+      "category": "assumption-risk",
+      "title": "Assumes Notion and Box Drive content is well-organized and retrievable",
+      "detail": "Source prompting offers to 'pull Notion notes' and 'check Box Drive' but assumes these sources are organized in a way that Marcus can navigate. In practice, faculty Notion pages are often chaotic (nested pages, no tagging, mixed personal and course content) and Box Drive folders may have inconsistent naming. The source-wrangling skill would need robust search, not just path-based retrieval.",
+      "action": "Add a 'source quality assessment' to the source-wrangling interaction: when pulled content is sparse, disorganized, or unclear, Marcus reports this to the user. 'I pulled the Notion notes for Module 3 but they're fairly sparse — just bullet points. Want to give me more context verbally, or should we work from what's there?'"
+    },
+    {
+      "file": "references/progress-reporting.md",
+      "severity": "low-opportunity",
+      "category": "delight-opportunity",
+      "title": "No celebration or reinforcement when milestones are reached",
+      "detail": "When a module is complete, when the first production run finishes, when the 10th assessment is approved — Marcus reports it as routine status. There's no milestone recognition. Faculty producing course content are doing creative work under time pressure; acknowledging accomplishments is a small delight that builds engagement.",
+      "action": "Add milestone awareness to progress reporting: 'That's Module 2 complete — all 5 lessons have slide decks, assessments, and voiceovers. That's a big milestone. Ready to start Module 3, or want to take a look at the full Module 2 portfolio first?' Natural, not artificial — proportional to actual accomplishment."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "low-opportunity",
+      "category": "experience-gap",
+      "title": "Cross-specialist coordination value is invisible to the user",
+      "detail": "Marcus builds context envelopes (production run ID, content type, learning objectives, style bible sections, exemplar references, user constraints, revision feedback) and passes them to every specialist. This is Marcus's core value add — ensuring specialist output is contextually grounded. But the user never sees this happening. They don't know Marcus is telling Gamma about the style bible or passing revision feedback to the content-creator.",
+      "action": "Occasionally make coordination visible: 'I'm passing the learning objectives and your feedback about clinical images to Gamma for the slide redesign — they'll have full context.' Not every time (that's noise), but periodically to reinforce Marcus's coordination value."
+    },
+    {
+      "file": "references/mode-management.md",
+      "severity": "low-opportunity",
+      "category": "journey-friction",
+      "title": "Mode names are system-centric, not user-centric",
+      "detail": "'Default mode' and 'ad-hoc mode' are implementation-level names. A medical education faculty member thinks in terms of 'working on my course' vs 'trying something out.' The mode names don't map to the user's mental model. 'Default' especially is meaningless — it's just the mode that isn't the other one.",
+      "action": "Consider user-facing mode names: 'Production mode' (everything is tracked and saved) vs 'Sandbox mode' (experiment freely, nothing is permanent). Marcus can use these labels in conversation while keeping the technical names internally. 'Want to try this in sandbox mode first, or go straight to production?'"
+    },
+    {
+      "file": "references/checkpoint-coord.md",
+      "severity": "low-opportunity",
+      "category": "facilitative-pattern",
+      "title": "No dual-output option at review gates",
+      "detail": "At checkpoint gates, Marcus presents the artifact for user review. But the user might want to share the artifact with a teaching assistant, a co-instructor, or an accreditation reviewer. There's no 'generate a shareable summary' output alongside the review presentation — the user would need to copy-paste or re-describe the artifact to share it.",
+      "action": "Add optional dual-output at review gates: 'Want me to generate a quick summary of this slide deck you can share with your team for feedback?' Produce a condensed description (content, objectives covered, quality assessment) in a shareable format alongside the full review presentation."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "low-opportunity",
+      "category": "edge-case",
+      "title": "No handling for mid-production user absence (days/weeks gap)",
+      "detail": "Marcus's memory system captures state, and the activation sequence loads last session context. But there's no explicit handling for staleness. If a user starts a production run, disappears for 3 weeks, and returns — are the pending review gates still valid? Is the specialist output still current? Have the learning objectives changed? Marcus resumes as if nothing happened.",
+      "action": "Add staleness detection to activation: if the last session activity was more than N days ago, Marcus proactively checks for changes. 'Welcome back! It's been a few weeks since we last worked on M3L2. The style bible has been updated since then — want me to check if the pending slides still comply, or start fresh?'"
+    },
+    {
+      "file": "references/memory-system.md",
+      "severity": "low-opportunity",
+      "category": "delight-opportunity",
+      "title": "No 'expertise evolution' visibility — Marcus gets smarter but user doesn't see it",
+      "detail": "patterns.md accumulates workflow sequences, parameter preferences, revision patterns, and specialist performance notes. Over time, Marcus becomes significantly more attuned to the user's preferences. But this evolution is invisible. After 20 sessions, Marcus doesn't say 'I've learned a lot about how you like content produced. Here's a summary of your style profile.'",
+      "action": "Add periodic 'what I've learned' summaries: at natural milestones (every N production runs, start of new module), Marcus offers a brief pattern review. 'Over our last 10 runs, I've learned: you prefer Rachel for narration, you usually reduce slide count by 2-3 on first review, and you like clinical images over diagrams. Does this still hold?' This also serves as a correction opportunity."
+    }
+  ],
+  "assessments": {
+    "skill_understanding": {
+      "purpose": "Single conversational point of contact for health sciences / medical education course content production. Coordinates multi-agent workflows, delegates to specialist agents, manages human checkpoint gates, enforces quality standards, and learns from production runs — all while hiding system complexity behind conversational ease.",
+      "primary_user": "Medical education faculty member who is the domain expert and creative director. They understand medical education deeply but shouldn't need to understand production orchestration, specialist agents, or state management.",
+      "key_assumptions": [
+        "User has or will create a style bible and exemplar library before meaningful production begins",
+        "User is fluent in medical education vocabulary (Bloom's taxonomy, backward design, LCME/ACGME, etc.)",
+        "Production requests map neatly to one of 8 predefined content types",
+        "Production follows a linear forward-only workflow through sequential stages",
+        "One course context is active at a time — no multi-course parallel work",
+        "The user is available for checkpoint gates within a reasonable timeframe (no multi-week gaps)",
+        "Specialist agents are available and responsive when invoked",
+        "Source materials (Notion, Box Drive) are organized enough to retrieve programmatically",
+        "Context window is sufficient for the full production lifecycle of a single content artifact",
+        "The user always wants to produce something (vs. review, plan, or explore)"
+      ]
+    },
+    "user_journeys": [
+      {
+        "archetype": "First-Timer",
+        "summary": "A new faculty member who heard about Marcus and wants to try it out. They have lecture notes in Notion but haven't set up any infrastructure (no style bible, no exemplars, no course context YAML). They want to produce a slide deck for their upcoming lecture.",
+        "friction_points": [
+          "Init asks 5 questions before any value — feels like filling out a form to use a tool",
+          "Terms like 'style bible,' 'exemplar library,' and 'asset-lesson pairing invariant' are opaque",
+          "No demo or guided tour — Marcus assumes the user knows what an orchestrator does",
+          "If infrastructure doesn't exist, Marcus can note it but can't actually produce much",
+          "Mode names (default/ad-hoc) mean nothing to a first-timer"
+        ],
+        "bright_spots": [
+          "Warm greeting with name and clear next-step offer — feels personal",
+          "Source prompting ('want me to pull your Notion notes?') is immediately useful",
+          "Clear communication style — professional without being intimidating",
+          "Memory system means the SECOND session is much better than the first"
+        ]
+      },
+      {
+        "archetype": "Expert",
+        "summary": "A faculty member who has run 50+ production runs, knows their course inside out, and wants to rapidly produce content for a new module. They have established patterns and strong preferences.",
+        "friction_points": [
+          "Full production planning ceremony every time — no 'fast track' for known workflows",
+          "No batch operations — 'build slides for all lessons in Module 3' requires 6 individual runs",
+          "No 'repeat last run' shortcut for similar content",
+          "Intermediate checkpoint gates feel like busywork for trusted patterns",
+          "Pattern learning is invisible — expert doesn't know Marcus has learned their preferences"
+        ],
+        "bright_spots": [
+          "Memory-based session continuity — Marcus picks up where they left off",
+          "Style bible and exemplar consultation ensures consistency across the course",
+          "Natural progress reporting matches expert's expectation of a professional collaborator",
+          "Options with recommendations saves decision fatigue"
+        ]
+      },
+      {
+        "archetype": "Confused User",
+        "summary": "A faculty member who is new to instructional design, unfamiliar with production workflows, and not sure what they need. They know they want 'better online content' but can't articulate specific content types or pedagogical objectives.",
+        "friction_points": [
+          "Medical education vocabulary barrier (Bloom's, backward design, assessment tracing)",
+          "Clarifying questions assume the user can answer them — no 'show me what's available' fallback",
+          "Content type vocabulary requires the user to know what artifact type they want",
+          "No guided discovery path — 'tell me about your teaching goals and I'll suggest what to build'",
+          "Mode distinction adds unnecessary cognitive load"
+        ],
+        "bright_spots": [
+          "Marcus never guesses — asks clarifying questions instead of assuming",
+          "Conversational style is approachable and non-technical",
+          "Recommendations come with rationale, which is educational",
+          "Quality gates provide natural teaching moments about content standards"
+        ]
+      },
+      {
+        "archetype": "Edge-Case User",
+        "summary": "A faculty member who teaches across 3 courses, wants to reuse assets between modules, has unusual content needs (patient simulations, OSCE checklists), and sometimes works in bursts with multi-week gaps between sessions.",
+        "friction_points": [
+          "Single course context — switching between courses isn't explicitly supported",
+          "Asset-lesson pairing invariant doesn't support one-to-many reuse",
+          "Content types they need (simulations, OSCE) aren't in the vocabulary",
+          "Multi-week gaps may produce stale state with no freshness detection",
+          "Partial production restarts not supported — can't go back to stage 2 after approving stage 4"
+        ],
+        "bright_spots": [
+          "Memory persistence means they can resume after gaps",
+          "Ad-hoc mode supports experimentation without commitment",
+          "Specialist routing is flexible enough to add new specialist types",
+          "Quality gates catch issues regardless of how unusual the content is"
+        ]
+      },
+      {
+        "archetype": "Hostile Environment",
+        "summary": "A session where Gamma is down, Notion API is timing out, the style bible was recently reformatted and has formatting issues, and the SQLite database has a corrupted record from a crashed session.",
+        "friction_points": [
+          "Cascading failures — if 3+ specialists are unavailable, Marcus has nothing to delegate to",
+          "No 'offline mode' — Marcus without specialist agents is just a conversation partner",
+          "read-mode-state.py hardcodes mode as 'default' — doesn't handle corrupt or missing mode state",
+          "Style bible malformation (bad YAML, broken references) could produce subtle downstream errors",
+          "No self-healing — Marcus detects problems but can't fix infrastructure"
+        ],
+        "bright_spots": [
+          "Error handling protocol is well-designed: inform, suggest alternatives, adjust plan, never fail silently",
+          "Pre-flight check capability can detect issues proactively",
+          "Graceful degradation messaging is clear and actionable",
+          "QA runs in all modes — quality never silently degrades"
+        ]
+      },
+      {
+        "archetype": "Automator",
+        "summary": "A curriculum coordinator who wants to batch-produce content across an entire semester — 8 modules, 40 lessons, standardized slide decks and assessments for all of them. They want to set parameters once and let Marcus handle it.",
+        "friction_points": [
+          "Interactive-only for v1 — no headless batch production",
+          "No programmatic trigger or CI integration",
+          "No production run templates — every run goes through intent parsing",
+          "No 'when X changes, do Y' automation triggers",
+          "Each production run requires manual checkpoint approvals"
+        ],
+        "bright_spots": [
+          "Architecture cleanly supports future headless mode (agent/specialist/API layers separated)",
+          "Pattern learning could feed template generation",
+          "Scripts (read-mode-state.py, generate-production-plan.py) are already structured for programmatic use",
+          "Style bible and exemplar consistency means standardized output quality"
+        ]
+      }
+    ],
+    "autonomous_assessment": {
+      "potential": "HIGH — Marcus's architecture (agent judgment layer separated from specialist execution layer separated from API connectivity layer) is textbook-ready for headless operation. The specialist context envelope is already a machine-readable handoff contract. The main barriers are human checkpoint gates (6+ per workflow) and ambiguity resolution in intent parsing.",
+      "hitl_points": 8,
+      "auto_resolvable": 5,
+      "needs_input": 3,
+      "suggested_output_contract": "{ artifacts: [{ path, content_type, module, lesson, quality_score, specialist_decisions }], quality_report: { per_artifact_scores, style_bible_compliance, bloom_alignment, accessibility_check }, decision_log: [{ stage, decision, rationale, auto_or_human }], production_summary: { total_artifacts, approved, needs_review, failed } }",
+      "required_inputs": [
+        "course_context.yaml — full course/module/lesson hierarchy with learning objectives",
+        "content_type — which artifact type to produce (or 'all' for full module build)",
+        "module_scope — which module(s) and lesson(s) to target",
+        "style_bible_path — path to resources/style-bible/",
+        "exemplar_path — path to resources/exemplars/",
+        "quality_thresholds — { auto_approve_above: 0.9, flag_for_review_below: 0.7 }",
+        "parameter_overrides — optional per-specialist parameter preferences from patterns.md"
+      ],
+      "notes": "Start with simple content types for headless (discussion prompts, where quality judgment is less subjective). Tier checkpoint gates: auto-approve if quality score > threshold, queue for human review otherwise. The 3 non-automatable HITL points are: (1) pedagogical intent that isn't captured in learning objectives, (2) clinical accuracy judgment that requires domain expertise, and (3) final approval for publication to course-content/courses/. The brainstorming doc explicitly marks this as 'Interactive mode only for v1' — headless is the obvious v2 headline feature."
+    },
+    "top_insights": [
+      {
+        "title": "The first 5 minutes determine adoption — and they're the worst 5 minutes",
+        "detail": "Marcus's init.md asks 5 setup questions before delivering any value. A first-timer with no infrastructure gets an interrogation about things they don't have. The memory system means session 2+ will be great — but many users won't reach session 2 if session 1 feels like filling out forms. The fix isn't removing setup; it's offering a zero-config demo flow that shows value immediately, then earning the right to ask setup questions.",
+        "action": "Add a 'quick start' path: detect empty infrastructure and offer a guided demo production run using sample content. Let the user see Marcus in action before asking them to configure anything. Setup becomes 'now that you've seen what I can do, let's set up your course properly.'"
+      },
+      {
+        "title": "Ad-hoc mode is a hotel with no checkout — great experiments can't move to production",
+        "detail": "The ad-hoc/default mode boundary is well-enforced but one-way. A user who experiments in ad-hoc mode and creates something excellent has no path to say 'promote this to production.' They'd need to switch to default mode and reproduce the work. This creates a perverse incentive to always use default mode (avoiding the potential loss), which defeats the purpose of having a safe sandbox.",
+        "action": "Add a 'promote' operation: the user approves an ad-hoc artifact, Marcus copies it to production staging, creates the state records retroactively, and runs the standard review gate. The artifact already exists — only the tracking and routing need to change."
+      },
+      {
+        "title": "Marcus orchestrates production but doesn't help plan production — the strategic gap",
+        "detail": "Every interaction assumes the user knows what they want to produce. But faculty often need help BEFORE production: 'I have 40 hours of content to produce this semester — where do I start? What should I produce first? What can I reuse from last year?' This is semester-level content strategy, and it's the highest-value conversation Marcus could have. Currently it would happen as unstructured chat in default mode with no dedicated workflow.",
+        "action": "Add a 'content strategy' capability or planning mode: Marcus helps the user map out production priorities across a module or semester, identify reuse opportunities, estimate effort, and create a production roadmap. Output: a content plan document that becomes the production backlog."
+      },
+      {
+        "title": "The expert user is being slowed down by the guardrails designed for everyone else",
+        "detail": "After 50 production runs, the expert knows the drill. They don't need the full production planning ceremony, intermediate checkpoint gates, or clarifying questions for well-established workflows. But Marcus treats every run as if it might be the user's first. The same quality rigor that protects a new user becomes friction for an expert. The fix isn't reducing quality — it's collapsing redundant ceremony when confidence is high.",
+        "action": "Add confidence-based ceremony reduction: for well-established workflows where Marcus has high pattern confidence, offer 'I'll run the standard workflow with your usual settings and come back with the final output for review. Just the final checkpoint. Sound good?' Keep the quality gates running internally but only surface the final approval gate."
+      },
+      {
+        "title": "Marcus learns in silence — the user never sees the intelligence accumulating",
+        "detail": "patterns.md accumulates valuable learned preferences: voice choices, revision patterns, specialist performance, workflow sequences. This is Marcus's differentiator — he gets smarter over time. But the user never sees this happening. They don't know Marcus remembered their preference for clinical images over diagrams. They don't know Marcus is passing their revision feedback to the specialist. The intelligence is invisible, which means the user can't correct wrong patterns AND doesn't feel the value of long-term use.",
+        "action": "Surface learned patterns periodically: 'Based on our work together, I've learned you prefer conversational tone for clinical cases. I'll apply that going forward — let me know if it changes.' Add 'show me what you've learned' as a capability so users can review and correct the pattern library."
+      }
+    ]
+  },
+  "summary": {
+    "total_findings": 30,
+    "by_severity": {
+      "high-opportunity": 6,
+      "medium-opportunity": 15,
+      "low-opportunity": 9
+    },
+    "by_category": {
+      "edge-case": 7,
+      "experience-gap": 3,
+      "delight-opportunity": 5,
+      "assumption-risk": 5,
+      "journey-friction": 3,
+      "autonomous-potential": 1,
+      "facilitative-pattern": 4
+    },
+    "assessment": "Marcus is an exceptionally well-designed orchestrator with clear architectural separation, disciplined memory management, and strong quality principles. The core design is sound — the gaps are almost entirely about user journey nuance rather than structural flaws. The five highest-impact opportunities are: (1) smoothing the first-session onboarding cliff, (2) adding ad-hoc-to-production promotion, (3) expanding beyond pure production to content strategy/planning, (4) reducing ceremony for expert users, and (5) making the learning system visible to the user. The headless potential is genuinely high — the architecture was designed in a way that makes autonomous batch production a natural evolution rather than a rewrite. The most interesting tension in Marcus's design is between quality rigor (non-negotiable gates, style bible enforcement, asset-lesson pairing invariant) and user flow (don't slow people down, hide complexity, feel like talking to a colleague). The current design leans toward rigor, which is correct for v1 of a medical education tool where mistakes have real consequences. The enhancement path is about finding ways to maintain that rigor while reducing the ceremony tax on experienced users."
+  }
+}

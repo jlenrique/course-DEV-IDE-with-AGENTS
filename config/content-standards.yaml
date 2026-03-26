@@ -1,4 +1,15 @@
-# Defaults agents and humans use when drafting course content (edit to match your programs).
+# Content Standards — Bootstrap defaults for agents and humans.
+#
+# ROLE: Minimum-viable floor. These defaults apply when no style bible exists
+# yet or when an agent/skill operates outside Marcus's production workflow
+# (e.g., ad-hoc drafts via Cursor rules, standalone content agents).
+#
+# SUPERSEDED BY: resources/style-bible/master-style-bible.md once that file
+# exists. The style bible is the authoritative source for brand identity,
+# visual design, voice/tone, and accessibility requirements.
+#
+# See docs/directory-responsibilities.md for the full configuration hierarchy.
+
 audience: "Adult learners, asynchronous online"
 voice: "Clear, direct, inclusive; avoid jargon without definition"
 accessibility:

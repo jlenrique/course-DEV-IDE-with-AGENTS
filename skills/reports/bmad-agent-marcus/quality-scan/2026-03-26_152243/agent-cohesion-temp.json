@@ -1,0 +1,189 @@
+{
+  "scanner": "agent-cohesion",
+  "agent_path": "skills/bmad-agent-marcus",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "severity": "strength",
+      "category": "strength",
+      "title": "Exemplary persona-capability alignment",
+      "detail": "Marcus's identity as a veteran executive producer maps precisely to what he does: orchestrate, delegate, manage checkpoints, report progress, and enforce quality. The persona doesn't promise abilities the capability set can't deliver, and the capability set doesn't include anything incongruent with the persona. The 'Does Not Do' section reinforces this by explicitly excluding code, tests, git, and API work — drawing a clean boundary around the orchestrator role.",
+      "action": "No action needed. This is a model of how persona and capability should align."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "strength",
+      "category": "strength",
+      "title": "Deep medical education domain embedding",
+      "detail": "Marcus doesn't just coordinate generic content — he speaks the language of medical education: Bloom's taxonomy, backward design, clinical case integration, assessment-objective tracing, LCME/ACGME accreditation awareness. This domain knowledge is woven into Identity, Communication Style, Principles, and the checkpoint quality criteria. A faculty user would immediately feel that Marcus understands their world.",
+      "action": "No action needed. Domain embedding is thorough and natural."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "strength",
+      "category": "strength",
+      "title": "Context envelope pattern for specialist delegation",
+      "detail": "The specialist handoff protocol defines a consistent context envelope (outbound: run ID, content type, scope, learning objectives, constraints, style bible sections, exemplar refs; inbound: artifact path, quality self-assessment, parameter decisions, status). This provides a clean, repeatable interface contract for all specialist agents, making the delegation pattern scalable and predictable.",
+      "action": "No action needed. Well-designed integration pattern."
+    },
+    {
+      "file": "references/mode-management.md",
+      "severity": "strength",
+      "category": "strength",
+      "title": "Mode management with hard enforcement boundaries",
+      "detail": "The default/ad-hoc mode system is well-conceived. It gives faculty a safe experimentation sandbox (ad-hoc) without polluting production state, while maintaining QA in both modes. The enforcement rules are explicit: no state writes in ad-hoc, no production routing, no pattern learning. The mode switch confirmations are unambiguous. This solves a real workflow need — faculty often want to try something before committing.",
+      "action": "No action needed. Strong operational design."
+    },
+    {
+      "file": "references/memory-system.md",
+      "severity": "strength",
+      "category": "strength",
+      "title": "Sophisticated memory system with mode-aware write discipline",
+      "detail": "The memory sidecar architecture (index.md as entry point, access-boundaries.md for permissions, patterns.md for learned behavior, chronology.md for history) is well-structured. Mode-aware write rules prevent ad-hoc experimentation from corrupting learned patterns. The write-through vs. checkpoint persistence strategy is practical. The principle that style bible content is never cached in memory (always re-read from disk) prevents stale reference drift.",
+      "action": "No action needed. Memory architecture is production-grade."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "strength",
+      "category": "strength",
+      "title": "Asset-lesson pairing invariant is a strong quality guardrail",
+      "detail": "The non-negotiable rule that every educational artifact must be paired with instructional context (parent lesson, traceable learning objectives, assessment alignment) prevents the common anti-pattern of orphaned assets. This invariant is enforced in conversation-mgmt.md and echoed in production planning. It reflects real medical education accreditation requirements where traceability is essential.",
+      "action": "No action needed. Domain-appropriate quality enforcement."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "medium",
+      "category": "gap",
+      "title": "CM capability is overloaded — four distinct concerns in one reference",
+      "detail": "The CM capability bundles conversation management, intent parsing, production planning, workflow orchestration, AND specialist handoff protocol into a single reference file. These are at least three distinct operational concerns: (1) understanding what the user wants, (2) planning how to produce it, (3) delegating to specialists. The reference is the longest and most complex, and a failure to load it would cripple most of Marcus's functionality. This creates a single point of failure and makes the capability table less useful as a routing mechanism.",
+      "action": "Consider splitting CM into at least two capabilities: 'IP' (Intent Parsing & Conversation Management) and 'PP' (Production Planning & Specialist Orchestration). This would make the capability table more granular, improve selective loading, and reduce blast radius if one reference fails to load."
+    },
+    {
+      "file": "scripts/read-mode-state.py",
+      "severity": "medium",
+      "category": "misalignment",
+      "title": "Mode state script doesn't actually track run mode (default vs ad-hoc)",
+      "detail": "read-mode-state.py returns a hardcoded 'mode': 'default' and never queries the database for actual mode state. The mode-management.md reference says to 'invoke ./scripts/read-mode-state.py to verify' after a mode switch, but the script cannot verify anything — it always returns 'default'. The actual mode appears to be tracked only in the memory sidecar's index.md, creating a disconnect between the documented verification mechanism and reality.",
+      "action": "Either (a) add a mode column to the SQLite coordination.db and have the script read it, or (b) have the script read the mode from the memory sidecar index.md, or (c) update mode-management.md to clarify that mode is tracked in memory only and remove the script verification reference."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "medium",
+      "category": "gap",
+      "title": "No explicit production run closure or finalization lifecycle stage",
+      "detail": "The production workflow covers intake → plan → delegate → review → approve, but there's no explicit 'close run' or 'finalize and deliver' capability. What happens after the last checkpoint approval? How does a production run transition from 'approved' to 'delivered'? The generate-production-plan.py script shows stages ending at 'checkpoint' (human approval) for most content types, with 'publish' for some LMS content, but there's no orchestrator-level finalization step that archives the run, confirms delivery, and triggers chronology/pattern updates.",
+      "action": "Add a lightweight 'RF' (Run Finalization) capability or extend CM to include an explicit close-out protocol: confirm all assets delivered, update chronology, trigger pattern extraction, archive run state, present summary to user."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "severity": "low",
+      "category": "gap",
+      "title": "No curriculum-level or batch production planning",
+      "detail": "Marcus can plan production for individual content items (one slide deck, one case study, one assessment), but there's no capability for planning at the module or semester level. A faculty user preparing an entire module might need to say 'Build all lesson content for Module 3' and get a coordinated multi-item production plan with dependency ordering across lessons. The current content-type-to-workflow mapping is purely per-item.",
+      "action": "Consider adding a 'curriculum planning' mode or extending production planning to handle multi-item requests with inter-item dependency awareness (e.g., lecture slides should be approved before the assessment that tests the same objectives)."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "low",
+      "category": "gap",
+      "title": "No content search or reuse capability",
+      "detail": "When producing new content, there's no explicit capability for searching previously produced assets for reuse or adaptation. A faculty user building a new case study might want to reference or adapt a similar case from a prior module. The memory sidecar tracks production history (chronology.md) but there's no search or retrieval interface for past artifacts beyond what the user remembers.",
+      "action": "Consider adding a content discovery capability that can search course-content/ for existing assets by content type, module, topic, or learning objective, and present reuse opportunities before starting from scratch."
+    },
+    {
+      "file": "references/checkpoint-coord.md",
+      "severity": "low",
+      "category": "gap",
+      "title": "No revision workflow for previously-approved content",
+      "detail": "Checkpoint coordination handles the approve/revise/reject cycle during initial production, but there's no documented workflow for revising content that was previously approved and delivered. What if a faculty user needs to update slides from last semester based on new clinical guidelines? The current model assumes production runs produce new content, not revise existing approved artifacts.",
+      "action": "Document a revision workflow: how to initiate a revision of existing approved content, how to version it, and how revision context (original approval, change rationale) is passed to specialists."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "suggestion",
+      "category": "opportunity",
+      "title": "Separate future specialist agents from current ones in the table",
+      "detail": "The External Specialist Agents table mixes currently available agents (gamma-specialist, elevenlabs-specialist, etc.) with future/planned ones (qualtrics-specialist, canva-specialist) using inline 'Future:' labels. This could confuse the LLM during activation — it might attempt to delegate to a specialist that doesn't exist yet and then need to recover from the error.",
+      "action": "Split the table into 'Available Specialist Agents' and 'Planned Specialist Agents' (or 'Future'), or add an explicit 'Status' column (active/planned) to the table so the agent can filter at delegation time."
+    },
+    {
+      "file": "references/source-prompting.md",
+      "severity": "suggestion",
+      "category": "opportunity",
+      "title": "Source prompting could integrate with content-creator for automatic context enrichment",
+      "detail": "Currently, source prompting (SP) offers to pull materials before production, and the retrieved materials are manually incorporated into the context envelope. This could be tighter — when content-creator is invoked, Marcus could automatically attach any previously-pulled source materials for the target lesson without requiring the user to confirm each time. The current flow adds conversational overhead on every production task.",
+      "action": "Consider a 'smart source attachment' behavior: if Notion notes or Box Drive materials were already pulled for a lesson during a prior session (tracked in patterns.md or chronology.md), automatically include them in the specialist context envelope with a brief mention to the user, rather than re-prompting."
+    },
+    {
+      "file": "SKILL.md",
+      "severity": "suggestion",
+      "category": "opportunity",
+      "title": "No multi-user collaboration or handoff capability",
+      "detail": "Marcus assumes a single user (the creative director/domain expert). In real medical education departments, multiple faculty may collaborate on a course. There's no concept of delegating review checkpoints to a different faculty member, sharing production state across users, or managing concurrent production runs from different requestors. This is reasonable for v1 but worth noting for roadmap.",
+      "action": "For a future version, consider a lightweight collaboration model: named reviewers at checkpoint gates, production run ownership, and the ability to share run status with other faculty."
+    }
+  ],
+  "assessments": {
+    "agent_identity": {
+      "name": "bmad-agent-marcus",
+      "persona_summary": "Veteran executive producer for health sciences and medical education content — a calm, experienced orchestrator who coordinates multi-agent production workflows, manages human checkpoints, and ensures educational artifacts meet professional and accreditation standards.",
+      "primary_purpose": "Single conversational point of contact for medical education course content production, bridging user intent to specialist execution through structured workflows, quality gates, and persistent learning.",
+      "capability_count": 19
+    },
+    "cohesion_analysis": {
+      "persona_alignment": {
+        "score": "strong",
+        "notes": "Marcus's identity as a veteran executive producer aligns precisely with the capability set. Every internal capability (conversation management, progress reporting, checkpoint coordination, mode management, source prompting, memory) maps to what an orchestrator should do. The 'Does Not Do' section reinforces the boundary — no code, no tests, no APIs. The medical education domain knowledge is embedded throughout, not bolted on. The communication style guidance reinforces the persona naturally."
+      },
+      "capability_completeness": {
+        "score": "mostly-complete",
+        "missing_areas": [
+          "Production run closure/finalization lifecycle stage",
+          "Curriculum-level or batch production planning",
+          "Content search and reuse across past productions",
+          "Revision workflow for previously-approved content"
+        ],
+        "notes": "The core production workflow (intake → plan → delegate → review → approve) is well-covered. The main gap is at the lifecycle boundaries: how a run formally closes, and how past production feeds into future production. These are not blocking for v1 usage but would surface quickly in sustained use across a full semester of course production."
+      },
+      "redundancy_level": {
+        "score": "clean",
+        "consolidation_opportunities": [
+          "CM could be split rather than consolidated — it bundles four concerns (conversation mgmt, intent parsing, production planning, specialist orchestration) that might benefit from being two capabilities"
+        ]
+      },
+      "external_integration": {
+        "external_skills_referenced": 13,
+        "integration_pattern": "intentional",
+        "notes": "The separation between external skills (workflow tools: pre-flight-check, production-coordination, run-reporting, parameter-intelligence, source-wrangling) and external specialist agents (content producers: gamma, elevenlabs, canvas, content-creator, quality-reviewer, assembly-coordinator, plus 2 future) is deliberate and well-structured. The context envelope pattern provides a clean, consistent interface contract for all delegations. Two future specialists are noted but could be separated more clearly to avoid premature delegation attempts."
+      },
+      "user_journey_score": {
+        "score": "mostly-complete",
+        "broken_workflows": [
+          "No explicit path from 'all checkpoints approved' to 'production run finalized and delivered'",
+          "No path for revising previously-approved content from prior semesters",
+          "No way to search for or reuse past production artifacts"
+        ],
+        "notes": "A medical education faculty member can accomplish meaningful content production end-to-end for the first-time-through case. The first-run onboarding is smooth, intent parsing is comprehensive, production planning with checkpoint gates covers the creative workflow well, and mode management provides safe experimentation. The gaps appear at the lifecycle edges: finalizing completed runs, revising old content, and leveraging past production for efficiency gains. These don't create dead-ends but rather soft edges where the user would need to work around limitations."
+      }
+    }
+  },
+  "summary": {
+    "total_findings": 14,
+    "by_severity": {
+      "high": 0,
+      "medium": 3,
+      "low": 3,
+      "suggestion": 3,
+      "strength": 5
+    },
+    "by_category": {
+      "gap": 5,
+      "redundancy": 0,
+      "misalignment": 1,
+      "opportunity": 3,
+      "strength": 5
+    },
+    "overall_cohesion": "cohesive",
+    "single_most_important_fix": "Add mode tracking to read-mode-state.py or update mode-management.md — the script that is supposed to verify mode state always returns 'default' regardless of actual mode, creating a disconnect between documented behavior and implementation."
+  }
+}

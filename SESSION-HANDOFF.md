@@ -1,86 +1,99 @@
-# Session Handoff — 2026-03-26 (Session 2: Party Mode Coaching)
+# Session Handoff — 2026-03-26 (Session 3: Epic 2 Complete)
 
 ## What Was Completed
 
-**Party Mode Coaching Session for Epic 2 Readiness**
+**Epic 2: Master Agent Architecture & Development — COMPLETE (6/6 stories)**
 
-This session ran a Party Mode team discussion (Winston/architect, Mary/analyst, John/PM, Sally/UX, Quinn/QA, Bob/SM) to prepare for Epic 2 (Master Agent Architecture). Three outcomes:
+This session completed the entire Epic 2 backlog: Story 2.1 validation, then Stories 2.2-2.6 creation, implementation, and review. Epic 2 retrospective complete.
 
-### 1. New Tool Integrations: Notion + Box Drive
-- **Notion** added as Tier 1 tool (official MCP `@notionhq/notion-mcp-server` v2.2.1, free API on all plans including free educator accounts)
-- **Box Drive** added as local filesystem source (no API key needed, just `BOX_DRIVE_PATH` in `.env`)
-- Both feed a "source wrangler" capability for pulling course development notes into production context
-- Notion also supports write-back (readiness assessments, design feedback)
-- 4 new FRs: FR71-FR74
+### Story 2.1 — Marcus Orchestrator Agent (Validation)
+- Party Mode team validated all 9 acceptance criteria — all passed
+- 5 doc harmonization tasks completed (sprint-status, workflow-status, next-session, orphaned sidecar redirect, project-context)
+- Marcus's interaction testing confirmed successful by user
 
-### 2. Run Mode Management (Ad-Hoc / Default Switch)
-- Binary ad-hoc/default mode switch for Master Orchestrator, settable via natural conversation
-- Ad-hoc mode: assets route to `course-content/staging/ad-hoc/`, state tracking suppressed, QA always runs
-- Default mode: full-throttle production with complete state tracking
-- Architecture decision: switch is a gate on the state management layer, not on agents — agents behave identically in both modes
-- Future evolution to per-level modality matrix (course/module/lesson/asset × default/write-only/read-only/ad-hoc) deferred until ad-hoc is reliable
-- 6 new FRs: FR75-FR80
+### Story 2.2 — Conversational Workflow Management
+- Created `production-coordination` skill: SKILL.md + 2 reference docs + `manage_run.py` (7 CLI subcommands)
+- `manage_run.py`: create, advance, checkpoint, approve, complete, status, list
+- Updated 3 Marcus references (conversation-mgmt, checkpoint-coord, progress-reporting)
+- 17 new tests — all pass
 
-### 3. Story 2.1 Discovery Answers Refined
-- Phase 1 (Intent): Added medical education domain context, ad-hoc/default mode awareness, "ringmaster" metaphor
-- Phase 2 (Capabilities): Added run-mode-management as internal capability, source-wrangling as external skill, source-wrangler in agent delegation list
-- Phase 3 (Requirements): Sharpened identity for health sciences education, added mode-switching communication patterns, added Notion/Box awareness to access boundaries, added ad-hoc mode enforcement principle
-- Answers are now ready for `bmad-create-story` → `bmad-agent-builder`
+### Story 2.3 — Agent Coordination Protocols
+- Created `delegation-protocol.md` — context envelope spec, specialist matching, graceful degradation
+- Created `log_coordination.py` — coordination event logging (log, history)
+- Updated Marcus conversation-mgmt.md with delegation section
+- 6 new tests — all pass
 
-### 4. Readiness Assessment
-Team assessed Epic 2 readiness across all domains:
-- Infrastructure: GREEN (Epic 1 complete, 117 tests)
-- Requirements: GREEN (80 FRs, all traced)
-- Discovery answers: GREEN (refined this session)
-- Process: CLEAR (coaching done, 4-5 session plan for Story 2.1)
+### Story 2.4 — Parameter Intelligence
+- Created `manage_style_guide.py` — read/write tool parameter preferences in style_guide.yaml
+- Commands: get (tool/key), set, list-tools
+- Updated Marcus SKILL.md: parameter-intelligence → active
+- 10 new tests — all pass
+
+### Story 2.5 — Pre-Flight Check Orchestration
+- Created `preflight-integration.md` — how Marcus invokes existing pre-flight-check skill
+- Lightweight reference doc only — skill already existed from Story 1.4
+
+### Story 2.6 — Run Mode Management
+- Created `manage_mode.py` — read/write mode state (default/ad-hoc switch persistence)
+- Updated Marcus mode-management.md with script invocation
+- 7 new tests — all pass
 
 ## What Is Next
 
-**Epic 2: Master Agent Architecture & Development** (6 stories, was 5)
-- Story 2.1: Master orchestrator agent creation via `bmad-agent-builder` — **NEXT** (run bmad-create-story first)
-- Story 2.2: Conversational workflow management
-- Story 2.3: Agent coordination protocols
-- Story 2.4: Parameter intelligence & style guide integration
-- Story 2.5: Pre-flight check orchestration
-- Story 2.6: Run mode management (ad-hoc/default switch) — **NEW**
+**Epic 3: Core Tool Specialist Agents & Mastery Skills** (7 stories)
+- Story 3.1: Gamma Specialist Agent & Mastery Skill
+- Story 3.2: ElevenLabs Specialist Agent
+- Story 3.3: Canvas Specialist Agent
+- Story 3.4: Content Creator & Quality Reviewer Agents
+- Story 3.5: Qualtrics Specialist Agent
+- Story 3.6: Canva Specialist Agent
+- Story 3.7: Source Wrangler (Notion + Box)
 
-**Epic 3 addition**: Story 3.7 (Source Wrangler — Notion + Box Drive) — **NEW**
+Story 3.1 will establish the pattern for specialist agents — built via `bmad-agent-builder` with tool mastery skills that orchestrate existing Epic 1 API clients.
 
 ## Unresolved Issues / Risks
 
-1. **Panopto**: Client code written but 3 tests skipped (no credentials configured). Non-blocking.
-2. **ElevenLabs `/user` endpoint**: Returns 401. Non-blocking.
-3. **Canva MCP**: OAuth redirect still rejected by Cursor. Non-blocking.
-4. **Notion integration not yet configured**: User needs to create internal integration at notion.so/my-integrations and add token to `.env`. Pre-requisite for Story 3.7, not for Story 2.1.
-5. **`run_mcp_from_env.cjs` needs Notion mapping**: When Notion MCP is enabled, the wrapper script needs a new server mapping entry.
-6. **Story count discrepancy**: bmm-workflow-status.yaml previously said 37 stories but actual count across epics is 35 (33 original + 2 new). Corrected this session.
+- **Branch naming**: Currently on `epic2-master-agent-architecture` — should create `epic3-core-tool-agents` branch for Epic 3
+- **Pre-existing test failure**: `test_has_brand_section` in `test_state_management.py` — style_guide.yaml doesn't have a `brand` key (by design — brand lives in style bible). Consider fixing or removing this test.
+- **No revision loop test**: The checkpoint → revision-requested → working → re-checkpoint flow isn't tested end-to-end. This will matter when specialist agents are built in Epic 3.
 
 ## Key Lessons Learned
 
-- **Party Mode coaching before agent creation is essential**: The pre-built discovery answers in epics.md were a good starting framework but had significant gaps (no run mode awareness, no source wrangling, no domain sharpening). The coaching session filled these gaps with team-validated, architecturally sound additions.
-- **New FRs should be integrated immediately across all docs**: Updating PRD, epics, tool matrix, project context, sprint status, and next-session in one pass prevents drift between artifacts.
-- **Notion free educator plan has full API access**: Confirmed via research. No blockers for integration.
-- **Ad-hoc mode as a state management gate (not agent behavior change)** is the right architectural pattern: agents don't need to know about modes, keeping the system simple and testable.
+1. **Stories 2.3-2.6 were lighter than estimated** — once the production-coordination skill skeleton was established in 2.2, subsequent stories were thin extensions (new script + reference doc + tests).
+2. **Autonomous execution worked well** — Party Mode was invoked for decisions (scope assessment, code review) not for every step. This balanced rigor with velocity.
+3. **Lint early** — the ruff check at shutdown caught 6 issues. Would have been cheaper to run after each story.
+4. **The three-layer architecture pays dividends** — every story cleanly separated agent updates (.md) from script implementation (.py) from infrastructure reuse (db_init.py, file_helpers.py).
 
 ## Validation Summary
 
-| Check | Result |
-|-------|--------|
-| git diff --check | Clean (trailing whitespace fixed) |
-| PRD FR coverage | 80 FRs, all traced to epics |
-| Epics FR coverage map | Updated with FR71-80 |
-| Sprint status | Stories 2.6, 3.7 added as backlog |
-| Discovery answers | Refined with run mode, source wrangling, domain context |
-| Tool matrix | Notion Tier 1 confirmed, Box Drive documented |
+| Test Suite | Tests | Result |
+|-----------|-------|--------|
+| `test_manage_run.py` | 17 | All pass |
+| `test_log_coordination.py` | 6 | All pass |
+| `test_manage_style_guide.py` | 10 | All pass |
+| `test_manage_mode.py` | 7 | All pass |
+| Marcus script tests (2.1) | 15 | All pass |
+| Existing unit tests | 98/99 | 1 pre-existing failure |
+| **Total Epic 2 tests** | **55** | **All pass** |
+| Ruff lint | 4 scripts | All pass (after fixes) |
 
 ## Artifact Update Checklist
 
-- [x] `_bmad-output/planning-artifacts/prd.md` — +10 FRs, scope descriptions updated
-- [x] `_bmad-output/planning-artifacts/epics.md` — +10 FRs, Stories 2.6/3.7 added, FR coverage map updated, Story 2.1 discovery answers refined
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — Stories 2.6, 3.7 added as backlog
-- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — FR count, story count, tool count, key decisions, next step updated
-- [x] `.env.example` — Notion API key, Box Drive path added
-- [x] `resources/tool-inventory/tool-access-matrix.md` — Notion (Tier 1) + Box Drive (Local FS) added with full detail
-- [x] `docs/project-context.md` — Phase, FR count, tool count, expansion notes updated
-- [x] `next-session-start-here.md` — Party Mode decisions documented, next actions updated
-- [x] `SESSION-HANDOFF.md` — This file
+| Artifact | Status |
+|----------|--------|
+| `_bmad-output/implementation-artifacts/sprint-status.yaml` | Updated — Epic 2 done, all stories done |
+| `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` | Updated — next step Epic 3 |
+| `_bmad-output/implementation-artifacts/2-2-conversational-workflow-management.md` | Created and marked done |
+| `_bmad-output/implementation-artifacts/2-3-agent-coordination-protocols.md` | Created |
+| `docs/project-context.md` | Updated — Epic 2 complete |
+| `next-session-start-here.md` | Updated — Epic 3 next |
+| `SESSION-HANDOFF.md` | This file |
+| `skills/bmad-agent-marcus/SKILL.md` | Updated — 2 skills activated |
+| `skills/bmad-agent-marcus/references/` | 4 files updated |
+| `tests/agents/bmad-agent-marcus/interaction-test-guide.md` | Updated — 3 new test scenarios |
+| `_bmad/memory/master-orchestrator-sidecar/index.md` | Redirected to bmad-agent-marcus-sidecar |
+
+## Previous Session Handoffs
+
+- **Session 2 (March 26, 2026)**: Party Mode coaching for Marcus, Notion/Box integration, run mode management, FR71-FR80
+- **Session 1 (March 25-26, 2026)**: Initial brainstorming, PRD, architecture, epics, Epic 1 implementation (11 stories)

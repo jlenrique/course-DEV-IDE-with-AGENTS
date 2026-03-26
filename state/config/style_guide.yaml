@@ -1,30 +1,12 @@
-# Style Guide — Brand standards and tool parameter preferences.
-# Agents apply these automatically; users update through conversation with orchestrator.
-
-brand:
-  colors:
-    primary: ""
-    secondary: ""
-    accent: ""
-    background: ""
-    text: ""
-  fonts:
-    heading: ""
-    body: ""
-    code: ""
-  logo_path: ""
-  tone: ""             # e.g. "professional-warm", "academic-approachable"
-  audience_level: ""   # e.g. "physician", "graduate-student", "general-learner"
-
-accessibility:
-  wcag_level: "AA"
-  min_contrast_ratio: 4.5
-  alt_text_required: true
-  captions_required: true
-
-# --- Per-tool parameter preferences ---
-# Agents check these before generating content. Conversational elicitation
-# fills gaps; newly learned preferences are saved back here.
+# Tool Parameter Preferences — Per-tool settings agents apply automatically.
+#
+# PURPOSE: Mutable, per-deployment dial settings for each tool integration.
+# Agents check these before generating content. Marcus elicits missing values
+# conversationally and saves learned preferences back here.
+#
+# NOT FOR: Brand identity, visual design, voice/tone, or accessibility standards.
+# Those live in resources/style-bible/ (authoritative) and config/content-standards.yaml
+# (bootstrap fallback). See docs/directory-responsibilities.md for the full map.
 
 tool_parameters:
   gamma:

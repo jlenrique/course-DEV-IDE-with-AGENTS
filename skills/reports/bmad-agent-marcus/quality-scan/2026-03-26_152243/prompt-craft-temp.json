@@ -1,0 +1,100 @@
+{
+  "scanner": "prompt-craft",
+  "skill_path": "skills/bmad-agent-marcus",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 10,
+      "severity": "medium",
+      "category": "under-contextualization",
+      "title": "Overview slightly lean for orchestrator complexity",
+      "detail": "Overview is ~3 sentences plus a reference-library note and Args line (~7 content lines). For a complex persona-driven orchestrator managing two run modes, a memory sidecar system, multi-specialist delegation, style-bible/exemplar integration, and source-material prompting, the overview could benefit from 1-2 additional sentences explicitly surfacing the mode system and memory concepts that are central to Marcus's operational identity. Currently the LLM must read to On Activation (line 50) before encountering mode/memory, which delays scope comprehension.",
+      "action": "Add 1-2 sentences to the overview mentioning the default/ad-hoc mode boundary and the sidecar memory system. Target ~10 overview sentences to match the agent's complexity tier."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 12,
+      "severity": "low",
+      "category": "token-waste",
+      "title": "Style-bible/exemplar re-read-from-disk instruction repeated 5 times",
+      "detail": "The 'always re-read from disk, never cache' instruction appears in: SKILL.md overview (line 12-13), Principle 10 (line 44), Does Not Do (line 48), memory-system.md core principle (line 7), and checkpoint-coord.md (line 26). Five occurrences across the agent surface. While self-containment justifies repetition in separately-loaded references (memory-system.md, checkpoint-coord.md), the three occurrences within SKILL.md itself (overview, principles, does-not-do) are redundant since they always load together.",
+      "action": "Consolidate to one strong statement in Overview or Principles within SKILL.md. Keep the repetition in memory-system.md and checkpoint-coord.md for self-containment."
+    },
+    {
+      "file": "references/save-memory.md",
+      "line": 1,
+      "severity": "low",
+      "category": "structural-inconsistency",
+      "title": "YAML frontmatter present only in save-memory.md",
+      "detail": "save-memory.md has YAML frontmatter (name, description, menu-code) while all other reference files use plain markdown with a Purpose section. This inconsistency suggests save-memory.md may have been templated from a different source or intended as a standalone skill rather than a reference file. Functionally harmless but creates a structural inconsistency across the references/ directory.",
+      "action": "Either add consistent frontmatter to all reference files (if tooling benefits from it) or remove frontmatter from save-memory.md and rely on the Capabilities table in SKILL.md for the menu-code mapping."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "line": 39,
+      "severity": "low",
+      "category": "brittleness",
+      "title": "Hardcoded path for course context YAML",
+      "detail": "Line 39 references `state/config/course_context.yaml` as a literal path. The generate-production-plan.py script resolves this path dynamically relative to project root, but the prompt text embeds it as a fixed string. If the project structure changes, the prompt text drifts from the script's resolution logic.",
+      "action": "Reference the path using a config variable or note that the script handles resolution. Minor concern since the path is also embedded in the script as a default."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 22,
+      "severity": "low",
+      "category": "progressive-disclosure",
+      "title": "Access boundaries embedded in memory-system.md rather than standalone",
+      "detail": "The access-boundaries section (lines 22-57) is a critical security construct — deny zones, mode-aware write permissions, boundary verification on every file operation. It's embedded as a subsection of memory-system.md rather than being a standalone reference. Given that access-boundaries.md is also a sidecar file that gets created at init, having the specification embedded in memory-system.md creates a layering question: is memory-system.md the source of truth, or is the generated access-boundaries.md?",
+      "action": "Consider extracting access boundaries into a standalone reference (access-boundaries-spec.md) that serves as the canonical specification. Low priority since current structure is functional."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 16,
+      "severity": "note",
+      "category": "positive-craft",
+      "title": "Exemplary intelligence placement between scripts and prompts",
+      "detail": "Deterministic operations (production plan generation from content type templates, state reading from SQLite) are correctly placed in scripts. Judgment operations (intent parsing, quality gate decisions, specialist routing, user interaction, clarification questions) remain in prompts. This is textbook correct placement for a workflow-facilitator agent.",
+      "action": "No action needed. Maintain this pattern when adding new capabilities."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 20,
+      "severity": "note",
+      "category": "positive-craft",
+      "title": "Communication Style section is high-quality persona craft",
+      "detail": "Eight detailed bullet points with concrete example utterances that precisely calibrate Marcus's voice: lead-with-context, options-with-recommendations, natural progress reporting, appropriate urgency, no unnecessary technical detail, domain-native vocabulary, unambiguous mode confirmations, cite style bible. Each bullet includes a worked example. This is load-bearing persona voice that directly instructs the LLM on output style and is NOT token waste.",
+      "action": "No action needed. This section is a strong example of persona craft done right."
+    },
+    {
+      "file": "references/",
+      "line": 0,
+      "severity": "note",
+      "category": "positive-craft",
+      "title": "Strong self-containment across all reference files",
+      "detail": "All 8 reference files have their own Purpose section, sufficient domain context, and can function independently if SKILL.md drops from context. conversation-mgmt.md includes the full Content Type Vocabulary table and handoff protocol. checkpoint-coord.md includes a worked example with medical education domain grounding. source-prompting.md has domain-specific examples. No reference file requires SKILL.md presence to make sense.",
+      "action": "No action needed. This is the correct pattern for progressive disclosure."
+    }
+  ],
+  "assessments": {
+    "skill_type_assessment": "workflow-facilitator",
+    "skillmd_assessment": {
+      "overview_quality": "appropriate",
+      "progressive_disclosure": "good",
+      "persona_context": "appropriate",
+      "notes": "SKILL.md is 105 lines / ~2395 tokens — lean but functional for a complex orchestrator. Progressive disclosure to 8 reference files and 2 scripts is well-executed. Persona voice is rich and load-bearing (Communication Style section with 8 example-driven bullets). Overview establishes who/what/how/why but could benefit from 1-2 additional sentences covering the mode system and memory architecture that are central to Marcus's operation. Identity and Principles sections are strong. Does Not Do provides clear boundary setting. Capabilities tables are efficient and scannable."
+    },
+    "prompts_scanned": 8,
+    "prompt_health": {
+      "prompts_with_config_header": 1,
+      "prompts_with_progression_conditions": 0,
+      "prompts_self_contained": 8,
+      "total_prompts": 8
+    }
+  },
+  "summary": {
+    "total_findings": 8,
+    "by_severity": {"critical": 0, "high": 0, "medium": 1, "low": 4, "note": 3},
+    "assessment": "Well-crafted workflow-facilitator agent with strong persona voice, exemplary intelligence placement (deterministic ops in scripts, judgment in prompts), and excellent progressive disclosure across 8 self-contained reference files. Persona voice and medical education domain framing are load-bearing and appropriately weighted. No critical or high-severity issues. The single medium finding is a slightly lean overview for the agent's operational complexity — easily addressed with 1-2 additional sentences. Low findings are minor structural inconsistencies and justified repetition.",
+    "top_improvement": "Expand the SKILL.md overview by 1-2 sentences to surface the default/ad-hoc mode boundary and sidecar memory system, giving the LLM earlier scope comprehension of Marcus's full operational model."
+  }
+}

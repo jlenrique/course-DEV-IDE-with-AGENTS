@@ -1,0 +1,124 @@
+{
+  "scanner": "script-opportunities",
+  "skill_path": "skills/bmad-agent-marcus",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 52,
+      "severity": "high",
+      "category": "preprocessing",
+      "title": "Activation data aggregator — gather all startup context into one JSON payload",
+      "detail": "Determinism confidence: certain. Estimated token savings: 900. Implementation complexity: moderate. Language: python. Could be prepass: yes. Reusable: yes. On every activation Marcus reads config YAML (user_name, communication_language, document_output_language), checks sidecar memory existence, reads index.md, scans style-bible/ and exemplars/ directories, and invokes read-mode-state.py. Each of these is pure file I/O and YAML/markdown parsing. A single 'preflight-activation.py' script could return a JSON blob: resolved config vars, memory sidecar status (exists, files present, last-modified), style-bible file inventory, exemplar file inventory, and current mode state. The LLM currently burns ~900 tokens just discovering and reading these paths before it can compose the greeting.",
+      "action": "Create 'preflight-activation.py' that reads config.yaml + config.user.yaml, checks sidecar dir, lists style-bible/ and exemplars/ contents, calls read-mode-state internally, and returns unified JSON. Activation instructions become: run script, interpret result, greet."
+    },
+    {
+      "file": "references/init.md",
+      "line": 11,
+      "severity": "high",
+      "category": "structure",
+      "title": "First-run environment discovery — check required directories and files exist",
+      "detail": "Determinism confidence: certain. Estimated token savings: 500. Implementation complexity: trivial. Language: python. Could be prepass: yes. Reusable: yes. On first run, Marcus manually checks existence of state/config/course_context.yaml, resources/style-bible/, resources/exemplars/, and the sidecar directory. This is pure filesystem existence checking — completely deterministic. The LLM reads each path, reasons about whether it exists, and reports. A script returns the same answer in milliseconds with zero token cost.",
+      "action": "Add a '--check-environment' flag to the proposed preflight-activation.py (or standalone 'check-environment.py') that returns JSON: {path: exists_bool} for every required path. Init instructions reference the script output instead of asking the LLM to check paths."
+    },
+    {
+      "file": "references/init.md",
+      "line": 20,
+      "severity": "high",
+      "category": "transformation",
+      "title": "Memory sidecar scaffolding — create initial directory and template files",
+      "detail": "Determinism confidence: certain. Estimated token savings: 700. Implementation complexity: trivial. Language: python. Could be prepass: no. Reusable: yes. On first run, Marcus creates four files (index.md, access-boundaries.md, patterns.md, chronology.md) in the sidecar directory. The file contents are either empty or follow a fixed template derived from memory-system.md and init.md. The LLM currently generates these files from scratch each time, spending tokens on boilerplate. A script with embedded templates does this deterministically.",
+      "action": "Create 'init-sidecar.py' that creates the sidecar directory and populates template files. Accepts --project-root and --agent-name. Prompt says: 'run init-sidecar.py, then ask user for name and course context'."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 22,
+      "severity": "high",
+      "category": "validation",
+      "title": "Access boundary path validation — check file operations against allow/deny rules",
+      "detail": "Determinism confidence: certain. Estimated token savings: 300 per check, cumulative 1500+ per session. Implementation complexity: moderate. Language: python. Could be prepass: no. Reusable: yes. Marcus is instructed to verify every file operation path against read/write/deny zone rules before executing. The rules are static path-prefix matching (allow state/ writes in default, deny .env always, etc.). The LLM re-reads the boundary table and mentally pattern-matches each path every time — pure deterministic work. A 'check-access.py' script takes (path, operation, mode) and returns allowed/denied with the matching rule.",
+      "action": "Create 'check-access.py' that encodes the allow/deny rules from access-boundaries.md and memory-system.md. Input: path, operation (read/write), mode (default/ad-hoc). Output: {allowed: bool, rule: string, zone: string}. Marcus calls before file ops."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 76,
+      "severity": "medium",
+      "category": "validation",
+      "title": "Mode-aware write permission lookup — table-driven file writability check",
+      "detail": "Determinism confidence: certain. Estimated token savings: 150 per check. Implementation complexity: trivial. Language: python. Could be prepass: no. Reusable: yes. The mode-aware write rules table (index.md: full/transient-only, patterns.md: append/readonly, etc.) is a pure lookup the LLM performs by re-reading the table each time. This is a subset of the access boundary validation and should be folded into the same script.",
+      "action": "Fold into 'check-access.py' — the sidecar file write rules become additional entries in the permission table. Same interface: (file, operation, mode) → allowed/denied."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 52,
+      "severity": "medium",
+      "category": "extraction",
+      "title": "Config variable resolution — parse YAML configs and extract user/language settings",
+      "detail": "Determinism confidence: certain. Estimated token savings: 350. Implementation complexity: trivial. Language: python. Could be prepass: yes. Reusable: yes. Marcus reads config.yaml and config.user.yaml, extracts three variables (user_name, communication_language, document_output_language), and applies defaults. This is pure YAML key extraction. The LLM reads the full YAML, finds three keys, applies defaults — all deterministic. Note: this could be a subcommand of the preflight-activation script.",
+      "action": "Include as part of 'preflight-activation.py' config section. If standalone, a 5-line script: load YAML, get keys with defaults, print JSON."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "line": 39,
+      "severity": "medium",
+      "category": "preprocessing",
+      "title": "Course hierarchy resolver — extract module/lesson/objective tree from YAML",
+      "detail": "Determinism confidence: certain. Estimated token savings: 400. Implementation complexity: trivial. Language: python. Could be prepass: yes. Reusable: yes. When the user says 'build slides for cardiac assessment,' Marcus reads course_context.yaml and resolves the course→module→lesson→objectives path. The generate-production-plan.py script already loads course context but only uses it during plan generation. A standalone resolver (or flag on the existing script) could return the full hierarchy or resolve a fuzzy module/lesson reference to its exact ID and objectives, saving the LLM from parsing the full YAML.",
+      "action": "Add '--resolve MODULE [LESSON]' mode to generate-production-plan.py (or create 'resolve-course-context.py') that returns structured JSON: module title, lesson title, learning objectives, asset inventory for that scope."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "line": 78,
+      "severity": "medium",
+      "category": "validation",
+      "title": "Asset-lesson pairing validator — verify every artifact has instructional context",
+      "detail": "Determinism confidence: high. Estimated token savings: 400. Implementation complexity: moderate. Language: python. Could be prepass: no. Reusable: yes. Before marking any production step complete, Marcus verifies: asset has parent lesson in course hierarchy, learning objectives documented, assessment alignment explicit. The hierarchy check is deterministic (traverse course_context.yaml). Objective documentation check is deterministic (file exists, section present). Only the assessment alignment judgment is partially interpretive. A script can handle the structural checks and flag missing elements for LLM review.",
+      "action": "Create 'validate-asset-pairing.py' that takes asset path and lesson ID, checks: (1) lesson exists in course_context.yaml, (2) lesson has learning_objectives list, (3) assessment alignment section exists in asset file. Returns {valid: bool, missing: [...]}."
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "line": 61,
+      "severity": "medium",
+      "category": "preprocessing",
+      "title": "Context envelope assembler — pre-populate specialist handoff data from state and config",
+      "detail": "Determinism confidence: high. Estimated token savings: 400. Implementation complexity: moderate. Language: python. Could be prepass: yes. Reusable: yes. When delegating to specialists, Marcus constructs a context envelope with: run ID (from SQLite), content type, scope (from course YAML), learning objectives (from course YAML), style bible sections (file matching), exemplar references (file matching). Most fields are deterministic lookups. A script could pre-assemble the envelope JSON from state DB + course context + file inventory, leaving only user constraints and revision feedback for the LLM to add.",
+      "action": "Create 'assemble-context-envelope.py' taking run_id, content_type, module_id, lesson_id. Pulls: run state from SQLite, objectives from course YAML, lists matching style-bible files, lists matching exemplar files. Returns partial envelope JSON. LLM fills in user constraints and qualitative fields."
+    },
+    {
+      "file": "references/checkpoint-coord.md",
+      "line": 33,
+      "severity": "low",
+      "category": "postprocessing",
+      "title": "Checkpoint outcome record validator — ensure structured fields are present in state writes",
+      "detail": "Determinism confidence: certain. Estimated token savings: 200. Implementation complexity: trivial. Language: python. Could be prepass: no. Reusable: yes. After checkpoint decisions, Marcus records structured data: artifact ID, version, decision, revision count, feedback, time-to-approval. The record structure is fixed. A post-processing script could validate that the state write contains all required fields with correct types before committing, catching LLM omissions.",
+      "action": "Create 'validate-checkpoint-record.py' that takes a checkpoint record JSON and validates: all required fields present, decision in {approved, revision, rejected}, revision_count is integer, timestamps parseable. Returns {valid: bool, errors: [...]}."
+    },
+    {
+      "file": "references/mode-management.md",
+      "line": 28,
+      "severity": "low",
+      "category": "transformation",
+      "title": "Mode switch state updater — write new mode to state with enforcement validation",
+      "detail": "Determinism confidence: certain. Estimated token savings: 150. Implementation complexity: trivial. Language: python. Could be prepass: no. Reusable: no. On mode switch, Marcus updates mode in state and adjusts routing. read-mode-state.py handles the read side. A complementary 'set-mode-state.py' could handle the write: update SQLite mode field, validate the switch is valid, clear ad-hoc session section in index.md when switching back to default. Currently the LLM manually performs these state mutations.",
+      "action": "Create 'set-mode-state.py' taking target mode (default/ad-hoc). Updates SQLite, clears ad-hoc section in index.md if switching to default, returns confirmation JSON. Pairs with read-mode-state.py."
+    }
+  ],
+  "assessments": {
+    "existing_scripts": ["read-mode-state.py", "generate-production-plan.py"],
+    "coverage_gaps": "Existing scripts cover state reading and plan generation. No scripts exist for activation pre-flight, access boundary enforcement, sidecar initialization, course context resolution, asset-pairing validation, context envelope assembly, or mode switching write-side. The activation sequence is the highest-value target — Marcus currently burns 900+ tokens on pure file I/O and path checking every time it starts up.",
+    "script_quality": "Both existing scripts follow good patterns: argparse CLI, JSON output, graceful fallbacks, stderr diagnostics. New scripts should follow the same conventions."
+  },
+  "summary": {
+    "total_findings": 11,
+    "by_severity": {"high": 4, "medium": 5, "low": 2},
+    "by_category": {
+      "preprocessing": 3,
+      "structure": 1,
+      "transformation": 2,
+      "validation": 3,
+      "extraction": 1,
+      "postprocessing": 1
+    },
+    "estimated_total_token_savings_per_session": 4550,
+    "assessment": "Marcus is a coordination-heavy orchestrator with significant deterministic overhead in its activation sequence, access boundary enforcement, and specialist handoff preparation. The highest-ROI script is a unified 'preflight-activation.py' that collapses config loading, environment checking, style-bible/exemplar inventory, and sidecar status into a single JSON payload — eliminating ~900 tokens of pure file-system work on every activation. The second priority cluster is access boundary validation ('check-access.py'), which the LLM performs repeatedly throughout a session by re-reading static rules. Together, the top 4 findings (activation aggregator, environment discovery, sidecar scaffolding, access validation) account for ~2900 tokens of deterministic work — roughly 64% of the total identified savings. The existing two scripts are well-designed and cover their domains; the gaps are in the activation path and runtime validation layers."
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "scanner": "structure",
+  "skill_path": "skills/bmad-agent-marcus",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 50,
+      "severity": "medium",
+      "category": "consistency",
+      "title": "Access boundaries not explicitly loaded in On Activation sequence",
+      "detail": "memory-system.md declares access-boundaries.md with 'Load on activation' and states 'On every activation, load these boundaries first. Before any file operation, verify the path is within allowed boundaries.' However, the On Activation sequence in SKILL.md (lines 52-66) loads config → memory index → state → greet without explicitly mentioning access-boundaries.md. This creates a gap: if index.md doesn't explicitly point to access-boundaries.md, the boundaries may not be loaded, especially on first run where init.md creates the file but the activation flow branches to init.md instead of the normal memory load path.",
+      "action": "Add an explicit step in On Activation to load access-boundaries.md from the memory sidecar (or from memory-system.md inline definition) before any state reads or file operations. Place it immediately after loading index.md."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 81,
+      "severity": "medium",
+      "category": "capability-completeness",
+      "title": "External Skills reference 5 unvalidated target skills",
+      "detail": "The External Skills table references pre-flight-check, production-coordination, run-reporting, parameter-intelligence, and source-wrangling. These are core to Marcus's production workflow (connectivity checks, state management, reporting, style elicitation, source material retrieval). If these skills do not exist, Marcus cannot execute multi-agent production workflows as designed. No validation that these targets are built or stubbed.",
+      "action": "Build or stub these 5 skills, or add explicit 'Status: planned' annotations to the External Skills table so Marcus can gracefully degrade when they are unavailable."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 91,
+      "severity": "medium",
+      "category": "capability-completeness",
+      "title": "External Specialist Agents reference 6 active + 2 future unvalidated agents",
+      "detail": "The External Specialist Agents table references gamma-specialist, elevenlabs-specialist, canvas-specialist, content-creator, quality-reviewer, and assembly-coordinator as active dependencies, plus qualtrics-specialist and canva-specialist as future. These specialists are the execution layer for all content production. Two are marked 'Future:' which is good practice, but the 6 active agents are listed without availability status.",
+      "action": "Validate that the 6 active specialist agents exist and are callable. Add a 'Status' column to the table (active/planned/future) so Marcus can route around unavailable specialists during production planning."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 16,
+      "severity": "low",
+      "category": "identity",
+      "title": "Identity section mixes persona definition with domain knowledge enumeration",
+      "detail": "The identity opens with a strong one-sentence persona ('Veteran executive producer...calm, experienced, unflappable') but then extends into a domain knowledge inventory (Bloom's taxonomy, LCME, ACGME, etc.) and a role relationship statement. While all content is high quality and relevant, the blending makes the persona less immediately graspable. The domain knowledge list reads more like a 'Domain Expertise' subsection.",
+      "action": "Consider separating into a focused one-sentence persona followed by a 'Domain Expertise' subsection. Low priority — current form is functional and effective."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "low",
+      "category": "structure",
+      "title": "No bmad-skill-manifest.yaml present",
+      "detail": "Other BMAD agents in the workspace (analyst, architect, dev, pm, qa, quick-flow-solo-dev, sm, tech-writer, ux-designer) include a bmad-skill-manifest.yaml for metadata and discoverability. bmad-agent-marcus does not have one. This may be intentional (newer agent, different pattern) but creates inconsistency with the agent cohort.",
+      "action": "Add a bmad-skill-manifest.yaml if it is part of the standard BMAD agent structure. If intentionally omitted, document why in the agent README or SKILL.md."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 33,
+      "severity": "low",
+      "category": "principles",
+      "title": "High principle count (10) may increase token pressure in long sessions",
+      "detail": "All 10 principles are domain-specific and high quality — none are generic filler. However, principles 3 (quality gates non-negotiable), 4 (asset-lesson pairing inviolable), and 5 (medical education rigor) all address quality/rigor from different angles and could potentially be consolidated. Similarly, principles 9 (source material assistance) and 10 (ground in style bible/exemplars) both address reference consultation. At 10 principles, the section consumes meaningful token budget on every activation.",
+      "action": "Consider consolidating to 7-8 principles by merging related quality/rigor principles and reference consultation principles. Low priority — current principles are all actionable and domain-specific."
+    }
+  ],
+  "assessments": {
+    "sections_found": [
+      "Overview",
+      "Identity",
+      "Communication Style",
+      "Principles",
+      "Does Not Do",
+      "On Activation",
+      "Capabilities",
+      "Internal Capabilities",
+      "External Skills",
+      "External Specialist Agents"
+    ],
+    "capabilities_count": 19,
+    "has_memory": true,
+    "has_headless": false
+  },
+  "summary": {
+    "total_findings": 6,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 3,
+      "low": 3
+    },
+    "by_category": {
+      "consistency": 1,
+      "capability-completeness": 2,
+      "identity": 1,
+      "structure": 1,
+      "principles": 1
+    },
+    "assessment": "Well-structured agent with comprehensive memory system, strong domain-specific identity, and excellent communication style examples. Primary gaps are operational: external skill/agent dependencies are unvalidated, and access boundary loading is implicit rather than explicit in the activation sequence. No critical or high findings."
+  }
+}

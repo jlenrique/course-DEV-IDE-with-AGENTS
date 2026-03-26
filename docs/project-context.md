@@ -3,7 +3,7 @@
 **Project Name:** course-DEV-IDE-with-AGENTS  
 **Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 IN PROGRESS)
 **Architecture Status:** 10 Epics, 80 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 starting (Master Orchestrator Agent).
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 next.
 
 ## Purpose
 
@@ -115,7 +115,9 @@ resources/        # Exemplars, style bible, tool inventory
 - [x] **TOOLS EXPANSION**: Notion (API + MCP, source wrangling) and Box Drive (local FS) added to tool universe (17 tools total)
 - [x] **SOURCE WRANGLER**: New architectural component for pulling reference materials from Notion/Box into production context; agent vs. skill design decision deferred to story creation
 - [x] **AD-HOC MODE**: Binary ad-hoc/default mode switch for Master Orchestrator; ad-hoc routes assets to scratch/staging, suppresses state tracking; QA always runs; future per-level modality matrix deferred
-- [ ] Epic 2: Master Agent Architecture & Development
+- [x] **STORY 2.1 (Marcus Orchestrator)**: Agent built via bmad-agent-builder (6-phase discovery with Party Mode coaching), quality scan passed (0 critical), 12 interaction test scenarios passed, Party Mode team validation complete. 13 files: SKILL.md + 8 references + 2 scripts + 2 test files. Memory sidecar active with 4 files. First production plan staged (C1-M1-P2S1-VID-001).
+- [x] **EPIC 2 COMPLETE**: Stories 2.2–2.6 all done. Production-coordination skill (4 scripts, 4 refs, 40 tests). Marcus references updated for workflow management, delegation, parameter intelligence, pre-flight, and mode management.
+- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (7 stories)
 
 ## Key Files
 
@@ -124,7 +126,11 @@ resources/        # Exemplars, style bible, tool inventory
 - `_bmad-output/planning-artifacts/epics.md` - Epic breakdown with requirements (recast)
 - `_bmad-output/strategic-decisions-collaborative-intelligence.md` - Strategic decisions
 - `_bmad-output/brainstorming/brainstorming-session-20260325-150802.md` - Brainstorming session
-- `resources/tool-inventory/tool-access-matrix.md` - **Tool universe access matrix (15 tools)**
+- `_bmad-output/brainstorming/party-mode-coaching-marcus-orchestrator.md` - Marcus coaching doc
+- `skills/bmad-agent-marcus/SKILL.md` - **Marcus orchestrator agent (Story 2.1 DONE)**
+- `skills/reports/bmad-agent-marcus/quality-scan/2026-03-26_152243/quality-report.md` - Marcus quality scan
+- `tests/agents/bmad-agent-marcus/interaction-test-guide.md` - Marcus interaction tests
+- `resources/tool-inventory/tool-access-matrix.md` - **Tool universe access matrix (17 tools)**
 - `scripts/heartbeat_check.mjs` - Baseline read-only API heartbeat across configured tools
 - `scripts/smoke_elevenlabs.mjs` - Focused ElevenLabs API smoke check
 - `scripts/smoke_qualtrics.mjs` - Focused Qualtrics API smoke check

@@ -1,27 +1,137 @@
-# Course Context — Master template for course-level metadata.
+# Course Context — C1: Foundations of Innovation Leadership
+# Part of the APC (A Pathway For Tomorrow's Healthcare Leaders) certificate program.
 # Agents read this to align all content production decisions with course objectives.
-# Fill in per-course values; modules array grows as content is planned.
+
+program:
+  name: "A Pathway For Tomorrow's Healthcare Leaders"
+  code: "APC"
+  institution: "JCPH"
+  total_courses: 3
+  # C1: Foundations of Innovation Leadership (Jul–Oct)
+  # C2: Tools for a Innovation Leader (Nov–Feb)
+  # C3: Establishing Viability through Execution (Mar–Jun)
 
 course:
-  name: ""
-  code: ""
-  description: ""
-  institution: ""
-  audience: ""
-  audience_level: ""   # e.g. "graduate-professional", "undergraduate", "continuing-education"
+  name: "Foundations of Innovation Leadership"
+  code: "C1"
+  description: >
+    First of three courses in the APC certificate program. Introduces healthcare
+    professionals to innovation mindset, foundational leadership principles,
+    decision science, strategic value proposition development, and early-stage
+    communication skills for pitching opportunity gaps. Combines asynchronous
+    content modules with synchronous experiential touchpoints.
+  institution: "JCPH"
+  audience: "Physicians and healthcare professionals pursuing intrapreneurship"
+  audience_level: "graduate-professional"
 
   learning_objectives:
-    # Top-level course outcomes (CLOs) — every module should trace back to these
-    - ""
+    # Top-level course outcomes (CLOs) — to be refined during production planning
+    - "Define and cultivate an innovative mindset including resilience, adaptability, and comfort with ambiguity"
+    - "Apply core leadership principles including change management, influence, and organizational culture"
+    - "Use decision science models and analysis techniques while recognizing cognitive biases"
+    - "Develop a value proposition using customer-centric frameworks (JTBD, Value Proposition Canvas)"
+    - "Construct and deliver an opportunity-gap pitch with effective verbal and non-verbal communication"
+    - "Formulate a strategic vision integrating competitive landscape analysis and market fit assessment"
+
+  # Content is organized into three parallel strands that run across 10 modules.
+  # Module-level lesson allocation TBD during detailed production planning.
+  content_strands:
+
+    - id: "IS"
+      name: "Innovation Mindset"
+      topics:
+        - id: "IS-1"
+          title: "Defining Innovative Mindset"
+          subtopics:
+            - "Flexibility, resiliency, and adaptability"
+            - "Working with ambiguity"
+            - "How to fail"
+            - "First principles"
+        - id: "IS-2"
+          title: "Defining Leadership"
+          subtopics:
+            - "Core leadership principles"
+            - "Change management"
+            - "Influence and inspiration"
+            - "Organizational culture and power dynamics"
+            - "Motivators and non-negotiables"
+
+    - id: "PPM"
+      name: "Product & Project Management"
+      topics:
+        - id: "PPM-1"
+          title: "Decision Science Fundamentals"
+          subtopics:
+            - "Decision making models"
+            - "Decision analysis techniques"
+            - "Cognitive biases and strategies for debiasing"
+            - "Ethical decision making"
+
+    - id: "OL"
+      name: "Operating as a Leader"
+      topics:
+        - id: "OL-1"
+          title: "Strategy: Value Proposition and Vision"
+          framework: "JTBD (Jobs To Be Done)"
+          subtopics:
+            - "Customer-centric solutioning"
+            - "Value Proposition Canvas"
+            - "Product-market fit"
+            - "Assessing desirability, feasibility, viability"
+            - "Competitive landscape analysis (Porter's 5 Forces, resource-based view)"
+            - "Strategic vision and integrating ideas into vision/mission statement"
+        - id: "OL-2"
+          title: "Communication 1: Pitching Your Opportunity Gap"
+          subtopics:
+            - "Structures and types of pitches"
+            - "Communicating market need"
+            - "Verbal and non-verbal communication"
+            - "How to handle Q&A"
+            - "Self-reflection feedback"
 
   modules:
-    # Populated per-module as production planning proceeds
-    # - id: "M1"
-    #   title: ""
-    #   learning_objectives: []
-    #   lessons: []
-    []
+    # 10 modules spanning Jul–Oct. Content allocation across strands TBD.
+    - { id: "M1",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M2",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M3",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M4",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M5",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M6",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M7",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M8",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M9",  title: "TBD", learning_objectives: [], lessons: [] }
+    - { id: "M10", title: "TBD", learning_objectives: [], lessons: [] }
 
-  term: ""
-  delivery_mode: ""    # e.g. "online-asynchronous", "hybrid", "synchronous"
+  synchronous_touchpoints:
+    - id: "SYNC-1"
+      title: "Journal Club"
+      type: "discussion"
+    - id: "SYNC-2"
+      title: "Leadership Roundtable"
+      type: "discussion"
+    - id: "SYNC-3"
+      title: "Communication Practice"
+      type: "skill-practice"
+    - id: "SYNC-4"
+      title: "Pitch Symposium"
+      type: "capstone-presentation"
+
+  assessments:
+    - id: "ASMT-1"
+      title: "Quiz & Discussion Assessment"
+      type: "formative"
+      scope: "recurring across modules"
+    - id: "ASMT-2"
+      title: "Leadership & Values Reflection Assessment"
+      type: "reflective"
+    - id: "ASMT-3"
+      title: "Value Proposition Pitch"
+      type: "performance"
+    - id: "ASMT-4"
+      title: "Module Reflections"
+      type: "reflective"
+      scope: "recurring across modules"
+
+  term: "Jul–Oct"
+  delivery_mode: "hybrid"   # asynchronous content + synchronous touchpoints
   credits: null

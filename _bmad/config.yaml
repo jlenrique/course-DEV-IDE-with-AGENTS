@@ -1,0 +1,6 @@
+# BMad Configuration
+# Shared config read by all BMad agents on activation.
+
+user_name: "Juan"
+communication_language: "English"
+document_output_language: "English"

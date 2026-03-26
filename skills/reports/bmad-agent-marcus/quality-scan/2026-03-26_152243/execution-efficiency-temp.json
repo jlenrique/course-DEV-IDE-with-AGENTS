@@ -1,0 +1,56 @@
+{
+  "scanner": "execution-efficiency",
+  "skill_path": "skills/bmad-agent-marcus",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 59,
+      "severity": "medium",
+      "category": "resource-loading",
+      "title": "Eager full-directory loading of style-bible and exemplars on every activation",
+      "detail": "On Activation reads the entire resources/style-bible/ and resources/exemplars/ directories fresh on every activation, even when the user intent is a non-production task (status check, mode switch, memory save, simple conversation). These directories can grow large with brand assets, allocation matrices, and pattern files. The conversation-mgmt.md reference (line 68) already specifies passing 'relevant style bible sections (matched to specialist domain)' to specialists — showing that selective access is the intended usage pattern downstream. Loading everything eagerly at activation wastes tokens and latency for sessions that never touch production planning.",
+      "action": "Defer style-bible and exemplar loading to the CM (Conversation Management) capability when production planning begins, or to the HC (Checkpoint Coordination) capability when quality criteria are needed. Add a note in On Activation: 'Style bible and exemplars are read fresh when production planning or quality review requires them — not on activation.' The index.md memory sidecar can note which style-bible sections were relevant in previous sessions for faster targeted loading."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 52,
+      "severity": "low",
+      "category": "parallelization",
+      "title": "Sequential activation reads where four independent operations could be batched",
+      "detail": "The On Activation sequence lists these as implicitly sequential prose steps: (1) load config.yaml + config.user.yaml, (2) load sidecar memory index.md, (3) load memory-system.md reference, (4) run read-mode-state.py or read state files. Steps 1, 3, and 4 are fully independent of each other and of step 2 (though step 2 has a conditional branch to init.md if the sidecar doesn't exist). Four independent reads listed sequentially is a minor latency opportunity.",
+      "action": "Restructure On Activation into two groups: a parallel batch (config files, memory-system.md reference, mode state script) and a sequential follow-up (sidecar index.md → conditional init.md). This can be expressed as: 'In parallel: load config files, load memory-system.md reference, invoke read-mode-state.py. Then: load sidecar index.md (or init.md if first run).'"
+    },
+    {
+      "file": "references/conversation-mgmt.md",
+      "line": 72,
+      "severity": "medium",
+      "category": "delegation-format",
+      "title": "Specialist return format specified as narrative prose instead of structured schema",
+      "detail": "The Specialist Handoff Protocol describes the expected inbound return from specialists as prose bullets: 'Artifact path, Quality self-assessment, Parameter decisions made, Completion status and any issues encountered.' For an orchestrator that processes many specialist returns to route workflows, a structured format specification (explicit keys, types, required vs optional) would reduce parsing ambiguity and enable consistent downstream processing. The outbound context envelope has the same issue but is less critical since specialists can tolerate flexible input.",
+      "action": "Define an explicit structured return contract for specialists. Example: '**Inbound (from specialist):** Return a structured object with keys: `artifact_path` (string, required), `quality_assessment` (object: {passed: bool, notes: string[]}), `parameter_decisions` (object[], for pattern saving), `status` (enum: completed|blocked|failed), `issues` (string[]).'"
+    },
+    {
+      "file": "references/checkpoint-coord.md",
+      "line": 26,
+      "severity": "low",
+      "category": "resource-loading",
+      "title": "Quality criteria re-reads entire style-bible per review gate without section targeting",
+      "detail": "Checkpoint coordination states quality criteria sources are 'both re-read fresh for each review gate' referring to the full resources/style-bible/ directory. If the eager activation loading (finding 1) is resolved by deferring to capability-time loading, each review gate would still load the entire style bible rather than the sections relevant to the artifact under review (e.g., only typography standards for slide review, only voice/tone for narration review).",
+      "action": "When loading style-bible for a review gate, scope reads to sections relevant to the artifact type and specialist domain. The outbound context envelope already identifies 'relevant style bible sections (matched to specialist domain)' — apply the same selectivity when Marcus loads quality criteria for checkpoint evaluation."
+    }
+  ],
+  "summary": {
+    "total_findings": 4,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 2,
+      "low": 2
+    },
+    "by_category": {
+      "resource-loading": 2,
+      "parallelization": 1,
+      "delegation-format": 1
+    }
+  }
+}

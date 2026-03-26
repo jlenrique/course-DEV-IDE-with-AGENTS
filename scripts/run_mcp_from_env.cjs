@@ -52,6 +52,14 @@ const serverConfigs = {
       CANVAS_DOMAIN: "CANVAS_DOMAIN",
     },
   },
+  notion: {
+    command: "npx",
+    args: ["-y", "@notionhq/notion-mcp-server"],
+    requiredEnv: ["NOTION_API_KEY"],
+    envMap: {
+      NOTION_TOKEN: "NOTION_API_KEY",
+    },
+  },
 };
 
 const config = serverConfigs[serverName];

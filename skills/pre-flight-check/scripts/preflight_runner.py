@@ -10,6 +10,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -18,6 +19,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import urllib.request
+
+from scripts.utilities.env_loader import load_env
 from scripts.utilities.file_helpers import project_root, safe_read_json
 from scripts.utilities.logging_setup import setup_logging
 
@@ -209,6 +213,97 @@ BLOCKED_TOOLS = {
 }
 
 
+# -- Notion API Check --
+
+
+def check_notion_api(env_vars: dict[str, str]) -> ToolResult:
+    """Verify Notion API connectivity with a lightweight /users/me call."""
+    token = env_vars.get("NOTION_API_KEY") or os.environ.get("NOTION_API_KEY", "")
+    if not token:
+        return ToolResult(
+            name="Notion",
+            status=ToolStatus.SKIPPED,
+            detail="NOTION_API_KEY not set in .env",
+            resolution="Add your Notion internal integration token to .env",
+        )
+    try:
+        req = urllib.request.Request(
+            "https://api.notion.com/v1/users/me",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Notion-Version": "2022-06-28",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status == 200:
+                return ToolResult(
+                    name="Notion",
+                    status=ToolStatus.MCP_READY,
+                    detail="API authenticated, MCP configured (22 tools)",
+                )
+    except urllib.error.HTTPError as exc:
+        return ToolResult(
+            name="Notion",
+            status=ToolStatus.FAILED,
+            detail=f"HTTP {exc.code} from Notion API",
+            resolution=get_resolution(f"HTTP {exc.code}"),
+        )
+    except (urllib.error.URLError, TimeoutError) as exc:
+        return ToolResult(
+            name="Notion",
+            status=ToolStatus.FAILED,
+            detail=f"Connection error: {exc}",
+            resolution=get_resolution("Connection error"),
+        )
+    return ToolResult(
+        name="Notion", status=ToolStatus.FAILED, detail="Unexpected response",
+    )
+
+
+# -- Box Drive Check --
+
+
+def check_box_drive(env_vars: dict[str, str]) -> ToolResult:
+    """Verify Box Drive local path is accessible and contains files."""
+    box_path = env_vars.get("BOX_DRIVE_PATH") or os.environ.get("BOX_DRIVE_PATH", "")
+    if not box_path:
+        return ToolResult(
+            name="Box Drive",
+            status=ToolStatus.SKIPPED,
+            detail="BOX_DRIVE_PATH not set in .env",
+            resolution="Add your local Box Drive folder path to .env",
+        )
+    p = Path(box_path)
+    if not p.exists():
+        return ToolResult(
+            name="Box Drive",
+            status=ToolStatus.FAILED,
+            detail=f"Path does not exist: {box_path}",
+            resolution="Verify Box Drive is installed and the path is correct in .env",
+        )
+    if not p.is_dir():
+        return ToolResult(
+            name="Box Drive",
+            status=ToolStatus.FAILED,
+            detail=f"Path is not a directory: {box_path}",
+            resolution="BOX_DRIVE_PATH should point to the Box Drive sync folder",
+        )
+    try:
+        items = list(p.iterdir())
+        return ToolResult(
+            name="Box Drive",
+            status=ToolStatus.API_READY,
+            detail=f"Local path accessible, {len(items)} top-level items",
+        )
+    except PermissionError:
+        return ToolResult(
+            name="Box Drive",
+            status=ToolStatus.FAILED,
+            detail=f"Permission denied reading: {box_path}",
+            resolution="Check file permissions on the Box Drive folder",
+        )
+
+
 # -- Main Runner --
 
 
@@ -322,6 +417,15 @@ def run_preflight(root: Path | None = None) -> PreflightReport:
                 name=tool, status=ToolStatus.BLOCKED, detail=detail,
                 resolution=get_resolution(detail),
             ))
+
+    # 6. Notion API connectivity check
+    logger.info("Checking Notion API connectivity...")
+    env_vars = load_env(root / ".env")
+    report.add(check_notion_api(env_vars))
+
+    # 7. Box Drive path accessibility check
+    logger.info("Checking Box Drive path...")
+    report.add(check_box_drive(env_vars))
 
     return report
 

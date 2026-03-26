@@ -7,6 +7,10 @@
     "canvas-lms": {
       "command": "node",
       "args": ["scripts/run_mcp_from_env.cjs", "canvas-lms"]
+    },
+    "notion": {
+      "command": "node",
+      "args": ["scripts/run_mcp_from_env.cjs", "notion"]
     }
   }
 }

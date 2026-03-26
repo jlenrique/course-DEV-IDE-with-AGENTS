@@ -36,9 +36,11 @@ The `hooks/scripts/session-start.mjs` placeholder will be wired to invoke pre-fl
 
 | Check Type | Tools | Method |
 |---|---|---|
-| **MCP Config** | Gamma, Canvas LMS | Verify `.mcp.json` / `.cursor/mcp.json` entries are present and well-formed |
+| **MCP Config** | Gamma, Canvas LMS, Notion | Verify `.mcp.json` / `.cursor/mcp.json` entries are present and well-formed |
 | **API Heartbeat** | All Tier 1-2 tools | Run `scripts/heartbeat_check.mjs` for read-only connectivity probes |
 | **Targeted Smoke** | ElevenLabs, Qualtrics | Run focused smoke scripts for deeper API validation |
+| **Notion API** | Notion | Direct Python API call to `/v1/users/me` to verify integration token |
+| **Local FS** | Box Drive | Verify `BOX_DRIVE_PATH` exists, is a directory, and is readable |
 | **Config Presence** | Kling, Panopto | Verify API keys are set in `.env` |
 | **Static Classification** | Vyond, CourseArc, Articulate | Report as manual-only (no API to test) |
 | **Blocker Reporting** | Canva | Report known MCP blockers with workaround guidance |

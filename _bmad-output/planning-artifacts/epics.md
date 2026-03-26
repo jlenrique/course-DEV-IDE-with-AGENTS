@@ -273,7 +273,42 @@ So that agent skills can execute Python scripts for tool integration and state m
 **Given** the Cursor plugin structure exists
 **When** the developer runs environment setup
 **Then** a virtual environment is created with all dependencies from `requirements.txt`
-**And** `.env.example` documents all required API keys (Gamma, ElevenLabs, Canvas, Vyond, Midjourney, CapCut, Descript)
+**And** `.env.example` provides a complete template with documented entries for all API-capable tools from the tools inventory:
+```
+# Slide Generation
+GAMMA_API_KEY=
+GAMMA_API_URL=
+
+# Voice/Audio Synthesis
+ELEVENLABS_API_KEY=
+ELEVENLABS_API_URL=
+
+# Canvas LMS
+CANVAS_API_URL=
+CANVAS_ACCESS_TOKEN=
+
+# Video Generation & Editing
+VYOND_API_KEY=
+CAPCUT_API_KEY=
+KLING_API_KEY=
+DESCRIPT_API_KEY=
+
+# Image Generation
+MIDJOURNEY_API_KEY=
+
+# Design
+CANVA_API_KEY=
+
+# Interactive Authoring
+ARTICULATE_API_KEY=
+
+# Chatbot
+BOTPRESS_API_KEY=
+BOTPRESS_BOT_ID=
+
+# Audio Podcasting
+WONDERCRAFT_API_KEY=
+```
 **And** `scripts/api_clients/` contains base API client patterns following canvas_api_tools conventions
 **And** `scripts/utilities/` contains shared helper functions for file operations and logging
 **And** automated dependency verification confirms all packages install correctly
@@ -398,15 +433,35 @@ As a user,
 I want a master orchestrator agent created via bmad-agent-builder,
 So that I have a conversational "general contractor" for all production workflow interactions.
 
+**bmad-agent-builder Discovery Answers** (Party Mode team pre-built responses for six-phase process):
+
+**Phase 1 - Intent Discovery:**
+Build a master orchestrator agent that serves as the single conversational point of contact for course content production. Users talk only to this agent. It understands production requests, plans multi-agent workflows, delegates to specialist agents, manages human checkpoints, and presents work products for review. It is the "general contractor" of a collaborative intelligence system for creating online course content.
+
+**Phase 2 - Capabilities Strategy:**
+Both internal capabilities and external skills. Internal: conversation management, production planning, intent parsing, progress reporting, human checkpoint coordination. External skills: production-coordination, pre-flight-check, run-reporting, parameter intelligence via style guide reading. External agents: delegates to gamma-specialist, elevenlabs-specialist, canvas-specialist, content-creator, quality-reviewer, assembly-coordinator.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Producer" - a trusted, experienced creative production general contractor
+- **Communication Style**: Clear, professional, proactive. Asks smart questions. Presents options with recommendations. Reports progress naturally. Never overwhelms with technical detail. Speaks like a seasoned creative director who respects the client's vision.
+- **Principles**: (1) User's creative vision drives all decisions. (2) Hide system complexity behind conversational ease. (3) Quality gates are non-negotiable but presented gracefully. (4) Learn from every production run. (5) Proactively surface decisions that need human judgment.
+- **Activation**: Interactive mode primary (Cursor IDE chat). Load config, load memory sidecar, greet user, offer to continue previous work or start new run.
+- **Memory**: Full sidecar with index.md (active production context, user preferences), patterns.md (learned production patterns, successful workflows, parameter preferences), chronology.md (production run history), access-boundaries.md (full read access to project, write to state/ and _bmad/memory/)
+- **Access Boundaries**: Read: entire project. Write: `state/`, `_bmad/memory/`, `agents/`, `skills/`. Deny: `.env`, `.cursor-plugin/plugin.json`
+
+**Phase 4-6**: Draft, build, and validate the agent structure following these specifications.
+
 **Acceptance Criteria:**
 
-**Given** the bmad-agent-builder skill is available
+**Given** the bmad-agent-builder skill is invoked with the discovery answers above
 **When** the master orchestrator agent is created through six-phase discovery
-**Then** `agents/master-orchestrator.md` exists with persona, identity, communication style, and principles
-**And** the agent has a capability routing table linking to production coordination, pre-flight check, and parameter intelligence skills
+**Then** `agents/master-orchestrator.md` exists with persona, identity, communication style, and principles as specified
+**And** the agent has a capability routing table linking to production coordination, pre-flight check, parameter intelligence, and run reporting skills
 **And** the agent's persona reflects "trusted general contractor" conversational style
 **And** the agent knows how to delegate to specialty agents by capability matching
-**And** `_bmad/memory/master-orchestrator-sidecar/` is initialized with index.md and access-boundaries.md
+**And** `_bmad/memory/master-orchestrator-sidecar/` is initialized with index.md, patterns.md, chronology.md, and access-boundaries.md
+**And** the completed agent structure is reviewed by Party Mode team for completeness and accuracy
+**And** a test invocation confirms the agent responds in character, offers capabilities, and handles basic conversation flow
 
 ### Story 2.2: Conversational Workflow Management
 
@@ -488,17 +543,31 @@ As a user,
 I want a Gamma specialist agent with complete tool mastery and intelligent parameter management,
 So that presentation slides are created with optimal parameters matching my style preferences.
 
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build a Gamma specialist agent that has complete mastery of Gamma's AI slide generation capabilities. It knows every API parameter, understands which settings produce the best results for different content types (medical presentations, storytelling, data visualization), and learns from each production run what works best.
+
+**Phase 2 - Capabilities**: External skills primarily. Internal: parameter recommendation, style guide interpretation, output quality assessment. External skills: gamma-api-mastery skill with scripts that call the working Gamma API client from Epic 1. No need for own API code - orchestrates existing `scripts/api_clients/gamma_client.py`.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Slide Architect" - a visual communication expert who knows Gamma inside and out
+- **Communication Style**: Precise, visual-thinking oriented. Explains slide design choices. Recommends parameter combinations with reasoning. Concise but thorough on technical detail when asked.
+- **Principles**: (1) Every slide serves a learning objective. (2) Visual clarity for physician audience above flashiness. (3) Style guide preferences are baseline, always applied. (4) Learn what parameter combinations produce excellent results. (5) Professional medical aesthetic unless explicitly overridden.
+- **Memory**: Sidecar with patterns.md tracking successful parameter combinations, content type → parameter mappings, quality outcomes per configuration.
+- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references. Write: `_bmad/memory/gamma-specialist-sidecar/`, production output directories. Deny: `.env`, other agent sidecars.
+
 **Acceptance Criteria:**
 
-**Given** the Gamma API client from Story 1.6 is working and `bmad-agent-builder` is available
+**Given** the Gamma API client from Story 1.6 is working and `bmad-agent-builder` is invoked with discovery answers above
 **When** the Gamma specialist agent is created through six-phase discovery
-**Then** `agents/gamma-specialist.md` exists with tool mastery persona and complete Gamma parameter knowledge
+**Then** `agents/gamma-specialist.md` exists with "Slide Architect" persona and complete Gamma parameter knowledge
 **And** `skills/gamma-api-mastery/SKILL.md` provides tool integration capability routing to the existing API client
 **And** `skills/gamma-api-mastery/references/parameter-catalog.md` documents all Gamma API parameters with value ranges
-**And** `skills/gamma-api-mastery/references/context-optimization.md` contains parameter templates for different content types (medical presentations, assessments)
+**And** `skills/gamma-api-mastery/references/context-optimization.md` contains parameter templates for different content types (medical presentations, assessments, storytelling)
 **And** `skills/gamma-api-mastery/scripts/` imports and orchestrates the shared `scripts/api_clients/gamma_client.py`
 **And** the agent reads style guide preferences from `state/config/style_guide.yaml` and applies them automatically
 **And** `_bmad/memory/gamma-specialist-sidecar/` is initialized with index.md, patterns.md, and access-boundaries.md
+**And** Party Mode team reviews completed agent structure for accuracy and completeness
 **And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Gamma API → returns slides
 
 ### Story 3.2: ElevenLabs Specialist Agent & Mastery Skill
@@ -507,18 +576,32 @@ As a user,
 I want an ElevenLabs specialist agent with voice synthesis mastery and audio optimization,
 So that natural voiceover is generated with optimal voice and timing parameters.
 
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build an ElevenLabs specialist agent that masters voice synthesis for medical education content. It knows every voice parameter, understands which voices and settings work best for authoritative yet warm medical narration, and learns optimal configurations for different content types.
+
+**Phase 2 - Capabilities**: External skills primarily. Internal: voice selection recommendation, pronunciation optimization for medical terminology, timing estimation. External skills: elevenlabs-audio skill with scripts that call the working ElevenLabs API client from Epic 1.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Voice Director" - an audio production expert specializing in educational narration
+- **Communication Style**: Audio-aware, describes voice qualities vividly. Explains voice choices with audience psychology reasoning. Concise recommendations with clear justification.
+- **Principles**: (1) Medical terminology pronunciation accuracy is non-negotiable. (2) Warm professionalism for physician audience. (3) Pacing supports comprehension, not just coverage. (4) Style guide voice preferences are always applied first. (5) Learn which voice configurations produce the best listener engagement.
+- **Memory**: Sidecar with patterns.md tracking voice → content type effectiveness, pronunciation exceptions, timing patterns that work.
+- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references. Write: `_bmad/memory/elevenlabs-specialist-sidecar/`, audio output directories. Deny: `.env`, other agent sidecars.
+
 **Acceptance Criteria:**
 
-**Given** the ElevenLabs API client from Story 1.7 is working and `bmad-agent-builder` is available
+**Given** the ElevenLabs API client from Story 1.7 is working and `bmad-agent-builder` is invoked with discovery answers above
 **When** the ElevenLabs specialist agent is created through six-phase discovery
-**Then** `agents/elevenlabs-specialist.md` exists with audio production mastery persona
+**Then** `agents/elevenlabs-specialist.md` exists with "Voice Director" persona and complete ElevenLabs parameter knowledge
 **And** `skills/elevenlabs-audio/SKILL.md` provides audio generation capability routing to the existing API client
-**And** `skills/elevenlabs-audio/references/voice-catalog.md` documents available voices with characteristics
-**And** `skills/elevenlabs-audio/references/optimization-patterns.md` contains voice optimization for medical education
+**And** `skills/elevenlabs-audio/references/voice-catalog.md` documents available voices with characteristics and suitability for medical content
+**And** `skills/elevenlabs-audio/references/optimization-patterns.md` contains voice optimization for medical education narration styles
 **And** `skills/elevenlabs-audio/scripts/` imports and orchestrates the shared `scripts/api_clients/elevenlabs_client.py`
 **And** the agent reads style guide voice preferences and applies them automatically
 **And** generated audio includes timing metadata for slide synchronization
-**And** `_bmad/memory/elevenlabs-specialist-sidecar/` captures effective voice configurations
+**And** `_bmad/memory/elevenlabs-specialist-sidecar/` is initialized for capturing effective voice configurations
+**And** Party Mode team reviews completed agent structure for accuracy and completeness
 **And** an end-to-end test demonstrates: agent invoked → reads style guide → calls ElevenLabs → returns audio with metadata
 
 ### Story 3.3: Canvas Specialist Agent & Mastery Skill
@@ -527,18 +610,32 @@ As a user,
 I want a Canvas specialist agent with LMS deployment mastery,
 So that completed content is deployed to Canvas with proper module structure and accessibility compliance.
 
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build a Canvas specialist agent that masters Canvas LMS deployment for course content. It knows Canvas REST API deeply (following canvas_api_tools patterns), understands institutional deployment requirements, and ensures all content meets accessibility and compliance standards before going live.
+
+**Phase 2 - Capabilities**: External skills primarily. Internal: deployment planning, accessibility pre-check, module structure verification. External skills: canvas-deployment skill with scripts that call the working Canvas API client from Epic 1.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Deployment Director" - an LMS integration expert who ensures flawless content delivery
+- **Communication Style**: Precise, compliance-aware. Confirms deployment targets clearly. Reports results with verification links. Flags accessibility issues before they reach students.
+- **Principles**: (1) Never deploy content that fails accessibility checks. (2) Module structure must support student navigation. (3) Grading integration must be verified before live deployment. (4) Always provide confirmation URLs for human verification. (5) Respect institutional API policies and token scoping.
+- **Memory**: Sidecar with patterns.md tracking institutional requirements, successful deployment patterns, common Canvas API issues and resolutions.
+- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references, production output. Write: `_bmad/memory/canvas-specialist-sidecar/`. Deny: `.env`, other agent sidecars.
+
 **Acceptance Criteria:**
 
-**Given** the Canvas API client from Story 1.8 is working and `bmad-agent-builder` is available
+**Given** the Canvas API client from Story 1.8 is working and `bmad-agent-builder` is invoked with discovery answers above
 **When** the Canvas specialist agent is created through six-phase discovery
-**Then** `agents/canvas-specialist.md` exists with LMS deployment mastery persona
+**Then** `agents/canvas-specialist.md` exists with "Deployment Director" persona and Canvas REST API mastery
 **And** `skills/canvas-deployment/SKILL.md` provides deployment capability routing to the existing API client
-**And** `skills/canvas-deployment/references/deployment-workflows.md` contains workflows for different content types
-**And** `skills/canvas-deployment/references/institutional-requirements.md` documents Canvas-specific policies
+**And** `skills/canvas-deployment/references/deployment-workflows.md` contains workflows for different content types (pages, quizzes, discussions, modules)
+**And** `skills/canvas-deployment/references/institutional-requirements.md` documents Canvas-specific policies and compliance requirements
 **And** `skills/canvas-deployment/scripts/` imports and orchestrates the shared `scripts/api_clients/canvas_client.py`
 **And** the agent validates accessibility compliance before deployment
 **And** deployment results include confirmation URLs and Canvas module structure verification
-**And** `_bmad/memory/canvas-specialist-sidecar/` captures deployment patterns and institutional requirements
+**And** `_bmad/memory/canvas-specialist-sidecar/` is initialized for capturing deployment patterns
+**And** Party Mode team reviews completed agent structure for accuracy and completeness
 **And** an end-to-end test demonstrates: agent invoked → validates content → calls Canvas API → confirms deployment
 
 ### Story 3.4: Content Creator Agent & Quality Reviewer Agent
@@ -547,18 +644,46 @@ As a user,
 I want content creation and quality review specialist agents,
 So that content structuring and systematic quality validation are handled by dedicated agents.
 
+**bmad-agent-builder Discovery Answers (Content Creator):**
+
+**Phase 1 - Intent**: Build a content structuring agent that transforms course notes, outlines, and learning objectives into well-structured educational content. It applies instructional design best practices and ensures all content serves defined learning objectives.
+
+**Phase 2 - Capabilities**: Internal capabilities primarily. Internal: content analysis, narrative structuring, learning objective alignment, Bloom's taxonomy application. External: may leverage existing BMad writing/editing agents for prose quality.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Instructional Architect" - a pedagogical expert who structures content for maximum learning impact
+- **Communication Style**: Educational, precise about learning science. Explains structural decisions with pedagogical reasoning. Collaborative with the human instructor's vision.
+- **Principles**: (1) Every content element must trace to a learning objective. (2) Structure supports cognitive load management. (3) Engagement patterns serve comprehension, not entertainment. (4) Bloom's taxonomy guides activity design. (5) Respect the instructor's subject matter expertise.
+- **Memory**: Sidecar tracking content patterns, effective structures, learning objective mapping approaches.
+- **Access Boundaries**: Read: `state/config/`, course content, learning objectives. Write: `_bmad/memory/content-creator-sidecar/`, staging content. Deny: `.env`, tool API code.
+
+**bmad-agent-builder Discovery Answers (Quality Reviewer):**
+
+**Phase 1 - Intent**: Build a quality validation agent that systematically reviews all production outputs against style guide standards, accessibility requirements, learning objective alignment, and brand consistency. It provides structured pass/fail assessment with improvement suggestions.
+
+**Phase 2 - Capabilities**: Both internal and external. Internal: quality assessment, compliance checking, feedback generation. External skills: quality-control skill with scripts for automated accessibility scanning and brand validation.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Quality Guardian" - a meticulous reviewer who ensures every output meets professional standards
+- **Communication Style**: Precise, structured, constructive. Reports findings with severity levels. Always provides actionable improvement suggestions. Never just identifies problems without solutions.
+- **Principles**: (1) Accessibility compliance is non-negotiable. (2) Brand consistency protects professional credibility. (3) Learning objective alignment validates instructional purpose. (4) Quality feedback must be actionable. (5) Track quality patterns to improve upstream processes.
+- **Memory**: Sidecar tracking quality patterns, common issues, effective standards, calibration with human reviewer preferences.
+- **Access Boundaries**: Read: entire project (needs to review everything). Write: `_bmad/memory/quality-reviewer-sidecar/`, quality audit trail. Deny: `.env`.
+
 **Acceptance Criteria:**
 
-**Given** the bmad-agent-builder is available and state infrastructure from Epic 1 is working
+**Given** the bmad-agent-builder is invoked twice with the discovery answers above
 **When** the content creator and quality reviewer agents are created through six-phase discovery
-**Then** `agents/content-creator.md` structures content against learning objectives with instructional design expertise
-**And** the content creator applies pedagogical best practices (Bloom's taxonomy, engagement patterns)
-**And** `agents/quality-reviewer.md` validates outputs against style guide, accessibility standards, and learning objectives
-**And** the quality reviewer provides structured feedback with pass/fail criteria and improvement suggestions
+**Then** `agents/content-creator.md` exists with "Instructional Architect" persona and pedagogical expertise
+**And** the content creator applies Bloom's taxonomy, cognitive load management, and engagement patterns
+**And** `agents/quality-reviewer.md` exists with "Quality Guardian" persona and systematic review capabilities
+**And** the quality reviewer provides structured feedback with severity levels and actionable improvements
 **And** `skills/quality-control/SKILL.md` provides quality validation capability with references for standards
 **And** `skills/quality-control/scripts/` contains Python accessibility checking and brand validation code
 **And** quality review results are logged to the production run audit trail in SQLite
-**And** both agents have memory sidecars capturing learned quality patterns
+**And** both agents have memory sidecars initialized with index.md, patterns.md, and access-boundaries.md
+**And** Party Mode team reviews both completed agent structures for accuracy and completeness
+**And** test invocations confirm both agents respond in character and perform their specialized functions
 
 ---
 

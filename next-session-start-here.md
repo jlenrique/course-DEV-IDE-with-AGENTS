@@ -78,10 +78,19 @@
 
 ### Agent Creation Process (Epic 2+ pattern)
 For every story that creates a custom agent via `bmad-agent-builder`:
-1. **Party Mode coaching** — team refines discovery answers with the user before creation
+1. **Party Mode coaching** — team (Winston, Mary, John, Sally, Quinn) refines discovery answers with the user
 2. **bmad-agent-builder** — six-phase discovery using the refined answers
-3. **Party Mode validation** — team reviews the completed agent for accuracy and completeness
-The user has flagged that agent definitions need to be very sophisticated and specific — they need collaborative coaching, not solo off-the-cuff answers.
+3. **Skill co-creation** — agent's mastery skill (SKILL.md + references/ + scripts/) built in the same story
+4. **Party Mode validation** — team reviews completed agent + skill for accuracy and completeness
+
+**Why coaching matters**: Agent definitions and skill reference docs (parameter catalogs, context optimization templates) require the user's domain expertise (medical education, physician audience) combined with architectural and tool knowledge. The Party Mode team provides the rigor; the user provides the instructional vision.
+
+**Three-layer architecture** (each independently updatable):
+- **API clients** (`scripts/api_clients/`) — connectivity, retry, auth (Epic 1, DONE)
+- **Skills** (`skills/{tool}/`) — tool expertise, parameter templates, execution code (Epic 3)
+- **Agents** (`agents/*.md`) — judgment, decision-making, personality, memory (Epics 2-3)
+
+**Full agent roster**: 13 custom agents planned across Epics 2-9 (see SESSION-HANDOFF.md for complete map).
 
 ### Gotchas
 - PowerShell doesn't support `&&` chaining — use `;` instead

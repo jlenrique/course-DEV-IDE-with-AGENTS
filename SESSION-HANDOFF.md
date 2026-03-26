@@ -42,6 +42,8 @@ Epic 2 is about creating the conversational "general contractor" agent that user
 - **Dashed directory names + Python**: `skills/pre-flight-check/` required a `conftest.py` with `importlib` to make imports work. Future skills should consider underscore naming.
 - **PowerShell quirks**: Can't use `&&`, `if not exist`, or `cmd.exe` patterns. Use PowerShell-native syntax or semicolons.
 - **Agent creation needs coaching**: User flagged that bmad-agent-builder discovery answers need to be co-developed with Party Mode team coaching, not answered solo. The pre-built answers in epics.md are starting frameworks. Every agent creation story in Epic 2+ should begin with a Party Mode coaching session to refine identity, capabilities, principles, memory design, and access boundaries before running the builder.
+- **Skills co-created with agents**: Each specialist agent and its mastery skill are defined in the same story because the agent's identity, principles, and capability routing all reference the skill. The skill's reference docs (parameter-catalog.md, context-optimization.md) require the user's domain expertise (medical education, physician audience) combined with tool knowledge — Party Mode coaching is essential for these too.
+- **Three-layer architecture clarity**: API clients (Epic 1, DONE) handle connectivity; skills (Epic 3) own tool expertise and parameter templates; agents (Epic 2-3) own judgment and decision-making. Each layer is independently updatable.
 
 ## Validation Summary
 

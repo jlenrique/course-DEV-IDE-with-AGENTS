@@ -8,14 +8,15 @@ Story 3.1 file is READY at `_bmad-output/implementation-artifacts/3-1-gamma-spec
 
 ```
 # In a FRESH Cursor chat session:
-1. Run bmad-dev-story — say "dev story 3.1" or "implement the next story"
-2. First: Fix GammaClient parameter names (inputText, textMode, exportAs)
-3. Build Gamma agent via bmad-agent-builder (Task 1)
+1. Party Mode coaching — produce coached bmad-agent-builder discovery answers
+   for Gamma specialist (like party-mode-coaching-marcus-orchestrator.md)
+2. In ANOTHER fresh session: bmad-agent-builder with coached answers (Task 1)
+3. Fix GammaClient parameter names (inputText, textMode, exportAs)
 4. Build gamma-api-mastery skill with GammaEvaluator (Tasks 2, 5)
 5. Woodshed: faithful reproduction of L1 + L2 exemplars with PDF export (Task 6)
 6. Run bmad-code-review for Story 3.1
 7. Post-story: woodshed L3, L4.1, L4.2 as progressive mastery exercises
-8. Repeat cycle for Stories 3.2–3.7
+8. Repeat cycle for Stories 3.2–3.8
 ```
 
 **Branch**: `epic3-core-tool-agents`

@@ -1,0 +1,63 @@
+tool: gamma
+agent: bmad-agent-gamma
+
+doc_sources:
+  - name: "Gamma Developer Docs"
+    url: "https://developers.gamma.app/"
+    type: developer-docs
+    llm_optimized: "https://developers.gamma.app/llms.txt"
+    llm_full: "https://developers.gamma.app/llms-full.txt"
+    md_suffix: true
+    key_pages:
+      - url: "https://developers.gamma.app/generations/create-generation.md"
+        topic: "POST /generations — generate from text"
+      - url: "https://developers.gamma.app/generations/create-from-template.md"
+        topic: "POST /generations/from-template"
+      - url: "https://developers.gamma.app/generations/get-generation-status.md"
+        topic: "GET /generations/{id} — poll for results"
+      - url: "https://developers.gamma.app/workspace/list-themes.md"
+        topic: "GET /themes"
+      - url: "https://developers.gamma.app/workspace/list-folders.md"
+        topic: "GET /folders"
+      - url: "https://developers.gamma.app/guides/generate-api-parameters-explained.md"
+        topic: "Complete parameter guide for text generation"
+      - url: "https://developers.gamma.app/guides/create-from-template-api-parameters-explained.md"
+        topic: "Template generation parameters"
+      - url: "https://developers.gamma.app/guides/async-patterns-and-polling.md"
+        topic: "Async polling patterns, rate limits, credits"
+      - url: "https://developers.gamma.app/guides/charts-and-structured-content.md"
+        topic: "Charts, tables, structured visuals"
+      - url: "https://developers.gamma.app/guides/image-url-best-practices.md"
+        topic: "Image URL optimization"
+      - url: "https://developers.gamma.app/guides/header-and-footer-formatting.md"
+        topic: "Header/footer customization"
+      - url: "https://developers.gamma.app/reference/image-model-accepted-values.md"
+        topic: "AI image model options"
+      - url: "https://developers.gamma.app/reference/output-language-accepted-values.md"
+        topic: "Output language codes"
+      - url: "https://developers.gamma.app/reference/error-codes.md"
+        topic: "Error codes reference"
+      - url: "https://developers.gamma.app/reference/common-feature-requests.md"
+        topic: "API scope and current limitations"
+      - url: "https://developers.gamma.app/mcp/mcp-tools-reference.md"
+        topic: "MCP tools: generate, get_themes, get_folders"
+
+  - name: "Gamma Help Center"
+    url: "https://help.gamma.app/en/"
+    type: help-center
+    notes: "User-facing docs — useful for understanding card layouts, design options, and content features that the API should be able to reproduce"
+
+  - name: "Gamma API Changelog"
+    url: "https://developers.gamma.app/changelog/readme.md"
+    type: changelog
+    notes: "Check before every woodshed cycle for new parameters, breaking changes, or deprecations"
+
+refresh_protocol:
+  on_woodshed_start: true
+  on_story_start: true
+  on_regression: false
+  method: ref_mcp
+  fallback: web_fetch
+
+last_refreshed: null
+refresh_notes: null

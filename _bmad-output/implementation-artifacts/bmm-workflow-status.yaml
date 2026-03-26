@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-26 (session 3 — Story 2.1 DONE)
+# Last Updated: 2026-03-26 (session 4 — exemplar infrastructure, smoke test success, two-mode woodshed, doc refresh protocol)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,8 +23,8 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "35 stories across 10 epics (Stories 2.6 + 3.7 added for run mode management and source wrangling), 100% FR coverage"
-    stories_count: 35
+    note: "36 stories across 10 epics (Story 3.8 added for tech spec wrangler skill)"
+    stories_count: 36
     epics_count: 10
   ux_design:
     status: "not-applicable"
@@ -55,9 +55,18 @@ key_decisions:
   - "MCP env-loader wrapper (run_mcp_from_env.cjs) keeps secrets out of versioned configs"
   - "Active Cursor MCPs limited to verified servers (Gamma, Canvas LMS)"
   - "ElevenLabs and Qualtrics: API-primary, MCP-deferred due to Cursor compatibility"
-
   - "Ad-hoc/default run mode switch: gate on state management layer, agents unaware of mode"
   - "Source wrangler capability: Notion API + Box Drive local FS, start as skill, may evolve to agent"
   - "Notion confirmed Tier 1 (official MCP on npm, free API on all plans including free educator)"
+  - "EXEMPLAR-DRIVEN DEVELOPMENT: Specialist agents prove competence by reproducing real exemplar artifacts via API/MCP. Exemplars serve as both design aids and acceptance tests (Party Mode session, March 26 2026)"
+  - "WOODSHED SKILL: Shared skill (skills/woodshed/) for study → reproduce → compare → reflect → register workflow. Detailed run logging, artifact retention (pass/fail), mandatory reflection between failures, circuit breaker (3/session, 7 total)"
+  - "PROGRESSIVE MASTERY: Simple → intermediate → advanced exemplars. Regression runs verify previously mastered exemplars stay mastered. Blocked status for exemplars the agent cannot master (triggers human review)"
 
-next_workflow_step: "Epic 2 COMPLETE (6/6 stories done, 55 tests). Retrospective complete. Next: Epic 3 (Core Tool Specialist Agents & Mastery Skills) — start with bmad-create-story for Story 3.1 (Gamma Specialist Agent)."
+  - "SMOKE TEST SUCCESS (2026-03-26): Gamma API single-card generation + PDF export/download validated. 5 credits/card, ~15s generation. GammaClient uses old param names (topic→inputText, missing textMode) — must fix in Story 3.1"
+  - "TWO-MODE WOODSHED: Faithful mode (exact reproduction) must pass before Creative mode (enhanced reproduction) unlocks. Proves tool control then creative judgment"
+  - "L-LEVEL SYSTEM: L1-L4 single slides, L5+ multi-slide decks. Dot extensions for within-level granularity. Levels provisional — agents may propose changes"
+  - "EXPORT REQUIREMENT: All reproductions must download production artifacts (PDF/PPTX/MP3). Screenshots supplementary only. Export URLs time-limited (~7 days)"
+  - "DOC REFRESH PROTOCOL: Each mastery skill maintains doc-sources.yaml. Mandatory refresh before woodshed cycles via Ref MCP. Gamma has llms.txt for LLM-optimized docs"
+  - "TECH SPEC WRANGLER: Shared skill (not agent). Deferred Perplexity MCP until needed"
+
+next_workflow_step: "Story 3.1 ready-for-dev. Implement in fresh session: fix GammaClient params, build agent via bmad-agent-builder, create mastery skill with GammaEvaluator, faithful reproduction of L1+L2 exemplars with PDF export. Story 3.1 scope: L1+L2 mastery; L3-L4 become post-story woodshed exercises."

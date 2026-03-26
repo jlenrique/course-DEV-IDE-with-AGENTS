@@ -89,6 +89,8 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Production run analysis and reports | `run-reporting` | planned | Run ID, chronology data |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
 | Pull from Notion, read from Box Drive, write feedback | `source-wrangling` | planned | Notion page IDs, Box Drive paths, feedback content |
+| Tool API doc refresh, research, validation | `tech-spec-wrangler` | planned (Story 3.8) | Tool name, doc-sources.yaml path, optional research query |
+| Exemplar study, reproduction, comparison, regression | `woodshed` | active | Tool name, exemplar ID, evaluator reference |
 
 ### External Specialist Agents
 

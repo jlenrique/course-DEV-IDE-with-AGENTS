@@ -667,9 +667,19 @@ So that I can experiment freely without impacting production state, or work in f
 
 ## Epic 3: Core Tool Integrations
 
-**Goal**: Users can leverage Gamma, ElevenLabs, and Canvas through intelligent specialty agents with complete tool mastery, parameter intelligence, and skills-based integration.
+**Goal**: Users can leverage Gamma, ElevenLabs, and Canvas through intelligent specialty agents with complete tool mastery, parameter intelligence, and skills-based integration. Each agent proves its competence through **exemplar-driven development**: studying real exemplar artifacts, reproducing them programmatically via API/MCP, and passing structured comparison against the originals. The shared **woodshed skill** (`skills/woodshed/`) provides the study → reproduce → compare → reflect → register workflow with detailed run logging, artifact retention, reflection protocols, and circuit breaker safeguards.
 
 **FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR61, FR62, FR63, FR64, FR65, FR71, FR72, FR73, FR74
+
+**Exemplar-Driven Acceptance Model**: For every specialist agent in this epic, the definition of "tool mastery" includes:
+1. Juan provides exemplar artifact(s) in `resources/exemplars/{tool}/{id}/`
+2. The agent studies the exemplar (brief + source) and derives a reproduction spec
+3. The agent reproduces the exemplar programmatically through the tool's API/MCP
+4. The reproduction is compared against the original using the rubric in `resources/exemplars/_shared/comparison-rubric-template.md`
+5. Passing the rubric = the agent has demonstrated real competence, not just API connectivity
+6. All reproduction attempts (pass and fail) are retained with detailed run logs for audit and improvement
+7. Between failed attempts, the agent reflects on root causes and predicts improvements before retrying
+8. If the agent cannot master an exemplar after the circuit breaker limit (7 total attempts), it produces a structured failure report for human review
 
 ### Story 3.1: Gamma Specialist Agent & Mastery Skill
 
@@ -702,7 +712,10 @@ So that presentation slides are created with optimal parameters matching my styl
 **And** the agent reads style guide preferences from `state/config/style_guide.yaml` and applies them automatically
 **And** `_bmad/memory/gamma-specialist-sidecar/` is initialized with index.md, patterns.md, and access-boundaries.md
 **And** Party Mode team reviews completed agent structure for accuracy and completeness
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Gamma API → returns slides
+**And** at least one exemplar exists in `resources/exemplars/gamma/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Gamma API using the woodshed workflow (study → reproduce → compare → pass rubric)
+**And** the reproduction attempt produces a detailed `run-log.yaml` capturing exact API call, prompt, response, and comparison conclusion
+**And** both the reproduced artifact and the run log are retained in `reproductions/{timestamp}/`
 
 ### Story 3.2: ElevenLabs Specialist Agent & Mastery Skill
 
@@ -736,7 +749,9 @@ So that natural voiceover is generated with optimal voice and timing parameters.
 **And** generated audio includes timing metadata for slide synchronization
 **And** `_bmad/memory/elevenlabs-specialist-sidecar/` is initialized for capturing effective voice configurations
 **And** Party Mode team reviews completed agent structure for accuracy and completeness
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls ElevenLabs → returns audio with metadata
+**And** at least one exemplar exists in `resources/exemplars/elevenlabs/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the ElevenLabs API using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
 ### Story 3.3: Canvas Specialist Agent & Mastery Skill
 
@@ -770,7 +785,9 @@ So that completed content is deployed to Canvas with proper module structure and
 **And** deployment results include confirmation URLs and Canvas module structure verification
 **And** `_bmad/memory/canvas-specialist-sidecar/` is initialized for capturing deployment patterns
 **And** Party Mode team reviews completed agent structure for accuracy and completeness
-**And** an end-to-end test demonstrates: agent invoked → validates content → calls Canvas API → confirms deployment
+**And** at least one exemplar exists in `resources/exemplars/canvas/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Canvas API using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
 ### Story 3.4: Content Creator Agent & Quality Reviewer Agent
 
@@ -846,7 +863,9 @@ So that course assessments, polls, and surveys are created with optimal paramete
 **And** `skills/qualtrics-assessment/scripts/` imports and orchestrates the shared `scripts/api_clients/qualtrics_client.py`
 **And** the agent reads style guide assessment preferences and applies them automatically
 **And** `_bmad/memory/qualtrics-specialist-sidecar/` is initialized for capturing assessment patterns
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Qualtrics API → returns survey
+**And** at least one exemplar exists in `resources/exemplars/qualtrics/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Qualtrics API using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
 ### Story 3.6: Canva Specialist Agent & Design Mastery Skill
 
@@ -874,7 +893,9 @@ So that course graphics, infographics, and visual assets are created with profes
 **And** `skills/canva-design/references/template-catalog.md` documents Canva templates suited for educational content
 **And** the agent reads style guide brand preferences and applies them to all design creation
 **And** `_bmad/memory/canva-specialist-sidecar/` is initialized for capturing design pattern effectiveness
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → uses Canva MCP → returns design
+**And** at least one exemplar exists in `resources/exemplars/canva/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Canva MCP using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
 ### Story 3.7: Source Wrangler — Notion & Box Drive Integration
 
@@ -897,6 +918,31 @@ So that agents have access to my existing course planning materials without manu
 **And** the wrangler can write feedback (readiness assessments, design tips) back to Notion pages
 **And** pre-flight checks verify Notion API connectivity and Box Drive path accessibility
 **And** a test demonstrates: wrangler invoked → pulls from Notion → reads from Box → materials available to orchestrator
+
+### Story 3.8: Tech Spec Wrangler Skill
+
+As a specialist agent,
+I want a shared tech spec wrangler skill that finds, validates, and delivers current tool documentation, working examples, and how-to guides,
+So that I always have authoritative, up-to-date API knowledge before production work and woodshed cycles.
+
+**FRs covered:** FR14 (API connectivity verification), FR18 (tool-specific expertise), FR22 (skills version control and effectiveness)
+
+**Design Decision:** Implemented as a shared **skill** (SKILL.md + scripts/), not a dedicated agent. Any specialist agent or the orchestrator can invoke it. The skill delegates to available MCPs: Ref MCP (primary — `ref_search_documentation`, `ref_read_url`) for reading known docs, and optionally a research MCP (e.g., Perplexity) for discovering unknown docs, examples, and community patterns. May be promoted to a full agent if judgment/proactive-monitoring needs emerge.
+
+**Acceptance Criteria:**
+
+**Given** a specialist agent needs current documentation for its tool (e.g., Gamma, ElevenLabs, Canvas)
+**When** the tech spec wrangler skill is invoked with a tool name and optional query
+**Then** it loads `doc-sources.yaml` from the requesting agent's mastery skill references
+**And** it checks the tool's changelog for changes since `last_refreshed` date via Ref MCP
+**And** if changes are found, it reads affected doc pages via Ref MCP (`ref_read_url`) and identifies new parameters, deprecations, or breaking changes
+**And** it can perform targeted research queries (e.g., "Gamma API charts best practices") via Ref MCP or research MCP
+**And** it returns a structured update report: what changed, what's new, what was deprecated, with source URLs cited
+**And** it updates `last_refreshed` and `refresh_notes` in the requesting skill's `doc-sources.yaml`
+**And** it logs discoveries to the requesting agent's memory sidecar (`patterns.md`)
+**And** for tools with LLM-optimized docs (e.g., Gamma's `llms.txt`), it uses those endpoints for efficient scanning
+**And** `skills/tech-spec-wrangler/SKILL.md` exists with references and scripts
+**And** unit tests cover changelog detection, doc comparison, and report generation
 
 ---
 

@@ -48,6 +48,11 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 - **Run presets**: `explore`, `draft`, `production`, `regulated` with parameter overrides
 - **Asset-lesson pairing invariant**: every educational artifact paired with instructional context
 - **Tool parameter mastery**: Specialty agents master complete API parameter spaces, preferences stored in style guide YAML
+- **Exemplar-driven development**: Each specialist agent proves competence by reproducing real exemplar artifacts programmatically via API/MCP, scored against a structured rubric. Exemplars serve as both design aids and acceptance tests. See `resources/exemplars/_shared/woodshed-workflow.md`
+- **Woodshed skill**: Shared skill (`skills/woodshed/`) provides study → reproduce → compare → reflect → register workflow with detailed run logging, downloaded artifact retention for every attempt (pass/fail), mandatory reflection between failed attempts, and circuit breaker give-up protocol (3/session, 7 total)
+- **Two woodshed modes**: Faithful (exact reproduction proving tool control) must be mastered before Creative (enhanced reproduction proving creative judgment) is unlocked per exemplar
+- **Progressive mastery**: L1-L4 single artifacts → L5 multi-artifact sets. L-levels with dot extensions. Levels provisional — agents may propose changes. Regression runs ensure mastered exemplars stay mastered
+- **Export and download**: All reproductions must download production-quality artifacts (PDF, PPTX, MP3) — screenshots supplementary only
 - **HIL gates**: human checkpoints at every stage with rubrics and signoff tracking
 - **Pre-flight checks**: Hook-driven MCP/API connectivity verification + tool documentation scanning
 - **Production run reporting**: Comprehensive effectiveness analysis with learning capture in agent memory
@@ -62,6 +67,7 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 .cursor-plugin/   # Cursor plugin manifest
 agents/           # Custom agent .md files (auto-discovered)
 skills/           # SKILL.md directories with references/ + scripts/ (auto-discovered)
+  woodshed/       # Shared exemplar mastery skill (study, reproduce, compare, regress)
 rules/            # .mdc rules files for agent guidance
 hooks/            # Event-driven automation triggers
 commands/         # Agent-executable command files
@@ -70,7 +76,16 @@ _bmad/memory/     # Agent memory sidecars for persistent learning
 scripts/          # Shared Python infrastructure (API clients, utilities)
 tests/            # Unit + integration tests
 docs/             # Architecture + agent guides + troubleshooting
-resources/        # Exemplars, style bible, tool inventory
+resources/
+  exemplars/      # Per-tool exemplar libraries with _catalog.yaml, briefs, source, reproductions
+    _shared/      # Comparison rubric template, woodshed workflow protocol
+    gamma/        # Gamma exemplars (slides/presentations)
+    elevenlabs/   # ElevenLabs exemplars (audio/voiceover)
+    canvas/       # Canvas exemplars (LMS deployment)
+    qualtrics/    # Qualtrics exemplars (surveys/assessments)
+    canva/        # Canva exemplars (visual design)
+  style-bible/    # Authoritative brand reference
+  tool-inventory/ # Tool access matrix
 ```
 
 ## Tool Universe (Researched March 26, 2026)
@@ -117,7 +132,8 @@ resources/        # Exemplars, style bible, tool inventory
 - [x] **AD-HOC MODE**: Binary ad-hoc/default mode switch for Master Orchestrator; ad-hoc routes assets to scratch/staging, suppresses state tracking; QA always runs; future per-level modality matrix deferred
 - [x] **STORY 2.1 (Marcus Orchestrator)**: Agent built via bmad-agent-builder (6-phase discovery with Party Mode coaching), quality scan passed (0 critical), 12 interaction test scenarios passed, Party Mode team validation complete. 13 files: SKILL.md + 8 references + 2 scripts + 2 test files. Memory sidecar active with 4 files. First production plan staged (C1-M1-P2S1-VID-001).
 - [x] **EPIC 2 COMPLETE**: Stories 2.2–2.6 all done. Production-coordination skill (4 scripts, 4 refs, 40 tests). Marcus references updated for workflow management, delegation, parameter intelligence, pre-flight, and mode management.
-- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (7 stories)
+- [x] **EXEMPLAR-DRIVEN DEVELOPMENT**: Woodshed skill created (`skills/woodshed/`), exemplar library scaffolded (`resources/exemplars/` per tool), comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, and L-level difficulty system all in place. 5 Gamma exemplars provided (L1-L4.2). Smoke test validated: Gamma API produces single-card output, PDF export/download works (205KB), 5 credits/card. GammaClient needs parameter name updates (inputText, textMode, exportAs). Epic 3 stories updated with exemplar reproduction as acceptance criteria.
+- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (8 stories — Story 3.8 Tech Spec Wrangler added)
 
 ## Key Files
 
@@ -134,6 +150,10 @@ resources/        # Exemplars, style bible, tool inventory
 - `scripts/heartbeat_check.mjs` - Baseline read-only API heartbeat across configured tools
 - `scripts/smoke_elevenlabs.mjs` - Focused ElevenLabs API smoke check
 - `scripts/smoke_qualtrics.mjs` - Focused Qualtrics API smoke check
+- `skills/woodshed/SKILL.md` - **Shared exemplar mastery skill (study, reproduce, compare, regress)**
+- `resources/exemplars/_shared/woodshed-workflow.md` - **Complete woodshed workflow protocol (logging, reflection, circuit breaker)**
+- `resources/exemplars/_shared/comparison-rubric-template.md` - **Rubric for scoring exemplar reproductions**
+- `resources/exemplars/gamma/_catalog.yaml` - **Gamma exemplar registry**
 - `docs/agent-environment.md` - Agent/MCP guidance  
 - `docs/workflow/human-in-the-loop.md` - HIL procedure
 - `.cursor/rules/course-content-agents.mdc` - Cursor agent rules

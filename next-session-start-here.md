@@ -2,23 +2,29 @@
 
 ## Immediate Next Action
 
-**Start Epic 3: Run `bmad-create-story` for Story 3.1 (Gamma Specialist Agent & Mastery Skill).**
+**Implement Story 3.1 (Gamma Specialist Agent & Mastery Skill) via `bmad-dev-story`.**
 
-Epic 2 (Master Agent Architecture & Development) is COMPLETE — all 6 stories done, 55 new tests, retrospective complete. Marcus was built via `bmad-agent-builder` with Party Mode coaching, passed quality scan (0 critical issues), passed all 12 interaction test scenarios, and was validated by the Party Mode team (March 26, 2026, Session 3).
+Story 3.1 file is READY at `_bmad-output/implementation-artifacts/3-1-gamma-specialist-agent.md`. Five Gamma exemplars are provided (L1-L4.2). Smoke test PASSED (2026-03-26): Gamma API generates single-card presentations, PDF export/download works, 5 credits/card.
 
 ```
 # In a FRESH Cursor chat session:
-1. Run bmad-create-story — say "Create Story 3.1" or "Create the next story"
-2. Run bmad-dev-story to implement Story 3.1
-3. Run bmad-code-review for Story 3.1
-4. Repeat for Stories 3.2–3.7
-5. After Epic 3 completes: Run bmad-retrospective for Epic 3
+1. Run bmad-dev-story — say "dev story 3.1" or "implement the next story"
+2. First: Fix GammaClient parameter names (inputText, textMode, exportAs)
+3. Build Gamma agent via bmad-agent-builder (Task 1)
+4. Build gamma-api-mastery skill with GammaEvaluator (Tasks 2, 5)
+5. Woodshed: faithful reproduction of L1 + L2 exemplars with PDF export (Task 6)
+6. Run bmad-code-review for Story 3.1
+7. Post-story: woodshed L3, L4.1, L4.2 as progressive mastery exercises
+8. Repeat cycle for Stories 3.2–3.7
 ```
 
-**Branch**: `epic2-master-agent-architecture` — consider creating `epic3-core-tool-agents` branch for Epic 3.
+**Branch**: `epic3-core-tool-agents`
 
-## Current Status — EPIC 2 COMPLETE, EPIC 3 NEXT
+## Current Status — EPIC 2 COMPLETE, EXEMPLAR INFRA BUILT + SMOKE TESTED, STORY 3.1 READY
 
+- **Exemplar-Driven Development Infrastructure**: DONE — woodshed skill, exemplar libraries per tool, comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, L-level difficulty system, BaseEvaluator DRY pattern
+- **Gamma Smoke Test**: PASSED — single-card generation + PDF export/download validated (205KB, 5 credits, ~15s). GammaClient needs param name fixes (Story 3.1 Task 2)
+- **Gamma Exemplars**: 5 slides provided (L1-L4.2) with briefs in `resources/exemplars/gamma/`
 - **Story 2.1 (Master Orchestrator Agent Creation)**: DONE — Marcus built, quality scanned, interaction tested, Party Mode validated
 - **Story 2.2 (Conversational Workflow Management)**: DONE — production-coordination skill, manage_run.py (17 tests)
 - **Story 2.3 (Agent Coordination Protocols)**: DONE — delegation-protocol.md, log_coordination.py (6 tests)
@@ -97,26 +103,50 @@ Party Mode team coached through all 6 phases of the bmad-agent-builder interview
 - Project Context: `docs/project-context.md`
 
 ### Key Tools for Next Session
-- `bmad-create-story` — create Story 2.2 (Conversational Workflow Management)
-- `bmad-dev-story` — implement Story 2.2
-- `bmad-code-review` — review Story 2.2 implementation
+- `bmad-agent-builder` — create Gamma specialist agent (Party Mode coaching first, then six-phase discovery)
+- `bmad-dev-story` — implement Story 3.1
+- `bmad-code-review` — review Story 3.1 implementation
+- `skills/woodshed/` — exemplar study, reproduction, comparison, regression
+- `skills/tech-spec-wrangler/` — planned (Story 3.8); doc refresh protocol available now via `doc-sources.yaml`
 
 ### API Keys
 - `.env` has live keys for: Gamma, ElevenLabs, Canvas, Qualtrics, Botpress, Wondercraft, Kling
 - `.env` is gitignored; `.env.example` is the safe template
 - `.cursor/mcp.json` uses `scripts/run_mcp_from_env.cjs` to load keys at runtime (no literal secrets in config)
 
-### Agent Creation Process (Epic 2+ pattern)
-For every story that creates a custom agent via `bmad-agent-builder`:
-1. **Party Mode coaching** — team refines discovery answers with the user
-2. **bmad-agent-builder** — six-phase discovery using the refined answers
-3. **Skill co-creation** — agent's mastery skill built in the same story
-4. **Party Mode validation** — team reviews completed agent + skill
+### Agent Creation Process (Epic 3 pattern — exemplar-driven)
+For every story that creates a custom specialist agent:
+1. **Juan provides exemplar(s)** in `resources/exemplars/{tool}/` with `brief.md` + `source/`
+2. **Party Mode coaching** — team refines discovery answers with the user
+3. **bmad-agent-builder** — six-phase discovery using the refined answers
+4. **Skill co-creation** — agent's mastery skill built in the same story
+5. **Woodshed validation** — agent studies exemplar, reproduces via API/MCP, passes rubric
+6. **Party Mode validation** — team reviews completed agent + skill + reproduction results
 
 **Three-layer architecture** (each independently updatable):
 - **API clients** (`scripts/api_clients/`) — connectivity, retry, auth (Epic 1, DONE)
 - **Skills** (`skills/{tool}/`) — tool expertise, parameter templates, execution code (Epic 3)
 - **Agents** (`skills/bmad-agent-{name}/`) — judgment, decision-making, personality, memory (Epics 2-3)
+
+**Exemplar-driven mastery** (new for Epic 3):
+- **Exemplar library** (`resources/exemplars/{tool}/`) — real artifacts that agents must reproduce
+- **L-level system**: L1-L4 single artifacts, L5+ multi-artifact sets, dot extensions for within-level granularity; levels are provisional
+- **Woodshed skill** (`skills/woodshed/`) — study → reproduce → compare → reflect → register
+- **Two modes**: Faithful (exact reproduction, proves control) → Creative (enhanced reproduction, proves judgment)
+- **DRY architecture**: `BaseEvaluator` in woodshed (common process); `GammaEvaluator` in mastery skill (agent-specific analysis)
+- **Export/download**: All reproductions download production artifacts (PDF/PPTX/MP3); screenshots supplementary only
+- **Run logging** — every attempt logs exact API calls, prompts, responses, comparison conclusions
+- **Artifact retention** — all reproduction outputs kept (pass and fail) for side-by-side review
+- **Circuit breaker** — 3 attempts/session, 7 total; agent gives up with structured failure report if it can't master an exemplar
+- **Doc refresh** — `doc-sources.yaml` per mastery skill; mandatory refresh via Ref MCP before woodshed cycles
+
+### Smoke Test Results (2026-03-26)
+- Gamma API: `inputText` + `textMode: preserve` + `format: presentation` + `numCards: 1` → 201 Created
+- Export: `exportAs: "pdf"` → signed download URL → 205KB PDF saved locally
+- Polling: 2-3 polls at 5s intervals → completed in ~15 seconds
+- Credits: 5 per card, ~7990 remaining
+- Finding: Gamma embellishes content even in preserve mode → agent must constrain via `additionalInstructions`
+- Finding: GammaClient uses old param names (`topic` not `inputText`) → must fix in Story 3.1
 
 ### Gotchas
 - PowerShell doesn't support `&&` chaining — use `;` instead

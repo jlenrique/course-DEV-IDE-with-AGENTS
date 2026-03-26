@@ -44,6 +44,8 @@ The `hooks/scripts/session-start.mjs` placeholder will be wired to invoke pre-fl
 | **Config Presence** | Kling, Panopto | Verify API keys are set in `.env` |
 | **Static Classification** | Vyond, CourseArc, Articulate | Report as manual-only (no API to test) |
 | **Blocker Reporting** | Canva | Report known MCP blockers with workaround guidance |
+| **Ref MCP** | Documentation/Research | Verify Ref MCP responds (`ref_search_documentation` callable) — required by tech-spec-wrangler |
+| **Doc Sources** | All specialist agents | Scan for `doc-sources.yaml` in each mastery skill's `references/`; flag stale `last_refreshed` dates |
 
 ## Output
 

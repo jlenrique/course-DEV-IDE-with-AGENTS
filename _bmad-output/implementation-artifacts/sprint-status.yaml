@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-26 (session 3 — Story 2.1 DONE, Party Mode validation)
+# last_updated: 2026-03-26 (session 4 — exemplar-driven development infrastructure, Epic 3 prep)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -68,14 +68,15 @@ development_status:
   epic-2-retrospective: done
 
   # === EPIC 3: Core Tool Specialist Agents & Mastery Skills ===
-  epic-3: backlog
-  3-1-gamma-specialist-agent: backlog
+  epic-3: in-progress
+  3-1-gamma-specialist-agent: ready-for-dev
   3-2-elevenlabs-specialist-agent: backlog
   3-3-canvas-specialist-agent: backlog
   3-4-content-creator-quality-reviewer-agents: backlog
   3-5-qualtrics-specialist-agent: backlog
   3-6-canva-specialist-agent: backlog
   3-7-source-wrangler-notion-box: backlog
+  3-8-tech-spec-wrangler-skill: backlog
   epic-3-retrospective: optional
 
   # === EPIC 4: Workflow Coordination & State Infrastructure ===

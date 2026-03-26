@@ -103,7 +103,10 @@ Agent learning and expertise crystallization through BMad sidecar pattern (`_bma
 **Python Infrastructure:**
 Supporting code for API clients (Gamma, ElevenLabs, Canvas), state management (SQLite coordination, YAML configuration), and deterministic operations. Scripts invoked from agent skills when code execution is required.
 
-**Note:** Project initialization establishes Cursor plugin structure (Epic 1) then creates agents through bmad-agent-builder (Epic 2+).
+**Exemplar-Driven Development & Woodshed Skill:**
+Specialist agents prove tool competence through exemplar reproduction. Real exemplar artifacts provided by the human serve as both design aids and acceptance tests. The shared `skills/woodshed/` skill provides a study → reproduce → compare → reflect → register workflow. Every reproduction attempt produces a detailed run log (exact API calls, prompts, MCP interactions, comparison conclusions) and retains all output artifacts regardless of pass/fail. Mandatory reflection between failed attempts forces deliberate improvement. A circuit breaker (3 attempts/session, 7 total) prevents runaway effort; if tripped, the agent produces a structured failure report documenting the capability gap. Progressive mastery through simple → intermediate → advanced exemplar tiers, with regression runs ensuring previously mastered exemplars stay mastered. Exemplar library lives at `resources/exemplars/{tool}/` with per-exemplar `brief.md`, `source/`, `reproduction-spec.yaml`, and `reproductions/` history.
+
+**Note:** Project initialization establishes Cursor plugin structure (Epic 1) then creates agents through bmad-agent-builder (Epic 2+). Epic 3 specialist agents validated through exemplar reproduction.
 
 ## Core Architectural Decisions
 

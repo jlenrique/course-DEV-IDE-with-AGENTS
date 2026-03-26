@@ -1,0 +1,4 @@
+tool: canva
+agent: bmad-agent-canva
+description: "Exemplar library for the Canva specialist agent (Visual Designer)"
+exemplars: []

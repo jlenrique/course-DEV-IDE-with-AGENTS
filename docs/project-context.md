@@ -3,7 +3,7 @@
 **Project Name:** course-DEV-IDE-with-AGENTS  
 **Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 3 IN PROGRESS)
 **Architecture Status:** 10 Epics, 80 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma, 29 tests; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer, 28 new tests). Epic 3 re-sequenced to 9 stories: 3.3 Kling Video (NEXT, API client + agent, human review), 3.4 ElevenLabs (expanded), 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva (manual-tool pattern), 3.8 Source Wrangler, 3.9 Tech Spec Wrangler. Manual-tool agent pattern established for Canva/Vyond/Articulate.
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma, 29 tests; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer, 28 new tests; Story 3.3 DONE — Kira/Kling Video Specialist, 10 new tests, comparison video set human-reviewed). 3.4 ElevenLabs (NEXT, expanded), 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva (manual-tool pattern), 3.8 Source Wrangler, 3.9 Tech Spec Wrangler.
 
 ## Purpose
 
@@ -134,7 +134,7 @@ resources/
 - [x] **STORY 2.1 (Marcus Orchestrator)**: Agent built via bmad-agent-builder (6-phase discovery with Party Mode coaching), quality scan passed (0 critical), 12 interaction test scenarios passed, Party Mode team validation complete. 13 files: SKILL.md + 8 references + 2 scripts + 2 test files. Memory sidecar active with 4 files. First production plan staged (C1-M1-P2S1-VID-001).
 - [x] **EPIC 2 COMPLETE**: Stories 2.2–2.6 all done. Production-coordination skill (4 scripts, 4 refs, 40 tests). Marcus references updated for workflow management, delegation, parameter intelligence, pre-flight, and mode management.
 - [x] **EXEMPLAR-DRIVEN DEVELOPMENT**: Woodshed skill created (`skills/woodshed/`), exemplar library scaffolded (`resources/exemplars/` per tool), comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, and L-level difficulty system all in place. 5 Gamma exemplars provided (L1-L4.2). Smoke test validated: Gamma API produces single-card output, PDF export/download works (205KB), 5 credits/card. GammaClient needs parameter name updates (inputText, textMode, exportAs). Epic 3 stories updated with exemplar reproduction as acceptance criteria.
-- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (9 stories — Story 3.1 Gary/Gamma DONE, Story 3.2 Irene/Content Creator + Quinn-R/Quality Reviewer DONE, 3.3 Kling Video NEXT, 3.4 ElevenLabs expanded, 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva manual-tool pattern, 3.8 Source Wrangler, 3.9 Tech Spec Wrangler)
+- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (9 stories — Story 3.1 Gary/Gamma DONE, Story 3.2 Irene/Content Creator + Quinn-R/Quality Reviewer DONE, Story 3.3 Kira/Kling Video DONE, 3.4 ElevenLabs NEXT, 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva manual-tool pattern, 3.8 Source Wrangler, 3.9 Tech Spec Wrangler)
 
 ## Key Files
 

@@ -110,6 +110,7 @@ class KlingClient(BaseAPIClient):
         aspect_ratio: str = "16:9",
         mode: str = "std",
         negative_prompt: str | None = None,
+        sound: bool | None = None,
     ) -> dict[str, Any]:
         """Generate a video from a text prompt.
 
@@ -122,6 +123,7 @@ class KlingClient(BaseAPIClient):
             aspect_ratio: Output ratio (16:9, 9:16, 1:1).
             mode: Generation mode (std=720p, pro=1080p).
             negative_prompt: Elements to exclude (max 2500 chars).
+            sound: Optional native audio generation toggle where supported.
 
         Returns:
             Task response with ``task_id`` for polling.
@@ -135,6 +137,8 @@ class KlingClient(BaseAPIClient):
         }
         if negative_prompt:
             payload["negative_prompt"] = negative_prompt
+        if sound is not None:
+            payload["sound"] = sound
 
         return self.post("/v1/videos/text2video", json=payload)
 
@@ -149,6 +153,7 @@ class KlingClient(BaseAPIClient):
         mode: str = "std",
         end_image_url: str | None = None,
         negative_prompt: str | None = None,
+        sound: bool | None = None,
     ) -> dict[str, Any]:
         """Generate a video from a static image.
 
@@ -161,6 +166,7 @@ class KlingClient(BaseAPIClient):
             mode: Generation mode (std or pro).
             end_image_url: End frame image for interpolation.
             negative_prompt: Elements to exclude.
+            sound: Optional native audio generation toggle where supported.
 
         Returns:
             Task response with ``task_id`` for polling.
@@ -177,6 +183,8 @@ class KlingClient(BaseAPIClient):
             payload["end_image"] = end_image_url
         if negative_prompt:
             payload["negative_prompt"] = negative_prompt
+        if sound is not None:
+            payload["sound"] = sound
 
         return self.post("/v1/videos/image2video", json=payload)
 

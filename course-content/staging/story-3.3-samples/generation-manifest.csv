@@ -1,0 +1,19 @@
+clip,filename,model_name,mode,duration,status,task_id,notes
+V1-hospital-broll,V1-hospital-broll__kling-v1-6_std_5s.mp4,kling-v1-6,std,5,downloaded,,initial live validation clip
+V2-clinical-to-innovator-pathway,V2-clinical-to-innovator-pathway__kling-v2-6_std_5s.mp4,kling-v2-6,std,5,downloaded,866382527034957896,downloaded V2-clinical-to-innovator-pathway__kling-v2-6_std_5s.mp4
+V3-heros-journey-roadmap,V3-heros-journey-roadmap__kling-v1-6_std_5s.mp4,kling-v1-6,std,5,downloaded,866385052715466782,downloaded V3-heros-journey-roadmap__kling-v1-6_std_5s.mp4
+V4-knowledge-explosion-timeline,V4-knowledge-explosion-timeline__kling-v1-6_std_5s.mp4,kling-v1-6,std,5,downloaded,866385892070522920,downloaded V4-knowledge-explosion-timeline__kling-v1-6_std_5s.mp4
+V5-physician-innovator-lineage,V5-physician-innovator-lineage__kling-v1-6_std_5s.mp4,kling-v1-6,std,5,downloaded,866387131667710036,downloaded V5-physician-innovator-lineage__kling-v1-6_std_5s.mp4
+V6-module-bridge-transition,V6-module-bridge-transition__kling-v1-6_std_5s.mp4,kling-v1-6,std,5,submitted,866388241867096144,submitted
+V1-hospital-broll,V1-hospital-broll__kling-v2-6_std_5s.mp4,kling-v2-6,std,5,downloaded,866388307465347131,downloaded V1-hospital-broll__kling-v2-6_std_5s.mp4
+V3-heros-journey-roadmap,V3-heros-journey-roadmap__kling-v2-6_std_5s.mp4,kling-v2-6,std,5,downloaded,866388701935435787,downloaded V3-heros-journey-roadmap__kling-v2-6_std_5s.mp4
+V4-knowledge-explosion-timeline,V4-knowledge-explosion-timeline__kling-v2-6_std_5s.mp4,kling-v2-6,std,5,downloaded,866389051367751697,downloaded V4-knowledge-explosion-timeline__kling-v2-6_std_5s.mp4
+V5-physician-innovator-lineage,V5-physician-innovator-lineage__kling-v2-6_std_5s.mp4,kling-v2-6,std,5,downloaded,866389454557159452,downloaded V5-physician-innovator-lineage__kling-v2-6_std_5s.mp4
+V6-module-bridge-transition,V6-module-bridge-transition__kling-v2-6_std_5s.mp4,kling-v2-6,std,5,downloaded,866389761656356872,downloaded V6-module-bridge-transition__kling-v2-6_std_5s.mp4
+V1-hospital-broll,V1-hospital-broll__kling-v2-6_pro_5s.mp4,kling-v2-6,pro,5,downloaded,866390157853851712,downloaded V1-hospital-broll__kling-v2-6_pro_5s.mp4
+V2-clinical-to-innovator-pathway,V2-clinical-to-innovator-pathway__kling-v2-6_pro_5s.mp4,kling-v2-6,pro,5,downloaded,866390714304446467,downloaded V2-clinical-to-innovator-pathway__kling-v2-6_pro_5s.mp4
+V3-heros-journey-roadmap,V3-heros-journey-roadmap__kling-v2-6_pro_5s.mp4,kling-v2-6,pro,5,downloaded,866391553504321542,downloaded V3-heros-journey-roadmap__kling-v2-6_pro_5s.mp4
+V4-knowledge-explosion-timeline,V4-knowledge-explosion-timeline__kling-v2-6_pro_5s.mp4,kling-v2-6,pro,5,downloaded,866392438083682328,downloaded V4-knowledge-explosion-timeline__kling-v2-6_pro_5s.mp4
+V5-physician-innovator-lineage,V5-physician-innovator-lineage__kling-v2-6_pro_5s.mp4,kling-v2-6,pro,5,downloaded,866393101236043808,downloaded V5-physician-innovator-lineage__kling-v2-6_pro_5s.mp4
+V6-module-bridge-transition,V6-module-bridge-transition__kling-v2-6_pro_5s.mp4,kling-v2-6,pro,5,downloaded,866393545421225998,downloaded V6-module-bridge-transition__kling-v2-6_pro_5s.mp4
+V2-clinical-to-innovator-pathway,V2-clinical-to-innovator-pathway__kling-v3-0_pro_5s.mp4,kling-v3-0,pro,5,failed,,APIError: HTTP 400: Bad Request

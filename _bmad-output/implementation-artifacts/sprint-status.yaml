@@ -73,7 +73,7 @@ development_status:
   epic-3: in-progress
   3-1-gamma-specialist-agent: done
   3-2-content-creator-quality-reviewer-agents: done  # instructional design director + BMad writer delegation, human review validation
-  3-3-kling-video-specialist-agent: in-progress  # NEW — API client built + live test passed, agent build next
+  3-3-kling-video-specialist-agent: done  # API client, Kira agent, kling-video skill, comparison video set, human-reviewed
   3-4-elevenlabs-specialist-agent: backlog  # expanded: timestamps, pronunciation, SFX, music, dialogue
   3-5-canvas-specialist-agent: backlog
   3-6-qualtrics-specialist-agent: backlog

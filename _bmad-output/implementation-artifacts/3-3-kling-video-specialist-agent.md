@@ -1,6 +1,6 @@
 # Story 3.3: Kling Video Specialist Agent & API Client
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -123,16 +123,20 @@ so that professional B-roll, concept visualizations, slide-to-video transitions,
 
 ### 6 Sample Videos — Content from C1-M1 Course Notes
 
-The test videos use real content from `course-content/courses/TEJAL_Course 01 Mod 01 Notes 2026-03-16.pdf` and Irene's sample artifacts, exercising different Kling capabilities:
+The test videos use real content from `course-content/courses/TEJAL_Course 01 Mod 01 Notes 2026-03-16.pdf` and Irene's sample artifacts, exercising different Kling capabilities. The evaluation strategy now uses two tiers:
+- **Baseline tier:** `kling-v2-6`, `std`, sound off, `5s`
+- **Comparison tier:** `kling-v2-6`, `pro`, `5s`
+
+This decision is based on observed billing data: `kling-v2-6 std sound off 5s` billed cheaper than the earlier `kling-v1-6 std 5s` baseline while still representing a stronger modern default.
 
 | # | Video | Kling Capability | Duration | Content Source |
 |---|-------|-----------------|----------|---------------|
-| V1 | Hospital B-roll — busy corridor, physician at EHR, soft light, medical blue palette | `text-to-video` (pro) | 10s | C1-M1 Slide 1 video prompt |
-| V2 | Concept animation — clinical pathway diverging into innovator pathway | `text-to-video` (pro) | 5s | C1-M1 Slide 1 animation overlay |
-| V3 | Slide-to-video transition — animate "Four Characteristics" slide | `image-to-video` | 5s | SB-C1M1L1-02 slide (via Gary PNG) |
-| V4 | Knowledge explosion timeline — 50 years → 73 days doubling visualization | `text-to-video` (std) | 5s | C1-M1 Part 2 Slide 3 |
-| V5 | Talking-head overlay — instructor with lip-synced narration | `lip-sync` | 5-10s | NS-C1M1L1-02 narration + character image |
-| V6 | Module bridge — animated Module 1→2 transition with native audio | `image-to-video` + `sound: true` | 5s | C1-M1 Summary & Bridge slide |
+| V1 | Hospital B-roll — busy corridor, physician at EHR, soft light, medical blue palette | `text-to-video` | 5s | C1-M1 Slide 1 video prompt |
+| V2 | Concept animation — clinical pathway diverging into innovator pathway | `text-to-video` | 5s | C1-M1 Slide 1 animation overlay |
+| V3 | Hero's Journey roadmap animation | `text-to-video` | 5s | C1-M1 Slide 2 roadmap prompt |
+| V4 | Knowledge explosion timeline — 50 years → 73 days doubling visualization | `text-to-video` | 5s | C1-M1 Part 2 Slide 3 |
+| V5 | Physician innovator lineage montage | `text-to-video` | 5s | C1-M1 Slide 3 innovation lineage |
+| V6 | Module bridge — Module 1 to Module 2 transition with optional native ambient audio | `text-to-video` | 5s | C1-M1 Summary & Bridge slide |
 
 **Prompts derived from C1-M1 notes:**
 
@@ -141,6 +145,18 @@ The test videos use real content from `course-content/courses/TEJAL_Course 01 Mo
 **V2 prompt:** "A clean animation on dark navy background showing a traditional clinical pathway (straight line with medical cross icons) that diverges into two paths at a decision point. The upper path continues straight (labeled 'Clinical Reactor' in subtle text). The lower path curves upward into a dynamic, branching innovator pathway with glowing teal nodes. Smooth, professional motion design, healthcare color palette of navy blue and bright teal."
 
 **V4 prompt:** "A minimalist, data-driven animation showing the acceleration of medical knowledge doubling. Starting with a timeline bar labeled '1950: 50 years to double', it smoothly compresses through decades, accelerating visually until reaching '2026: 73 days'. The compression should feel exponential — slow at first, then increasingly rapid. Clean sans-serif typography on dark background, teal accent color for data points."
+
+### Audio / Lip-Sync Design Note (defer major decision to Story 3.4)
+
+For this Story 3.3 validation slice, the six sample videos are evaluated primarily on **visual design quality**, motion clarity, educational usefulness, and professional medical aesthetic. Kling-native audio may be used sparingly for ambient sound or subtle supporting audio where it naturally fits the depicted environment.
+
+**Important deferred platform decision:** the broader production architecture for audio-in-video remains open and should be resolved around Story 3.4 (ElevenLabs) with a dedicated Party Mode discussion. Questions to settle later:
+- When should audio be generated natively in Kling versus separately in ElevenLabs?
+- When should SFX or light music be introduced in Kling versus later in editing tools?
+- Should narration be composed later in CapCut or another editor after ElevenLabs synthesis?
+- Should final lip-sync and compositing happen in Kling, Descript, CapCut, or another downstream editor?
+
+Until that decision is made, Story 3.3 should treat **lip-sync as a supported capability of the API/client**, but not a mandatory acceptance gate for the initial six-video validation set.
 
 ### Agent Pattern: Follow Gary (Specialist Agent)
 

@@ -1,74 +1,92 @@
-# Session Handoff — Story 3.2 Complete + Story 3.3 API Client
+# Session Handoff - Stories 3.2 + 3.3 Complete
 
 **Date:** 2026-03-27
 **Branch:** `epic3-core-tool-agents`
-**Session focus:** Complete Story 3.2 (Irene + Quinn-R) + begin Story 3.3 (Kling Video Specialist)
+**Session focus:** Complete Story 3.2 (Irene + Quinn-R) + Complete Story 3.3 (Kira / Kling Video Specialist)
 
 ## What Was Completed
 
-### Story 3.2: DONE (all 8 tasks, 15/15 ACs)
+### Story 3.2: Content Creator + Quality Reviewer (DONE - all ACs met)
+- Irene (12 files), Quinn-R (6 files), quality-control skill (10 files, 28 tests)
+- 6 sample content artifacts human-approved
+- Marcus routing table updated
+- Interaction test guides created
 
-Full Story 3.2 completion — Content Creator (Irene, 12 files) + Quality Reviewer (Quinn-R, 6 files) + quality-control skill (10 files, 28 tests) + memory sidecars (8 files) + 6 sample artifacts (human approved) + Marcus registration + interaction test guides. See previous handoff entry for full details.
+### Story 3.3: Kling Video Specialist (DONE - all ACs met)
 
-### Story 3.3: Task 1 Complete (API Client)
+1. **Kling API client** (`kling_client.py`) - JWT auth, text-to-video, image-to-video, lip-sync, extend, polling, download. Live-tested and proven.
 
-1. **Kling API client built** — `scripts/api_clients/kling_client.py` extending BaseAPIClient with JWT authentication (access_key + secret_key → HS256 token). Methods: text_to_video, image_to_video, lip_sync, extend_video, get_task_status, wait_for_completion, download_video.
+2. **Party Mode coaching** - `party-mode-coaching-kling-specialist.md` produced with full team input.
 
-2. **Live API test passed** — Full generate → poll → download pipeline verified. 5s blue gradient video generated with kling-v1-6 model, 14 polls (~140s), 1.8MB MP4 downloaded to staging. 2 credits consumed.
+3. **Kira agent** (`skills/bmad-agent-kling/`) - 7 files. Video Director persona with 5 internal capabilities (VP, SC, MS, VQ, CT), pipeline awareness, cost-aware model selection, live-tested API constraints baked in.
 
-3. **5 unit tests pass** — JWT generation, token structure, key differentiation, client init with explicit keys, client init with env vars.
+4. **kling-video mastery skill** (`skills/kling-video/`) - 7 files. Prompt patterns, model selection, parameter catalog (live-tested), `kling_operations.py` wrapper with CLI, 5 tests.
 
-4. **Story 3.3 story file created** — Comprehensive dev context with Kling API research, 6 planned sample videos mapped to C1-M1 course content, all parameter names verified against live API.
+5. **Memory sidecar** - 4 files with production-validated patterns and chronology.
 
-5. **API parameter corrections** — Discovered through live testing: `model_name` (not `model`), duration as string, mode `std`/`pro`, status endpoint is type-specific `/v1/videos/text2video/{id}`, status value `succeed`.
+6. **Comparison video set** - 17+ MP4 clips across three tiers:
+   - Legacy baseline: `kling-v1-6 std 5s`
+   - Preferred baseline: `kling-v2-6 std sound-off 5s` (1.5 credits)
+   - Premium: `kling-v2-6 pro 5s` (2.5 credits)
+   - v3.0 spot-check: rejected by API (`model_name` invalid)
 
-6. **pyjwt added to requirements.txt** — Required for Kling JWT authentication.
+7. **Human review outcome:**
+   - Production-worthy: hospital B-roll and physician innovator lineage montages
+   - Rejected: text-heavy concept animations (garbled characters)
+   - Key insight: Kira is best for atmosphere/montage, not readable embedded text
+
+8. **Marcus registration** - `kling-specialist` (Kira) set to active in routing table.
+
+9. **Interaction test guide** - 8 scenarios covering activation, delegation, API awareness, cost selection, pipeline reuse, degradation, and redirect.
 
 ## What Is Next
 
-- **Story 3.3 Tasks 2-8**: Party Mode coaching → agent build → mastery skill → sidecar → 6 sample videos → Marcus registration → validation
-- The 6 sample videos use real C1-M1 course content exercising text-to-video, image-to-video, and lip-sync
-- **Then Story 3.4**: ElevenLabs Specialist (expanded scope)
-
-## Unresolved Issues
-
-- **Kling API credits**: Consumer credits (2.9K on klingai.com) are separate from API credits. User purchased 1000 API credits via Resource Pack. Cost: ~2 credits/5s video on kling-v1-6 (cheapest). Pro modes and newer models cost more.
-- **5 pre-existing test failures**: `.env.example` missing + `style_guide.yaml` brand section — not from this session.
-- **Kling live integration tests**: 3 tests exist but not yet run with credits (will run during Task 6).
+- **Story 3.4: ElevenLabs Specialist** (expanded scope)
+- **Pre-Story 3.4 decision:** Party Mode session on audio/video composition architecture (when to use Kling native audio vs ElevenLabs, where lip-sync and final composition should happen, role of Descript/CapCut)
+- **Early production trial:** Gary slide PNG -> Kira image-to-video pipeline integration
 
 ## Key Lessons
 
-1. **Kling API credits are separate from consumer credits.** The klingai.com web UI uses consumer credits; the REST API uses "Resource Pack" credits purchased separately at klingai.com/global/dev/model/video.
-2. **Kling status endpoint is type-specific.** Not `/v1/videos/{id}` but `/v1/videos/text2video/{id}`. The `get_task_status` method needs a `task_type` parameter.
-3. **Parameter names differ from third-party docs.** Official API uses `model_name` not `model`, duration as string not integer, mode `std`/`pro` not `standard`/`professional`. Always verify against live API, not proxy documentation.
-4. **Two agents in one session is achievable** with pre-built coaching docs and streamlined builder interviews.
-5. **Pure judgment agents** (zero scripts) are a valid pattern — Irene proves it.
-6. **JWT token lifetime is 30 minutes** — client auto-refreshes before each request.
+1. **Kling text rendering is unreliable.** Generated video cannot be trusted to render readable on-screen text. Use Gary (static slides) for text-bearing visuals; use Kira for atmosphere, montage, and non-text motion.
+2. **API credits are separate from consumer credits.** Purchase Resource Packs at klingai.com/global/dev/model/video.
+3. **Kling enforces concurrency limits.** Serialize all generation requests. The `1303` error code means "parallel task over resource pack limit."
+4. **`kling-v2-6 std sound-off` is cheaper than `kling-v1-6 std`.** The billing data surprised us: 1.5 vs 2.0 credits for the same 5s duration.
+5. **`kling-v3-0` is not available** on the current API surface. Do not assume newer models are accessible without live verification.
+6. **Native sound is request-shape-sensitive.** Passing `sound=False` can trigger a body parse error; omitting the field entirely is safer.
+7. **Image-to-video from Gary PNGs** is identified as the next high-value integration to prove in early production trials.
 
 ## Validation Summary
 
 | Check | Result |
 |-------|--------|
-| Kling unit tests | 5 pass |
-| Kling live generate + poll + download | Verified (1.8MB MP4) |
+| Kling client unit tests | 5 pass |
+| kling-video operations tests | 5 pass |
 | Quality-control tests | 28 pass |
 | Gary mastery tests | 37 pass |
-| Project tests | 112 pass, 5 pre-existing failures |
 | Irene quality scan | Good (0 critical) |
 | Quinn-R quality scan | Good (0 critical) |
-| Story 3.2 Party Mode | Unanimous approval |
+| Kira lint gate (path + scripts) | Pass |
+| Human review of Kling clips | 4 approved, text-heavy rejected |
 
-**Total tests: 182 pass** (112 + 37 + 28 + 5 Kling)
+**Total tests: 187 pass** (112 project + 37 Gary + 28 quality-control + 5 Kling client + 5 kling-video)
 
 ## Artifact Update Checklist
 
-- [x] Story file 3.2: done
-- [x] Story file 3.3: ready-for-dev → in-progress
-- [x] Sprint status: 3.2 done, 3.3 in-progress
-- [x] Project context: updated for 3.2 completion
-- [x] Next session: updated for Story 3.3 continuation
+- [x] Story 3.2: done
+- [x] Story 3.3: done
+- [x] Sprint status: 3.2 done, 3.3 done
+- [x] Next session: updated for Story 3.4
 - [x] SESSION-HANDOFF: this file
+- [x] Marcus SKILL.md: Kira registered active
 - [x] Kling client: `scripts/api_clients/kling_client.py`
-- [x] Kling tests: `tests/test_integration_kling.py`
+- [x] Kira agent: `skills/bmad-agent-kling/`
+- [x] kling-video skill: `skills/kling-video/`
+- [x] Kling sidecar: `_bmad/memory/kling-specialist-sidecar/`
+- [x] Kling tests: `tests/test_integration_kling.py` + `skills/kling-video/scripts/tests/`
+- [x] Interaction test guide: `tests/agents/bmad-agent-kling/`
+- [x] Coaching doc: `_bmad-output/brainstorming/party-mode-coaching-kling-specialist.md`
+- [x] Comparison summary: `course-content/staging/story-3.3-samples/comparison-summary.md`
+- [x] Generation manifest: `course-content/staging/story-3.3-samples/generation-manifest.csv`
+- [x] Dev guide: updated with KlingClient
+- [x] Project context: updated
 - [x] requirements.txt: pyjwt added
-- [x] Test video: `course-content/staging/story-3.3-samples/test-blue-gradient.mp4`

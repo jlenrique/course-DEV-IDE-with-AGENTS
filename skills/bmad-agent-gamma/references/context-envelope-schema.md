@@ -28,7 +28,7 @@ style_bible_sections:
   - "Typography System"
 exemplar_references:
   - "L1-two-processes-one-mind"
-export_format: "pdf"                        # pdf | pptx | png (default: pdf)
+export_format: "png"                        # png | pdf | pptx (default: png for production)
 template_id: null                           # Gamma gammaId — if set, use from-template endpoint
 template_prompt: null                       # prompt text for template-based generation
 parameters_ready: false                     # true = skip greet/mastery, fast-path to execution
@@ -52,7 +52,7 @@ run_mode: "default"                         # default | ad-hoc
 | `user_constraints` | no | [] | Free-text constraints from the user |
 | `style_bible_sections` | no | [] | Specific sections Gary should re-read from style bible |
 | `exemplar_references` | no | [] | Exemplar IDs for pattern matching |
-| `export_format` | no | `"pdf"` | PDF for review, PPTX for editing, PNG for snapshots |
+| `export_format` | no | `"png"` | PNG for production (video/embed), PDF for review/archival, PPTX for editing |
 | `template_id` | no | null | Gamma `gammaId` for template-based generation; when set, Gary uses `POST /generations/from-template` instead of text generation |
 | `template_prompt` | no | null | Prompt text for template-based generation; required when `template_id` is set |
 | `parameters_ready` | no | `false` | When `true`, triggers expert fast-path |

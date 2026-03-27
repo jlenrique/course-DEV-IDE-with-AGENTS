@@ -33,9 +33,9 @@ Track which constraint phrasings produce the best fidelity outcomes in `patterns
 
 ## Export Format Selection
 
-- **PDF** — default for comparison, archival, and review (most consistent rendering)
-- **PPTX** — when downstream editing or assembly is planned
-- **PNG** — when a single-frame visual snapshot is needed
+- **PNG** — default for production. These are visual assets for video production (Descript, CapCut, Kling) and course embedding (CourseArc, Canvas). Lossless quality at Gamma's render resolution.
+- **PDF** — for human review at checkpoint gates, woodshed comparison (text extraction), and archival.
+- **PPTX** — when downstream editing or manual refinement is planned.
 
 Always request export and download immediately — URLs expire (~7 days).
 

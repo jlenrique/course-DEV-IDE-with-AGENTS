@@ -55,7 +55,7 @@ Folder IDs for organizing output in Gamma workspace.
 #### `exportAs` (string)
 - `pdf` | `pptx` | `png` — one format per request.
 - Export URLs are signed, expire ~7 days. Download immediately.
-- **Medical ed guidance**: Always request `pdf` for review. Use `pptx` when downstream editing is planned.
+- **Medical ed guidance**: Default to `png` for production — slides are visual assets for video production and course embedding. Use `pdf` for human review at checkpoint gates and woodshed comparison. Use `pptx` when downstream editing is planned.
 
 ### textOptions (object)
 

@@ -16,7 +16,7 @@ textOptions:
 imageOptions:
   source: pexels
 additionalInstructions: "Clean, professional medical education layout. One key concept per slide. Clear heading hierarchy."
-exportAs: pdf
+exportAs: png
 ```
 
 ## Case Study Presentation
@@ -31,7 +31,7 @@ textOptions:
 imageOptions:
   source: noImages
 additionalInstructions: "Case study format: presenting complaint, clinical findings, differential diagnosis, management. Clear section breaks."
-exportAs: pdf
+exportAs: png
 ```
 
 ## Data Visualization Slide
@@ -44,7 +44,7 @@ textOptions:
 imageOptions:
   source: noImages
 additionalInstructions: "Data visualization layout. Clean chart presentation with labeled axes and clear legend. Dark background, light data colors."
-exportAs: pdf
+exportAs: png
 ```
 
 ## Assessment / Comprehension Check
@@ -55,7 +55,7 @@ textMode: preserve
 additionalInstructions: "Interactive assessment layout. Question prompt prominent. Answer options or categorization items clearly separated. Pedagogical assessment slide, not content delivery."
 imageOptions:
   source: noImages
-exportAs: pdf
+exportAs: png
 ```
 
 ## Module Introduction / Conclusion
@@ -68,7 +68,7 @@ textOptions:
 additionalInstructions: "Bold, clean layout with strong title statement. Minimal supporting text. Visually striking and conceptually clear."
 imageOptions:
   source: noImages
-exportAs: pdf
+exportAs: png
 ```
 
 ## Storytelling / Narrative Arc
@@ -81,7 +81,7 @@ textOptions:
 additionalInstructions: "Progressive narrative layout with three escalating beats. Forward momentum — past to present to future. Not three equal columns; a STORY with rising energy."
 imageOptions:
   source: noImages
-exportAs: pdf
+exportAs: png
 ```
 
 ## Template Extension

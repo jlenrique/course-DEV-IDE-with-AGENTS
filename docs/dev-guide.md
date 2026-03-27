@@ -365,7 +365,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `canvas-deployment` | planned | Epic 3 |
 | `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
 
-### Compositor: assembly bundle (CLI)
+### Compositor assembly bundle CLI
 
 Before a human assembles in Descript, **localize** Gate-approved stills next to the manifest (see `skills/compositor/SKILL.md`). From the repo root, using the project `.venv`:
 

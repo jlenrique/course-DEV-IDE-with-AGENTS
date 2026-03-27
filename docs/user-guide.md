@@ -193,7 +193,7 @@ Before promoting content from staging:
 
 ### Narrated slide assembly (Descript)
 
-For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor](dev-guide.md#compositor-assembly-bundle-cli).
+For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ---
 

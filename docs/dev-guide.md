@@ -479,9 +479,31 @@ This is where you come in. The three-layer architecture means there are three di
 5. **Register with Marcus** — Add the agent to Marcus's External Specialist Agents table
 6. **Party Mode validation** — Team reviews for accuracy and completeness
 
-**Template:** Use `skills/bmad-agent-marcus/SKILL.md` as the canonical example of a fully-built agent with identity, communication style, principles, activation sequence, and capability routing.
+**Templates:**
+- **Orchestrator agent:** `skills/bmad-agent-marcus/SKILL.md` — identity, communication style, principles, activation, capability routing
+- **Specialist agent:** `skills/bmad-agent-gamma/SKILL.md` (Gary) — delegation protocol, context envelope schema, degradation handling, dual activation (headless + interactive)
+- **Mastery skill:** `skills/gamma-api-mastery/` — SKILL.md + parameter catalog + context optimization + evaluator + operations scripts
+- **Evaluator:** `skills/gamma-api-mastery/scripts/gamma_evaluator.py` — extends BaseEvaluator with medium-specific extraction and comparison
 
 **Why coaching matters:** Agent definitions require domain expertise (medical education, physician audience) combined with architectural and tool knowledge. The Party Mode team provides rigor; the user provides instructional vision.
+
+### Evaluator Design Requirements (Lessons from Story 3.1)
+
+Every specialist agent's evaluator MUST follow these requirements, established through Gary's woodshed debugging:
+
+1. **Guide the tool's intelligence — never suppress it.** Rich instructions describing the desired visual/audio/structural outcome outperform restrictive constraints. Each tool has a core creative strength; work with it.
+
+2. **Extract and compare actual output.** The evaluator must perform medium-specific output extraction (PDF text, audio duration, image analysis) and compare against source content. "Did a file download?" is not a quality check.
+
+3. **Score based on content coverage — not exact match.** Check that source key words and phrases appear in the reproduction. Tool enhancements (sub-descriptions, visual accents, structural formatting) are usually beneficial, not failures.
+
+4. **Use a cheap quality signal.** File size (slides), duration vs word count (audio), dimensions (images), question count (surveys) — instant proxies for quality that cost nothing.
+
+5. **Separate woodshed from production QA.** Woodshed compares against a source exemplar (tool control). Production QA compares against the context envelope (did the agent produce what Marcus asked for). Same rubric dimensions, different reference point.
+
+6. **Capture know-how from production feedback.** The agent's `patterns.md` grows from user checkpoint reviews, not woodshed scores. Real insights emerge from the user saying "excellent" or "fix the density."
+
+See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full reference with per-tool examples.
 
 ### Recipe 4: Refining an Existing Agent's Behavior
 

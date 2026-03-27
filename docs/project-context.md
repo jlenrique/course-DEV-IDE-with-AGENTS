@@ -52,7 +52,8 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 - **Woodshed skill**: Shared skill (`skills/woodshed/`) provides study → reproduce → compare → reflect → register workflow with detailed run logging, downloaded artifact retention for every attempt (pass/fail), mandatory reflection between failed attempts, and circuit breaker give-up protocol (3/session, 7 total)
 - **Two woodshed modes**: Faithful (exact reproduction proving tool control) must be mastered before Creative (enhanced reproduction proving creative judgment) is unlocked per exemplar
 - **Progressive mastery**: L1-L4 single artifacts → L5 multi-artifact sets. L-levels with dot extensions. Levels provisional — agents may propose changes. Regression runs ensure mastered exemplars stay mastered
-- **Export and download**: All reproductions must download production-quality artifacts (PDF, PPTX, MP3) — screenshots supplementary only
+- **Export and download**: All reproductions must download production-quality artifacts (PNG for production, PDF for review, PPTX for editing, MP3 for audio) — screenshots supplementary only
+- **Evaluator design requirements** (from Story 3.1): Guide the tool's intelligence (never suppress), extract and compare actual output (not just process compliance), score on content coverage (not exact match), use cheap quality signals per medium, separate woodshed training from production QA, capture know-how from user checkpoint reviews. See `skills/woodshed/SKILL.md` for full reference
 - **HIL gates**: human checkpoints at every stage with rubrics and signoff tracking
 - **Pre-flight checks**: Hook-driven MCP/API connectivity verification + tool documentation scanning
 - **Production run reporting**: Comprehensive effectiveness analysis with learning capture in agent memory

@@ -81,6 +81,58 @@ The woodshed owns the **process**. Each mastery skill owns the **evaluation inte
 - Example: `skills/gamma-api-mastery/scripts/gamma_evaluator.py` extends `BaseEvaluator` with Gamma-specific slide analysis, API parameter derivation, and visual comparison logic
 - The woodshed runner calls the evaluator — it never needs to know whether it's comparing slides, audio, or LMS deployments
 
+## Evaluator Design Requirements (Mandatory for All Specialist Agents)
+
+These requirements were established during Gary (Gamma specialist) development and apply to every evaluator built for Stories 3.2-3.8. They exist because a rubber-stamp evaluator that checks process compliance ("did a file download?") instead of actual output quality is worse than no evaluator — it gives false confidence.
+
+### 1. Guide the tool's intelligence — never suppress it
+
+Every creative tool has a core strength. The evaluator's `derive_reproduction_spec()` must craft instructions that GUIDE the tool toward the desired outcome, not suppress its capabilities. Rich instructions describing the desired result outperform restrictive constraints that strip the tool's design intelligence.
+
+| Tool | Guide (correct) | Suppress (wrong) |
+|------|-----------------|-------------------|
+| Gamma | "Two-column comparison with medical icons" | "No images, no additions" |
+| ElevenLabs | "Warm professional tone, emphasis on clinical terms" | "Read exactly as written, no inflection" |
+| Canva | "JCPH brand kit, data visualization style" | "Plain text only, no templates" |
+| Kling | "Subtle data animation, reveal sequentially" | "Static frame, no transitions" |
+| Qualtrics | "Branch on Q3 response, skip logic for experienced" | "Simple list of questions" |
+
+### 2. Extract and compare actual output — not just process metadata
+
+The evaluator's `compare_reproduction()` must perform **medium-specific output extraction** and compare against the source content. Checking "did a file download?" is not comparison.
+
+| Tool | Output | Extraction Method |
+|------|--------|-------------------|
+| Gamma | PNG/PDF slides | PDF text extraction (pymupdf), file size as visual richness signal |
+| ElevenLabs | MP3 audio | Duration vs expected read time, speech-to-text for pronunciation |
+| Canva | PNG/SVG graphics | Color extraction for brand compliance, text OCR |
+| Kling | MP4 video | Frame extraction, duration, scene detection |
+| Qualtrics | JSON survey | Question count, logic path validation, response type coverage |
+
+### 3. Score based on content coverage — not exact text match
+
+Compare source KEY WORDS and PHRASES against the reproduction. The tool may enhance, restructure, or add contextual sub-descriptions — this is usually beneficial, not a failure. Only flag additions that change meaning, add wrong content, or violate the professional aesthetic.
+
+### 4. Use a cheap quality signal appropriate to the medium
+
+Every medium has an instant-check proxy for quality that costs nothing to compute:
+
+| Tool | Cheap Signal | What It Tells You |
+|------|-------------|-------------------|
+| Gamma | File size (bytes) | 8KB = bare text (bad), 50KB+ = visually rich (good) |
+| ElevenLabs | Audio duration vs script word count | Too short = words skipped; too long = pacing issues |
+| Canva | Image dimensions + file size | Tiny/compressed = low quality export |
+| Kling | Video duration vs narration length | Mismatch = sync problems |
+| Qualtrics | Question count vs learning objectives | Too few = coverage gaps |
+
+### 5. Remember that woodshed is training — production QA is different
+
+Woodshed compares reproduction against a source exemplar to prove tool control. Production QA compares output against the context envelope (what Marcus asked for) — style compliance, learning objective alignment, content completeness, accessibility. Same rubric dimensions, different reference point. Never confuse the two workflows.
+
+### 6. Capture know-how in the memory sidecar from real production feedback
+
+The agent's `patterns.md` grows through the user's checkpoint reviews in production, not through woodshed scores. The most valuable patterns emerge from seeing what each tool does with different instruction styles — and the user saying "this is excellent" or "fix the density."
+
 ## Reflection Between Cycles
 
 When a reproduction fails, the agent **must** reflect before retrying:

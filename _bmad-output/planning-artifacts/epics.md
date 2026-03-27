@@ -681,6 +681,16 @@ So that I can experiment freely without impacting production state, or work in f
 7. Between failed attempts, the agent reflects on root causes and predicts improvements before retrying
 8. If the agent cannot master an exemplar after the circuit breaker limit (7 total attempts), it produces a structured failure report for human review
 
+**Evaluator Design Requirements (from Story 3.1 — Gary/Gamma)**: Every specialist evaluator MUST:
+1. **Guide the tool's intelligence — never suppress it.** Rich instructions describing the desired outcome outperform restrictive constraints. Each creative tool has a core strength; suppressing it produces worse output than guiding it. (E.g., telling Gamma "no images, no additions" produces bare text; telling it "two-column comparison with medical icons" produces professional slides.)
+2. **Extract and compare actual output.** Medium-specific output extraction (PDF text, audio speech-to-text, image OCR, survey JSON parsing) — not just "did a file download?" A rubber-stamp evaluator that checks process compliance gives false confidence.
+3. **Score based on content coverage — not exact text match.** Source key words and phrases should appear in the reproduction, but tool enhancements (sub-descriptions, visual accents, structural formatting) are usually beneficial. Only flag additions that change meaning or violate the professional aesthetic.
+4. **Use a cheap quality signal.** File size (slides: 8KB=bad, 50KB+=good), audio duration vs word count, image dimensions, question count vs objectives — instant proxies appropriate to each medium.
+5. **Separate woodshed from production QA.** Woodshed compares against a source exemplar (tool control training). Production QA compares against the context envelope from Marcus (did the agent produce what was asked for). Same rubric dimensions, different reference point. Woodshed never appears in production runs.
+6. **Capture know-how from production feedback.** The memory sidecar's `patterns.md` grows from user checkpoint reviews, not woodshed scores. The most valuable patterns come from the user saying "excellent" or "fix the density."
+
+See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full reference with per-tool examples.
+
 ### Story 3.1: Gamma Specialist Agent & Mastery Skill
 
 As a user,

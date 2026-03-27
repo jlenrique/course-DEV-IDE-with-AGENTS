@@ -71,6 +71,16 @@
 
 5. **Template support should be considered early.** User raised Gamma templates as a workflow concern — addressing it during agent build was much cheaper than retrofitting later.
 
+6. **CRITICAL: Guide the tool, never suppress it.** The initial evaluator told Gamma "no images, no additions" — producing 8KB bare text cards instead of professional slides. Rich `additionalInstructions` describing the desired visual outcome ("two-column comparison with medical icons") produces 40-187KB visually rich output. This applies to every specialist: ElevenLabs (guide tone/pacing, don't say "no inflection"), Canva (guide brand style, don't say "plain text only"), etc.
+
+7. **CRITICAL: The evaluator must compare actual output, not rubber-stamp.** The initial evaluator scored "did a PDF download?" as 4/5 structural fidelity — passing terrible output with false confidence. Fixed evaluator extracts PDF text, measures source word coverage, detects embellishment. Every future evaluator must do medium-specific output extraction.
+
+8. **Woodshed is training, not production.** Woodshed proves tool control through exemplar reproduction. Production QA compares output against what Marcus asked for. Same rubric dimensions, different reference point. The user reviews the actual artifact at checkpoint gates — that human judgment is the ground truth.
+
+9. **Default to PNG for production exports.** Slides are visual assets for video production and course embedding, not documents. PDF for human review, PPTX for editing.
+
+10. **The memory sidecar captures real know-how.** `patterns.md` should be seeded with debugging insights and grows through user checkpoint reviews in production — not from automated rubric scores.
+
 ## Artifact Update Checklist
 
 - [x] Story artifact (`3-1-gamma-specialist-agent.md`) — all tasks checked, status: done, Dev Agent Record filled
@@ -84,3 +94,9 @@
 - [x] Marcus SKILL.md — Gary in specialist agents table
 - [x] Marcus sidecar — Gary referenced in next steps
 - [x] Exemplar catalog — L1+L2 mastered
+- [x] Woodshed SKILL.md — Evaluator Design Requirements section added (6 requirements with per-tool examples)
+- [x] Epics — Evaluator Design Requirements added to Epic 3 shared acceptance model
+- [x] Project context — evaluator requirements and PNG default added
+- [x] Gary patterns.md — seeded with founding woodshed insights
+- [x] Content-type templates — default export changed to PNG
+- [x] Context envelope schema — default export changed to PNG

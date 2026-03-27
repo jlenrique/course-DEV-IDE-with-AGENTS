@@ -6,11 +6,15 @@
 
 Follow the Gary pattern established in Story 3.1: Party Mode coaching → bmad-agent-builder → mastery skill → evaluator → woodshed → Party Mode validation.
 
+**CRITICAL: Apply Evaluator Design Requirements** from Story 3.1 debugging (see `skills/woodshed/SKILL.md`). Every evaluator must: guide the tool's intelligence (not suppress), extract actual output for comparison (not rubber-stamp), score on content coverage (not exact match), and use medium-appropriate cheap quality signals.
+
 ```
 1. Party Mode coaching — produce coached bmad-agent-builder discovery answers
    for ElevenLabs specialist (model on party-mode-coaching-gamma-specialist.md)
 2. bmad-agent-builder with coached answers
 3. Build elevenlabs-audio mastery skill with ElevenLabsEvaluator
+   - ElevenLabsEvaluator must: extract audio duration + speech-to-text, compare against script,
+     score on pronunciation accuracy + pacing + tone quality, use duration-vs-word-count as cheap signal
 4. Woodshed: faithful reproduction of audio exemplar(s) with MP3 export
 5. Run bmad-code-review for Story 3.2
 ```
@@ -37,6 +41,16 @@ Follow the Gary pattern established in Story 3.1: Party Mode coaching → bmad-a
 | Interaction Tests | `tests/agents/bmad-agent-gamma/interaction-test-guide.md` | 12 scenarios |
 | Woodshed L1 | `resources/exemplars/gamma/L1-two-processes-one-mind/reproductions/` | PASSED (25KB PDF) |
 | Woodshed L2 | `resources/exemplars/gamma/L2-diagnosis-innovation/reproductions/` | PASSED (8KB PDF) |
+
+### Key Lessons from Story 3.1 Debugging (Apply to ALL Epic 3 Stories)
+
+1. **Guide the tool, don't suppress it.** Rich `additionalInstructions` describing the desired outcome >> restrictive "don't add anything" constraints. Each tool has a core creative strength.
+2. **The evaluator must compare actual output** — extract text/audio/image from the produced artifact and compare against the source. "Did a file download?" is not a quality check.
+3. **Score on content coverage, not exact match.** Tool enhancements (sub-descriptions, visual accents) are usually beneficial. Only flag changes that alter meaning.
+4. **`inputText` (or equivalent) should communicate intent.** Include contextual framing, not just bare content. Keep descriptive context that shouldn't appear in the output inside `additionalInstructions`.
+5. **Woodshed is training; production is different.** Woodshed compares against exemplars. Production QA compares against Marcus's context envelope requirements. Never confuse them.
+6. **Default export to PNG for production** (visual assets for video/embed). PDF for review. PPTX for editing.
+7. **Memory sidecar `patterns.md` grows from user checkpoint reviews** — not from woodshed scores.
 
 ### Key Architectural Decisions (Story 3.1)
 

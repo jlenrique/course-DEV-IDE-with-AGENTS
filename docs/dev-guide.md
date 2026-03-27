@@ -420,6 +420,7 @@ class NewToolClient(BaseAPIClient):
 | `CanvasClient` | `canvas_client.py` | Bearer token | Pagination (Link header), modules, pages, assignments |
 | `QualtricsClient` | `qualtrics_client.py` | X-API-TOKEN (raw) | Surveys, questions, response export |
 | `PanoptoClient` | `panopto_client.py` | Bearer (OAuth2) | Folders, sessions, OAuth2 token refresh |
+| `KlingClient` | `kling_client.py` | JWT (HS256 from access_key+secret_key) | Text-to-video, image-to-video, lip-sync, extend, polling, download |
 
 ---
 

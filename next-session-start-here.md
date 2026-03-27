@@ -2,59 +2,30 @@
 
 ## Immediate Next Action
 
-**Implement Story 3.3 (Kling Video Specialist — API client + video production agent, human review)**
+**Continue Story 3.3 (Kling Video Specialist) — Tasks 2-8 remaining.**
 
-Story 3.2 is DONE. Content Creator (Irene) and Quality Reviewer (Quinn-R) are built, quality-scanned, Party Mode validated, sample artifacts approved. The content pipeline bookends are in place.
+Task 1 (API client) is DONE: `kling_client.py` built, JWT auth verified, live video generated (5s blue gradient, 1.8MB MP4 downloaded, 2 credits consumed). The full generate → poll → download pipeline works end-to-end.
 
-**Then Story 3.4 (ElevenLabs — expanded scope with timestamps, pronunciation, SFX, music, dialogue)**
+Remaining tasks:
+```
+2. Party Mode coaching — produce coached bmad-agent-builder discovery answers
+3. bmad-agent-builder — create Video Director agent
+4. kling-video mastery skill — references + scripts
+5. Memory sidecar — initialize 4 files
+6. Produce 6 sample videos — use C1-M1 content, exercise different API capabilities
+7. Register with Marcus
+8. Party Mode validation
+```
 
 **Branch**: `epic3-core-tool-agents`
 
-## Current Status — STORIES 3.1 + 3.2 COMPLETE, EPIC 3 IN PROGRESS
+## Current Status — STORIES 3.1 + 3.2 COMPLETE, STORY 3.3 IN PROGRESS
 
-- **Story 3.2 (Irene + Quinn-R — Content Creator + Quality Reviewer)**: DONE — Irene (12 files, Instructional Architect, delegates to Paige/Sophia/Caravaggio), Quinn-R (6 files, Quality Guardian, 5-dimension review), quality-control skill (3 scripts, 28 tests), 8 sidecar files, 6 sample artifacts approved, Marcus updated, both quality-scanned (0 critical each)
-- **Story 3.1 (Gary — Gamma Specialist)**: DONE — Agent built (10 files), mastery skill built (6 files), GammaClient fixed, 29 tests pass, L1+L2 woodshed PASSED, quality scan (0 critical, 2 high repo-completeness resolved), Party Mode validated, interaction test guide created
-- **Epic 3 re-sequenced (March 26)**: Content Creator moved to 3.2 (was 3.4), ElevenLabs expanded to 3.3 (was 3.2), Canvas renumbered to 3.4 (was 3.3), Canva downgraded to design guidance (API cannot edit elements)
-- **ElevenLabs brainstorm completed**: 12 artifact types identified, P0-P3 prioritized, evaluator design specified — see `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
-- **Canva API assessed**: Cannot add captions, apply templates, or edit elements programmatically. Import/export only. Downgraded to design guidance agent.
+- **Story 3.3 (Kling Video Specialist)**: IN PROGRESS — API client built (`kling_client.py`), JWT auth working, live video generated + downloaded, 5 unit tests pass. Remaining: agent, skill, sidecar, 6 sample videos, validation.
+- **Story 3.2 (Irene + Quinn-R — Content Creator + Quality Reviewer)**: DONE — Irene (12 files), Quinn-R (6 files), quality-control skill (3 scripts, 28 tests), 6 sample artifacts approved, Marcus updated
+- **Story 3.1 (Gary — Gamma Specialist)**: DONE — Agent built (10 files), mastery skill (6 files), 29 tests, L1+L2 woodshed PASSED
 - **Epic 2**: COMPLETE (6/6 stories, 55 tests)
 - **Epic 1**: COMPLETE (11/11 stories, 117 tests)
-
-### Gary Agent — What's Built
-
-| Component | Location | Status |
-|-----------|----------|--------|
-| Agent SKILL.md | `skills/bmad-agent-gamma/SKILL.md` | Complete (118 lines, 7 internal caps, 3 external skills) |
-| References (9) | `skills/bmad-agent-gamma/references/` | Complete (parameter-recommendation, style-guide-integration, quality-assessment, exemplar-study, content-type-mapping, context-envelope-schema, memory-system, init, save-memory) |
-| Mastery Skill | `skills/gamma-api-mastery/SKILL.md` | Complete (SKILL.md + 3 refs + 2 scripts) |
-| GammaEvaluator | `skills/gamma-api-mastery/scripts/gamma_evaluator.py` | Complete (extends BaseEvaluator) |
-| Tests (29) | `skills/gamma-api-mastery/scripts/tests/` | 17 evaluator + 12 operations, all passing |
-| Memory Sidecar | `_bmad/memory/gamma-specialist-sidecar/` | Active (index.md, patterns.md, chronology.md, access-boundaries.md) |
-| Quality Scan | `skills/reports/bmad-agent-gamma/quality-scan/` | 0 critical, overall Good |
-| Interaction Tests | `tests/agents/bmad-agent-gamma/interaction-test-guide.md` | 12 scenarios |
-| Woodshed L1 | `resources/exemplars/gamma/L1-two-processes-one-mind/reproductions/` | PASSED (25KB PDF) |
-| Woodshed L2 | `resources/exemplars/gamma/L2-diagnosis-innovation/reproductions/` | PASSED (8KB PDF) |
-
-### Key Lessons from Story 3.1 Debugging (Apply to ALL Epic 3 Stories)
-
-1. **Guide the tool, don't suppress it.** Rich `additionalInstructions` describing the desired outcome >> restrictive "don't add anything" constraints. Each tool has a core creative strength.
-2. **The evaluator must compare actual output** — extract text/audio/image from the produced artifact and compare against the source. "Did a file download?" is not a quality check.
-3. **Score on content coverage, not exact match.** Tool enhancements (sub-descriptions, visual accents) are usually beneficial. Only flag changes that alter meaning.
-4. **`inputText` (or equivalent) should communicate intent.** Include contextual framing, not just bare content. Keep descriptive context that shouldn't appear in the output inside `additionalInstructions`.
-5. **Woodshed is training; production is different.** Woodshed compares against exemplars. Production QA compares against Marcus's context envelope requirements. Never confuse them.
-6. **Default export to PNG for production** (visual assets for video/embed). PDF for review. PPTX for editing.
-7. **Memory sidecar `patterns.md` grows from user checkpoint reviews** — not from woodshed scores.
-
-### Key Architectural Decisions (Story 3.1)
-
-- **Agent name: Gary** (Slide Architect 🎨) — user-selected
-- **Template generation** support added (`POST /generations/from-template` with `gammaId` + `prompt`)
-- **Template registry** in `state/config/style_guide.yaml` → `tool_parameters.gamma.templates` for scope-based template resolution
-- **Context envelope schema** formalized with required/optional fields, golden examples, and `parameters_ready` expert fast-path flag
-- **GammaClient** backward-incompatible fix: `topic` → `inputText`, added `textMode`, `exportAs`, `additionalInstructions`, all optional params
-- **API response** uses `generationId` not `id` — handled in gamma_operations.py
-- **Cross-skill imports** via `importlib.util.spec_from_file_location` for hyphenated directory names
-- **pyproject.toml** added `pythonpath = ["."]` for project-root imports in skill tests
 
 ## What's Working Right Now
 
@@ -66,41 +37,68 @@ Story 3.2 is DONE. Content Creator (Irene) and Quality Reviewer (Quinn-R) are bu
 - **Ref**: 2 tools — doc search and URL reading (user-level)
 
 ### API Access (via scripts, not MCP)
+- **Kling**: `scripts/api_clients/kling_client.py` — text-to-video, image-to-video, lip-sync, extend, polling, download. JWT auth. LIVE TESTED.
 - **ElevenLabs**: `node scripts/smoke_elevenlabs.mjs` — 45 voices
 - **Qualtrics**: `node scripts/smoke_qualtrics.mjs` — surveys, questions, distributions
 - **All tools**: `node scripts/heartbeat_check.mjs` — full heartbeat
 
 ## Hot-Start Context
 
+### Kling API — Key Findings from Live Testing
+- **Base URL**: `https://api.klingai.com`
+- **Auth**: JWT with access_key as `iss`, secret_key for HS256 signing (30-min token lifetime)
+- **Status endpoint**: `/v1/videos/text2video/{task_id}` (type-specific, NOT generic `/v1/videos/{task_id}`)
+- **Status values**: `submitted` → `processing` → `succeed` / `failed`
+- **Video URL**: nested in `data.task_result.videos[0].url`
+- **Mode values**: `std` (720p) / `pro` (1080p) — NOT "standard"/"professional"
+- **Model names**: `kling-v1-6`, `kling-v2-6`, `kling-v3-0` (dashes, not dots)
+- **Duration**: string `"5"` not integer `5`
+- **Parameter name**: `model_name` not `model`
+- **Credits**: API credits are SEPARATE from consumer credits. Purchased via Resource Pack at klingai.com/global/dev/model/video
+- **Cost**: ~2 credits per 5s std video with kling-v1-6. 1000 API credits purchased.
+- **Timing**: ~140s for a 5s std video (14 polls at 10s intervals)
+
 ### Key File Paths
-- Gary SKILL.md: `skills/bmad-agent-gamma/SKILL.md`
-- Gary Sidecar: `_bmad/memory/gamma-specialist-sidecar/`
-- Gary Quality Scan: `skills/reports/bmad-agent-gamma/quality-scan/2026-03-26_200831/quality-report.md`
-- Gary Interaction Tests: `tests/agents/bmad-agent-gamma/interaction-test-guide.md`
-- Gary Coaching Doc: `_bmad-output/brainstorming/party-mode-coaching-gamma-specialist.md`
-- ElevenLabs Capability Audit: `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
+- Kling Client: `scripts/api_clients/kling_client.py`
+- Kling Tests: `tests/test_integration_kling.py` (5 unit pass, 3 live need credits)
+- Kling Story: `_bmad-output/implementation-artifacts/3-3-kling-video-specialist-agent.md`
+- Test Video: `course-content/staging/story-3.3-samples/test-blue-gradient.mp4` (1.8MB, 5s)
+- C1-M1 Notes: `course-content/courses/TEJAL_Course 01 Mod 01 Notes 2026-03-16.pdf`
+- Irene SKILL.md: `skills/bmad-agent-content-creator/SKILL.md`
+- Quinn-R SKILL.md: `skills/bmad-agent-quality-reviewer/SKILL.md`
 - Marcus SKILL.md: `skills/bmad-agent-marcus/SKILL.md`
 - Sprint Status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - Epics: `_bmad-output/planning-artifacts/epics.md`
 
-### Epic 3 Story Sequence (re-sequenced March 27, 2026 — 9 stories)
-| Story | Agent | Validation | Status |
-|-------|-------|------------|--------|
-| 3.1 | Gary (Gamma Specialist) | Exemplar + Woodshed | DONE |
-| 3.2 | Content Creator (Irene) + Quality Reviewer (Quinn-R) | Human review (sample artifacts) | DONE |
-| 3.3 | Kling Video Specialist (NEW) | Human review (sample videos) | NEXT |
-| 3.4 | ElevenLabs Specialist (expanded) | Exemplar + Woodshed | Backlog |
-| 3.5 | Canvas Specialist | Exemplar + Woodshed | Backlog |
-| 3.6 | Qualtrics Specialist | Exemplar + Woodshed | Backlog |
-| 3.7 | Canva Specialist (manual-tool pattern) | Human review (instructions) | Backlog |
-| 3.8 | Source Wrangler (Notion + Box) | Functional testing | Backlog |
-| 3.9 | Tech Spec Wrangler | Functional testing | Backlog |
+### 6 Sample Videos Planned (Task 6)
+| # | Type | API Capability | Content Source |
+|---|------|---------------|---------------|
+| V1 | Hospital B-roll | text-to-video (pro) | C1-M1 Slide 1 prompt |
+| V2 | Pathway concept animation | text-to-video (pro) | C1-M1 Slide 1 overlay |
+| V3 | Slide-to-video transition | image-to-video | Gary PNG from SB-C1M1L1-02 |
+| V4 | Knowledge timeline | text-to-video (std) | C1-M1 Part 2 Slide 3 |
+| V5 | Talking-head lip sync | lip-sync | NS-C1M1L1-02 narration + image |
+| V6 | Module bridge transition | image-to-video + sound | C1-M1 Summary slide |
+
+### Epic 3 Story Sequence (9 stories)
+| Story | Agent | Status |
+|-------|-------|--------|
+| 3.1 | Gary (Gamma Specialist) | DONE |
+| 3.2 | Irene (Content Creator) + Quinn-R (Quality Reviewer) | DONE |
+| 3.3 | Kling Video Specialist | IN PROGRESS (Task 1 done) |
+| 3.4 | ElevenLabs Specialist (expanded) | Backlog |
+| 3.5 | Canvas Specialist | Backlog |
+| 3.6 | Qualtrics Specialist | Backlog |
+| 3.7 | Canva Specialist (manual-tool pattern) | Backlog |
+| 3.8 | Source Wrangler (Notion + Box) | Backlog |
+| 3.9 | Tech Spec Wrangler | Backlog |
 
 ### Gotchas
 - PowerShell doesn't support `&&` chaining — use `;` instead
 - `.venv` is set up with Python 3.13 — activate with `.venv\Scripts\activate`
 - Run tests with `.venv\Scripts\python -m pytest tests/ -v`
-- Skill tests run separately: `.venv\Scripts\python -m pytest skills/gamma-api-mastery/scripts/tests/ -v`
-- Gamma API returns `generationId` not `id` in POST response
-- Cursor MCP `env` field does NOT resolve `${VAR}` from .env files — wrapper script exists
+- Kling API credits are SEPARATE from consumer credits — buy Resource Packs
+- Kling status endpoint is type-specific: `/v1/videos/text2video/{id}` not `/v1/videos/{id}`
+- Kling uses `model_name` not `model`, duration as string, mode `std`/`pro`
 - Cross-skill Python imports use `importlib.util` loader pattern due to hyphenated directory names
+- `pyjwt` added to requirements.txt for Kling JWT auth

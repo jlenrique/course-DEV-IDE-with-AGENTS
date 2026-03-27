@@ -365,6 +365,19 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `canvas-deployment` | planned | Epic 3 |
 | `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
 
+### Compositor: assembly bundle (CLI)
+
+Before a human assembles in Descript, **localize** Gate-approved stills next to the manifest (see `skills/compositor/SKILL.md`). From the repo root, using the project `.venv`:
+
+```bash
+.venv\Scripts\python.exe skills/compositor/scripts/compositor_operations.py sync-visuals path/to/manifest.yaml
+.venv\Scripts\python.exe skills/compositor/scripts/compositor_operations.py guide path/to/manifest.yaml path/to/DESCRIPT-ASSEMBLY-GUIDE.md
+```
+
+- **`sync-visuals`** copies each segment `visual_file` into `<manifest_dir>/visuals/` (override with `--subdir`) and rewrites only those path strings in the manifest (YAML layout preserved).
+- **`guide`** emits the Descript Assembly Guide; the legacy **two-argument** form (`manifest` then `output`, without the `guide` subcommand) still works.
+- Tests: `pytest skills/compositor/scripts/tests`
+
 ---
 
 ## API Client Anatomy

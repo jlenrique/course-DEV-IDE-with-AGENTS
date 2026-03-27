@@ -1,7 +1,7 @@
 # Session Handoff — Compositor `sync-visuals` + ad-hoc pilot bundle + wrap-up
 
 **Date:** 2026-03-27  
-**Branch:** confirm with `git branch --show-current` (often `master` or a story branch)  
+**Branch:** `dev/trial-run-slide-narration` (tracks `origin/dev/trial-run-slide-narration`) — commit `4b75eaa`  
 **Session focus:** localize Gate-approved PNGs into the Descript assembly bundle; document workflow; run BMAD session shutdown protocol
 
 ---

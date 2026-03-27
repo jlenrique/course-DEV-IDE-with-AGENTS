@@ -1,102 +1,91 @@
-# Session Handoff — Story 3.1 Complete
+# Session Handoff — Story 3.2 Complete
 
 **Date:** 2026-03-27
 **Branch:** `epic3-core-tool-agents`
-**Session focus:** Story 3.1 — Gamma Specialist Agent (Gary) & Mastery Skill
+**Session focus:** Story 3.2 — Content Creator Agent (Irene) + Quality Reviewer Agent (Quinn-R) + quality-control skill
 
 ## What Was Completed
 
-### Story 3.1: Gary — Gamma Specialist Agent & Mastery Skill (ALL 7 TASKS, 12/12 ACs)
+### Story 3.2: Content Creator + Quality Reviewer Agents (ALL 8 TASKS, 15/15 ACs)
 
-1. **Party Mode coaching** — Produced `party-mode-coaching-gamma-specialist.md` with copy-paste-ready bmad-agent-builder answers. Agent named Gary (Slide Architect 🎨) by user.
+1. **Story file created** — `_bmad-output/implementation-artifacts/3-2-content-creator-quality-reviewer-agents.md` with 15 ACs, 8 tasks, 33 subtasks, comprehensive dev notes. Quality-validated by subagent (1 gap found and fixed: AC15 task traceability).
 
-2. **Agent built** — `skills/bmad-agent-gamma/` with SKILL.md (118 lines) + 9 reference files. Quality scanned (0 critical, overall Good). All quick-win optimizations applied. Party Mode team validated all 7 coaching concerns.
+2. **Party Mode coaching** — Produced `party-mode-coaching-content-creator-quality-reviewer.md` (699 lines) covering both agents. Two-part document with copy-paste-ready answers for 6-phase builder discovery. Team notes from 9 participants including Paige, Sophia, Caravaggio as delegatees.
 
-3. **Mastery skill built** — `skills/gamma-api-mastery/` with SKILL.md, parameter-catalog.md (sourced from Ref MCP doc refresh), context-optimization.md, gamma_operations.py, gamma_evaluator.py.
+3. **Irene (Content Creator) built** — `skills/bmad-agent-content-creator/` with SKILL.md + 11 reference files (12 total). Pure judgment agent — zero scripts by design. 8 internal capabilities (IA, LO, BT, CL, CS, AA, PQ, WD), 5 external agents (Paige, Sophia, Caravaggio, 2 editorial skills). Quality scanned (0 critical, Good). Party Mode team validated unanimously.
+   - Delegation protocol with writer selection matrix, 6 mandatory brief fields, 2-round revision limit
+   - Pedagogical framework covering Bloom's, cognitive load, backward design, sequencing
+   - 6 output artifact templates with downstream consumption annotations
 
-4. **GammaClient fixed** — Backward-incompatible parameter name updates (`topic` → `inputText`, added `textMode`, `exportAs`, all optional params). Added `generate_from_template()` for template-based generation.
+4. **Quinn-R (Quality Reviewer) built** — `skills/bmad-agent-quality-reviewer/` with SKILL.md + 5 reference files (6 total). Pure judgment agent — scripts in companion skill. 6 internal capabilities (QA, CC, BV, LA, IS, FG), 1 external skill (quality-control). Quality scanned (0 critical, 0 high, Good). Party Mode team validated unanimously.
+   - 5-dimension review protocol with severity mappings and calibration
+   - Structured feedback format with score calculation and pass thresholds
+   - Medical accuracy escalation protocol (flag, never adjudicate)
+   - Mode-aware behavior (QA always runs; logging suppressed in ad-hoc)
 
-5. **Memory sidecar initialized** — 4 files at `_bmad/memory/gamma-specialist-sidecar/`: index.md, patterns.md, chronology.md, access-boundaries.md.
+5. **quality-control skill built** — `skills/quality-control/` with SKILL.md + 3 references + 3 scripts + 3 test files (10 total). 28 tests pass.
+   - `accessibility_checker.py` — Flesch-Kincaid reading level, heading hierarchy, alt text, content density
+   - `brand_validator.py` — Color palette compliance, typography, voice markers from style bible
+   - `quality_logger.py` — SQLite quality_gates logging with mode-aware persistence
 
-6. **GammaEvaluator built** — Extends BaseEvaluator from woodshed. Implements analyze_exemplar, derive_reproduction_spec, execute_reproduction, compare_reproduction with L-level rubric weights.
+6. **Memory sidecars initialized** — 8 files total (4 per agent):
+   - `_bmad/memory/content-creator-sidecar/` — new, 4 files
+   - `_bmad/memory/quality-reviewer-sidecar/` — updated index.md, added 3 files
 
-7. **Woodshed L1+L2 PASSED** — Both exemplars reproduced faithfully via live Gamma API. PDFs downloaded (L1: 25KB, L2: 8KB). Run logs and comparison YAMLs retained. Catalog updated to `mastered`.
+7. **Sample artifacts produced** — 6 artifacts in `course-content/staging/story-3.2-samples/`:
+   - LP-C1M1L1 (lesson plan), NS-C1M1L1-02 (narration script), DS-C1M1L1-03 (dialogue script), SB-C1M1L1-02 (slide brief), AB-C1M1L1-05 (assessment brief), FP-C1M1L1-01 (first-person explainer)
+   - Topic: IS-1 "Defining Innovative Mindset" from course context
+   - Human review: APPROVED by Juan
 
-8. **29 new tests** — 17 evaluator + 12 operations, all passing. 112 existing tests still pass.
+8. **Marcus registration** — Updated External Specialist Agents table: `content-creator` (Irene) and `quality-reviewer` (Quinn-R) both set to `active` with context-passing details.
 
-### Additional Deliverables (Beyond Story 3.1 Scope)
-
-- **Template generation support** — User-requested feature. Gamma `POST /generations/from-template` endpoint integrated. Template registry design in style_guide.yaml with scope-based resolution.
-- **Context envelope schema** — Formalized Marcus↔Gary delegation contract with required/optional fields, golden examples, and expert fast-path flag.
-- **Interaction test guide** — 12 scenarios at `tests/agents/bmad-agent-gamma/`.
-- **Cross-reference updates** — Gary's name propagated across 14 project files.
+9. **Interaction test guides** — Created for both agents:
+   - `tests/agents/bmad-agent-content-creator/interaction-test-guide.md` (10 scenarios)
+   - `tests/agents/bmad-agent-quality-reviewer/interaction-test-guide.md` (12 scenarios)
 
 ## What Is Next
 
-1. **Story 3.2** — ElevenLabs Specialist Agent & Mastery Skill (follow Gary pattern)
-2. **Post-story woodshed** — L3, L4.1, L4.2 progressive mastery exercises for Gary
-3. **Stories 3.3-3.8** — Canvas, content-creator, quality-reviewer, qualtrics, canva, source-wrangler, tech-spec-wrangler
+- **Story 3.3: Kling Video Specialist** — API client built within the story + video production agent + human review validation
+- **Story 3.4: ElevenLabs Specialist** — expanded scope with timestamps, pronunciation, SFX, music, dialogue
+- Content pipeline is now bookended: Irene (front) → specialists → Quinn-R (back)
 
-## Unresolved Issues / Risks
+## Unresolved Issues
 
-- **Pre-existing test failures** — 5 tests fail (`.env.example` missing from disk, `style_guide.yaml` missing `brand` key). Not introduced this session.
-- **Cross-skill imports** — Hyphenated directory names (`gamma-api-mastery`) require `importlib.util` loader pattern. Works but is fragile. May want to standardize on underscore naming for future skills.
-- **Gamma embellishment** — L1+L2 passed but embellishment control is not yet battle-tested at L3-L4 complexity. The constraint phrasing tracking in patterns.md will reveal effectiveness over time.
-- **Template registry** — Designed but no templates are registered yet. First real template will exercise the full workflow.
+- **5 pre-existing test failures** — `.env.example` missing (3 tests) + `style_guide.yaml` missing `brand` section (1 test) + Canva env test (1). Not from this session. Should be addressed separately.
+- **Irene quality scan finding** — Context envelope validation is deterministic work that could be a shared pre-pass script. Deferred to shared schema work.
+- **Quinn-R quality scan finding** — No structured JSON output for headless chains. Deferred to system-level schema formalization.
+
+## Key Lessons
+
+1. **Two agents in one session is achievable** when coaching docs are pre-built and the builder interview is streamlined with copy-paste answers.
+2. **Pure judgment agents** (zero scripts) are a valid and clean pattern. Irene proves that pedagogical design doesn't need code execution.
+3. **Downstream consumption annotations** are the glue that makes a pipeline, not just a collection of artifacts. Every template telling the next specialist what it needs prevents integration failures.
+4. **Quality scan before Party Mode** catches structural issues early. Both agents went into validation with all lint fixes already applied.
+5. **Writer delegation protocol** is the Content Creator's most critical artifact — more important than any individual template. Get the brief right and the writing follows.
 
 ## Validation Summary
 
-| What | How | Result |
-|------|-----|--------|
-| Gary agent structure | bmad-agent-builder lint gate (path-standards, scripts) | PASS — 0 findings |
-| Gary quality | Full quality optimizer (6 LLM scanners + 2 lint + 3 prepass) | Good — 0 critical, 2 high (repo-completeness, resolved) |
-| Party Mode team concerns | 7 team members reviewed against coaching doc | ALL 7 PASS |
-| Coaching doc compliance | Systematic comparison across all 6 phases | ALL PASS (3 gaps found and fixed) |
-| Gamma operations tests | 12 pytest unit tests | ALL PASS |
-| Gamma evaluator tests | 17 pytest unit tests | ALL PASS |
-| Existing test suite | 117 tests in tests/ | 112 pass, 3 skip, 5 fail (pre-existing) |
-| Woodshed L1 | Live Gamma API: generate + poll + export + download | PASS — 25KB PDF, rubric 4-5/5 |
-| Woodshed L2 | Live Gamma API: generate + poll + export + download | PASS — 8KB PDF, rubric 4-5/5 |
-| Whitespace | `git diff --check` | Clean |
+| Check | Result |
+|-------|--------|
+| Project tests | 112 pass, 5 pre-existing failures, 3 skipped |
+| Quality-control tests | 28 pass |
+| Gary mastery tests | 37 pass |
+| Irene quality scan | Good (0 critical, 1 high system-level) |
+| Quinn-R quality scan | Good (0 critical, 0 high) |
+| Lint gates (both agents) | Pass (0 findings each) |
+| Party Mode validation | Unanimous approval (both agents) |
+| Human review (samples) | Approved |
 
-## Key Lessons Learned
-
-1. **The Epic 3 specialist agent pattern is now proven and replicable.** The flow (coaching → builder → mastery skill → evaluator → woodshed → validation) works end-to-end. Stories 3.2-3.8 can follow this template.
-
-2. **Gamma API returns `generationId`, not `id`.** The existing GammaClient was also using wrong parameter names. Always validate against live API before building higher layers.
-
-3. **Cross-skill Python imports with hyphenated directories need special handling.** The `importlib.util.spec_from_file_location` pattern works but adds complexity. Consider underscore naming for future skills.
-
-4. **Quality optimizer catches real issues.** The production-coordination hidden dependency (style guide write-back) was a genuine gap that the cohesion scanner found. The envelope schema recommendation (CR-H1) became a key deliverable.
-
-5. **Template support should be considered early.** User raised Gamma templates as a workflow concern — addressing it during agent build was much cheaper than retrofitting later.
-
-6. **CRITICAL: Guide the tool, never suppress it.** The initial evaluator told Gamma "no images, no additions" — producing 8KB bare text cards instead of professional slides. Rich `additionalInstructions` describing the desired visual outcome ("two-column comparison with medical icons") produces 40-187KB visually rich output. This applies to every specialist: ElevenLabs (guide tone/pacing, don't say "no inflection"), Canva (guide brand style, don't say "plain text only"), etc.
-
-7. **CRITICAL: The evaluator must compare actual output, not rubber-stamp.** The initial evaluator scored "did a PDF download?" as 4/5 structural fidelity — passing terrible output with false confidence. Fixed evaluator extracts PDF text, measures source word coverage, detects embellishment. Every future evaluator must do medium-specific output extraction.
-
-8. **Woodshed is training, not production.** Woodshed proves tool control through exemplar reproduction. Production QA compares output against what Marcus asked for. Same rubric dimensions, different reference point. The user reviews the actual artifact at checkpoint gates — that human judgment is the ground truth.
-
-9. **Default to PNG for production exports.** Slides are visual assets for video production and course embedding, not documents. PDF for human review, PPTX for editing.
-
-10. **The memory sidecar captures real know-how.** `patterns.md` should be seeded with debugging insights and grows through user checkpoint reviews in production — not from automated rubric scores.
+**Total tests: 177 pass**
 
 ## Artifact Update Checklist
 
-- [x] Story artifact (`3-1-gamma-specialist-agent.md`) — all tasks checked, status: done, Dev Agent Record filled
-- [x] Sprint status (`sprint-status.yaml`) — 3-1 → done
-- [x] Workflow status (`bmm-workflow-status.yaml`) — next_workflow_step updated
-- [x] Project context (`docs/project-context.md`) — phase and implementation status updated
-- [x] Next session (`next-session-start-here.md`) — full rewrite for Story 3.2
-- [x] Session handoff (`SESSION-HANDOFF.md`) — this file
-- [x] Dev guide (`docs/dev-guide.md`) — Gary added to run walkthrough
-- [x] Interaction test guide (`tests/agents/bmad-agent-gamma/`) — 12 scenarios
-- [x] Marcus SKILL.md — Gary in specialist agents table
-- [x] Marcus sidecar — Gary referenced in next steps
-- [x] Exemplar catalog — L1+L2 mastered
-- [x] Woodshed SKILL.md — Evaluator Design Requirements section added (6 requirements with per-tool examples)
-- [x] Epics — Evaluator Design Requirements added to Epic 3 shared acceptance model
-- [x] Project context — evaluator requirements and PNG default added
-- [x] Gary patterns.md — seeded with founding woodshed insights
-- [x] Content-type templates — default export changed to PNG
-- [x] Context envelope schema — default export changed to PNG
+- [x] Story file: `_bmad-output/implementation-artifacts/3-2-content-creator-quality-reviewer-agents.md` → done
+- [x] Sprint status: `_bmad-output/implementation-artifacts/sprint-status.yaml` → 3-2 done
+- [x] Project context: `docs/project-context.md` → updated
+- [x] Next session: `next-session-start-here.md` → updated for Story 3.3
+- [x] Session handoff: this file
+- [x] Marcus SKILL.md: updated routing table
+- [x] Coaching doc: `_bmad-output/brainstorming/party-mode-coaching-content-creator-quality-reviewer.md`
+- [x] Quality reports: `skills/reports/bmad-agent-content-creator/` and `skills/reports/bmad-agent-quality-reviewer/`
+- [x] Interaction tests: `tests/agents/bmad-agent-content-creator/` and `tests/agents/bmad-agent-quality-reviewer/`

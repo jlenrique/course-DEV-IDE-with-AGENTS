@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-27
+last_updated: 2026-03-26
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -72,7 +72,7 @@ development_status:
   # ElevenLabs to 3.4, Canvas to 3.5. Canva uses manual-tool agent pattern. 9 stories total.
   epic-3: in-progress
   3-1-gamma-specialist-agent: done
-  3-2-content-creator-quality-reviewer-agents: backlog  # instructional design director + BMad writer delegation, human review validation
+  3-2-content-creator-quality-reviewer-agents: done  # instructional design director + BMad writer delegation, human review validation
   3-3-kling-video-specialist-agent: backlog  # NEW — video production, API client built in-story, human review validation
   3-4-elevenlabs-specialist-agent: backlog  # expanded: timestamps, pronunciation, SFX, music, dialogue
   3-5-canvas-specialist-agent: backlog

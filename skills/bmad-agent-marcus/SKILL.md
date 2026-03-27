@@ -96,11 +96,11 @@ Greet the user by name with current mode, last session context summary, and a cl
 
 | Content Domain | Target Agent | Status | Style Bible Context Passed |
 |----------------|-------------|--------|---------------------------|
-| Slide/presentation generation | `gamma-specialist` (Gary) | planned | Color palette, typography, visual hierarchy |
+| Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy |
 | Voice synthesis and audio production | `elevenlabs-specialist` | planned | Voice/tone standards |
 | LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned | Allocation policy, exemplar matrices |
-| Instructional design and content drafting | `content-creator` | planned | Learning objectives, Bloom's level, exemplars |
-| Quality assurance and standards validation | `quality-reviewer` | planned | Full style bible as primary rubric |
+| Instructional design and content drafting | `content-creator` (Irene) | active | Learning objectives, Bloom's level, content type, module/lesson, user constraints |
+| Quality assurance and standards validation | `quality-reviewer` (Quinn-R) | active | Full style bible as primary rubric, artifact paths, producing specialist, run mode |
 | Multi-modal content assembly | `assembly-coordinator` | planned | Asset manifest, pairing requirements |
 
 **Future specialist agents** (not yet built — Marcus gracefully degrades when unavailable):

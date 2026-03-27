@@ -2,36 +2,17 @@
 
 ## Immediate Next Action
 
-**Implement Story 3.2 (Content Creator Agent + Quality Reviewer Agent) via `bmad-dev-story`.**
+**Implement Story 3.3 (Kling Video Specialist — API client + video production agent, human review)**
 
-Content is KING. Scripts must exist before slides can be narrated. Story 3.2 was moved up from the old Story 3.4 position because the production pipeline demands it:
-```
-Content Creator (scripts) → Gary (slides) → ElevenLabs (narration) → Assembly → Quality Reviewer
-```
+Story 3.2 is DONE. Content Creator (Irene) and Quality Reviewer (Quinn-R) are built, quality-scanned, Party Mode validated, sample artifacts approved. The content pipeline bookends are in place.
 
-The Content Creator ("Instructional Architect") judiciously delegates to BMad writers for top-notch prose:
-- **Paige** (Tech Writer) — for structured explanatory content (procedures, protocols)
-- **Sophia** (Storyteller) — for narratives (case studies, patient vignettes, first-person explainers)
-- **Caravaggio** (Presentation Expert) — for slide narrative design and visual flow advice
-
-Follow the Gary pattern: Party Mode coaching → bmad-agent-builder → agent creation → interaction testing → Party Mode validation.
-
-```
-1. Party Mode coaching — produce coached bmad-agent-builder discovery answers
-   for Content Creator + Quality Reviewer (model on party-mode-coaching-gamma-specialist.md)
-2. bmad-agent-builder with coached answers (invoke twice — one per agent)
-3. Build reference templates for all 6 output artifact types
-4. Test invocations: verify both agents respond in character
-5. Run bmad-code-review for Story 3.2
-```
-
-**Then Story 3.3 (Kling Video Specialist — API client + video production agent, human review)**
 **Then Story 3.4 (ElevenLabs — expanded scope with timestamps, pronunciation, SFX, music, dialogue)**
 
 **Branch**: `epic3-core-tool-agents`
 
-## Current Status — STORY 3.1 COMPLETE, EPIC 3 RE-SEQUENCED
+## Current Status — STORIES 3.1 + 3.2 COMPLETE, EPIC 3 IN PROGRESS
 
+- **Story 3.2 (Irene + Quinn-R — Content Creator + Quality Reviewer)**: DONE — Irene (12 files, Instructional Architect, delegates to Paige/Sophia/Caravaggio), Quinn-R (6 files, Quality Guardian, 5-dimension review), quality-control skill (3 scripts, 28 tests), 8 sidecar files, 6 sample artifacts approved, Marcus updated, both quality-scanned (0 critical each)
 - **Story 3.1 (Gary — Gamma Specialist)**: DONE — Agent built (10 files), mastery skill built (6 files), GammaClient fixed, 29 tests pass, L1+L2 woodshed PASSED, quality scan (0 critical, 2 high repo-completeness resolved), Party Mode validated, interaction test guide created
 - **Epic 3 re-sequenced (March 26)**: Content Creator moved to 3.2 (was 3.4), ElevenLabs expanded to 3.3 (was 3.2), Canvas renumbered to 3.4 (was 3.3), Canva downgraded to design guidance (API cannot edit elements)
 - **ElevenLabs brainstorm completed**: 12 artifact types identified, P0-P3 prioritized, evaluator design specified — see `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
@@ -106,8 +87,8 @@ Follow the Gary pattern: Party Mode coaching → bmad-agent-builder → agent cr
 | Story | Agent | Validation | Status |
 |-------|-------|------------|--------|
 | 3.1 | Gary (Gamma Specialist) | Exemplar + Woodshed | DONE |
-| 3.2 | Content Creator + Quality Reviewer | Human review (sample artifacts) | NEXT |
-| 3.3 | Kling Video Specialist (NEW) | Human review (sample videos) | Backlog |
+| 3.2 | Content Creator (Irene) + Quality Reviewer (Quinn-R) | Human review (sample artifacts) | DONE |
+| 3.3 | Kling Video Specialist (NEW) | Human review (sample videos) | NEXT |
 | 3.4 | ElevenLabs Specialist (expanded) | Exemplar + Woodshed | Backlog |
 | 3.5 | Canvas Specialist | Exemplar + Woodshed | Backlog |
 | 3.6 | Qualtrics Specialist | Exemplar + Woodshed | Backlog |

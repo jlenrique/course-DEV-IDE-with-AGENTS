@@ -1,0 +1,42 @@
+# Lesson Plan Template
+
+## Header
+
+- **Module:** {module_id} — {module_title}
+- **Lesson:** {lesson_id} — {lesson_title}
+- **Learning Objectives:** {list all objectives with Bloom's level tags}
+- **Estimated Duration:** {minutes}
+- **Prerequisites:** {prior lessons/concepts required}
+- **Pairing Reference:** LP-{module_id}{lesson_id}
+
+## Content Blocks
+
+For each content block in the lesson sequence:
+
+### Block {N}: {block_title}
+
+- **Objective Served:** {specific learning objective ID}
+- **Bloom's Level:** {level}
+- **Content Type:** {lecture narration | case study | procedure walkthrough | data visualization | discussion prompt}
+- **Writer Delegation:** {Paige | Sophia | Caravaggio} — {rationale for writer selection}
+- **Estimated Duration:** {minutes}
+- **Key Terminology:** {terms that must appear}
+
+**Content Summary:**
+{Brief description of what this block covers and its pedagogical purpose}
+
+**Cognitive Load Notes:**
+{Chunking decisions, scaffolding context, dual-coding opportunities}
+
+## Assessment Hooks
+
+| Objective | Assessment Type | Bloom's Level | Placement |
+|-----------|----------------|---------------|-----------|
+| {objective} | {MC, matching, case application, etc.} | {level} | {formative during lesson / summative end} |
+
+## Downstream Consumption
+
+- **Narration Scripts:** {count} scripts needed, paired with this lesson plan via LP reference
+- **Slide Briefs:** {count} briefs needed, cross-referenced by block number
+- **Assessment Briefs:** {count} items, mapped to assessment hooks above
+- **Asset-Lesson Pairing:** Every artifact produced from this plan references LP-{module_id}{lesson_id}

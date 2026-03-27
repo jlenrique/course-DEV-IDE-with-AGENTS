@@ -156,8 +156,8 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
     - Artifact path (where the presentation was saved)
     - Quality self-assessment score
     - Parameter decisions made (for saving to style guide)
-26. Marcus invokes the `quality-reviewer` agent (planned) for independent quality validation
-27. Quality reviewer checks: brand consistency, accessibility (WCAG 2.1 AA), learning objective alignment
+26. Marcus invokes Quinn-R (`quality-reviewer` agent, active) for independent quality validation
+27. Quinn-R checks: brand consistency, accessibility (WCAG 2.1 AA), learning objective alignment, instructional soundness, content accuracy flags
 
 ### Phase 7: Human Checkpoint (Marcus → User)
 
@@ -361,7 +361,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `gamma-api-mastery` | planned | Epic 3 |
 | `elevenlabs-audio` | planned | Epic 3 |
 | `canvas-deployment` | planned | Epic 3 |
-| `quality-control` | planned | Epic 4 |
+| `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
 
 ---
 

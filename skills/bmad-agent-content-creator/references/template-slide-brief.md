@@ -1,12 +1,15 @@
 # Slide Brief Template
 
+**Pass 1 artifact** — produced before Gary generates slides. This brief tells Gary what each slide needs to accomplish pedagogically. Irene writes narration *after* Gary generates slides (Pass 2), ensuring narration complements Gary's actual output. Do not pre-write narration in this brief.
+
 ## Header
 
 - **Lesson Plan Reference:** LP-{module_id}{lesson_id}
 - **Brief ID:** SB-{module_id}{lesson_id}-{sequence}
-- **Paired Narration Script:** NS-{module_id}{lesson_id}-{sequence}
+- **Narration Script (Pass 2 — produced after Gary):** NS-{module_id}{lesson_id}-{sequence}
 - **Learning Objective:** {specific objective this slide serves}
 - **Bloom's Level:** {level}
+- **Pass:** 1 (input to Gary's generation; narration written after Gary's output reviewed)
 
 ## Slide Specifications
 
@@ -34,4 +37,7 @@
   - `imageOptions.source`: {aiGenerated | noImages | pexels}
 - **Format:** presentation
 - **Export:** PNG (production) or PDF (review)
-- **Pairing Note:** Narration script NS-{id} must be produced alongside — Gary benefits from seeing both for visual-verbal coherence
+- **Pairing Note:** Narration script NS-{id} is produced in Pass 2 *after* Gary's slides are approved. Gary uses this brief to generate slides; Irene then writes narration that complements what Gary actually produced.
+- **Downstream Kira:** segments that need video animation should note `visual_mode: video` suggestion here so Kira knows which slides to animate after ElevenLabs provides durations.
+  - `visual_mode`: static-hold | video (suggestion for segment manifest)
+  - `visual_source`: gary | kira (suggestion)

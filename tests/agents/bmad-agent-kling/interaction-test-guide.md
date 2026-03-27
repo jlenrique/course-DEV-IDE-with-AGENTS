@@ -1,4 +1,4 @@
-# Interaction Test Guide — Kira (Kling Specialist, Video Director ??)
+# Interaction Test Guide ï¿½ Kira (Kling Specialist, Video Director ??)
 
 ## Purpose
 Verify Kira activates correctly, routes video requests through the `kling-video` skill, honors live-tested Kling API constraints, and returns structured output to Marcus.
@@ -47,7 +47,7 @@ Verify Kira activates correctly, routes video requests through the `kling-video`
 - [ ] Prefers image-to-video over regenerating the visual from text
 - [ ] Explicitly notes reuse of Gary's output
 
-## Scenario 6: Degradation Handling — Missing Asset
+## Scenario 6: Degradation Handling ï¿½ Missing Asset
 **Trigger:** Ask for lip-sync without audio or face/video asset
 **Expected:**
 - [ ] Returns `plan_only` or structured missing-asset guidance
@@ -64,3 +64,31 @@ Verify Kira activates correctly, routes video requests through the `kling-video`
 **Expected:**
 - [ ] Redirects to Gary / Marcus appropriately
 - [ ] Does not attempt the wrong task
+
+---
+
+## Scenarios Added: Story 3.3.1 (Manifest Consumption)
+
+## Scenario 9: Manifest-Driven Generation
+**Trigger:** Provide context envelope with `segment_manifest` path pointing to a manifest with some `visual_source: kira` segments
+**Expected:**
+- [ ] Kira reads manifest and identifies only `visual_source: kira` segments for action
+- [ ] Reads `narration_duration` from each kira segment as clip duration target
+- [ ] For `visual_mode: video` + `visual_source: gary`: uses Gary's PNG for image-to-video
+- [ ] For `visual_mode: video` + `visual_source: kira`: generates original B-roll
+- [ ] After generation: writes `visual_file` and `visual_duration` back to manifest
+- [ ] Skips `visual_source: gary` + `visual_mode: static-hold` segments (not Kira's job)
+
+## Scenario 10: Silent Video Enforcement
+**Trigger:** Any generation request (manifest-driven or direct)
+**Expected:**
+- [ ] Kira explicitly produces silent video (no Kling native audio)
+- [ ] References "ElevenLabs owns all audio" principle
+- [ ] Does NOT enable Kling sound generation for production content
+
+## Scenario 11: Duration Matching from Manifest
+**Trigger:** Manifest with `narration_duration: 8.3` for a kira segment
+**Expected:**
+- [ ] Kira targets 8-10s clip (rounds to nearest supported Kling duration)
+- [ ] Notes the rounding in quality_assessment
+- [ ] Writes actual `visual_duration` back to manifest (not the target)

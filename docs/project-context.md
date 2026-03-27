@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 3 IN PROGRESS)
+**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 3 IN PROGRESS — Stories 3.1-3.3.1 done)
 **Architecture Status:** 10 Epics, 80 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma, 29 tests; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer, 28 new tests; Story 3.3 DONE — Kira/Kling Video Specialist, 10 new tests, comparison video set human-reviewed). 3.4 ElevenLabs (NEXT, expanded), 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva (manual-tool pattern), 3.8 Source Wrangler, 3.9 Tech Spec Wrangler.
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer; Story 3.3 DONE — Kira/Kling Video Specialist; Story 3.3.1 DONE — Composition Architecture Harmonization + Gary Deck Enhancement). 3.4 ElevenLabs (NEXT, expanded), 3.5 Compositor (NEW), 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva (manual-tool pattern), 3.9 Source Wrangler, 3.10 Tech Spec Wrangler. Epic 3 now 11 stories.
 
 ## Purpose
 
@@ -134,7 +134,22 @@ resources/
 - [x] **STORY 2.1 (Marcus Orchestrator)**: Agent built via bmad-agent-builder (6-phase discovery with Party Mode coaching), quality scan passed (0 critical), 12 interaction test scenarios passed, Party Mode team validation complete. 13 files: SKILL.md + 8 references + 2 scripts + 2 test files. Memory sidecar active with 4 files. First production plan staged (C1-M1-P2S1-VID-001).
 - [x] **EPIC 2 COMPLETE**: Stories 2.2–2.6 all done. Production-coordination skill (4 scripts, 4 refs, 40 tests). Marcus references updated for workflow management, delegation, parameter intelligence, pre-flight, and mode management.
 - [x] **EXEMPLAR-DRIVEN DEVELOPMENT**: Woodshed skill created (`skills/woodshed/`), exemplar library scaffolded (`resources/exemplars/` per tool), comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, and L-level difficulty system all in place. 5 Gamma exemplars provided (L1-L4.2). Smoke test validated: Gamma API produces single-card output, PDF export/download works (205KB), 5 credits/card. GammaClient needs parameter name updates (inputText, textMode, exportAs). Epic 3 stories updated with exemplar reproduction as acceptance criteria.
-- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (9 stories — Story 3.1 Gary/Gamma DONE, Story 3.2 Irene/Content Creator + Quinn-R/Quality Reviewer DONE, Story 3.3 Kira/Kling Video DONE, 3.4 ElevenLabs NEXT, 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva manual-tool pattern, 3.8 Source Wrangler, 3.9 Tech Spec Wrangler)
+- [x] **STORY 3.3.1 (Composition Architecture Harmonization + Gary Deck)**: DONE — Party Mode composition decisions implemented: segment manifest as Irene artifact, two-pass Irene model, Irene/Quinn-R/Kira/Marcus/Gary all updated, architecture.md updated with pipeline graph, tool inventory updated (Descript as sole composition platform), Gary deck mode + theme/template preview (TP capability), gary_slide_output return field, GammaClient.list_themes() live-tested (10 themes). Epic 3 re-sequenced to 11 stories: Compositor added as 3.5, Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10.
+- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (11 stories — Stories 3.1-3.3.1 DONE, 3.4 ElevenLabs NEXT, 3.5 Compositor NEW, 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva manual-tool pattern, 3.9 Source Wrangler, 3.10 Tech Spec Wrangler)
+
+## Composition Architecture (Added 2026-03-27)
+
+See `_bmad-output/brainstorming/party-mode-composition-architecture.md` for full decision record.
+
+- **Silent Video + Smart Audio:** Kling always `sound-off`. ElevenLabs owns all audio (narration, SFX, music).
+- **Segment manifest:** YAML file produced by Irene Pass 2. Single source of truth. All downstream agents read/write.
+- **Narration-paced video:** ElevenLabs generates first; narration_duration becomes clip duration target for Kira.
+- **Descript:** Sole composition platform (manual-tool pattern). Compositor skill (Story 3.5) generates Descript Assembly Guide.
+- **Four HIL gates:** Lesson plan → slides → script+manifest → final video.
+- **Quinn-R two-pass:** Pre-composition (asset quality) + post-composition (final export).
+- **Irene two-pass:** Pass 1 (lesson plan + slide brief before Gary); Pass 2 (narration script + segment manifest after Gary + HIL Gate 2).
+- **Gary deck enhancement:** Deck mode (numCards by content type), theme/template preview (TP capability), gary_slide_output return field.
+- **Seven instructional use cases:** Narrated deck, dialogue, walkthrough, case study, assessment prompt, concept explainer, module bumper — all one pipeline.
 
 ## Key Files
 
@@ -144,6 +159,8 @@ resources/
 - `_bmad-output/strategic-decisions-collaborative-intelligence.md` - Strategic decisions
 - `_bmad-output/brainstorming/brainstorming-session-20260325-150802.md` - Brainstorming session
 - `_bmad-output/brainstorming/party-mode-coaching-marcus-orchestrator.md` - Marcus coaching doc
+- `_bmad-output/brainstorming/party-mode-composition-architecture.md` - **Composition architecture decisions (2026-03-27)**
+- `_bmad-output/implementation-artifacts/3-3-1-composition-architecture-harmonization.md` - **Story 3.3.1 (DONE)**
 - `skills/bmad-agent-marcus/SKILL.md` - **Marcus orchestrator agent (Story 2.1 DONE)**
 - `skills/reports/bmad-agent-marcus/quality-scan/2026-03-26_152243/quality-report.md` - Marcus quality scan
 - `tests/agents/bmad-agent-marcus/interaction-test-guide.md` - Marcus interaction tests

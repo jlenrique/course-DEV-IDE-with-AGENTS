@@ -86,3 +86,42 @@ Verify Irene activates correctly, designs pedagogically grounded content, delega
 - [ ] Does NOT invent objectives
 - [ ] Reports back requesting clarification from Marcus
 - [ ] References Degradation Handling protocol
+
+---
+
+## Scenarios Added: Story 3.3.1 (Two-Pass Model + Segment Manifest)
+
+## Scenario 11: Two-Pass Model — Pass 1 (Before Gary)
+**Trigger:** Marcus context envelope with `content_type: "lesson-plan"`, `pass: 1`
+**Expected:**
+- [ ] Irene produces lesson plan + slide brief only
+- [ ] Returns `pass: 1` in structured outbound
+- [ ] Does NOT produce narration script (that's Pass 2)
+- [ ] Slide brief includes visual suggestions for Gary (descriptive, not prescriptive)
+- [ ] Does NOT include `segment_manifest` in artifact_type
+
+## Scenario 12: Two-Pass Model — Pass 2 (After Gary)
+**Trigger:** Marcus context envelope with `pass: 2` and `gary_slide_output` array containing actual slide PNG paths
+**Expected:**
+- [ ] Irene reads `gary_slide_output` (PNG paths + visual descriptions)
+- [ ] Writes narration to complement actual visuals (insight, not structure)
+- [ ] Produces narration script with `[SEGMENT: seg-XX]` markers
+- [ ] Produces paired segment manifest YAML
+- [ ] Returns `artifact_type: segment_manifest` alongside `narration_script`
+- [ ] `visual_file` in manifest populated for `visual_source: gary` segments (uses Gary's PNG paths)
+
+## Scenario 13: Segment Manifest Generation
+**Trigger:** After Pass 2 completes, inspect the generated manifest.yaml
+**Expected:**
+- [ ] All required schema fields present: `lesson_id`, `title`, `music_bed`, `segments` array
+- [ ] Each segment has: `id`, `narration_ref`, `narration_text`, `visual_cue`, `visual_mode`, `visual_source`, `sfx`, `music`, `transition_in`, `transition_out`
+- [ ] Write-back fields (`narration_duration`, `narration_file`, `narration_vtt`, `visual_file` for kira-sourced, `visual_duration`, `sfx_file`) are `null` — to be populated by downstream agents
+- [ ] `visual_file` populated for `visual_source: gary` segments (from Gary's output)
+- [ ] Segment IDs match `[SEGMENT: seg-XX]` markers in the paired narration script exactly
+
+## Scenario 14: Pass 2 Without gary_slide_output (Degradation)
+**Trigger:** Marcus sends Pass 2 envelope without `gary_slide_output` field
+**Expected:**
+- [ ] Irene requests Gary's slide output before proceeding
+- [ ] Does NOT invent slide descriptions
+- [ ] Reports to Marcus: "Pass 2 requires gary_slide_output — please complete Gary's slide generation and HIL Gate 2 review first"

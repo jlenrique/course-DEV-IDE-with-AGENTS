@@ -1,92 +1,122 @@
-# Session Handoff - Stories 3.2 + 3.3 Complete
+# Session Handoff — Party Mode + Story 3.3.1 Complete
 
 **Date:** 2026-03-27
 **Branch:** `epic3-core-tool-agents`
-**Session focus:** Complete Story 3.2 (Irene + Quinn-R) + Complete Story 3.3 (Kira / Kling Video Specialist)
+**Session focus:** Party Mode composition architecture decision + Story 3.3.1 (Composition Harmonization + Gary Deck Enhancement)
+
+---
 
 ## What Was Completed
 
-### Story 3.2: Content Creator + Quality Reviewer (DONE - all ACs met)
-- Irene (12 files), Quinn-R (6 files), quality-control skill (10 files, 28 tests)
-- 6 sample content artifacts human-approved
-- Marcus routing table updated
-- Interaction test guides created
+### Party Mode: Composition Architecture Decision
+Ran a full Party Mode session (Marcus, Irene, Kira, Quinn-R, Winston) to resolve the audio/video composition architecture before building the ElevenLabs agent. Seven use cases explored, tooling evaluated, key decisions reached:
 
-### Story 3.3: Kling Video Specialist (DONE - all ACs met)
+- **Silent Video + Smart Audio**: Kling always `sound-off`; ElevenLabs owns all intentional audio
+- **Segment manifest** as single source of truth (YAML, produced by Irene Pass 2)
+- **Narration-paced video**: audio drives timing; Kira generates clips to narration duration
+- **Descript** as sole composition platform (manual-tool pattern)
+- **Compositor skill** (Story 3.5) generates Descript Assembly Guide from completed manifest
+- **Four HIL gates** front-loading human judgment (lesson plan → slides → script+manifest → final video)
+- **Irene two-pass model**: Pass 1 before Gary (lesson plan), Pass 2 after Gary (narration + manifest)
+- **Seven instructional use cases**, all one pipeline
 
-1. **Kling API client** (`kling_client.py`) - JWT auth, text-to-video, image-to-video, lip-sync, extend, polling, download. Live-tested and proven.
+Decision record: `_bmad-output/brainstorming/party-mode-composition-architecture.md`
 
-2. **Party Mode coaching** - `party-mode-coaching-kling-specialist.md` produced with full team input.
+### Story 3.3.1: Composition Architecture Harmonization + Gary Deck Enhancement (DONE)
+Documentation-only story: 27 ACs, 9 tasks, all complete. No Python code changes.
 
-3. **Kira agent** (`skills/bmad-agent-kling/`) - 7 files. Video Director persona with 5 internal capabilities (VP, SC, MS, VQ, CT), pipeline awareness, cost-aware model selection, live-tested API constraints baked in.
+**Agent updates:**
+- **Irene**: two-pass model, segment manifest as 7th artifact type (MG capability), `gary_slide_output` envelope field, templates updated
+- **Quinn-R**: two-pass validation (pre/post-composition), AQ + CI dimensions (now 7 total), quality-control SKILL.md updated
+- **Kira**: manifest consumption documented, 3 engagement modes, `segment_manifest` envelope field, silent video confirmed
+- **Marcus**: 4 HIL gates in checkpoint-coord, full dependency graph + Compositor + Descript handoff in conversation-mgmt, SKILL.md updated
+- **Gary**: deck mode, TP (Theme/Template Preview) capability, `theme-template-preview.md` created, deck parameter guidance, 4 new deck templates, `gary_slide_output` return field, `list_themes_and_templates` gamma-api-mastery operation
 
-4. **kling-video mastery skill** (`skills/kling-video/`) - 7 files. Prompt patterns, model selection, parameter catalog (live-tested), `kling_operations.py` wrapper with CLI, 5 tests.
+**Plan updates:**
+- Architecture.md: Production Composition Pipeline section added
+- Tool inventory: Descript → sole composition platform (manual-tool pattern)
+- Epics: 3.3.1 + 3.5 Compositor added; Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10 (Epic 3 now 11 stories)
+- Sprint status, bmm-workflow-status, project-context, next-session-start-here all updated
 
-5. **Memory sidecar** - 4 files with production-validated patterns and chronology.
+**Interaction test guides updated:** Irene (+4 scenarios), Gary (+4 scenarios), Quinn-R (+3 scenarios), Kira (+3 scenarios)
 
-6. **Comparison video set** - 17+ MP4 clips across three tiers:
-   - Legacy baseline: `kling-v1-6 std 5s`
-   - Preferred baseline: `kling-v2-6 std sound-off 5s` (1.5 credits)
-   - Premium: `kling-v2-6 pro 5s` (2.5 credits)
-   - v3.0 spot-check: rejected by API (`model_name` invalid)
+**Live validation:** `GammaClient.list_themes()` smoke test PASSED — 10 themes, institutional "2026 HIL APC (Nejal)" confirmed.
 
-7. **Human review outcome:**
-   - Production-worthy: hospital B-roll and physician innovator lineage montages
-   - Rejected: text-heavy concept animations (garbled characters)
-   - Key insight: Kira is best for atmosphere/montage, not readable embedded text
-
-8. **Marcus registration** - `kling-specialist` (Kira) set to active in routing table.
-
-9. **Interaction test guide** - 8 scenarios covering activation, delegation, API awareness, cost selection, pipeline reuse, degradation, and redirect.
+---
 
 ## What Is Next
 
-- **Story 3.4: ElevenLabs Specialist** (expanded scope)
-- **Pre-Story 3.4 decision:** Party Mode session on audio/video composition architecture (when to use Kling native audio vs ElevenLabs, where lip-sync and final composition should happen, role of Descript/CapCut)
-- **Early production trial:** Gary slide PNG -> Kira image-to-video pipeline integration
+**Story 3.4: ElevenLabs Specialist** (expanded scope)
 
-## Key Lessons
+The segment manifest is the input contract. ElevenLabs reads `narration_text`, `sfx`, `music` from manifest; writes back `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`.
 
-1. **Kling text rendering is unreliable.** Generated video cannot be trusted to render readable on-screen text. Use Gary (static slides) for text-bearing visuals; use Kira for atmosphere, montage, and non-text motion.
-2. **API credits are separate from consumer credits.** Purchase Resource Packs at klingai.com/global/dev/model/video.
-3. **Kling enforces concurrency limits.** Serialize all generation requests. The `1303` error code means "parallel task over resource pack limit."
-4. **`kling-v2-6 std sound-off` is cheaper than `kling-v1-6 std`.** The billing data surprised us: 1.5 vs 2.0 credits for the same 5s duration.
-5. **`kling-v3-0` is not available** on the current API surface. Do not assume newer models are accessible without live verification.
-6. **Native sound is request-shape-sensitive.** Passing `sound=False` can trigger a body parse error; omitting the field entirely is safer.
-7. **Image-to-video from Gary PNGs** is identified as the next high-value integration to prove in early production trials.
+Key pre-Story 3.4 decisions already made:
+- P0: narration + timestamps + VTT, pronunciation dictionaries, multi-slide stitching
+- P1: dialogue (multi-speaker), SFX, music
+- Manifest schema is the integration boundary
+- `elevenlabs_client.py` needs expansion (timestamps, pronunciation dicts, SFX, music)
+- `bmad-agent-builder` six-phase discovery with Party Mode coaching
+
+Suggested: run Party Mode coaching for ElevenLabs agent before bmad-agent-builder to get discovery answers pre-loaded.
+
+**Story 3.5 (after 3.4): Compositor Skill**
+
+Reads completed manifest → generates Descript Assembly Guide → proof-of-concept C1-M1 lesson end-to-end.
+
+---
+
+## Unresolved Issues / Risks
+
+- **Music sourcing for ElevenLabs**: ElevenLabs can generate music tracks vs. using licensed tracks — need decision in Story 3.4 brainstorm
+- **Use Case 6 (concept explainer sync_points)**: sub-segment timing deferred; will require video-first approach when needed — first real occurrence will require manual Descript assembly
+- **Kling duration precision**: Kira rounds to nearest supported duration (5s/10s), which may cause ±2s vs narration. Compositor needs to handle this tolerance in Descript guide
+- **Gary `visual_description` quality**: the TP capability assumes Gary can describe what Gamma generated — Gary needs to derive visual_description from the generated content, which may require inspecting the exported PNG (image analysis) or inferring from the prompt + parameters
+
+---
+
+## Key Lessons Learned
+
+1. **Use cases first, tools second.** Working through 7 concrete instructional scenarios revealed that all use cases can share one pipeline — removing tool routing complexity.
+2. **Narration-paced video > video-paced narration.** Forcing narration to fit pre-made video feels unnatural; narration drives timing naturally.
+3. **Gary → Irene Pass 2 ordering is critical.** Irene writing narration before Gary's slides exist led to visual-narration mismatch in mental models. Two-pass model fixes this architecturally.
+4. **Descript one-tool simplicity.** Previous design had FFmpeg/DaVinci/Descript branching — collapsing to one tool dramatically simplifies the Compositor skill.
+
+---
 
 ## Validation Summary
 
-| Check | Result |
-|-------|--------|
-| Kling client unit tests | 5 pass |
-| kling-video operations tests | 5 pass |
-| Quality-control tests | 28 pass |
-| Gary mastery tests | 37 pass |
-| Irene quality scan | Good (0 critical) |
-| Quinn-R quality scan | Good (0 critical) |
-| Kira lint gate (path + scripts) | Pass |
-| Human review of Kling clips | 4 approved, text-heavy rejected |
+| What | Method | Result |
+|------|--------|--------|
+| Segment manifest schema consistency | Python field-presence check | PASS — 19/19 fields |
+| Cross-reference resolution | Python file-existence check | PASS — 9/9 references |
+| Internal consistency (epics/sprint/bmm) | Python key-presence check | PASS — 7/7 new story keys |
+| GammaClient.list_themes() | Live API smoke test | PASS — 10 themes returned |
+| Ruff linter | `ruff check .` | PASS (pre-existing findings in .agents/ only) |
 
-**Total tests: 187 pass** (112 project + 37 Gary + 28 quality-control + 5 Kling client + 5 kling-video)
+---
 
 ## Artifact Update Checklist
 
-- [x] Story 3.2: done
-- [x] Story 3.3: done
-- [x] Sprint status: 3.2 done, 3.3 done
-- [x] Next session: updated for Story 3.4
-- [x] SESSION-HANDOFF: this file
-- [x] Marcus SKILL.md: Kira registered active
-- [x] Kling client: `scripts/api_clients/kling_client.py`
-- [x] Kira agent: `skills/bmad-agent-kling/`
-- [x] kling-video skill: `skills/kling-video/`
-- [x] Kling sidecar: `_bmad/memory/kling-specialist-sidecar/`
-- [x] Kling tests: `tests/test_integration_kling.py` + `skills/kling-video/scripts/tests/`
-- [x] Interaction test guide: `tests/agents/bmad-agent-kling/`
-- [x] Coaching doc: `_bmad-output/brainstorming/party-mode-coaching-kling-specialist.md`
-- [x] Comparison summary: `course-content/staging/story-3.3-samples/comparison-summary.md`
-- [x] Generation manifest: `course-content/staging/story-3.3-samples/generation-manifest.csv`
-- [x] Dev guide: updated with KlingClient
-- [x] Project context: updated
-- [x] requirements.txt: pyjwt added
+- [x] `_bmad-output/implementation-artifacts/3-3-1-composition-architecture-harmonization.md` — status: review
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 3.3.1 review, new story slots
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — 5 new decisions, next step updated
+- [x] `_bmad-output/planning-artifacts/architecture.md` — Pipeline section added
+- [x] `_bmad-output/planning-artifacts/epics.md` — 3.3.1 + 3.5 + renumbering
+- [x] `_bmad-output/brainstorming/party-mode-composition-architecture.md` — decision record created
+- [x] `docs/project-context.md` — Composition Architecture section, Current State updated
+- [x] `next-session-start-here.md` — complete rewrite, Story 3.4 next
+- [x] `SESSION-HANDOFF.md` — this file
+- [x] `resources/tool-inventory/tool-access-matrix.md` — Descript updated
+- [x] `skills/bmad-agent-content-creator/SKILL.md` + 2 templates
+- [x] `skills/bmad-agent-content-creator/references/template-segment-manifest.md` — NEW
+- [x] `skills/bmad-agent-quality-reviewer/SKILL.md`
+- [x] `skills/quality-control/SKILL.md`
+- [x] `skills/bmad-agent-kling/SKILL.md`
+- [x] `skills/bmad-agent-marcus/SKILL.md` + 2 references
+- [x] `skills/bmad-agent-gamma/SKILL.md` + 3 references
+- [x] `skills/bmad-agent-gamma/references/theme-template-preview.md` — NEW
+- [x] `skills/gamma-api-mastery/SKILL.md`
+- [x] `tests/agents/bmad-agent-content-creator/interaction-test-guide.md` — +4 scenarios
+- [x] `tests/agents/bmad-agent-gamma/interaction-test-guide.md` — +4 scenarios
+- [x] `tests/agents/bmad-agent-quality-reviewer/interaction-test-guide.md` — +3 scenarios
+- [x] `tests/agents/bmad-agent-kling/interaction-test-guide.md` — +3 scenarios

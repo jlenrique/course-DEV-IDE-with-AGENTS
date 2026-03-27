@@ -102,3 +102,36 @@ Verify Quinn-R activates correctly, reviews artifacts across 5 quality dimension
 - [ ] Other dimensions reviewed normally
 - [ ] Overall verdict: PARTIAL REVIEW
 - [ ] Clear note about what was skipped and why
+
+---
+
+## Scenarios Added: Story 3.3.1 (Two-Pass Validation + Audio/Composition Dimensions)
+
+## Scenario 13: Pre-Composition Pass
+**Trigger:** Marcus invokes review with `review_pass: "pre-composition"` + `segment_manifest_path`
+**Expected:**
+- [ ] Quinn-R runs pre-composition checks (AQ + CI dimensions) against assets
+- [ ] Validates narration WPM (130-170) from duration/word-count ratio
+- [ ] Validates VTT timestamp monotonicity
+- [ ] Validates segment narration coverage (>95% of script words)
+- [ ] Validates video duration vs narration duration (±0.5s tolerance)
+- [ ] Returns `review_pass: "pre-composition"` in report
+- [ ] Does NOT run post-composition checks (brand, full accessibility) — those are post-composition
+- [ ] If pass: Marcus provides Descript Assembly Guide to user; if fail: routes back to producing agent
+
+## Scenario 14: Post-Composition Pass
+**Trigger:** Marcus invokes review with `review_pass: "post-composition"` + final MP4 + VTT paths
+**Expected:**
+- [ ] Quinn-R runs full 7-dimension review (CC, BV, LA, IS, AQ, CI, CA)
+- [ ] AQ checks: narration at -16 LUFS, music ducked -30 LUFS under speech, SFX -20 LUFS
+- [ ] CI checks: caption synchronization, transition consistency
+- [ ] Returns `review_pass: "post-composition"` in report
+- [ ] `dimension_scores` includes all 7 dimensions
+
+## Scenario 15: Audio Quality Dimension (AQ)
+**Trigger:** Provide narration MP3 with WPM outside 130-170 range (too fast at 200 WPM)
+**Expected:**
+- [ ] AQ dimension FAIL
+- [ ] Finding: severity High — "Narration pace: 200 WPM (target: 130-170). Recommend regenerating with lower stability or adjusted pacing."
+- [ ] Location: specific segment ID from manifest
+- [ ] Actionable fix suggestion included

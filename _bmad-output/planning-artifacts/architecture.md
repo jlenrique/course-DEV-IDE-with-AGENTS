@@ -629,6 +629,104 @@ Systematic expertise crystallization now includes **tool usage expertise** - age
 
 **Architecture Completeness**: **100% Epic Support** with parameter intelligence completing the collaborative intelligence vision - agents master tools completely while user maintains creative control through conversational direction.
 
-**[A] Advanced Elicitation - Explore innovative project organization approaches  
-[P] Party Mode - Review structure from different development perspectives  
+**[A] Advanced Elicitation - Explore innovative project organization approaches
+[P] Party Mode - Review structure from different development perspectives
 [C] Continue - Save this structure and move to architecture validation**
+
+---
+
+## Production Composition Pipeline (Added 2026-03-27)
+
+_Decisions from Party Mode session: `_bmad-output/brainstorming/party-mode-composition-architecture.md`_
+
+### Pipeline Dependency Graph
+
+```
+Irene Pass 1: Lesson Plan + Slide Brief
+    │
+    ▼  [HIL Gate 1: Review lesson plan]
+    │
+Gary: Gamma slide deck → PNGs
+    │  (theme/template preview before generation)
+    ▼  [HIL Gate 2: Review slides — CRITICAL gate]
+    │
+Irene Pass 2: Narration Script + Segment Manifest
+    │  (writes narration to complement Gary's actual visuals)
+    ▼  [HIL Gate 3: Review script & manifest]
+    │
+    ├──→ ElevenLabs Agent: narration MP3 + VTT + SFX + music
+    │        │  (writes durations back to manifest)
+    │        ▼
+    ├──→ Kira: silent video clips (after ElevenLabs writes durations)
+    │
+    ▼  [Quinn-R: pre-composition validation]
+    │
+Compositor Skill: generates Descript Assembly Guide
+    │
+    ▼  [Human: assembles in Descript → exports MP4 + VTT]
+    │
+    ▼  [Quinn-R: post-composition validation]
+    │
+    ▼  [HIL Gate 4: Final video review]
+    │
+Done: asset ready for Canvas deployment
+```
+
+### Segment Manifest — Data Backbone
+
+The **segment manifest** (YAML) is the single source of truth for a lesson's multimedia production. Produced by Irene in Pass 2, consumed and written back to by all downstream agents.
+
+- **Irene writes:** `narration_text`, `visual_cue`, `visual_mode`, `visual_source`, `sfx`, `music`, `transition_in/out`; populates `visual_file` for Gary's slides immediately
+- **ElevenLabs writes back:** `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`
+- **Kira writes back:** `visual_file`, `visual_duration` (for kira-sourced segments)
+- **Compositor reads:** complete manifest → generates Descript Assembly Guide
+
+Path: `course-content/staging/{lesson_id}/manifest.yaml`
+
+### Composition Platform
+
+**Descript** is the sole composition platform — a Tier 3 manual-tool. All seven instructional use cases converge into Descript. No tool routing, no FFmpeg/DaVinci branching.
+
+The **Compositor skill** (Story 3.5) generates a **Descript Assembly Guide** from the completed manifest:
+- Ordered asset list with file paths
+- Track assignments (V1: video/images, A1: narration, A2: music, A3: SFX)
+- Timing table (segment start times from narration_duration values)
+- Music cue instructions (duck/swell/out timestamps)
+- Transition specs per segment
+
+Human opens Descript, follows the guide, tweaks, exports final MP4 + VTT.
+
+### Audio Architecture
+
+- **Kling always produces silent video** — `sound-off`; Kling's native audio is atmospheric and uncontrollable
+- **ElevenLabs owns all intentional audio** — narration, SFX, music; no exceptions
+- **Narration-paced video** — audio drives timing; Kira generates clips to match narration durations
+- **Narration WPM target:** 130-170 words per minute
+
+### Seven Instructional Use Cases
+
+All converge into the same pipeline and Descript workflow:
+
+| # | Use Case | Audio Profile | Visual Profile |
+|---|----------|--------------|----------------|
+| 1 | Narrated slide deck | Narration-paced | Static PNGs + optional Kira animation |
+| 2 | Dialogue / debate | Multi-voice dialogue | Conversation B-roll, angle cuts |
+| 3 | Step-by-step walkthrough | Narration with pause beats | Sequential step visuals |
+| 4 | Case study narrative | Continuous narration + music | Varied visual sequence |
+| 5 | Assessment prompt | Sparse narration + deliberate silence | Scenario clip + text frame |
+| 6 | Concept explainer | Tightly choreographed | Visual metaphor animation |
+| 7 | Module bumper | Title VO + music sting | Branded template |
+
+### Four HIL Gates
+
+| Gate | Timing | Reviews | Cheapest revision point |
+|------|--------|---------|------------------------|
+| 1 | After Irene P1, before Gary | Lesson plan, objectives | Before any asset generation |
+| 2 | After Gary, before Irene P2 | Slides (visual quality, brand) | Before narration written |
+| 3 | After Irene P2, before ElevenLabs/Kira | Script + manifest | Before audio/video generation |
+| 4 | After Descript export | Final composed video | After composition |
+
+### Quinn-R Two-Pass Validation
+
+- **Pre-composition pass:** WPM (130-170), VTT monotonicity, segment coverage, video duration vs narration (±0.5s)
+- **Post-composition pass:** Audio levels (narration -16 LUFS, music -30 LUFS, SFX -20 LUFS), caption sync, accessibility, brand, learning objective alignment

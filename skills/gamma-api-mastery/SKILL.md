@@ -38,11 +38,29 @@ This is the **skill layer** in the three-layer architecture: Gary (agent — jud
 
 ## Generation Modes
 
-This skill supports two Gamma API endpoints:
+This skill supports three Gamma API operations:
 
-| Mode | Endpoint | When |
-|------|----------|------|
+| Mode | Endpoint / Method | When |
+|------|------------------|------|
 | **Text generation** | `POST /v1.0/generations` | Standard — build slides from content with full parameter control |
 | **Template generation** | `POST /v1.0/generations/from-template` | When a custom Gamma template (`gammaId`) exists for the scope |
+| **Theme/template listing** | `GET /v1.0/themes` via `GammaClient.list_themes()` | Gary's TP capability — before generation when theme selection is needed |
+
+### list_themes_and_templates Operation
+
+Invoked by Gary's TP (Theme/Template Preview) capability. Combines:
+1. `GammaClient.list_themes(limit=20)` — returns available Gamma themes from the API
+2. Template registry lookup from `state/config/style_guide.yaml` → `tool_parameters.gamma.templates`, filtered by scope and content_type
+
+Returns a combined result for Gary to present to Marcus/user:
+```python
+{
+  "registered_templates": [...],  # from style_guide.yaml registry
+  "gamma_themes": [...],          # from API
+  "recommendation": "..."         # Gary's reasoning
+}
+```
+
+This operation does NOT consume generation credits. It is safe to call before every deck generation.
 
 Template-based generation uses `gammaId` + `prompt`. The template encodes layout and visual standards; the prompt provides new content. See `./references/parameter-catalog.md` for full template endpoint documentation.

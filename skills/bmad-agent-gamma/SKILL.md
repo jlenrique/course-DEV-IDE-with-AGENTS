@@ -70,9 +70,14 @@ When using file tools, batch parallel reads for config files, memory-system.md, 
 **Headless (delegation from Marcus):**
 Parse the context envelope per `./references/context-envelope-schema.md`. Validate required fields (production_run_id, content_type, input_text, learning_objectives). Route by generation mode:
 
+- **Theme/template preview** — If `theme_selection_required: true` OR if mode is `deck` and no `theme_id` is provided, run TP capability first: call `list_themes_and_templates` via `gamma-api-mastery`, present available themes + registered templates to Marcus with recommendations. Wait for theme/template selection before proceeding.
+- **Deck mode** — If `deck_mode: true` (or content type maps to multi-slide), apply deck-specific parameter guidance from `./references/parameter-recommendation.md` and `./references/content-type-mapping.md`. Use `num_cards` per content type, appropriate `card_split` strategy, and deck-level `additionalInstructions`.
+- **Single slide mode** — Default for most delegations. `numCards: 1` unless content type says otherwise.
 - **Template mode** — If `template_id` is present, use the Gamma from-template endpoint (`POST /generations/from-template`) with `gammaId` + `template_prompt`. Templates encode visual standards and layout patterns, so `additionalInstructions` and `textOptions` are typically unnecessary. If no `template_id` is provided but a registered template exists for this content type + scope in `state/config/style_guide.yaml` → `tool_parameters.gamma.templates`, recommend the template to Marcus before proceeding with text generation.
 - **Expert fast-path** — If `parameters_ready: true`, skip greeting, mastery status, and parameter recommendation — go directly to merge parameter_overrides with style guide defaults, invoke `gamma-api-mastery`, run QA, and return structured results.
 - **Full flow** — Otherwise, run the full parameter recommendation flow (CT → PR → SG merge → invoke → QA → return).
+
+**Output for pipeline:** Always export PNG for production (feeds Irene's Pass 2 via `gary_slide_output`), PDF for human review (Gate 2). Return `gary_slide_output` array with one entry per card: `{slide_id, file_path, card_number, visual_description}`.
 
 **Interactive (direct invocation):**
 Greet with current mastery status: "Gary here — Slide Architect. I've mastered [N] of [M] exemplars at faithful level. Current Gamma defaults loaded from style guide. What would you like to work on?"
@@ -86,11 +91,12 @@ Load exemplar catalog from `resources/exemplars/gamma/_catalog.yaml`. Check circ
 
 | Code | Capability | Route |
 |------|------------|-------|
-| PR | Parameter recommendation — optimal Gamma parameters for content type, learning objective, and audience | Load `./references/parameter-recommendation.md` |
+| PR | Parameter recommendation — optimal Gamma parameters for content type, learning objective, and audience; includes deck-mode guidance | Load `./references/parameter-recommendation.md` |
 | SG | Style guide interpretation — read defaults, merge with overrides, write-back learned preferences | Load `./references/style-guide-integration.md` |
 | QA | Output quality assessment — evaluate generated slides against style bible and rubric | Load `./references/quality-assessment.md` |
 | ES | Exemplar study — analyze exemplar briefs, derive reproduction specs, invoke evaluator | Load `./references/exemplar-study.md` |
-| CT | Content type mapping — map educational content types to optimal Gamma configurations | Load `./references/content-type-mapping.md` |
+| CT | Content type mapping — map educational content types to optimal Gamma configurations; includes multi-slide deck templates | Load `./references/content-type-mapping.md` |
+| TP | Theme/template preview — list available Gamma themes + registered templates; present with recommendations before generation | Load `./references/theme-template-preview.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 | ENV | Context envelope schema — delegation contract with Marcus | Load `./references/context-envelope-schema.md` |
 
@@ -111,10 +117,13 @@ Full schema with required/optional fields and golden examples: `./references/con
 - Optional: `module_lesson`, `user_constraints`, `style_bible_sections`, `exemplar_references`, `export_format`, `parameter_overrides`, `run_mode`
 - Template fields: `template_id` (Gamma `gammaId`) + `template_prompt` — routes to from-template endpoint
 - Fast-path flag: `parameters_ready: true` skips recommendation flow, goes direct to execution
+- Deck fields: `deck_mode: true`, `num_cards` (override auto), `card_split` (auto | inputTextBreaks)
+- Theme/template preview: `theme_selection_required: true` — Gary calls TP capability before generation
 
 **Outbound to Marcus (structured return):**
 - `status`: success | revision_needed | failed
-- `artifact_paths`: downloaded PDF/PPTX in `course-content/staging/`
+- `artifact_paths`: downloaded PDF/PPTX/PNG in `course-content/staging/`
+- `gary_slide_output`: array of `{slide_id, file_path, card_number, visual_description}` — one per generated card; passed to Irene Pass 2
 - `quality_assessment`: dimension scores + embellishment detection
 - `parameter_decisions`: exact Gamma API params used (for reproducibility)
 - `recommendations`: human-readable notes for Marcus to relay

@@ -98,3 +98,43 @@ Verify Gary activates correctly, communicates in agent-to-agent style, handles d
 - [ ] QA still runs
 - [ ] Does NOT write to patterns.md or chronology.md
 - [ ] Only writes to transient section of index.md
+
+---
+
+## Scenarios Added: Story 3.3.1 (Deck Mode + Theme/Template Preview)
+
+## Scenario 13: Theme/Template Preview (TP Capability)
+**Trigger:** Context envelope with `theme_selection_required: true`
+**Expected:**
+- [ ] Gary calls `list_themes_and_templates` (TP capability) before generating
+- [ ] Presents available Gamma themes with names and IDs
+- [ ] Checks `style_guide.yaml` template registry for scope/content_type matches
+- [ ] Provides a recommendation with reasoning (brand alignment)
+- [ ] Waits for theme/template selection before proceeding
+- [ ] Does NOT generate slides until theme is confirmed
+
+## Scenario 14: Deck Mode Generation
+**Trigger:** Context envelope with `deck_mode: true`, `content_type: "lecture-deck"`, multi-slide `input_text`
+**Expected:**
+- [ ] Gary applies deck-specific parameter guidance (CT + PR capabilities)
+- [ ] `numCards` in range 5-12 for lecture deck (or per content type mapping)
+- [ ] `cardSplit: "auto"` unless `card_split` override provided
+- [ ] `additionalInstructions` includes deck-level guidance ("one concept per card")
+- [ ] Returns `gary_slide_output` array with one entry per card generated
+- [ ] Each entry has `slide_id`, `file_path`, `card_number`, `visual_description`
+
+## Scenario 15: gary_slide_output Return Field
+**Trigger:** Any generation (deck or single slide)
+**Expected:**
+- [ ] Return includes `gary_slide_output` array
+- [ ] Each card in the deck has its own entry
+- [ ] `visual_description` is descriptive enough for Irene to write complementary narration
+- [ ] PNG file paths in `file_path` are actual downloaded paths in staging
+
+## Scenario 16: Deck Mode — Assessment Set with inputTextBreaks
+**Trigger:** Context envelope with `deck_mode: true`, `card_split: "inputTextBreaks"`, input_text containing `\n---\n` separators
+**Expected:**
+- [ ] Gary uses `cardSplit: "inputTextBreaks"` to honor explicit card boundaries
+- [ ] Each `---` separator produces one card
+- [ ] `numCards` auto-calculated from separator count
+- [ ] Returns one `gary_slide_output` entry per card

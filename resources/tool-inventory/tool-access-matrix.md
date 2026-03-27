@@ -140,12 +140,13 @@ These tools have REST APIs but no published MCP servers. Agent integration works
 These tools have partial programmatic access. Integration may be possible but with significant constraints.
 
 #### Descript
-- **API:** Early Access Public API at `docs.descriptapi.com`
-- **Auth:** Bearer token from Descript Settings
-- **Scope:** Limited to partner import/export workflows — NOT full editing control
-- **Key Endpoints:** Import media, AI agent edits, job management
-- **Reality:** Best used for "handoff" workflows — send media in, get edited media out
-- **Recommendation:** Treat as semi-manual; use API for import/export, manual for editing
+- **Role:** **SOLE COMPOSITION PLATFORM** — designated assembly tool for the entire production pipeline (decision: Party Mode 2026-03-27)
+- **Pattern:** Manual-tool pattern — Compositor skill (Story 3.5) generates a Descript Assembly Guide from the completed segment manifest; human assembles + exports in Descript
+- **API:** Early Access Public API at `docs.descriptapi.com` — limited to partner import/export; NOT used programmatically in this project
+- **Auth:** Bearer token from Descript Settings (not needed for manual-tool pattern)
+- **Why Descript:** Transcript-driven editing aligns with narration-first pipeline; handles multi-track audio (narration + music + SFX), captions (VTT/SRT), transitions, AI audio polish (Studio Sound, filler removal); exports MP4 + VTT natively
+- **Composition outputs:** Final MP4 + VTT per lesson; submitted to Quinn-R post-composition validation and then HIL Gate 4
+- **Recommendation:** No programmatic integration needed. Compositor skill provides precise assembly instructions; user executes in Descript UI
 
 #### Midjourney
 - **API:** NO official REST API (Discord-based interface)

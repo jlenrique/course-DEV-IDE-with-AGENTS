@@ -25,13 +25,15 @@ Marcus recognizes these content types, each mapping to different specialist agen
 
 | Content Type | Primary Specialist | Secondary Specialists | Typical Workflow |
 |---|---|---|---|
-| Lecture slides | `gamma-specialist` (Gary) | `content-creator` (outline), `quality-reviewer` | Outline → slides → review → approve |
+| Narrated lesson (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Irene P1 → [Gate 1] → Gary → [Gate 2] → Irene P2 → [Gate 3] → ElevenLabs + Kira → Quinn-R pre-comp → Descript → [Gate 4] → Quinn-R post-comp |
+| Lecture slides only | `gamma-specialist` (Gary) | `content-creator` (slide brief), `quality-reviewer` | Irene P1 slide brief → [Gate 1] → Gary → [Gate 2] → approve |
+| Narrated slides (no video) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Irene P1 → Gary → [Gate 2] → Irene P2 → [Gate 3] → ElevenLabs → Quinn-R pre-comp → Descript → [Gate 4] |
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Assessment / quiz | `content-creator` | `canvas-specialist`, `quality-reviewer` | Draft → alignment check → review → LMS publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
-| Video script | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Script → voice synthesis → review → approve |
-| Infographic | `canva-specialist` (future) | `content-creator` (copy), `quality-reviewer` | Copy → design → review → approve |
+| Video clip (B-roll / concept) | `kling-specialist` (Kira) | `content-creator` (brief), `quality-reviewer` | Brief → generation → download → review |
+| Infographic | `canva-specialist` (Story 3.8) | `content-creator` (copy), `quality-reviewer` | Copy → design guidance → user executes in Canva → review |
 | Interactive module | `content-creator` | `canvas-specialist`, `assembly-coordinator` | Design → build → assemble → review → approve |
 
 ## Course Structure Awareness
@@ -149,6 +151,103 @@ When the user approves a production plan and Marcus begins executing the workflo
 6. **Check status** — At any point, `manage_run.py status {run_id}` returns JSON with current stage, completion count, and mode. Marcus translates this into natural reporting.
 
 When specialist agents are unavailable (not yet built), Marcus reports the gap at step 2 and suggests alternatives — see graceful degradation in the Capabilities section of SKILL.md.
+
+## Full Pipeline Dependency Graph (Narrated Lesson)
+
+```
+Irene Pass 1: Lesson Plan + Slide Brief
+    │
+    ▼  [HIL Gate 1: Review lesson plan]
+    │
+Gary: Gamma slide deck → PNGs
+    │  (reads Irene's slide brief; presents theme/template options first)
+    ▼  [HIL Gate 2: Review slides — CRITICAL: narration cannot start until approved]
+    │
+Irene Pass 2: Narration Script + Segment Manifest
+    │  (reads Gary's actual PNGs via gary_slide_output in envelope)
+    ▼  [HIL Gate 3: Review script & manifest]
+    │
+    ├──→ ElevenLabs Agent: narration MP3 + VTT + SFX + music
+    │        │  (reads manifest for narration_text, sfx, music cues)
+    │        │  (writes narration_duration, narration_file, narration_vtt back to manifest)
+    │        │
+    │        ▼
+    ├──→ Kira: silent video clips (after ElevenLabs writes narration_duration)
+    │        │  (reads manifest for visual_source, visual_mode, narration_duration)
+    │        │  (writes visual_file, visual_duration back to manifest)
+    │
+    ▼  [Quinn-R: pre-composition validation — WPM, VTT, duration match]
+    │
+Compositor Skill: generates Descript Assembly Guide from completed manifest
+    │
+    ▼  [Human: assembles + tweaks in Descript → exports MP4 + VTT]
+    │
+    ▼  [Quinn-R: post-composition validation — audio levels, captions, accessibility]
+    │
+    ▼  [HIL Gate 4: Final video review]
+    │
+Done: asset ready for Canvas deployment
+```
+
+**Marcus orchestrates this entire flow.** Key invariants:
+- Gary before Irene Pass 2 (narration complements actual slides)
+- ElevenLabs before Kira (Kira needs `narration_duration` to set clip duration)
+- Both before compositor (compositor needs complete manifest)
+- Quinn-R pre-composition before Descript handoff
+- Quinn-R post-composition before Gate 4
+
+## Irene Two-Pass Delegation
+
+Marcus must invoke Irene **twice** for full lesson builds:
+
+**First delegation (Pass 1):**
+```yaml
+envelope:
+  production_run_id: {id}
+  content_type: "lesson-plan"
+  module_lesson: {module}/{lesson}
+  learning_objectives: [{...}]
+  pass: 1
+```
+
+**Second delegation (Pass 2 — after Gate 2 approval):**
+```yaml
+envelope:
+  production_run_id: {id}
+  content_type: "narration-script"
+  module_lesson: {module}/{lesson}
+  learning_objectives: [{...}]
+  pass: 2
+  gary_slide_output:
+    - slide_id: "slide-01"
+      file_path: "course-content/staging/{lesson_id}/slides/card-01.png"
+      card_number: 1
+      visual_description: "{Gary's description of what's on the slide}"
+    # ... one entry per Gary PNG
+```
+
+## Compositor Delegation
+
+The Compositor skill (Story 3.5 — planned) generates a Descript Assembly Guide from a completed manifest. When available, Marcus invokes it after Quinn-R's pre-composition pass:
+
+```yaml
+envelope:
+  production_run_id: {id}
+  segment_manifest: "course-content/staging/{lesson_id}/manifest.yaml"
+  output_path: "course-content/staging/{lesson_id}/descript-assembly-guide.md"
+```
+
+Until Story 3.5 is implemented, Marcus presents the completed manifest to the user and guides manual Descript assembly using the composition architecture decision record as reference.
+
+## Descript Manual-Tool Handoff
+
+Descript is the sole composition platform — a Tier 3 manual-tool. Marcus hands off to the user with:
+1. The Descript Assembly Guide (from Compositor, or manually composed from manifest)
+2. All asset file paths (narration MP3s, VTT, video clips, slide PNGs, SFX, music)
+3. Track assignment instructions (V1: video/images, A1: narration, A2: music, A3: SFX)
+4. Timing table (segment start times from manifest narration_duration values)
+5. Music cue instructions (duck/swell/out timestamps)
+6. Transition specs per segment
 
 ## Asset-Lesson Pairing Enforcement
 

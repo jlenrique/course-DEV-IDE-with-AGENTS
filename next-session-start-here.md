@@ -2,28 +2,90 @@
 
 ## Immediate Next Action
 
-**Implement Story 3.4 (ElevenLabs Specialist - expanded scope with timestamps, pronunciation, SFX, music, dialogue)**
+**Implement Story 3.4 (ElevenLabs Specialist — expanded scope with timestamps, pronunciation, SFX, music, dialogue)**
 
-Stories 3.1-3.3 are DONE. The content pipeline now has: Irene (content design) -> Gary (slides) -> Kira (video) -> Quinn-R (quality review). ElevenLabs is the next critical piece for narration synthesis.
+Story 3.3.1 harmonization is DONE. The composition architecture is fully resolved and all agents, plans, and docs are updated. The segment manifest is the input contract for Story 3.4 — ElevenLabs reads it and writes back `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`.
 
-**Important pre-Story 3.4 decision:** Run a dedicated Party Mode session on the audio/video composition architecture question before building the ElevenLabs agent. Key questions to resolve:
-- When should audio be generated natively in Kling versus separately in ElevenLabs?
-- When should SFX or light music be introduced in Kling versus later in editing tools?
-- Should narration be composed later in CapCut or another editor after ElevenLabs synthesis?
-- Should final lip-sync and compositing happen in Kling, Descript, CapCut, or another downstream editor?
-- What is the ideal assembly/composition workflow across all these tools?
+**Pre-Story 3.4 decision (RESOLVED):** The Party Mode composition architecture session established:
+- Silent video + Smart Audio model (Kling sound-off, ElevenLabs owns all audio)
+- Narration-paced video (ElevenLabs generates first, Kira matches durations)
+- Segment manifest as single source of truth
+- Descript as sole composition platform (manual-tool pattern)
+- Compositor skill as Story 3.5 (proof-of-concept end-to-end assembly)
 
-**Early production trial priority:** Gary slide PNG -> Kira image-to-video animation. This was identified during Story 3.3 review as a high-value pipeline integration to prove early.
+**Decision record:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
 
 **Branch**: `epic3-core-tool-agents`
 
-## Current Status - STORIES 3.1 + 3.2 + 3.3 COMPLETE, EPIC 3 IN PROGRESS
+## Current Status — STORIES 3.1 + 3.2 + 3.3 + 3.3.1 COMPLETE, EPIC 3 IN PROGRESS
 
+- **Story 3.3.1 (Composition Harmonization + Gary Deck)**: DONE — all agents updated, architecture updated, Gary deck mode + theme/template preview added, Epic 3 re-sequenced to 11 stories
 - **Story 3.3 (Kira - Kling Video Specialist)**: DONE - API client (JWT auth, live-tested), Kira agent (7 files), kling-video skill (7 files), 5+5 tests, comparison video set (baseline v2-6 std vs premium v2-6 pro), human-reviewed, production guidance established
 - **Story 3.2 (Irene + Quinn-R)**: DONE - 12+6+10 files, 28 tests, 6 sample artifacts approved
 - **Story 3.1 (Gary)**: DONE - 10+6 files, 29 tests, L1+L2 woodshed PASSED
 - **Epic 2**: COMPLETE (6/6 stories, 55 tests)
 - **Epic 1**: COMPLETE (11/11 stories, 117 tests)
+
+## Composition Architecture (Resolved 2026-03-27)
+
+### Pipeline
+```
+Irene P1 → [Gate 1] → Gary → [Gate 2] → Irene P2 → [Gate 3] →
+ElevenLabs + Kira → Quinn-R pre-comp → Compositor → Descript →
+Quinn-R post-comp → [Gate 4] → Canvas
+```
+
+### Key Design Decisions
+- **Silent video always** from Kling (`sound-off`)
+- **ElevenLabs owns all audio** (narration, SFX, music)
+- **Segment manifest** (YAML) = single source of truth, all agents read/write
+- **Narration-paced video** = audio drives visual timing
+- **Descript** = sole composition platform, manual-tool pattern
+- **Compositor skill** (Story 3.5) = generates Descript Assembly Guide from completed manifest
+- **Four HIL gates** = lesson plan, slides, script+manifest, final video
+- **Quinn-R two-pass** = pre-composition (asset quality) + post-composition (final export)
+
+### Irene Two-Pass Model
+- **Pass 1** (before Gary): lesson plan + slide brief
+- **Pass 2** (after Gary + HIL Gate 2): narration script + segment manifest
+- Gary returns `gary_slide_output` array with slide PNGs → passed to Irene for Pass 2
+
+### Gary Deck Enhancement
+- **Deck mode**: numCards ranges per content type (lecture 5-12, case study 3-5, overview 3-4)
+- **Theme/template preview** (TP capability): presents available themes + registered templates before generation
+- `GammaClient.list_themes()` live-tested: returns 10 themes (institutional: "2026 HIL APC Nejal")
+- `gary_slide_output` return field feeds Irene Pass 2
+
+## Epic 3 Story Sequence (11 stories)
+| Story | Agent/Skill | Status |
+|-------|-------------|--------|
+| 3.1 | Gary (Gamma Specialist) | DONE |
+| 3.2 | Irene (Content Creator) + Quinn-R (Quality Reviewer) | DONE |
+| 3.3 | Kira (Kling Video Specialist) | DONE |
+| 3.3.1 | Composition Harmonization + Gary Deck | DONE |
+| 3.4 | ElevenLabs Specialist (expanded) | **NEXT** |
+| 3.5 | Compositor Skill (Descript Assembly Guide) | Backlog |
+| 3.6 | Canvas Specialist | Backlog |
+| 3.7 | Qualtrics Specialist | Backlog |
+| 3.8 | Canva Specialist (manual-tool pattern) | Backlog |
+| 3.9 | Source Wrangler (Notion + Box) | Backlog |
+| 3.10 | Tech Spec Wrangler | Backlog |
+
+## What's Working Right Now
+
+### MCP Servers
+- **Gamma**: 2 tools
+- **Canvas LMS**: 54 tools
+- **Notion**: 22 tools
+- **Playwright**: 22 tools
+- **Ref**: 2 tools
+
+### API Access
+- **Kling**: `scripts/api_clients/kling_client.py` - JWT auth, text-to-video, image-to-video, lip-sync, extend. LIVE TESTED.
+- **ElevenLabs**: `node scripts/smoke_elevenlabs.mjs` - 45 voices
+- **Qualtrics**: `node scripts/smoke_qualtrics.mjs`
+- **All tools**: `node scripts/heartbeat_check.mjs`
+- **Gamma themes**: `GammaClient.list_themes()` returns 10 themes. LIVE TESTED.
 
 ## Key Kling Findings from Story 3.3
 
@@ -43,35 +105,7 @@ Stories 3.1-3.3 are DONE. The content pipeline now has: Irene (content design) -
 - Use Gary for text-bearing visuals; use Kira for atmosphere, transitions, and non-text motion
 - Serialize Kling submissions (concurrency limit enforced by API)
 - Download MP4s immediately (CDN URLs expire)
-- Image-to-video from Gary PNGs is the next high-value integration to prove
-
-## What's Working Right Now
-
-### MCP Servers
-- **Gamma**: 2 tools
-- **Canvas LMS**: 54 tools
-- **Notion**: 22 tools
-- **Playwright**: 22 tools
-- **Ref**: 2 tools
-
-### API Access
-- **Kling**: `scripts/api_clients/kling_client.py` - JWT auth, text-to-video, image-to-video, lip-sync, extend. LIVE TESTED.
-- **ElevenLabs**: `node scripts/smoke_elevenlabs.mjs` - 45 voices
-- **Qualtrics**: `node scripts/smoke_qualtrics.mjs`
-- **All tools**: `node scripts/heartbeat_check.mjs`
-
-## Epic 3 Story Sequence (9 stories)
-| Story | Agent | Status |
-|-------|-------|--------|
-| 3.1 | Gary (Gamma Specialist) | DONE |
-| 3.2 | Irene (Content Creator) + Quinn-R (Quality Reviewer) | DONE |
-| 3.3 | Kira (Kling Video Specialist) | DONE |
-| 3.4 | ElevenLabs Specialist (expanded) | NEXT |
-| 3.5 | Canvas Specialist | Backlog |
-| 3.6 | Qualtrics Specialist | Backlog |
-| 3.7 | Canva Specialist (manual-tool pattern) | Backlog |
-| 3.8 | Source Wrangler (Notion + Box) | Backlog |
-| 3.9 | Tech Spec Wrangler | Backlog |
+- Image-to-video from Gary PNGs is the next high-value integration (Compositor proof-of-concept)
 
 ## Gotchas
 - PowerShell doesn't support `&&` chaining
@@ -82,3 +116,4 @@ Stories 3.1-3.3 are DONE. The content pipeline now has: Irene (content design) -
 - Kling text rendering produces garbled characters - use Gary for text-bearing visuals
 - `pyjwt` in requirements.txt for Kling JWT auth
 - Cross-skill Python imports use `importlib.util` loader pattern
+- GammaClient.list_themes() requires dotenv load in Python scripts (API key from .env)

@@ -858,6 +858,28 @@ A `scripts/api_clients/kling_client.py` is created extending `BaseAPIClient`, co
 
 **Note:** Kling API client was originally planned for Story 5.4 (Tier 2 integrations). Pulling it forward to this story since the BaseAPIClient infrastructure is well established and the video production capability is high-priority for the content pipeline.
 
+### Story 3.3.1: Composition Architecture Harmonization & Gary Deck Enhancement
+
+As a developer,
+I want all existing agents, plans, and documentation updated to reflect the composition architecture decisions (Party Mode 2026-03-27), and Gary enhanced with multi-slide deck generation and theme/template preview,
+So that Story 3.4 (ElevenLabs) and the future Compositor story can build on a coherent, harmonized foundation.
+
+**Decision Reference:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
+
+**Key changes:**
+- Irene: two-pass model, segment manifest as 7th artifact type, downstream annotations for ElevenLabs/Kira
+- Quinn-R: two-pass validation, audio quality + composition integrity dimensions
+- Kira: manifest consumption references (visual_source, visual_mode, narration_duration)
+- Marcus: pipeline dependency graph, four HIL gates, Compositor delegation, Descript handoff
+- Gary: deck mode, theme/template preview (TP capability), deck parameter guidance, gary_slide_output return field
+- Architecture doc: Production Composition Pipeline section added
+- Tool inventory: Descript entry updated to sole composition platform
+- Story renumbering: Compositor added as 3.5, Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10
+
+**Story file:** `_bmad-output/implementation-artifacts/3-3-1-composition-architecture-harmonization.md`
+
+---
+
 ### Story 3.4: ElevenLabs Specialist Agent & Mastery Skill
 
 As a user,
@@ -933,7 +955,37 @@ The existing `elevenlabs_client.py` must be expanded with:
 
 **Brainstorm Reference:** `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
 
-### Story 3.5: Canvas Specialist Agent & Mastery Skill
+### Story 3.5: Compositor Skill (Descript Assembly Guide)
+
+As a user,
+I want a Compositor skill that reads a completed segment manifest and generates a Descript Assembly Guide,
+So that assembling the final lesson video in Descript is fast, accurate, and reproducible — not manual guesswork.
+
+**Dependency:** Requires a completed segment manifest (all agent write-back fields populated) from a production run with ElevenLabs (Story 3.4) and Kira outputs.
+
+**Design Reference:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
+
+**Scope:**
+- New skill: `skills/compositor/SKILL.md` — reads completed manifest, generates Descript Assembly Guide
+- Descript Assembly Guide format: ordered asset list (file paths), track assignments (V1/A1/A2/A3), timing table (segment start times from narration_duration), music cue instructions (duck/swell/out timestamps), transition specs per segment
+- Marcus integration: Marcus invokes Compositor after Quinn-R pre-composition pass; presents guide + asset paths to user
+- Proof of concept: Execute end-to-end on a real C1-M1 lesson: Irene manifest → ElevenLabs audio → Kira video → Compositor guide → human assembles in Descript → final video
+
+**Acceptance Criteria:**
+
+**Given** a completed segment manifest with all narration_duration, narration_file, visual_file fields populated
+**When** the Compositor skill is invoked with the manifest path
+**Then** `skills/compositor/SKILL.md` exists with clear generation workflow
+**And** a Descript Assembly Guide is generated at `course-content/staging/{lesson_id}/descript-assembly-guide.md`
+**And** the guide includes: ordered asset list, track assignments, timing table, music cues, transition specs
+**And** the guide is human-executable — a non-technical user can follow it in Descript without interpretation
+**And** Marcus references the Compositor in its delegation protocol
+**And** a real C1-M1 lesson is assembled end-to-end as proof of concept
+**And** Party Mode team reviews the completed Compositor and proof-of-concept output
+
+---
+
+### Story 3.6: Canvas Specialist Agent & Mastery Skill
 
 As a user,
 I want a Canvas specialist agent with LMS deployment mastery,
@@ -969,7 +1021,7 @@ So that completed content is deployed to Canvas with proper module structure and
 **And** the agent successfully reproduces the exemplar via the Canvas API using the woodshed workflow
 **And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
-### Story 3.6: Qualtrics Specialist Agent & Mastery Skill
+### Story 3.7: Qualtrics Specialist Agent & Mastery Skill
 
 As a user,
 I want a Qualtrics specialist agent with survey design mastery and assessment intelligence,
@@ -1000,7 +1052,7 @@ So that course assessments, polls, and surveys are created with optimal paramete
 **And** the agent successfully reproduces the exemplar via the Qualtrics API using the woodshed workflow
 **And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
-### Story 3.7: Canva Specialist Agent (Manual-Tool Agent Pattern)
+### Story 3.8: Canva Specialist Agent (Manual-Tool Agent Pattern)
 
 As a user,
 I want a Canva specialist agent with design creation guidance and import/export capabilities,
@@ -1057,7 +1109,7 @@ This story establishes the **manual-tool agent pattern** — reused for Vyond an
 
 **Reusable pattern:** This manual-tool agent pattern applies to Vyond (Story 5.1) and Articulate (Epic 6). See those stories for tool-specific adaptations.
 
-### Story 3.8: Source Wrangler — Notion & Box Drive Integration
+### Story 3.9: Source Wrangler — Notion & Box Drive Integration
 
 As a user,
 I want a source wrangling capability that pulls course development notes from Notion and reference materials from my local Box Drive into the production context,
@@ -1079,7 +1131,7 @@ So that agents have access to my existing course planning materials without manu
 **And** pre-flight checks verify Notion API connectivity and Box Drive path accessibility
 **And** a test demonstrates: wrangler invoked → pulls from Notion → reads from Box → materials available to orchestrator
 
-### Story 3.9: Tech Spec Wrangler Skill
+### Story 3.10: Tech Spec Wrangler Skill
 
 As a specialist agent,
 I want a shared tech spec wrangler skill that finds, validates, and delivers current tool documentation, working examples, and how-to guides,

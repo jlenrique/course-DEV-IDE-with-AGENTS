@@ -88,6 +88,75 @@ imageOptions:
 exportAs: pdf
 ```
 
+---
+
+## Multi-Slide Deck Templates
+
+### Lecture Deck
+
+```yaml
+format: presentation
+numCards: auto  # Gary's judgment; typically 5-12 for a lesson
+cardSplit: auto
+textMode: generate
+textOptions:
+  amount: medium
+  tone: "Professional medical education, clear and evidence-based"
+  audience: "Practicing physicians and health sciences graduate students"
+imageOptions:
+  source: pexels
+additionalInstructions: "Professional medical education deck. One key concept per card. Consistent visual hierarchy: Montserrat headings, clean body text, ample white space. Do not pack multiple concepts onto one card."
+exportAs: png
+```
+
+### Case Study Deck
+
+```yaml
+format: presentation
+numCards: 3-5
+cardSplit: auto
+textMode: generate
+textOptions:
+  amount: detailed
+  tone: "Clinical narrative, patient-centered"
+  audience: "Medical professionals analyzing clinical scenarios"
+imageOptions:
+  source: noImages
+additionalInstructions: "Clinical case study format. Card 1: presenting complaint and initial scenario. Cards 2-3: clinical reasoning, differential diagnosis. Final card: management summary and teaching point. Maintain clinical narrative voice throughout. Clear section breaks between case phases."
+exportAs: png
+```
+
+### Module Overview Deck
+
+```yaml
+format: presentation
+numCards: 3-4
+cardSplit: auto
+textMode: generate
+textOptions:
+  amount: brief
+  tone: "Orientation and framing, professional medical education"
+imageOptions:
+  source: noImages
+additionalInstructions: "Module overview format. Card 1: module title and framing question. Cards 2-3: key topics or learning objectives. Final card: assessment preview or key takeaway. Clean, bold visual design — this sets the tone for the module."
+exportAs: png
+```
+
+### Assessment Set
+
+```yaml
+format: presentation
+numCards: 2-4  # one question per card; user specifies count
+cardSplit: inputTextBreaks  # Irene provides ---\n separators per question
+textMode: preserve
+imageOptions:
+  source: noImages
+additionalInstructions: "Assessment slide format. Each card contains exactly one question with clearly separated answer options. Question prompt prominent at top. Answer options clearly labeled A/B/C/D. No explanatory text on question cards."
+exportAs: png
+```
+
+---
+
 ## Gamma Template-Based Generation
 
 When a custom Gamma template has been created for a specific course, module, or content type, Gary uses the `POST /generations/from-template` endpoint instead of text generation. Templates encode visual layout, brand standards, and structural patterns directly in Gamma — reducing the need for `additionalInstructions` and `textOptions` overrides.

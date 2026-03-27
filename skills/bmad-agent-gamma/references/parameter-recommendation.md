@@ -31,10 +31,39 @@ Track which constraint phrasings produce the best fidelity outcomes in `patterns
 - `imageOptions.source: "pexels"` or `"webFreeToUse"` — use for production slides needing stock imagery
 - `imageOptions.source: "aiGenerated"` — use when custom visuals are explicitly requested
 
+## Deck Mode Parameter Guidance
+
+When `deck_mode: true` or content type maps to multi-slide, apply deck-specific guidance:
+
+### numCards Ranges by Content Type
+
+| Content Type | Recommended numCards | Rationale |
+|-------------|---------------------|-----------|
+| Lecture deck | 5-12 | One concept per card; Gamma decides breaks |
+| Case study deck | 3-5 | Presenting complaint → diagnosis → management |
+| Module overview | 3-4 | Objectives → topics → assessment preview |
+| Assessment set | 2-4 | One question per card; use inputTextBreaks |
+| Narrative arc | 4-8 | Story beats, rising action |
+| Module bumper | 1-2 | Title + subtitle or title only |
+
+`numCards: auto` is valid — Gamma decides the count. Use `auto` when Irene's slide brief says "Gary's judgment" for number of slides.
+
+### cardSplit Strategy
+
+- `"auto"` — Gamma decides how to distribute content across cards. Use for most lecture and narrative content.
+- `"inputTextBreaks"` — Gamma splits on `\n---\n` separators in `inputText`. Use when Irene provides a brief with explicit per-slide sections marked.
+
+### Deck-Level additionalInstructions
+
+Deck-mode instructions must address both the overall deck AND per-card structure:
+- **Lecture deck**: `"Professional medical education deck. Each card covers one key concept. Consistent visual hierarchy throughout: Montserrat headings, clean body text, ample white space. Do not pack multiple concepts onto one card."`
+- **Case study deck**: `"Clinical case study format. Card 1: presenting complaint. Cards 2-3: clinical reasoning. Final card: management summary. Maintain clinical narrative voice throughout."`
+- **Assessment set**: `"Assessment slide format. Each card contains exactly one question with clearly separated answer options. Question prompt prominent. No explanatory text on question cards — save explanations for separate review slides if needed."`
+
 ## Export Format Selection
 
-- **PNG** — default for production. These are visual assets for video production (Descript, CapCut, Kling) and course embedding (CourseArc, Canvas). Lossless quality at Gamma's render resolution.
-- **PDF** — for human review at checkpoint gates, woodshed comparison (text extraction), and archival.
+- **PNG** — default for production pipeline. Gary's PNGs are the primary visual input to Irene's Pass 2 (`gary_slide_output`) and downstream to Kira (image-to-video) and Descript (slide holds). Lossless quality at Gamma's render resolution.
+- **PDF** — for human review at HIL Gate 2, woodshed comparison (text extraction), and archival.
 - **PPTX** — when downstream editing or manual refinement is planned.
 
 Always request export and download immediately — URLs expire (~7 days).

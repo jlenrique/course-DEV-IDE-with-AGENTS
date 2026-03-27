@@ -19,7 +19,7 @@ Experimental sandbox with assets routed to scratch/staging and state tracking su
 
 - **State writes:** Suppressed (no SQLite updates, no config changes)
 - **Memory writes:** Only transient ad-hoc session section in `index.md` — no patterns, chronology, or preference updates
-- **Output routing:** `course-content/staging/ad-hoc/` scratch area only
+- **Output routing:** `course-content/staging/ad-hoc/` scratch area only (including nested paths such as `ad-hoc/source-bundles/{slug}/` for **source-wrangler** bundles, Gary exports you place under ad-hoc, trial narrations, etc.)
 - **Learning:** Disabled — experimental runs do not train Marcus's patterns
 - **QA:** Still active — quality gates are non-negotiable in any mode
 

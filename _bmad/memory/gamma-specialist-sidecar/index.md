@@ -31,4 +31,4 @@ _Empty — will populate as production runs generate effective parameter combina
 
 ## Transient Ad-Hoc Section
 
-_Empty — not currently in ad-hoc mode._
+- **2026-03-27 (C1M1 physician-innovator pilot):** `recraft-v4-svg` off-brand; `flux-2-pro` nice but off exemplar. **Exemplar UI:** Recraft V3 + Line drawing + Condense + Minimal + Classic — see `CLIENT_EXEMPLAR_GAMMA_SETTINGS.md`. **Attempt 4:** API-aligned `recraft-v3` + condense + brief + line-drawing style → `v4-exemplar-aligned-recraft-v3/`, Gamma `https://gamma.app/docs/oz0jooxmkdwqx6r`.

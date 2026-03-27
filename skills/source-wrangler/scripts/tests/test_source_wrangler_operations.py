@@ -8,8 +8,11 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+from pypdf import PdfWriter
+
 _MODULE_DIR = Path(__file__).resolve().parents[1]
-_REPO_ROOT = _MODULE_DIR.parents[2]
+_REPO_ROOT = _MODULE_DIR.parents[3]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
@@ -66,6 +69,18 @@ def test_wrangle_playwright_saved_html(tmp_path: Path) -> None:
     assert "Para" in text
 
 
+def test_is_gamma_app_docs_url() -> None:
+    assert sw.is_gamma_app_docs_url("https://gamma.app/docs/abc?mode=doc")
+    assert sw.is_gamma_app_docs_url("https://www.gamma.app/docs/x")
+    assert not sw.is_gamma_app_docs_url("https://public-api.gamma.app/v1.0/themes")
+    assert not sw.is_gamma_app_docs_url("https://example.com/")
+
+
+def test_fetch_url_rejects_gamma_docs() -> None:
+    with pytest.raises(sw.GammaDocsURLNotSupportedError):
+        sw.fetch_url("https://gamma.app/docs/test-id")
+
+
 @patch.object(sw.requests, "get")
 def test_summarize_url_for_envelope(mock_get: MagicMock) -> None:
     mock_resp = MagicMock()
@@ -85,3 +100,37 @@ def test_list_box_files(tmp_path: Path) -> None:
     (tmp_path / "sub" / "b.txt").write_text("y", encoding="utf-8")
     found = sw.list_box_files(tmp_path, max_files=20)
     assert len(found) == 2
+
+
+def test_verify_and_require_local_sources(tmp_path: Path) -> None:
+    existing = tmp_path / "a.txt"
+    existing.write_text("ok", encoding="utf-8")
+    missing = tmp_path / "gone.pdf"
+    assert sw.verify_local_source_paths([existing]) == []
+    assert sw.verify_local_source_paths([missing]) == [missing]
+    sw.require_local_source_files([existing])
+    with pytest.raises(FileNotFoundError, match="gone"):
+        sw.require_local_source_files([missing])
+
+
+def test_wrangle_local_pdf_blank_page(tmp_path: Path) -> None:
+    pdf_path = tmp_path / "blank.pdf"
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    with pdf_path.open("wb") as f:
+        writer.write(f)
+    title, text, rec = sw.wrangle_local_pdf(pdf_path)
+    assert title == "blank"
+    assert rec.kind == "local_pdf"
+    assert "pypdf" in rec.note
+    assert isinstance(text, str)
+
+
+def test_extract_pdf_text_sample_deck() -> None:
+    sample = _REPO_ROOT / "course-content" / "staging" / "Diagnosis-Innovation.pdf"
+    if not sample.is_file():
+        pytest.skip("staging sample PDF not present")
+    body, meta = sw.extract_pdf_text(sample, max_pages=2)
+    assert meta["engine"] == "pypdf"
+    assert meta["pages_total"] >= 1
+    assert "Innovation" in body or "innovation" in body.lower()

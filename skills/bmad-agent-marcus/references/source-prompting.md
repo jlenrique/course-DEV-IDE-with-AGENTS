@@ -27,10 +27,18 @@ Before starting any content production task, assess whether source materials wou
 - Institutional templates and guidelines
 - Media assets (images, diagrams)
 
+### Local PDFs (via `source-wrangler`)
+- SME module notes (e.g. under `course-content/courses/`) — use `wrangle_local_pdf()` then `write_source_bundle()`
+- Before a trial run, ensure expected paths exist (`require_local_source_files`) so missing files surface immediately
+
 ### Web exemplars (Playwright MCP + `source-wrangler`)
 - User or Cursor session captures a page (save HTML) or provides a URL
 - Skill extracts readable text, stores `extracted.md` + `metadata.json` under a staging bundle path
 - Marcus passes `extracted.md` paths into Irene/Gary envelopes as `user_constraints` / `input_text` supplements
+
+### Gamma exemplar links
+- **Not** plain HTTP fetch: `gamma.app/docs/...` is blocked in source-wrangler by design
+- Route through **Gary** (export) or Playwright HTML capture, then ingest with the skill — same bundle contract as other sources
 
 ## Prompting Style
 

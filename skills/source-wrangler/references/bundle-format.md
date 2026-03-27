@@ -12,6 +12,8 @@ Each bundle is a directory written by `write_source_bundle()`.
 
 ## Provenance entries
 
-Each item: `kind` (`url` | `notion_page` | `box_file` | `playwright_html`), `ref`, `note`, `fetched_at` (ISO-8601).
+Each item: `kind` (`url` | `notion_page` | `box_file` | `playwright_html` | `local_pdf`), `ref`, `note`, `fetched_at` (ISO-8601).
+
+For PDFs ingested via `wrangle_local_pdf()`, `note` typically includes `pypdf` and pages scanned (e.g. `pypdf scanned=10/24`).
 
 Agents should cite `ref` when summarizing where a claim came from.

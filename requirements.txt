@@ -13,6 +13,9 @@ python-dotenv>=1.0,<2
 pydantic>=2.7,<3
 pyyaml>=6.0,<7
 
+# Source wrangler (PDF text extraction)
+pypdf>=5.0,<6
+
 # Development & testing
 pytest>=8.0,<9
 pytest-asyncio>=0.23,<1

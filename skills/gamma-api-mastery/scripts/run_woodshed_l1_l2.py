@@ -55,24 +55,32 @@ def run_exemplar(exemplar_id: str, evaluator: GammaEvaluator) -> dict:
     style_guide = load_style_guide_gamma()
     spec = evaluator.derive_reproduction_spec(analysis, style_guide)
 
+    # Rich input text that communicates the slide's intent and content,
+    # giving Gamma the material to create a visually engaging slide.
+    # The additionalInstructions (from derive_reproduction_spec) guides
+    # the visual layout; the inputText provides the content and context.
     content_sections = {
         "L1-two-processes-one-mind": (
             "Two Processes, One Mind\n\n"
-            "Clinical Diagnosis:\n"
+            "This slide compares two parallel processes side by side to show "
+            "that clinical diagnosis and design thinking share the same cognitive pattern.\n\n"
+            "Clinical Diagnosis process:\n"
             "- History & Physical\n"
             "- Form hypothesis\n"
             "- Order labs & imaging\n"
             "- Iterate until diagnosis\n\n"
-            "Design Thinking:\n"
+            "Design Thinking process:\n"
             "- Empathize with users\n"
             "- Define the problem\n"
             "- Ideate solutions\n"
             "- Prototype & test\n\n"
-            "Both require rapid hypothesis formation, experimentation, "
-            "and iteration to find root causes."
+            "Unifying insight: Both require rapid hypothesis formation, "
+            "experimentation, and iteration to find root causes."
         ),
         "L2-diagnosis-innovation": (
             "Diagnosis = Innovation\n\n"
+            "A bold, provocative statement that reframes what physicians already do "
+            "as innovation.\n\n"
             "Your clinical training has already prepared you to be an innovator. "
             "The process you use every day mirrors the innovation process exactly."
         ),

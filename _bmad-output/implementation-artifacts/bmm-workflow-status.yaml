@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-26 (session 3 — Story 2.1 DONE)
+# Last Updated: 2026-03-27 (session 6 — Party Mode composition architecture, Story 3.3.1 harmonization, Gary deck enhancement, Compositor story added)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,8 +23,8 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "35 stories across 10 epics (Stories 2.6 + 3.7 added for run mode management and source wrangling), 100% FR coverage"
-    stories_count: 35
+    note: "36 stories across 10 epics (Story 3.8 added for tech spec wrangler skill)"
+    stories_count: 36
     epics_count: 10
   ux_design:
     status: "not-applicable"
@@ -55,9 +55,29 @@ key_decisions:
   - "MCP env-loader wrapper (run_mcp_from_env.cjs) keeps secrets out of versioned configs"
   - "Active Cursor MCPs limited to verified servers (Gamma, Canvas LMS)"
   - "ElevenLabs and Qualtrics: API-primary, MCP-deferred due to Cursor compatibility"
-
   - "Ad-hoc/default run mode switch: gate on state management layer, agents unaware of mode"
   - "Source wrangler capability: Notion API + Box Drive local FS, start as skill, may evolve to agent"
   - "Notion confirmed Tier 1 (official MCP on npm, free API on all plans including free educator)"
+  - "EXEMPLAR-DRIVEN DEVELOPMENT: Specialist agents prove competence by reproducing real exemplar artifacts via API/MCP. Exemplars serve as both design aids and acceptance tests (Party Mode session, March 26 2026)"
+  - "WOODSHED SKILL: Shared skill (skills/woodshed/) for study → reproduce → compare → reflect → register workflow. Detailed run logging, artifact retention (pass/fail), mandatory reflection between failures, circuit breaker (3/session, 7 total)"
+  - "PROGRESSIVE MASTERY: Simple → intermediate → advanced exemplars. Regression runs verify previously mastered exemplars stay mastered. Blocked status for exemplars the agent cannot master (triggers human review)"
 
-next_workflow_step: "Epic 2 COMPLETE (6/6 stories done, 55 tests). Retrospective complete. Next: Epic 3 (Core Tool Specialist Agents & Mastery Skills) — start with bmad-create-story for Story 3.1 (Gamma Specialist Agent)."
+  - "SMOKE TEST SUCCESS (2026-03-26): Gamma API single-card generation + PDF export/download validated. 5 credits/card, ~15s generation. GammaClient uses old param names (topic→inputText, missing textMode) — must fix in Story 3.1"
+  - "TWO-MODE WOODSHED: Faithful mode (exact reproduction) must pass before Creative mode (enhanced reproduction) unlocks. Proves tool control then creative judgment"
+  - "L-LEVEL SYSTEM: L1-L4 single slides, L5+ multi-slide decks. Dot extensions for within-level granularity. Levels provisional — agents may propose changes"
+  - "EXPORT REQUIREMENT: All reproductions must download production artifacts (PDF/PPTX/MP3). Screenshots supplementary only. Export URLs time-limited (~7 days)"
+  - "DOC REFRESH PROTOCOL: Each mastery skill maintains doc-sources.yaml. Mandatory refresh before woodshed cycles via Ref MCP. Gamma has llms.txt for LLM-optimized docs"
+  - "TECH SPEC WRANGLER: Shared skill (not agent). Deferred Perplexity MCP until needed"
+  - "EPIC 3 RE-SEQUENCING (2026-03-26): Content Creator + Quality Reviewer moved to Story 3.2 (was 3.4). Scripts must precede narration in the production pipeline. Content Creator delegates to BMad writers (Paige/Tech Writer, Sophia/Storyteller, Caravaggio/Presentation Expert) for prose quality. ElevenLabs expanded to Story 3.3 with timestamps, pronunciation dictionaries, SFX, music, dialogue. Canvas renumbered to 3.4. Canva downgraded to design guidance (API cannot edit elements)."
+  - "ELEVENLABS CAPABILITY AUDIT (2026-03-26): 12 instructional artifact types identified from full API surface review. P0: narration+timestamps+VTT, pronunciation dictionaries, multi-slide request stitching. P1: case study dialogue, SFX package, background music. P2-P3: voice cloning, dubbing, conversational AI tutors. Evaluator design: STT extraction, word coverage >95%, WPM check 130-170, timestamp monotonicity."
+  - "CANVA API ASSESSMENT (2026-03-26): Connect API cannot edit individual design elements (no add_text, modify_element, apply_style). Only create blank designs, import PPTX, export, manage assets, Autofill (Enterprise only). Not worth OAuth integration effort. Downgraded to design guidance agent (Tier 4 pattern). Future upgrade if element-level API becomes available."
+  - "CONTENT-IS-KING PRINCIPLE: Written content quality is paramount for higher education. Content Creator owns pedagogy but delegates prose to BMad specialists: Paige for technical precision, Sophia for narrative craft, Caravaggio for visual narrative flow. Editorial review agents polish all output before downstream handoff."
+  - "CONTENT CREATOR VALIDATION MODEL: No exemplars, no woodshed. Produces sample of each output artifact type for human review. Appropriate because the agent produces written content, not API-generated artifacts."
+  - "KLING VIDEO SPECIALIST (Story 3.3): Pulled forward from Epic 5. API client built in-story (BaseAPIClient well established). Text-to-video, image-to-video, lip-sync, extend. Human review validation. Video types: B-roll, concept viz, slide-to-video transitions, talking-head overlays."
+  - "MANUAL-TOOL AGENT PATTERN: Agents for tools without programmatic control (Canva, Vyond, Articulate) are structurally identical to other agents but operate through step-by-step user instructions instead of API calls. Marcus polls them for capability. They provide detailed instructions the user executes. No API skill layer, no woodshed. Validated by human review of instruction quality."
+  - "COMPOSITION ARCHITECTURE (2026-03-27, Party Mode): Silent Video + Smart Audio model. Kling always sound-off. ElevenLabs owns all audio. Narration-paced video (audio drives timing). Segment manifest (YAML) is single source of truth — Irene produces, ElevenLabs + Kira + Compositor read/write. Descript is sole composition platform (manual-tool pattern). Compositor skill (Story 3.5) generates Descript Assembly Guide. Seven instructional use cases, all one pipeline. Four HIL gates front-load human judgment. Quinn-R two-pass validation (pre-composition + post-composition)."
+  - "IRENE TWO-PASS MODEL (2026-03-27): Pass 1 (before Gary): lesson plan + slide brief. Pass 2 (after Gary + HIL Gate 2): narration script + segment manifest. Narration written to complement Gary's actual visuals, not pre-written to a spec. gary_slide_output array passed in envelope for Pass 2."
+  - "GARY DECK ENHANCEMENT (2026-03-27): Deck mode added (numCards ranges per content type, cardSplit strategies, deck additionalInstructions). Theme/template preview (TP capability) via list_themes_and_templates — presents available Gamma themes + registered templates before generation. gary_slide_output return field feeds Irene Pass 2. GammaClient.list_themes() verified live (returns 10 themes including 2026 HIL APC institutional theme)."
+  - "COMPOSITOR SKILL (Story 3.5, NEW): Reads completed segment manifest (all agent write-back fields populated) → generates Descript Assembly Guide. Proof of concept: real C1-M1 lesson end-to-end assembly. Added as new story between ElevenLabs (3.4) and Canvas (3.6). Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10. Epic 3 now 11 stories."
+
+next_workflow_step: "Story 3.3.1 harmonization COMPLETE (2026-03-27). Next: Story 3.4 ElevenLabs Specialist Agent. The segment manifest is now the input contract for Marcus-mediated narration, timing, and downstream composition routing."

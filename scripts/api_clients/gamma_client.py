@@ -49,41 +49,114 @@ class GammaClient(BaseAPIClient):
 
     def generate(
         self,
-        topic: str,
+        input_text: str,
+        text_mode: str = "generate",
         *,
+        format: str = "presentation",
         num_cards: int | None = None,
-        output_format: str = "cards",
-        llm: str | None = None,
-        language: str | None = None,
+        card_split: str | None = None,
         theme_id: str | None = None,
+        additional_instructions: str | None = None,
+        text_options: dict[str, Any] | None = None,
+        image_options: dict[str, Any] | None = None,
+        card_options: dict[str, Any] | None = None,
+        sharing_options: dict[str, Any] | None = None,
+        export_as: str | None = None,
+        folder_ids: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Start an AI content generation.
+        """Start a text-based AI content generation.
 
         Args:
-            topic: Topic or detailed prompt for the generation.
-            num_cards: Number of slides/cards to generate.
-            output_format: "cards" (slides) or "document".
-            llm: LLM model to use (e.g. "claude-3", "gpt-4o").
-            language: Output language code.
+            input_text: Content for generation (required). Up to ~100k tokens.
+            text_mode: How input is modified: "generate", "condense", or
+                "preserve" (required).
+            format: Output format: "presentation", "document", "social",
+                or "webpage".
+            num_cards: Number of cards (1-60 Pro/Teams, 1-75 Ultra).
+            card_split: "auto" (use numCards) or "inputTextBreaks"
+                (split on ``\\n---\\n``).
             theme_id: Theme ID from ``list_themes()``.
+            additional_instructions: Free-text guidance (1-5000 chars).
+            text_options: ``{"amount", "tone", "audience", "language"}``.
+            image_options: ``{"source", "model", "style"}``.
+            card_options: ``{"dimensions", "headerFooter"}``.
+            sharing_options: ``{"workspaceAccess", "externalAccess",
+                "emailOptions"}``.
+            export_as: "pdf", "pptx", or "png". One per request.
+            folder_ids: Folder IDs for organizing output.
 
         Returns:
             Generation response with ``id`` for polling status.
         """
         payload: dict[str, Any] = {
-            "topic": topic,
-            "outputFormat": output_format,
+            "inputText": input_text,
+            "textMode": text_mode,
+            "format": format,
         }
         if num_cards is not None:
             payload["numCards"] = num_cards
-        if llm:
-            payload["llm"] = llm
-        if language:
-            payload["language"] = language
+        if card_split:
+            payload["cardSplit"] = card_split
         if theme_id:
             payload["themeId"] = theme_id
+        if additional_instructions:
+            payload["additionalInstructions"] = additional_instructions
+        if text_options:
+            payload["textOptions"] = text_options
+        if image_options:
+            payload["imageOptions"] = image_options
+        if card_options:
+            payload["cardOptions"] = card_options
+        if sharing_options:
+            payload["sharingOptions"] = sharing_options
+        if export_as:
+            payload["exportAs"] = export_as
+        if folder_ids:
+            payload["folderIds"] = folder_ids
 
         return self.post("/generations", json=payload)
+
+    def generate_from_template(
+        self,
+        gamma_id: str,
+        prompt: str,
+        *,
+        theme_id: str | None = None,
+        export_as: str | None = None,
+        folder_ids: list[str] | None = None,
+        image_options: dict[str, Any] | None = None,
+        sharing_options: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Start a template-based generation.
+
+        Args:
+            gamma_id: ID of the template gamma (must be single-page).
+            prompt: Content and instructions for the template.
+            theme_id: Override theme.
+            export_as: "pdf", "pptx", or "png".
+            folder_ids: Folder IDs for organizing output.
+            image_options: Override image settings.
+            sharing_options: Sharing configuration.
+
+        Returns:
+            Generation response with ``id`` for polling status.
+        """
+        payload: dict[str, Any] = {
+            "gammaId": gamma_id,
+            "prompt": prompt,
+        }
+        if theme_id:
+            payload["themeId"] = theme_id
+        if export_as:
+            payload["exportAs"] = export_as
+        if folder_ids:
+            payload["folderIds"] = folder_ids
+        if image_options:
+            payload["imageOptions"] = image_options
+        if sharing_options:
+            payload["sharingOptions"] = sharing_options
+
+        return self.post("/generations/from-template", json=payload)
 
     def get_generation(self, generation_id: str) -> dict[str, Any]:
         """Get the current status of a generation."""

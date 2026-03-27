@@ -1,0 +1,113 @@
+{
+  "scanner": "structure",
+  "skill_path": "skills/bmad-agent-gamma",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 3,
+      "severity": "medium",
+      "category": "frontmatter",
+      "title": "Description trigger clause omits quoted invocation phrases",
+      "detail": "The BMad structure guidelines recommend a two-part description whose trigger clause uses quoted specific phrases (for example 'talk to Gary') to reduce ambiguous activations. The current description uses paraphrased triggers (talk to Gary, Slide Architect, presentation slides) without quotes, which is slightly weaker for conservative routing versus similar slide or Gamma-related skills.",
+      "action": "Revise the description trigger segment to include explicit quoted phrases, e.g. Use when the user asks to 'talk to Gary', requests the 'Slide Architect', or needs 'Gamma slides' / 'presentation slides generated'."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 3,
+      "severity": "low",
+      "category": "frontmatter",
+      "title": "Opening summary segment is nine words (guideline 5–8)",
+      "detail": "The first sentence of the description is concise and capability-aligned but counts nine words ('Gamma slide generation specialist with complete API parameter mastery'), one word over the typical 5–8 word summary target in the structure checklist.",
+      "action": "Optionally tighten to eight words or fewer, e.g. 'Gamma slide specialist; full API parameter mastery.' while preserving distinctiveness from other agents."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 18,
+      "severity": "strength",
+      "category": "identity",
+      "title": "Identity is actionable and tightly aligned to capabilities",
+      "detail": "The one-sentence-plus expansion ties physician-audience constraints, Gamma parameter mastery, embellishment awareness, and specialist boundaries (delegated work, quality assessment, return to Marcus) to the actual capability table and external skills.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 20,
+      "severity": "strength",
+      "category": "communication-style",
+      "title": "Communication style includes concrete, persona-matched examples",
+      "detail": "Multiple bullets show exact parameter tuples, agent-to-agent tone, structured quality scores, and exemplar-grounded language — matching the Slide Architect / Marcus-delegation model without abstract filler.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 31,
+      "severity": "strength",
+      "category": "principles",
+      "title": "Principles are domain-specific decision frameworks",
+      "detail": "Principles enforce learning-objective traceability, physician-appropriate visuals, style-guide precedence, Gamma embellishment control, export discipline, and honest scoring — not generic platitudes.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 55,
+      "severity": "strength",
+      "category": "activation-sequence",
+      "title": "On Activation ordering is logical for config, memory, and modes",
+      "detail": "Sequence loads project config first, then memory discipline and sidecar entry (with init fallback), then style guide note, then branches headless vs interactive vs woodshed — consistent with needing resolved paths before delegation work.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 62,
+      "severity": "note",
+      "category": "memory-setup",
+      "title": "Sidecar on disk may start with index.md only",
+      "detail": "references/memory-system.md documents patterns.md, chronology.md, and access-boundaries.md under the sidecar; the repository _bmad/memory/gamma-specialist-sidecar/ currently exposes index.md. This is acceptable if first-run or save flows create the other files; access rules are still defined in memory-system.md and save-memory.md.",
+      "action": "If onboarding expects those files to exist immediately, add a bootstrap step or templates under the sidecar; otherwise no change."
+    }
+  ],
+  "assessments": {
+    "metadata": {
+      "prepass_scanner": "structure-capabilities-prepass",
+      "prepass_status": "pass",
+      "prepass_total_issues": 0,
+      "prepass_findings_included": 0
+    },
+    "sections_found": [
+      "Overview",
+      "Identity",
+      "Communication Style",
+      "Principles",
+      "Does Not Do",
+      "Degradation Handling",
+      "On Activation",
+      "Capabilities"
+    ],
+    "capabilities_internal_count": 6,
+    "capabilities_external_count": 2,
+    "has_memory": true,
+    "has_headless": true,
+    "memory_sidecar_doc_path": "_bmad/memory/gamma-specialist-sidecar/index.md",
+    "logical_consistency_notes": "Identity, communication style, and principles align; description action verbs match Gamma/slide/delegation capabilities; external skill targets (gamma-api-mastery, woodshed) exist under skills/."
+  },
+  "summary": {
+    "total_findings": 7,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "strength": 4,
+      "note": 1
+    },
+    "by_category": {
+      "frontmatter": 2,
+      "identity": 1,
+      "communication-style": 1,
+      "principles": 1,
+      "activation-sequence": 1,
+      "memory-setup": 1
+    },
+    "assessment": "Pre-pass reported zero structural or capability issues; the agent is complete with strong identity, examples, principles, and activation flow. Minor frontmatter improvements (quoted triggers, optional word-count trim) and awareness of sidecar file bootstrap round out the scan."
+  }
+}

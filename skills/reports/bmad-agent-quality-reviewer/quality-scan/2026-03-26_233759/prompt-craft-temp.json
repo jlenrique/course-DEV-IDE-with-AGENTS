@@ -1,0 +1,88 @@
+{
+  "scanner": "prompt-craft",
+  "skill_path": "skills/bmad-agent-quality-reviewer",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 8,
+      "severity": "note",
+      "category": "overview-quality",
+      "title": "Overview clearly frames mission, modes, and delegation",
+      "detail": "Seven-line Overview covers the Quality Guardian role, five review dimensions, delegation to quality-control for deterministic work, dual default vs ad-hoc behavior, and human calibration. Matches outcome-driven guidance for a domain-heavy gate agent; no overlap with defensive padding per pre-pass (zero waste_pattern hits).",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 18,
+      "severity": "low",
+      "category": "communication-consistency",
+      "title": "Human reviewer name hardcoded as Juan while config uses user_name",
+      "detail": "On Activation resolves {user_name} from config, but Identity, Communication Style, and Principles use the concrete name Juan. This breaks portability across projects and conflicts with the stated config-driven communication pattern. Not persona waste—the intent is calibration examples—but the implementation should stay consistent with variables.",
+      "action": "Replace Juan with {user_name} (with null-safe phrasing) or neutral wording such as \"the human reviewer\" wherever reviewer-specific examples appear (also lines 29 and 38)."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 32,
+      "severity": "low",
+      "category": "anti-pattern",
+      "title": "Suggestive loading for patterns.md and chronology.md",
+      "detail": "Sections use \"Load when needed\" rather than mandatory triggers. Under context compaction or rushed execution, the agent may skip pattern and history files when calibration or recurring-issue reporting depends on them. This is progressive disclosure tradeoff—not always wrong—but weaker than imperative load rules for judgment-heavy memory use.",
+      "action": "Replace with explicit when-to-load rules (e.g., load patterns.md before emitting pattern_alerts or after N reviews; load chronology.md when reporting calibration_notes)."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 34,
+      "severity": "low",
+      "category": "communication-consistency",
+      "title": "Hardcoded reviewer name in memory-system reference",
+      "detail": "Same Juan hardcoding as SKILL.md appears in patterns.md description. Keeps sidecar docs aligned with one install only.",
+      "action": "Use {user_name} or generic \"human reviewer\" in reference text."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 71,
+      "severity": "low",
+      "category": "progression",
+      "title": "No explicit progression or continuation conditions in SKILL.md",
+      "detail": "Pre-pass reported has_progression false. Headless vs interactive paths are described, but there are no stated gates (e.g., when to pause for partial artifacts, resume multi-artifact review, or require human ack) comparable to step-workflow skills. For typical single-shot Marcus handoffs this is acceptable; risk grows for long or interrupted reviews.",
+      "action": "If multi-phase reviews are common, add a short subsection with explicit continuation conditions; otherwise document that single-pass completion is intentional."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 79,
+      "severity": "note",
+      "category": "outcome-balance",
+      "title": "Capabilities table uses imperative Load routes to references",
+      "detail": "Internal capabilities map to ./references/review-protocol.md, feedback-format.md, and save-memory.md with direct Load instructions—not optional \"see if needed\" language. Supports self-containment and context survival when those files are loaded per activation.",
+      "action": ""
+    }
+  ],
+  "assessments": {
+    "skill_type_assessment": "workflow-facilitator",
+    "skillmd_assessment": {
+      "overview_quality": "appropriate",
+      "progressive_disclosure": "good",
+      "persona_context": "appropriate",
+      "notes": "114 lines, ~3k tokens: well within guidelines. Heavy procedural and persona content is load-bearing for a QA gate agent. Procedure depth lives in references/review-protocol.md and feedback-format.md appropriately; no large inline schemas in SKILL.md."
+    },
+    "prompts_scanned": 0,
+    "prompt_health": {
+      "prompts_with_config_header": 0,
+      "prompts_with_progression_conditions": 0,
+      "prompts_self_contained": 0,
+      "total_prompts": 0
+    }
+  },
+  "summary": {
+    "total_findings": 6,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 4,
+      "note": 2
+    },
+    "assessment": "Strong prompt craft for a single-SKILL agent: clear Overview, identity, and outcome-focused principles; progressive disclosure to references is appropriate. Pre-pass showed no defensive padding or back-references. Main gaps are config consistency (hardcoded reviewer name) and mildly suggestive memory loading phrasing.",
+    "top_improvement": "Align all reviewer-facing examples and reference text with {user_name} (or neutral phrasing) to match On Activation config loading."
+  }
+}

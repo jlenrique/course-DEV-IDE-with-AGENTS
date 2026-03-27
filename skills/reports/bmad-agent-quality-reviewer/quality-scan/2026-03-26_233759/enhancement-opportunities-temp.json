@@ -1,0 +1,268 @@
+{
+  "scanner": "enhancement-opportunities",
+  "skill_path": "skills/bmad-agent-quality-reviewer",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 74,
+      "severity": "medium-opportunity",
+      "category": "journey-friction",
+      "title": "Interactive greeting assumes pipeline stats the user may not have",
+      "detail": "The direct-invocation flow asks for last review cycle counts and recurring patterns. A first-timer or someone outside the Marcus pipeline has no meaningful N/M/X/Y to substitute, which creates an awkward dead-end tone and undermines trust before the first review.",
+      "action": "Add a branch: if sidecar or SQLite history is missing or empty, use a compact onboarding line (e.g., no prior cycle / first run) and offer two clear choices: paste artifact paths or run environment check per init.md."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 71,
+      "severity": "medium-opportunity",
+      "category": "autonomous-potential",
+      "title": "Headless path is Marcus-only; direct automators lack a declared contract",
+      "detail": "Headless behavior is specified for delegation from Marcus with a rich payload, but there is no documented JSON/XML schema or example request body for non-Marcus callers (CI, another skill). Automators may guess wrong required fields.",
+      "action": "Add a minimal machine-readable request/response example in SKILL.md or references (required keys, optional keys, example findings array) mirroring the Outbound to Marcus block."
+    },
+    {
+      "file": "references/feedback-format.md",
+      "line": 7,
+      "severity": "high-opportunity",
+      "category": "autonomous-potential",
+      "title": "Primary report is Markdown-first; headless chains want structured data",
+      "detail": "The canonical report is prose/Markdown. Pipelines that invoke Quinn-R programmatically must scrape Markdown or re-ask the model to emit JSON, which is fragile and duplicates the structured fields already implied (verdict, dimension_scores, findings).",
+      "action": "Define an optional parallel JSON block or companion schema (even a commented example) for the same report so quality_logger and downstream tools consume one shape."
+    },
+    {
+      "file": "references/review-protocol.md",
+      "line": 69,
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "Multi-artifact review depends on optional cross_artifact_refs",
+      "detail": "Cross-artifact consistency is essential for paired assets, but cross_artifact_refs is optional in the delegation protocol. A caller could omit it and get siloed per-file reviews without the skill surfacing that pairing checks were skipped.",
+      "action": "When multiple artifact_paths share a lesson or naming pattern, default to running cross-artifact checks unless explicitly disabled; note in the report when pairing was inferred vs explicit."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 56,
+      "severity": "low-opportunity",
+      "category": "edge-case",
+      "title": "Partial review and FAIL verdict ambiguity for consumers",
+      "detail": "PARTIAL REVIEW and skipped dimensions are well described, but orchestrators may not know whether to block the pipeline or continue with degraded confidence. The distinction between structural incompleteness and missing reference data is easy to mis-rank.",
+      "action": "Add a single machine-oriented field recommendation: blocking vs non-blocking partial review, or a numeric readiness score separate from dimension pass/fail."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 53,
+      "severity": "medium-opportunity",
+      "category": "experience-gap",
+      "title": "Ad-hoc mode executes fully but calibration learning path is unclear",
+      "detail": "Ad-hoc runs do not persist to SQLite and sidecar writes are restricted; users doing quick audits may expect calibration to stick. The skill does not spell out that calibration saves require default mode and Save Memory.",
+      "action": "In SKILL.md On Activation, add one sentence: ad-hoc reviews are ephemeral unless user switches to default mode and runs SM; optionally prompt once when ad-hoc is detected."
+    },
+    {
+      "file": "references/review-protocol.md",
+      "line": 84,
+      "severity": "medium-opportunity",
+      "category": "assumption-risk",
+      "title": "Calibration loop assumes Marcus relays human feedback reliably",
+      "detail": "The calibration protocol depends on Marcus relaying accept/reject/adjust after each checkpoint. If the human reviews without that relay, Quinn-R's patterns.md and chronology drift from reality.",
+      "action": "Document a fallback: direct human calibration commands (e.g., dismiss finding ID, escalate type) that Quinn-R can record without Marcus, or a periodic reconciliation prompt."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 46,
+      "severity": "low-opportunity",
+      "category": "experience-gap",
+      "title": "Mis-invocation redirect names agents but not concrete next prompts",
+      "detail": "Redirect text points to Irene, Marcus, and bmad-help but does not give one example user phrase per route, which slightly raises friction for confused users.",
+      "action": "Append example prompts: e.g., For production routing say 'Ask Marcus to queue a quality gate' for Irene say 'content design for module X'."
+    },
+    {
+      "file": "references/feedback-format.md",
+      "line": 85,
+      "severity": "low-opportunity",
+      "category": "delight-opportunity",
+      "title": "Fixed score deduction table may not fit all content types",
+      "detail": "The linear deduction model is clear but treats all critical findings equally; some artifact types (e.g., tiny quiz vs full module) might warrant weighting without manual override.",
+      "action": "Allow optional content_type multipliers from tool_policies.yaml and document them so experts can tune without editing the skill prose."
+    },
+    {
+      "file": "references/review-protocol.md",
+      "line": 19,
+      "severity": "high-opportunity",
+      "category": "facilitative-pattern",
+      "title": "No parallel review lenses before final report",
+      "detail": "A single Quinn-R pass blends five dimensions. High-stakes publication could benefit from a brief structured second pass (skeptic on medical flags, pedagogy-only lens on soundness) without changing the persona's core rubric.",
+      "action": "Optional step: after draft report, run a short adversarial checklist (2-3 questions) per dimension or fan sub-lenses only when review_depth=thorough."
+    },
+    {
+      "file": "references/feedback-format.md",
+      "line": 38,
+      "severity": "medium-opportunity",
+      "category": "facilitative-pattern",
+      "title": "No dual-output: human report vs LLM distillate for downstream agents",
+      "detail": "Downstream skills (e.g., fix agents) must ingest long Markdown findings. A token-efficient distillate of findings (dimension, severity, location, fix one-liner) would speed chained workflows.",
+      "action": "Offer optional dual-output: full report plus compact findings JSON or bullet distillate for next agent in chain."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 50,
+      "severity": "medium-opportunity",
+      "category": "journey-friction",
+      "title": "Mid-session scope change and pause are not described",
+      "detail": "Users may want to stop after automated checks, add an artifact, or change review_depth mid-flight. There is no guidance on preserving partial state or cleanly restarting.",
+      "action": "Add a short capability note: how to resume (re-read sidecar index), cancel (clear transient section), or append artifacts to the same run ID."
+    },
+    {
+      "file": "references/init.md",
+      "line": 17,
+      "severity": "low-opportunity",
+      "category": "edge-case",
+      "title": "Environment check lists dependencies but not remediation order",
+      "detail": "Init lists paths to verify; when several are missing, the user gets partial review but no suggested fix order (e.g., style bible vs course_context vs quality-control skill).",
+      "action": "Add a prioritized recovery list: which missing dependency blocks which dimensions, in one table."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 12,
+      "severity": "low-opportunity",
+      "category": "delight-opportunity",
+      "title": "Expert path could skip narrative when payload is complete",
+      "detail": "Experts supplying artifact_paths, content_type, and review_depth still go through the same activation narrative as exploratory users.",
+      "action": "Document a compact activation phrase or structured first message that skips greeting stats and jumps straight to review-protocol execution when all required delegation fields are present."
+    }
+  ],
+  "assessments": {
+    "skill_understanding": {
+      "purpose": "Systematic quality validation (brand, accessibility, learning alignment, instructional soundness, content accuracy flags) for educational production artifacts, as gatekeeper to human review, with optional calibration memory.",
+      "primary_user": "Marcus (orchestrator) delegating at checkpoints; human reviewers calibrating severity; specialists consuming structured feedback.",
+      "assumptions": [
+        "quality-control skill scripts and paths (style bible, course_context, tool_policies) exist or degrade gracefully",
+        "Marcus supplies structured delegation payloads for headless runs",
+        "Medical accuracy is always escalated, never adjudicated by the agent",
+        "SQLite and sidecar exist for default-mode persistence"
+      ]
+    },
+    "user_journeys": [
+      {
+        "archetype": "first-timer",
+        "summary": "Invokes Quinn-R directly; reads strong principles and degradation handling but may freeze on the interactive greeting that expects prior cycle metrics.",
+        "friction_points": [
+          "Greeting placeholders without history",
+          "Many parallel loads on activation without a single checklist UI"
+        ],
+        "bright_spots": [
+          "Clear Does Not Do and redirect",
+          "init.md environment checklist",
+          "Dimension-organized feedback format"
+        ]
+      },
+      {
+        "archetype": "expert",
+        "summary": "Wants fastest path to a verdict and fix list; appreciates severity discipline but may find Markdown-only output and fixed scoring rigid for automation.",
+        "friction_points": [
+          "No documented JSON IO for direct API-style use",
+          "Score formula not tunable per artifact type in-skill"
+        ],
+        "bright_spots": [
+          "Headless Marcus path with explicit required fields",
+          "review_depth optional parameter",
+          "Location-specific feedback norms"
+        ]
+      },
+      {
+        "archetype": "confused",
+        "summary": "Mistook Quinn-R for content author; gets a short redirect.",
+        "friction_points": [
+          "Redirect could use example phrases for next step"
+        ],
+        "bright_spots": [
+          "Explicit boundary: no content modification"
+        ]
+      },
+      {
+        "archetype": "edge-case",
+        "summary": "Submits partial slides, contradictory objectives, or multiple artifacts without explicit pairing hints.",
+        "friction_points": [
+          "Optional cross_artifact_refs may silently reduce pairing rigor",
+          "PARTIAL REVIEW vs FAIL semantics for orchestrators"
+        ],
+        "bright_spots": [
+          "Incomplete artifact handling in Degradation Handling",
+          "Multi-artifact section in review-protocol"
+        ]
+      },
+      {
+        "archetype": "hostile-environment",
+        "summary": "Style bible missing, scripts fail, or course_context absent.",
+        "friction_points": [
+          "Judgment-only fallback lowers confidence but thresholds may still expect automation",
+          "Init remediation order not prioritized"
+        ],
+        "bright_spots": [
+          "Explicit SKIPPED dimension reporting",
+          "Fresh style bible read (no stale cache)"
+        ]
+      },
+      {
+        "archetype": "automator",
+        "summary": "CI or another agent invokes after Marcus or tries to mimic Marcus payload.",
+        "friction_points": [
+          "Canonical output is Markdown-oriented",
+          "No published minimal schema example in repo for non-Marcus callers"
+        ],
+        "bright_spots": [
+          "Structured outbound field list in SKILL.md",
+          "Logging toggle via run mode"
+        ]
+      }
+    ],
+    "autonomous_assessment": {
+      "potential": "easily-adaptable",
+      "hitl_points": 4,
+      "auto_resolvable": 5,
+      "needs_input": 3,
+      "suggested_output_contract": "Return status (pass|pass_with_notes|fail|partial_review), verdict confidence, dimension_scores object, findings[] with severity/dimension/location/description/fix_suggestion, medical_accuracy_flags[], logging_status; optional parallel JSON file path if dual-output added.",
+      "required_inputs": [
+        "production_run_id",
+        "artifact_paths",
+        "content_type",
+        "producing_specialist",
+        "run_mode (default | ad-hoc)"
+      ],
+      "notes": "Headless delegation from Marcus is already specified; biggest gap is machine-readable report parity and documented request schema for non-Marcus automators. Interactive value remains for calibration and exploratory audits."
+    },
+    "top_insights": [
+      {
+        "title": "Add structured IO alongside Markdown reports",
+        "detail": "The agent is orchestration-friendly at the input boundary for Marcus but output remains prose-first, which limits reliable chaining in agents and CI.",
+        "action": "Publish a minimal JSON (or JSONL) report shape next to feedback-format.md and optionally emit it in headless runs."
+      },
+      {
+        "title": "Infer or default cross-artifact checks",
+        "detail": "Pairing consistency is high value for medical courseware; optional cross_artifact_refs risks silent weakening of that value.",
+        "action": "Default on pairing heuristics when multiple paths are co-submitted unless opted out."
+      },
+      {
+        "title": "First-message and ad-hoc clarity",
+        "detail": "Greeting and persistence rules are the main UX cliffs for humans; the rubric itself is strong.",
+        "action": "Branch greeting on empty history; one-line ad-hoc vs default persistence reminder on activation."
+      }
+    ]
+  },
+  "summary": {
+    "total_findings": 14,
+    "by_severity": {
+      "high-opportunity": 2,
+      "medium-opportunity": 8,
+      "low-opportunity": 4
+    },
+    "by_category": {
+      "edge_case": 3,
+      "experience_gap": 2,
+      "delight_opportunity": 2,
+      "assumption_risk": 1,
+      "journey_friction": 2,
+      "autonomous_potential": 2,
+      "facilitative_pattern": 2
+    },
+    "assessment": "Quinn-R is unusually strong on degradation, dimension clarity, and Marcus headless delegation; the largest creative wins are structured output for pipelines, safer defaults for multi-artifact pairing, and onboarding branches for empty history and ad-hoc persistence expectations."
+  }
+}

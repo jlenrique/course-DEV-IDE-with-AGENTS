@@ -1,0 +1,268 @@
+{
+  "scanner": "enhancement-opportunities",
+  "skill_path": "skills/bmad-agent-gamma",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 69,
+      "severity": "medium-opportunity",
+      "category": "experience-gap",
+      "title": "First-timer meets 'woodshed' and mastery counts without a plain-language onboarding path",
+      "detail": "Interactive activation promises exemplar counts and Gamma defaults but assumes the user already knows what woodshed means, what an exemplar L-level is, and why mastery order matters. A novice opening Gary directly may feel they must choose correctly among capabilities with no guided 'start here' story.",
+      "action": "Add a two-sentence plain-English primer in On Activation or a linked micro-reference: what woodshed does, recommended first step (L1-L2), and that production work usually arrives via Marcus."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 97,
+      "severity": "high-opportunity",
+      "category": "assumption-risk",
+      "title": "Context envelope fields are described in prose but not as a machine-checkable contract",
+      "detail": "Marcus delegation lists production run ID, content type, objectives, constraints, style sections, and exemplar refs — but there is no canonical schema, required vs optional fields, or example envelope. Automators and Marcus implementations may diverge silently; Gary's 'missing context' path is correct but discovery of gaps happens late.",
+      "action": "Add `references/context-envelope-schema.md` (or a YAML example) with required keys, optional keys, and one full golden envelope for headless and orchestrator tests."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 104,
+      "severity": "medium-opportunity",
+      "category": "autonomous-potential",
+      "title": "Structured return to Marcus lacks a versioned output contract for pipelines",
+      "detail": "Outbound bullets name artifact path, scores, parameter decisions, and flags, but chained agents and CI cannot rely on a single parseable shape. The quality-assessment reference shows YAML — production return could drift between sessions or implementers.",
+      "action": "Define a stable `gary_return` YAML/JSON schema (version field, paths relative to project root, explicit enums for recommendation) and reference it from SKILL.md Outbound section."
+    },
+    {
+      "file": "references/content-type-mapping.md",
+      "line": 93,
+      "severity": "low-opportunity",
+      "category": "edge-case",
+      "title": "Templates assume medical physician audience; non-clinical courses still map through medical framing",
+      "detail": "When Marcus passes a non-medical content type or audience, Gary is instructed to pick the closest template — tone and audience strings remain medically scoped, which can skew Gamma's text generation until manually overridden.",
+      "action": "Add a short 'audience override' note: when envelope.audience differs from template, replace tone/audience in the merged YAML before call; optionally add one non-medical template stub."
+    },
+    {
+      "file": "references/init.md",
+      "line": 21,
+      "severity": "medium-opportunity",
+      "category": "journey-friction",
+      "title": "Gamma API pre-flight failure leaves the first-run script underspecified",
+      "detail": "First interaction requires confirming Gamma connectivity via GammaClient or themes list, but there is no prescribed user-visible fallback if credentials are missing, .env is denied, or the client errors. The user may hit a dead end after sidecar setup.",
+      "action": "Document a graceful branch: report exact failure class (auth, network, missing dependency), point to gamma-api-mastery setup, and offer 'defer API check; study exemplar briefs only' if appropriate."
+    },
+    {
+      "file": "references/style-guide-integration.md",
+      "line": 43,
+      "severity": "medium-opportunity",
+      "category": "edge-case",
+      "title": "Write-back depends on production-coordination skill script that may be absent in some workspaces",
+      "detail": "Learned preferences route through `manage_style_guide.py` in another skill. In a minimal checkout, Gary can read defaults but silently cannot persist learning, creating success amnesia across sessions without an obvious in-skill warning.",
+      "action": "In SG reference, add a detect-and-report step: if script path missing, log to Marcus return flags and append a one-line user-facing note to use manual style guide edit or install coordination skill."
+    },
+    {
+      "file": "references/exemplar-study.md",
+      "line": 15,
+      "severity": "medium-opportunity",
+      "category": "facilitative-pattern",
+      "title": "Doc refresh is mandatory before woodshed but has no soft gate or time-box",
+      "detail": "Users jumping into reproduction may wait on changelog + Ref MCP scans every time. There is no 'use last refresh if less than N days' or 'anything else before I scan the API?' style elicitation — which can feel like ceremony for experts or stall creative flow.",
+      "action": "Add optional fast path: if `last_refreshed` within policy window and user or envelope says `skip_doc_refresh: true`, skip to exemplar analysis with an explicit risk flag in the return payload."
+    },
+    {
+      "file": "references/quality-assessment.md",
+      "line": 6,
+      "severity": "medium-opportunity",
+      "category": "facilitative-pattern",
+      "title": "Quality assessment is single-lens self-scoring with no parallel review pattern",
+      "detail": "Gary scores dimensions honestly, but high-stakes slides might benefit from a second lens (skeptic on embellishment, accessibility spotter) before Marcus approves. The skill does not suggest fan-out or cross-check prompts.",
+      "action": "Optional finalization step: 'parallel review' mode — second pass with rubric-only adversarial prompt or delegation hint to a QA skill when overall_score < threshold or embellishment_detected."
+    },
+    {
+      "file": "references/save-memory.md",
+      "line": 11,
+      "severity": "low-opportunity",
+      "category": "journey-friction",
+      "title": "Session end and 'meaningful learning' are subjective for when to save",
+      "detail": "Save triggers include 'session end if meaningful learning' without cues for compaction-heavy chats or user abort mid-woodshed. Risk of lost transient index context or over-writing ad-hoc sections without user confirmation.",
+      "action": "Clarify: on explicit user 'stop' or new delegation, flush transient ad-hoc section; offer one-line confirm before large patterns.md append after failed runs."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 14,
+      "severity": "high-opportunity",
+      "category": "delight-opportunity",
+      "title": "Power users with a complete envelope still share the same activation narrative as explorers",
+      "detail": "Experts who already have YAML parameters, a frozen style guide, and a content type want to skip greeting and mastery small talk. Today both modes are described but there is no crisp 'expert one-shot' trigger phrase or envelope flag to jump straight to invoke gamma-api-mastery + QA return.",
+      "action": "Document `expert_fast_path` or equivalent: if envelope contains `parameters_ready: true` and full Gamma parameter block, skip interactive greet and woodshed prompts; execute merge order and return."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 46,
+      "severity": "low-opportunity",
+      "category": "edge-case",
+      "title": "User who invoked Gary by mistake has no scripted wrong-agent recovery",
+      "detail": "Confused users asking for PRD or brainstorming get a specialist tuned for Marcus and Gamma. There is no single-line redirect to bmad-help or Marcus beyond Gary staying in persona.",
+      "action": "Add a capability row or activation bullet: if request clearly outside slides/Gamma, respond once with correct routing suggestion and stop."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 26,
+      "severity": "low-opportunity",
+      "category": "experience-gap",
+      "title": "Ad-hoc mode read-only sidecar is correct but invisible to the delegating user",
+      "detail": "Marcus or the user may not realize experimental runs do not update patterns — leading to false expectations that Gary 'learned' from a scratch generation.",
+      "action": "Require Gary to state mode in structured return: `memory_mode: default|ad-hoc` and whether patterns were written."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 46,
+      "severity": "strength",
+      "category": "facilitative-pattern",
+      "title": "Strength: degradation handling is explicit and actionable across API, quality, circuit breaker, and missing context",
+      "detail": "Failure modes tie to concrete next steps (retry timing, stronger instructions, Canva fallback, structured failure-report). This reduces dead-end frustration compared to agents that only report errors.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 75,
+      "severity": "strength",
+      "category": "facilitative-pattern",
+      "title": "Strength: capability table with codes and reference routes supports progressive disclosure well",
+      "detail": "PR/SG/QA/ES/CT/SM map cleanly to files without loading everything at once — good for token efficiency and for models that load references on demand.",
+      "action": ""
+    }
+  ],
+  "assessments": {
+    "skill_understanding": {
+      "purpose": "Act as Gary, a Gamma API slide specialist for medical education: merge style guide and envelopes, recommend parameters, invoke gamma-api-mastery, assess quality, persist learning to a memory sidecar, and support woodshed exemplar mastery.",
+      "primary_user": "Marcus orchestrator (primary production path); course authors and power users for direct woodshed, debugging, and exemplar study.",
+      "assumptions": [
+        "Marcus supplies a sufficiently complete context envelope when delegating.",
+        "style_guide.yaml and course_context.yaml exist at expected paths when needed.",
+        "Audience is physician-oriented unless envelope overrides; templates are medically framed.",
+        "gamma-api-mastery and optionally woodshed and production-coordination tooling are available.",
+        "English/default BMad language config unless config overrides."
+      ]
+    },
+    "user_journeys": [
+      {
+        "archetype": "first-timer",
+        "summary": "Opens Gary, sees mastery counts and woodshed — may not know execution order or that Marcus normally delegates; may wander into references without a single happy path.",
+        "friction_points": [
+          "Jargon (woodshed, L-levels) without inline definitions",
+          "Choosing between interactive vs headless description"
+        ],
+        "bright_spots": [
+          "Clear Does Not Do and Principles",
+          "init.md for first-run sidecar creation"
+        ]
+      },
+      {
+        "archetype": "expert",
+        "summary": "Has parameters and content ready; wants one-shot generation and terse return — may find greeting and exemplar status noise.",
+        "friction_points": [
+          "No documented expert fast-path flag",
+          "Doc refresh before every woodshed cycle"
+        ],
+        "bright_spots": [
+          "Parameter-precise communication style",
+          "Merge order documented in SG and PR"
+        ]
+      },
+      {
+        "archetype": "confused",
+        "summary": "Invoked Gary for non-slide work; Gary stays in specialist persona.",
+        "friction_points": [
+          "No explicit handoff line to general help or PM agents"
+        ],
+        "bright_spots": [
+          "Narrow scope reduces misleading answers if user corrects intent"
+        ]
+      },
+      {
+        "archetype": "edge-case",
+        "summary": "Valid but odd input — new content type, contradictory style overrides, or preserve mode with very long input.",
+        "friction_points": [
+          "Closest-template heuristic may miss pedagogical intent",
+          "Gamma embellishment despite constraints"
+        ],
+        "bright_spots": [
+          "CT capability documents extension to patterns.md",
+          "Embellishment detection in QA"
+        ]
+      },
+      {
+        "archetype": "hostile-environment",
+        "summary": "Missing files, API down, Ref MCP unavailable for doc refresh, or write-back script missing.",
+        "friction_points": [
+          "init pre-flight under-specified",
+          "Silent inability to persist style learning if script missing"
+        ],
+        "bright_spots": [
+          "Degradation section covers 429 and quality failures",
+          "Ad-hoc mode protects production memory"
+        ]
+      },
+      {
+        "archetype": "automator",
+        "summary": "CI or subagent passes envelope and expects deterministic artifact path and parseable status.",
+        "friction_points": [
+          "No versioned envelope/return schema",
+          "Human gates implied for woodshed and approval write-back"
+        ],
+        "bright_spots": [
+          "Headless delegation path described in On Activation",
+          "YAML examples for parameters and quality_assessment"
+        ]
+      }
+    ],
+    "autonomous_assessment": {
+      "potential": "partially-adaptable",
+      "hitl_points": 9,
+      "auto_resolvable": 4,
+      "needs_input": 5,
+      "suggested_output_contract": "Parseable object (YAML or JSON) with keys: schema_version, production_run_id, artifact_paths[], quality_assessment (dimensions + embellishment flags), parameter_decisions, recommendations[], memory_mode, errors[]. Optional markdown summary for human inbox.",
+      "required_inputs": [
+        "content_type or equivalent pedagogical description",
+        "learning_objectives or explicit waiver flag from Marcus",
+        "source content or inputText",
+        "production_run_id",
+        "style_guide path readable or embedded overrides"
+      ],
+      "notes": "Production delegation from Marcus is largely automatable when the envelope is complete. Woodshed, doc refresh policy, user approval for style write-back, and ambiguous objectives remain fundamentally HITL. An explicit headless/expert flag would unlock most friction for pipelines without diluting interactive mastery flows."
+    },
+    "top_insights": [
+      {
+        "title": "Version the context envelope and Gary return payload",
+        "detail": "Orchestration and CI reliability jump when Marcus and Gary agree on required keys and a single parseable return shape.",
+        "action": "Add small schema docs plus one golden example for each direction; reference them from SKILL.md."
+      },
+      {
+        "title": "Expert fast-path is the highest-leverage delight win",
+        "detail": "Reduces perceived latency and token cost for repeat users who already mastered parameters.",
+        "action": "Document envelope flag and behavior: skip greet, run merge + API + QA, return."
+      },
+      {
+        "title": "Optional second-lens QA before handoff",
+        "detail": "Protects publication quality when self-scores are borderline or embellishment is detected.",
+        "action": "Gate a cheap adversarial rubric pass on threshold triggers rather than always-on cost."
+      }
+    ]
+  },
+  "summary": {
+    "total_findings": 14,
+    "by_severity": {
+      "high-opportunity": 2,
+      "medium-opportunity": 7,
+      "low-opportunity": 3,
+      "strength": 2
+    },
+    "by_category": {
+      "edge_case": 3,
+      "experience_gap": 2,
+      "delight_opportunity": 1,
+      "assumption_risk": 1,
+      "journey_friction": 2,
+      "autonomous_potential": 1,
+      "facilitative_pattern": 4
+    },
+    "assessment": "Gary is unusually strong on failure handling, scope discipline, and progressive disclosure. The biggest creative wins are formalizing Marcus↔Gary contracts for automation, adding an expert one-shot path, and softening first-run and doc-refresh friction without weakening API safety. Woodshed remains rightly interactive; production delegation can become pipeline-grade with minimal persona change."
+  }
+}

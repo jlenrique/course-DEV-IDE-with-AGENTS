@@ -124,7 +124,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 13. Marcus builds a **production plan**: what needs to be created, which specialist handles it, what quality gates apply
 14. Marcus presents the plan to the user for confirmation
 
-### Phase 4: Specialist Delegation (Marcus → Gamma Specialist)
+### Phase 4: Specialist Delegation (Marcus → Gary, Gamma Specialist)
 
 15. Marcus builds a **context envelope** containing:
     - Production run ID
@@ -134,8 +134,8 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
     - User constraints (from conversation)
     - Relevant style bible sections (color palette, typography, Gamma prompt template)
     - Applicable exemplar references
-16. Marcus delegates to the `gamma-specialist` agent
-17. The Gamma specialist loads its own SKILL.md, reads `references/` for parameter mastery details
+16. Marcus delegates to Gary (`gamma-specialist` agent)
+17. Gary loads his own SKILL.md, reads `references/` for parameter mastery details
 18. The specialist determines optimal Gamma parameters:
     - First: check `state/config/style_guide.yaml` for saved preferences
     - Second: apply context inference (medical content → specific LLM, style, format choices)
@@ -143,7 +143,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 
 ### Phase 5: Tool Execution (Specialist → Skill → API Client)
 
-19. The Gamma specialist invokes Python scripts in `skills/gamma-api-mastery/scripts/`
+19. Gary invokes Python scripts in `skills/gamma-api-mastery/scripts/`
 20. The script instantiates `GammaClient` from `scripts/api_clients/gamma_client.py`
 21. `GammaClient.generate()` sends the API request with all parameters
 22. `GammaClient.wait_for_generation()` polls until completion (3s intervals, up to 120 attempts)
@@ -156,8 +156,8 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
     - Artifact path (where the presentation was saved)
     - Quality self-assessment score
     - Parameter decisions made (for saving to style guide)
-26. Marcus invokes the `quality-reviewer` agent (planned) for independent quality validation
-27. Quality reviewer checks: brand consistency, accessibility (WCAG 2.1 AA), learning objective alignment
+26. Marcus invokes Quinn-R (`quality-reviewer` agent, active) for independent quality validation
+27. Quinn-R checks: brand consistency, accessibility (WCAG 2.1 AA), learning objective alignment, instructional soundness, content accuracy flags
 
 ### Phase 7: Human Checkpoint (Marcus → User)
 
@@ -361,7 +361,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `gamma-api-mastery` | planned | Epic 3 |
 | `elevenlabs-audio` | planned | Epic 3 |
 | `canvas-deployment` | planned | Epic 3 |
-| `quality-control` | planned | Epic 4 |
+| `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
 
 ---
 
@@ -420,6 +420,7 @@ class NewToolClient(BaseAPIClient):
 | `CanvasClient` | `canvas_client.py` | Bearer token | Pagination (Link header), modules, pages, assignments |
 | `QualtricsClient` | `qualtrics_client.py` | X-API-TOKEN (raw) | Surveys, questions, response export |
 | `PanoptoClient` | `panopto_client.py` | Bearer (OAuth2) | Folders, sessions, OAuth2 token refresh |
+| `KlingClient` | `kling_client.py` | JWT (HS256 from access_key+secret_key) | Text-to-video, image-to-video, lip-sync, extend, polling, download |
 
 ---
 
@@ -479,9 +480,31 @@ This is where you come in. The three-layer architecture means there are three di
 5. **Register with Marcus** — Add the agent to Marcus's External Specialist Agents table
 6. **Party Mode validation** — Team reviews for accuracy and completeness
 
-**Template:** Use `skills/bmad-agent-marcus/SKILL.md` as the canonical example of a fully-built agent with identity, communication style, principles, activation sequence, and capability routing.
+**Templates:**
+- **Orchestrator agent:** `skills/bmad-agent-marcus/SKILL.md` — identity, communication style, principles, activation, capability routing
+- **Specialist agent:** `skills/bmad-agent-gamma/SKILL.md` (Gary) — delegation protocol, context envelope schema, degradation handling, dual activation (headless + interactive)
+- **Mastery skill:** `skills/gamma-api-mastery/` — SKILL.md + parameter catalog + context optimization + evaluator + operations scripts
+- **Evaluator:** `skills/gamma-api-mastery/scripts/gamma_evaluator.py` — extends BaseEvaluator with medium-specific extraction and comparison
 
 **Why coaching matters:** Agent definitions require domain expertise (medical education, physician audience) combined with architectural and tool knowledge. The Party Mode team provides rigor; the user provides instructional vision.
+
+### Evaluator Design Requirements (Lessons from Story 3.1)
+
+Every specialist agent's evaluator MUST follow these requirements, established through Gary's woodshed debugging:
+
+1. **Guide the tool's intelligence — never suppress it.** Rich instructions describing the desired visual/audio/structural outcome outperform restrictive constraints. Each tool has a core creative strength; work with it.
+
+2. **Extract and compare actual output.** The evaluator must perform medium-specific output extraction (PDF text, audio duration, image analysis) and compare against source content. "Did a file download?" is not a quality check.
+
+3. **Score based on content coverage — not exact match.** Check that source key words and phrases appear in the reproduction. Tool enhancements (sub-descriptions, visual accents, structural formatting) are usually beneficial, not failures.
+
+4. **Use a cheap quality signal.** File size (slides), duration vs word count (audio), dimensions (images), question count (surveys) — instant proxies for quality that cost nothing.
+
+5. **Separate woodshed from production QA.** Woodshed compares against a source exemplar (tool control). Production QA compares against the context envelope (did the agent produce what Marcus asked for). Same rubric dimensions, different reference point.
+
+6. **Capture know-how from production feedback.** The agent's `patterns.md` grows from user checkpoint reviews, not woodshed scores. Real insights emerge from the user saying "excellent" or "fix the density."
+
+See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full reference with per-tool examples.
 
 ### Recipe 4: Refining an Existing Agent's Behavior
 

@@ -89,23 +89,31 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Production run analysis and reports | `run-reporting` | planned | Run ID, chronology data |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
 | Pull from Notion, read from Box Drive, write feedback | `source-wrangling` | planned | Notion page IDs, Box Drive paths, feedback content |
+| Tool API doc refresh, research, validation | `tech-spec-wrangler` | planned (Story 3.8) | Tool name, doc-sources.yaml path, optional research query |
+| Exemplar study, reproduction, comparison, regression | `woodshed` | active | Tool name, exemplar ID, evaluator reference |
 
 ### External Specialist Agents
 
 | Content Domain | Target Agent | Status | Style Bible Context Passed |
 |----------------|-------------|--------|---------------------------|
-| Slide/presentation generation | `gamma-specialist` | planned | Color palette, typography, visual hierarchy |
-| Voice synthesis and audio production | `elevenlabs-specialist` | planned | Voice/tone standards |
-| LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned | Allocation policy, exemplar matrices |
-| Instructional design and content drafting | `content-creator` | planned | Learning objectives, Bloom's level, exemplars |
-| Quality assurance and standards validation | `quality-reviewer` | planned | Full style bible as primary rubric |
-| Multi-modal content assembly | `assembly-coordinator` | planned | Asset manifest, pairing requirements |
+| Instructional design, Pass 1 (lesson plan + slide brief) | `content-creator` (Irene) | active | Learning objectives, Bloom's level, content type, module/lesson, user constraints |
+| Instructional design, Pass 2 (narration script + segment manifest) | `content-creator` (Irene) | active | Same + `gary_slide_output` (PNG paths + visual descriptions) |
+| Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy; Gary presents theme/template options before generating |
+| Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, segment manifest; Kira always produces silent video |
+| Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | planned (Story 3.4) | Voice/tone standards, segment manifest |
+| Descript composition assembly guide | `compositor` | planned (Story 3.5) | Completed segment manifest path |
+| Quality assurance — pre-composition pass | `quality-reviewer` (Quinn-R) | active | Segment manifest path, audio/video asset paths, `review_pass: pre-composition` |
+| Quality assurance — post-composition pass | `quality-reviewer` (Quinn-R) | active | Final MP4, VTT paths, `review_pass: post-composition` |
+| LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned (Story 3.6) | Allocation policy, exemplar matrices |
+
+**Descript manual-tool handoff:** After Compositor generates the Descript Assembly Guide (or Marcus constructs it from the manifest), Marcus hands the guide + all asset paths to the user for manual assembly in Descript. This is the only step not agent-executed. See `./references/conversation-mgmt.md` for handoff details.
 
 **Future specialist agents** (not yet built — Marcus gracefully degrades when unavailable):
 
-| Content Domain | Target Agent | Style Bible Context Passed |
-|----------------|-------------|---------------------------|
-| Survey/evaluation creation | `qualtrics-specialist` | Assessment alignment standards |
-| Graphic design and visual assets | `canva-specialist` | Brand identity, visual design system |
+| Content Domain | Target Agent | Status |
+|----------------|-------------|--------|
+| Survey/evaluation creation | `qualtrics-specialist` | planned (Story 3.7) |
+| Graphic design and visual assets | `canva-specialist` | planned (Story 3.8, manual-tool pattern) |
+| Source material ingestion from Notion/Box | `source-wrangler` | planned (Story 3.9) |
 
 When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter decisions to save.

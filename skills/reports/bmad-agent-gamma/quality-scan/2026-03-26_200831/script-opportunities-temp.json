@@ -1,0 +1,145 @@
+{
+  "scanner": "script-opportunities",
+  "skill_path": "skills/bmad-agent-gamma",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 57,
+      "severity": "medium",
+      "category": "extraction",
+      "title": "LLM loads and merges BMAD YAML config on every activation",
+      "detail": "Determinism confidence: high. Estimated token savings: 120-250 per invocation when config is unchanged. Implementation complexity: moderate. Language: python. Could be prepass: yes. Feeds scanner: structure or execution-efficiency prepass. Reusable across skills: yes (shared _bmad/config merge). Help pattern savings: n/a — invoke a small `merge_bmad_config.py --json` (or similar) and pass JSON into context instead of re-reading instructions.",
+      "action": "Add a script that reads `_bmad/config.yaml` and `_bmad/config.user.yaml`, deep-merges keys, applies documented defaults, and emits compact JSON or a one-line summary for the agent."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 67,
+      "severity": "high",
+      "category": "extraction",
+      "title": "Context envelope parsing and field extraction delegated to the LLM",
+      "detail": "Determinism confidence: high for structured envelopes. Estimated token savings: 200-600 per delegation when envelope is YAML/JSON. Implementation complexity: moderate. Language: python. Could be prepass: yes. Feeds scanner: any workflow scanner expecting envelope shape. Reusable across skills: yes (Marcus-style envelopes). Help pattern savings: document schema via script `--help` / `--schema` to avoid inlining field lists in prompts.",
+      "action": "Provide a validator/parser script (e.g. jsonschema or pydantic) that parses the context envelope, lists missing required keys (content type, learning objectives, etc.), and outputs a normalized JSON blob for Gary to reason over."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 70,
+      "severity": "medium",
+      "category": "counting",
+      "title": "Interactive greeting asks the LLM to compute exemplar mastery counts",
+      "detail": "Determinism confidence: certain. Estimated token savings: 80-200 per interactive activation. Implementation complexity: trivial. Language: python. Could be prepass: yes. Feeds scanner: script-opportunities or onboarding prepass. Reusable across skills: yes (any woodshed catalog). Help pattern savings: n/a.",
+      "action": "Script reads `resources/exemplars/gamma/_catalog.yaml`, counts exemplars by status (e.g. mastered vs total), and prints a single line for the greeting."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 73,
+      "severity": "medium",
+      "category": "validation",
+      "title": "Woodshed activation: catalog load and circuit-breaker checks are rule-based",
+      "detail": "Determinism confidence: high. Estimated token savings: 100-400 per woodshed session start. Implementation complexity: moderate. Language: python. Could be prepass: yes. Feeds scanner: execution-deps or workflow integrity. Reusable across skills: partial (woodshed + catalog schema). Help pattern savings: n/a.",
+      "action": "Script loads `_catalog.yaml`, surfaces `circuit_breaker` limits, current attempt tallies from session state file or env, and emits PASS/WARN/BLOCK with reasons — LLM only handles exceptions."
+    },
+    {
+      "file": "references/init.md",
+      "line": 6,
+      "severity": "medium",
+      "category": "structure",
+      "title": "First-run sidecar file and directory initialization described as LLM steps",
+      "detail": "Determinism confidence: certain. Estimated token savings: 150-400 on first run. Implementation complexity: trivial. Language: either. Could be prepass: no (one-shot bootstrap). Feeds scanner: n/a. Reusable across skills: yes (template for other agent sidecars). Help pattern savings: `init_gamma_sidecar.sh --help` can list created paths instead of duplicating in init.md.",
+      "action": "Replace procedural markdown with a bash or Python bootstrap that creates `_bmad/memory/gamma-specialist-sidecar/`, writes stub `index.md`, `patterns.md`, `chronology.md`, and seeds `access-boundaries.md` from a template."
+    },
+    {
+      "file": "references/style-guide-integration.md",
+      "line": 21,
+      "severity": "medium",
+      "category": "transformation",
+      "title": "Documented parameter merge order is a deterministic deep-merge over YAML sources",
+      "detail": "Determinism confidence: high for layers 1-4 when inputs are structured. Estimated token savings: 200-500 per recommendation when style guide + template + envelope are merged mechanically. Implementation complexity: moderate. Language: python. Could be prepass: yes. Feeds scanner: parameter recommendation prepass. Reusable across skills: yes. Help pattern savings: `--merge-order` in script help replaces verbose merge bullets.",
+      "action": "Implement `merge_gamma_parameters.py` that takes paths or stdin for API defaults, style guide slice, CT template, and envelope overrides; outputs resolved YAML/JSON; Gary only adjusts layer 5 (per-request judgment)."
+    },
+    {
+      "file": "references/save-memory.md",
+      "line": 47,
+      "severity": "high",
+      "category": "counting",
+      "title": "Condensation trigger uses numeric thresholds the LLM must estimate by reading files",
+      "detail": "Determinism confidence: certain. Estimated token savings: 300-800 per check if agent would otherwise read full patterns.md. Implementation complexity: trivial. Language: python. Could be prepass: yes. Feeds scanner: token/structure prepass. Reusable across skills: yes (any append-only memory file). Help pattern savings: n/a.",
+      "action": "Script counts entries and/or words in `patterns.md`, compares to 200 / 5000 thresholds, outputs JSON `{condense_recommended, entry_count, word_count}` for the agent to act on without scanning the file body."
+    },
+    {
+      "file": "references/exemplar-study.md",
+      "line": 9,
+      "severity": "high",
+      "category": "preprocessing",
+      "title": "Doc refresh pipeline: read YAML sources, compare dates, flag stale docs",
+      "detail": "Determinism confidence: high for file reads and timestamp comparison; changelog fetch is deterministic given URL. Estimated token savings: 500+ tokens when LLM would otherwise re-walk URLs manually. Implementation complexity: moderate. Language: python. Could be prepass: yes. Feeds scanner: gamma-api-mastery or doc drift scanner. Reusable across skills: yes (any doc-sources.yaml pattern). Help pattern savings: n/a.",
+      "action": "Script reads `doc-sources.yaml`, compares `last_refreshed` to policy or remote Last-Modified, lists stale entries, optionally diffs cached vs fetched TOC — LLM only interprets ambiguous API semantics."
+    },
+    {
+      "file": "references/exemplar-study.md",
+      "line": 19,
+      "severity": "medium",
+      "category": "extraction",
+      "title": "Structured fields from exemplar brief.md listed for manual extraction",
+      "detail": "Determinism confidence: moderate (depends on brief.md conventions). Estimated token savings: 150-400 per exemplar when headings are stable. Implementation complexity: moderate. Language: python. Could be prepass: yes. Feeds scanner: exemplar study prepass. Reusable across skills: partial. Help pattern savings: n/a.",
+      "action": "Parser script extracts frontmatter and/or fixed heading sections from `brief.md` into JSON (layout pattern, pedagogical type, agent guidance); LLM retains visual analysis of `source/` artifacts only."
+    },
+    {
+      "file": "references/exemplar-study.md",
+      "line": 56,
+      "severity": "medium",
+      "category": "comparison",
+      "title": "Markdown exemplar table duplicates authoritative _catalog.yaml",
+      "detail": "Determinism confidence: certain for drift detection. Estimated token savings: 50-150 per edit cycle (avoid human/LLM sync errors). Implementation complexity: trivial. Language: python. Could be prepass: yes. Feeds scanner: structure scanner. Reusable across skills: yes. Help pattern savings: n/a.",
+      "action": "CI or script generates the markdown table from `_catalog.yaml`, or lints that table rows match YAML ids — single source of truth."
+    },
+    {
+      "file": "references/quality-assessment.md",
+      "line": 29,
+      "severity": "medium",
+      "category": "postprocessing",
+      "title": "quality_assessment YAML structure could be validated after LLM fills scores",
+      "detail": "Determinism confidence: certain. Estimated token savings: 100-300 per return when invalid shape would trigger retries. Implementation complexity: trivial. Language: python. Could be prepass: no. Feeds scanner: postprocessing hook for Marcus. Reusable across skills: yes. Help pattern savings: jsonschema/yamllint errors replace long 'format' prose in prompts over time.",
+      "action": "Add validation script (jsonschema or pydantic) for the documented `quality_assessment` object including required dimension keys and 0.0-1.0 bounds."
+    },
+    {
+      "file": "references/parameter-recommendation.md",
+      "line": 48,
+      "severity": "low",
+      "category": "postprocessing",
+      "title": "Parameter recommendation YAML block is schema-validatable",
+      "detail": "Determinism confidence: certain. Estimated token savings: 50-120 per invocation. Implementation complexity: trivial. Language: python. Could be prepass: no. Feeds scanner: optional. Reusable across skills: partial (Gamma-specific). Help pattern savings: n/a.",
+      "action": "Reuse or extend the same schema validator for `parameters` / `reasoning` blocks before handoff to gamma-api-mastery."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 9,
+      "severity": "low",
+      "category": "structure",
+      "title": "Sidecar expected file layout could be linted without LLM inspection",
+      "detail": "Determinism confidence: certain. Estimated token savings: 80-150 when diagnosing misconfigured repos. Implementation complexity: trivial. Language: either. Could be prepass: yes. Feeds scanner: structure-capabilities prepass. Reusable across skills: yes. Help pattern savings: n/a.",
+      "action": "Script verifies `gamma-specialist-sidecar/` contains `index.md`, `patterns.md`, `chronology.md`, `access-boundaries.md` and reports missing files."
+    }
+  ],
+  "assessments": {
+    "existing_scripts": []
+  },
+  "summary": {
+    "total_findings": 13,
+    "by_severity": {
+      "high": 3,
+      "medium": 8,
+      "low": 2
+    },
+    "by_category": {
+      "extraction": 3,
+      "counting": 2,
+      "validation": 1,
+      "structure": 2,
+      "transformation": 1,
+      "preprocessing": 1,
+      "comparison": 1,
+      "postprocessing": 2
+    },
+    "assessment": "Estimated aggregate savings: roughly 2.0k–4.5k tokens per full session (activation + delegation + woodshed + save-memory checks) if prepass scripts supply merged config, envelope validation, catalog metrics, doc-refresh status, and patterns.md size JSON. Highest-value targets: context envelope parse/validate (SKILL.md), doc refresh staleness pipeline (exemplar-study.md), and patterns.md condensation metrics (save-memory.md). Six findings are strong prepass candidates for LLM scanners or orchestrators; the agent has no scripts/ folder yet, so no duplicate-risk with existing automation. Parameter and quality YAML validators double as standalone lints for CI."
+  }
+}

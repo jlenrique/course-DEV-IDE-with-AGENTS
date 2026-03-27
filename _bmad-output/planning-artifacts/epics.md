@@ -667,9 +667,29 @@ So that I can experiment freely without impacting production state, or work in f
 
 ## Epic 3: Core Tool Integrations
 
-**Goal**: Users can leverage Gamma, ElevenLabs, and Canvas through intelligent specialty agents with complete tool mastery, parameter intelligence, and skills-based integration.
+**Goal**: Users can leverage Gamma, ElevenLabs, and Canvas through intelligent specialty agents with complete tool mastery, parameter intelligence, and skills-based integration. Each agent proves its competence through **exemplar-driven development**: studying real exemplar artifacts, reproducing them programmatically via API/MCP, and passing structured comparison against the originals. The shared **woodshed skill** (`skills/woodshed/`) provides the study → reproduce → compare → reflect → register workflow with detailed run logging, artifact retention, reflection protocols, and circuit breaker safeguards.
 
 **FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR61, FR62, FR63, FR64, FR65, FR71, FR72, FR73, FR74
+
+**Exemplar-Driven Acceptance Model**: For every specialist agent in this epic, the definition of "tool mastery" includes:
+1. Juan provides exemplar artifact(s) in `resources/exemplars/{tool}/{id}/`
+2. The agent studies the exemplar (brief + source) and derives a reproduction spec
+3. The agent reproduces the exemplar programmatically through the tool's API/MCP
+4. The reproduction is compared against the original using the rubric in `resources/exemplars/_shared/comparison-rubric-template.md`
+5. Passing the rubric = the agent has demonstrated real competence, not just API connectivity
+6. All reproduction attempts (pass and fail) are retained with detailed run logs for audit and improvement
+7. Between failed attempts, the agent reflects on root causes and predicts improvements before retrying
+8. If the agent cannot master an exemplar after the circuit breaker limit (7 total attempts), it produces a structured failure report for human review
+
+**Evaluator Design Requirements (from Story 3.1 — Gary/Gamma)**: Every specialist evaluator MUST:
+1. **Guide the tool's intelligence — never suppress it.** Rich instructions describing the desired outcome outperform restrictive constraints. Each creative tool has a core strength; suppressing it produces worse output than guiding it. (E.g., telling Gamma "no images, no additions" produces bare text; telling it "two-column comparison with medical icons" produces professional slides.)
+2. **Extract and compare actual output.** Medium-specific output extraction (PDF text, audio speech-to-text, image OCR, survey JSON parsing) — not just "did a file download?" A rubber-stamp evaluator that checks process compliance gives false confidence.
+3. **Score based on content coverage — not exact text match.** Source key words and phrases should appear in the reproduction, but tool enhancements (sub-descriptions, visual accents, structural formatting) are usually beneficial. Only flag additions that change meaning or violate the professional aesthetic.
+4. **Use a cheap quality signal.** File size (slides: 8KB=bad, 50KB+=good), audio duration vs word count, image dimensions, question count vs objectives — instant proxies appropriate to each medium.
+5. **Separate woodshed from production QA.** Woodshed compares against a source exemplar (tool control training). Production QA compares against the context envelope from Marcus (did the agent produce what was asked for). Same rubric dimensions, different reference point. Woodshed never appears in production runs.
+6. **Capture know-how from production feedback.** The memory sidecar's `patterns.md` grows from user checkpoint reviews, not woodshed scores. The most valuable patterns come from the user saying "excellent" or "fix the density."
+
+See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full reference with per-tool examples.
 
 ### Story 3.1: Gamma Specialist Agent & Mastery Skill
 
@@ -702,43 +722,270 @@ So that presentation slides are created with optimal parameters matching my styl
 **And** the agent reads style guide preferences from `state/config/style_guide.yaml` and applies them automatically
 **And** `_bmad/memory/gamma-specialist-sidecar/` is initialized with index.md, patterns.md, and access-boundaries.md
 **And** Party Mode team reviews completed agent structure for accuracy and completeness
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Gamma API → returns slides
+**And** at least one exemplar exists in `resources/exemplars/gamma/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Gamma API using the woodshed workflow (study → reproduce → compare → pass rubric)
+**And** the reproduction attempt produces a detailed `run-log.yaml` capturing exact API call, prompt, response, and comparison conclusion
+**And** both the reproduced artifact and the run log are retained in `reproductions/{timestamp}/`
 
-### Story 3.2: ElevenLabs Specialist Agent & Mastery Skill
+### Story 3.2: Content Creator Agent & Quality Reviewer Agent
 
 As a user,
-I want an ElevenLabs specialist agent with voice synthesis mastery and audio optimization,
-So that natural voiceover is generated with optimal voice and timing parameters.
+I want content creation and quality review specialist agents,
+So that instructional content is pedagogically designed by a specialist who delegates writing to expert BMad agents, and all production outputs are systematically validated for quality.
 
-**bmad-agent-builder Discovery Answers:**
+**Dependency rationale:** Content is king in higher education. Written content (narration scripts, dialogue scripts, slide briefs, lesson plans) is the prerequisite for all downstream production. The pipeline is: Content Creator (scripts/lesson plans) → Gary (slides) → ElevenLabs (narration) → Kling (video) → Assembly → Quality Reviewer. This story must precede all tool-specialist work.
 
-**Phase 1 - Intent**: Build an ElevenLabs specialist agent that masters voice synthesis for medical education content. It knows every voice parameter, understands which voices and settings work best for authoritative yet warm medical narration, and learns optimal configurations for different content types.
+**Validation model:** No exemplars. No woodshed. The Content Creator produces one sample of each output artifact type on a designated topic, staged in `course-content/staging/`. Acceptance = human review (Juan) confirms instructional soundness and prose quality. This is appropriate because the Content Creator produces *written content*, not API-generated artifacts.
 
-**Phase 2 - Capabilities**: External skills primarily. Internal: voice selection recommendation, pronunciation optimization for medical terminology, timing estimation. External skills: elevenlabs-audio skill with scripts that call the working ElevenLabs API client from Epic 1.
+**bmad-agent-builder Discovery Answers (Content Creator):**
+
+**Phase 1 - Intent**: Build an instructional design agent ("Instructional Architect") whose unique value is **pedagogical expertise** — Bloom's taxonomy, cognitive load theory, learning objective alignment, content sequencing, assessment design. The agent does NOT write prose itself; it is the **instructional design director** who tells expert writers *what* to write, *why*, and *how it fits the learning arc*. It delegates all writing to three BMad specialist agents who are better prose craftspeople, reviews their output for pedagogical soundness, and assembles the final structured artifacts for downstream production.
+
+**Content is KING — Instructional Design Director Model:**
+The Content Creator's unique contribution is **instructional design chops**. It is the pedagogical authority that directs the writing team:
+- **Paige (Tech Writer)** — delegated for precise, structured explanatory content (procedures, protocols, technical descriptions, data-driven explanations)
+- **Sophia (Storyteller)** — delegated for compelling narratives (case study dialogues, patient vignettes, first-person clinical explainers, emotional engagement pieces)
+- **Caravaggio (Presentation Expert)** — delegated for slide narrative design (visual hierarchy advice, slide-script pairing, presentation flow, audience attention sequencing)
+- **Editorial review agents** (`bmad-editorial-review-prose`, `bmad-editorial-review-structure`) — for polishing all written output before downstream handoff
+
+The Content Creator provides each writer with: learning objectives, target Bloom's level, cognitive load constraints, audience profile, and pedagogical intent. The writers produce beautiful prose. The Content Creator reviews for pedagogical alignment, assembles into structured artifact templates, and hands off to downstream specialists (Gary, ElevenLabs, Kling, Qualtrics).
+
+**Phase 2 - Capabilities**: Primarily instructional design expertise with strategic delegation. Internal: instructional analysis, learning objective decomposition, Bloom's taxonomy application, cognitive load management, content sequencing, assessment alignment, quality review of delegated prose for pedagogical soundness. External: delegates writing to Paige (technical), Sophia (narrative), Caravaggio (slide design), editorial review agents (polish).
 
 **Phase 3 - Requirements:**
-- **Identity**: "Voice Director" - an audio production expert specializing in educational narration
-- **Communication Style**: Audio-aware, describes voice qualities vividly. Explains voice choices with audience psychology reasoning. Concise recommendations with clear justification.
-- **Principles**: (1) Medical terminology pronunciation accuracy is non-negotiable. (2) Warm professionalism for physician audience. (3) Pacing supports comprehension, not just coverage. (4) Style guide voice preferences are always applied first. (5) Learn which voice configurations produce the best listener engagement.
-- **Memory**: Sidecar with patterns.md tracking voice → content type effectiveness, pronunciation exceptions, timing patterns that work.
-- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references. Write: `_bmad/memory/elevenlabs-specialist-sidecar/`, audio output directories. Deny: `.env`, other agent sidecars.
+- **Identity**: "Instructional Architect" - a pedagogical expert who designs content for maximum learning impact and directs writing specialists
+- **Communication Style**: Educational, precise about learning science. Explains structural decisions with pedagogical reasoning. Collaborative with the human instructor's vision. Clear about what to delegate and why.
+- **Principles**: (1) Every content element must trace to a learning objective. (2) Structure supports cognitive load management. (3) Engagement patterns serve comprehension, not entertainment. (4) Bloom's taxonomy guides activity design. (5) Respect the instructor's subject matter expertise. (6) Own the pedagogy, delegate the prose — the best instructional design + the best writing = the best content.
+- **Memory**: Sidecar tracking content patterns, effective structures, learning objective mapping approaches, script-to-slide pairing patterns, which BMad writers produce best results for which content types.
+- **Access Boundaries**: Read: `state/config/`, course content, learning objectives, style bible. Write: `_bmad/memory/content-creator-sidecar/`, staging content. Deny: `.env`, tool API code.
+
+**Output Artifacts:**
+1. **Lesson Plans** — structured outlines with learning objectives, content blocks, assessment hooks
+2. **Narration Scripts** — per-slide scripts with stage directions (tone, pacing, emphasis) for ElevenLabs (writing delegated to Paige or Sophia based on content type)
+3. **Dialogue Scripts** — multi-speaker scripts with character labels and tone direction for case study scenarios (writing delegated to Sophia)
+4. **Slide Briefs** — per-slide content specifications (text, key visuals, layout hints) for Gary/Gamma (visual flow delegated to Caravaggio)
+5. **Assessment Briefs** — question/answer specs for Qualtrics integration
+6. **First-Person Explainers** — expert-voice content (clinical reasoning walkthrough, procedure narration) (writing delegated to Sophia)
+
+**bmad-agent-builder Discovery Answers (Quality Reviewer):**
+
+**Phase 1 - Intent**: Build a quality validation agent that systematically reviews all production outputs against style guide standards, accessibility requirements, learning objective alignment, and brand consistency. It provides structured pass/fail assessment with improvement suggestions.
+
+**Phase 2 - Capabilities**: Both internal and external. Internal: quality assessment, compliance checking, feedback generation. External skills: quality-control skill with scripts for automated accessibility scanning and brand validation.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Quality Guardian" - a meticulous reviewer who ensures every output meets professional standards
+- **Communication Style**: Precise, structured, constructive. Reports findings with severity levels. Always provides actionable improvement suggestions. Never just identifies problems without solutions.
+- **Principles**: (1) Accessibility compliance is non-negotiable. (2) Brand consistency protects professional credibility. (3) Learning objective alignment validates instructional purpose. (4) Quality feedback must be actionable. (5) Track quality patterns to improve upstream processes.
+- **Memory**: Sidecar tracking quality patterns, common issues, effective standards, calibration with human reviewer preferences.
+- **Access Boundaries**: Read: entire project (needs to review everything). Write: `_bmad/memory/quality-reviewer-sidecar/`, quality audit trail. Deny: `.env`.
 
 **Acceptance Criteria:**
 
-**Given** the ElevenLabs API client from Story 1.7 is working and `bmad-agent-builder` is invoked with discovery answers above
+**Given** `bmad-agent-builder` is invoked twice with the discovery answers above
+**When** the content creator and quality reviewer agents are created through six-phase discovery
+**Then** `skills/bmad-agent-content-creator/SKILL.md` exists with "Instructional Architect" persona whose core expertise is instructional design, not prose writing
+**And** the content creator delegates writing to BMad specialists: Paige (technical content), Sophia (narratives/dialogues/first-person), Caravaggio (slide narrative design)
+**And** the content creator provides each writer with learning objectives, Bloom's level, cognitive load constraints, and pedagogical intent
+**And** the content creator reviews delegated writing for pedagogical alignment before assembling final artifacts
+**And** the agent produces one sample of each output artifact type (lesson plan, narration script, dialogue script, slide brief, assessment brief, first-person explainer) on a designated topic
+**And** sample artifacts are staged in `course-content/staging/` for human review
+**And** output artifacts follow structured templates in `skills/bmad-agent-content-creator/references/`
+**And** `agents/quality-reviewer.md` exists with "Quality Guardian" persona and systematic review capabilities
+**And** the quality reviewer provides structured feedback with severity levels and actionable improvements
+**And** `skills/quality-control/SKILL.md` provides quality validation capability with references for standards
+**And** `skills/quality-control/scripts/` contains Python accessibility checking and brand validation code
+**And** quality review results are logged to the production run audit trail in SQLite
+**And** both agents have memory sidecars initialized with index.md, patterns.md, and access-boundaries.md
+**And** Party Mode team reviews both completed agent structures for accuracy and completeness
+**And** human review (Juan) confirms sample artifacts meet quality standards for instructional soundness and prose quality
+
+### Story 3.3: Kling Video Specialist Agent & API Client
+
+As a user,
+I want a Kling video production specialist agent with AI video generation mastery,
+So that professional B-roll, concept visualizations, slide-to-video transitions, and educational video clips are generated programmatically for course content.
+
+**Validation model:** No exemplars. No woodshed. The agent produces sample videos of each type it supports (B-roll, concept visualization, image-to-video transition, lip-sync overlay) as small examples. Acceptance = human review (Juan) confirms video quality and educational appropriateness. This mirrors the Content Creator validation model — the agent demonstrates capability through sample production, not exemplar reproduction.
+
+**API Client (built within this story):**
+A `scripts/api_clients/kling_client.py` is created extending `BaseAPIClient`, covering:
+- `text_to_video()` — generate video from text prompt (5s or 10s, 720p/1080p, aspect ratios)
+- `image_to_video()` — generate video from image (single frame or first+last frame)
+- `get_task_status()` — poll async task completion
+- `download_video()` — retrieve completed video file
+- `extend_video()` — extend existing video duration
+- `lip_sync()` — apply lip-sync to video with audio
+
+**Auth:** `KLING_ACCESS_KEY` + `KLING_SECRET_KEY` in `.env` (already templated in `.env.example`)
+
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build a Kling specialist agent ("Video Director") that masters AI video generation for medical education content. It understands text-to-video and image-to-video generation, model selection (O1 for quality, 2.6 Pro for audio, 2.5 Turbo for speed), aspect ratio and resolution choices, motion control, lip-sync, and prompt engineering for educational video. The agent produces B-roll, concept visualizations, transition sequences, and talking-head overlays that integrate into the content production pipeline.
+
+**Phase 2 - Capabilities**: External skills primarily. Internal: video prompt engineering, shot composition for educational context, motion direction, model selection based on content requirements. External skills: kling-video skill with scripts that call the Kling API client built in this story.
+
+**Phase 3 - Requirements:**
+- **Identity**: "Video Director" — a video production expert specializing in AI-generated educational video
+- **Communication Style**: Visually descriptive, explains shot choices with educational impact reasoning. Concise about technical parameters, expressive about creative direction. Thinks in sequences and transitions.
+- **Principles**: (1) Every video clip must serve an instructional purpose. (2) Visual clarity for medical content over cinematic flash. (3) B-roll supports the narration, never distracts from it. (4) Model selection balances quality vs. speed vs. cost for each use case. (5) Lip-sync quality must be natural enough for professional presentation. (6) Learn which prompt patterns and model configurations produce the best results for different content types.
+- **Memory**: Sidecar tracking effective prompts per content type, model performance comparisons, successful visual patterns for medical education.
+- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references. Write: `_bmad/memory/kling-specialist-sidecar/`, video output directories. Deny: `.env`, other agent sidecars.
+
+**Video Types for Medical Education:**
+1. **B-roll** — ambient establishing shots (hospital corridors, lab environments, clinical settings) via text-to-video
+2. **Concept Visualizations** — abstract medical concepts made visual (cellular processes, drug mechanisms) via text-to-video with detailed prompts
+3. **Image-to-Video Transitions** — slide images animated into motion sequences for dynamic presentations via image-to-video
+4. **Talking-Head Overlays** — lip-synced presenter clips synchronized with narration audio via lip-sync API
+5. **Transition Sequences** — smooth visual bridges between content sections
+
+**Acceptance Criteria:**
+
+**Given** `KLING_ACCESS_KEY` and `KLING_SECRET_KEY` are configured in `.env`
+**When** the Kling API client and specialist agent are built
+**Then** `scripts/api_clients/kling_client.py` extends `BaseAPIClient` with text-to-video, image-to-video, task polling, download, extend, and lip-sync methods
+**And** the client handles Kling's async task model (submit → poll → download)
+**And** `skills/bmad-agent-kling/SKILL.md` exists with "Video Director" persona and Kling API parameter mastery
+**And** `skills/kling-video/SKILL.md` provides video generation capability routing to the API client
+**And** `skills/kling-video/references/prompt-patterns.md` documents effective prompts for educational video types
+**And** `skills/kling-video/references/model-selection.md` documents model tradeoffs (O1 vs 2.6 Pro vs 2.5 Turbo)
+**And** `skills/kling-video/scripts/` imports and orchestrates `scripts/api_clients/kling_client.py`
+**And** the agent produces sample videos of each type (B-roll, concept viz, image-to-video, lip-sync) for human review
+**And** sample videos are staged in `course-content/staging/` for human review
+**And** `_bmad/memory/kling-specialist-sidecar/` is initialized with index.md, patterns.md, and access-boundaries.md
+**And** Party Mode team reviews completed agent structure for accuracy and completeness
+**And** human review (Juan) confirms sample videos meet quality standards for educational video production
+
+**Note:** Kling API client was originally planned for Story 5.4 (Tier 2 integrations). Pulling it forward to this story since the BaseAPIClient infrastructure is well established and the video production capability is high-priority for the content pipeline.
+
+### Story 3.3.1: Composition Architecture Harmonization & Gary Deck Enhancement
+
+As a developer,
+I want all existing agents, plans, and documentation updated to reflect the composition architecture decisions (Party Mode 2026-03-27), and Gary enhanced with multi-slide deck generation and theme/template preview,
+So that Story 3.4 (ElevenLabs) and the future Compositor story can build on a coherent, harmonized foundation.
+
+**Decision Reference:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
+
+**Key changes:**
+- Irene: two-pass model, segment manifest as 7th artifact type, downstream annotations for ElevenLabs/Kira
+- Quinn-R: two-pass validation, audio quality + composition integrity dimensions
+- Kira: manifest consumption references (visual_source, visual_mode, narration_duration)
+- Marcus: pipeline dependency graph, four HIL gates, Compositor delegation, Descript handoff
+- Gary: deck mode, theme/template preview (TP capability), deck parameter guidance, gary_slide_output return field
+- Architecture doc: Production Composition Pipeline section added
+- Tool inventory: Descript entry updated to sole composition platform
+- Story renumbering: Compositor added as 3.5, Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10
+
+**Story file:** `_bmad-output/implementation-artifacts/3-3-1-composition-architecture-harmonization.md`
+
+---
+
+### Story 3.4: ElevenLabs Specialist Agent & Mastery Skill
+
+As a user,
+I want an ElevenLabs specialist agent with comprehensive audio production mastery covering narration, pronunciation, sound design, and multi-speaker dialogue,
+So that professional audio artifacts are generated with optimal parameters for medical education content.
+
+**Dependency:** Requires narration scripts from Content Creator agent (Story 3.2) or interim scripts from existing BMad agents.
+
+**bmad-agent-builder Discovery Answers:**
+
+**Phase 1 - Intent**: Build an ElevenLabs specialist agent that masters the FULL ElevenLabs API surface for medical education content. Beyond basic TTS, the agent commands: timestamp-synced narration (for VTT subtitle generation and slide synchronization), pronunciation dictionaries (critical for medical terminology), request stitching for multi-slide continuity, sound effects generation, music generation, and multi-speaker dialogue. The agent understands which voices and settings work best for authoritative yet warm medical narration and learns optimal configurations for different content types.
+
+**Phase 2 - Capabilities**: External skills primarily. Internal: voice selection recommendation, pronunciation optimization for medical terminology, timing estimation, audio quality assessment. External skills: elevenlabs-audio skill with scripts that call the working ElevenLabs API client from Epic 1 (expanded with new API methods).
+
+**Phase 3 - Requirements:**
+- **Identity**: "Voice Director" - an audio production expert specializing in educational narration and sound design
+- **Communication Style**: Audio-aware, describes voice qualities vividly. Explains voice choices with audience psychology reasoning. Concise recommendations with clear justification.
+- **Principles**: (1) Medical terminology pronunciation accuracy is non-negotiable. (2) Warm professionalism for physician audience. (3) Pacing supports comprehension, not just coverage. (4) Style guide voice preferences are always applied first. (5) Timestamps are a first-class output, not an afterthought — every narration includes VTT timing data. (6) Request stitching maintains natural flow across multi-slide sequences. (7) Learn which voice configurations produce the best listener engagement.
+- **Memory**: Sidecar with patterns.md tracking voice → content type effectiveness, pronunciation exceptions, timing patterns that work, voice parameter combinations per content type.
+- **Access Boundaries**: Read: `state/config/`, `scripts/api_clients/`, skill references. Write: `_bmad/memory/elevenlabs-specialist-sidecar/`, audio output directories. Deny: `.env`, other agent sidecars.
+
+**API Client Expansion (from Story 1.7 base):**
+The existing `elevenlabs_client.py` must be expanded with:
+- `text_to_speech_with_timestamps()` — returns audio + word-level timing JSON
+- `create_pronunciation_dictionary()` / `add_pronunciation_rules()` — medical terminology management
+- `text_to_sound_effect()` — sound design generation (duration, looping, prompt influence)
+- `text_to_dialogue()` — multi-speaker audio generation (P1 stretch)
+- `generate_music()` — background music (P2 stretch)
+- `get_pronunciation_dictionaries()` / `list_pronunciation_dictionaries()` — dictionary management
+
+**Priority Tiers (from Party Mode brainstorm — March 26, 2026):**
+- **P0 (Must-have):** Slide narration with timestamps + VTT, pronunciation dictionaries, multi-slide request stitching
+- **P1 (MVP stretch):** Case study dialogue (multi-speaker), sound effects package, background music
+- **P2 (Deferred):** Voice cloning, audio annotations, podcast summaries
+- **P3 (Future):** Dubbing/translation, conversational AI tutors, interactive audio quizzes
+
+**Acceptance Criteria:**
+
+**Given** the ElevenLabs API client from Story 1.7 is working (expanded per above) and `bmad-agent-builder` is invoked with discovery answers above
 **When** the ElevenLabs specialist agent is created through six-phase discovery
-**Then** `agents/elevenlabs-specialist.md` exists with "Voice Director" persona and complete ElevenLabs parameter knowledge
-**And** `skills/elevenlabs-audio/SKILL.md` provides audio generation capability routing to the existing API client
+**Then** `skills/bmad-agent-elevenlabs/SKILL.md` exists with "Voice Director" persona and complete ElevenLabs parameter knowledge across all API capabilities
+**And** `skills/elevenlabs-audio/SKILL.md` provides audio generation capability routing to the expanded API client
 **And** `skills/elevenlabs-audio/references/voice-catalog.md` documents available voices with characteristics and suitability for medical content
 **And** `skills/elevenlabs-audio/references/optimization-patterns.md` contains voice optimization for medical education narration styles
-**And** `skills/elevenlabs-audio/scripts/` imports and orchestrates the shared `scripts/api_clients/elevenlabs_client.py`
+**And** `skills/elevenlabs-audio/references/pronunciation-management.md` documents pronunciation dictionary workflow for medical terminology
+**And** `skills/elevenlabs-audio/references/sound-design-patterns.md` documents SFX and music generation patterns for instructional content
+**And** `skills/elevenlabs-audio/scripts/` imports and orchestrates the expanded `scripts/api_clients/elevenlabs_client.py`
+**And** the expanded API client includes methods for timestamps, pronunciation dictionaries, sound effects, and (stub) dialogue/music
 **And** the agent reads style guide voice preferences and applies them automatically
-**And** generated audio includes timing metadata for slide synchronization
+**And** generated narration includes word-level timestamp JSON and paired VTT subtitle track
+**And** the agent uses `previous_request_ids`/`next_request_ids` for multi-slide narration continuity
+**And** a pronunciation dictionary with at least 10 medical terms is created and verified
 **And** `_bmad/memory/elevenlabs-specialist-sidecar/` is initialized for capturing effective voice configurations
 **And** Party Mode team reviews completed agent structure for accuracy and completeness
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls ElevenLabs → returns audio with metadata
+**And** at least one exemplar exists in `resources/exemplars/elevenlabs/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the ElevenLabs API using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
-### Story 3.3: Canvas Specialist Agent & Mastery Skill
+**Exemplar L-Level Progression:**
+- L1: Single-slide narration → script in, MP3 + VTT out, timing verified
+- L2: Multi-slide narration with request stitching (3-5 slides, continuity across segments)
+- L3: Narration + pronunciation dictionary (medical terms pronounced correctly)
+- L4: Case study dialogue (multi-speaker clinical scenario) — P1 stretch
+- L5: Complete slide deck narration suite (full production output set) — future
+
+**ElevenLabsEvaluator Design Requirements:**
+- Extract audio duration + speech-to-text from downloaded MP3
+- Compare STT transcript against source script (word coverage >95%)
+- Score on pronunciation accuracy (medical terms), pacing (130-170 WPM for educational), tone quality
+- Use duration-vs-word-count as cheap quality signal (~150 WPM expected)
+- Verify timestamp completeness and monotonicity when timestamps are used
+- File size sanity check (~1MB/min at 128kbps MP3)
+
+**Brainstorm Reference:** `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
+
+### Story 3.5: Compositor Skill (Descript Assembly Guide)
+
+As a user,
+I want a Compositor skill that reads a completed segment manifest and generates a Descript Assembly Guide,
+So that assembling the final lesson video in Descript is fast, accurate, and reproducible — not manual guesswork.
+
+**Dependency:** Requires a completed segment manifest (all agent write-back fields populated) from a production run with ElevenLabs (Story 3.4) and Kira outputs.
+
+**Design Reference:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
+
+**Scope:**
+- New skill: `skills/compositor/SKILL.md` — reads completed manifest, generates Descript Assembly Guide
+- Descript Assembly Guide format: ordered asset list (file paths), track assignments (V1/A1/A2/A3), timing table (segment start times from narration_duration), music cue instructions (duck/swell/out timestamps), transition specs per segment
+- Marcus integration: Marcus invokes Compositor after Quinn-R pre-composition pass; presents guide + asset paths to user
+- Proof of concept: Execute end-to-end on a real C1-M1 lesson: Irene manifest → ElevenLabs audio → Kira video → Compositor guide → human assembles in Descript → final video
+
+**Acceptance Criteria:**
+
+**Given** a completed segment manifest with all narration_duration, narration_file, visual_file fields populated
+**When** the Compositor skill is invoked with the manifest path
+**Then** `skills/compositor/SKILL.md` exists with clear generation workflow
+**And** a Descript Assembly Guide is generated at `course-content/staging/{lesson_id}/descript-assembly-guide.md`
+**And** the guide includes: ordered asset list, track assignments, timing table, music cues, transition specs
+**And** the guide is human-executable — a non-technical user can follow it in Descript without interpretation
+**And** Marcus references the Compositor in its delegation protocol
+**And** a real C1-M1 lesson is assembled end-to-end as proof of concept
+**And** Party Mode team reviews the completed Compositor and proof-of-concept output
+
+---
+
+### Story 3.6: Canvas Specialist Agent & Mastery Skill
 
 As a user,
 I want a Canvas specialist agent with LMS deployment mastery,
@@ -770,56 +1017,11 @@ So that completed content is deployed to Canvas with proper module structure and
 **And** deployment results include confirmation URLs and Canvas module structure verification
 **And** `_bmad/memory/canvas-specialist-sidecar/` is initialized for capturing deployment patterns
 **And** Party Mode team reviews completed agent structure for accuracy and completeness
-**And** an end-to-end test demonstrates: agent invoked → validates content → calls Canvas API → confirms deployment
+**And** at least one exemplar exists in `resources/exemplars/canvas/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Canvas API using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
-### Story 3.4: Content Creator Agent & Quality Reviewer Agent
-
-As a user,
-I want content creation and quality review specialist agents,
-So that content structuring and systematic quality validation are handled by dedicated agents.
-
-**bmad-agent-builder Discovery Answers (Content Creator):**
-
-**Phase 1 - Intent**: Build a content structuring agent that transforms course notes, outlines, and learning objectives into well-structured educational content. It applies instructional design best practices and ensures all content serves defined learning objectives.
-
-**Phase 2 - Capabilities**: Internal capabilities primarily. Internal: content analysis, narrative structuring, learning objective alignment, Bloom's taxonomy application. External: may leverage existing BMad writing/editing agents for prose quality.
-
-**Phase 3 - Requirements:**
-- **Identity**: "Instructional Architect" - a pedagogical expert who structures content for maximum learning impact
-- **Communication Style**: Educational, precise about learning science. Explains structural decisions with pedagogical reasoning. Collaborative with the human instructor's vision.
-- **Principles**: (1) Every content element must trace to a learning objective. (2) Structure supports cognitive load management. (3) Engagement patterns serve comprehension, not entertainment. (4) Bloom's taxonomy guides activity design. (5) Respect the instructor's subject matter expertise.
-- **Memory**: Sidecar tracking content patterns, effective structures, learning objective mapping approaches.
-- **Access Boundaries**: Read: `state/config/`, course content, learning objectives. Write: `_bmad/memory/content-creator-sidecar/`, staging content. Deny: `.env`, tool API code.
-
-**bmad-agent-builder Discovery Answers (Quality Reviewer):**
-
-**Phase 1 - Intent**: Build a quality validation agent that systematically reviews all production outputs against style guide standards, accessibility requirements, learning objective alignment, and brand consistency. It provides structured pass/fail assessment with improvement suggestions.
-
-**Phase 2 - Capabilities**: Both internal and external. Internal: quality assessment, compliance checking, feedback generation. External skills: quality-control skill with scripts for automated accessibility scanning and brand validation.
-
-**Phase 3 - Requirements:**
-- **Identity**: "Quality Guardian" - a meticulous reviewer who ensures every output meets professional standards
-- **Communication Style**: Precise, structured, constructive. Reports findings with severity levels. Always provides actionable improvement suggestions. Never just identifies problems without solutions.
-- **Principles**: (1) Accessibility compliance is non-negotiable. (2) Brand consistency protects professional credibility. (3) Learning objective alignment validates instructional purpose. (4) Quality feedback must be actionable. (5) Track quality patterns to improve upstream processes.
-- **Memory**: Sidecar tracking quality patterns, common issues, effective standards, calibration with human reviewer preferences.
-- **Access Boundaries**: Read: entire project (needs to review everything). Write: `_bmad/memory/quality-reviewer-sidecar/`, quality audit trail. Deny: `.env`.
-
-**Acceptance Criteria:**
-
-**Given** the bmad-agent-builder is invoked twice with the discovery answers above
-**When** the content creator and quality reviewer agents are created through six-phase discovery
-**Then** `agents/content-creator.md` exists with "Instructional Architect" persona and pedagogical expertise
-**And** the content creator applies Bloom's taxonomy, cognitive load management, and engagement patterns
-**And** `agents/quality-reviewer.md` exists with "Quality Guardian" persona and systematic review capabilities
-**And** the quality reviewer provides structured feedback with severity levels and actionable improvements
-**And** `skills/quality-control/SKILL.md` provides quality validation capability with references for standards
-**And** `skills/quality-control/scripts/` contains Python accessibility checking and brand validation code
-**And** quality review results are logged to the production run audit trail in SQLite
-**And** both agents have memory sidecars initialized with index.md, patterns.md, and access-boundaries.md
-**And** Party Mode team reviews both completed agent structures for accuracy and completeness
-**And** test invocations confirm both agents respond in character and perform their specialized functions
-
-### Story 3.5: Qualtrics Specialist Agent & Mastery Skill
+### Story 3.7: Qualtrics Specialist Agent & Mastery Skill
 
 As a user,
 I want a Qualtrics specialist agent with survey design mastery and assessment intelligence,
@@ -846,37 +1048,68 @@ So that course assessments, polls, and surveys are created with optimal paramete
 **And** `skills/qualtrics-assessment/scripts/` imports and orchestrates the shared `scripts/api_clients/qualtrics_client.py`
 **And** the agent reads style guide assessment preferences and applies them automatically
 **And** `_bmad/memory/qualtrics-specialist-sidecar/` is initialized for capturing assessment patterns
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → calls Qualtrics API → returns survey
+**And** at least one exemplar exists in `resources/exemplars/qualtrics/` (provided by Juan)
+**And** the agent successfully reproduces the exemplar via the Qualtrics API using the woodshed workflow
+**And** the reproduction produces a detailed `run-log.yaml` and both artifact and log are retained
 
-### Story 3.6: Canva Specialist Agent & Design Mastery Skill
+### Story 3.8: Canva Specialist Agent (Manual-Tool Agent Pattern)
 
 As a user,
-I want a Canva specialist agent with design creation mastery via the Canva MCP,
-So that course graphics, infographics, and visual assets are created with professional design quality matching brand standards.
+I want a Canva specialist agent with design creation guidance and import/export capabilities,
+So that course graphics, infographics, and visual assets are managed with professional design quality matching brand standards.
+
+**API Value Assessment (March 26, 2026):**
+The Canva Connect API at `api.canva.com/rest/v1` has been thoroughly researched. **The API cannot edit individual design elements** — there is no endpoint to add text, move elements, add captions, or apply a template/style to existing content. What it *can* do:
+- Create blank designs (presentation, doc, custom dimensions) — any plan
+- Import PPTX (e.g., Gary/Gamma export → Canva for manual enhancement) — any plan
+- Export designs to PNG/PDF/MP4 — any plan
+- Upload/manage image assets — any plan
+- Autofill brand template fields — **Enterprise plan only**
+
+**Implication:** Canva's programmatic value for this project is limited to an **import/export gateway** (not a design manipulation tool). The most useful path is: Gary generates PPTX → Canva imports it → user manually enhances in Canva editor → Canva exports. This does not warrant building an OAuth token manager or API client at this stage.
+
+**Manual-Tool Agent Pattern:**
+This story establishes the **manual-tool agent pattern** — reused for Vyond and Articulate in later epics. Agents for tools without programmatic control are structurally identical to every other agent (same bmad-agent-builder creation, same memory sidecar, same deep tool knowledge). The differences are operational:
+- **Marcus polls them** during production planning: "What can you contribute to this production cycle?" The agent responds based on deep knowledge of what the tool can do.
+- **When pulled into a production sequence**, the agent provides **detailed, step-by-step instructions** the user executes at the keyboard on the agent's behalf.
+- **No API skill layer** — no `scripts/` directory, no API client. The agent's skill layer is knowledge-only (references with tool capability catalogs, workflow templates, best-practice guides).
+- **No woodshed** — the tool isn't programmatically controlled, so there's no automated reproduction to evaluate.
+- **Validation**: Human review of the agent's guidance quality — does it provide accurate, actionable instructions that produce good results when the user follows them?
 
 **bmad-agent-builder Discovery Answers:**
 
-**Phase 1 - Intent**: Build a Canva specialist agent that masters visual design creation for educational content. It leverages the Canva MCP's design tools, understands which templates and design patterns work best for different educational contexts (course banners, infographics, social media posts, handouts), and maintains brand consistency through style guide integration.
+**Phase 1 - Intent**: Build a Canva specialist agent that has deep expertise in Canva's full capabilities, design patterns, templates, and brand consistency requirements. The agent is polled by Marcus to confirm what it can contribute to any production cycle. When assigned tasks, it produces detailed, step-by-step instructions that the user executes in Canva's editor. It understands the PPTX import path for Gamma → Canva handoff workflows.
+
+**Phase 2 - Capabilities**: Internal capabilities only (no external API/MCP). Internal: design specification creation, template recommendation, brand consistency guidance, step-by-step instruction generation, PPTX import workflow guidance, accessibility compliance checking for visual designs.
 
 **Phase 3 - Requirements:**
 - **Identity**: "Visual Designer" — a graphic design expert who creates professional educational visuals
-- **Communication Style**: Visually oriented, describes design choices with clarity. Recommends templates and styles with brand reasoning.
-- **Principles**: (1) Every visual must serve instructional clarity. (2) Brand consistency across all course materials. (3) Accessibility standards (contrast, alt-text) are non-negotiable. (4) Style guide design preferences are always applied. (5) Learn which design patterns resonate with the target audience.
-- **Memory**: Sidecar tracking successful design patterns, brand application approaches, template effectiveness.
-- **Access Boundaries**: Read: `state/config/`, skill references. Write: `_bmad/memory/canva-specialist-sidecar/`, design output. Deny: `.env`, other agent sidecars.
+- **Communication Style**: Visually oriented, describes design choices with clarity. Recommends templates and styles with brand reasoning. Provides detailed step-by-step Canva instructions the user can follow. When polled by Marcus, clearly states what Canva can and cannot contribute.
+- **Principles**: (1) Every visual must serve instructional clarity. (2) Brand consistency across all course materials. (3) Accessibility standards (contrast, alt-text) are non-negotiable. (4) Style guide design preferences are always applied. (5) When providing instructions, be specific enough that the user can execute without guesswork. (6) Learn which design patterns resonate with the target audience.
+- **Memory**: Sidecar tracking successful design patterns, brand application approaches, template effectiveness, user feedback on instruction clarity.
+- **Access Boundaries**: Read: `state/config/`, skill references. Write: `_bmad/memory/canva-specialist-sidecar/`, design specs output. Deny: `.env`, other agent sidecars.
 
 **Acceptance Criteria:**
 
-**Given** the Canva MCP from Story 1.10 is working and `bmad-agent-builder` is invoked with discovery answers above
+**Given** `bmad-agent-builder` is invoked with discovery answers above
 **When** the Canva specialist agent is created through six-phase discovery
-**Then** `agents/canva-specialist.md` exists with "Visual Designer" persona and Canva MCP tool mastery
-**And** `skills/canva-design/SKILL.md` provides design creation capability routing to the Canva MCP tools
+**Then** `skills/bmad-agent-canva/SKILL.md` exists with "Visual Designer" persona and deep Canva capability knowledge
+**And** `skills/canva-design/SKILL.md` provides design guidance capability (knowledge-only, no scripts/)
+**And** `skills/canva-design/references/capability-catalog.md` documents everything Canva can do, organized by use case
 **And** `skills/canva-design/references/template-catalog.md` documents Canva templates suited for educational content
-**And** the agent reads style guide brand preferences and applies them to all design creation
+**And** `skills/canva-design/references/pptx-import-workflow.md` documents the Gamma PPTX → Canva import → manual enhancement → export path
+**And** the agent can be polled by Marcus and accurately report what it can contribute to a given production cycle
+**And** when assigned tasks, the agent provides step-by-step instructions detailed enough for the user to execute without guesswork
+**And** the agent reads style guide brand preferences and applies them to all design specifications
 **And** `_bmad/memory/canva-specialist-sidecar/` is initialized for capturing design pattern effectiveness
-**And** an end-to-end test demonstrates: agent invoked → reads style guide → uses Canva MCP → returns design
+**And** Party Mode team reviews completed agent structure for accuracy and completeness
+**And** human review (Juan) confirms the agent produces accurate, actionable Canva instructions
 
-### Story 3.7: Source Wrangler — Notion & Box Drive Integration
+**Future upgrade path:** If Canva Enterprise Autofill API or element-level manipulation API becomes available, upgrade to programmatic integration with a `canva_client.py` API client and OAuth token management.
+
+**Reusable pattern:** This manual-tool agent pattern applies to Vyond (Story 5.1) and Articulate (Epic 6). See those stories for tool-specific adaptations.
+
+### Story 3.9: Source Wrangler — Notion & Box Drive Integration
 
 As a user,
 I want a source wrangling capability that pulls course development notes from Notion and reference materials from my local Box Drive into the production context,
@@ -897,6 +1130,31 @@ So that agents have access to my existing course planning materials without manu
 **And** the wrangler can write feedback (readiness assessments, design tips) back to Notion pages
 **And** pre-flight checks verify Notion API connectivity and Box Drive path accessibility
 **And** a test demonstrates: wrangler invoked → pulls from Notion → reads from Box → materials available to orchestrator
+
+### Story 3.10: Tech Spec Wrangler Skill
+
+As a specialist agent,
+I want a shared tech spec wrangler skill that finds, validates, and delivers current tool documentation, working examples, and how-to guides,
+So that I always have authoritative, up-to-date API knowledge before production work and woodshed cycles.
+
+**FRs covered:** FR14 (API connectivity verification), FR18 (tool-specific expertise), FR22 (skills version control and effectiveness)
+
+**Design Decision:** Implemented as a shared **skill** (SKILL.md + scripts/), not a dedicated agent. Any specialist agent or the orchestrator can invoke it. The skill delegates to available MCPs: Ref MCP (primary — `ref_search_documentation`, `ref_read_url`) for reading known docs, and optionally a research MCP (e.g., Perplexity) for discovering unknown docs, examples, and community patterns. May be promoted to a full agent if judgment/proactive-monitoring needs emerge.
+
+**Acceptance Criteria:**
+
+**Given** a specialist agent needs current documentation for its tool (e.g., Gamma, ElevenLabs, Canvas)
+**When** the tech spec wrangler skill is invoked with a tool name and optional query
+**Then** it loads `doc-sources.yaml` from the requesting agent's mastery skill references
+**And** it checks the tool's changelog for changes since `last_refreshed` date via Ref MCP
+**And** if changes are found, it reads affected doc pages via Ref MCP (`ref_read_url`) and identifies new parameters, deprecations, or breaking changes
+**And** it can perform targeted research queries (e.g., "Gamma API charts best practices") via Ref MCP or research MCP
+**And** it returns a structured update report: what changed, what's new, what was deprecated, with source URLs cited
+**And** it updates `last_refreshed` and `refresh_notes` in the requesting skill's `doc-sources.yaml`
+**And** it logs discoveries to the requesting agent's memory sidecar (`patterns.md`)
+**And** for tools with LLM-optimized docs (e.g., Gamma's `llms.txt`), it uses those endpoints for efficient scanning
+**And** `skills/tech-spec-wrangler/SKILL.md` exists with references and scripts
+**And** unit tests cover changelog detection, doc comparison, and report generation
 
 ---
 
@@ -999,22 +1257,35 @@ So that finished course assets reach Canvas, CourseArc, or other platforms ready
 
 **FRs covered:** FR45, FR46, FR47
 
-### Story 5.1: Expanded Tool Specialist Agents
+### Story 5.1: Expanded Tool Specialist Agents (Vyond, Midjourney, CapCut, Articulate)
 
 As a user,
-I want specialist agents for Vyond, Midjourney, and CapCut,
+I want specialist agents for Vyond, Midjourney, CapCut, and Articulate,
 So that the full creative tool ecosystem is available for multi-modal content production.
+
+**Manual-Tool Agent Pattern (Vyond, Midjourney, Articulate):**
+Vyond (Enterprise API required, not available), Midjourney (no official API — third-party wrappers are unofficial and unreliable), and Articulate (no content creation API) follow the **manual-tool agent pattern** established in Story 3.7 (Canva). These agents have deep tool knowledge, get polled by Marcus during production planning, and provide detailed step-by-step instructions the user executes at the keyboard. No API skills, no woodshed. See Story 3.7 for the full pattern description.
+
+- **Vyond agent**: Animation production expert. Provides detailed storyboards, scene descriptions, character specifications, timing, and step-by-step Vyond Studio instructions. The user builds in Vyond's web editor following the agent's guidance. The agent coordinates the exported video with other production assets downstream.
+- **Midjourney agent**: Bespoke image generation expert. Deep mastery of Midjourney prompt syntax (v6/v7 parameters: `--ar`, `--style`, `--chaos`, `--no`, `--sref`, `--cref`, etc.), style references, image composition, and medical/scientific visualization. Essential for creating highly bespoke images where generic stock imagery won't suffice — anatomical illustrations, clinical scenario visualizations, branded concept art, data-informed infographics. Provides ready-to-paste prompts with parameter recommendations, iteration guidance, and upscale/variation strategies. The user pastes prompts into Midjourney's Discord bot or web interface. Future upgrade path: if a reliable official or third-party API becomes available, the agent can be upgraded to programmatic integration.
+- **Articulate agent**: Interactive authoring expert (Storyline 360 / Rise 360). Provides detailed interaction specifications, branching logic, storyboards, and step-by-step build instructions. The user builds in Storyline/Rise following the agent's guidance. The agent can review exported SCORM packages for structural completeness.
+
+**API-Based Agents (CapCut):**
+CapCut may have API access (status unclear — see tool-access-matrix.md). If viable, follows the standard agent pattern with API skills and woodshed validation.
 
 **Acceptance Criteria:**
 
 **Given** bmad-agent-builder creates agents for each tool
 **When** expanded tool specialists are available
-**Then** `agents/vyond-specialist.md` provides animation production mastery
-**And** `agents/midjourney-specialist.md` provides image generation mastery
-**And** `agents/capcut-specialist.md` provides video assembly mastery
-**And** each agent has corresponding skill directory with SKILL.md, references/, and scripts/
-**And** each agent has a memory sidecar for learning effective parameter combinations
-**And** style guide includes parameter preferences sections for each new tool
+**Then** `agents/vyond-specialist.md` provides animation production mastery following the manual-tool agent pattern (knowledge-only skill layer, step-by-step instructions, no API)
+**And** `agents/midjourney-specialist.md` provides bespoke image generation mastery following the manual-tool agent pattern (prompt engineering expertise, ready-to-paste prompts, no API)
+**And** `agents/articulate-specialist.md` provides interactive authoring mastery following the manual-tool agent pattern (knowledge-only skill layer, step-by-step instructions, no API)
+**And** `agents/capcut-specialist.md` provides video assembly mastery (API-based where available, manual-tool pattern as fallback)
+**And** each agent has corresponding skill directory with SKILL.md and references/
+**And** manual-tool agents have knowledge-only skill layers (no scripts/); API-based agents have scripts/ calling API clients
+**And** each agent has a memory sidecar for learning effective patterns
+**And** style guide includes parameter/preference sections for each new tool
+**And** all manual-tool agents are validated by human review of instruction/prompt quality
 
 ### Story 5.2: Multi-Modal Assembly Coordination
 
@@ -1047,7 +1318,7 @@ So that every content piece maintains professional standards regardless of which
 **And** creative pattern libraries in agent memory capture successful brand applications
 **And** style guide evolves based on production outcomes and user feedback
 
-### Story 5.4: Tier 2 API Integrations (Botpress, Wondercraft, Vyond, Kling, Panopto)
+### Story 5.4: Tier 2 API Integrations (Botpress, Wondercraft, Panopto)
 
 As a developer,
 I want API clients and specialist agents for the remaining Tier 2 tools in the tool universe,
@@ -1059,14 +1330,12 @@ So that the full creative tool ecosystem is available for multi-modal content pr
 **When** API clients are built and tested for each tool
 **Then** `scripts/api_clients/botpress_client.py` provides chatbot creation and management capabilities
 **And** `scripts/api_clients/wondercraft_client.py` provides AI podcast/audio generation capabilities
-**And** `scripts/api_clients/vyond_client.py` provides animation video creation capabilities
-**And** `scripts/api_clients/kling_client.py` provides AI video generation capabilities (text-to-video, image-to-video)
 **And** `scripts/api_clients/panopto_client.py` provides video platform management (if not completed in Story 1.11)
 **And** each client has exponential backoff retry logic and clear error diagnostics
 **And** integration tests demonstrate basic connectivity and operations for each tool
 **And** specialist agents are created via bmad-agent-builder for tools with sufficient API surface
 
-**Note:** This story may be split into individual stories during sprint planning based on priority and which tools are most needed for the MVP production workflow. Descript (early access), Midjourney (third-party only), and CapCut (unclear API) are deferred until their API access matures.
+**Note:** Kling API client and agent were pulled forward to Story 3.3. Vyond uses the manual-tool agent pattern (no API client needed — Enterprise plan only). Descript (early access), Midjourney (third-party only), and CapCut (unclear API) are deferred until their API access matures.
 
 ---
 

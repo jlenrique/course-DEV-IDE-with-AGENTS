@@ -1,0 +1,4 @@
+tool: elevenlabs
+agent: bmad-agent-elevenlabs
+description: "Exemplar library for the ElevenLabs specialist agent (Voice Director)"
+exemplars: []

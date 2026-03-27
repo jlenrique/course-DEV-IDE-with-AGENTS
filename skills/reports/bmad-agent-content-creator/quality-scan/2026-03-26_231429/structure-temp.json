@@ -1,0 +1,149 @@
+{
+  "scanner": "structure",
+  "skill_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-content-creator",
+  "findings": [
+    {
+      "file": "structure-capabilities-prepass.json",
+      "line": null,
+      "severity": "note",
+      "category": "sections",
+      "title": "Pre-pass artifact missing at expected report path",
+      "detail": "Expected file skills/reports/bmad-agent-content-creator/quality-scan/2026-03-26_231429/structure-capabilities-prepass.json was not present in the workspace. Deterministic pre-pass findings could not be merged verbatim; structural validation was performed manually against SKILL.md and references.",
+      "action": "Regenerate or copy structure-capabilities-prepass.json into the quality-scan run directory so future scans can preserve verbatim pre-pass output."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 3,
+      "severity": "strength",
+      "category": "frontmatter",
+      "title": "Frontmatter name, kebab-case id, and Use-when description present",
+      "detail": "name is bmad-agent-content-creator; description states role and includes explicit Use when triggers with quoted phrases (talk to Irene, Instructional Architect, content design, Marcus delegation).",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 16,
+      "severity": "strength",
+      "category": "identity",
+      "title": "Identity section is actionable and aligned with capabilities",
+      "detail": "One-sentence persona expands into concrete behaviors: Bloom, cognitive load, backward design, delegation to Paige/Sophia/Caravaggio, no prose writing, Marcus envelope context. Matches Capabilities and Does Not Do.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 22,
+      "severity": "strength",
+      "category": "communication-style",
+      "title": "Communication style uses concrete exemplar bullets",
+      "detail": "Multiple quoted or clearly framed example utterances tie style to instructional design (delegation precision, pedagogical feedback, downstream annotations). Aligns with medical-education domain and orchestrator workflow.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 33,
+      "severity": "strength",
+      "category": "principles",
+      "title": "Principles are domain-specific decision frameworks",
+      "detail": "Ten principles operationalize learning science (objective traceability, cognitive load, Bloom mapping, backward design, style-bible grounding) rather than generic platitudes.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 80,
+      "severity": "strength",
+      "category": "capabilities",
+      "title": "Internal capability routes resolve to existing reference files",
+      "detail": "All Internal Capabilities table paths (pedagogical-framework.md, delegation-protocol.md, template-assessment-brief.md, save-memory.md) exist under references/. No orphaned capability file references detected in manual check.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 66,
+      "severity": "strength",
+      "category": "memory-setup",
+      "title": "Memory path consistent across activation and memory-system",
+      "detail": "SKILL.md uses {project-root}/_bmad/memory/content-creator-sidecar/index.md as single entry; references/memory-system.md uses the same sidecar root. Save Memory (SM) capability points to save-memory.md; memory-system documents save triggers and write-through behavior.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 72,
+      "severity": "strength",
+      "category": "headless-mode",
+      "title": "Headless delegation block defines envelope validation and workflow",
+      "detail": "On Activation includes Headless subsection: parse envelope, validate required fields, read style bible, follow delegation-protocol, assemble templates, return to Marcus. Matches declared sidecar/orchestrator pattern.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 3,
+      "severity": "low",
+      "category": "frontmatter",
+      "title": "Trigger phrase 'content design' is broad",
+      "detail": "The description invites activation on generic 'content design' needs, which may overlap with other BMad agents unless the platform ranks by specificity. More distinctive phrases (instructional architect, Irene, Bloom-level design) are also present and help disambiguation.",
+      "action": "Optionally narrow the trigger clause to emphasize instructional-architecture and delegated-writer workflows, or document intended priority vs. other content skills."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 12,
+      "severity": "medium",
+      "category": "consistency",
+      "title": "Project-relative paths assume course repo layout not bundled in skill folder",
+      "detail": "Overview and activation reference resources/style-bible/, state/config/course_context.yaml, and course-content/staging/. These are not present under skills/bmad-agent-content-creator/; init.md expects them in the deployment project. This is coherent for a sidecar course project but creates a structural dependency for first-run success.",
+      "action": "Ensure deployment docs or Marcus onboarding state that these directories/files must exist (or are created by another pipeline) before Irene runs; consider a one-line pointer in Overview if this skill is copied standalone."
+    }
+  ],
+  "assessments": {
+    "sections_found": [
+      "Overview",
+      "Identity",
+      "Communication Style",
+      "Principles",
+      "Does Not Do",
+      "Degradation Handling",
+      "On Activation",
+      "Capabilities"
+    ],
+    "capabilities_count": 14,
+    "internal_capability_rows": 9,
+    "external_agent_rows": 5,
+    "has_memory": true,
+    "has_headless": true,
+    "metadata": {
+      "frontmatter_valid": true,
+      "required_sections_present": true,
+      "invalid_sections_on_exit": false,
+      "template_artifacts_in_skillmd": "none observed ({project-root} and config placeholders only)",
+      "external_skill_ids_referenced": [
+        "bmad-agent-tech-writer",
+        "bmad-cis-agent-storyteller",
+        "bmad-cis-agent-presentation-master",
+        "bmad-editorial-review-prose",
+        "bmad-editorial-review-structure"
+      ]
+    }
+  },
+  "summary": {
+    "total_findings": 10,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "note": 1,
+      "strength": 7
+    },
+    "by_category": {
+      "sections": 1,
+      "frontmatter": 2,
+      "identity": 1,
+      "communication-style": 1,
+      "principles": 1,
+      "capabilities": 1,
+      "memory-setup": 1,
+      "headless-mode": 1,
+      "consistency": 1
+    },
+    "assessment": "Structure is complete with required sections, no invalid exit sections, and strong identity, principles, and communication guidance. Capability table files exist; memory and headless flows are documented. Main gap is the missing pre-pass JSON for deterministic replay; secondary gap is reliance on project-relative paths (style-bible, course_context) outside the skill package."
+  }
+}

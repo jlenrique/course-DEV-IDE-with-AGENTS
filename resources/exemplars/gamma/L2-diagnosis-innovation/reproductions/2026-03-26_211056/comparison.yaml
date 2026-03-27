@@ -1,0 +1,28 @@
+exemplar_id: L2-diagnosis-innovation
+timestamp: 2026-03-26_211056
+scores:
+  structural_fidelity:
+    score: 2
+    notes: 'Text similarity: 0.35. Title present: True. Source lines: 4, Repro lines:
+      3.'
+  content_completeness:
+    score: 1
+    notes: 'Key phrases found: 1/4 (25%). Missing: [''your clinical training has already
+      prepared you to be an'', ''innovator. the process you use every day mirrors
+      the'', ''innovation process exactly.''].'
+  parameter_accuracy:
+    score: 5
+    notes: 4/4 key parameters correctly set.
+  context_alignment:
+    score: 3
+    notes: 'Pedagogical type: content-delivery. Title+content alignment: 25%.'
+  creative_quality:
+    score: 2
+    notes: 'File size: 11,591 bytes. Visually sparse — Gamma may need richer instructions.'
+conclusion: 'Layout: title-plus-body. Similarity: 0.35. Content coverage: 25%. File
+  size: 11,591B. Embellishment: high. Missing: your clinical training has already
+  prepared you to be an, innovator. the process you use every day mirrors the, innovation
+  process exactly.'
+pass_fail:
+  result: fail
+  reason: High-weight dimension below 3

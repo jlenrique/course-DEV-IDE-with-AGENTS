@@ -1,0 +1,22 @@
+exemplar_id: L2-diagnosis-innovation
+timestamp: 2026-03-26_204241
+scores:
+  structural_fidelity:
+    score: 0
+    notes: Reproduction failed
+  parameter_accuracy:
+    score: 0
+    notes: Reproduction failed
+  content_completeness:
+    score: 0
+    notes: Reproduction failed
+  context_alignment:
+    score: 0
+    notes: Reproduction failed
+  creative_quality:
+    score: 0
+    notes: Reproduction failed
+conclusion: 'Reproduction failed: HTTP 404: Not Found'
+pass_fail:
+  result: fail
+  reason: High-weight dimension below 3

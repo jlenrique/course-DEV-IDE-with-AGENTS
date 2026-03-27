@@ -56,14 +56,26 @@ The single source of truth for all brand and content standards. Human-curated, n
 
 Marcus and specialist agents re-read this fresh for each production task — never cached in memory.
 
-### `resources/exemplars/` — Worked Production Patterns
+### `resources/exemplars/` — Exemplar Library & Worked Production Patterns
 
-Proven patterns from past production decisions. Reference material, not configuration.
+Two roles: (1) **exemplar-driven agent development** — real artifacts that specialist agents must study and reproduce to prove tool mastery, and (2) reference patterns from past production decisions.
 
 | Subdirectory | Contents |
 |--------------|----------|
+| `_shared/` | Cross-cutting woodshed protocol: comparison rubric template, workflow documentation |
+| `gamma/` | Gamma exemplar artifacts with `_catalog.yaml`, per-exemplar `brief.md`, `source/`, `reproduction-spec.yaml`, and `reproductions/` history |
+| `elevenlabs/` | ElevenLabs exemplar artifacts (same structure) |
+| `canvas/` | Canvas exemplar artifacts (same structure) |
+| `qualtrics/` | Qualtrics exemplar artifacts (same structure) |
+| `canva/` | Canva exemplar artifacts (same structure) |
 | `policies/` | Platform allocation decision frameworks (Canvas vs CourseArc criteria) |
 | `platform-matrices/` | Worked allocation examples from actual course modules |
+
+**Exemplar workflow**: Juan provides exemplar artifacts → agent studies via woodshed skill → agent reproduces programmatically → comparison against original proves mastery. All reproduction attempts (pass/fail) are retained with detailed run logs. See `_shared/woodshed-workflow.md` for the full protocol including reflection between failed cycles and circuit breaker give-up rules.
+
+**Write rules**: Exemplar `source/` and `brief.md` are human-curated only. Agents write to `reproduction-spec.yaml`, `reproductions/`, and `failure-report.yaml`.
+
+**Doc refresh protocol**: `_shared/doc-refresh-protocol.md` defines how agents refresh their tool's API documentation before woodshed cycles. Each mastery skill maintains `references/doc-sources.yaml` with authoritative URLs, LLM-optimized endpoints (e.g., Gamma's `llms.txt`), and changelog locations. Agents use the Ref MCP (`ref_search_documentation`, `ref_read_url`) to check for changes and update their `parameter-catalog.md` accordingly.
 
 ### `resources/tool-inventory/` — Tool Capability Reference
 

@@ -1,0 +1,4 @@
+tool: qualtrics
+agent: bmad-agent-qualtrics
+description: "Exemplar library for the Qualtrics specialist agent (Assessment Architect)"
+exemplars: []

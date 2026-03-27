@@ -1,14 +1,16 @@
-# Quality Reviewer — Memory Sidecar
+# Quality Reviewer (Quinn-R) — Memory Sidecar
 
-**Agent**: `agents/quality-reviewer.md` (Epic 3)
-**Purpose**: Quality assessment patterns and human reviewer preference calibration.
-
-## Planned Files
-
-- `patterns.md` — Quality patterns, common issues, effective standards, calibration with human preferences
-- `chronology.md` — Review history
-- `access-boundaries.md` — Read: entire project (needs to review everything). Write: this sidecar, quality audit trail. Deny: `.env`.
+**Agent**: `skills/bmad-agent-quality-reviewer/SKILL.md`
+**Purpose**: Quality assessment patterns, human reviewer calibration, recurring issue tracking.
 
 ## Active Context
 
-No production runs yet. This sidecar will be populated when the quality reviewer agent is created in Story 3.4.
+No active review cycle. Sidecar initialized for Story 3.2.
+
+## Calibration Summary
+
+Fresh sidecar — no calibration data yet. Severity classifications use defaults from `skills/quality-control/references/quality-standards.md`.
+
+## Recurring Issue Patterns
+
+No patterns tracked yet. Will populate after first 3+ reviews.

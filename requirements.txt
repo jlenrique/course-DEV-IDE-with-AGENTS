@@ -5,6 +5,9 @@
 requests>=2.31,<3
 aiohttp>=3.9,<4
 
+# Authentication
+pyjwt>=2.8,<3
+
 # Configuration & validation
 python-dotenv>=1.0,<2
 pydantic>=2.7,<3

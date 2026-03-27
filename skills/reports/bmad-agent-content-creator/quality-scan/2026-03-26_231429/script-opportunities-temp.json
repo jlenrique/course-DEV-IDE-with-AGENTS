@@ -1,0 +1,89 @@
+{
+  "scanner": "script-opportunities",
+  "skill_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-content-creator",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 73,
+      "severity": "high",
+      "category": "validation",
+      "title": "Context envelope required-field checks are deterministic schema work",
+      "detail": "Determinism confidence: certain. Headless activation instructs parsing the context envelope and validating production_run_id, content_type, module_lesson, learning_objectives. Given identical envelope input, pass/fail and missing-key reporting are identical. Estimated token savings: 200–500+ per invocation if a pre-pass validates JSON/YAML before Irene loads. Implementation complexity: trivial. Language: python (jsonschema or pydantic) or jq for JSON envelopes. Could be prepass: yes. Feeds scanner: script-opportunities / any orchestrator gate. Reusable across skills: yes (shared envelope contract). Help pattern savings: n/a unless a small CLI documents required keys via --help.",
+      "action": "Provide validate-context-envelope.(py|sh) consumed by Marcus or CI; Irene receives only validated envelopes or a compact validation summary JSON. Do not require Irene to run it if role separation is preserved."
+    },
+    {
+      "file": "references/memory-system.md",
+      "line": 28,
+      "severity": "medium",
+      "category": "validation",
+      "title": "Access-boundary verification before file operations is path-prefix logic",
+      "detail": "Determinism confidence: certain for prefix rules. Instructions require verifying each path against read/write/deny zones before operations. Estimated token savings: 100–300 per session when many file ops are considered. Implementation complexity: trivial. Language: python or bash. Could be prepass: yes (lint staged paths list). Feeds scanner: optional path-standards style checks. Reusable across skills: yes (many agents with sidecars). Help pattern savings: small if CLI exposes allow/deny lists via --help.",
+      "action": "Implement path_guard.py (resolve realpath, check against configured allow/deny prefixes). Invoke from tooling when staging writes, not necessarily inside Irene's chat loop."
+    },
+    {
+      "file": "references/init.md",
+      "line": 19,
+      "severity": "medium",
+      "category": "structure",
+      "title": "First-run environment checks are filesystem existence probes",
+      "detail": "Determinism confidence: certain. Verifying course_context.yaml, style-bible/, staging/ exist is pure FS checks. Estimated token savings: 50–150 per first run. Implementation complexity: trivial. Language: bash or python. Could be prepass: yes. Feeds scanner: onboarding / setup scanners. Reusable across skills: yes.",
+      "action": "Replace or supplement with scripts/check-content-creator-env.sh that exits non-zero with a machine-readable list of missing paths."
+    },
+    {
+      "file": "references/delegation-protocol.md",
+      "line": 75,
+      "severity": "low",
+      "category": "counting",
+      "title": "Estimated audio duration from word count uses fixed WPM divisors",
+      "detail": "Determinism confidence: certain for arithmetic given word count (150 wpm narration; 130 dialogue; 140 first-person in templates). Estimated token savings: under 100 per artifact unless LLM re-derives from scratch repeatedly. Implementation complexity: trivial. Language: python or awk. Could be prepass: yes on assembled markdown. Feeds scanner: prompt-metrics. Reusable across skills: partial (ElevenLabs-related). Help pattern savings: none.",
+      "action": "Post-process assembled scripts to compute word count (wc -w or tiktoken) and emit duration fields deterministically; optionally validate against template placeholders."
+    },
+    {
+      "file": "references/pedagogical-framework.md",
+      "line": 49,
+      "severity": "medium",
+      "category": "preprocessing",
+      "title": "Slide brief density heuristic mixes counting with instructional judgment",
+      "detail": "Determinism confidence: moderate. Bullet/list item counts and section counts are scriptable; interpreting distinct concept items still needs pedagogy. Estimated token savings: 100–250 if a script pre-extracts counts and flags hot spots. Implementation complexity: moderate (heuristic markdown parser). Language: python. Could be prepass: yes (compact JSON summary for Irene). Feeds scanner: enhancement or cohesion scans. Reusable across skills: partial.",
+      "action": "Add optional slide_brief_metrics.py: count bullets, headings, list depth; flag >7 bullets as review candidates without claiming semantic distinctness."
+    },
+    {
+      "file": "references/template-assessment-brief.md",
+      "line": 36,
+      "severity": "low",
+      "category": "postprocessing",
+      "title": "Backward design checklist is structural conformance after authoring",
+      "detail": "Determinism confidence: high for presence of sections and checkboxes; Bloom alignment content remains human. Estimated token savings: 50–150. Implementation complexity: trivial to moderate. Language: python. Could be prepass: no; postprocessing yes. Feeds scanner: PR/QA automation. Reusable across skills: partial (assessment-heavy agents). Help pattern savings: none.",
+      "action": "Optional linter ensures generated assessment briefs include Backward Design Verification block and required subheadings; cannot validate pedagogical truth of distractors."
+    },
+    {
+      "file": "SKILL.md",
+      "line": 46,
+      "severity": "strength",
+      "category": "structure",
+      "title": "No scripts in-repo aligns with explicit non-execution role",
+      "detail": "SKILL states Irene does not call APIs or execute scripts; instructional design and delegation stay in the LLM while deterministic gates belong to orchestration (Marcus), CI, or host scripts. Script opportunities here are mostly pre-flight or post-assembly tooling outside the agent loop, not missing skill-local automation by accident.",
+      "action": "Keep scripts/ empty for Irene unless product policy changes; implement validators in shared tooling or orchestrator layer."
+    }
+  ],
+  "assessments": {
+    "existing_scripts": []
+  },
+  "summary": {
+    "total_findings": 7,
+    "by_severity": {
+      "high": 1,
+      "medium": 3,
+      "low": 2,
+      "strength": 1
+    },
+    "by_category": {
+      "validation": 2,
+      "structure": 2,
+      "counting": 1,
+      "preprocessing": 1,
+      "postprocessing": 1
+    },
+    "assessment": "Total estimated deterministic LLM tax if uncorrected: roughly 500–1200 tokens per heavy session, dominated by envelope validation and path checks. Highest-value fix: schema-validate inbound context envelopes before Irene runs (pre-pass for orchestrator). Three findings (slide density heuristic, assessment section lint, duration math) suit post-assembly or sidecar tooling. Deliberately empty scripts/ is appropriate for this persona; shifting validation to Marcus/CI preserves boundaries without forgoing automation."
+  }
+}

@@ -1,0 +1,24 @@
+exemplar_id: L2-diagnosis-innovation
+timestamp: 2026-03-26_211222
+scores:
+  structural_fidelity:
+    score: 1
+    notes: 'Text similarity: 0.79. Title present: False. Source lines: 4, Repro lines:
+      6.'
+  content_completeness:
+    score: 5
+    notes: 'Key phrases found: 4/4 (100%). Missing: none.'
+  parameter_accuracy:
+    score: 5
+    notes: 4/4 key parameters correctly set.
+  context_alignment:
+    score: 3
+    notes: 'Pedagogical type: content-delivery. Title+content alignment: 100%.'
+  creative_quality:
+    score: 5
+    notes: 'File size: 187,306 bytes. Visually rich.'
+conclusion: 'Layout: title-plus-body. Similarity: 0.79. Content coverage: 100%. File
+  size: 187,306B. Embellishment: high'
+pass_fail:
+  result: fail
+  reason: High-weight dimension below 3

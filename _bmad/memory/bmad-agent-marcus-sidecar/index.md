@@ -29,11 +29,11 @@
 
 ## Session History
 
-- **2026-03-26**: First activation. Set up memory sidecar, `_bmad/config.yaml` (user_name: Juan). Populated C1 course context from APC Content Roadmap image (3 courses, C1 has 10 modules, 3 content strands, 4 sync touchpoints, 4 assessment types). Style bible and exemplar library confirmed present. Pre-flight check completed: 6 APIs connected (Gamma, ElevenLabs, Canvas, Qualtrics, Wondercraft, Kling), Notion MCP live (22 tools), Box Drive accessible, 1 failure (Botpress). Searched Notion and Box Drive for pharmacology content — none found. Read C1-M1 SME notes. Created production plan for "Economic & Structural Reality" video (C1-M1-P2S1-VID-001). Execution blocked — specialist agents (gamma-specialist, elevenlabs-specialist, assembly-coordinator, quality-reviewer) not yet built. Tested ad-hoc/default mode switching — confirmed working.
+- **2026-03-26**: First activation. Set up memory sidecar, `_bmad/config.yaml` (user_name: Juan). Populated C1 course context from APC Content Roadmap image (3 courses, C1 has 10 modules, 3 content strands, 4 sync touchpoints, 4 assessment types). Style bible and exemplar library confirmed present. Pre-flight check completed: 6 APIs connected (Gamma, ElevenLabs, Canvas, Qualtrics, Wondercraft, Kling), Notion MCP live (22 tools), Box Drive accessible, 1 failure (Botpress). Searched Notion and Box Drive for pharmacology content — none found. Read C1-M1 SME notes. Created production plan for "Economic & Structural Reality" video (C1-M1-P2S1-VID-001). Execution blocked — specialist agents (Gary/gamma-specialist, elevenlabs-specialist, assembly-coordinator, quality-reviewer) not yet built. Tested ad-hoc/default mode switching — confirmed working.
 
 ## Next Steps
 
-- Build specialist agents needed for production execution (gamma-specialist, elevenlabs-specialist, assembly-coordinator, quality-reviewer)
+- Build specialist agents needed for production execution: Gary (`gamma-specialist`), elevenlabs-specialist, assembly-coordinator, quality-reviewer
 - Module-level content allocation when Juan is ready (still evolving)
 - Execute production plan C1-M1-P2S1-VID-001 once specialists are available
 - Finalize Notion's role in learner experience and share relevant pages with integration

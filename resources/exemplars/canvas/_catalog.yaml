@@ -1,0 +1,4 @@
+tool: canvas
+agent: bmad-agent-canvas
+description: "Exemplar library for the Canvas specialist agent (Deployment Director)"
+exemplars: []

@@ -2,124 +2,119 @@
 
 ## Immediate Next Action
 
-**Start Epic 3: Run `bmad-create-story` for Story 3.1 (Gamma Specialist Agent & Mastery Skill).**
+**Implement Story 3.4 (ElevenLabs Specialist — expanded scope with timestamps, pronunciation, SFX, music, dialogue)**
 
-Epic 2 (Master Agent Architecture & Development) is COMPLETE — all 6 stories done, 55 new tests, retrospective complete. Marcus was built via `bmad-agent-builder` with Party Mode coaching, passed quality scan (0 critical issues), passed all 12 interaction test scenarios, and was validated by the Party Mode team (March 26, 2026, Session 3).
+Story 3.3.1 harmonization is DONE. The composition architecture is fully resolved and all agents, plans, and docs are updated. The segment manifest is the input contract for Story 3.4 — ElevenLabs reads it and writes back `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`.
 
+**Pre-Story 3.4 decision (RESOLVED):** The Party Mode composition architecture session established:
+- Silent video + Smart Audio model (Kling sound-off, ElevenLabs owns all audio)
+- Narration-paced video (ElevenLabs generates first, Kira matches durations)
+- Segment manifest as single source of truth
+- Descript as sole composition platform (manual-tool pattern)
+- Compositor skill as Story 3.5 (proof-of-concept end-to-end assembly)
+
+**Decision record:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
+
+**Branch**: `epic3-core-tool-agents`
+
+## Current Status — STORIES 3.1 + 3.2 + 3.3 + 3.3.1 COMPLETE, EPIC 3 IN PROGRESS
+
+- **Story 3.3.1 (Composition Harmonization + Gary Deck)**: DONE — all agents updated, architecture updated, Gary deck mode + theme/template preview added, Epic 3 re-sequenced to 11 stories
+- **Story 3.3 (Kira - Kling Video Specialist)**: DONE - API client (JWT auth, live-tested), Kira agent (7 files), kling-video skill (7 files), 5+5 tests, comparison video set (baseline v2-6 std vs premium v2-6 pro), human-reviewed, production guidance established
+- **Story 3.2 (Irene + Quinn-R)**: DONE - 12+6+10 files, 28 tests, 6 sample artifacts approved
+- **Story 3.1 (Gary)**: DONE - 10+6 files, 29 tests, L1+L2 woodshed PASSED
+- **Epic 2**: COMPLETE (6/6 stories, 55 tests)
+- **Epic 1**: COMPLETE (11/11 stories, 117 tests)
+
+## Composition Architecture (Resolved 2026-03-27)
+
+### Pipeline
 ```
-# In a FRESH Cursor chat session:
-1. Run bmad-create-story — say "Create Story 3.1" or "Create the next story"
-2. Run bmad-dev-story to implement Story 3.1
-3. Run bmad-code-review for Story 3.1
-4. Repeat for Stories 3.2–3.7
-5. After Epic 3 completes: Run bmad-retrospective for Epic 3
+Marcus → Irene P1 → Marcus/[Gate 1] → Gary → Marcus/[Gate 2] →
+Irene P2 → Marcus/[Gate 3] → ElevenLabs → Marcus → Kira →
+Marcus → Quinn-R pre-comp → Compositor → Descript →
+Quinn-R post-comp → Marcus/[Gate 4] → Canvas
 ```
 
-**Branch**: `epic2-master-agent-architecture` — consider creating `epic3-core-tool-agents` branch for Epic 3.
+### Key Design Decisions
+- **Silent video always** from Kling (`sound-off`)
+- **ElevenLabs owns all audio** (narration, SFX, music)
+- **Segment manifest** (YAML) = single source of truth, all agents read/write
+- **Narration-paced video** = audio drives visual timing
+- **Descript** = sole composition platform, manual-tool pattern
+- **Compositor skill** (Story 3.5) = generates Descript Assembly Guide from completed manifest
+- **Four HIL gates** = lesson plan, slides, script+manifest, final video
+- **Quinn-R two-pass** = pre-composition (asset quality) + post-composition (final export)
 
-## Current Status — EPIC 2 COMPLETE, EPIC 3 NEXT
+### Irene Two-Pass Model
+- **Pass 1** (before Gary): lesson plan + slide brief
+- **Pass 2** (after Gary + HIL Gate 2): narration script + segment manifest
+- Gary returns `gary_slide_output` array with slide PNGs → passed to Irene for Pass 2
 
-- **Story 2.1 (Master Orchestrator Agent Creation)**: DONE — Marcus built, quality scanned, interaction tested, Party Mode validated
-- **Story 2.2 (Conversational Workflow Management)**: DONE — production-coordination skill, manage_run.py (17 tests)
-- **Story 2.3 (Agent Coordination Protocols)**: DONE — delegation-protocol.md, log_coordination.py (6 tests)
-- **Story 2.4 (Parameter Intelligence)**: DONE — manage_style_guide.py (10 tests)
-- **Story 2.5 (Pre-Flight Check Orchestration)**: DONE — preflight-integration.md
-- **Story 2.6 (Run Mode Management)**: DONE — manage_mode.py (7 tests)
-- **Epic 1**: COMPLETE (11/11 stories done, 117 tests pass, 3 skipped)
-- **Tool Universe**: 17 tools audited and classified (added Notion + Box Drive)
-- **Live MCPs**: Gamma (2 tools), Canvas LMS (54 tools), Notion (22 tools) verified in Cursor
-- **API-verified**: ElevenLabs (45 voices), Qualtrics (authenticated), Wondercraft, Kling
-- **PRD**: 80 FRs across 11 capability domains
-- **Architecture**: Complete, recast for BMad agent + Cursor plugin approach
+### Gary Deck Enhancement
+- **Deck mode**: numCards ranges per content type (lecture 5-12, case study 3-5, overview 3-4)
+- **Theme/template preview** (TP capability): presents available themes + registered templates before generation
+- `GammaClient.list_themes()` live-tested: returns 10 themes (institutional: "2026 HIL APC Nejal")
+- `gary_slide_output` return field feeds Irene Pass 2
 
-### Marcus Agent — What's Built
-
-Marcus (Creative Production Orchestrator, 🎬) is fully operational at the Story 2.1 scope:
-
-| Component | Location | Status |
-|-----------|----------|--------|
-| Agent SKILL.md | `skills/bmad-agent-marcus/SKILL.md` | Complete (112 lines, persona, 10 principles, capability routing) |
-| References (8) | `skills/bmad-agent-marcus/references/` | Complete (conversation-mgmt, mode-management, checkpoint-coord, progress-reporting, source-prompting, memory-system, init, save-memory) |
-| Scripts (2) | `skills/bmad-agent-marcus/scripts/` | Complete (`read-mode-state.py`, `generate-production-plan.py`) |
-| Script Tests (15) | `skills/bmad-agent-marcus/scripts/tests/` | Complete (8 + 7 tests) |
-| Memory Sidecar | `_bmad/memory/bmad-agent-marcus-sidecar/` | Active (index.md, access-boundaries.md, patterns.md, chronology.md) |
-| Quality Scan | `skills/reports/bmad-agent-marcus/quality-scan/` | 0 critical, 2 high (env-only), 11 medium, 12 low |
-| Interaction Tests | `tests/agents/bmad-agent-marcus/interaction-test-guide.md` | 12 scenarios, all pass |
-
-**Marcus can**: greet in character, report mode, parse intent, plan production, manage mode switching, save memory, gracefully degrade when specialists aren't built, run pre-flight checks, offer source material assistance.
-
-**Marcus needs** (Stories 2.2–2.6): conversational workflow execution infrastructure, multi-agent coordination protocols, parameter intelligence, pre-flight orchestration integration, run mode management infrastructure.
-
-### Party Mode Decisions (March 26, 2026 — Sessions 1–3)
-
-**Session 3 — Story 2.1 Validation (COMPLETE):**
-Party Mode team (Winston, Mary, John, Sally, Quinn, Bob, Paige) reviewed all Story 2.1 acceptance criteria against implementation. All 9 AC items passed. Identified 4 doc harmonization tasks (sprint status, workflow status, next-session, orphaned sidecar) — all resolved in this session.
-
-**Session 2 — Marcus Orchestrator Coaching (COMPLETE):**
-Party Mode team coached through all 6 phases of the bmad-agent-builder interview. Produced `_bmad-output/brainstorming/party-mode-coaching-marcus-orchestrator.md` with copy-paste-ready answers.
-
-**Session 1 — Three new capabilities agreed upon:**
-1. Notion + Box Drive Integration (Story 3.7)
-2. Run Mode Management (Story 2.6)
-3. Source Wrangler architectural component
+## Epic 3 Story Sequence (11 stories)
+| Story | Agent/Skill | Status |
+|-------|-------------|--------|
+| 3.1 | Gary (Gamma Specialist) | DONE |
+| 3.2 | Irene (Content Creator) + Quinn-R (Quality Reviewer) | DONE |
+| 3.3 | Kira (Kling Video Specialist) | DONE |
+| 3.3.1 | Composition Harmonization + Gary Deck | DONE |
+| 3.4 | ElevenLabs Specialist (expanded) | **NEXT** |
+| 3.5 | Compositor Skill (Descript Assembly Guide) | Backlog |
+| 3.6 | Canvas Specialist | Backlog |
+| 3.7 | Qualtrics Specialist | Backlog |
+| 3.8 | Canva Specialist (manual-tool pattern) | Backlog |
+| 3.9 | Source Wrangler (Notion + Box) | Backlog |
+| 3.10 | Tech Spec Wrangler | Backlog |
 
 ## What's Working Right Now
 
-### MCP Servers (in Cursor agent chat)
-- **Gamma**: 2 tools — generate content, browse themes
-- **Canvas LMS**: 54 tools — full course/module/assignment management
-- **Notion**: 22 tools — pages, databases, comments, search
-- **Playwright**: 22 tools — browser automation (user-level)
-- **Ref**: 2 tools — doc search and URL reading (user-level)
+### MCP Servers
+- **Gamma**: 2 tools
+- **Canvas LMS**: 54 tools
+- **Notion**: 22 tools
+- **Playwright**: 22 tools
+- **Ref**: 2 tools
 
-### API Access (via scripts, not MCP)
-- **ElevenLabs**: `node scripts/smoke_elevenlabs.mjs` — 45 voices
-- **Qualtrics**: `node scripts/smoke_qualtrics.mjs` — surveys, questions, distributions
-- **All tools**: `node scripts/heartbeat_check.mjs` — full heartbeat
+### API Access
+- **Kling**: `scripts/api_clients/kling_client.py` - JWT auth, text-to-video, image-to-video, lip-sync, extend. LIVE TESTED.
+- **ElevenLabs**: `node scripts/smoke_elevenlabs.mjs` - 45 voices
+- **Qualtrics**: `node scripts/smoke_qualtrics.mjs`
+- **All tools**: `node scripts/heartbeat_check.mjs`
+- **Gamma themes**: `GammaClient.list_themes()` returns 10 themes. LIVE TESTED.
 
-### Known MCP Limitations (deferred)
-- ElevenLabs MCP: Cursor filters tools due to name length >60 chars
-- Qualtrics MCP: Not on npm, needs local build
-- Canva MCP: OAuth redirect rejected by Cursor
-- Fetch MCP: No usable tools surfaced
+## Key Kling Findings from Story 3.3
 
-## Hot-Start Context
+### What works well
+- Atmospheric B-roll (hospital corridors, clinical environments)
+- Montage-style visual storytelling (physician innovator lineage)
+- Non-text-dependent motion sequences
+- Best baseline: `kling-v2-6 std sound-off 5s` at 1.5 credits
+- Best premium: `kling-v2-6 pro 5s` at 2.5 credits
 
-### Key File Paths
-- Marcus SKILL.md: `skills/bmad-agent-marcus/SKILL.md`
-- Marcus Sidecar: `_bmad/memory/bmad-agent-marcus-sidecar/`
-- Marcus Quality Scan: `skills/reports/bmad-agent-marcus/quality-scan/2026-03-26_152243/quality-report.md`
-- Marcus Interaction Tests: `tests/agents/bmad-agent-marcus/interaction-test-guide.md`
-- Sprint Status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- Epics: `_bmad-output/planning-artifacts/epics.md`
-- Tool Matrix: `resources/tool-inventory/tool-access-matrix.md`
-- MCP Config (live): `.cursor/mcp.json`
-- Project Context: `docs/project-context.md`
+### What does NOT work well
+- Text-heavy concept animations produce garbled characters
+- Infographic/timeline/roadmap clips where Kling must render readable embedded text
+- `kling-v3-0` is not accepted on the current API surface
 
-### Key Tools for Next Session
-- `bmad-create-story` — create Story 2.2 (Conversational Workflow Management)
-- `bmad-dev-story` — implement Story 2.2
-- `bmad-code-review` — review Story 2.2 implementation
+### Production guidance
+- Use Gary for text-bearing visuals; use Kira for atmosphere, transitions, and non-text motion
+- Serialize Kling submissions (concurrency limit enforced by API)
+- Download MP4s immediately (CDN URLs expire)
+- Image-to-video from Gary PNGs is the next high-value integration (Compositor proof-of-concept)
 
-### API Keys
-- `.env` has live keys for: Gamma, ElevenLabs, Canvas, Qualtrics, Botpress, Wondercraft, Kling
-- `.env` is gitignored; `.env.example` is the safe template
-- `.cursor/mcp.json` uses `scripts/run_mcp_from_env.cjs` to load keys at runtime (no literal secrets in config)
-
-### Agent Creation Process (Epic 2+ pattern)
-For every story that creates a custom agent via `bmad-agent-builder`:
-1. **Party Mode coaching** — team refines discovery answers with the user
-2. **bmad-agent-builder** — six-phase discovery using the refined answers
-3. **Skill co-creation** — agent's mastery skill built in the same story
-4. **Party Mode validation** — team reviews completed agent + skill
-
-**Three-layer architecture** (each independently updatable):
-- **API clients** (`scripts/api_clients/`) — connectivity, retry, auth (Epic 1, DONE)
-- **Skills** (`skills/{tool}/`) — tool expertise, parameter templates, execution code (Epic 3)
-- **Agents** (`skills/bmad-agent-{name}/`) — judgment, decision-making, personality, memory (Epics 2-3)
-
-### Gotchas
-- PowerShell doesn't support `&&` chaining — use `;` instead
-- `.venv` is set up with Python 3.13 — activate with `.venv\Scripts\activate`
-- Run tests with `.venv\Scripts\python -m pytest tests/ -v`
-- Cursor MCP `env` field does NOT resolve `${VAR}` from .env files — that's why the wrapper script exists
+## Gotchas
+- PowerShell doesn't support `&&` chaining
+- `.venv` with Python 3.13
+- Kling API credits are SEPARATE from consumer credits
+- Kling status endpoint is type-specific: `/v1/videos/text2video/{id}`
+- Kling uses `model_name` not `model`, duration as string, mode `std`/`pro`
+- Kling text rendering produces garbled characters - use Gary for text-bearing visuals
+- `pyjwt` in requirements.txt for Kling JWT auth
+- Cross-skill Python imports use `importlib.util` loader pattern
+- GammaClient.list_themes() requires dotenv load in Python scripts (API key from .env)

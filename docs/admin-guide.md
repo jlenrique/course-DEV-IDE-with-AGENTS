@@ -39,8 +39,8 @@
 git clone <repo-url>
 cd course-DEV-IDE-with-AGENTS
 
-# 2. Create or edit your local .env file
-# Add the API keys you plan to use (see next section)
+# 2. Create `.env` at the project root (gitignored — never committed)
+# Add API keys using the tables in "API Keys and Credentials" below
 
 # 3. Activate the Python virtual environment
 # Windows:
@@ -97,7 +97,7 @@ node scripts/heartbeat_check.mjs
 
 ## API Keys and Credentials
 
-All secrets live in `.env` at the project root. **Never commit this file.**
+All secrets live in `.env` at the project root. **Never commit this file.** Variable names and where to obtain keys are documented in this section (Tier 1–3 tables).
 
 ### Tier 1 — API + MCP (full programmatic access)
 
@@ -180,7 +180,7 @@ Defined in `.mcp.json` (project-level) and `.cursor/mcp.json` (Cursor-specific):
 
 1. Add the server mapping in `scripts/run_mcp_from_env.cjs`
 2. Add the server entry in both `.mcp.json` and `.cursor/mcp.json`
-3. Add required env vars to your local `.env`
+3. Add required env vars to `.env` and document them in this guide if new
 4. Restart Cursor to pick up the new MCP server
 5. Verify with the pre-flight check
 
@@ -375,7 +375,7 @@ These are reference material, not configuration. Agents consult them for decisio
 
 | Principle | Implementation |
 |-----------|---------------|
-| API keys never committed | `.env` is gitignored and kept local-only |
+| API keys never committed | `.env` is gitignored; key names documented in this guide |
 | No secrets in MCP config | `run_mcp_from_env.cjs` wrapper loads keys at runtime |
 | Keys never logged in plain text | `BaseAPIClient` does not log auth headers |
 | Scoped access tokens | Use institution-scoped Canvas tokens per API policy |
@@ -436,7 +436,7 @@ Git-versioned in `state/config/`. If corrupted, restore from git history: `git c
 
 1. **Research** — Classify the tool (Tier 1-4) using `resources/tool-inventory/tool-access-matrix.md` as the template
 2. **API client** — If Tier 1-3: create a client in `scripts/api_clients/` extending `BaseAPIClient`
-3. **Environment** — Add env vars to your local `.env`
+3. **Environment** — Add env vars to `.env` and update this guide if needed
 4. **MCP** (if available) — Add server mapping to `run_mcp_from_env.cjs` and entries in `.mcp.json` / `.cursor/mcp.json`
 5. **Pre-flight** — Update pre-flight check to include the new tool
 6. **Tool matrix** — Update `resources/tool-inventory/tool-access-matrix.md`

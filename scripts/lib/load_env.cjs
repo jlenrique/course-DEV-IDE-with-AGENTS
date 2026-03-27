@@ -4,7 +4,10 @@ const path = require("node:path");
 function loadEnv(repoRoot = path.resolve(__dirname, "..", "..")) {
   const envPath = path.join(repoRoot, ".env");
   if (!fs.existsSync(envPath)) {
-    throw new Error("Missing .env file. Copy .env.example to .env and fill in your keys.");
+    throw new Error(
+      "Missing .env file. Create `.env` at the project root and add your keys " +
+        "(see docs/admin-guide.md — API Keys and Credentials)."
+    );
   }
 
   const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);

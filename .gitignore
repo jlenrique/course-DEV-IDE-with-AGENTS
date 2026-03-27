@@ -1,7 +1,9 @@
-# Local secrets — never commit
+# Local secrets — never commit (document keys in docs/admin-guide.md)
 .env
 .env.*
-!.env.example
+
+# Cursor / Playwright MCP local logs
+.playwright-mcp/
 
 # Optional local-only drops (large media, exports)
 secrets/

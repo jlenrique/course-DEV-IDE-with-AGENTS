@@ -42,7 +42,7 @@ There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token*
 
 ## APIs and credentials
 
-- **Canvas**: REST API with access token; store `CANVAS_API_URL` and `CANVAS_ACCESS_TOKEN` in `.env`. Use scoped tokens and institution API policies.
+- **Canvas**: REST API with access token; store `CANVAS_API_URL` and `CANVAS_ACCESS_TOKEN` in `.env` (see `docs/admin-guide.md`). Use scoped tokens and institution API policies.
 - **Gamma**: REST API with X-API-KEY header; store `GAMMA_API_KEY` in `.env`. Pro/Ultra/Teams/Business plan required.
 - **ElevenLabs**: REST API with xi-api-key header; store `ELEVENLABS_API_KEY` in `.env`.
 - **Qualtrics**: REST API with X-API-TOKEN header; store `QUALTRICS_API_TOKEN` and `QUALTRICS_DATACENTER` in `.env`.

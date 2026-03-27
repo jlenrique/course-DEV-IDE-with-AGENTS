@@ -437,7 +437,7 @@ This is where you come in. The three-layer architecture means there are three di
 
 1. Create `scripts/api_clients/{tool}_client.py` extending `BaseAPIClient`
 2. Use the appropriate auth pattern for the tool (check API docs)
-3. Add env vars to your local `.env`
+3. Add env vars to `.env` (see `docs/admin-guide.md`)
 4. Add integration test in `tests/test_integration_{tool}.py`
 5. Update `resources/tool-inventory/tool-access-matrix.md`
 6. Add tool parameter section in `state/config/style_guide.yaml`
@@ -639,7 +639,7 @@ course-DEV-IDE-with-AGENTS/
 ├── .cursor-plugin/plugin.json         ← Cursor plugin manifest (auto-discovers agents, skills)
 ├── .mcp.json                          ← MCP server definitions (project-level)
 ├── .cursor/mcp.json                   ← MCP server definitions (Cursor-specific)
-├── .env                               ← Actual secrets (gitignored)
+├── .env                               ← Actual secrets (gitignored; key names in docs/admin-guide.md)
 ├── pyproject.toml                     ← Python project config
 ├── requirements.txt                   ← Python dependencies
 │

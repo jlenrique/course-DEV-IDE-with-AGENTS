@@ -11,7 +11,7 @@ globs:
 
 - Treat `course-content/staging/` as **draft space**; prefer new drafts there unless the user explicitly asks to update published paths under `course-content/courses/`.
 - Read `config/content-standards.yaml` before generating instructional copy or slide outlines. If `resources/style-bible/master-style-bible.md` exists, prefer it — the style bible is the authoritative source; `config/content-standards.yaml` is the bootstrap fallback (see `docs/directory-responsibilities.md`).
-- Do not invent Canvas or CourseArc API behavior; when calling APIs, use env vars from `.env.example` and official docs. Never commit tokens or paste secrets into files.
+- Do not invent Canvas or CourseArc API behavior; when calling APIs, use env vars from your local `.env` (see `docs/admin-guide.md`) and official docs. Never commit tokens or paste secrets into files.
 - For presentations intended for the web, favor **structured slide source** (e.g. Marp-compatible Markdown) plus export notes for the user’s platform workflow.
 - After substantive drafts, suggest the user run their **human-in-the-loop** steps in `docs/workflow/human-in-the-loop.md`.
 - BMad skills in `.cursor/skills/` are available for PRD, brainstorming, editorial review, and presentation help; use them when the user asks for structured methodology.

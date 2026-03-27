@@ -35,7 +35,8 @@ def load_env(env_path: str | Path | None = None) -> dict[str, str]:
     if not env_path.exists():
         raise FileNotFoundError(
             f"Missing .env file at {env_path}. "
-            "Create the local .env file and add your API keys."
+            "Create `.env` at the project root and add your API keys "
+            "(see docs/admin-guide.md — API Keys and Credentials)."
         )
 
     loaded: dict[str, str] = {}

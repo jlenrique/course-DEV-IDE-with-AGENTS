@@ -32,3 +32,8 @@ class TestCanvaIntegration:
     def test_local_env_template_is_not_committed(self):
         """Repo policy: only the local .env file is used for secrets."""
         assert not (ROOT / ".env.example").exists()
+
+    def test_admin_guide_documents_canva(self):
+        """Verify admin guide documents Canva (OAuth / MCP context)."""
+        content = (ROOT / "docs" / "admin-guide.md").read_text(encoding="utf-8")
+        assert "Canva" in content or "canva" in content.lower()

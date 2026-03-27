@@ -1,7 +1,9 @@
 # Session Handoff — Compositor `sync-visuals` + ad-hoc pilot bundle + wrap-up
 
+**Addendum (2026-03-28):** `dev/trial-run-slide-narration` was **fast-forward merged into `master`** and pushed (`aaa0327` on `master`). User/admin/dev guides were expanded with **Compositor assembly bundle CLI** (cross-links, `.venv` commands). New default working branch: **`dev/next-session`** (`9687ab6`), pushed to `origin`. Uncommitted WIP (source-wrangler, Marcus refs, etc.) was stashed during merge and **restored** on `dev/next-session`.
+
 **Date:** 2026-03-27  
-**Branch:** `dev/trial-run-slide-narration` (pushed to `origin`). Feature payload: commit `4b75eaa`.  
+**Branch (historical):** `dev/trial-run-slide-narration` → merged to `master`. Feature payload: commit `4b75eaa`.  
 **Session focus:** localize Gate-approved PNGs into the Descript assembly bundle; document workflow; run BMAD session shutdown protocol
 
 ---
@@ -20,8 +22,9 @@
 
 - **`skills/compositor/SKILL.md`** — assembly-bundle rule: run `sync-visuals` then regenerate the Descript Assembly Guide.
 - **`docs/user-guide.md`** — short “Narrated slide assembly (Descript)” subsection.
-- **`docs/dev-guide.md`** — compositor row in Current Skills table.
-- **`docs/admin-guide.md`** — Descript row note on local bundles.
+- **`docs/dev-guide.md`** — compositor row + **Compositor assembly bundle CLI** subsection (commands, tests).
+- **`docs/admin-guide.md`** — Descript row + link to dev-guide compositor section.
+- **`docs/user-guide.md`** — link from narrated-slide assembly to dev-guide compositor section.
 - **`docs/project-context.md`** — Descript bullet mentions `sync-visuals`.
 
 ### Ad-hoc pilot: Physician as Innovator

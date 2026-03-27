@@ -103,7 +103,7 @@ assert(fileExists(".cursor/rules/course-content-agents.mdc"), "course-content-ag
 // --- AC #6: No regressions on preserved files ---
 console.log("\n=== AC #6: Preserved Files Intact ===");
 const preserved = [
-  ".env.example",
+  "docs/admin-guide.md",
   "config/content-standards.yaml",
   "config/platforms.example.yaml",
   "scripts/.gitkeep",

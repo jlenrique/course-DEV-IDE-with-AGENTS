@@ -300,33 +300,37 @@ class TestProjectPackaging:
 
 
 # ---------------------------------------------------------------------------
-# AC #2: .env.example completeness verification
+# AC #2: Local .env policy + admin guide documents required keys
 # ---------------------------------------------------------------------------
 
 
-class TestEnvExample:
-    def test_env_example_exists(self):
+class TestEnvDocumentation:
+    def test_env_is_gitignored(self):
         from scripts.utilities.file_helpers import project_root
 
-        assert (project_root() / ".env.example").exists()
+        content = (project_root() / ".gitignore").read_text(encoding="utf-8")
+        assert ".env" in content
+        assert "!.env.example" not in content
 
-    def test_env_example_has_tier1_keys(self):
+    def test_admin_guide_documents_tier1_keys(self):
         from scripts.utilities.file_helpers import project_root
 
-        content = (project_root() / ".env.example").read_text(encoding="utf-8")
+        content = (project_root() / "docs" / "admin-guide.md").read_text(encoding="utf-8")
         tier1_keys = [
-            "GAMMA_API_KEY", "ELEVENLABS_API_KEY",
-            "CANVAS_ACCESS_TOKEN", "QUALTRICS_API_TOKEN",
+            "GAMMA_API_KEY",
+            "ELEVENLABS_API_KEY",
+            "CANVAS_ACCESS_TOKEN",
+            "QUALTRICS_API_TOKEN",
         ]
         for key in tier1_keys:
-            assert key in content, f"{key} should be in .env.example"
+            assert key in content, f"{key} should be documented in admin-guide.md"
 
-    def test_env_example_has_tier2_keys(self):
+    def test_admin_guide_documents_tier2_keys(self):
         from scripts.utilities.file_helpers import project_root
 
-        content = (project_root() / ".env.example").read_text(encoding="utf-8")
+        content = (project_root() / "docs" / "admin-guide.md").read_text(encoding="utf-8")
         for key in ["BOTPRESS_API_KEY", "WONDERCRAFT_API_KEY", "KLING_ACCESS_KEY"]:
-            assert key in content, f"{key} should be in .env.example"
+            assert key in content, f"{key} should be documented in admin-guide.md"
 
 
 # ---------------------------------------------------------------------------

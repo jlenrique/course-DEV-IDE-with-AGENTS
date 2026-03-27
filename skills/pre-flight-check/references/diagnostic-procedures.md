@@ -6,7 +6,7 @@ Step-by-step troubleshooting for pre-flight check failures, organized by failure
 
 **Symptoms**: `FAIL: HTTP 401` or `HTTP 403` in heartbeat output.
 
-1. Verify the API key is set in `.env` (not `.env.example`)
+1. Verify the API key is set in `.env` (local only; never committed)
 2. Confirm the key has not expired or been rotated
 3. Check the key has sufficient permissions/scopes for the endpoint being tested
 4. For Canvas: verify token is scoped to the correct institution URL
@@ -49,8 +49,8 @@ Step-by-step troubleshooting for pre-flight check failures, organized by failure
 
 **Symptoms**: `SKIP: {KEY} not set in .env`.
 
-1. Copy the key template from `.env.example`
-2. Fill in the actual key value
+1. Open `docs/admin-guide.md` → **API Keys and Credentials** for variable names
+2. Add each key to `.env` at the project root
 3. For OAuth-based tools (Canva): follow MCP auth flow in Cursor instead
 
 ## Known Blockers

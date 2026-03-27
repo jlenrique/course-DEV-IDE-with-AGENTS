@@ -2,7 +2,7 @@
  * Quick heartbeat check for all API-accessible tools.
  *
  * Usage:
- *   1. Copy .env.example to .env and fill in your API tokens
+ *   1. Create `.env` at the project root and add your API tokens (see docs/admin-guide.md)
  *   2. Run: node scripts/heartbeat_check.mjs
  *
  * Tests lightweight read-only endpoints for each configured tool.
@@ -15,7 +15,9 @@ import { readFileSync, existsSync } from "node:fs";
 function loadEnv() {
   const envPath = ".env";
   if (!existsSync(envPath)) {
-    console.error("ERROR: .env file not found. Copy .env.example to .env and fill in your API tokens.");
+    console.error(
+      "ERROR: .env file not found. Create `.env` at the project root (see docs/admin-guide.md)."
+    );
     process.exit(1);
   }
   const lines = readFileSync(envPath, "utf-8").split("\n");

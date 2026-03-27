@@ -29,7 +29,7 @@ class TestCanvaIntegration:
 
         assert "Canva" in BLOCKED_TOOLS
 
-    def test_env_example_documents_canva(self):
-        """Verify .env.example mentions Canva."""
-        content = (ROOT / ".env.example").read_text(encoding="utf-8")
+    def test_admin_guide_documents_canva(self):
+        """Verify admin guide documents Canva (OAuth / MCP context)."""
+        content = (ROOT / "docs" / "admin-guide.md").read_text(encoding="utf-8")
         assert "Canva" in content or "canva" in content.lower()

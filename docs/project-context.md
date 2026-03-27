@@ -105,12 +105,12 @@ resources/
 - **API-verified but MCP-deferred platforms**: ElevenLabs, Qualtrics
 - **Documented but currently deferred MCPs**: ElevenLabs (Cursor tool-name filtering), Canva (OAuth redirect rejection), Qualtrics (GitHub-only build step), Fetch (no usable surfaced tools in this setup), Brave Search (not enabled by default)
 - **User-level MCPs** already available: Playwright (browser automation), Ref (doc search/reading)
-- **API keys templated** in `.env.example`: All Tier 1-3 tools with documentation links
+- **API keys** documented in `docs/admin-guide.md`: Tier 1-3 tools with documentation links; values live in local `.env` only
 - **Manual tools** require agent-guided workflows where agents provide specs and users execute in tool UI
 
 ## Current State
 
-- [x] Repository scaffolded with directory structure, .env.example, content standards  
+- [x] Repository scaffolded with directory structure, local `.env` pattern, content standards
 - [x] BMad Method installed (BMM, Core, CIS modules)
 - [x] **BRAINSTORMING COMPLETED**: 10 comprehensive epics defined
 - [x] **PRD COMPLETED**: 70 FRs across 11 capability domains (recast for agent .md approach)
@@ -119,7 +119,7 @@ resources/
 - [x] **Strategic Decisions**: Party Mode team validated and recast for agent .md patterns
 - [x] **STORY CREATION COMPLETED**: 31 stories across 10 epics, 100% FR coverage validated
 - [x] **API-FIRST SEQUENCING**: API/MCP clients (Gamma, ElevenLabs, Canvas) built in Epic 1 before agent creation
-- [x] **TOOL UNIVERSE AUDIT**: 15 tools researched and classified (Tier 1-4), MCP servers configured, .env.example expanded
+- [x] **TOOL UNIVERSE AUDIT**: 15 tools researched and classified (Tier 1-4), MCP servers configured, credentials documented for local `.env`
 - [x] **EPIC 1 COMPLETE**: All 11 stories implemented, tested with live APIs, validated by Party Mode review team
 - [x] **STORY 1.1**: Cursor plugin foundation — plugin.json, .mcp.json, hooks, directory structure
 - [x] **STORY 1.2**: Python infrastructure — BaseAPIClient with retry/pagination/binary, utilities, venv

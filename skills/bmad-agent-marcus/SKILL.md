@@ -96,7 +96,7 @@ Greet the user by name with current mode, last session context summary, and a cl
 
 | Content Domain | Target Agent | Status | Style Bible Context Passed |
 |----------------|-------------|--------|---------------------------|
-| Slide/presentation generation | `gamma-specialist` | planned | Color palette, typography, visual hierarchy |
+| Slide/presentation generation | `gamma-specialist` (Gary) | planned | Color palette, typography, visual hierarchy |
 | Voice synthesis and audio production | `elevenlabs-specialist` | planned | Voice/tone standards |
 | LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned | Allocation policy, exemplar matrices |
 | Instructional design and content drafting | `content-creator` | planned | Learning objectives, Bloom's level, exemplars |

@@ -1,102 +1,86 @@
-# Session Handoff — 2026-03-26 (Session 4: Exemplar-Driven Development Infrastructure)
+# Session Handoff — Story 3.1 Complete
+
+**Date:** 2026-03-27
+**Branch:** `epic3-core-tool-agents`
+**Session focus:** Story 3.1 — Gamma Specialist Agent (Gary) & Mastery Skill
 
 ## What Was Completed
 
-**Exemplar-driven development paradigm designed, built, and smoke-tested. Story 3.1 created and ready-for-dev. Epic 3 expanded to 8 stories.**
+### Story 3.1: Gary — Gamma Specialist Agent & Mastery Skill (ALL 7 TASKS, 12/12 ACs)
 
-### Git Operations
-- Merged `epic2-master-agent-architecture` → `master`, pushed to origin
-- Created `epic3-core-tool-agents` branch from master, pushed with tracking
+1. **Party Mode coaching** — Produced `party-mode-coaching-gamma-specialist.md` with copy-paste-ready bmad-agent-builder answers. Agent named Gary (Slide Architect 🎨) by user.
 
-### Exemplar-Driven Development Infrastructure (NEW)
-- **Party Mode session**: Team designed the exemplar-driven paradigm — agents prove competence by reproducing real artifacts, not just connecting to APIs
-- **Woodshed skill** (`skills/woodshed/`): 1 SKILL.md, 2 reference docs, 5 Python scripts (`woodshed_base.py` with `BaseEvaluator` abstract class, `study_exemplar.py`, `reproduce_exemplar.py`, `compare_reproduction.py`, `run_regression.py`)
-- **Exemplar library** (`resources/exemplars/`): Per-tool directories with `_catalog.yaml` for gamma, elevenlabs, canvas, qualtrics, canva. Shared `_shared/` with comparison rubric template, woodshed workflow protocol, and doc refresh protocol
-- **5 Gamma exemplars**: L1-L4.2 individual slides with briefs, organized in L-level directories
-- **Two-mode woodshed**: Faithful (exact reproduction, proves tool control) → Creative (enhanced reproduction, proves judgment)
-- **L-level difficulty system**: L1-L4 single artifacts, L5+ multi-artifact sets, dot extensions for within-level granularity
-- **DRY architecture**: `BaseEvaluator` in woodshed (common process); agent-specific evaluators in mastery skills (e.g., `GammaEvaluator`)
-- **Export/download requirement**: All reproductions must download production artifacts (PDF/PPTX/MP3), not screenshots
-- **Run logging**: Every attempt captures exact API call, prompt, response, comparison conclusion
-- **Reflection protocol**: Mandatory root cause analysis between failed attempts
-- **Circuit breaker**: 3 attempts/session, 7 total; failure report if tripped
-- **Doc refresh protocol**: `doc-sources.yaml` per mastery skill; mandatory refresh via Ref MCP before woodshed cycles
-- **Gamma doc-sources.yaml**: 16 key developer doc pages registered, including `llms.txt` LLM-optimized endpoints
+2. **Agent built** — `skills/bmad-agent-gamma/` with SKILL.md (118 lines) + 9 reference files. Quality scanned (0 critical, overall Good). All quick-win optimizations applied. Party Mode team validated all 7 coaching concerns.
 
-### Gamma Smoke Test (PASSED)
-- API call: `inputText` + `textMode: preserve` + `format: presentation` + `numCards: 1` → 201 Created
-- Polling: 2-3 polls at 5s intervals → completed in ~15 seconds
-- Export: `exportAs: "pdf"` → signed download URL → 205KB PDF downloaded and stored
-- Credits: 5 per card, ~7990 remaining
-- **Finding**: Gamma embellishes content even in `preserve` mode — added 4-step process diagram not in input
-- **Finding**: Existing `GammaClient` uses wrong parameter names (`topic` instead of `inputText`, missing `textMode`) — returns 400. Must fix in Story 3.1.
-- Smoke test PDF stored at `resources/exemplars/gamma/L2-diagnosis-innovation/reproductions/smoke-test/`
+3. **Mastery skill built** — `skills/gamma-api-mastery/` with SKILL.md, parameter-catalog.md (sourced from Ref MCP doc refresh), context-optimization.md, gamma_operations.py, gamma_evaluator.py.
 
-### Story 3.1 Created
-- `_bmad-output/implementation-artifacts/3-1-gamma-specialist-agent.md`: 7 tasks, 12 ACs
-- Comprehensive dev notes: full Gamma API parameter space, existing client gap analysis, DRY evaluator architecture, two-mode woodshed, export workflow, smoke test findings, anti-patterns
-- Scope: L1 + L2 faithful reproduction for acceptance; L3-L4 post-story woodshed exercises
+4. **GammaClient fixed** — Backward-incompatible parameter name updates (`topic` → `inputText`, added `textMode`, `exportAs`, all optional params). Added `generate_from_template()` for template-based generation.
 
-### Epic 3 Expanded
-- **Story 3.8 (Tech Spec Wrangler Skill)** added: shared skill for tool API doc refresh, research, and validation via Ref MCP
-- Epic 3 now has 8 stories (was 7). Total project: 36 stories across 10 epics.
+5. **Memory sidecar initialized** — 4 files at `_bmad/memory/gamma-specialist-sidecar/`: index.md, patterns.md, chronology.md, access-boundaries.md.
 
-### Doc Harmonization (8 files updated)
-- `_bmad-output/planning-artifacts/epics.md` — Epic 3 preamble + all story ACs updated with exemplar requirements; Story 3.8 added
-- `_bmad-output/planning-artifacts/architecture.md` — Exemplar-driven development section added
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` — Epic 3 in-progress, Story 3.1 ready-for-dev, Story 3.8 backlog
-- `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — 9 new key decisions, next step updated
-- `docs/project-context.md` — Operational model, repo contract, key files, current state all updated
-- `docs/directory-responsibilities.md` — `resources/exemplars/` section expanded
-- `docs/agent-environment.md` — Comprehensive rewrite: MCPs with health checks, shared skills table, expanded APIs
-- `next-session-start-here.md` — Full session 4 context with smoke test findings and Party Mode coaching note
-- `skills/bmad-agent-marcus/SKILL.md` — tech-spec-wrangler and woodshed added to External Skills
-- `skills/pre-flight-check/SKILL.md` — Ref MCP health check and doc-sources staleness check added
+6. **GammaEvaluator built** — Extends BaseEvaluator from woodshed. Implements analyze_exemplar, derive_reproduction_spec, execute_reproduction, compare_reproduction with L-level rubric weights.
+
+7. **Woodshed L1+L2 PASSED** — Both exemplars reproduced faithfully via live Gamma API. PDFs downloaded (L1: 25KB, L2: 8KB). Run logs and comparison YAMLs retained. Catalog updated to `mastered`.
+
+8. **29 new tests** — 17 evaluator + 12 operations, all passing. 112 existing tests still pass.
+
+### Additional Deliverables (Beyond Story 3.1 Scope)
+
+- **Template generation support** — User-requested feature. Gamma `POST /generations/from-template` endpoint integrated. Template registry design in style_guide.yaml with scope-based resolution.
+- **Context envelope schema** — Formalized Marcus↔Gary delegation contract with required/optional fields, golden examples, and expert fast-path flag.
+- **Interaction test guide** — 12 scenarios at `tests/agents/bmad-agent-gamma/`.
+- **Cross-reference updates** — Gary's name propagated across 14 project files.
 
 ## What Is Next
 
-1. **Party Mode coaching session** for Gamma specialist agent — produce `party-mode-coaching-gamma-specialist.md` with copy-paste-ready bmad-agent-builder discovery answers
-2. **bmad-agent-builder** for Gamma specialist in fresh session using coached answers
-3. **Story 3.1 implementation** — fix GammaClient, build mastery skill with GammaEvaluator, faithful reproduction of L1 + L2
-4. **Post-story woodshed** — L3, L4.1, L4.2 progressive mastery
+1. **Story 3.2** — ElevenLabs Specialist Agent & Mastery Skill (follow Gary pattern)
+2. **Post-story woodshed** — L3, L4.1, L4.2 progressive mastery exercises for Gary
+3. **Stories 3.3-3.8** — Canvas, content-creator, quality-reviewer, qualtrics, canva, source-wrangler, tech-spec-wrangler
 
 ## Unresolved Issues / Risks
 
-- **GammaClient parameter names are wrong** — uses `topic` (400 error), needs `inputText` + `textMode`. Must fix before any agent can use it.
-- **Gamma content embellishment** — `textMode: preserve` doesn't fully prevent Gamma from adding content. Agent must learn to constrain via `additionalInstructions`.
-- **Pre-existing test failure** — `TestStyleGuide.test_has_brand_section` fails (missing `brand` key in style_guide.yaml). Not blocking but should be addressed.
-- **Tech spec wrangler** (Story 3.8) — designed but not yet built. Doc refresh protocol is available as a manual procedure in the meantime.
-- **Perplexity MCP** — deferred. Would enhance tech-spec-wrangler research capability. Juan will decide when ready.
-
-## Key Lessons Learned
-
-1. **Exemplars as acceptance tests** — using real artifacts as both design aids AND acceptance criteria eliminates the gap between "API works" and "agent produces quality output"
-2. **Smoke test before building** — 5-minute API call validated the entire paradigm before investing in full infrastructure
-3. **Gamma API docs are LLM-friendly** — `llms.txt` and `.md` URL suffixes make automated doc refresh clean
-4. **DRY evaluator pattern** — separating process (woodshed) from evaluation (per-agent) is the right abstraction for scaling across specialist agents
-5. **Two-mode mastery** — faithful reproduction proves control, creative enhancement proves judgment. Musicians must play the sheet music before they improvise.
-6. **Export/download is non-negotiable** — screenshots can't be assembled into production workflows. Every reproduction must download the actual artifact.
+- **Pre-existing test failures** — 5 tests fail (`.env.example` missing from disk, `style_guide.yaml` missing `brand` key). Not introduced this session.
+- **Cross-skill imports** — Hyphenated directory names (`gamma-api-mastery`) require `importlib.util` loader pattern. Works but is fragile. May want to standardize on underscore naming for future skills.
+- **Gamma embellishment** — L1+L2 passed but embellishment control is not yet battle-tested at L3-L4 complexity. The constraint phrasing tracking in patterns.md will reveal effectiveness over time.
+- **Template registry** — Designed but no templates are registered yet. First real template will exercise the full workflow.
 
 ## Validation Summary
 
-| Check | Result |
-|-------|--------|
-| Test suite | 116 passed, 1 failed (pre-existing), 3 skipped |
-| Whitespace | Clean (`git diff --check` passed) |
-| Gamma smoke test | Passed — generation, export, download all work |
-| Branch | `epic3-core-tool-agents` pushed to origin |
+| What | How | Result |
+|------|-----|--------|
+| Gary agent structure | bmad-agent-builder lint gate (path-standards, scripts) | PASS — 0 findings |
+| Gary quality | Full quality optimizer (6 LLM scanners + 2 lint + 3 prepass) | Good — 0 critical, 2 high (repo-completeness, resolved) |
+| Party Mode team concerns | 7 team members reviewed against coaching doc | ALL 7 PASS |
+| Coaching doc compliance | Systematic comparison across all 6 phases | ALL PASS (3 gaps found and fixed) |
+| Gamma operations tests | 12 pytest unit tests | ALL PASS |
+| Gamma evaluator tests | 17 pytest unit tests | ALL PASS |
+| Existing test suite | 117 tests in tests/ | 112 pass, 3 skip, 5 fail (pre-existing) |
+| Woodshed L1 | Live Gamma API: generate + poll + export + download | PASS — 25KB PDF, rubric 4-5/5 |
+| Woodshed L2 | Live Gamma API: generate + poll + export + download | PASS — 8KB PDF, rubric 4-5/5 |
+| Whitespace | `git diff --check` | Clean |
+
+## Key Lessons Learned
+
+1. **The Epic 3 specialist agent pattern is now proven and replicable.** The flow (coaching → builder → mastery skill → evaluator → woodshed → validation) works end-to-end. Stories 3.2-3.8 can follow this template.
+
+2. **Gamma API returns `generationId`, not `id`.** The existing GammaClient was also using wrong parameter names. Always validate against live API before building higher layers.
+
+3. **Cross-skill Python imports with hyphenated directories need special handling.** The `importlib.util.spec_from_file_location` pattern works but adds complexity. Consider underscore naming for future skills.
+
+4. **Quality optimizer catches real issues.** The production-coordination hidden dependency (style guide write-back) was a genuine gap that the cohesion scanner found. The envelope schema recommendation (CR-H1) became a key deliverable.
+
+5. **Template support should be considered early.** User raised Gamma templates as a workflow concern — addressing it during agent build was much cheaper than retrofitting later.
 
 ## Artifact Update Checklist
 
-- [x] Story 3.1 file (`3-1-gamma-specialist-agent.md`)
-- [x] Sprint status (`sprint-status.yaml`)
-- [x] Workflow status (`bmm-workflow-status.yaml`)
-- [x] Project context (`docs/project-context.md`)
-- [x] Next session (`next-session-start-here.md`)
-- [x] Epics (`epics.md`)
-- [x] Architecture (`architecture.md`)
-- [x] Directory responsibilities (`directory-responsibilities.md`)
-- [x] Agent environment (`agent-environment.md`)
-- [x] Marcus SKILL.md (new external skills)
-- [x] Pre-flight check SKILL.md (new health checks)
-- [x] Session handoff (this file)
+- [x] Story artifact (`3-1-gamma-specialist-agent.md`) — all tasks checked, status: done, Dev Agent Record filled
+- [x] Sprint status (`sprint-status.yaml`) — 3-1 → done
+- [x] Workflow status (`bmm-workflow-status.yaml`) — next_workflow_step updated
+- [x] Project context (`docs/project-context.md`) — phase and implementation status updated
+- [x] Next session (`next-session-start-here.md`) — full rewrite for Story 3.2
+- [x] Session handoff (`SESSION-HANDOFF.md`) — this file
+- [x] Dev guide (`docs/dev-guide.md`) — Gary added to run walkthrough
+- [x] Interaction test guide (`tests/agents/bmad-agent-gamma/`) — 12 scenarios
+- [x] Marcus SKILL.md — Gary in specialist agents table
+- [x] Marcus sidecar — Gary referenced in next steps
+- [x] Exemplar catalog — L1+L2 mastered

@@ -124,7 +124,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 13. Marcus builds a **production plan**: what needs to be created, which specialist handles it, what quality gates apply
 14. Marcus presents the plan to the user for confirmation
 
-### Phase 4: Specialist Delegation (Marcus → Gamma Specialist)
+### Phase 4: Specialist Delegation (Marcus → Gary, Gamma Specialist)
 
 15. Marcus builds a **context envelope** containing:
     - Production run ID
@@ -134,8 +134,8 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
     - User constraints (from conversation)
     - Relevant style bible sections (color palette, typography, Gamma prompt template)
     - Applicable exemplar references
-16. Marcus delegates to the `gamma-specialist` agent
-17. The Gamma specialist loads its own SKILL.md, reads `references/` for parameter mastery details
+16. Marcus delegates to Gary (`gamma-specialist` agent)
+17. Gary loads his own SKILL.md, reads `references/` for parameter mastery details
 18. The specialist determines optimal Gamma parameters:
     - First: check `state/config/style_guide.yaml` for saved preferences
     - Second: apply context inference (medical content → specific LLM, style, format choices)
@@ -143,7 +143,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 
 ### Phase 5: Tool Execution (Specialist → Skill → API Client)
 
-19. The Gamma specialist invokes Python scripts in `skills/gamma-api-mastery/scripts/`
+19. Gary invokes Python scripts in `skills/gamma-api-mastery/scripts/`
 20. The script instantiates `GammaClient` from `scripts/api_clients/gamma_client.py`
 21. `GammaClient.generate()` sends the API request with all parameters
 22. `GammaClient.wait_for_generation()` polls until completion (3s intervals, up to 120 attempts)

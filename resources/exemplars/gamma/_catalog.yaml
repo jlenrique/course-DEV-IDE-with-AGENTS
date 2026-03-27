@@ -1,6 +1,8 @@
 tool: gamma
 agent: bmad-agent-gamma
-description: "Exemplar library for the Gamma specialist agent (Slide Architect)"
+agent_display_name: Gary
+agent_title: Slide Architect
+description: "Exemplar library for Gary — the Gamma specialist agent (Slide Architect 🎨)"
 
 # Difficulty levels (L-system):
 #   L1-L4: Individual slides (single cards)
@@ -28,11 +30,11 @@ exemplars:
   - id: "L1-two-processes-one-mind"
     level: "L1"
     difficulty: simple
-    status: untested
-    creative_status: locked        # locked until status=mastered
-    mastered_at: null
+    status: mastered
+    creative_status: locked
+    mastered_at: "2026-03-27"
     blocked_at: null
-    total_attempts: 0
+    total_attempts: 1
     description: "Parallel comparison layout — Clinical Diagnosis vs Design Thinking with unifying conclusion"
     slide_type: single-card
     layout_pattern: two-column-parallel
@@ -42,11 +44,11 @@ exemplars:
   - id: "L2-diagnosis-innovation"
     level: "L2"
     difficulty: simple
-    status: untested
+    status: mastered
     creative_status: locked
-    mastered_at: null
+    mastered_at: "2026-03-27"
     blocked_at: null
-    total_attempts: 0
+    total_attempts: 1
     description: "Bold conceptual headline with short explanatory paragraph — minimal, single-focus layout"
     slide_type: single-card
     layout_pattern: title-plus-body

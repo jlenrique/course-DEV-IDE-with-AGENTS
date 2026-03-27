@@ -1,0 +1,42 @@
+{
+  "scanner": "path-standards",
+  "script": "scan-path-standards.py",
+  "version": "2.0.0",
+  "skill_path": "skills\\bmad-agent-gamma",
+  "timestamp": "2026-03-27T00:08:39.010231+00:00",
+  "files_scanned": [
+    "references\\content-type-mapping.md",
+    "references\\exemplar-study.md",
+    "references\\init.md",
+    "references\\memory-system.md",
+    "references\\parameter-recommendation.md",
+    "references\\quality-assessment.md",
+    "references\\save-memory.md",
+    "references\\style-guide-integration.md",
+    "SKILL.md"
+  ],
+  "status": "pass",
+  "findings": [],
+  "assessments": {},
+  "summary": {
+    "total_findings": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "by_category": {
+      "project_root_not_bmad": 0,
+      "bare_bmad": 0,
+      "double_prefix": 0,
+      "absolute_path": 0,
+      "relative_prefix": 0,
+      "bare_internal_path": 0,
+      "memory_path": 0,
+      "frontmatter": 0,
+      "structure": 0
+    },
+    "assessment": "Path standards scan complete"
+  }
+}

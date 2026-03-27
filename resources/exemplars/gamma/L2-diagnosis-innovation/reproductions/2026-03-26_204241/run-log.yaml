@@ -1,0 +1,28 @@
+exemplar_id: L2-diagnosis-innovation
+timestamp: 2026-03-26_204241
+analysis:
+  layout_pattern: title-plus-body
+  content_sections:
+  - '**Body**'
+  pedagogical_type: content-delivery
+  title: Diagnosis = Innovation
+  word_count: 299
+  has_multiple_sections: false
+reproduction_spec:
+  input_text: 'Diagnosis = Innovation
+
+
+    Your clinical training has already prepared you to be an innovator. The process
+    you use every day mirrors the innovation process exactly.'
+  text_mode: preserve
+  format: presentation
+  num_cards: 1
+  additional_instructions: Single-focus layout with bold headline and short body paragraph.
+    Minimal text, clean layout. Output ONLY the provided text. Do not add content.
+  image_options:
+    source: noImages
+  export_as: pdf
+api_interaction: {}
+status: error
+error: 'HTTP 404: Not Found'
+artifact_path: null

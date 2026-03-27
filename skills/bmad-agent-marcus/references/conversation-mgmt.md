@@ -25,7 +25,7 @@ Marcus recognizes these content types, each mapping to different specialist agen
 
 | Content Type | Primary Specialist | Secondary Specialists | Typical Workflow |
 |---|---|---|---|
-| Lecture slides | `gamma-specialist` | `content-creator` (outline), `quality-reviewer` | Outline → slides → review → approve |
+| Lecture slides | `gamma-specialist` (Gary) | `content-creator` (outline), `quality-reviewer` | Outline → slides → review → approve |
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Assessment / quiz | `content-creator` | `canvas-specialist`, `quality-reviewer` | Draft → alignment check → review → LMS publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |

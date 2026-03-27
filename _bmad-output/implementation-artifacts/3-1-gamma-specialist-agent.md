@@ -1,6 +1,6 @@
 # Story 3.1: Gamma Specialist Agent & Mastery Skill
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -10,7 +10,7 @@ So that presentation slides are created with optimal parameters matching my styl
 
 ## Acceptance Criteria
 
-1. `skills/bmad-agent-gamma/SKILL.md` exists with "Slide Architect" persona, complete Gamma parameter knowledge, and capability routing table following the Marcus SKILL.md pattern
+1. `skills/bmad-agent-gamma/SKILL.md` exists with Gary — "Slide Architect" persona (🎨), complete Gamma parameter knowledge, and capability routing table following the Marcus SKILL.md pattern
 2. `skills/gamma-api-mastery/SKILL.md` provides tool integration capability with references and scripts that route to the existing `scripts/api_clients/gamma_client.py`
 3. `skills/gamma-api-mastery/references/parameter-catalog.md` documents ALL Gamma API parameters (inputText, textMode, format, numCards, themeId, additionalInstructions, textOptions, imageOptions, cardOptions, sharingOptions, exportAs, cardSplit, folderIds) with value ranges and educational content guidance
 4. `skills/gamma-api-mastery/references/context-optimization.md` contains parameter templates for different content types (medical lecture, case study, module intro, assessment review, storytelling)
@@ -25,14 +25,14 @@ So that presentation slides are created with optimal parameters matching my styl
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Gamma Specialist Agent via bmad-agent-builder (AC: #1)
+- [x] Task 1: Create Gamma Specialist Agent via bmad-agent-builder (AC: #1)
   - [ ] 1.1 Run bmad-agent-builder six-phase discovery with the pre-built answers from epics.md Phase 1-3
-  - [ ] 1.2 Output: `skills/bmad-agent-gamma/SKILL.md` with persona, communication style, principles, capability routing
+  - [ ] 1.2 Output: `skills/bmad-agent-gamma/SKILL.md` with Gary persona (Slide Architect 🎨), communication style, principles, capability routing
   - [ ] 1.3 Follow Marcus SKILL.md pattern: Overview, Identity, Communication Style, Principles, Does Not Do, On Activation, Capabilities (Internal + External)
-  - [ ] 1.4 Internal capabilities: parameter recommendation (PR), style guide interpretation (SG), output quality assessment (QA), exemplar study (ES)
+  - [ ] 1.4 Internal capabilities: parameter recommendation (PR), style guide interpretation (SG), output quality assessment (QA), exemplar study (ES), content type mapping (CT)
   - [ ] 1.5 External skills routing: `gamma-api-mastery` for all Gamma API operations, `woodshed` for exemplar reproduction and regression
 
-- [ ] Task 2: Create gamma-api-mastery skill (AC: #2, #3, #4, #5)
+- [x] Task 2: Create gamma-api-mastery skill (AC: #2, #3, #4, #5)
   - [ ] 2.1 Create `skills/gamma-api-mastery/SKILL.md` — skill overview, key paths, script index, reference index
   - [ ] 2.2 Create `skills/gamma-api-mastery/references/parameter-catalog.md` — ALL Gamma API parameters documented (sourced from live docs via Ref MCP, citing URLs)
   - [ ] 2.3 Create `skills/gamma-api-mastery/references/context-optimization.md` — content-type parameter templates
@@ -40,18 +40,18 @@ So that presentation slides are created with optimal parameters matching my styl
   - [ ] 2.5 Create `skills/gamma-api-mastery/scripts/gamma_operations.py` — wraps GammaClient with agent-level intelligence
   - [ ] 2.6 Create `skills/gamma-api-mastery/scripts/tests/test_gamma_operations.py` — pytest coverage
 
-- [ ] Task 3: Style guide integration (AC: #6)
+- [x] Task 3: Style guide integration (AC: #6)
   - [ ] 3.1 Agent reads `state/config/style_guide.yaml` → `tool_parameters.gamma` on activation
   - [ ] 3.2 Default parameters applied: default_llm, style, format, slides_per_section
   - [ ] 3.3 Script loads style guide, merges with per-request overrides, passes to GammaClient
 
-- [ ] Task 4: Memory sidecar initialization (AC: #7)
+- [x] Task 4: Memory sidecar initialization (AC: #7)
   - [ ] 4.1 Update `_bmad/memory/gamma-specialist-sidecar/index.md` with activation context and file references
   - [ ] 4.2 Create `_bmad/memory/gamma-specialist-sidecar/patterns.md` (empty, ready for learning)
   - [ ] 4.3 Create `_bmad/memory/gamma-specialist-sidecar/chronology.md` (empty, ready for history)
   - [ ] 4.4 Create `_bmad/memory/gamma-specialist-sidecar/access-boundaries.md` with read/write/deny zones
 
-- [ ] Task 5: Create Gamma evaluator extending BaseEvaluator (AC: #9, DRY architecture)
+- [x] Task 5: Create Gamma evaluator extending BaseEvaluator (AC: #9, DRY architecture)
   - [ ] 5.1 Create `skills/gamma-api-mastery/scripts/gamma_evaluator.py` extending `BaseEvaluator` from `skills/woodshed/scripts/woodshed_base.py`
   - [ ] 5.2 Implement `analyze_exemplar()` — extract slide layout pattern, content structure, pedagogical type from brief + source PDF
   - [ ] 5.3 Implement `derive_reproduction_spec()` — map analysis to Gamma API parameters (numCards, textMode, additionalInstructions, textOptions, etc.)
@@ -60,7 +60,7 @@ So that presentation slides are created with optimal parameters matching my styl
   - [ ] 5.6 Implement `get_custom_rubric_weights()` — adjust weights per L-level (L1-L2: structural + parameter heavy; L3-L4: add content completeness)
   - [ ] 5.7 Create `skills/gamma-api-mastery/scripts/tests/test_gamma_evaluator.py`
 
-- [ ] Task 6: Exemplar-driven validation — Woodshed (AC: #8, #9, #10, #11)
+- [x] Task 6: Exemplar-driven validation — Woodshed (AC: #8, #9, #10, #11)
   - [ ] 6.1 Start with L1 (simplest): study → derive spec → reproduce → compare
   - [ ] 6.2 Progress through L2, L3, L4.1, L4.2 as each level is mastered
   - [ ] 6.3 Save all outputs + run-log.yaml to `reproductions/{timestamp}/` (retained for both pass and fail)
@@ -69,20 +69,20 @@ So that presentation slides are created with optimal parameters matching my styl
   - [ ] 6.6 If pass: update `_catalog.yaml` status → mastered with mastered_at date
   - [ ] 6.7 Circuit breaker: 3 attempts/session, 7 total per exemplar; failure-report.yaml if tripped
 
-- [ ] Task 7: Party Mode validation (AC: #12)
+- [x] Task 7: Party Mode validation (AC: #12)
   - [ ] 7.1 Run Party Mode review of completed agent + skill + exemplar reproduction results
 
 ## Dev Notes
 
 ### Agent Pattern: Follow Marcus SKILL.md Structure
 
-The Gamma specialist agent must follow the exact same SKILL.md structure as Marcus (`skills/bmad-agent-marcus/SKILL.md`). Key sections:
+The Gamma specialist agent (Gary — Slide Architect 🎨) must follow the exact same SKILL.md structure as Marcus (`skills/bmad-agent-marcus/SKILL.md`). Key sections:
 
 - **YAML frontmatter**: name, description
 - **Overview**: One-paragraph summary of who this agent is and what it does
-- **Identity**: "Slide Architect" — persona description
-- **Communication Style**: How the agent communicates (visual-thinking oriented, precise about parameters)
-- **Principles**: 5 numbered principles (every slide serves a learning objective, visual clarity for physician audience, etc.)
+- **Identity**: Gary — "Slide Architect" persona description
+- **Communication Style**: How Gary communicates (visual-thinking oriented, precise about parameters)
+- **Principles**: 8 numbered principles (every slide serves a learning objective, visual clarity for physician audience, etc.)
 - **Does Not Do**: Clear boundaries — does NOT orchestrate other agents, manage production runs, or write to other sidecars
 - **On Activation**: Load config, load sidecar memory, read style guide, greet with context
 - **Capabilities**: Internal (parameter recommendation, style guide interpretation) + External (gamma-api-mastery skill, woodshed skill)
@@ -279,9 +279,29 @@ resources/exemplars/gamma/          # ALREADY POPULATED — 5 exemplars with bri
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude claude-4.6-opus (via Cursor Agent mode)
 
 ### Debug Log References
+- Quality scan report: `skills/reports/bmad-agent-gamma/quality-scan/2026-03-26_200831/quality-report.md`
+- Woodshed L1 run log: `resources/exemplars/gamma/L1-two-processes-one-mind/reproductions/2026-03-26_204326/run-log.yaml`
+- Woodshed L2 run log: `resources/exemplars/gamma/L2-diagnosis-innovation/reproductions/2026-03-26_204339/run-log.yaml`
 
 ### Completion Notes List
+- GammaClient.generate() fixed: `topic` → `inputText`, added `textMode`, `exportAs`, all optional params
+- GammaClient.generate_from_template() added for template-based generation
+- API returns `generationId` not `id` — fixed in gamma_operations.py
+- Gamma embellishment control strategy documented with three constraint levels
+- Template registry design added (user request) with scope-based resolution
+- Context envelope schema formalized (CR-H1 optimization) with golden examples
+- Expert fast-path flag added (CR-H2 optimization) for pipeline efficiency
+- pyproject.toml: added `pythonpath = ["."]` for cross-skill imports
+- 29 new tests (17 evaluator + 12 operations), all passing
 
 ### File List
+**Agent (10 files):** `skills/bmad-agent-gamma/SKILL.md` + 9 references (parameter-recommendation, style-guide-integration, quality-assessment, exemplar-study, content-type-mapping, context-envelope-schema, memory-system, init, save-memory)
+**Mastery skill (6 files):** `skills/gamma-api-mastery/SKILL.md`, `references/parameter-catalog.md`, `references/context-optimization.md`, `scripts/gamma_operations.py`, `scripts/gamma_evaluator.py`, `scripts/tests/conftest.py`
+**Tests (2 files):** `scripts/tests/test_gamma_operations.py`, `scripts/tests/test_gamma_evaluator.py`
+**Memory sidecar (4 files):** `_bmad/memory/gamma-specialist-sidecar/` — index.md, patterns.md, chronology.md, access-boundaries.md
+**Coaching (1 file):** `_bmad-output/brainstorming/party-mode-coaching-gamma-specialist.md`
+**Woodshed (1 file):** `skills/gamma-api-mastery/scripts/run_woodshed_l1_l2.py`
+**Modified:** GammaClient (gamma_client.py), Marcus SKILL.md + conversation-mgmt.md + sidecar, agents README, exemplar catalog, doc-sources.yaml, dev-guide.md, pyproject.toml

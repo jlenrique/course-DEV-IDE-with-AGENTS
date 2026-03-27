@@ -1,0 +1,96 @@
+{
+  "scanner": "execution-efficiency",
+  "skill_path": "skills/bmad-agent-gamma",
+  "findings": [
+    {
+      "file": "SKILL.md",
+      "line": 62,
+      "severity": "strength",
+      "category": "memory-optimization",
+      "title": "Sidecar uses index.md as single memory entry point",
+      "detail": "On Activation directs loading `_bmad/memory/gamma-specialist-sidecar/index.md` as the entry point before deeper sidecar files, matching selective memory loading. Fallback to `references/init.md` avoids loading a full sidecar when none exists.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 81,
+      "severity": "strength",
+      "category": "resource-optimization",
+      "title": "Capability table loads references only when a route is taken",
+      "detail": "Internal capabilities (PR, SG, QA, ES, CT, SM) each map to a single reference file loaded on demand rather than loading all references at activation. Reduces baseline token use and keeps context aligned to the active task.",
+      "action": ""
+    },
+    {
+      "file": "SKILL.md",
+      "line": 57,
+      "severity": "medium",
+      "category": "batching",
+      "title": "On Activation lists independent reads without parallel batching guidance",
+      "detail": "The block loads `_bmad/config.yaml`, optional `config.user.yaml`, `references/memory-system.md`, sidecar `index.md` or `init.md`, and `style_guide.yaml` as a linear list. These I/Os have no hard ordering among several items; serial tool rounds add latency versus one batched parallel read pass. Estimated savings: one fewer assistant turn on cold start when tools support parallelism.",
+      "action": "Add an explicit line: when using file tools, issue parallel reads for config files, memory-system.md, sidecar index (or init), and style_guide.yaml in one round unless a parse result gates the next step."
+    },
+    {
+      "file": "references/exemplar-study.md",
+      "line": 11,
+      "severity": "medium-opportunity",
+      "category": "parallelization",
+      "title": "Doc refresh can batch parallel Ref MCP fetches for multiple parameter pages",
+      "detail": "After API changes are detected, scanning affected parameter pages via Ref MCP is described as a sequential workflow. Multiple independent URLs are typical; sequential ref_read_url calls multiply wall-clock time. Batching independent URL reads in one message reduces latency in proportion to page count.",
+      "action": "When multiple parameter docs need refresh, fetch all affected URLs in parallel in a single tool batch, then merge updates into `parameter-catalog.md`."
+    },
+    {
+      "file": "references/init.md",
+      "line": 19,
+      "severity": "low",
+      "category": "sequential-independent",
+      "title": "First-interaction onboarding steps are fully sequential",
+      "detail": "First interactive activation lists Gamma connectivity check, then style guide read, then report. The style guide read does not depend on API success textually; partial parallelization may save a small fraction of first-run time.",
+      "action": "Where the runtime allows, run connectivity preflight and `style_guide.yaml` read in parallel, then synthesize the greeting from both outcomes."
+    },
+    {
+      "file": "references/parameter-recommendation.md",
+      "line": 7,
+      "severity": "suggestion",
+      "category": "resource-loading",
+      "title": "Style guide YAML read overlaps with style-guide-integration.md",
+      "detail": "`parameter-recommendation.md` and `references/style-guide-integration.md` both instruct reading `state/config/style_guide.yaml` at invocation. Tasks that route through PR then SG (or vice versa) may repeat the same read in one turn, wasting tokens and I/O.",
+      "action": "State in SKILL or cross-references: one read of `tool_parameters.gamma` per task satisfies both capabilities; subsequent steps reuse the loaded block."
+    }
+  ],
+  "assessments": {
+    "prepass_integration": {
+      "prepass_scanner": "execution-efficiency-prepass",
+      "prepass_status": "pass",
+      "sequential_patterns_count": 0,
+      "prepass_issues_count": 0,
+      "notes": "No script-flagged sequential chains, loop patterns, or subagent-chain violations; LLM review focused on prose workflow and memory/resource strategy."
+    },
+    "execution_efficiency": {
+      "delegation_role": "primarily_delegatee",
+      "subagent_chaining_risk": "none_observed_in_skill_text",
+      "memory_loading_strategy": "strong_index_first_selective_references",
+      "parallelization_surface": "low_no_staged_dag_mostly_single_specialist_thread"
+    }
+  },
+  "summary": {
+    "total_findings": 6,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "medium-opportunity": 1,
+      "suggestion": 1,
+      "strength": 2
+    },
+    "by_category": {
+      "memory-optimization": 1,
+      "resource-optimization": 1,
+      "batching": 1,
+      "parallelization": 1,
+      "sequential-independent": 1,
+      "resource-loading": 1
+    },
+    "assessment": "Pre-pass was clean; the skill is strong on selective memory and capability-scoped references. Main improvements are explicit cold-start read batching, parallel doc-refresh fetches when many URLs change, and deduplicating style-guide reads across PR/SG."
+  }
+}

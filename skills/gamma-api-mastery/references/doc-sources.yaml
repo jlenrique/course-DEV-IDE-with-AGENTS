@@ -1,5 +1,6 @@
 tool: gamma
 agent: bmad-agent-gamma
+agent_display_name: Gary
 
 doc_sources:
   - name: "Gamma Developer Docs"

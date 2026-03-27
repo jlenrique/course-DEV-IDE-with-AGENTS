@@ -9,7 +9,7 @@ Each agent is created via `bmad-agent-builder` six-phase conversational discover
 | Agent | Persona | Epic |
 |-------|---------|------|
 | `master-orchestrator.md` | "Producer" — general contractor for production workflows | Epic 2 |
-| `gamma-specialist.md` | "Slide Architect" — Gamma tool mastery | Epic 3 |
+| `gamma-specialist.md` | Gary — "Slide Architect" — Gamma tool mastery | Epic 3 |
 | `elevenlabs-specialist.md` | "Voice Director" — audio production expert | Epic 3 |
 | `canvas-specialist.md` | "Deployment Director" — Canvas LMS integration | Epic 3 |
 | `content-creator.md` | "Instructional Architect" — pedagogical content structuring | Epic 3 |

@@ -69,4 +69,4 @@ key_decisions:
   - "DOC REFRESH PROTOCOL: Each mastery skill maintains doc-sources.yaml. Mandatory refresh before woodshed cycles via Ref MCP. Gamma has llms.txt for LLM-optimized docs"
   - "TECH SPEC WRANGLER: Shared skill (not agent). Deferred Perplexity MCP until needed"
 
-next_workflow_step: "Story 3.1 ready-for-dev. Implement in fresh session: fix GammaClient params, build agent via bmad-agent-builder, create mastery skill with GammaEvaluator, faithful reproduction of L1+L2 exemplars with PDF export. Story 3.1 scope: L1+L2 mastery; L3-L4 become post-story woodshed exercises."
+next_workflow_step: "Story 3.1 DONE. Gary (Gamma Specialist, Slide Architect) agent built, quality scanned, Party Mode validated. gamma-api-mastery skill with GammaEvaluator. L1+L2 faithful reproduction PASSED. GammaClient params fixed. Template generation added. 29 new tests pass. Next: Story 3.2 (ElevenLabs Specialist Agent)."

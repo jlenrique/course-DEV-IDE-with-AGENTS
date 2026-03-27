@@ -8,7 +8,7 @@
 
 — import from **`visuals/`** (Gate 2 stills, copied in-repo), **`audio/`**, **`captions/`**, follow **`DESCRIPT-ASSEMBLY-GUIDE.md`**. Kira out of scope for this pilot.
 
-**Before Descript (automation):** `python skills/compositor/scripts/compositor_operations.py sync-visuals <manifest.yaml>` then `guide <manifest.yaml> <DESCRIPT-ASSEMBLY-GUIDE.md>` whenever a new assembly bundle is finalized (PNG paths were Gary-relative).
+**Before Descript (automation):** `.venv\Scripts\python.exe skills/compositor/scripts/compositor_operations.py sync-visuals <manifest.yaml>` then the same with `guide <manifest.yaml> <DESCRIPT-ASSEMBLY-GUIDE.md>` whenever a new assembly bundle is finalized (details: [Developer guide — Compositor assembly bundle CLI](docs/dev-guide.md#compositor-assembly-bundle-cli)).
 
 Story **3.9 Source Wrangler** is implemented: `skills/source-wrangler/` + `NotionClient` + URL/HTML ingest + Playwright-assisted capture path. Stories 3.4, 3.5, 3.9, and 3.10 are in place; segment manifest and doc-refresh coverage remain active.
 
@@ -21,13 +21,15 @@ Story **3.9 Source Wrangler** is implemented: `skills/source-wrangler/` + `Notio
 
 **Decision record:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
 
-**Branch**: `dev/trial-run-slide-narration` (pilot) or `master`
+**Branch**: **`dev/next-session`** (default working branch; tracks `origin/dev/next-session`). **`master`** carries merged release history (`dev/trial-run-slide-narration` was merged 2026-03-28).
+
+**Startup:** `git checkout dev/next-session` and `git pull origin dev/next-session` (or `git fetch origin && git checkout dev/next-session && git pull`).
 
 ## Current Status — STORIES 3.1 + 3.2 + 3.3 + 3.3.1 + 3.4 + 3.5 + 3.9 + 3.10 COMPLETE
 
 - **Story 3.3.1 (Composition Harmonization + Gary Deck)**: DONE — all agents updated, architecture updated, Gary deck mode + theme/template preview added, Epic 3 re-sequenced to 11 stories
 - **Story 3.4 (Voice Director / ElevenLabs)**: DONE — expanded ElevenLabs client (timestamps, dictionaries, dialogue, SFX, music stream), `elevenlabs-audio` skill, Voice Director agent, sidecar, bootstrap exemplar, focused live timestamp + manifest smoke passed
-- **Story 3.5 (Compositor + Intent Contract)**: DONE — `skills/compositor/` added, proof-of-concept `descript-assembly-guide.md` generated from completed manifest, `behavioral_intent` formalized across Irene templates/manifest, Gary intent self-check added, Quinn-R intent-fidelity review added
+- **Story 3.5 (Compositor + Intent Contract)**: DONE — `skills/compositor/` added, Descript Assembly Guide + **`sync-visuals`** (localize approved stills into the assembly bundle), `behavioral_intent` formalized across Irene templates/manifest, Gary intent self-check added, Quinn-R intent-fidelity review added
 - **Story 3.10 (Tech Spec Wrangler)**: DONE — `skills/tech-spec-wrangler/` added, ElevenLabs/Compositor doc-source coverage created, refresh metadata + proof report + sidecar logging validated
 - **Story 3.3 (Kira - Kling Video Specialist)**: DONE - API client (JWT auth, live-tested), Kira agent (7 files), kling-video skill (7 files), 5+5 tests, comparison video set (baseline v2-6 std vs premium v2-6 pro), human-reviewed, production guidance established
 - **Story 3.2 (Irene + Quinn-R)**: DONE - 12+6+10 files, 28 tests, 6 sample artifacts approved

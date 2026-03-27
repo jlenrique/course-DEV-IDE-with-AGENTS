@@ -2,28 +2,40 @@
 
 ## Immediate Next Action
 
-**Implement Story 3.2 (ElevenLabs Specialist Agent & Mastery Skill) via `bmad-dev-story`.**
+**Implement Story 3.2 (Content Creator Agent + Quality Reviewer Agent) via `bmad-dev-story`.**
 
-Follow the Gary pattern established in Story 3.1: Party Mode coaching → bmad-agent-builder → mastery skill → evaluator → woodshed → Party Mode validation.
+Content is KING. Scripts must exist before slides can be narrated. Story 3.2 was moved up from the old Story 3.4 position because the production pipeline demands it:
+```
+Content Creator (scripts) → Gary (slides) → ElevenLabs (narration) → Assembly → Quality Reviewer
+```
 
-**CRITICAL: Apply Evaluator Design Requirements** from Story 3.1 debugging (see `skills/woodshed/SKILL.md`). Every evaluator must: guide the tool's intelligence (not suppress), extract actual output for comparison (not rubber-stamp), score on content coverage (not exact match), and use medium-appropriate cheap quality signals.
+The Content Creator ("Instructional Architect") judiciously delegates to BMad writers for top-notch prose:
+- **Paige** (Tech Writer) — for structured explanatory content (procedures, protocols)
+- **Sophia** (Storyteller) — for narratives (case studies, patient vignettes, first-person explainers)
+- **Caravaggio** (Presentation Expert) — for slide narrative design and visual flow advice
+
+Follow the Gary pattern: Party Mode coaching → bmad-agent-builder → agent creation → interaction testing → Party Mode validation.
 
 ```
 1. Party Mode coaching — produce coached bmad-agent-builder discovery answers
-   for ElevenLabs specialist (model on party-mode-coaching-gamma-specialist.md)
-2. bmad-agent-builder with coached answers
-3. Build elevenlabs-audio mastery skill with ElevenLabsEvaluator
-   - ElevenLabsEvaluator must: extract audio duration + speech-to-text, compare against script,
-     score on pronunciation accuracy + pacing + tone quality, use duration-vs-word-count as cheap signal
-4. Woodshed: faithful reproduction of audio exemplar(s) with MP3 export
+   for Content Creator + Quality Reviewer (model on party-mode-coaching-gamma-specialist.md)
+2. bmad-agent-builder with coached answers (invoke twice — one per agent)
+3. Build reference templates for all 6 output artifact types
+4. Test invocations: verify both agents respond in character
 5. Run bmad-code-review for Story 3.2
 ```
 
+**Then Story 3.3 (Kling Video Specialist — API client + video production agent, human review)**
+**Then Story 3.4 (ElevenLabs — expanded scope with timestamps, pronunciation, SFX, music, dialogue)**
+
 **Branch**: `epic3-core-tool-agents`
 
-## Current Status — STORY 3.1 COMPLETE, EPIC 3 IN PROGRESS
+## Current Status — STORY 3.1 COMPLETE, EPIC 3 RE-SEQUENCED
 
 - **Story 3.1 (Gary — Gamma Specialist)**: DONE — Agent built (10 files), mastery skill built (6 files), GammaClient fixed, 29 tests pass, L1+L2 woodshed PASSED, quality scan (0 critical, 2 high repo-completeness resolved), Party Mode validated, interaction test guide created
+- **Epic 3 re-sequenced (March 26)**: Content Creator moved to 3.2 (was 3.4), ElevenLabs expanded to 3.3 (was 3.2), Canvas renumbered to 3.4 (was 3.3), Canva downgraded to design guidance (API cannot edit elements)
+- **ElevenLabs brainstorm completed**: 12 artifact types identified, P0-P3 prioritized, evaluator design specified — see `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
+- **Canva API assessed**: Cannot add captions, apply templates, or edit elements programmatically. Import/export only. Downgraded to design guidance agent.
 - **Epic 2**: COMPLETE (6/6 stories, 55 tests)
 - **Epic 1**: COMPLETE (11/11 stories, 117 tests)
 
@@ -85,9 +97,23 @@ Follow the Gary pattern established in Story 3.1: Party Mode coaching → bmad-a
 - Gary Quality Scan: `skills/reports/bmad-agent-gamma/quality-scan/2026-03-26_200831/quality-report.md`
 - Gary Interaction Tests: `tests/agents/bmad-agent-gamma/interaction-test-guide.md`
 - Gary Coaching Doc: `_bmad-output/brainstorming/party-mode-coaching-gamma-specialist.md`
+- ElevenLabs Capability Audit: `_bmad-output/brainstorming/party-mode-elevenlabs-capability-audit.md`
 - Marcus SKILL.md: `skills/bmad-agent-marcus/SKILL.md`
 - Sprint Status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - Epics: `_bmad-output/planning-artifacts/epics.md`
+
+### Epic 3 Story Sequence (re-sequenced March 27, 2026 — 9 stories)
+| Story | Agent | Validation | Status |
+|-------|-------|------------|--------|
+| 3.1 | Gary (Gamma Specialist) | Exemplar + Woodshed | DONE |
+| 3.2 | Content Creator + Quality Reviewer | Human review (sample artifacts) | NEXT |
+| 3.3 | Kling Video Specialist (NEW) | Human review (sample videos) | Backlog |
+| 3.4 | ElevenLabs Specialist (expanded) | Exemplar + Woodshed | Backlog |
+| 3.5 | Canvas Specialist | Exemplar + Woodshed | Backlog |
+| 3.6 | Qualtrics Specialist | Exemplar + Woodshed | Backlog |
+| 3.7 | Canva Specialist (manual-tool pattern) | Human review (instructions) | Backlog |
+| 3.8 | Source Wrangler (Notion + Box) | Functional testing | Backlog |
+| 3.9 | Tech Spec Wrangler | Functional testing | Backlog |
 
 ### Gotchas
 - PowerShell doesn't support `&&` chaining — use `;` instead

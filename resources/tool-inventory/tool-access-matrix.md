@@ -149,10 +149,10 @@ These tools have partial programmatic access. Integration may be possible but wi
 
 #### Midjourney
 - **API:** NO official REST API (Discord-based interface)
-- **Third-Party Options:** Crazyrouter, Legnext, ImagineAPI.dev provide REST wrappers
+- **Third-Party Options:** ImagineAPI.dev, ImaginePro, UseAPI.net, PiAPI provide REST wrappers (all unofficial)
 - **Auth:** Varies by third-party provider (Bearer tokens)
 - **Features via Third-Party:** Text-to-image, upscale, variations, image-to-image
-- **Recommendation:** Evaluate third-party options for reliability; plan for possible manual fallback
+- **Project Decision (March 27, 2026):** Uses **manual-tool agent pattern** (same as Canva, Vyond, Articulate). The agent has deep Midjourney prompt expertise and provides ready-to-paste prompts. Essential for bespoke images where generic imagery won't suffice. Third-party API wrappers are unofficial and unreliable — not worth the dependency. If an official API becomes available, the agent can be upgraded to programmatic integration.
 
 #### CapCut
 - **API:** Official status unclear. OpenAPI spec exists for ChatGPT plugin.

@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-26 (session 4 — exemplar infrastructure, smoke test success, two-mode woodshed, doc refresh protocol)
+# Last Updated: 2026-03-27 (session 5 — ElevenLabs capability brainstorm, Epic 3 re-sequencing, Canva API assessment, Content Creator moved up)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -68,5 +68,12 @@ key_decisions:
   - "EXPORT REQUIREMENT: All reproductions must download production artifacts (PDF/PPTX/MP3). Screenshots supplementary only. Export URLs time-limited (~7 days)"
   - "DOC REFRESH PROTOCOL: Each mastery skill maintains doc-sources.yaml. Mandatory refresh before woodshed cycles via Ref MCP. Gamma has llms.txt for LLM-optimized docs"
   - "TECH SPEC WRANGLER: Shared skill (not agent). Deferred Perplexity MCP until needed"
+  - "EPIC 3 RE-SEQUENCING (2026-03-26): Content Creator + Quality Reviewer moved to Story 3.2 (was 3.4). Scripts must precede narration in the production pipeline. Content Creator delegates to BMad writers (Paige/Tech Writer, Sophia/Storyteller, Caravaggio/Presentation Expert) for prose quality. ElevenLabs expanded to Story 3.3 with timestamps, pronunciation dictionaries, SFX, music, dialogue. Canvas renumbered to 3.4. Canva downgraded to design guidance (API cannot edit elements)."
+  - "ELEVENLABS CAPABILITY AUDIT (2026-03-26): 12 instructional artifact types identified from full API surface review. P0: narration+timestamps+VTT, pronunciation dictionaries, multi-slide request stitching. P1: case study dialogue, SFX package, background music. P2-P3: voice cloning, dubbing, conversational AI tutors. Evaluator design: STT extraction, word coverage >95%, WPM check 130-170, timestamp monotonicity."
+  - "CANVA API ASSESSMENT (2026-03-26): Connect API cannot edit individual design elements (no add_text, modify_element, apply_style). Only create blank designs, import PPTX, export, manage assets, Autofill (Enterprise only). Not worth OAuth integration effort. Downgraded to design guidance agent (Tier 4 pattern). Future upgrade if element-level API becomes available."
+  - "CONTENT-IS-KING PRINCIPLE: Written content quality is paramount for higher education. Content Creator owns pedagogy but delegates prose to BMad specialists: Paige for technical precision, Sophia for narrative craft, Caravaggio for visual narrative flow. Editorial review agents polish all output before downstream handoff."
+  - "CONTENT CREATOR VALIDATION MODEL: No exemplars, no woodshed. Produces sample of each output artifact type for human review. Appropriate because the agent produces written content, not API-generated artifacts."
+  - "KLING VIDEO SPECIALIST (Story 3.3): Pulled forward from Epic 5. API client built in-story (BaseAPIClient well established). Text-to-video, image-to-video, lip-sync, extend. Human review validation. Video types: B-roll, concept viz, slide-to-video transitions, talking-head overlays."
+  - "MANUAL-TOOL AGENT PATTERN: Agents for tools without programmatic control (Canva, Vyond, Articulate) are structurally identical to other agents but operate through step-by-step user instructions instead of API calls. Marcus polls them for capability. They provide detailed instructions the user executes. No API skill layer, no woodshed. Validated by human review of instruction quality."
 
-next_workflow_step: "Story 3.1 DONE. Gary (Gamma Specialist, Slide Architect) agent built, quality scanned, Party Mode validated. gamma-api-mastery skill with GammaEvaluator. L1+L2 faithful reproduction PASSED. GammaClient params fixed. Template generation added. 29 new tests pass. Next: Story 3.2 (ElevenLabs Specialist Agent)."
+next_workflow_step: "Story 3.1 DONE. Epic 3 re-sequenced and expanded to 9 stories (March 27, 2026): 3.2 Content Creator (instructional design director, delegates writing to BMad specialists, human review validation), 3.3 Kling Video Specialist (NEW — API client + agent, human review), 3.4 ElevenLabs (expanded), 3.5 Canvas, 3.6 Qualtrics, 3.7 Canva (manual-tool agent pattern), 3.8 Source Wrangler, 3.9 Tech Spec Wrangler. Manual-tool agent pattern established for Canva/Vyond/Articulate. Next: Story 3.2."

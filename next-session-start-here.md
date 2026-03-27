@@ -30,9 +30,10 @@ Story 3.3.1 harmonization is DONE. The composition architecture is fully resolve
 
 ### Pipeline
 ```
-Irene P1 → [Gate 1] → Gary → [Gate 2] → Irene P2 → [Gate 3] →
-ElevenLabs + Kira → Quinn-R pre-comp → Compositor → Descript →
-Quinn-R post-comp → [Gate 4] → Canvas
+Marcus → Irene P1 → Marcus/[Gate 1] → Gary → Marcus/[Gate 2] →
+Irene P2 → Marcus/[Gate 3] → ElevenLabs → Marcus → Kira →
+Marcus → Quinn-R pre-comp → Compositor → Descript →
+Quinn-R post-comp → Marcus/[Gate 4] → Canvas
 ```
 
 ### Key Design Decisions

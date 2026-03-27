@@ -642,41 +642,41 @@ _Decisions from Party Mode session: `_bmad-output/brainstorming/party-mode-compo
 ### Pipeline Dependency Graph
 
 ```
-Irene Pass 1: Lesson Plan + Slide Brief
+Marcus -> Irene Pass 1: Lesson Plan + Slide Brief
     │
-    ▼  [HIL Gate 1: Review lesson plan]
+    ▼  [HIL Gate 1 via Marcus: Review lesson plan]
     │
-Gary: Gamma slide deck → PNGs
-    │  (theme/template preview before generation)
-    ▼  [HIL Gate 2: Review slides — CRITICAL gate]
+Marcus -> Gary: Gamma slide deck -> PNGs
+    │  (theme/template preview before generation; user refinements routed through Marcus)
+    ▼  [HIL Gate 2 via Marcus: Review slides — CRITICAL gate]
     │
-Irene Pass 2: Narration Script + Segment Manifest
+Marcus -> Irene Pass 2: Narration Script + Segment Manifest
     │  (writes narration to complement Gary's actual visuals)
-    ▼  [HIL Gate 3: Review script & manifest]
+    ▼  [HIL Gate 3 via Marcus: Review script & manifest]
     │
-    ├──→ ElevenLabs Agent: narration MP3 + VTT + SFX + music
-    │        │  (writes durations back to manifest)
+Marcus -> ElevenLabs Agent: narration MP3 + VTT + SFX + music
+    │        │  (writes durations and voice-specific outputs back to manifest)
     │        ▼
-    ├──→ Kira: silent video clips (after ElevenLabs writes durations)
+Marcus -> Kira: silent video clips (only after ElevenLabs writes durations)
     │
-    ▼  [Quinn-R: pre-composition validation]
+    ▼  [Marcus -> Quinn-R: pre-composition validation]
     │
-Compositor Skill: generates Descript Assembly Guide
+Marcus -> Compositor Skill: generates Descript Assembly Guide
     │
-    ▼  [Human: assembles in Descript → exports MP4 + VTT]
+    ▼  [Human: assembles in Descript -> exports MP4 + VTT]
     │
-    ▼  [Quinn-R: post-composition validation]
+    ▼  [Marcus -> Quinn-R: post-composition validation]
     │
-    ▼  [HIL Gate 4: Final video review]
+    ▼  [HIL Gate 4 via Marcus: Final video review]
     │
 Done: asset ready for Canvas deployment
 ```
 
 ### Segment Manifest — Data Backbone
 
-The **segment manifest** (YAML) is the single source of truth for a lesson's multimedia production. Produced by Irene in Pass 2, consumed and written back to by all downstream agents.
+The **segment manifest** (YAML) is the single source of truth for a lesson's multimedia production. Produced by Irene in Pass 2, consumed and written back to by all downstream agents, with Marcus always brokering the handoff between stages.
 
-- **Irene writes:** `narration_text`, `visual_cue`, `visual_mode`, `visual_source`, `sfx`, `music`, `transition_in/out`; populates `visual_file` for Gary's slides immediately
+- **Irene writes:** `narration_text`, `voice_id`, `visual_cue`, `visual_mode`, `visual_source`, `sfx`, `music`, `transition_in/out`; populates `visual_file` for Gary's slides immediately
 - **ElevenLabs writes back:** `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`
 - **Kira writes back:** `visual_file`, `visual_duration` (for kira-sourced segments)
 - **Compositor reads:** complete manifest → generates Descript Assembly Guide
@@ -723,7 +723,7 @@ All converge into the same pipeline and Descript workflow:
 |------|--------|---------|------------------------|
 | 1 | After Irene P1, before Gary | Lesson plan, objectives | Before any asset generation |
 | 2 | After Gary, before Irene P2 | Slides (visual quality, brand) | Before narration written |
-| 3 | After Irene P2, before ElevenLabs/Kira | Script + manifest | Before audio/video generation |
+| 3 | After Irene P2, before ElevenLabs, before Kira can be queued | Script + manifest | Before audio/video generation |
 | 4 | After Descript export | Final composed video | After composition |
 
 ### Quinn-R Two-Pass Validation

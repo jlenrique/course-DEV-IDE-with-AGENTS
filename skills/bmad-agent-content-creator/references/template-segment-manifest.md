@@ -24,6 +24,7 @@ segments:
   - id: string              # e.g., seg-01, seg-02 (sequential, matches narration script markers)
     narration_ref: string   # Pointer to narration script section, e.g., "narration-script.md#segment-1"
     narration_text: string  # Full narration text for this segment (copy from script)
+    voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
     visual_mode: enum       # static-hold | video | text-frame | pause-beat
     visual_source: enum     # gary | kira | null
@@ -80,6 +81,7 @@ segments:
 ```yaml
 - id: seg-01
   narration_text: "The economic reality of physician practice..."
+  voice_id: null
   visual_mode: static-hold
   visual_source: gary
   sfx: null
@@ -92,6 +94,7 @@ segments:
 ```yaml
 - id: seg-02
   narration_text: "[DR. A]: The evidence suggests consolidation improves outcomes..."
+  voice_id: "voice_dr_a"
   visual_mode: video
   visual_source: kira
   sfx: null
@@ -105,6 +108,7 @@ segments:
 ```yaml
 - id: seg-03
   narration_text: "First, assess the patient's chief complaint."
+  voice_id: null
   visual_mode: static-hold
   visual_source: gary
   sfx: null
@@ -113,6 +117,7 @@ segments:
   transition_out: none
 - id: seg-03-beat
   narration_text: ""        # empty — pause beat
+  voice_id: null
   visual_mode: pause-beat
   visual_source: null
   sfx: null
@@ -125,6 +130,7 @@ segments:
 ```yaml
 - id: seg-04
   narration_text: "Meet Dr. Patel. She's reviewing a complex case..."
+  voice_id: null
   visual_mode: video
   visual_source: kira
   sfx: null
@@ -137,6 +143,7 @@ segments:
 ```yaml
 - id: seg-05a
   narration_text: "Watch the following scenario and consider: what would you do next?"
+  voice_id: null
   visual_mode: static-hold
   visual_source: gary
   sfx: null
@@ -145,6 +152,7 @@ segments:
   transition_out: cut
 - id: seg-05b
   narration_text: ""        # deliberate silence — learner observes
+  voice_id: null
   visual_mode: video
   visual_source: kira
   sfx: null
@@ -157,6 +165,7 @@ segments:
 ```yaml
 - id: seg-06
   narration_text: "As more information pours in, the glass overflows..."
+  voice_id: null
   visual_mode: video
   visual_source: kira
   sfx: null
@@ -176,6 +185,7 @@ segments:
 ```yaml
 - id: seg-bumper
   narration_text: "Module 3: Clinical Decision-Making."
+  voice_id: null
   visual_mode: video
   visual_source: kira
   sfx: "music-sting-logo"
@@ -190,6 +200,7 @@ segments:
 
 **ElevenLabs agent reads:**
 - `narration_text` per segment — text to synthesize
+- `voice_id` — per-segment voice override when present; otherwise use the lesson default from Marcus/style guide
 - `sfx` — SFX cue to generate or look up
 - `music` — music direction (swell/duck/out)
 - Writes back: `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`
@@ -217,6 +228,7 @@ segments:
 
 - Produce the manifest in the same task as the narration script — they are always paired
 - Segment IDs must match `[SEGMENT: seg-XX]` markers in the narration script exactly
+- Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment
 - For `static-hold` segments referencing Gary PNGs: populate `visual_file` with the Gary-provided path from `gary_slide_output` immediately — don't leave it null
 - Leave ElevenLabs and Kira write-back fields (`narration_duration`, `narration_file`, etc.) as `null` — those agents populate them

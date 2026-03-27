@@ -25,9 +25,9 @@ Marcus recognizes these content types, each mapping to different specialist agen
 
 | Content Type | Primary Specialist | Secondary Specialists | Typical Workflow |
 |---|---|---|---|
-| Narrated lesson (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Irene P1 → [Gate 1] → Gary → [Gate 2] → Irene P2 → [Gate 3] → ElevenLabs + Kira → Quinn-R pre-comp → Descript → [Gate 4] → Quinn-R post-comp |
-| Lecture slides only | `gamma-specialist` (Gary) | `content-creator` (slide brief), `quality-reviewer` | Irene P1 slide brief → [Gate 1] → Gary → [Gate 2] → approve |
-| Narrated slides (no video) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Irene P1 → Gary → [Gate 2] → Irene P2 → [Gate 3] → ElevenLabs → Quinn-R pre-comp → Descript → [Gate 4] |
+| Narrated lesson (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Marcus -> Irene P1 -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Kira -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
+| Lecture slides only | `gamma-specialist` (Gary) | `content-creator` (slide brief), `quality-reviewer` | Marcus -> Irene slide brief -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> approve |
+| Narrated slides (no video) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Marcus -> Irene P1 -> Marcus -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Quinn-R pre-comp -> Descript -> Marcus/[Gate 4] |
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Assessment / quiz | `content-creator` | `canvas-specialist`, `quality-reviewer` | Draft → alignment check → review → LMS publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
@@ -86,7 +86,7 @@ When a production plan stage requires a specialist:
 2. **Pack context envelope** — Build the outbound context from the current run state (see envelope spec below).
 3. **Log delegation** — `log_coordination.py log --run-id {id} --agent {specialist} --action delegated --payload '{envelope}'`
 4. **Invoke specialist** — Load the specialist SKILL.md. Present the context envelope as the task.
-5. **Receive results** — Specialist returns artifact path, quality assessment, parameter decisions.
+5. **Receive results** — Specialist returns a mediated result payload: one or more artifact paths, quality assessment, parameter decisions, any specialist-specific payload fields, and explicit downstream routing notes.
 6. **Log completion** — `log_coordination.py log --run-id {id} --agent {specialist} --action completed --payload '{result}'`
 7. **Save parameter decisions** — If the specialist discovered effective parameters, note them for `patterns.md` (default mode).
 
@@ -108,7 +108,11 @@ When delegating to a specialist agent or skill, Marcus passes a **context envelo
 **Inbound (from specialist):**
 
 ```yaml
-artifact_path: "course-content/staging/..."
+status: completed|blocked|failed
+artifact_paths:
+  - "course-content/staging/..."
+primary_artifact: "course-content/staging/..."
+artifact_type: lesson_plan|slide_brief|narration_script|segment_manifest|slide_deck|audio_bundle|assembly_guide
 quality_assessment:
   passed: true|false
   score: 0.0-1.0
@@ -117,7 +121,15 @@ parameter_decisions:
   - key: "gamma.style"
     value: "professional-medical"
     rationale: "Matched style bible visual identity"
-status: completed|blocked|failed
+specialist_payload:
+  gary_slide_output: []        # Gary -> Marcus -> Irene Pass 2
+  segment_manifest: null       # Irene -> Marcus -> ElevenLabs/Kira/Compositor
+  narration_outputs: []        # ElevenLabs -> Marcus -> Quinn-R/Compositor
+recommendations: ["...", "..."]
+downstream_routing:
+  next_specialist: "content-creator"
+  requires_hil_gate: true
+  next_input_artifacts: ["course-content/staging/..."]
 issues: ["...", "..."]  # empty if none
 ```
 
@@ -155,41 +167,47 @@ When specialist agents are unavailable (not yet built), Marcus reports the gap a
 ## Full Pipeline Dependency Graph (Narrated Lesson)
 
 ```
-Irene Pass 1: Lesson Plan + Slide Brief
+User notes + guidance
     │
-    ▼  [HIL Gate 1: Review lesson plan]
+    ▼
+Marcus -> Irene Pass 1: Lesson Plan + Slide Brief
     │
-Gary: Gamma slide deck → PNGs
-    │  (reads Irene's slide brief; presents theme/template options first)
-    ▼  [HIL Gate 2: Review slides — CRITICAL: narration cannot start until approved]
+    ▼  [HIL Gate 1 via Marcus: Review lesson plan]
     │
-Irene Pass 2: Narration Script + Segment Manifest
-    │  (reads Gary's actual PNGs via gary_slide_output in envelope)
-    ▼  [HIL Gate 3: Review script & manifest]
+Marcus -> Gary: Gamma slide deck -> PNGs
+    │  (Gary reads Irene's slide brief from Marcus's envelope; theme/template options routed back through Marcus)
+    ▼  [HIL Gate 2 via Marcus: Review slides — CRITICAL: narration cannot start until approved]
     │
-    ├──→ ElevenLabs Agent: narration MP3 + VTT + SFX + music
-    │        │  (reads manifest for narration_text, sfx, music cues)
-    │        │  (writes narration_duration, narration_file, narration_vtt back to manifest)
-    │        │
-    │        ▼
-    ├──→ Kira: silent video clips (after ElevenLabs writes narration_duration)
-    │        │  (reads manifest for visual_source, visual_mode, narration_duration)
-    │        │  (writes visual_file, visual_duration back to manifest)
+Marcus -> Irene Pass 2: Narration Script + Segment Manifest
+    │  (Irene reads Gary's actual PNGs via Marcus-carried gary_slide_output)
+    ▼  [HIL Gate 3 via Marcus: Review script & manifest]
     │
-    ▼  [Quinn-R: pre-composition validation — WPM, VTT, duration match]
+Marcus -> ElevenLabs Agent: narration MP3 + VTT + SFX + music
+    │  (reads manifest for narration_text, sfx, music cues, voice selection)
+    │  (writes narration_duration, narration_file, narration_vtt back to manifest)
+    ▼
+Marcus -> Kira: silent video clips
+    │  (runs only after Marcus has received narration_duration from ElevenLabs)
+    │  (reads manifest for visual_source, visual_mode, narration_duration)
+    │  (writes visual_file, visual_duration back to manifest)
+    ▼
+Marcus -> Quinn-R: pre-composition validation
     │
-Compositor Skill: generates Descript Assembly Guide from completed manifest
+    ▼
+Marcus -> Compositor Skill: generate Descript Assembly Guide from completed manifest
     │
-    ▼  [Human: assembles + tweaks in Descript → exports MP4 + VTT]
+    ▼  [Human: assembles + tweaks in Descript -> exports MP4 + VTT]
     │
-    ▼  [Quinn-R: post-composition validation — audio levels, captions, accessibility]
+    ▼
+Marcus -> Quinn-R: post-composition validation
     │
-    ▼  [HIL Gate 4: Final video review]
+    ▼  [HIL Gate 4 via Marcus: Final video review]
     │
 Done: asset ready for Canvas deployment
 ```
 
 **Marcus orchestrates this entire flow.** Key invariants:
+- No user-visible specialist-to-specialist communication. Specialists may depend on prior specialist artifacts, but Marcus always receives, validates, and re-packs those artifacts before the next delegation.
 - Gary before Irene Pass 2 (narration complements actual slides)
 - ElevenLabs before Kira (Kira needs `narration_duration` to set clip duration)
 - Both before compositor (compositor needs complete manifest)

@@ -25,10 +25,10 @@ The production pipeline has four mandatory human checkpoints. Each gate has defi
 **Revision → back to:** Gary with specific visual feedback
 
 ### HIL Gate 3 — Script & Manifest Review
-**Timing:** After Irene Pass 2; before ElevenLabs and Kira run
+**Timing:** After Irene Pass 2; before ElevenLabs runs and before Kira can be queued
 **What to review:** Narration script (prose quality, pedagogical accuracy, slide complementarity) + segment manifest (segment structure, SFX/music cues, visual assignments)
 **Review criteria:** Narration complements visuals (doesn't duplicate), appropriate tone and pacing, accurate medical content, logical segment structure, manifest field completeness
-**Approve → next step:** ElevenLabs agent generates narration audio; Kira generates video clips (can run in parallel after durations are known)
+**Approve → next step:** Marcus sends the approved script + manifest to ElevenLabs first. Once ElevenLabs returns `narration_duration` and audio artifacts to Marcus, Marcus can then delegate duration-targeted video work to Kira and route the completed manifest onward.
 **Revision → back to:** Irene Pass 2 with specific feedback on script or manifest
 
 ### HIL Gate 4 — Final Video Review

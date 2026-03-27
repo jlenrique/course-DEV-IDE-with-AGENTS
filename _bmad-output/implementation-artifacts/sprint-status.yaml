@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-26 (session 5 — ElevenLabs brainstorm, Epic 3 re-sequencing, Canva API assessment)
+# last_updated: 2026-03-27 (session 6 — Story 3.3.1 complete, Story 3.4 ready)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -74,7 +74,7 @@ development_status:
   3-1-gamma-specialist-agent: done
   3-2-content-creator-quality-reviewer-agents: done  # instructional design director + BMad writer delegation, human review validation
   3-3-kling-video-specialist-agent: done  # API client, Kira agent, kling-video skill, comparison video set, human-reviewed
-  3-3-1-composition-architecture-harmonization: review  # agent updates, segment manifest, Gary deck mode, re-sequencing — DONE 2026-03-27
+  3-3-1-composition-architecture-harmonization: done  # agent updates, segment manifest, Gary deck mode, re-sequencing — DONE 2026-03-27
   3-4-elevenlabs-specialist-agent: backlog  # expanded: timestamps, pronunciation, SFX, music, dialogue
   3-5-compositor-skill: backlog  # Descript Assembly Guide generation from completed segment manifest
   3-6-canvas-specialist-agent: backlog  # was 3.5

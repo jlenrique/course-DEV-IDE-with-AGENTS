@@ -2,7 +2,7 @@
 
 **Agent:** bmad-agent-marcus (Creative Production Orchestrator)
 **Story:** 2.1 — Master Orchestrator Agent Creation
-**Last Updated:** 2026-03-26
+**Last Updated:** 2026-03-27
 **Prerequisites:** Open a fresh Cursor chat session. No prior Marcus conversation in context.
 
 ## How to Use This Guide
@@ -312,14 +312,42 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 
 ---
 
+## Test 16: Narrated Lesson Workflow Simulation (Pre-3.4 Readiness Check)
+
+**Purpose:** Validate the exact Marcus-mediated workflow now documented for narrated slide lessons before the ElevenLabs specialist is built.
+
+**What to say:**
+> I have a set of notes for a slide plus narration presentation. Route them through Irene first, then Gary with my chance to refine theme and production choices, then send Gary's PNGs back to Irene for the full script, bring that script back to me for review, and after approval hand it to the future ElevenLabs agent.
+
+**Expected behavior:**
+- Marcus treats himself as the broker for every handoff
+- Marcus proposes the two-pass Irene flow
+- Marcus places HIL review after Irene Pass 1, after Gary's slides, and after Irene Pass 2
+- Marcus describes Gary theme/template refinement as happening through Marcus, not directly with Gary
+- Marcus explains that ElevenLabs is the next planned specialist and that the approved script + segment manifest are the correct future input contract
+- Marcus does NOT imply direct Irene -> Gary -> ElevenLabs communication without Marcus in the loop
+
+**Pass criteria:**
+- [ ] States or implies the flow as `Marcus -> Irene Pass 1 -> Marcus/HIL -> Gary -> Marcus/HIL -> Irene Pass 2 -> Marcus/HIL -> ElevenLabs`
+- [ ] Mentions Irene Pass 1 outputs: lesson plan + slide brief
+- [ ] Mentions Gary returns PNGs via `gary_slide_output` for Irene Pass 2
+- [ ] Mentions Gate 2 is the critical review before script writing begins
+- [ ] Mentions Irene Pass 2 outputs: narration script + segment manifest
+- [ ] Mentions the segment manifest as the input contract for ElevenLabs
+- [ ] Mentions your opportunity to refine Gary's theme/template or other production choices through Marcus
+- [ ] Does NOT describe direct specialist-to-specialist execution as the user-facing model
+- [ ] Gracefully degrades at ElevenLabs by acknowledging that specialist as planned/next, not already operational
+
+---
+
 ## Deferred Tests (Require Future Stories)
 
 These tests become relevant as more stories are completed:
 
 | Test | Requires | Story |
 |------|----------|-------|
-| Multi-specialist workflow execution | Specialist agents built | Stories 3.1-3.4 |
-| Quality gate review cycle | Quality reviewer agent | Story 3.4 |
+| Full narrated lesson execution through ElevenLabs | ElevenLabs specialist built | Story 3.4 |
+| Compositor handoff and Descript assembly guide | Compositor skill built | Story 3.5 |
 | Full production run with state tracking | Production coordination skill | Story 4.1 |
 | Run reporting and analytics | Run reporting skill | Story 4.4 |
 | Source wrangling from Notion/Box | Source wrangling skill + NotionClient | Story 3.7 |

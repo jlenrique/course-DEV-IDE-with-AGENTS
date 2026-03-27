@@ -23,6 +23,10 @@ __pycache__/
 dist/
 build/
 
+# Generated media (large binary assets — keep locally, don't commit)
+*.mp4
+uv.lock
+
 # OS / editor
 .DS_Store
 Thumbs.db

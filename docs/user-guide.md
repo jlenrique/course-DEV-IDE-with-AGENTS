@@ -91,6 +91,7 @@ Marcus can pull your reference materials into the production context:
 
 - **Notion** — Course development notes, syllabi, design documents. Tell Marcus: *"Pull my Module 3 notes from Notion"*
 - **Box Drive** — Locally synced files. Tell Marcus: *"Check Box Drive for the pharmacology references"*
+- **Web exemplars** — Share a URL, or save a page with Playwright in Cursor and point Marcus at the HTML file; the **source-wrangler** skill turns captures into `extracted.md` bundles for Irene and Gary
 
 Marcus proactively offers to pull source materials before starting production tasks. Context enrichment before creation beats revision after.
 

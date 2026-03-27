@@ -357,7 +357,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `production-coordination` | planned | Epic 4 |
 | `run-reporting` | planned | Epic 4 |
 | `parameter-intelligence` | planned | Epic 3 |
-| `source-wrangling` | planned | Epic 3 |
+| `source-wrangler` | `skills/source-wrangler/` | Active (Story 3.9) |
 | `gamma-api-mastery` | active | Epic 3 |
 | `elevenlabs-audio` | active | Epic 3 |
 | `tech-spec-wrangler` | active | Epic 3 |

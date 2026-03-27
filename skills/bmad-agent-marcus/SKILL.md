@@ -88,7 +88,7 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Workflow stage management and state transitions | `production-coordination` | active | Run ID, current stage, state context |
 | Production run analysis and reports | `run-reporting` | planned | Run ID, chronology data |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
-| Pull from Notion, read from Box Drive, write feedback | `source-wrangling` | planned | Notion page IDs, Box Drive paths, feedback content |
+| Pull from Notion, read from Box, capture web/HTML exemplars, build agent bundles | `source-wrangler` | active | Notion page IDs, Box paths, URLs, Playwright-saved HTML paths, staging output dir |
 | Tool API doc refresh, research, validation | `tech-spec-wrangler` | active | Tool name, doc-sources.yaml path, optional research query |
 | Exemplar study, reproduction, comparison, regression | `woodshed` | active | Tool name, exemplar ID, evaluator reference |
 
@@ -114,6 +114,5 @@ Greet the user by name with current mode, last session context summary, and a cl
 |----------------|-------------|--------|
 | Survey/evaluation creation | `qualtrics-specialist` | planned (Story 3.7) |
 | Graphic design and visual assets | `canva-specialist` | planned (Story 3.8, manual-tool pattern) |
-| Source material ingestion from Notion/Box | `source-wrangler` | planned (Story 3.9) |
 
 When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter decisions to save.

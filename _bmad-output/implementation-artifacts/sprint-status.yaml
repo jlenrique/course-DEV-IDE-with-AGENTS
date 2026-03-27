@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-27 (session 10 — Stories 3.4, 3.5, and 3.10 reviewed and done)
+# last_updated: 2026-03-28 (Story 3.9 Source Wrangler implemented)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -80,7 +80,7 @@ development_status:
   3-6-canvas-specialist-agent: backlog  # was 3.5
   3-7-qualtrics-specialist-agent: backlog  # was 3.6
   3-8-canva-specialist-agent: backlog  # manual-tool agent pattern; was 3.7
-  3-9-source-wrangler-notion-box: backlog  # was 3.8
+  3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
   epic-3-retrospective: optional
 

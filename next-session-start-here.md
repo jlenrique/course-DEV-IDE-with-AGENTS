@@ -2,9 +2,9 @@
 
 ## Immediate Next Action
 
-**Create and implement Story 3.9 (Source Wrangler), then run the first controlled slide + narration pilot through Descript**
+**Run the first controlled slide + narration pilot through Descript** (Kira out of scope). Use `dev/trial-run-slide-narration` or current default branch.
 
-Stories 3.4, 3.5, and 3.10 are now implemented, reviewed, and complete on `story3-4-elevenlabs-specialist`. The ElevenLabs specialist, compositor skill, and tech-spec-wrangler are all in place. The segment manifest now has active audio and composition consumers, and the active creative/composition tools now have doc-refresh coverage.
+Story **3.9 Source Wrangler** is implemented: `skills/source-wrangler/` + `NotionClient` + URL/HTML ingest + Playwright-assisted capture path. Stories 3.4, 3.5, 3.9, and 3.10 are in place; segment manifest and doc-refresh coverage remain active.
 
 **Pre-Story 3.4 decision (RESOLVED):** The Party Mode composition architecture session established:
 - Silent video + Smart Audio model (Kling sound-off, ElevenLabs owns all audio)
@@ -15,9 +15,9 @@ Stories 3.4, 3.5, and 3.10 are now implemented, reviewed, and complete on `story
 
 **Decision record:** `_bmad-output/brainstorming/party-mode-composition-architecture.md`
 
-**Branch**: `story3-4-elevenlabs-specialist`
+**Branch**: `dev/trial-run-slide-narration` (pilot) or `master`
 
-## Current Status — STORIES 3.1 + 3.2 + 3.3 + 3.3.1 + 3.4 + 3.5 + 3.10 COMPLETE
+## Current Status — STORIES 3.1 + 3.2 + 3.3 + 3.3.1 + 3.4 + 3.5 + 3.9 + 3.10 COMPLETE
 
 - **Story 3.3.1 (Composition Harmonization + Gary Deck)**: DONE — all agents updated, architecture updated, Gary deck mode + theme/template preview added, Epic 3 re-sequenced to 11 stories
 - **Story 3.4 (Voice Director / ElevenLabs)**: DONE — expanded ElevenLabs client (timestamps, dictionaries, dialogue, SFX, music stream), `elevenlabs-audio` skill, Voice Director agent, sidecar, bootstrap exemplar, focused live timestamp + manifest smoke passed
@@ -72,7 +72,7 @@ Quinn-R post-comp → Marcus/[Gate 4] → Canvas
 | 3.6 | Canvas Specialist | Backlog |
 | 3.7 | Qualtrics Specialist | Backlog |
 | 3.8 | Canva Specialist (manual-tool pattern) | Backlog |
-| 3.9 | Source Wrangler (Notion + Box) | Backlog |
+| 3.9 | Source Wrangler (Notion + Box + web/Playwright) | DONE |
 | 3.10 | Tech Spec Wrangler | DONE |
 
 ## What's Working Right Now

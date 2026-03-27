@@ -15,17 +15,22 @@ Before starting any content production task, assess whether source materials wou
 
 ## Source Channels
 
-### Notion (via `source-wrangling` skill)
+### Notion (via `source-wrangler` skill + `NotionClient`)
 - Course development notes and planning documents
 - Learning objective mappings
 - Faculty content submissions and feedback
 - Readiness assessments
 
-### Box Drive (via `source-wrangling` skill — local filesystem)
+### Box Drive (via `source-wrangler` skill — local filesystem)
 - Reference materials, textbook excerpts, journal articles
 - Previously created content for reuse or revision
 - Institutional templates and guidelines
 - Media assets (images, diagrams)
+
+### Web exemplars (Playwright MCP + `source-wrangler`)
+- User or Cursor session captures a page (save HTML) or provides a URL
+- Skill extracts readable text, stores `extracted.md` + `metadata.json` under a staging bundle path
+- Marcus passes `extracted.md` paths into Irene/Gary envelopes as `user_constraints` / `input_text` supplements
 
 ## Prompting Style
 

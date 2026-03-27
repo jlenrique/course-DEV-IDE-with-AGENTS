@@ -39,6 +39,7 @@ There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token*
 | **Woodshed** | `skills/woodshed/` | Exemplar-driven agent skill development — study, reproduce, compare, reflect, regress (faithful + creative modes) | Active |
 | **Production coordination** | `skills/production-coordination/` | Workflow stages, delegation, mode management, style guide | Active |
 | **Tech spec wrangler** | `skills/tech-spec-wrangler/` | Tool API doc refresh, research, validation via Ref MCP; ensures agents always have current API knowledge | Active |
+| **Source wrangler** | `skills/source-wrangler/` | Notion + Box + URL/HTML ingestion; Playwright-saved page processing; `extracted.md` bundles for specialists | Active |
 
 ## APIs and credentials
 

@@ -31,7 +31,7 @@ Marcus recognizes these content types, each mapping to different specialist agen
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Assessment / quiz | `content-creator` | `canvas-specialist`, `quality-reviewer` | Draft → alignment check → review → LMS publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
-| Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Script → voice synthesis → review → approve |
+| Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Marcus -> script intake -> ElevenLabs -> Marcus/review -> approve |
 | Video clip (B-roll / concept) | `kling-specialist` (Kira) | `content-creator` (brief), `quality-reviewer` | Brief → generation → download → review |
 | Infographic | `canva-specialist` (Story 3.8) | `content-creator` (copy), `quality-reviewer` | Copy → design guidance → user executes in Canva → review |
 | Interactive module | `content-creator` | `canvas-specialist`, `assembly-coordinator` | Design → build → assemble → review → approve |
@@ -246,7 +246,7 @@ envelope:
 
 ## Compositor Delegation
 
-The Compositor skill (Story 3.5 — planned) generates a Descript Assembly Guide from a completed manifest. When available, Marcus invokes it after Quinn-R's pre-composition pass:
+The Compositor skill generates a Descript Assembly Guide from a completed manifest. Marcus invokes it after Quinn-R's pre-composition pass:
 
 ```yaml
 envelope:

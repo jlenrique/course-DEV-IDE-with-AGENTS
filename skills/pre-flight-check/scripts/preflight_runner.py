@@ -180,7 +180,7 @@ def parse_heartbeat_output(output: str) -> list[dict[str, str]]:
 # -- Resolution Guidance --
 
 RESOLUTION_MAP = {
-    "not set in .env": "Add the API key to your .env file (see .env.example for template).",
+    "not set in .env": "Add the API key to your local .env file.",
     "HTTP 401": "API key is invalid or expired. Regenerate from the tool's dashboard.",
     "HTTP 403": "API key lacks required permissions. Check scopes and plan level.",
     "HTTP 429": "Rate limited. Wait a few minutes, then retry.",

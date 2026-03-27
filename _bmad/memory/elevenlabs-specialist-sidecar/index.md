@@ -1,14 +1,19 @@
-# ElevenLabs Specialist — Memory Sidecar
+# Voice Director — Memory Sidecar
 
-**Agent**: `agents/elevenlabs-specialist.md` (Epic 3)
-**Purpose**: Voice synthesis expertise patterns and audio optimization tracking.
+**Agent**: `skills/bmad-agent-elevenlabs/SKILL.md`
+**Display Name**: Voice Director
+**Purpose**: Audio generation expertise patterns, pronunciation decisions, and voice effectiveness tracking.
 
-## Planned Files
+## Files
 
-- `patterns.md` — Voice to content type effectiveness, pronunciation exceptions, timing patterns
-- `chronology.md` — Audio generation history
-- `access-boundaries.md` — Read: `state/config/`, `scripts/api_clients/`. Write: this sidecar, audio output. Deny: `.env`, other agent sidecars.
+- `index.md` — active context and quick-access preferences
+- `patterns.md` — approved voice, timing, and pronunciation lessons
+- `chronology.md` — production and validation history
+- `access-boundaries.md` — read/write/deny zones
 
 ## Active Context
 
-No production runs yet. This sidecar will be populated when the ElevenLabs specialist agent is created in Story 3.2.
+- **Current run**: none
+- **Voice preferences**: using style-guide defaults
+- **Pronunciation dictionaries**: none registered in sidecar yet
+- **Narration continuity patterns**: none learned yet

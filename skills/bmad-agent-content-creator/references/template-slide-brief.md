@@ -27,6 +27,9 @@
 **Learning Purpose:**
 {Why this slide exists in the sequence — what cognitive step it serves}
 
+**Behavioral / Affective Intent:**
+{What the slide should make the learner feel or do next — credible, sobering, urgent, attention-grabbing, reflective, reassuring, etc.}
+
 ## Downstream Consumption — Gary (Gamma)
 
 - **Suggested Parameters:**
@@ -38,6 +41,7 @@
 - **Format:** presentation
 - **Export:** PNG (production) or PDF (review)
 - **Pairing Note:** Narration script NS-{id} is produced in Pass 2 *after* Gary's slides are approved. Gary uses this brief to generate slides; Irene then writes narration that complements what Gary actually produced.
+- **Intent Note:** Gary should explicitly assess whether the generated slide matches the intended behavioral/affective effect before recommending approval at Gate 2.
 - **Downstream Kira:** segments that need video animation should note `visual_mode: video` suggestion here so Kira knows which slides to animate after ElevenLabs provides durations.
   - `visual_mode`: static-hold | video (suggestion for segment manifest)
   - `visual_source`: gary | kira (suggestion)

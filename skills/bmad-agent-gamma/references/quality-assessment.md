@@ -13,6 +13,7 @@ Score each dimension 0.0-1.0:
 | **Layout integrity** | Requested layout pattern achieved (parallel columns, cards, narrative arc, etc.) | 0.25 | 0.20 |
 | **Accessibility** | WCAG 2.1 AA contrast, color independence, readable at target sizes | 0.10 | 0.10 |
 | **Pedagogical alignment** | Slide serves stated learning objective, appropriate Bloom's level treatment | 0.10 | 0.15 |
+| **Intent fidelity** | Visual rhetoric and emphasis match the requested behavioral/affective effect | — | 0.10 |
 | **Content completeness** | All required content elements present, nothing critical missing | — | 0.10 |
 
 ## Embellishment Detection
@@ -35,6 +36,7 @@ quality_assessment:
     layout_integrity: 0.9
     accessibility: 1.0
     pedagogical_alignment: 0.8
+    intent_fidelity: 0.85
   embellishment_detected: true
   embellishment_details:
     - "Gamma added a subtitle 'Bridging Two Worlds' not in the input"
@@ -51,3 +53,15 @@ quality_assessment:
 - **Below 0.5**: Reject — provide root cause for rework
 
 Be conservative. Honest assessment protects the user from publishing subpar content.
+
+## Intent-Fidelity Guidance
+
+If Irene or Marcus specifies `behavioral_intent`, assess whether the slide's hierarchy, contrast, density, and imagery support that effect:
+
+- `credible` -> restrained, professional, evidence-forward
+- `alarming` -> tension without melodrama; strong contrast and visual consequence
+- `moving` -> emotionally resonant, human-centered, not sentimental clutter
+- `attention-reset` -> visual simplification, pause beat, deliberate focus shift
+- `reflective` -> slower, calmer visual rhythm with space to think
+
+If the output is technically correct but emotionally flat or mismatched, score `intent_fidelity` down and flag for Gate 2 review.

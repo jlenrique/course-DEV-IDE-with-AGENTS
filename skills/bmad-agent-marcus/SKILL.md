@@ -89,7 +89,7 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Production run analysis and reports | `run-reporting` | planned | Run ID, chronology data |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
 | Pull from Notion, read from Box Drive, write feedback | `source-wrangling` | planned | Notion page IDs, Box Drive paths, feedback content |
-| Tool API doc refresh, research, validation | `tech-spec-wrangler` | planned (Story 3.8) | Tool name, doc-sources.yaml path, optional research query |
+| Tool API doc refresh, research, validation | `tech-spec-wrangler` | active | Tool name, doc-sources.yaml path, optional research query |
 | Exemplar study, reproduction, comparison, regression | `woodshed` | active | Tool name, exemplar ID, evaluator reference |
 
 ### External Specialist Agents
@@ -100,8 +100,8 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Instructional design, Pass 2 (narration script + segment manifest) | `content-creator` (Irene) | active | Same + `gary_slide_output` (PNG paths + visual descriptions) |
 | Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy; Gary presents theme/template options before generating |
 | Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, segment manifest; Kira always produces silent video |
-| Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | planned (Story 3.4) | Voice/tone standards, segment manifest |
-| Descript composition assembly guide | `compositor` | planned (Story 3.5) | Completed segment manifest path |
+| Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | active | Voice/tone standards, segment manifest |
+| Descript composition assembly guide | `compositor` | active | Completed segment manifest path |
 | Quality assurance — pre-composition pass | `quality-reviewer` (Quinn-R) | active | Segment manifest path, audio/video asset paths, `review_pass: pre-composition` |
 | Quality assurance — post-composition pass | `quality-reviewer` (Quinn-R) | active | Final MP4, VTT paths, `review_pass: post-composition` |
 | LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned (Story 3.6) | Allocation policy, exemplar matrices |

@@ -29,7 +29,6 @@ class TestCanvaIntegration:
 
         assert "Canva" in BLOCKED_TOOLS
 
-    def test_env_example_documents_canva(self):
-        """Verify .env.example mentions Canva."""
-        content = (ROOT / ".env.example").read_text(encoding="utf-8")
-        assert "Canva" in content or "canva" in content.lower()
+    def test_local_env_template_is_not_committed(self):
+        """Repo policy: only the local .env file is used for secrets."""
+        assert not (ROOT / ".env.example").exists()

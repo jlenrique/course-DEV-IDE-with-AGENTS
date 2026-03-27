@@ -1,0 +1,24 @@
+tool: compositor
+agent: compositor
+agent_display_name: Compositor
+
+doc_sources:
+  - name: "Descript Help Center"
+    url: "https://www.descript.com/help"
+    type: help-center
+    notes: "Reference only; project uses manual-tool composition pattern rather than direct API editing"
+
+  - name: "Descript API Docs"
+    url: "https://docs.descriptapi.com"
+    type: developer-docs
+    notes: "Limited import/export API surface; composition remains manual in this repo"
+
+refresh_protocol:
+  on_woodshed_start: false
+  on_story_start: true
+  on_regression: false
+  method: ref_mcp
+  fallback: web_fetch
+
+last_refreshed: null
+refresh_notes: null

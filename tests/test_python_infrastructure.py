@@ -300,33 +300,15 @@ class TestProjectPackaging:
 
 
 # ---------------------------------------------------------------------------
-# AC #2: .env.example completeness verification
+# AC #2: Local env policy verification
 # ---------------------------------------------------------------------------
 
 
-class TestEnvExample:
-    def test_env_example_exists(self):
+class TestEnvPolicy:
+    def test_env_example_not_committed(self):
         from scripts.utilities.file_helpers import project_root
 
-        assert (project_root() / ".env.example").exists()
-
-    def test_env_example_has_tier1_keys(self):
-        from scripts.utilities.file_helpers import project_root
-
-        content = (project_root() / ".env.example").read_text(encoding="utf-8")
-        tier1_keys = [
-            "GAMMA_API_KEY", "ELEVENLABS_API_KEY",
-            "CANVAS_ACCESS_TOKEN", "QUALTRICS_API_TOKEN",
-        ]
-        for key in tier1_keys:
-            assert key in content, f"{key} should be in .env.example"
-
-    def test_env_example_has_tier2_keys(self):
-        from scripts.utilities.file_helpers import project_root
-
-        content = (project_root() / ".env.example").read_text(encoding="utf-8")
-        for key in ["BOTPRESS_API_KEY", "WONDERCRAFT_API_KEY", "KLING_ACCESS_KEY"]:
-            assert key in content, f"{key} should be in .env.example"
+        assert not (project_root() / ".env.example").exists()
 
 
 # ---------------------------------------------------------------------------

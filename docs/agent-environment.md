@@ -38,11 +38,11 @@ There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token*
 | **Pre-flight check** | `skills/pre-flight-check/` | MCP/API/doc-sources connectivity verification before production runs | Active |
 | **Woodshed** | `skills/woodshed/` | Exemplar-driven agent skill development — study, reproduce, compare, reflect, regress (faithful + creative modes) | Active |
 | **Production coordination** | `skills/production-coordination/` | Workflow stages, delegation, mode management, style guide | Active |
-| **Tech spec wrangler** | `skills/tech-spec-wrangler/` | Tool API doc refresh, research, validation via Ref MCP; ensures agents always have current API knowledge | Planned (Story 3.8) |
+| **Tech spec wrangler** | `skills/tech-spec-wrangler/` | Tool API doc refresh, research, validation via Ref MCP; ensures agents always have current API knowledge | Active |
 
 ## APIs and credentials
 
-- **Canvas**: REST API with access token; store `CANVAS_API_URL` and `CANVAS_ACCESS_TOKEN` in `.env` (see `.env.example`). Use scoped tokens and institution API policies.
+- **Canvas**: REST API with access token; store `CANVAS_API_URL` and `CANVAS_ACCESS_TOKEN` in `.env`. Use scoped tokens and institution API policies.
 - **Gamma**: REST API with X-API-KEY header; store `GAMMA_API_KEY` in `.env`. Pro/Ultra/Teams/Business plan required.
 - **ElevenLabs**: REST API with xi-api-key header; store `ELEVENLABS_API_KEY` in `.env`.
 - **Qualtrics**: REST API with X-API-TOKEN header; store `QUALTRICS_API_TOKEN` and `QUALTRICS_DATACENTER` in `.env`.

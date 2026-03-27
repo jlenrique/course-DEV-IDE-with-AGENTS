@@ -26,6 +26,7 @@ For each slide/segment — segment IDs must match `[SEGMENT: seg-XX]` markers ex
 - Tone: {conversational clinical | formal academic | empathetic narrative}
 - Pacing: {measured/deliberate | conversational flow | building urgency}
 - Emphasis: {key phrases to stress, marked with *asterisks*}
+- Behavioral Intent: {credible | moving | alarming | urgent | reflective | attention-reset | provocative}
 
 **Narration:**
 {The actual narration text, written by Paige or Sophia, reviewed for pedagogical alignment.
@@ -55,6 +56,7 @@ three-column comparison, narrate "Notice how the revenue gap widens in each deca
   |------|--------------|
   | {medical term} | {phonetic guide} |
 - **Audio Notes:** {voice style notes, SFX cues per segment, music bed direction}
+- **Intent Note:** The delivery should reinforce the segment's `behavioral_intent`, not just read the words correctly.
 
 ## Downstream Consumption — Segment Manifest
 

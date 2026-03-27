@@ -4,7 +4,7 @@ Systematic dimension-by-dimension review procedure for all production artifacts.
 
 ## Quality Dimensions
 
-Five dimensions reviewed on every artifact. Each has a default severity and can be calibrated based on learned human preferences.
+Eight dimensions reviewed across the pipeline. Not every dimension applies equally to every artifact, but all should be considered when relevant. Each has a default severity and can be calibrated based on learned human preferences.
 
 | Dimension | What It Checks | Default Severity | Source of Truth |
 |-----------|---------------|-----------------|----------------|
@@ -12,7 +12,10 @@ Five dimensions reviewed on every artifact. Each has a default severity and can 
 | **Accessibility (CC)** | WCAG 2.1 AA: contrast, alt text, reading level, heading hierarchy | Critical (always) | WCAG 2.1 AA standard, `quality-control` scripts |
 | **Learning Objective Alignment (LA)** | Every content element traces to an objective; no orphans, no gaps | High | `state/config/course_context.yaml` |
 | **Instructional Soundness** | Bloom's taxonomy fit, cognitive load, content sequencing | Medium-High | Pedagogical judgment (no external reference — Quinn-R's expertise) |
+| **Intent Fidelity (IF)** | Output supports the intended behavioral / affective learner effect | Medium-High | Irene artifacts + Marcus HIL-approved direction |
 | **Content Accuracy** | Medical/clinical correctness concerns | Critical-escalation | Human review via Marcus (Quinn-R flags, never adjudicates) |
+| **Audio Quality (AQ)** | WPM, VTT monotonicity, coverage, pronunciation support | High | Manifest + audio/VTT artifacts |
+| **Composition Integrity (CI)** | Duration match, audio/visual coordination, caption sync, assembly coherence | High | Manifest + assembled output |
 
 ## Review Procedure
 
@@ -57,6 +60,14 @@ Apply pedagogical judgment:
 - Sequencing: content flows logically within and across artifacts
 - Severity: Medium for optimization opportunities, High for structural design issues
 
+### Step 5b: Intent fidelity
+
+Check whether the artifact actually supports the intended learner effect defined upstream:
+- Read `behavioral_intent` from lesson plan, slide brief, narration script, or segment manifest when present
+- If absent, fall back to Marcus's HIL-approved creative direction
+- Evaluate whether the visual/audio choices reinforce that effect or flatten it
+- Severity: Medium for weak execution, High when the artifact fights the intended effect
+
 ### Step 6: Content accuracy scan
 
 Flag potential medical/clinical accuracy concerns:
@@ -75,6 +86,7 @@ When reviewing multiple related artifacts (e.g., narration script + paired slide
 - Content alignment: narration text and slide text tell the same story
 - Terminology consistency: same medical terms used across paired artifacts
 - Sequencing consistency: slide order matches narration order
+- Intent consistency: `behavioral_intent` is coherent across slide, narration, manifest, and final composition notes
 
 ### Asset-lesson pairing invariant
 - Every artifact references its lesson plan (LP-{id})
@@ -100,3 +112,11 @@ Quinn-R adjusts severity classifications based on human reviewer feedback:
 - Accessibility findings CANNOT be demoted below Critical — non-negotiable
 - Medical accuracy flags CANNOT be suppressed — always escalate
 - Calibration resets if the style bible is updated (new standards = fresh baseline)
+
+## Audio / Composition Checks
+
+When the review includes narration or final assembly:
+
+- **AQ**: narration WPM, VTT monotonicity, pronunciation support, segment coverage
+- **CI**: video duration vs narration duration, caption sync, transition consistency, assembly coherence
+- **IF**: the emotional/behavioral effect should survive into the assembled output, not be lost in technically correct but flat composition

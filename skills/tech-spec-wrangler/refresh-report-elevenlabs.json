@@ -1,0 +1,19 @@
+{
+  "tool": "elevenlabs",
+  "agent": "bmad-agent-elevenlabs",
+  "refreshed_at": "2026-03-27T18:40:23+00:00",
+  "sources_checked": [
+    "https://elevenlabs.io/docs/api-reference",
+    "https://elevenlabs.io/docs/eleven-api/guides/how-to/text-to-speech/pronunciation-dictionaries"
+  ],
+  "findings": [
+    {
+      "change": "Validated current ElevenLabs timestamp, dictionary, dialogue, sound-effect, and music-stream docs for Story 3.4.",
+      "url": "https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps"
+    }
+  ],
+  "summary": {
+    "total_sources": 2,
+    "total_findings": 1
+  }
+}

@@ -1,0 +1,32 @@
+tool: elevenlabs
+agent: bmad-agent-elevenlabs
+agent_display_name: Voice Director
+doc_sources:
+- name: ElevenLabs API Reference
+  url: https://elevenlabs.io/docs/api-reference
+  type: developer-docs
+  key_pages:
+  - url: https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps
+    topic: TTS with timestamps
+  - url: https://elevenlabs.io/docs/api-reference/pronunciation-dictionaries/create-from-file
+    topic: Pronunciation dictionary creation
+  - url: https://elevenlabs.io/docs/api-reference/pronunciation-dictionaries/list
+    topic: Pronunciation dictionary listing
+  - url: https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert
+    topic: Sound effects generation
+  - url: https://elevenlabs.io/docs/api-reference/text-to-dialogue/convert
+    topic: Dialogue generation
+  - url: https://elevenlabs.io/docs/api-reference/music/stream
+    topic: Music streaming generation
+- name: ElevenLabs Pronunciation Guide
+  url: https://elevenlabs.io/docs/eleven-api/guides/how-to/text-to-speech/pronunciation-dictionaries
+  type: how-to
+  notes: Model constraints and practical dictionary usage
+refresh_protocol:
+  on_woodshed_start: true
+  on_story_start: true
+  on_regression: false
+  method: ref_mcp
+  fallback: web_fetch
+last_refreshed: '2026-03-27T18:39:40+00:00'
+refresh_notes: Validated ElevenLabs core API surfaces during Story 3.4 implementation

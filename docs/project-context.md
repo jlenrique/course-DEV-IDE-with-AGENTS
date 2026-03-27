@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 3 IN PROGRESS — Stories 3.1-3.3.1 done)
+**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 3 IN PROGRESS — Stories 3.1-3.5 and 3.10 complete)
 **Architecture Status:** 10 Epics, 80 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer; Story 3.3 DONE — Kira/Kling Video Specialist; Story 3.3.1 DONE — Composition Architecture Harmonization + Gary Deck Enhancement). 3.4 ElevenLabs (NEXT, expanded), 3.5 Compositor (NEW), 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva (manual-tool pattern), 3.9 Source Wrangler, 3.10 Tech Spec Wrangler. Epic 3 now 11 stories.
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer; Story 3.3 DONE — Kira/Kling Video Specialist; Story 3.3.1 DONE — Composition Architecture Harmonization + Gary Deck Enhancement; Story 3.4 DONE — Voice Director + `elevenlabs-audio` skill + expanded ElevenLabs client + live timestamp and manifest smokes; Story 3.5 DONE — compositor skill + Descript Assembly Guide + `behavioral_intent` contract formalization across the pipeline; Story 3.10 DONE — `tech-spec-wrangler` skill + active doc-source coverage for creative/composition tools + proof refresh report and sidecar logging). Remaining non-delivery options: 3.8 Canva (manual-tool pattern) and 3.9 Source Wrangler. Delivery/platform agents begin at 3.6 Canvas and beyond.
 
 ## Purpose
 
@@ -105,12 +105,12 @@ resources/
 - **API-verified but MCP-deferred platforms**: ElevenLabs, Qualtrics
 - **Documented but currently deferred MCPs**: ElevenLabs (Cursor tool-name filtering), Canva (OAuth redirect rejection), Qualtrics (GitHub-only build step), Fetch (no usable surfaced tools in this setup), Brave Search (not enabled by default)
 - **User-level MCPs** already available: Playwright (browser automation), Ref (doc search/reading)
-- **API keys templated** in `.env.example`: All Tier 1-3 tools with documentation links
+- **API keys configured locally** in `.env`: Tier 1-3 tools documented in admin/dev guides and tool inventory
 - **Manual tools** require agent-guided workflows where agents provide specs and users execute in tool UI
 
 ## Current State
 
-- [x] Repository scaffolded with directory structure, .env.example, content standards  
+- [x] Repository scaffolded with directory structure and content standards  
 - [x] BMad Method installed (BMM, Core, CIS modules)
 - [x] **BRAINSTORMING COMPLETED**: 10 comprehensive epics defined
 - [x] **PRD COMPLETED**: 70 FRs across 11 capability domains (recast for agent .md approach)
@@ -119,7 +119,7 @@ resources/
 - [x] **Strategic Decisions**: Party Mode team validated and recast for agent .md patterns
 - [x] **STORY CREATION COMPLETED**: 31 stories across 10 epics, 100% FR coverage validated
 - [x] **API-FIRST SEQUENCING**: API/MCP clients (Gamma, ElevenLabs, Canvas) built in Epic 1 before agent creation
-- [x] **TOOL UNIVERSE AUDIT**: 15 tools researched and classified (Tier 1-4), MCP servers configured, .env.example expanded
+- [x] **TOOL UNIVERSE AUDIT**: 15 tools researched and classified (Tier 1-4), MCP servers configured, local `.env` requirements documented
 - [x] **EPIC 1 COMPLETE**: All 11 stories implemented, tested with live APIs, validated by Party Mode review team
 - [x] **STORY 1.1**: Cursor plugin foundation — plugin.json, .mcp.json, hooks, directory structure
 - [x] **STORY 1.2**: Python infrastructure — BaseAPIClient with retry/pagination/binary, utilities, venv
@@ -135,7 +135,7 @@ resources/
 - [x] **EPIC 2 COMPLETE**: Stories 2.2–2.6 all done. Production-coordination skill (4 scripts, 4 refs, 40 tests). Marcus references updated for workflow management, delegation, parameter intelligence, pre-flight, and mode management.
 - [x] **EXEMPLAR-DRIVEN DEVELOPMENT**: Woodshed skill created (`skills/woodshed/`), exemplar library scaffolded (`resources/exemplars/` per tool), comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, and L-level difficulty system all in place. 5 Gamma exemplars provided (L1-L4.2). Smoke test validated: Gamma API produces single-card output, PDF export/download works (205KB), 5 credits/card. GammaClient needs parameter name updates (inputText, textMode, exportAs). Epic 3 stories updated with exemplar reproduction as acceptance criteria.
 - [x] **STORY 3.3.1 (Composition Architecture Harmonization + Gary Deck)**: DONE — Party Mode composition decisions implemented: segment manifest as Irene artifact, two-pass Irene model, Irene/Quinn-R/Kira/Marcus/Gary all updated, architecture.md updated with pipeline graph, tool inventory updated (Descript as sole composition platform), Gary deck mode + theme/template preview (TP capability), gary_slide_output return field, GammaClient.list_themes() live-tested (10 themes). Epic 3 re-sequenced to 11 stories: Compositor added as 3.5, Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10.
-- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (11 stories — Stories 3.1-3.3.1 DONE, 3.4 ElevenLabs NEXT, 3.5 Compositor NEW, 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva manual-tool pattern, 3.9 Source Wrangler, 3.10 Tech Spec Wrangler)
+- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (11 stories — Stories 3.1-3.5 and 3.10 DONE, 3.6 Canvas backlog, 3.7 Qualtrics backlog, 3.8 Canva backlog, 3.9 Source Wrangler backlog)
 
 ## Composition Architecture (Added 2026-03-27)
 

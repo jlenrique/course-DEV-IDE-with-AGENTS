@@ -358,8 +358,9 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `run-reporting` | planned | Epic 4 |
 | `parameter-intelligence` | planned | Epic 3 |
 | `source-wrangling` | planned | Epic 3 |
-| `gamma-api-mastery` | planned | Epic 3 |
-| `elevenlabs-audio` | planned | Epic 3 |
+| `gamma-api-mastery` | active | Epic 3 |
+| `elevenlabs-audio` | active | Epic 3 |
+| `tech-spec-wrangler` | active | Epic 3 |
 | `canvas-deployment` | planned | Epic 3 |
 | `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
 
@@ -436,7 +437,7 @@ This is where you come in. The three-layer architecture means there are three di
 
 1. Create `scripts/api_clients/{tool}_client.py` extending `BaseAPIClient`
 2. Use the appropriate auth pattern for the tool (check API docs)
-3. Add env vars to `.env` and `.env.example`
+3. Add env vars to your local `.env`
 4. Add integration test in `tests/test_integration_{tool}.py`
 5. Update `resources/tool-inventory/tool-access-matrix.md`
 6. Add tool parameter section in `state/config/style_guide.yaml`
@@ -638,7 +639,6 @@ course-DEV-IDE-with-AGENTS/
 ├── .cursor-plugin/plugin.json         ← Cursor plugin manifest (auto-discovers agents, skills)
 ├── .mcp.json                          ← MCP server definitions (project-level)
 ├── .cursor/mcp.json                   ← MCP server definitions (Cursor-specific)
-├── .env.example                       ← API key template (committed)
 ├── .env                               ← Actual secrets (gitignored)
 ├── pyproject.toml                     ← Python project config
 ├── requirements.txt                   ← Python dependencies

@@ -21,12 +21,16 @@ For each content block in the lesson sequence:
 - **Writer Delegation:** {Paige | Sophia | Caravaggio} — {rationale for writer selection}
 - **Estimated Duration:** {minutes}
 - **Key Terminology:** {terms that must appear}
+- **Behavioral / Affective Goal:** {credible | moving | alarming | attention-reset | reflective | provocative | urgent}
 
 **Content Summary:**
 {Brief description of what this block covers and its pedagogical purpose}
 
 **Cognitive Load Notes:**
 {Chunking decisions, scaffolding context, dual-coding opportunities}
+
+**Why This Feeling Matters:**
+{Why the intended learner effect supports the objective rather than distracting from it}
 
 ## Assessment Hooks
 

@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-27 (session 6 — Story 3.3.1 complete, Story 3.4 ready)
+# last_updated: 2026-03-27 (session 10 — Stories 3.4, 3.5, and 3.10 reviewed and done)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -75,13 +75,13 @@ development_status:
   3-2-content-creator-quality-reviewer-agents: done  # instructional design director + BMad writer delegation, human review validation
   3-3-kling-video-specialist-agent: done  # API client, Kira agent, kling-video skill, comparison video set, human-reviewed
   3-3-1-composition-architecture-harmonization: done  # agent updates, segment manifest, Gary deck mode, re-sequencing — DONE 2026-03-27
-  3-4-elevenlabs-specialist-agent: backlog  # expanded: timestamps, pronunciation, SFX, music, dialogue
-  3-5-compositor-skill: backlog  # Descript Assembly Guide generation from completed segment manifest
+  3-4-elevenlabs-specialist-agent: done  # Voice Director, elevenlabs-audio skill, expanded client, tests, live timestamp and manifest smokes
+  3-5-compositor-skill: done  # compositor skill, proof assembly guide, behavioral intent contract formalized
   3-6-canvas-specialist-agent: backlog  # was 3.5
   3-7-qualtrics-specialist-agent: backlog  # was 3.6
   3-8-canva-specialist-agent: backlog  # manual-tool agent pattern; was 3.7
   3-9-source-wrangler-notion-box: backlog  # was 3.8
-  3-10-tech-spec-wrangler-skill: backlog  # was 3.9
+  3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
   epic-3-retrospective: optional
 
   # === EPIC 4: Workflow Coordination & State Infrastructure ===

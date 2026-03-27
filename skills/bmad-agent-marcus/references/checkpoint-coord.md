@@ -13,21 +13,21 @@ The production pipeline has four mandatory human checkpoints. Each gate has defi
 ### HIL Gate 1 — Lesson Plan Review
 **Timing:** After Irene Pass 1; before Gary generates slides
 **What to review:** Lesson plan (learning objectives, content outline, concept sequence, visual suggestions), slide brief (pedagogical intent per slide)
-**Review criteria:** Content accuracy, objectives coverage, appropriate Bloom's level, logical sequencing, scope (is this one lesson or should it split?)
+**Review criteria:** Content accuracy, objectives coverage, appropriate Bloom's level, logical sequencing, scope (is this one lesson or should it split?), and whether the proposed behavioral/affective goals fit the teaching need
 **Approve → next step:** Gary generates slide deck from the slide brief
 **Revision → back to:** Irene Pass 1 with specific feedback
 
 ### HIL Gate 2 — Slides Review
 **Timing:** After Gary generates slides; before Irene Pass 2
 **What to review:** Gary's Gamma slide PNGs (visual quality, brand compliance, content accuracy, layout clarity)
-**Review criteria:** Brand consistency (JCPH Navy, Medical Teal, Montserrat), visual hierarchy, content fidelity to slide brief, accessibility contrast, professional medical aesthetic
+**Review criteria:** Brand consistency (JCPH Navy, Medical Teal, Montserrat), visual hierarchy, content fidelity to slide brief, accessibility contrast, professional medical aesthetic, and fit to the approved `behavioral_intent`
 **Approve → next step:** Gary's PNG paths passed to Irene for Pass 2 (narration + manifest). This is the most important gate — narration cannot be written until slides are approved.
 **Revision → back to:** Gary with specific visual feedback
 
 ### HIL Gate 3 — Script & Manifest Review
 **Timing:** After Irene Pass 2; before ElevenLabs runs and before Kira can be queued
 **What to review:** Narration script (prose quality, pedagogical accuracy, slide complementarity) + segment manifest (segment structure, SFX/music cues, visual assignments)
-**Review criteria:** Narration complements visuals (doesn't duplicate), appropriate tone and pacing, accurate medical content, logical segment structure, manifest field completeness
+**Review criteria:** Narration complements visuals (doesn't duplicate), appropriate tone and pacing, accurate medical content, logical segment structure, manifest field completeness, and whether narration + manifest preserve the intended behavioral/affective effect
 **Approve → next step:** Marcus sends the approved script + manifest to ElevenLabs first. Once ElevenLabs returns `narration_duration` and audio artifacts to Marcus, Marcus can then delegate duration-targeted video work to Kira and route the completed manifest onward.
 **Revision → back to:** Irene Pass 2 with specific feedback on script or manifest
 
@@ -50,7 +50,7 @@ At each checkpoint, Marcus:
 4. **Shows Quinn-R pre-validation** — For gates 3 and 4, include Quinn-R's automated check results
 5. **Requests explicit decision** — Ask for one of: approve, reject with reason, or request specific revisions
 
-Example (Gate 2): "Here's the cardiac physiology slide deck — 14 frames covering all four learning objectives. Style bible: JCPH Navy headers, Medical Teal highlights. Gary's self-assessment: all objectives covered, visual hierarchy consistent, one accessibility note on contrast ratio for Figure 3. This is the critical gate — once you approve, I'll send these to Irene for narration. What's your call?"
+Example (Gate 2): "Here's the cardiac physiology slide deck — 14 frames covering all four learning objectives. Intended effect: credible with an attention-reset on the complication slide. Style bible: JCPH Navy headers, Medical Teal highlights. Gary's self-assessment: all objectives covered, visual hierarchy consistent, one accessibility note on contrast ratio for Figure 3. This is the critical gate — once you approve, I'll send these to Irene for narration. What's your call?"
 
 ---
 

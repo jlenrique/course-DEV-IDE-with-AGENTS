@@ -24,6 +24,7 @@ segments:
   - id: string              # e.g., seg-01, seg-02 (sequential, matches narration script markers)
     narration_ref: string   # Pointer to narration script section, e.g., "narration-script.md#segment-1"
     narration_text: string  # Full narration text for this segment (copy from script)
+    behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
     visual_mode: enum       # static-hold | video | text-frame | pause-beat
@@ -81,6 +82,7 @@ segments:
 ```yaml
 - id: seg-01
   narration_text: "The economic reality of physician practice..."
+  behavioral_intent: "credible"
   voice_id: null
   visual_mode: static-hold
   visual_source: gary
@@ -94,6 +96,7 @@ segments:
 ```yaml
 - id: seg-02
   narration_text: "[DR. A]: The evidence suggests consolidation improves outcomes..."
+  behavioral_intent: "provocative"
   voice_id: "voice_dr_a"
   visual_mode: video
   visual_source: kira
@@ -108,6 +111,7 @@ segments:
 ```yaml
 - id: seg-03
   narration_text: "First, assess the patient's chief complaint."
+  behavioral_intent: "clear-guidance"
   voice_id: null
   visual_mode: static-hold
   visual_source: gary
@@ -117,6 +121,7 @@ segments:
   transition_out: none
 - id: seg-03-beat
   narration_text: ""        # empty — pause beat
+  behavioral_intent: "attention-reset"
   voice_id: null
   visual_mode: pause-beat
   visual_source: null
@@ -130,6 +135,7 @@ segments:
 ```yaml
 - id: seg-04
   narration_text: "Meet Dr. Patel. She's reviewing a complex case..."
+  behavioral_intent: "moving"
   voice_id: null
   visual_mode: video
   visual_source: kira
@@ -143,6 +149,7 @@ segments:
 ```yaml
 - id: seg-05a
   narration_text: "Watch the following scenario and consider: what would you do next?"
+  behavioral_intent: "provocative"
   voice_id: null
   visual_mode: static-hold
   visual_source: gary
@@ -152,6 +159,7 @@ segments:
   transition_out: cut
 - id: seg-05b
   narration_text: ""        # deliberate silence — learner observes
+  behavioral_intent: "reflective"
   voice_id: null
   visual_mode: video
   visual_source: kira
@@ -165,6 +173,7 @@ segments:
 ```yaml
 - id: seg-06
   narration_text: "As more information pours in, the glass overflows..."
+  behavioral_intent: "alarming"
   voice_id: null
   visual_mode: video
   visual_source: kira
@@ -185,6 +194,7 @@ segments:
 ```yaml
 - id: seg-bumper
   narration_text: "Module 3: Clinical Decision-Making."
+  behavioral_intent: "attention-grabbing"
   voice_id: null
   visual_mode: video
   visual_source: kira
@@ -200,6 +210,7 @@ segments:
 
 **ElevenLabs agent reads:**
 - `narration_text` per segment — text to synthesize
+- `behavioral_intent` — delivery cue for tone, pacing, and emphasis
 - `voice_id` — per-segment voice override when present; otherwise use the lesson default from Marcus/style guide
 - `sfx` — SFX cue to generate or look up
 - `music` — music direction (swell/duck/out)
@@ -213,6 +224,7 @@ segments:
 
 **Compositor reads:**
 - Complete manifest (all fields populated) — generates Descript Assembly Guide
+- `behavioral_intent` — assembly note so the human preserves the intended learner effect in pacing, transitions, and emphasis
 - `music_bed` — overall music track to source
 - `transition_in`/`transition_out` per segment — editing instructions
 - `music` cues — ducking/swelling instructions
@@ -221,6 +233,7 @@ segments:
 - `narration_duration` — validates WPM (130-170), checks monotonicity in VTT
 - `visual_duration` vs `narration_duration` — validates ±0.5s tolerance
 - Segment coverage — validates all segments have narration files
+- `behavioral_intent` — checks whether the artifact set appears to support the intended affective goal rather than fighting it
 
 ---
 
@@ -228,6 +241,7 @@ segments:
 
 - Produce the manifest in the same task as the narration script — they are always paired
 - Segment IDs must match `[SEGMENT: seg-XX]` markers in the narration script exactly
+- `behavioral_intent` should be concise and action-guiding, not literary. Think "credible", "urgent", "attention-reset", "reflective", not long prose.
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment
 - For `static-hold` segments referencing Gary PNGs: populate `visual_file` with the Gary-provided path from `gary_slide_output` immediately — don't leave it null

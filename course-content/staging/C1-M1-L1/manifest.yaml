@@ -1,0 +1,22 @@
+lesson_id: C1-M1-L1
+title: Defining Innovative Mindset - Composition Proof
+music_bed: null
+segments:
+  - id: seg-01
+    narration_ref: "NS-C1M1L1-02#segment-1"
+    narration_text: "Short medical narration smoke test through manifest mode."
+    behavioral_intent: credible
+    voice_id: null
+    visual_cue: "Single clean title frame supporting an authoritative opening beat."
+    visual_mode: static-hold
+    visual_source: gary
+    sfx: null
+    music: null
+    transition_in: fade
+    transition_out: fade
+    narration_duration: 3.204
+    narration_file: "course-content/staging/C1-M1-L1/audio/seg-01.mp3"
+    narration_vtt: "course-content/staging/C1-M1-L1/captions/seg-01.vtt"
+    sfx_file: null
+    visual_file: "course-content/staging/C1-M1-L1/visuals/seg-01.png"
+    visual_duration: 3.204

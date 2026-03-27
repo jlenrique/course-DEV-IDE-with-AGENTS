@@ -6,6 +6,8 @@ Uses read-only endpoints to avoid consuming credits.
 
 from __future__ import annotations
 
+import os
+
 from tests.conftest import requires_elevenlabs
 
 
@@ -52,3 +54,29 @@ class TestElevenLabsLive:
         detail = client.get_voice(voices[0]["voice_id"])
         assert "voice_id" in detail
         assert "name" in detail
+
+    def test_list_pronunciation_dictionaries(self):
+        """Pronunciation dictionary listing should return structured metadata."""
+        from scripts.api_clients import ElevenLabsClient
+
+        client = ElevenLabsClient()
+        payload = client.list_pronunciation_dictionaries(page_size=10)
+        assert "pronunciation_dictionaries" in payload
+        assert "has_more" in payload
+
+    def test_timestamps_smoke_when_enabled(self):
+        """Optional credit-consuming smoke test for narration + timestamps."""
+        if os.environ.get("ELEVENLABS_ENABLE_GENERATION_TESTS") != "1":
+            return
+
+        from scripts.api_clients import ElevenLabsClient
+
+        client = ElevenLabsClient()
+        voices = client.list_voices()
+        assert voices, "Expected at least one available voice"
+        result = client.text_to_speech_with_timestamps(
+            "Testing timestamped narration for medical education.",
+            voices[0]["voice_id"],
+        )
+        assert result["audio_bytes"]
+        assert "alignment" in result or "normalized_alignment" in result

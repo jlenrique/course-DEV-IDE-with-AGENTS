@@ -119,6 +119,7 @@ Marcus proactively offers to pull source materials before starting production ta
 - *"What's the status of the current production run?"*
 - *"Switch to ad-hoc mode"*
 - *"Show me what's in staging"*
+- *"Refresh tool knowledge"* — ask Marcus to refresh current API/tool documentation before a production task
 
 ### Source Materials
 - *"Pull my notes from Notion for this module"*

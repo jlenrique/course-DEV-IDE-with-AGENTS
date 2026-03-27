@@ -2,7 +2,13 @@
 
 ## Immediate Next Action
 
-**Run the first controlled slide + narration pilot through Descript** (Kira out of scope). Use `dev/trial-run-slide-narration` or current default branch.
+**Assemble the ad-hoc narrated-slides pilot in Descript** using the single bundle folder:
+
+`course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/`
+
+— import from **`visuals/`** (Gate 2 stills, copied in-repo), **`audio/`**, **`captions/`**, follow **`DESCRIPT-ASSEMBLY-GUIDE.md`**. Kira out of scope for this pilot.
+
+**Before Descript (automation):** `python skills/compositor/scripts/compositor_operations.py sync-visuals <manifest.yaml>` then `guide <manifest.yaml> <DESCRIPT-ASSEMBLY-GUIDE.md>` whenever a new assembly bundle is finalized (PNG paths were Gary-relative).
 
 Story **3.9 Source Wrangler** is implemented: `skills/source-wrangler/` + `NotionClient` + URL/HTML ingest + Playwright-assisted capture path. Stories 3.4, 3.5, 3.9, and 3.10 are in place; segment manifest and doc-refresh coverage remain active.
 
@@ -112,6 +118,8 @@ Quinn-R post-comp → Marcus/[Gate 4] → Canvas
 - Image-to-video from Gary PNGs is the next high-value integration (Compositor proof-of-concept)
 
 ## Gotchas
+- **Compositor:** `sync-visuals` copies approved `visual_file` stills into `<manifest_folder>/visuals/` and patches manifest paths in place; then regenerate the assembly guide.
+- Pilot bundle: `c1m1-physician-innovator-pilot-pass2` holds audio, captions, visuals, manifest, guide, ElevenLabs summary together.
 - PowerShell doesn't support `&&` chaining
 - `.venv` with Python 3.13
 - Kling API credits are SEPARATE from consumer credits

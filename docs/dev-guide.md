@@ -361,6 +361,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `gamma-api-mastery` | active | Epic 3 |
 | `elevenlabs-audio` | active | Epic 3 |
 | `tech-spec-wrangler` | active | Epic 3 |
+| `compositor` | `skills/compositor/` | Active (Story 3.5) — `sync-visuals` + Descript Assembly Guide |
 | `canvas-deployment` | planned | Epic 3 |
 | `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
 

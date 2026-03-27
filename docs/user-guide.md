@@ -191,6 +191,10 @@ Before promoting content from staging:
 - [ ] Accessibility checklist considered (contrast, alt text, captions)
 - [ ] Visible in target platform (Canvas page / LTI link) in preview mode
 
+### Narrated slide assembly (Descript)
+
+For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. The compositor skill runs `sync-visuals` on the manifest so those PNGs sit next to the other assets (instead of only under the Gary export tree) before you import into Descript.
+
 ---
 
 ## Tools in the Ecosystem

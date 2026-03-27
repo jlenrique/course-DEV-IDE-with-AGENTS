@@ -1,0 +1,248 @@
+lesson_id: C1-M1-PILOT-PHYSINN
+title: Physician as Innovator (ad-hoc pilot)
+music_bed: ambient-reflective
+gary_generation: v4-exemplar-aligned-recraft-v3
+gamma_url: https://gamma.app/docs/oz0jooxmkdwqx6r
+segments:
+- id: seg-01
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-01
+  narration_text: 'Welcome to Course One, Module One. This isn’t a detour from your
+    clinical identity — it’s an extension of it. Over the next few minutes we’ll make
+    a single argument plain: *the physician as innovator* is not a separate job title
+    you apply for. It’s a way of seeing the system you already work inside — and a
+    set of skills you can develop without leaving the mission that brought you to
+    medicine.'
+  behavioral_intent: credible
+  voice_id: null
+  visual_cue: Static slide 1 - 1 Physician-as-Innovator
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 24.521
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-01.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-01.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/1_Physician-as-Innovator.png
+  visual_duration: null
+- id: seg-02
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-02
+  narration_text: Medicine is accelerating — evidence, technology, and operational
+    complexity don’t wait for anyone’s comfort level. Many of us were trained deeply
+    in *how to deliver care along established pathways* — and far less often in how
+    to *redesign* those pathways when they fail patients or teams. The gap isn’t usually
+    a shortage of good intentions. It’s the combination of **structured process**
+    for change and **psychological safety** to name what’s broken. Until those exist,
+    even excellent clinicians stay stuck in reactive mode.
+  behavioral_intent: credible
+  voice_id: null
+  visual_cue: Static slide 2 - 2 The-Modern-Clinician-Dilemma
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 34.505
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-02.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-02.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/2_The-Modern-Clinician-Dilemma.png
+  visual_duration: null
+- id: seg-03
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-03
+  narration_text: 'In this program, an **innovation mindset** means this: you hold
+    the internal conviction that you can be a **designer of the healthcare system**
+    — not only an employee within it. You’re still bound by evidence, ethics, and
+    scope of practice. You’re *expanding* where your agency applies: to workflows,
+    handoffs, and system patterns that either help or harm. The National Academy of
+    Medicine and related work on clinician well-being remind us: burnout isn’t only
+    personal resilience — it’s often **system design**. That’s the arena we’re entering.'
+  behavioral_intent: definitional
+  voice_id: null
+  visual_cue: Static slide 3 - 3 Innovation-Mindset
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 36.734
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-03.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-03.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/3_Innovation-Mindset.png
+  visual_duration: null
+- id: seg-04
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-04
+  narration_text: 'Think of this certificate as a **hero’s journey** with three movements.
+    Course One — where you are now — is **Sparking**: learning to see friction and
+    opportunity in the clinical world you already inhabit. Course Two is **Building**:
+    design, planning, and pitch. Course Three is **Driving impact**: turning projects
+    into durable change. The point isn’t a binder of slides — it’s a **playbook**
+    you can use and an executive one-pager you can defend. *You* sit at the center
+    of that arc.'
+  behavioral_intent: motivating
+  voice_id: null
+  visual_cue: Static slide 4 - 4 Your-Journey
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 36.826
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-04.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-04.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/4_Your-Journey.png
+  visual_duration: null
+- id: seg-05
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-05
+  narration_text: 'When we say physicians innovate, we’re not speaking abstractly.
+    **Thomas Fogarty** helped transform vascular surgery with device thinking. **Peter
+    Pronovost** turned a checklist into a global patient-safety movement — that’s
+    **process** innovation at scale. **Patricia Bath** advanced how we treat cataracts
+    — technology tied to access. And at the **organizational** level, health systems
+    have shifted from purely reactive sick care toward models that try to engineer
+    health. Different levers — same through-line: physicians who refused to treat
+    broken systems as immutable.'
+  behavioral_intent: proud
+  voice_id: null
+  visual_cue: Static slide 5 - 5 Physician-Innovators
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 41.657
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-05.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-05.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/5_Physician-Innovators.png
+  visual_duration: null
+- id: seg-06
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-06
+  narration_text: 'Here’s the reframe many clinicians need: **physicianship** and
+    **innovation leadership** draw on the same muscle groups — *empathy* for who suffers,
+    *curiosity* when data surprises you, *analytical discipline* when noise is loud,
+    *comfort with ambiguity* when the right next step isn’t obvious, and *resilience*
+    when the first fix fails. You are not being asked to become someone else. You’re
+    being asked to aim traits you already exercise at the bedside toward **systems
+    and operations** — where harm and waste also hide.'
+  behavioral_intent: reassuring
+  voice_id: null
+  visual_cue: Static slide 6 - 6 Physicianship-Innovation
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 34.969
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-06.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-06.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/6_Physicianship-Innovation.png
+  visual_duration: null
+- id: seg-07
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-07
+  narration_text: '**Design thinking** can sound like business jargon — until you
+    map it to your clinical method. When you take a history, you’re **building empathy
+    with reality** — what’s actually happening to this person. When you synthesize
+    exam and data into a working diagnosis, you’re **defining the problem** with rigor.
+    When you build a differential and choose a plan, you’re **ideating** and **testing**
+    a hypothesis — then iterating when the story changes. You already run an innovation
+    loop; the “patient” is often a human being. In this program, we’ll also aim that
+    loop at **broken workflows** — where harm is statistical, not singular.'
+  behavioral_intent: analytical
+  voice_id: null
+  visual_cue: Static slide 7 - 7 Clinical-Method-Design-Thinking
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 44.443
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-07.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-07.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/7_Clinical-Method-Design-Thinking.png
+  visual_duration: null
+- id: seg-08
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-08
+  narration_text: '**Entrepreneurship** and **intrapreneurship** are cousins, not
+    duplicates. An entrepreneur often builds something new from the outside. An **intrapreneur**
+    drives innovation **inside** an existing organization — navigating politics, capital,
+    brand, and scale that already exist. For many of you, the fastest path to impact
+    is intrapreneurial: improve the system that already trusts you with patients.
+    That requires stakeholder alignment — a skill we’ll return to, especially around
+    your capstone.'
+  behavioral_intent: pragmatic
+  voice_id: null
+  visual_cue: Static slide 8 - 8 Intrapreneur-vs-Entrepreneur
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 37.895
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-08.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-08.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/8_Intrapreneur-vs-Entrepreneur.png
+  visual_duration: null
+- id: seg-09
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-09
+  narration_text: An **idea** is a sentence in a meeting — “we should use AI for notes,”
+    “we should fix boarding,” “we should redesign sign-out.” Useful — and *insufficient*.
+    An **opportunity** is an idea that has been tested against **desirability, feasibility,
+    and viability** in *your* environment, with a credible path to execution. This
+    program is designed to move you from brainstorming to **engineering opportunities**
+    — because healthcare already has enough unfunded mandates dressed up as innovation.
+  behavioral_intent: challenging
+  voice_id: null
+  visual_cue: Static slide 9 - 9 Idea-vs-Opportunity
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 35.294
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-09.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-09.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/9_Idea-vs-Opportunity.png
+  visual_duration: null
+- id: seg-10
+  narration_ref: NS-C1M1-physician-innovator-pilot.md#seg-10
+  narration_text: 'Here’s the honest summary. Clinical training makes you an expert
+    in care delivery; it does not automatically make you an expert in **system innovation**
+    — and that gap is fixable. Your mission in this module is to strengthen **process**,
+    **psychological safety**, and **first-principles thinking** — and to start capturing
+    friction you see every week. Upcoming work will walk you toward an **Opportunity
+    Radar** and a personal **SWOT** — simple tools that turn passive frustration into
+    something you can prioritize and test. The rest of the journey turns those seeds
+    into plans, pitches, and impact. For now: notice what breaks — and assume you’re
+    allowed to care.'
+  behavioral_intent: forward-looking
+  voice_id: null
+  visual_cue: Static slide 10 - 10 Next-Steps
+  visual_mode: static-hold
+  visual_source: gary
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: cross-dissolve
+  narration_duration: 46.718
+  narration_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio/seg-10.mp3
+  narration_vtt: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions/seg-10.vtt
+  sfx_file: null
+  visual_file: course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/visuals/10_Next-Steps.png
+  visual_duration: null

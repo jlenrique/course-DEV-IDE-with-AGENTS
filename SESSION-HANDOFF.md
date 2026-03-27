@@ -1,108 +1,59 @@
-# Session Handoff — Stories 3.4, 3.5, 3.10 Complete
+# Session Handoff — Compositor `sync-visuals` + ad-hoc pilot bundle + wrap-up
 
 **Date:** 2026-03-27  
-**Branch:** `story3-4-elevenlabs-specialist`  
-**Session focus:** finish Story 3.4 review, implement Story 3.5 (Compositor + intent contract), implement Story 3.10 (Tech Spec Wrangler), close session with next step set to Story 3.9 then pilot
+**Branch:** confirm with `git branch --show-current` (often `master` or a story branch)  
+**Session focus:** localize Gate-approved PNGs into the Descript assembly bundle; document workflow; run BMAD session shutdown protocol
 
 ---
 
 ## What Was Completed
 
-### Story 3.4 — ElevenLabs Specialist (DONE)
+### Compositor enhancement
 
-- Built `skills/bmad-agent-elevenlabs/` (Voice Director specialist)
-- Built `skills/elevenlabs-audio/` mastery skill
-- Expanded `scripts/api_clients/elevenlabs_client.py` with:
-  - timestamped TTS
-  - pronunciation dictionary helpers
-  - dialogue generation
-  - sound effects generation
-  - music stream support
-- Added unit tests and live-safe integration extensions
-- Added bootstrap exemplar scaffold under `resources/exemplars/elevenlabs/`
-- Added manifest-driven narration write-back so completed manifests now receive:
-  - `narration_duration`
-  - `narration_file`
-  - `narration_vtt`
-  - `sfx_file`
+- Added **`sync_approved_visuals_to_assembly_bundle`** and CLI subcommand **`sync-visuals`** in `skills/compositor/scripts/compositor_operations.py`.
+- Copies each segment’s `visual_file` into `<manifest_dir>/visuals/` (configurable via `--subdir`) and rewrites **only** those path strings in the manifest (YAML layout preserved).
+- CLI: legacy two-arg **`guide`** mode unchanged; explicit `guide` and `sync-visuals` subcommands supported.
+- Extended **`pyproject.toml`** `testpaths` with `skills/compositor/scripts/tests`.
+- New unit tests for copy + idempotent “already in bundle” case.
 
-### Story 3.5 — Compositor + Intent Contract (DONE)
+### Documentation
 
-- Built `skills/compositor/`
-- Built `compositor_operations.py` and unit tests
-- Generated proof-of-concept Descript Assembly Guide at:
-  - `course-content/staging/C1-M1-L1/descript-assembly-guide.md`
-- Formalized `behavioral_intent` across the active production contract:
-  - lesson plan
-  - slide brief
-  - narration script
-  - segment manifest
-- Updated Gary to self-check `intent_fidelity`
-- Updated Quinn-R review protocol to check `intent_fidelity`
-- Updated Marcus HIL guidance so affective/behavioral intent is surfaced at Gate 1-3 review points
+- **`skills/compositor/SKILL.md`** — assembly-bundle rule: run `sync-visuals` then regenerate the Descript Assembly Guide.
+- **`docs/user-guide.md`** — short “Narrated slide assembly (Descript)” subsection.
+- **`docs/dev-guide.md`** — compositor row in Current Skills table.
+- **`docs/admin-guide.md`** — Descript row note on local bundles.
+- **`docs/project-context.md`** — Descript bullet mentions `sync-visuals`.
 
-### Story 3.10 — Tech Spec Wrangler (DONE)
+### Ad-hoc pilot: Physician as Innovator
 
-- Built `skills/tech-spec-wrangler/`
-- Added doc-refresh/report/update script and tests
-- Added doc-source coverage for active creative/composition tools:
-  - `gamma-api-mastery`
-  - `elevenlabs-audio`
-  - `compositor`
-- Generated proof report:
-  - `skills/tech-spec-wrangler/refresh-report-elevenlabs.json`
-- Updated ElevenLabs doc refresh metadata and logged a refresh note into the sidecar
-
-### Review Results
-
-Final review wave completed on the newly authored stories with party-mode-style consensus:
-
-- `3.4`: one real blocking gap found and fixed
-  - missing manifest-driven narration/write-back path
-- `3.5`: no remaining blocking issues after implementation
-- `3.10`: acceptable as a shared skill as-is; no redesign required
-- stale handoff/status references were corrected in active docs
+- Ran **`sync-visuals`** on `course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/manifest.yaml`.
+- **10 PNGs** copied to `.../c1m1-physician-innovator-pilot-pass2/visuals/`.
+- Regenerated **`DESCRIPT-ASSEMBLY-GUIDE.md`** so V1 paths point at `visuals/`.
+- **`pre-composition-check.json`** remains **PASS** (all manifest paths resolve).
+- **`_bmad/memory/bmad-agent-marcus-sidecar/index.md`** — transient note for sync + guide.
 
 ---
 
 ## What Is Next
 
-### Immediate Next Build
-
-**Story 3.9 — Source Wrangler (Notion + Box)**  
-This is the recommended next non-delivery slice before any Canvas/CourseArc work.
-
-Why:
-- strengthens upstream context quality for all existing creation/composition agents
-- fits the current non-delivery focus
-- improves the realism of the first production pilot
-
-### After Story 3.9
-
-Run the first controlled pilot:
-
-`Marcus -> Irene Pass 1 -> Gary -> Irene Pass 2 -> ElevenLabs -> Quinn-R pre-comp -> Compositor -> human Descript assembly -> Quinn-R post-comp`
-
-This is the right first end-to-end creative production trial before platform publishing.
+1. **Human:** Assemble in **Descript** using the pilot bundle (single folder: `audio/`, `captions/`, `visuals/`, manifest, guide, ElevenLabs summary).
+2. **Optional:** Quinn-R post-composition on exported MP4 + captions.
+3. **Promotion:** No move to `course-content/courses/` until you explicitly approve (ad-hoc pilot remains in `staging/ad-hoc/`).
 
 ---
 
 ## Unresolved Issues / Risks
 
-- `course-content/staging/C1-M1-L1/` is a proof-of-concept composition artifact set, not a full production lesson package
-- `Gary visual_description` quality remains a known quality lever; still dependent on what Gary can infer/return from generation output
-- `Kira` duration rounding remains a real production constraint the compositor/human must manage
-- `Tech Spec Wrangler` is active as a skill, but not yet fully auto-triggered everywhere; current use is policy-driven
-- delivery-platform automation is intentionally deferred; the pipeline is ready through Descript, not through Canvas/CourseArc publishing
+- **`ruff check skills/compositor/scripts/compositor_operations.py`** still reports **pre-existing E501** (long strings in `behavioral_note` and one f-string); not introduced by this change. Consider a follow-up formatting pass or `# noqa: E501` on that dict if the team wants a clean compositor-only lint.
+- **No automated `content-standards.yaml` validator** in repo; manual review against `config/content-standards.yaml` when promoting content.
+- **Interaction tests (protocol 4b):** compositor is a **skill**, not a `bmad-agent-*` specialist; no new agent interaction test required.
 
 ---
 
 ## Key Lessons Learned
 
-1. **Intent must be first-class.** `behavioral_intent` cannot live only in HIL comments if the downstream assets are supposed to feel coherent.
-2. **Manifest realism matters.** A documented contract is not enough; live manifest write-back was the key missing step in `3.4`.
-3. **Composition guidance is valuable before composition automation.** The Descript Assembly Guide meaningfully reduces ambiguity even though composition remains manual.
-4. **Shared infrastructure can stabilize multiple specialists at once.** `tech-spec-wrangler` improved the creation/composition stack more efficiently than adding another platform-specific agent.
+1. **Single-folder assembly reduces friction** — Descript operators should not hunt the Gary export tree when audio and captions already live in the pass-2 folder.
+2. **Text substitution beats full YAML dump** for manifest edits when long quoted narration blocks must stay human-readable.
 
 ---
 
@@ -110,37 +61,34 @@ This is the right first end-to-end creative production trial before platform pub
 
 | What | Method | Result |
 |------|--------|--------|
-| 3.4 focused unit/integration validation | `pytest` focused suites | PASS |
-| 3.4 manifest-driven live smoke | live ElevenLabs call through manifest path | PASS |
-| 3.5 compositor unit tests | `pytest skills/compositor/scripts/tests/test_compositor_operations.py` | PASS |
-| 3.4 + 3.5 focused combined suite | `pytest` focused suite | PASS |
-| 3.10 wrangler tests | `pytest skills/tech-spec-wrangler/scripts/tests/test_doc_refresh.py` | PASS |
-| shutdown validation suite | focused `pytest` set | PASS — `36 passed` |
-| diff hygiene | `git diff --check` | pending final rerun after whitespace cleanup |
+| Compositor unit tests | `pytest skills/compositor/scripts/tests/test_compositor_operations.py -q` | **6 passed** |
+| Pilot `sync-visuals` | CLI on real manifest | **OK** (10 copies) |
+| Pilot assembly guide | Regenerated `DESCRIPT-ASSEMBLY-GUIDE.md` | Paths under `visuals/` |
+| Diff hygiene | `git diff --check` | **PASS** |
 
 ---
 
 ## Content / Staging Summary
 
-- Kept proof composition artifacts at `course-content/staging/C1-M1-L1/`
-- Removed stale scratch smoke artifacts from `course-content/staging/story-3.4-smoke/`
-- No content promoted to `course-content/courses/` this session
+- **Ad-hoc pilot bundle:** `course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/` (now includes **`visuals/`**).
+- Original Gary exports remain at `course-content/staging/ad-hoc/gamma-c1m1-physician-innovator-pilot/v4-exemplar-aligned-recraft-v3/png/` (source of copy).
+- **Not promoted** to `course-content/courses/` this session.
 
 ---
 
 ## Artifact Update Checklist
 
-- [x] `_bmad-output/implementation-artifacts/3-4-elevenlabs-specialist-agent.md`
-- [x] `_bmad-output/implementation-artifacts/3-5-compositor-skill.md`
-- [x] `_bmad-output/implementation-artifacts/3-10-tech-spec-wrangler-skill.md`
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
+- [x] `skills/compositor/scripts/compositor_operations.py`
+- [x] `skills/compositor/scripts/tests/test_compositor_operations.py`
+- [x] `skills/compositor/SKILL.md`
+- [x] `pyproject.toml` (testpaths)
 - [x] `docs/project-context.md`
+- [x] `docs/user-guide.md`
+- [x] `docs/dev-guide.md`
+- [x] `docs/admin-guide.md`
 - [x] `next-session-start-here.md`
 - [x] `SESSION-HANDOFF.md`
-- [x] `docs/admin-guide.md`
-- [x] `docs/dev-guide.md`
-- [x] `docs/user-guide.md`
-- [x] `docs/agent-environment.md`
-- [x] `resources/tool-inventory/tool-access-matrix.md` (carried forward, no new changes this session)
-
+- [x] `_bmad/memory/bmad-agent-marcus-sidecar/index.md`
+- [x] Pilot: `manifest.yaml`, `DESCRIPT-ASSEMBLY-GUIDE.md`, `visuals/*.png`
+- [ ] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — no significant phase transition this session (unchanged)
+- [ ] `_bmad-output/implementation-artifacts/sprint-status.yaml` — no Kanban state change this session (unchanged)

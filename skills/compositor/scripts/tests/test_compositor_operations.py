@@ -94,3 +94,64 @@ class TestValidation:
             assert "missing required fields" in str(exc)
         else:  # pragma: no cover
             raise AssertionError("Expected validation failure")
+
+
+class TestSyncApprovedVisuals:
+    def test_copies_visuals_and_updates_manifest(self, tmp_path: Path) -> None:
+        repo = tmp_path
+        (repo / ".git").mkdir()
+        remote = repo / "gary-export" / "png"
+        remote.mkdir(parents=True)
+        (remote / "1_Slide.png").write_bytes(b"png-bytes")
+
+        bundle = repo / "assembly-bundle"
+        bundle.mkdir()
+        manifest_path = bundle / "manifest.yaml"
+        manifest_path.write_text(
+            """
+lesson_id: L1
+title: Test
+segments:
+  - id: seg-01
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-01.mp3
+    visual_file: gary-export/png/1_Slide.png
+""".strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        summary = MODULE.sync_approved_visuals_to_assembly_bundle(
+            manifest_path, repo_root=repo
+        )
+        assert summary["copies"]
+        copied = bundle / "visuals" / "1_Slide.png"
+        assert copied.is_file()
+        assert copied.read_bytes() == b"png-bytes"
+
+        updated = MODULE.load_manifest(manifest_path)
+        assert updated["segments"][0]["visual_file"] == "assembly-bundle/visuals/1_Slide.png"
+
+    def test_idempotent_when_visual_already_in_bundle(self, tmp_path: Path) -> None:
+        repo = tmp_path
+        (repo / ".git").mkdir()
+        bundle = repo / "assembly-bundle"
+        vis = bundle / "visuals"
+        vis.mkdir(parents=True)
+        (vis / "a.png").write_bytes(b"x")
+        manifest_path = bundle / "manifest.yaml"
+        manifest_path.write_text(
+            """
+lesson_id: L1
+title: Test
+segments:
+  - id: seg-01
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-01.mp3
+    visual_file: assembly-bundle/visuals/a.png
+""".strip()
+            + "\n",
+            encoding="utf-8",
+        )
+        MODULE.sync_approved_visuals_to_assembly_bundle(manifest_path, repo_root=repo)
+        assert (vis / "a.png").read_bytes() == b"x"

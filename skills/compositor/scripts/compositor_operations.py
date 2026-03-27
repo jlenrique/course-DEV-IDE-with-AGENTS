@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import argparse
+import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +20,78 @@ def load_manifest(manifest_path: str | Path) -> dict[str, Any]:
     """Load a manifest from disk."""
     manifest_path = Path(manifest_path)
     return yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+
+
+def find_repo_root(start: Path) -> Path:
+    """Walk parents from ``start`` until a directory containing ``.git`` is found."""
+    current = start.resolve()
+    for candidate in [current, *current.parents]:
+        if (candidate / ".git").exists():
+            return candidate
+    raise FileNotFoundError(
+        "Could not locate repository root (no .git directory in parents of "
+        f"{start}). Pass repo_root explicitly if working outside a git clone."
+    )
+
+
+def sync_approved_visuals_to_assembly_bundle(
+    manifest_path: str | Path,
+    *,
+    visuals_subdir: str = "visuals",
+    repo_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Copy segment ``visual_file`` assets next to the manifest and rewrite paths.
+
+    Approved slides often live under a Gary/Gamma export tree. For a completed
+    assembly bundle (audio, captions, guide, summaries), copy those stills into
+    ``<manifest_dir>/<visuals_subdir>/`` and update each segment's ``visual_file``
+    to the new repo-relative path so Descript and reviewers use one folder.
+    """
+    manifest_path = Path(manifest_path).resolve()
+    root = Path(repo_root).resolve() if repo_root else find_repo_root(manifest_path)
+    manifest = load_manifest(manifest_path)
+    segments = manifest.get("segments", [])
+    if not segments:
+        raise ValueError("Manifest has no segments.")
+
+    dest_dir = (manifest_path.parent / visuals_subdir).resolve()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    copies: list[dict[str, str]] = []
+    for segment in segments:
+        rel_visual = segment.get("visual_file")
+        if not rel_visual:
+            raise ValueError(f"Segment {segment.get('id', '<unknown>')} missing visual_file.")
+        src = (root / rel_visual).resolve()
+        if not src.is_file():
+            raise FileNotFoundError(f"Visual not found for {segment.get('id')}: {src}")
+
+        dest_file = dest_dir / src.name
+        if dest_file.resolve() != src.resolve():
+            shutil.copy2(src, dest_file)
+
+        new_rel = (dest_file.relative_to(root)).as_posix()
+        if rel_visual != new_rel:
+            copies.append({"segment": segment["id"], "from": rel_visual, "to": new_rel})
+
+    text = manifest_path.read_text(encoding="utf-8")
+    for item in copies:
+        old, new = item["from"], item["to"]
+        occurrences = text.count(old)
+        if occurrences != 1:
+            raise ValueError(
+                "Refusing manifest edit: path "
+                f"{old!r} appears {occurrences} times in {manifest_path} (expected 1)."
+            )
+        text = text.replace(old, new)
+    if copies:
+        manifest_path.write_text(text, encoding="utf-8")
+
+    return {
+        "manifest_path": str(manifest_path),
+        "visuals_dir": str(dest_dir),
+        "copies": copies,
+    }
 
 
 def save_markdown(content: str, output_path: str | Path) -> Path:
@@ -202,22 +276,61 @@ def generate_assembly_guide_file(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build CLI parser."""
+    """Build CLI parser (subcommands + legacy two-arg guide mode)."""
     parser = argparse.ArgumentParser(
-        description="Generate a Descript Assembly Guide from a completed manifest."
+        description="Compositor: sync approved visuals into the assembly bundle and/or "
+        "generate a Descript Assembly Guide."
     )
-    parser.add_argument("manifest_path")
-    parser.add_argument("output_path")
+    sub = parser.add_subparsers(dest="command")
+
+    guide = sub.add_parser("guide", help="Generate Descript Assembly Guide markdown.")
+    guide.add_argument("manifest_path")
+    guide.add_argument("output_path")
+
+    sync = sub.add_parser(
+        "sync-visuals",
+        help="Copy approved visual_file assets next to the manifest; update manifest paths.",
+    )
+    sync.add_argument("manifest_path")
+    sync.add_argument(
+        "--subdir",
+        default="visuals",
+        help="Folder under the manifest directory for copied stills (default: visuals).",
+    )
+    sync.add_argument(
+        "--repo-root",
+        default=None,
+        help="Repository root (defaults to parent chain containing .git).",
+    )
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
-    args = build_parser().parse_args(argv)
+    raw = list(sys.argv[1:] if argv is None else argv)
+    if len(raw) >= 2 and raw[0] not in ("guide", "sync-visuals", "--help", "-h"):
+        raw = ["guide", *raw]
+
+    args = build_parser().parse_args(raw)
     try:
-        output = generate_assembly_guide_file(args.manifest_path, args.output_path)
-        print(str(output))
-        return 0
+        if getattr(args, "command", None) is None:
+            build_parser().print_help()
+            return 2
+        if args.command == "sync-visuals":
+            summary = sync_approved_visuals_to_assembly_bundle(
+                args.manifest_path,
+                visuals_subdir=args.subdir,
+                repo_root=args.repo_root,
+            )
+            print(yaml.dump(summary, default_flow_style=False, sort_keys=False).strip())
+            return 0
+        if args.command == "guide":
+            output = generate_assembly_guide_file(args.manifest_path, args.output_path)
+            print(str(output))
+            return 0
+        build_parser().print_help()
+        return 2
     except Exception as exc:  # pragma: no cover
         print(f"ERROR: {exc}")
         return 1

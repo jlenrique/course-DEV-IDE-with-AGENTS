@@ -144,7 +144,7 @@ See `_bmad-output/brainstorming/party-mode-composition-architecture.md` for full
 - **Silent Video + Smart Audio:** Kling always `sound-off`. ElevenLabs owns all audio (narration, SFX, music).
 - **Segment manifest:** YAML file produced by Irene Pass 2. Single source of truth. All downstream agents read/write.
 - **Narration-paced video:** ElevenLabs generates first; narration_duration becomes clip duration target for Kira.
-- **Descript:** Sole composition platform (manual-tool pattern). Compositor skill (Story 3.5) generates Descript Assembly Guide.
+- **Descript:** Sole composition platform (manual-tool pattern). Compositor skill (Story 3.5) generates Descript Assembly Guide and can **`sync-visuals`** to copy Gate-approved stills into the assembly bundle (`visuals/`) next to audio, captions, and summaries.
 - **Four HIL gates:** Lesson plan → slides → script+manifest → final video.
 - **Quinn-R two-pass:** Pre-composition (asset quality) + post-composition (final export).
 - **Irene two-pass:** Pass 1 (lesson plan + slide brief before Gary); Pass 2 (narration script + segment manifest after Gary + HIL Gate 2).

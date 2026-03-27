@@ -1,0 +1,12 @@
+{
+  "attempt": 3,
+  "image_model": "flux-2-pro",
+  "menu_option": "F",
+  "theme_id": "njim9kuhfnljvaa",
+  "generation_id": "zdNGiNhBvvKPttO6JqmhJ",
+  "gamma_id": "g_4qjkxa7yyimczv6",
+  "gamma_url": "https://gamma.app/docs/z3m2pde2pa6hpi5",
+  "credits_deducted": 78,
+  "note": "Strict anti-photoreal additionalInstructions + flat-vector imageOptions.style",
+  "irene_handoff_status": "BLOCKED until Gate 2 style approval (Marcus)."
+}

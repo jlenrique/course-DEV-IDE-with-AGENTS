@@ -5,7 +5,7 @@
 - `narration_file` -> Track `A1`
 - `music_bed` or music assets -> Track `A2`
 - `sfx_file` -> Track `A3`
-- `visual_file` -> Track `V1`
+- `visual_file` -> Track `V1` (after **`sync-visuals`**, expect repo-relative paths under the assembly bundle’s `visuals/` folder next to the manifest)
 
 ## Duration Rules
 

@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.7,<3",
     "aiohttp>=3.9,<4",
     "pyyaml>=6.0,<7",
+    "pypdf>=5.0,<6",
 ]
 
 [project.optional-dependencies]
@@ -30,7 +31,11 @@ line-length = 100
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = [
+    "tests",
+    "skills/source-wrangler/scripts/tests",
+    "skills/compositor/scripts/tests",
+]
 pythonpath = ["."]
 asyncio_mode = "auto"
 

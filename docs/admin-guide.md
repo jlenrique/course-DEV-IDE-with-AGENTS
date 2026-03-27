@@ -123,7 +123,7 @@ All secrets live in `.env` at the project root. **Never commit this file.** Vari
 
 | Tool | Env Variable(s) | Notes |
 |------|-----------------|-------|
-| **Descript** | `DESCRIPT_API_KEY` | Early access, import/export only |
+| **Descript** | `DESCRIPT_API_KEY` | Early access, import/export only; assembly uses repo-local bundles (`visuals/`, audio, manifest) from compositor `sync-visuals` + guide |
 | **Midjourney** | `MIDJOURNEY_API_KEY` | Third-party wrapper |
 | **CapCut** | `CAPCUT_API_KEY` | Official API status unclear |
 

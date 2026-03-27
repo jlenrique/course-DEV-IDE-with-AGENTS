@@ -17,7 +17,7 @@ This is a **skill**, not a specialist agent. Marcus invokes it after Quinn-R's p
 |------|---------|
 | `./references/assembly-guide-format.md` | Canonical structure of the generated Descript Assembly Guide |
 | `./references/manifest-interpretation.md` | Rules for interpreting manifest fields into assembly instructions |
-| `./scripts/compositor_operations.py` | Manifest parser + assembly-guide generator |
+| `./scripts/compositor_operations.py` | Manifest parser, `sync-visuals`, assembly-guide generator |
 
 ## Operating Rules
 
@@ -25,3 +25,17 @@ This is a **skill**, not a specialist agent. Marcus invokes it after Quinn-R's p
 - Treat `behavioral_intent` as a first-class assembly cue.
 - Generate guidance that a non-technical human can follow in Descript without guesswork.
 - Never rewrite the manifest’s pedagogical meaning during composition; preserve the approved intent.
+
+## Assembly bundle: localize approved visuals
+
+When a **completed assembly bundle** is ready (audio, captions, ElevenLabs summary, Descript Assembly Guide, and manifest in one folder), **copy** Gate‑2‑approved stills out of the Gary/Gamma export tree into that bundle so humans and Descript see a single directory.
+
+1. Run `sync-visuals` (updates `visual_file` paths in the manifest in place, preserving YAML layout):
+
+   `python skills/compositor/scripts/compositor_operations.py sync-visuals path/to/manifest.yaml`
+
+   Stills land in `path/to/visuals/` (override with `--subdir`).
+
+2. Regenerate the assembly guide so paths point at the localized copies:
+
+   `python skills/compositor/scripts/compositor_operations.py guide path/to/manifest.yaml path/to/DESCRIPT-ASSEMBLY-GUIDE.md`

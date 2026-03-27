@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "run_mode": "ad-hoc",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voice_name": "Matilda - Knowledgable, Professional (informative_educational)",
+  "model": "from style_guide elevenlabs.model_id or default eleven_multilingual_v2",
+  "segments": 10,
+  "total_narration_seconds": 373.562,
+  "audio_dir": "course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/audio",
+  "captions_dir": "course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/captions",
+  "manifest_updated": "course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/manifest.yaml",
+  "notes": "Request stitching: each segment after the first used previous_request_ids for continuity. Regenerate single segment by re-running generate_narration for that block if retake needed."
+}

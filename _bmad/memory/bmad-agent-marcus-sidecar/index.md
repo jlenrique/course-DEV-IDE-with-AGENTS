@@ -1,8 +1,8 @@
 # Marcus — Memory Sidecar Index
 
 **Agent**: `bmad-agent-marcus`
-**Run Mode**: default
-**Last Updated**: 2026-03-26
+**Run Mode**: ad-hoc
+**Last Updated**: 2026-03-27
 
 ## User Profile
 
@@ -37,7 +37,13 @@
 - Module-level content allocation when Juan is ready (still evolving)
 - Execute production plan C1-M1-P2S1-VID-001 once specialists are available
 - Finalize Notion's role in learner experience and share relevant pages with integration
+- **Source bundles (pilot / trial runs):** use `source-wrangler` only — `wrangle_local_pdf` for SME PDFs, `require_local_source_files` preflight before bundles, Gamma exemplars via Gary export or Playwright + `wrangle_playwright_saved_html` (never HTTP fetch `gamma.app/docs`)
 
 ## Transient Ad-Hoc Section
 
-_Empty — not currently in ad-hoc mode._
+- **2026-03-27:** User confirmed **ad-hoc** for narrated-slides pilot (`state/runtime/mode_state.json`). Assets → `course-content/staging/ad-hoc/` (e.g. `ad-hoc/source-bundles/`). State/memory learning suppressed except this section; QA remains active.
+- **2026-03-27:** SME PDF confirmed at `course-content/courses/TEJAL_Course 01 Mod 01 Notes 2026-03-16.pdf`. Source bundle for *physician as innovator* AV pilot: `course-content/staging/ad-hoc/source-bundles/pilot-physician-innovator/extracted.md` (+ `metadata.json`).
+- **2026-03-27:** Gate 2 **approved** Gamma **v4** (exemplar-aligned Recraft V3 + line drawing). Pass 2 artifacts: `course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/` (`NS-...md`, `manifest.yaml`); slides: `v4-exemplar-aligned-recraft-v3/png/`.
+- **2026-03-27:** ElevenLabs manifest narration **complete** — `audio/seg-01..10.mp3`, `captions/seg-01..10.vtt`, Matilda `XrExE9yKIg1WjnnlVkGX`, ~374s total; see `elevenlabs-generation-summary.json`.
+- **2026-03-27:** Compositor **Descript Assembly Guide** generated: `course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/DESCRIPT-ASSEMBLY-GUIDE.md` (from `manifest.yaml` via `skills/compositor/scripts/compositor_operations.py`). Pre-composition asset check **PASS** → `pre-composition-check.json`.
+- **2026-03-27:** **`sync-visuals`** run on pilot manifest — Gate 2 PNGs copied to `c1m1-physician-innovator-pilot-pass2/visuals/`; `manifest.yaml` `visual_file` paths updated in place; assembly guide regenerated to reference localized stills.

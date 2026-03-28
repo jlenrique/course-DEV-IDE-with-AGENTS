@@ -30,6 +30,7 @@ Every brief to a BMad writer includes ALL of the following:
 - **Pedagogical Intent** — WHY this content exists in the learning arc. What cognitive shift should the learner experience?
 - **Format Constraints** — Structure requirements: word count range, section count, paragraph density, whether dialogue or narration, etc.
 - **Key Terminology** — Medical/clinical terms that MUST appear in the output. These are non-negotiable vocabulary anchors.
+- **Source Reference** — `source_ref` citation tracing this brief to its origin in the source bundle or lesson plan. Format: `{filename}#{path_expression}` (see `docs/source-ref-grammar.md`). Required for every content field that carries pedagogical assertions.
 
 ### Optional Fields
 

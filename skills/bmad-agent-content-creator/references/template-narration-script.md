@@ -21,6 +21,7 @@ For each slide/segment — segment IDs must match `[SEGMENT: seg-XX]` markers ex
 [SEGMENT: seg-01]
 
 **[Gary Slide: {gary_slide_id} — {visual_description from gary_slide_output}]**
+**Source Reference:** `source_ref: {lesson-plan.md#Block N}` | `slide_ref: SB-{id}#Slide {N}` — traces this narration segment to its source in the lesson plan and paired slide
 
 **Stage Directions:**
 - Tone: {conversational clinical | formal academic | empathetic narrative}

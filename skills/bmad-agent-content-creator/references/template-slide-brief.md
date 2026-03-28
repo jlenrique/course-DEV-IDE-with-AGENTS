@@ -18,6 +18,8 @@
 **Content:**
 {Primary text content for this slide — what appears on screen}
 
+**Source Reference:** `source_ref: {lesson-plan.md#Block N}` — traces this slide's content to its origin in the lesson plan
+
 **Visual Guidance:**
 - Layout: {two-column parallel | title-plus-body | three-column cards | data visualization | full-bleed image}
 - Hero Element: {what draws the eye first}

@@ -4,7 +4,9 @@
 
 - **Module:** {module_id} — {module_title}
 - **Lesson:** {lesson_id} — {lesson_title}
-- **Learning Objectives:** {list all objectives with Bloom's level tags}
+- **Learning Objectives:**
+  - LO-1: {objective text} (Bloom's: {level}) | `source_ref: {extracted.md#Section > Subsection}`
+  - LO-2: {objective text} (Bloom's: {level}) | `source_ref: {extracted.md#Section > Subsection}`
 - **Estimated Duration:** {minutes}
 - **Prerequisites:** {prior lessons/concepts required}
 - **Pairing Reference:** LP-{module_id}{lesson_id}
@@ -19,6 +21,7 @@ For each content block in the lesson sequence:
 - **Bloom's Level:** {level}
 - **Content Type:** {lecture narration | case study | procedure walkthrough | data visualization | discussion prompt}
 - **Writer Delegation:** {Paige | Sophia | Caravaggio} — {rationale for writer selection}
+- **Source Reference:** `source_ref: {extracted.md#Section > Subsection}` — traces this block to its origin in the source bundle
 - **Estimated Duration:** {minutes}
 - **Key Terminology:** {terms that must appear}
 - **Behavioral / Affective Goal:** {credible | moving | alarming | attention-reset | reflective | provocative | urgent}

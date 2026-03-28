@@ -87,10 +87,12 @@ gary_slide_output:
     file_path: "course-content/staging/C1-M1-P2S1-slides/card-01.png"
     card_number: 1
     visual_description: "Economic overview: three-column comparison of physician practice models across decades"
+    source_ref: "slide-brief.md#Slide 1"     # Provenance: traces this generated card back to its slide brief source
   - slide_id: "C1-M1-P2S1-card-02"
     file_path: "course-content/staging/C1-M1-P2S1-slides/card-02.png"
     card_number: 2
     visual_description: "Revenue gap timeline: dual-axis chart with declining solo practice revenue vs. consolidation trend"
+    source_ref: "slide-brief.md#Slide 2"     # Provenance: traces this generated card back to its slide brief source
 
 quality_assessment:
   overall_score: 0.87
@@ -143,7 +145,7 @@ memory_mode: "default"
 | `production_run_id` | yes | Echo from inbound |
 | `status` | yes | `success`, `revision_needed`, or `failed` |
 | `artifact_paths` | yes | Empty array if failed; includes both PDF (review) and PNG per card (production) |
-| `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description}` — one per generated card; passed to Irene Pass 2 |
+| `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description, source_ref}` — one per generated card; passed to Irene Pass 2. `source_ref` traces each card to its slide brief origin. |
 | `quality_assessment` | yes | Structured scores; see quality-assessment.md for dimensions |
 | `generation_mode` | yes | `"text"` or `"from-template"` — which endpoint was used |
 | `template_used` | if from-template | The `gammaId` used; null for text generation |

@@ -1,0 +1,50 @@
+# Fidelity Contract Schema — L1 Deterministic Contracts
+# These contracts define WHAT must be true at each production gate.
+# HOW truth is verified (L2 agentic evaluation) evolves with LLM capability.
+# Contracts are human-authored, versioned, and reviewed before the Fidelity Assessor is built.
+
+schema_version: "1.0"
+
+# Every gate contract YAML file must conform to this structure:
+#
+# gate: "G{n}"                          # Gate identifier (G0–G6)
+# gate_name: "{human-readable name}"    # E.g., "Source Bundle", "Generated Slides"
+# producing_agent: "{agent name}"       # Agent responsible for the artifact
+# hil_gate: "{Gate N or null}"          # Corresponding HIL gate (Gate 1–4) or null
+# source_of_truth:
+#   primary: "{description}"            # What the artifact is compared against
+#   schema_ref: "{file path}"           # Path to the upstream template/schema
+#
+# criteria:
+#   - id: "G{n}-{nn}"                  # Unique criterion ID (e.g., G3-01)
+#     name: "{short name}"             # Human-readable short name
+#     description: "{assertion}"        # What this criterion checks
+#     fidelity_class:                   # Which fidelity classes this applies to
+#       - creative                      # Gamma-enhanced freely
+#       - literal-text                  # Exact text must be preserved
+#       - literal-visual                # SME image must be faithfully placed
+#     severity: critical | high | medium
+#     evaluation_type: deterministic | agentic
+#       # deterministic: can be checked by code (string match, count, schema validation)
+#       # agentic: requires LLM judgment (semantic coverage, clinical accuracy, visual interpretation)
+#     check: "{human-readable test}"    # The assertion to evaluate
+#     requires_perception: false        # true if a sensory bridge is needed to evaluate
+#     perception_modality: null         # image | audio | pdf | video (if requires_perception)
+
+required_fields:
+  gate: true
+  gate_name: true
+  producing_agent: true
+  source_of_truth: true
+  criteria: true
+
+required_criterion_fields:
+  id: true
+  name: true
+  description: true
+  fidelity_class: true
+  severity: true
+  evaluation_type: true
+  check: true
+  requires_perception: true
+  perception_modality: false

@@ -1,0 +1,62 @@
+gate: "G2"
+gate_name: "Slide Brief"
+producing_agent: "irene"
+hil_gate: "Gate 1"
+source_of_truth:
+  primary: "Lesson plan (LOs, content structure, assessment hooks)"
+  schema_ref: "skills/bmad-agent-content-creator/references/template-slide-brief.md"
+
+criteria:
+  - id: "G2-01"
+    name: "LO traceability"
+    description: "Every slide's Learning Purpose traces to a lesson plan LO"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "Every slide section has a non-empty Learning Purpose that references a valid LO from the paired lesson plan"
+    requires_perception: false
+
+  - id: "G2-02"
+    name: "Content item completeness"
+    description: "Each slide has Content, Visual Guidance, and Learning Purpose fields populated"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every slide section contains non-empty Content, Visual Guidance (with Layout, Hero Element, Visual Density), and Learning Purpose"
+    requires_perception: false
+
+  - id: "G2-03"
+    name: "Fidelity classification accuracy"
+    description: "Fidelity tags are applied correctly: literal-text only for exact-match content (assessment items, statistics, accreditation terms); literal-visual only when SME image exists; creative is default — over-tagging literal is a violation"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "literal-text slides contain verifiable exact-match content from source; literal-visual slides reference an existing SME image; creative slides have no content requiring verbatim preservation"
+    requires_perception: false
+
+  - id: "G2-04"
+    name: "Downstream parameter coherence"
+    description: "textMode and imageOptions.source values are consistent with fidelity classification"
+    fidelity_class: [literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "literal-text slides specify textMode: preserve; literal-visual slides specify textMode: preserve + imageOptions.source: noImages or user-provided; creative slides may use any textMode"
+    requires_perception: false
+
+  - id: "G2-05"
+    name: "No content loss from lesson plan"
+    description: "All content blocks from the lesson plan are represented in at least one slide"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "For each content block in the lesson plan, at least one slide's Content addresses that block's material"
+    requires_perception: false
+
+  - id: "G2-06"
+    name: "Fidelity-control vocabulary for literal slides"
+    description: "Literal-text and literal-visual slides use deterministic fidelity-control vocabulary, not free-text additionalInstructions"
+    fidelity_class: [literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Literal slides specify text_treatment, image_treatment, layout_constraint, content_scope from the finite vocabulary — additionalInstructions is empty or absent for literal slides"
+    requires_perception: false

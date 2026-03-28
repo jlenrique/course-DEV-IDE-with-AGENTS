@@ -1,0 +1,48 @@
+gate: "G6"
+gate_name: "Composition"
+producing_agent: "compositor + human (Descript)"
+hil_gate: "Gate 4"
+source_of_truth:
+  primary: "Segment manifest (assembly order, timing, sync points, asset paths)"
+  schema_ref: "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
+
+criteria:
+  - id: "G6-01"
+    name: "Segment order"
+    description: "Segments in the composed video follow the order specified by the segment manifest"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Video frame analysis confirms segment sequence matches manifest segment order"
+    requires_perception: true
+    perception_modality: video
+
+  - id: "G6-02"
+    name: "Audio-visual sync"
+    description: "Each audio segment is paired with its correct visual (slide PNG or video clip)"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each segment: audio transcript matches expected narration AND visual matches expected slide/clip from manifest"
+    requires_perception: true
+    perception_modality: video
+
+  - id: "G6-03"
+    name: "Assembly completeness"
+    description: "All segments in the manifest are present in the composition — no segment omitted"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "count(video_segments) >= count(manifest_segments) — verified via keyframe extraction and segment boundary detection"
+    requires_perception: true
+    perception_modality: video
+
+  - id: "G6-04"
+    name: "Timing compliance"
+    description: "Segment durations in composed video match manifest specifications within tolerance"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: deterministic
+    check: "Each video segment duration is within ±20% of manifest.segments[].narration_duration"
+    requires_perception: true
+    perception_modality: video

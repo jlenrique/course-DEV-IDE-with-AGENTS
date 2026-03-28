@@ -1,6 +1,6 @@
 # Story 2A-1: APP Fidelity Maturity Audit & L1 Contract Definitions
 
-Status: review
+Status: done
 
 ## Story
 

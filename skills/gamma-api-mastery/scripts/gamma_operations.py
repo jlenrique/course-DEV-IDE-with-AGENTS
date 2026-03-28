@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
+STYLE_PRESETS_PATH = PROJECT_ROOT / "state" / "config" / "gamma-style-presets.yaml"
 STAGING_DIR = PROJECT_ROOT / "course-content" / "staging"
 
 
@@ -33,17 +34,160 @@ def load_style_guide_gamma() -> dict[str, Any]:
     return tool_params.get("gamma", {})
 
 
+# ---------------------------------------------------------------------------
+# Style Preset Library
+# ---------------------------------------------------------------------------
+
+def _load_presets_file(path: Path | None = None) -> list[dict[str, Any]]:
+    """Load the raw presets list from YAML."""
+    p = path or STYLE_PRESETS_PATH
+    if not p.exists():
+        return []
+    data = yaml.safe_load(p.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return []
+    return data.get("presets", [])
+
+
+def list_style_presets(
+    *,
+    scope: str | None = None,
+    path: Path | None = None,
+) -> list[dict[str, Any]]:
+    """Return all style presets, optionally filtered by scope.
+
+    Args:
+        scope: If provided, return only presets whose scope matches.
+            Matching rules: exact match, or preset scope ``"*"`` matches
+            everything, or the requested scope starts with the preset
+            scope (e.g., request ``"C1 > M1"`` matches preset ``"C1"``).
+        path: Override preset file path (for testing).
+
+    Returns:
+        List of preset dicts (complete, including parameters and provenance).
+    """
+    presets = _load_presets_file(path)
+    if scope is None:
+        return presets
+    matched: list[dict[str, Any]] = []
+    for preset in presets:
+        ps = preset.get("scope", "*")
+        if ps == "*" or ps == scope or scope.startswith(ps):
+            matched.append(preset)
+    return matched
+
+
+def load_style_preset(
+    name: str,
+    *,
+    path: Path | None = None,
+) -> dict[str, Any] | None:
+    """Load a single style preset by name and return its parameters dict.
+
+    Args:
+        name: The preset name (e.g., ``"hil-2026-apc-nejal"``).
+        path: Override preset file path (for testing).
+
+    Returns:
+        The ``parameters`` dict from the matching preset (ready for
+        merge), or ``None`` if no preset with that name exists.
+    """
+    for preset in _load_presets_file(path):
+        if preset.get("name") == name:
+            return preset.get("parameters", {})
+    return None
+
+
+def resolve_style_preset(
+    name: str | None = None,
+    *,
+    theme_id: str | None = None,
+    scope: str | None = None,
+    path: Path | None = None,
+) -> dict[str, Any]:
+    """Resolve the best-matching style preset parameters.
+
+    Resolution order:
+    1. If ``name`` is provided, look up by exact name.
+    2. If ``theme_id`` is provided, find a preset that matches that theme.
+    3. If ``scope`` is provided, find the most specific scope match.
+    4. Return empty dict if no match.
+
+    The returned dict contains flattened Gamma API parameters suitable for
+    injection into the merge cascade at level 3.
+
+    Returns:
+        Parameter dict (may be empty).
+    """
+    presets = _load_presets_file(path)
+    if not presets:
+        return {}
+
+    # 1. Exact name match
+    if name:
+        for p in presets:
+            if p.get("name") == name:
+                return _flatten_preset_params(p)
+
+    # 2. Theme ID match
+    if theme_id:
+        for p in presets:
+            if p.get("theme_id") == theme_id:
+                return _flatten_preset_params(p)
+
+    # 3. Scope match (most specific wins)
+    if scope:
+        candidates = list_style_presets(scope=scope, path=path)
+        if candidates:
+            # Sort by scope specificity: longer scope string = more specific
+            candidates.sort(key=lambda c: len(c.get("scope", "")), reverse=True)
+            # Skip wildcard-only matches unless it's the only option
+            specific = [c for c in candidates if c.get("scope", "*") != "*"]
+            best = specific[0] if specific else candidates[0]
+            return _flatten_preset_params(best)
+
+    return {}
+
+
+def _flatten_preset_params(preset: dict[str, Any]) -> dict[str, Any]:
+    """Extract and flatten parameters from a preset for merge.
+
+    Pulls ``theme_id`` from the preset top level into the parameter dict
+    so the merge cascade includes it.
+    """
+    params = dict(preset.get("parameters", {}))
+    if preset.get("theme_id") and "themeId" not in params:
+        params["themeId"] = preset["theme_id"]
+    return params
+
+
 def merge_parameters(
     style_defaults: dict[str, Any],
     content_template: dict[str, Any],
     envelope_overrides: dict[str, Any],
+    *,
+    style_preset: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Merge parameters following the priority cascade.
 
-    Priority (later wins): style guide → content template → envelope overrides.
+    Priority (later wins):
+        1. style guide defaults
+        2. style preset (if provided)
+        3. content type template
+        4. context envelope overrides
+
+    The ``style_preset`` layer is optional for backward compatibility.
+    When Gary resolves a named preset via ``resolve_style_preset()``,
+    pass the result here so its parameters sit between style guide
+    defaults and content type templates.
     """
+    sources = [style_defaults]
+    if style_preset:
+        sources.append(style_preset)
+    sources.extend([content_template, envelope_overrides])
+
     merged: dict[str, Any] = {}
-    for source in [style_defaults, content_template, envelope_overrides]:
+    for source in sources:
         for key, value in source.items():
             if value is not None and value != "":
                 merged[key] = value

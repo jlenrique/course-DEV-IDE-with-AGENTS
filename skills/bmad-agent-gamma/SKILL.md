@@ -70,12 +70,12 @@ When using file tools, batch parallel reads for config files, memory-system.md, 
 **Headless (delegation from Marcus):**
 Parse the context envelope per `./references/context-envelope-schema.md`. Validate required fields (production_run_id, content_type, input_text, learning_objectives). Route by generation mode:
 
-- **Theme/template preview** — If `theme_selection_required: true` OR if mode is `deck` and no `theme_id` is provided, run TP capability first: call `list_themes_and_templates` via `gamma-api-mastery`, present available themes + registered templates to Marcus with recommendations. Wait for theme/template selection before proceeding.
+- **Theme/template preview** — If `theme_selection_required: true` OR if mode is `deck` and no `theme_id` is provided, run TP capability first: call `list_themes_and_templates` via `gamma-api-mastery`, present available themes + registered templates to Marcus with recommendations. After theme selection, run SP capability: call `resolve_style_preset()` (by theme_id or explicit `style_preset` name from envelope) to load supplementary parameters (image model, style, text mode). Report the resolved preset to Marcus. Wait for confirmation before proceeding.
 - **Deck mode** — If `deck_mode: true` (or content type maps to multi-slide), apply deck-specific parameter guidance from `./references/parameter-recommendation.md` and `./references/content-type-mapping.md`. Use `num_cards` per content type, appropriate `card_split` strategy, and deck-level `additionalInstructions`.
 - **Single slide mode** — Default for most delegations. `numCards: 1` unless content type says otherwise.
 - **Template mode** — If `template_id` is present, use the Gamma from-template endpoint (`POST /generations/from-template`) with `gammaId` + `template_prompt`. Templates encode visual standards and layout patterns, so `additionalInstructions` and `textOptions` are typically unnecessary. If no `template_id` is provided but a registered template exists for this content type + scope in `state/config/style_guide.yaml` → `tool_parameters.gamma.templates`, recommend the template to Marcus before proceeding with text generation.
-- **Expert fast-path** — If `parameters_ready: true`, skip greeting, mastery status, and parameter recommendation — go directly to merge parameter_overrides with style guide defaults, invoke `gamma-api-mastery`, run QA, and return structured results.
-- **Full flow** — Otherwise, run the full parameter recommendation flow (CT → PR → SG merge → invoke → QA → return).
+- **Expert fast-path** — If `parameters_ready: true`, skip greeting, mastery status, and parameter recommendation — go directly to merge parameter_overrides with style guide defaults (skip preset lookup — envelope already has everything), invoke `gamma-api-mastery`, run QA, and return structured results.
+- **Full flow** — Otherwise, run the full parameter recommendation flow (CT → SP → PR → SG merge → invoke → QA → return). SP resolves any matching style preset for the selected theme or scope before PR constructs the final parameter set.
 
 **Output for pipeline:** Always export PNG for production (feeds Irene's Pass 2 via `gary_slide_output`), PDF for human review (Gate 2). Return `gary_slide_output` array with one entry per card: `{slide_id, file_path, card_number, visual_description}`.
 
@@ -97,6 +97,7 @@ Load exemplar catalog from `resources/exemplars/gamma/_catalog.yaml`. Check circ
 | ES | Exemplar study — analyze exemplar briefs, derive reproduction specs, invoke evaluator | Load `./references/exemplar-study.md` |
 | CT | Content type mapping — map educational content types to optimal Gamma configurations; includes multi-slide deck templates | Load `./references/content-type-mapping.md` |
 | TP | Theme/template preview — list available Gamma themes + registered templates; present with recommendations before generation | Load `./references/theme-template-preview.md` |
+| SP | Style preset library — resolve named visual-identity presets that supplement a theme with image model, style, text mode, and other API parameters for reproducible look-and-feel | Load `./references/style-preset-library.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 | ENV | Context envelope schema — delegation contract with Marcus | Load `./references/context-envelope-schema.md` |
 
@@ -114,7 +115,7 @@ Full schema with required/optional fields and golden examples: `./references/con
 
 **Inbound from Marcus (context envelope):**
 - Required: `production_run_id`, `content_type`, `input_text`, `learning_objectives`
-- Optional: `module_lesson`, `user_constraints`, `style_bible_sections`, `exemplar_references`, `export_format`, `parameter_overrides`, `run_mode`
+- Optional: `module_lesson`, `user_constraints`, `style_bible_sections`, `exemplar_references`, `export_format`, `parameter_overrides`, `run_mode`, `style_preset` (named preset from `gamma-style-presets.yaml`)
 - Template fields: `template_id` (Gamma `gammaId`) + `template_prompt` — routes to from-template endpoint
 - Fast-path flag: `parameters_ready: true` skips recommendation flow, goes direct to execution
 - Deck fields: `deck_mode: true`, `num_cards` (override auto), `card_split` (auto | inputTextBreaks)
@@ -126,6 +127,7 @@ Full schema with required/optional fields and golden examples: `./references/con
 - `gary_slide_output`: array of `{slide_id, file_path, card_number, visual_description}` — one per generated card; passed to Irene Pass 2
 - `quality_assessment`: dimension scores + embellishment detection
 - `parameter_decisions`: exact Gamma API params used (for reproducibility)
+- `style_preset_used`: name of the resolved style preset (or `null` if none matched)
 - `recommendations`: human-readable notes for Marcus to relay
 - `save_to_style_guide`: learned preferences to persist (default mode only)
 - `errors`: empty array or structured error details

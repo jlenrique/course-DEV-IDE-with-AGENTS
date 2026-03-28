@@ -6,14 +6,15 @@ Recommend optimal Gamma API parameter combinations given content type, learning 
 
 1. Read style guide defaults from `state/config/style_guide.yaml` → `tool_parameters.gamma`
 2. **Check for template**: If `template_id` in context envelope, route to from-template endpoint (see `./references/content-type-mapping.md` for template logic). If no template_id, check the template registry for a scope + content_type match — if found, recommend it to Marcus before proceeding with text generation.
-3. Identify content type from context envelope (use CT capability if mapping is needed)
-4. Check memory sidecar `patterns.md` for previously effective parameter combinations for this content type
-5. Apply style bible visual standards (colors, typography, accessibility)
-6. Construct complete parameter set with reasoning for each non-default choice
+3. **Resolve style preset** (SP capability): If the envelope includes `style_preset`, resolve by name. Otherwise resolve by `theme_id` or scope via `resolve_style_preset()`. A matched preset provides image model, style, text mode, and other parameters that establish the visual identity baseline. See `./references/style-preset-library.md`.
+4. Identify content type from context envelope (use CT capability if mapping is needed)
+5. Check memory sidecar `patterns.md` for previously effective parameter combinations for this content type
+6. Apply style bible visual standards (colors, typography, accessibility)
+7. Construct complete parameter set with reasoning for each non-default choice
 
 ## Parameter Priority (merge order)
 
-See `./references/style-guide-integration.md` for the canonical five-level merge order. In short: API defaults → style guide → content type template → context envelope overrides → Gary's per-request judgment. Later levels win.
+See `./references/style-guide-integration.md` for the canonical six-level merge order. In short: API defaults → style guide → **style preset** → content type template → context envelope overrides → Gary's per-request judgment. Later levels win.
 
 ## Embellishment Control
 

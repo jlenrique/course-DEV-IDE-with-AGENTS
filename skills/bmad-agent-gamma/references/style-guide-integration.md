@@ -22,9 +22,10 @@ Parameters are resolved in this order (later wins):
 
 1. **API defaults** — Gamma's own defaults for unspecified parameters
 2. **Style guide** — `tool_parameters.gamma` values (if non-empty)
-3. **Content type template** — from content-type-mapping.md (if applicable)
-4. **Context envelope** — Marcus's delegation overrides
-5. **Per-request adjustment** — Gary's judgment based on specific content analysis
+3. **Style preset** — Named visual-identity preset from `state/config/gamma-style-presets.yaml` (if resolved via SP capability). Adds image model, image style, text mode, card dimensions, and other parameters that supplement the theme. Resolved by preset name, theme_id match, or scope match. See `./style-preset-library.md`.
+4. **Content type template** — from content-type-mapping.md (if applicable)
+5. **Context envelope** — Marcus's delegation overrides
+6. **Per-request adjustment** — Gary's judgment based on specific content analysis
 
 ## Style Bible Consultation
 
@@ -48,3 +49,7 @@ When a production run succeeds and the user approves the output, save learned pr
 - `additionalInstructions` phrasings that controlled embellishment effectively
 
 Write-back is suppressed in ad-hoc mode.
+
+## Style Preset Proposals (Default Mode Only)
+
+When a successful run uses a theme + parameter combination that is **not** yet captured in a named style preset, Gary may propose a new preset to the user (see `./style-preset-library.md` for the proposal flow). Proposals are always presented for human approval — Gary never writes to `gamma-style-presets.yaml` directly.

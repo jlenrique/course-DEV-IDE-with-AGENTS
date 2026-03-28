@@ -16,8 +16,11 @@ from gamma_operations import (
     download_export,
     generate_from_template,
     generate_slide,
+    list_style_presets,
     load_style_guide_gamma,
+    load_style_preset,
     merge_parameters,
+    resolve_style_preset,
 )
 
 
@@ -199,3 +202,188 @@ class TestDownloadExport:
             )
 
         assert result.name == "my-deck.pdf"
+
+
+# ---------------------------------------------------------------------------
+# Style Preset Tests
+# ---------------------------------------------------------------------------
+
+_SAMPLE_PRESETS_YAML = """\
+presets:
+  - name: hil-2026-apc-nejal
+    description: HIL branded deck
+    scope: "*"
+    theme_id: njim9kuhfnljvaa
+    theme_name: "2026 HIL APC Nejal"
+    parameters:
+      textMode: condense
+      textOptions:
+        amount: brief
+        language: en
+      imageOptions:
+        source: aiGenerated
+        model: recraft-v3
+        style: "Line drawing"
+      cardOptions:
+        dimensions: "16x9"
+    provenance:
+      source: exemplar-match
+      established: "2026-03-27"
+    version: 1
+  - name: startup-bold
+    description: Bold startup style
+    scope: "C2"
+    theme_id: theme_startup_xyz
+    theme_name: "Startup Bold"
+    parameters:
+      textMode: generate
+      imageOptions:
+        source: aiGenerated
+        model: flux-2-pro
+        style: "Photographic editorial"
+    provenance:
+      source: user-defined
+      established: "2026-03-28"
+    version: 1
+"""
+
+
+def _write_presets(tmp_path: Path) -> Path:
+    p = tmp_path / "gamma-style-presets.yaml"
+    p.write_text(_SAMPLE_PRESETS_YAML, encoding="utf-8")
+    return p
+
+
+class TestListStylePresets:
+    """Tests for listing style presets."""
+
+    def test_returns_all_presets(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        presets = list_style_presets(path=path)
+        assert len(presets) == 2
+
+    def test_filters_by_scope_wildcard(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        presets = list_style_presets(scope="C1", path=path)
+        # Only wildcard preset matches C1
+        assert len(presets) == 1
+        assert presets[0]["name"] == "hil-2026-apc-nejal"
+
+    def test_filters_by_scope_exact(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        presets = list_style_presets(scope="C2", path=path)
+        # Both wildcard and C2 match
+        assert len(presets) == 2
+
+    def test_filters_by_scope_prefix(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        presets = list_style_presets(scope="C2 > M1", path=path)
+        # Both wildcard and C2 match (C2 > M1 starts with C2)
+        assert len(presets) == 2
+
+    def test_returns_empty_when_file_missing(self, tmp_path: Path) -> None:
+        presets = list_style_presets(path=tmp_path / "nonexistent.yaml")
+        assert presets == []
+
+
+class TestLoadStylePreset:
+    """Tests for loading a single preset by name."""
+
+    def test_loads_by_name(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        params = load_style_preset("hil-2026-apc-nejal", path=path)
+        assert params is not None
+        assert params["textMode"] == "condense"
+        assert params["imageOptions"]["model"] == "recraft-v3"
+
+    def test_returns_none_for_unknown_name(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        assert load_style_preset("nonexistent", path=path) is None
+
+
+class TestResolveStylePreset:
+    """Tests for multi-strategy preset resolution."""
+
+    def test_resolve_by_name(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("startup-bold", path=path)
+        assert result["textMode"] == "generate"
+        assert result["imageOptions"]["model"] == "flux-2-pro"
+
+    def test_resolve_by_theme_id(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset(theme_id="njim9kuhfnljvaa", path=path)
+        assert result["textMode"] == "condense"
+        assert result["themeId"] == "njim9kuhfnljvaa"
+
+    def test_resolve_by_scope_most_specific(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset(scope="C2 > M1", path=path)
+        # C2 is more specific than * for scope "C2 > M1"
+        assert result["textMode"] == "generate"
+
+    def test_resolve_returns_empty_when_no_match(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset(name="totally-unknown", path=path)
+        assert result == {}
+
+    def test_resolve_returns_empty_when_file_missing(self, tmp_path: Path) -> None:
+        result = resolve_style_preset(
+            name="hil-2026-apc-nejal",
+            path=tmp_path / "gone.yaml",
+        )
+        assert result == {}
+
+    def test_flatten_includes_theme_id(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
+        assert result["themeId"] == "njim9kuhfnljvaa"
+
+
+class TestMergeParametersWithPreset:
+    """Tests for the updated merge_parameters with style_preset layer."""
+
+    def test_preset_overrides_style_guide(self) -> None:
+        result = merge_parameters(
+            {"textMode": "generate"},
+            {},
+            {},
+            style_preset={"textMode": "condense"},
+        )
+        assert result["textMode"] == "condense"
+
+    def test_content_template_overrides_preset(self) -> None:
+        result = merge_parameters(
+            {},
+            {"textMode": "preserve"},
+            {},
+            style_preset={"textMode": "condense"},
+        )
+        assert result["textMode"] == "preserve"
+
+    def test_envelope_overrides_all(self) -> None:
+        result = merge_parameters(
+            {"textMode": "generate"},
+            {"textMode": "condense"},
+            {"textMode": "preserve"},
+            style_preset={"textMode": "condense"},
+        )
+        assert result["textMode"] == "preserve"
+
+    def test_preset_contributes_new_keys(self) -> None:
+        result = merge_parameters(
+            {"format": "presentation"},
+            {},
+            {},
+            style_preset={"imageOptions": {"model": "recraft-v3"}},
+        )
+        assert result["format"] == "presentation"
+        assert result["imageOptions"]["model"] == "recraft-v3"
+
+    def test_backward_compatible_without_preset(self) -> None:
+        result = merge_parameters(
+            {"format": "presentation"},
+            {"numCards": 1},
+            {"exportAs": "pdf"},
+        )
+        assert result == {"format": "presentation", "numCards": 1, "exportAs": "pdf"}

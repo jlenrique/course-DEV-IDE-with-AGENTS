@@ -81,9 +81,36 @@ Store the user/Marcus selection:
 - If theme selected: set `theme_id` in parameters → include in generation call
 - If no selection: proceed with style guide defaults (Gary applies color/typography via `additionalInstructions`)
 
+### Step 3.5 — Resolve Style Preset (SP)
+
+After theme/template selection, Gary checks for a matching **style preset** in `state/config/gamma-style-presets.yaml` via the SP capability (`./references/style-preset-library.md`):
+
+1. If the context envelope includes `style_preset: "<name>"`, resolve by name.
+2. Otherwise, if a theme was selected, resolve by `theme_id` match.
+3. Otherwise, resolve by scope match for the current production context.
+
+**If a preset matches**, report it to Marcus/user:
+
+```
+🎨 Style preset found: [hil-2026-apc-nejal]
+   This applies: recraft-v3 line-drawing, condense/brief text, 16x9 cards
+   These parameters supplement the selected theme for consistent look-and-feel.
+
+   Proceed with this preset? (Override any setting in the context envelope if needed.)
+```
+
+**If no preset matches**, note it and proceed:
+
+```
+ℹ️ No style preset is registered for this theme/scope.
+   I'll use style guide defaults + content type template parameters.
+   After this run, if you approve the output, I can propose saving these
+   settings as a named preset for future reuse.
+```
+
 ### Step 4 — Proceed with Generation
 
-With theme/template resolved, proceed to standard generation flow (PR → SG merge → invoke → QA → return).
+With theme/template and style preset resolved, proceed to standard generation flow (PR → SG merge with preset at level 3 → invoke → QA → return).
 
 ---
 
@@ -107,3 +134,11 @@ When a successful generation uses a theme the user wants to reuse, Gary suggests
 "This deck worked well with the [theme_name] theme — want me to register it for future [content_type] slides in [scope]? I'd add it to the template registry so it's always recommended for this context."
 
 Registration: add entry to `state/config/style_guide.yaml` → `tool_parameters.gamma.templates` with scope, content_type, gamma_id, and description. Save via `production-coordination` → `manage_style_guide.py`.
+
+### Proposing a New Style Preset
+
+When a successful generation uses a theme + parameter combination the user wants to reuse, Gary also suggests saving a **style preset** (see `./references/style-preset-library.md`):
+
+"This run used [theme + image model + style + text mode]. Want me to propose saving this as a named style preset? Future runs with this theme would automatically apply these parameters."
+
+Preset proposals are presented to the user for manual addition to `state/config/gamma-style-presets.yaml` (HIL governance — Gary never writes the file directly).

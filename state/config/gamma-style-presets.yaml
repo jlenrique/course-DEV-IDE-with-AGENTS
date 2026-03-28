@@ -1,0 +1,65 @@
+# Gamma Style Presets — Named visual identity specifications for reproducible slide production.
+#
+# Each preset maps a human-readable name to a complete set of Gamma API parameters
+# that, combined with a theme, fully specify the look and feel of generated slides.
+# Presets are resolved by Gary's SP (Style Preset) capability and injected into the
+# parameter merge cascade between style guide defaults and content type templates.
+#
+# GOVERNANCE: User creates and approves presets (they're git-versioned). Gary may
+# PROPOSE preset additions or modifications based on run outcomes, but proposals go
+# through HIL review before being saved here. No autonomous preset mutation.
+#
+# SCHEMA per preset:
+#   name:           Human-readable preset name (unique key)
+#   description:    What this look-and-feel is for
+#   scope:          Where it applies — "*" (all), "C1" (course), "C1 > M1" (module), etc.
+#   theme_id:       Gamma theme ID from GET /v1.0/themes
+#   theme_name:     Human-readable theme name (for display; theme_id is authoritative)
+#   parameters:     Gamma API parameters applied when this preset is active
+#     textMode:     generate | condense | preserve
+#     textOptions:  {amount, tone, audience, language}
+#     imageOptions: {source, model, style}
+#     cardOptions:  {dimensions}
+#     additionalInstructions: base instructions (content-type-specific additions are merged on top)
+#   provenance:     How this preset was established
+#     source:       "pilot-run" | "exemplar-match" | "user-defined" | "gary-proposed"
+#     established:  ISO date
+#     notes:        Free text
+#   version:        Integer, incremented on each edit
+#
+# MERGE BEHAVIOR: Preset parameters slot into the cascade at level 3 of 6:
+#   1. API defaults → 2. Style guide → 3. STYLE PRESET → 4. Content type template
+#   → 5. Context envelope overrides → 6. Gary per-request judgment
+# A preset value is overridden by anything at levels 4-6.
+
+presets:
+  - name: hil-2026-apc-nejal
+    description: >-
+      HIL 2026 APC branded deck style — Recraft V3 line-drawing imagery,
+      condensed minimal text, classic card design. Matches client-approved
+      exemplar from C1M1 physician-innovator pilot (attempt 4).
+    scope: "*"
+    theme_id: njim9kuhfnljvaa
+    theme_name: "2026 HIL APC Nejal"
+    parameters:
+      textMode: condense
+      textOptions:
+        amount: brief
+        language: en
+      imageOptions:
+        source: aiGenerated
+        model: recraft-v3
+        style: >-
+          Line drawing, clean black ink lines on white, minimal fill,
+          editorial medical infographic, no shading, no photorealism
+      cardOptions:
+        dimensions: "16x9"
+    provenance:
+      source: exemplar-match
+      established: "2026-03-27"
+      notes: >-
+        Derived from CLIENT_EXEMPLAR_GAMMA_SETTINGS.md captured during
+        C1M1 physician-innovator pilot. Attempt 4 (recraft-v3 + condense +
+        brief + line-drawing) matched the client-approved Gamma UI settings.
+        See course-content/staging/ad-hoc/gamma-c1m1-physician-innovator-pilot/.
+    version: 1

@@ -25,7 +25,7 @@ This is the **skill layer** in the three-layer architecture: Gary (agent — jud
 
 | Script | Purpose | Invoked By |
 |--------|---------|------------|
-| `gamma_operations.py` | Load style guide defaults, merge with request params, call GammaClient, poll, export, download artifact | Gary (PR, SG, CT capabilities) |
+| `gamma_operations.py` | Load style guide defaults, resolve style presets, merge with request params, call GammaClient, poll, export, download artifact | Gary (PR, SG, SP, CT capabilities) |
 | `gamma_evaluator.py` | Analyze exemplars, derive reproduction specs, execute reproductions, compare against rubric | Gary (ES capability) via woodshed skill |
 
 ## Reference Index
@@ -45,6 +45,7 @@ This skill supports three Gamma API operations:
 | **Text generation** | `POST /v1.0/generations` | Standard — build slides from content with full parameter control |
 | **Template generation** | `POST /v1.0/generations/from-template` | When a custom Gamma template (`gammaId`) exists for the scope |
 | **Theme/template listing** | `GET /v1.0/themes` via `GammaClient.list_themes()` | Gary's TP capability — before generation when theme selection is needed |
+| **Style preset resolution** | `resolve_style_preset()` in `gamma_operations.py` | Gary's SP capability — after theme selection, resolves a named visual-identity preset from `state/config/gamma-style-presets.yaml` |
 
 ### list_themes_and_templates Operation
 
@@ -62,5 +63,9 @@ Returns a combined result for Gary to present to Marcus/user:
 ```
 
 This operation does NOT consume generation credits. It is safe to call before every deck generation.
+
+### Style Preset Resolution
+
+After theme selection, Gary resolves a matching **style preset** via `resolve_style_preset()` in `gamma_operations.py`. Presets live in `state/config/gamma-style-presets.yaml` and map a theme (plus scope) to supplementary API parameters — image model, image style, text mode, card dimensions — that fully specify a reproducible visual identity. Resolution order: by name → by theme_id → by scope. Resolved preset parameters are injected into the merge cascade at level 3 (between style guide and content type template). See Gary's `./references/style-preset-library.md` for full details.
 
 Template-based generation uses `gammaId` + `prompt`. The template encodes layout and visual standards; the prompt provides new content. See `./references/parameter-catalog.md` for full template endpoint documentation.

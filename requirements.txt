@@ -16,6 +16,9 @@ pyyaml>=6.0,<7
 # Source wrangler (PDF text extraction)
 pypdf>=5.0,<6
 
+# Sensory bridges (PPTX slide extraction)
+python-pptx>=1.0,<2
+
 # Development & testing
 pytest>=8.0,<9
 pytest-asyncio>=0.23,<1

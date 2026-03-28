@@ -2,6 +2,17 @@
 
 Evaluate generated slides against style bible standards and return structured self-assessment to Marcus.
 
+## Perception Before Assessment
+
+Before scoring any dimension, invoke the image sensory bridge on each generated PNG to confirm what was actually produced. Follow the universal perception protocol (`skills/sensory-bridges/references/perception-protocol.md`):
+
+1. For each downloaded PNG: invoke `perceive(png_path, "image", "G3", "gamma-specialist")`
+2. Confirm interpretation: "I see Slide N shows [description]. Confidence: HIGH/MEDIUM/LOW."
+3. Score dimensions based on confirmed perception, not assumed output
+4. If perception confidence is LOW, flag to Marcus before reporting quality scores
+
+Within a production run, perception results are cached per `(artifact_path, modality)` — if Vera has already perceived the same PNG, Gary reads the cached result (see `skills/sensory-bridges/references/validator-handoff.md`).
+
 ## Assessment Dimensions
 
 Score each dimension 0.0-1.0:

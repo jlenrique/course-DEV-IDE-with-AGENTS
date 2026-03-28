@@ -1,0 +1,63 @@
+gate: "G4"
+gate_name: "Narration Script"
+producing_agent: "irene"
+hil_gate: "Gate 3"
+source_of_truth:
+  primary: "Lesson plan + actual generated slides (PNGs perceived via sensory bridge)"
+  schema_ref: "skills/bmad-agent-content-creator/references/template-narration-script.md"
+
+criteria:
+  - id: "G4-01"
+    name: "Slide correspondence"
+    description: "Each narration segment references an existing slide by number"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "Every segment's [Gary Slide: {id}] reference maps to a valid slide in gary_slide_output[]"
+    requires_perception: false
+
+  - id: "G4-02"
+    name: "Visual accuracy"
+    description: "Narration describes content actually visible on the referenced slide, verified against sensory bridge perception artifact"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each narration segment, the described visual elements match the perception_artifact[] extracted text and layout for that slide number"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G4-03"
+    name: "Assessment reference exactness"
+    description: "Any assessment items mentioned in narration match the lesson plan's assessment hooks verbatim"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Knowledge check topics, assessment questions, or testable items mentioned in narration appear verbatim in the lesson plan assessment hooks table"
+    requires_perception: false
+
+  - id: "G4-04"
+    name: "Terminology consistency"
+    description: "Medical/clinical terms in narration match those used on slides and in the lesson plan"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "Clinical terms (drug names, procedure names, condition names) are spelled and used identically across narration, slides, and lesson plan"
+    requires_perception: false
+
+  - id: "G4-05"
+    name: "No narration invention"
+    description: "Narration does not introduce clinical claims, data, or assertions not present in the lesson plan or slides"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Domain-specific factual assertions in narration can be traced to the lesson plan or generated slide content"
+    requires_perception: false
+
+  - id: "G4-06"
+    name: "Segment manifest alignment"
+    description: "Narration segments map 1:1 to segment manifest entries"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "count(narration_segments) == count(manifest_segments) and narration_ref linkages are valid"
+    requires_perception: false

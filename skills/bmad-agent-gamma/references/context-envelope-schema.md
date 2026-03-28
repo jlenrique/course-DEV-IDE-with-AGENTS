@@ -35,8 +35,31 @@ parameters_ready: false                     # true = skip greet/mastery, fast-pa
 parameter_overrides:                        # explicit Gamma API params that override all defaults
   numCards: 1
   textMode: "preserve"
-  additionalInstructions: "Chart layout with labeled axes"
+  additionalInstructions: "Chart layout with labeled axes"  # creative slides only — literal slides use fidelity-control vocabulary (text_treatment, image_treatment, layout_constraint, content_scope) via merge_parameters()
 run_mode: "default"                         # default | ad-hoc
+
+# FIDELITY — per-slide classification from Irene's slide brief (Story 3.11)
+fidelity_per_slide:                          # populated by Marcus from Irene's slide brief
+  - slide_number: 1
+    fidelity: "creative"                     # creative | literal-text | literal-visual
+  - slide_number: 10
+    fidelity: "literal-text"
+    fidelity_rationale: "Knowledge check teaser — exact topics from source"
+
+fidelity_guidance:                           # user's fidelity preferences from Marcus discovery
+  literal_visuals:
+    - description: "Dual-axis chart from page 7"
+      source_ref: "TEJAL_Notes.pdf#page7"
+      rebranded_asset_path: "course-content/staging/.../rebranded-assets/slide-03-chart.png"
+  literal_text:
+    - description: "10 KC topics from Chapters 2 & 3"
+      source_ref: "extracted.md#Chapter 2 Knowledge Check"
+
+diagram_cards:                               # literal-visual slides with hosted image URLs
+  - card_number: 3
+    image_url: "https://gamma.app/hosted/..."  # HTTPS, publicly accessible, image extension
+    placement_note: "Primary visual, full-width"
+    required: true
 
 # DECK MODE — multi-slide generation
 deck_mode: false                            # true = apply deck parameter guidance
@@ -87,10 +110,12 @@ gary_slide_output:
     file_path: "course-content/staging/C1-M1-P2S1-slides/card-01.png"
     card_number: 1
     visual_description: "Economic overview: three-column comparison of physician practice models across decades"
+    source_ref: "slide-brief.md#Slide 1"     # Provenance: traces this generated card back to its slide brief source
   - slide_id: "C1-M1-P2S1-card-02"
     file_path: "course-content/staging/C1-M1-P2S1-slides/card-02.png"
     card_number: 2
     visual_description: "Revenue gap timeline: dual-axis chart with declining solo practice revenue vs. consolidation trend"
+    source_ref: "slide-brief.md#Slide 2"     # Provenance: traces this generated card back to its slide brief source
 
 quality_assessment:
   overall_score: 0.87
@@ -103,6 +128,16 @@ quality_assessment:
   embellishment_detected: true
   embellishment_details:
     - "Gamma added subtitle 'Bridging Two Worlds' not in input"
+
+provenance:                                  # per-card fidelity provenance (Story 3.11)
+  - card_number: 1
+    source_call: "creative"                  # creative | literal (which Gamma API call)
+    generation_id: "abc123"                  # Gamma generation ID
+    fidelity: "creative"                     # fidelity class from slide brief
+  - card_number: 10
+    source_call: "literal"
+    generation_id: "def456"
+    fidelity: "literal-text"
 
 generation_mode: "text"                     # text | from-template
 template_used: null                         # gammaId if from-template, null if text generation
@@ -143,7 +178,7 @@ memory_mode: "default"
 | `production_run_id` | yes | Echo from inbound |
 | `status` | yes | `success`, `revision_needed`, or `failed` |
 | `artifact_paths` | yes | Empty array if failed; includes both PDF (review) and PNG per card (production) |
-| `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description}` — one per generated card; passed to Irene Pass 2 |
+| `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description, source_ref}` — one per generated card; passed to Irene Pass 2. `source_ref` traces each card to its slide brief origin. |
 | `quality_assessment` | yes | Structured scores; see quality-assessment.md for dimensions |
 | `generation_mode` | yes | `"text"` or `"from-template"` — which endpoint was used |
 | `template_used` | if from-template | The `gammaId` used; null for text generation |

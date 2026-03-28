@@ -1,0 +1,66 @@
+gate: "G3"
+gate_name: "Generated Slides"
+producing_agent: "gary"
+hil_gate: "Gate 2"
+source_of_truth:
+  primary: "Slide brief (content items, fidelity tags, visual specs)"
+  schema_ref: "skills/bmad-agent-content-creator/references/template-slide-brief.md"
+
+criteria:
+  - id: "G3-01"
+    name: "Slide count match"
+    description: "Number of generated slides equals number specified in the slide brief"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "count(generated_slides) == count(slide_brief.slides)"
+    requires_perception: false
+
+  - id: "G3-02"
+    name: "Literal text preservation"
+    description: "For literal-text slides, all content_items from the slide brief appear verbatim in the generated slide"
+    fidelity_class: [literal-text]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each content_item in slide_brief.slides[fidelity=literal-text].content: item text appears verbatim in the PPTX extracted text (via pptx sensory bridge; fallback to image bridge if PPTX unavailable)"
+    requires_perception: true
+    perception_modality: pptx
+
+  - id: "G3-03"
+    name: "Literal visual placement"
+    description: "For literal-visual slides, the specified SME image is present and surrounding text is preserved"
+    fidelity_class: [literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Image sensory bridge confirms: (1) an image is present on the slide, (2) surrounding text matches slide brief content"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G3-04"
+    name: "Creative content coverage"
+    description: "For creative slides, all content_items themes from the slide brief are semantically represented even if creatively enhanced"
+    fidelity_class: [creative]
+    severity: high
+    evaluation_type: agentic
+    check: "For each content_item in slide_brief.slides[fidelity=creative].content: the theme/concept is semantically present in the PPTX extracted text — creative reframing is acceptable, theme omission is not (fallback to image bridge if PPTX unavailable)"
+    requires_perception: true
+    perception_modality: pptx
+
+  - id: "G3-05"
+    name: "No harmful invention"
+    description: "Generated slides do not contain clinical claims, statistics, or assessment items not present in the slide brief"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "PPTX extracted text does not contain domain-specific factual assertions (drug names, dosages, statistics, clinical recommendations) absent from the slide brief (fallback to image bridge if PPTX unavailable)"
+    requires_perception: true
+    perception_modality: pptx
+
+  - id: "G3-06"
+    name: "Provenance manifest completeness"
+    description: "Every generated card has a provenance entry mapping it to its source API call and fidelity class"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "provenance[] array has one entry per generated card with card_number, source_call, generation_id, and fidelity class"
+    requires_perception: false

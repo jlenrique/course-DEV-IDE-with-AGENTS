@@ -36,6 +36,7 @@ Before any file operation, verify the path is within allowed boundaries.
 - Learning objective decomposition strategies that work for different course levels
 - Common revision patterns: what the user consistently adjusts
 - Assessment design preferences by Bloom's level
+- Fidelity classification patterns: which content types consistently need literal-text or literal-visual treatment, source material signals that predict literal needs (e.g., "Knowledge Check" headings), user correction patterns when fidelity tags are overridden
 
 **Format:** Append-only, default mode writes only. Condense periodically.
 

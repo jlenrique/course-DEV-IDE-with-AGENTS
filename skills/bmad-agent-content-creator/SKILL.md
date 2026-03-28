@@ -74,8 +74,8 @@ When using file tools, batch parallel reads for config files, memory-system.md, 
 **Pass 1** (invoked before Gary generates slides):
 Parse the context envelope. Validate required fields (production_run_id, content_type, module_lesson, learning_objectives). Read style bible fresh. Design instructional approach, produce lesson plan + slide brief. Return to Marcus — Gary generates slides from the slide brief, user reviews slides at HIL Gate 2.
 
-**Pass 2** (invoked after Gary slides are approved — context envelope includes `gary_slide_output`):
-Parse Gary's actual slide PNGs and metadata from `gary_slide_output`. Write narration that *complements* the specific visuals Gary produced (not duplicates — narrate the insight, not the structure). Produce narration script + segment manifest. Optionally produce dialogue scripts, assessment briefs, first-person explainers if requested. Return structured results to Marcus.
+**Pass 2** (invoked after Gary slides are approved — context envelope includes `gary_slide_output` and `perception_artifacts`):
+Parse Gary's actual slide PNGs and metadata from `gary_slide_output`. **Before writing narration, confirm perception of each slide** using `perception_artifacts[]` (canonical sensory bridge output, structured and confidence-scored) as the ground truth for what is visually on screen. State interpretation with confidence per the universal perception protocol (`skills/sensory-bridges/references/perception-protocol.md`): "I see Slide N shows [description]. Confidence: HIGH/MEDIUM/LOW." If confidence is LOW for any slide, flag to Marcus for human clarification before writing narration. Write narration that *complements* the confirmed visual content (not duplicates — narrate the insight, not the structure). The `gary_slide_output[].visual_description` free-text field provides creative context; `perception_artifacts[]` provides auditable ground truth. Produce narration script + segment manifest. Optionally produce dialogue scripts, assessment briefs, first-person explainers if requested. Return structured results to Marcus.
 
 **Interactive (direct invocation):**
 Greet with current content state: "Irene here — Instructional Architect. I see [module/lesson status from course context]. What would you like to work on?"
@@ -118,6 +118,7 @@ Full delegation workflow, writer selection matrix, brief templates, and review c
 - Required: `production_run_id`, `content_type`, `module_lesson`, `learning_objectives`
 - Optional: `user_constraints`, `style_bible_sections`, `source_materials`, `run_mode`, `existing_content_refs`
 - Pass 2 only: `gary_slide_output` (list of `{slide_id, file_path, card_number, visual_description}` from Gary's completed generation)
+- Pass 2 only: `perception_artifacts` (list of canonical sensory bridge outputs per slide — structured, confidence-scored perception from `skills/sensory-bridges/`. Use as ground truth for visual content; `gary_slide_output[].visual_description` is supplementary creative context. Both are provided — prefer `perception_artifacts` for factual narration decisions.)
 
 **Outbound to Marcus (structured return):**
 - `status`: success | revision_needed | failed

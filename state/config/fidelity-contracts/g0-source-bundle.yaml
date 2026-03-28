@@ -1,0 +1,54 @@
+gate: "G0"
+gate_name: "Source Bundle"
+producing_agent: "source-wrangler"
+hil_gate: null
+source_of_truth:
+  primary: "Original SME materials (Notion pages, PDFs, Box files, URLs)"
+  schema_ref: "skills/source-wrangler/references/bundle-format.md"
+
+criteria:
+  - id: "G0-01"
+    name: "Section coverage"
+    description: "All major sections/headings from SME source material appear in extracted.md"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each top-level section in the source material, a corresponding section exists in extracted.md"
+    requires_perception: false
+
+  - id: "G0-02"
+    name: "Media capture notation"
+    description: "Referenced images, diagrams, and tables in source material are noted in metadata.json even if binary content is not extracted"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "metadata.json contains media_references[] with entries for each image/diagram/table found in source"
+    requires_perception: false
+
+  - id: "G0-03"
+    name: "Metadata completeness"
+    description: "metadata.json has valid provenance entries with kind, ref, and fetched_at for every ingested source"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every provenance[] entry has non-empty kind (url|notion_page|box_file|playwright_html|local_pdf), ref, and fetched_at (ISO-8601)"
+    requires_perception: false
+
+  - id: "G0-04"
+    name: "No content invention"
+    description: "extracted.md contains only content traceable to source materials — no agent-generated summaries, interpretations, or additions"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Every paragraph in extracted.md can be traced to a specific source document section"
+    requires_perception: false
+
+  - id: "G0-05"
+    name: "Degraded source detection"
+    description: "If source materials include scanned/OCR PDFs (not machine-readable text), a degraded_source warning is emitted with affected page ranges"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "PDF sources are checked for machine-readable text; scanned pages flagged with page numbers in metadata"
+    requires_perception: true
+    perception_modality: pdf

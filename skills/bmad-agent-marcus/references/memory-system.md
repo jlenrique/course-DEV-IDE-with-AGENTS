@@ -68,6 +68,7 @@ Tokens are expensive. Only remember what matters. Condense everything to its ess
 - Parameter combinations the user approved (e.g., "ElevenLabs voice Rachel for clinical narration")
 - Common revision patterns (e.g., "user always adjusts slide count downward on first review")
 - Specialist performance notes (e.g., "Gamma produces better results with detailed outlines vs. brief prompts")
+- Fidelity discovery patterns: user's common responses to visual/textual fidelity queries, typical literal slide counts per deck, content types that consistently trigger fidelity flags, hosting workflow preferences (Gamma workspace upload vs. other), Imagine export settings that produce best results
 
 ### `chronology.md` — Timeline
 

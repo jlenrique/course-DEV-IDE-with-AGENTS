@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-27 (session 6 — Party Mode composition architecture, Story 3.3.1 harmonization, Gary deck enhancement, Compositor story added)
+# Last Updated: 2026-03-28 (session 7 — Epic 2A stories 2A-4 through 2A-6 completed, control docs reconciled, Story 2A-7 active)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -15,7 +15,7 @@ workflow_artifacts:
   prd:
     status: "completed"
     file: "_bmad-output/planning-artifacts/prd.md"
-    functional_requirements: 80
+    functional_requirements: 90
     nonfunctional_requirements: 25
   architecture:
     status: "completed"
@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "37 stories across 10 epics (Story 3.11 mixed-fidelity added 2026-03-28)"
-    stories_count: 37
-    epics_count: 10
+    note: "40 stories across 9 epics (Rebaselined 2026-03-28: Epic 4A governance added, Epics 7+8+9 collapsed into Epic G, Epic 5 trimmed, Epic 6.2 merged into 3.6)"
+    stories_count: 40
+    epics_count: 9
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "35 stories across 10 epics tracked (Stories 2.6, 3.7 added March 26 Party Mode)"
+    note: "40 stories across 9 epics tracked (Rebaselined 2026-03-28: Epic 4A governance added, Epic G replaces Epics 7+8+9, Epic 5 and Epic 6 trimmed)"
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -68,6 +68,9 @@ key_decisions:
   - "EXPORT REQUIREMENT: All reproductions must download production artifacts (PDF/PPTX/MP3). Screenshots supplementary only. Export URLs time-limited (~7 days)"
   - "DOC REFRESH PROTOCOL: Each mastery skill maintains doc-sources.yaml. Mandatory refresh before woodshed cycles via Ref MCP. Gamma has llms.txt for LLM-optimized docs"
   - "TECH SPEC WRANGLER: Shared skill (not agent). Deferred Perplexity MCP until needed"
+  - "AGENTIC PRODUCTION PLATFORM (APP): Formal naming and design principles established (2026-03-28 Party Mode + parallel Gemini analysis). Three-Layer Intelligence Model (L1 deterministic contracts, L2 agentic evaluation, L3 learning memory) + Hourglass Model (wide cognitive → narrow deterministic neck → wide cognitive) + Leaky Neck diagnostic. GOLD document: _bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md"
+  - "FIDELITY ASSURANCE ARCHITECTURE (2026-03-28): APP is at Level 0 for fidelity assurance — zero independent evaluation, perception unconfirmed/blind, no provenance traceability. New Epic 2A created with 9 stories: audit, sensory bridges, provenance protocol, Fidelity Assessor agent, gate-by-gate verification (G0-G6), cumulative drift, leaky neck remediation, maturity audit skill. Epic 2A must complete before resuming Epic 3 tool specialist work."
+  - "STORY 3.11 COMPLETE (2026-03-28): Mixed-fidelity Gamma generation implemented. execute_generation() production entry point, merge_parameters() vocabulary enforcement, generate_deck_mixed_fidelity() two-call orchestrator with URL validation, contract-compliant gary_slide_output payload."
   - "EPIC 3 RE-SEQUENCING (2026-03-26): Content Creator + Quality Reviewer moved to Story 3.2 (was 3.4). Scripts must precede narration in the production pipeline. Content Creator delegates to BMad writers (Paige/Tech Writer, Sophia/Storyteller, Caravaggio/Presentation Expert) for prose quality. ElevenLabs expanded to Story 3.3 with timestamps, pronunciation dictionaries, SFX, music, dialogue. Canvas renumbered to 3.4. Canva downgraded to design guidance (API cannot edit elements)."
   - "ELEVENLABS CAPABILITY AUDIT (2026-03-26): 12 instructional artifact types identified from full API surface review. P0: narration+timestamps+VTT, pronunciation dictionaries, multi-slide request stitching. P1: case study dialogue, SFX package, background music. P2-P3: voice cloning, dubbing, conversational AI tutors. Evaluator design: STT extraction, word coverage >95%, WPM check 130-170, timestamp monotonicity."
   - "CANVA API ASSESSMENT (2026-03-26): Connect API cannot edit individual design elements (no add_text, modify_element, apply_style). Only create blank designs, import PPTX, export, manage assets, Autofill (Enterprise only). Not worth OAuth integration effort. Downgraded to design guidance agent (Tier 4 pattern). Future upgrade if element-level API becomes available."
@@ -80,4 +83,4 @@ key_decisions:
   - "GARY DECK ENHANCEMENT (2026-03-27): Deck mode added (numCards ranges per content type, cardSplit strategies, deck additionalInstructions). Theme/template preview (TP capability) via list_themes_and_templates — presents available Gamma themes + registered templates before generation. gary_slide_output return field feeds Irene Pass 2. GammaClient.list_themes() verified live (returns 10 themes including 2026 HIL APC institutional theme)."
   - "COMPOSITOR SKILL (Story 3.5, NEW): Reads completed segment manifest (all agent write-back fields populated) → generates Descript Assembly Guide. Proof of concept: real C1-M1 lesson end-to-end assembly. Added as new story between ElevenLabs (3.4) and Canvas (3.6). Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10. Epic 3 now 11 stories."
 
-next_workflow_step: "Story 3.11 (Mixed-Fidelity Gamma Generation) is ready-for-dev — critical blocker for Trial 2 completion. Implement before resuming Trial Run 2. Trial 1 Descript assembly still pending (human task). After 3.11, resume Trial 2 pipeline, then continue with Story 3.6 Canvas Specialist."
+next_workflow_step: "Epic 2A COMPLETE (9/9 stories). Story 3.11 COMPLETE (mixed-fidelity system). Epic 3 at 8/11 (3.6-3.8 deferred). Next: Epic 4A (Agent Governance, Quality Optimization & APP Observability) — 5 stories: run baton, lane matrix, envelope governance, agent QA gate, perception caching + observability. Roadmap rebaselined 2026-03-28: 9 epics, 40 stories."

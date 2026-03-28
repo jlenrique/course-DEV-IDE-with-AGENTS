@@ -22,6 +22,7 @@ title: string               # Human-readable lesson title
 music_bed: string | null    # Overall music direction: "ambient-reflective" | "upbeat-clinical" | "tense-diagnostic" | null
 segments:
   - id: string              # e.g., seg-01, seg-02 (sequential, matches narration script markers)
+    source_ref: string      # Provenance chain: "lesson-plan.md#Block N" — traces this segment to its pedagogical origin
     narration_ref: string   # Pointer to narration script section, e.g., "narration-script.md#segment-1"
     narration_text: string  # Full narration text for this segment (copy from script)
     behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.

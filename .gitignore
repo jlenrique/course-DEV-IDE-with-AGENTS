@@ -13,6 +13,7 @@ course-content/**/private/
 state/runtime/*.db
 state/runtime/*.db-journal
 state/runtime/backup/*.db
+state/runtime/mode_state.json
 
 # Python
 .venv/

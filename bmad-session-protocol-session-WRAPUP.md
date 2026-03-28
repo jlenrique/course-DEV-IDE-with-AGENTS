@@ -1,8 +1,26 @@
-# BMAD v6 Session Protocol: Multi-Agent Course Content Production
+# BMAD v6 Session Protocol: End-of-Session (Shutdown)
 
-This file is the single source for how BMAD sessions are run for the **course-DEV-IDE-with-AGENTS** project across Cursor Composer and Claude Code chats. 
+Companion to `bmad-session-protocol-session-START.md`. Together these two files guarantee reliable context transfer between sessions.
 
-## End-of-Session (Shutdown)
+### Context transfer contract
+
+The startup protocol **reads** certain files; the wrapup protocol **writes** them. Every read must have a corresponding write, or context is lost.
+
+| File | Startup reads | Wrapup writes | Role |
+|------|:---:|:---:|------|
+| `next-session-start-here.md` | Step 1 | Step 7 | **Forward-looking hot-start** — next actions, branch, risks, gotchas |
+| `docs/project-context.md` | Step 1 | Step 5 | Current state, key decisions, architecture summary |
+| `docs/agent-environment.md` | Step 1 | Step 5 | MCP/API/tool/skill inventory for agents |
+| `bmm-workflow-status.yaml` | Step 5 | Step 3 | BMAD phase and workflow transitions |
+| `sprint-status.yaml` | Step 5 | Step 4a | Epic/story Kanban state |
+| `SESSION-HANDOFF.md` | — | Step 8 | **Backward-looking record** — lessons, decisions, validation (permanent archive; startup does not read) |
+| Guides (user/admin/dev) | Step 5 on-demand | Step 9a | Large stable docs — updated only when content changes |
+
+> **Key principle:** `next-session-start-here.md` is the sole ramp-up document for the next session. Any risk, blocker, or unresolved issue from the current session MUST be surfaced there (Step 7), not only in SESSION-HANDOFF. SESSION-HANDOFF is the permanent record; next-session-start-here is the action trigger.
+
+---
+
+## Steps
 
 Execute these steps in order before ending a session.
 
@@ -15,12 +33,13 @@ Run the project's quality/hygiene checks:
 
 Fix findings before proceeding. If no quality mechanism exists, note this as a gap to address in a future story.
 
-### 2. Update BMAD artifacts
+### 2. Update BMAD planning and story artifacts
 
-Update canonical BMAD artifacts in `_bmad-output/` to reflect the session's work:
-- **Planning phase**: PRD, architecture, epics/stories files
-- **Implementation phase**: story artifacts, task checklists, Dev Agent Record entries
-- **Brainstorming phase**: brainstorming session files with current phase status
+Update canonical BMAD artifacts in `_bmad-output/` to reflect the session's work. This step covers **content artifacts only** — status YAMLs are handled separately in Steps 3 and 4a.
+
+- **Planning phase**: PRD, architecture, epics/stories files in `_bmad-output/planning-artifacts/`
+- **Implementation phase**: story artifacts and task checklists in `_bmad-output/implementation-artifacts/` (excluding the two status YAMLs)
+- **Brainstorming phase**: brainstorming session files in `_bmad-output/brainstorming/`
 - **Content creation**: staging content status, review checklist updates
 
 ### 3. Update workflow status
@@ -34,9 +53,17 @@ Update `_bmad-output/implementation-artifacts/sprint-status.yaml` for epic and s
 ### 4b. Interaction Testing: 
 Confirm presence, if appropriate at this phase of the project work, of an 'Interaction test' for a newly created agent.  The test should be modeled on the interaction test guide now available in the project. If an agent or supporting skill has been modified, ensure the corresponding interaction test is updated, if warranted.
 
-### 5. Update project context
+### 5. Update project context and agent environment
 
 Update `docs/project-context.md` only if rules, phase, or architecture changed this session. Do not update for routine implementation progress.
+
+Update `docs/agent-environment.md` if any of the following changed this session:
+- MCP servers added, removed, or reconfigured
+- API clients added or auth patterns changed
+- Shared skills added, renamed, or retired
+- Tool tier classifications changed in the tool inventory
+
+Both files are read at startup Step 1 — stale content here means the next session starts with wrong assumptions.
 
 ### 6. Update course content state
 
@@ -50,12 +77,13 @@ Update `docs/project-context.md` only if rules, phase, or architecture changed t
 ### 7. Update next-session-start-here
 
 Update `next-session-start-here.md` with:
-- Next actions (immediate, concrete)
+- **Immediate next action** (concrete, unambiguous — the first thing the next session should do)
+- **Unresolved issues or blockers** from this session that affect the next session's work (do not bury these only in SESSION-HANDOFF — surface them here)
 - Current branch and startup commands
-- Hot-start notes (key file paths, API references, gotchas)
+- Hot-start notes (key file paths, API references, gotchas discovered this session)
 - **Course content context**: staging items pending review, workflow status, platform connection notes
 
-This file is action-oriented and forward-looking. Its purpose is to give the next session's agent the fastest possible ramp-up to productive work.
+This file is action-oriented and forward-looking. Its purpose is to give the next session's agent the fastest possible ramp-up to productive work. It is the **sole ramp-up document** — the next session reads this file first and may not read SESSION-HANDOFF at all.
 
 ### 8. Update session handoff
 
@@ -70,19 +98,24 @@ Update `SESSION-HANDOFF.md` with:
 
 This file is record-oriented and backward-looking. Its purpose is to preserve context, decisions, and lessons that would otherwise be lost between sessions.
 
-### 9. Review reuse and pattern artifacts
+### 9a. Update guides (if affected)
+
+Update these only if the session changed something they document (new skill, new API client, new workflow, architecture change). Do not update for routine content creation.
+
+- `docs/user-guide.md` — user-facing workflows, Marcus interactions, content organization
+- `docs/admin-guide.md` — credentials, MCP config, environment setup, operational procedures
+- `docs/dev-guide.md` — architecture, extension recipes, testing, coding standards
+
+These are startup "read on demand" docs (Step 5). Stale guide content wastes context window when the next session loads them.
+
+### 9b. Review reuse and pattern artifacts
 
 If the project maintains reuse, pattern, or service tracking files, review and update them. Check for:
 - Design patterns discovered or refined → update `design-patterns.md`
-- Services that should be cataloged → update `service-catalog.md`  
+- Services that should be cataloged → update `service-catalog.md`
 - **Course content patterns**: content templates, workflow improvements → update `course-content/_templates/`
 - **Tool integration patterns**: new MCP/API integrations → update `resources/tool-inventory/`
 - Reuse opportunities for future stories → update `reuse-first-protocol.md`
-
-Update:
-- user guide in /docs
-- admin guide in /docs
-- dev guide in /docs
 
 *Skip if none of these files exist or no new patterns/services emerged.*
 
@@ -114,5 +147,3 @@ If changes were made this session, create a commit with a message summarizing th
 ### 13. Optional: session close
 
 Morale summary, party mode wrap-up, or any other team ritual.
-
- content.

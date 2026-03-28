@@ -106,7 +106,7 @@ AI image model when source is `aiGenerated`. Full current list (as of 2026-03-27
 **Medical ed guidance by use case:**
 - **Style-reference matching (Approach B)**: `flux-kontext-pro` — designed for style-reference controlled generation; best for "make it look like this exemplar"
 - **Text accuracy in images**: `ideogram-v3` / `ideogram-v3-quality` — specifically strong at rendering readable text; use for text-bearing concept slides
-- **Illustration/lineart**: `recraft-v3`, `recraft-v4`, `nano-banana-2-mini` — proven for editorial medical illustration style
+- **Illustration/lineart**: `recraft-v3`, `recraft-v4`, `gemini-3.1-flash-image-mini` (Nano Banana 2 Mini) — proven for editorial medical illustration style
 - **Photorealistic**: `flux-2-pro`, `luma-photon-1`, `imagen-4-fast`
 - **High quality / production**: `gpt-image-1-high`, `recraft-v4-pro`, `imagen-4-ultra`
 - **Fast/cheap iteration**: `flux-2-klein`, `flux-kontext-fast`, `ideogram-v3-turbo`

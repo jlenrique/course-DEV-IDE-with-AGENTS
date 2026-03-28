@@ -23,8 +23,8 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "36 stories across 10 epics (Epic 3 re-sequenced: Compositor 3.5, Canvas 3.6, Qualtrics 3.7, Canva 3.8, Source Wrangler 3.9, Tech Spec Wrangler 3.10)"
-    stories_count: 36
+    note: "37 stories across 10 epics (Story 3.11 mixed-fidelity added 2026-03-28)"
+    stories_count: 37
     epics_count: 10
   ux_design:
     status: "not-applicable"
@@ -80,4 +80,4 @@ key_decisions:
   - "GARY DECK ENHANCEMENT (2026-03-27): Deck mode added (numCards ranges per content type, cardSplit strategies, deck additionalInstructions). Theme/template preview (TP capability) via list_themes_and_templates — presents available Gamma themes + registered templates before generation. gary_slide_output return field feeds Irene Pass 2. GammaClient.list_themes() verified live (returns 10 themes including 2026 HIL APC institutional theme)."
   - "COMPOSITOR SKILL (Story 3.5, NEW): Reads completed segment manifest (all agent write-back fields populated) → generates Descript Assembly Guide. Proof of concept: real C1-M1 lesson end-to-end assembly. Added as new story between ElevenLabs (3.4) and Canvas (3.6). Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10. Epic 3 now 11 stories."
 
-next_workflow_step: "Pilot assembly bundle is ready for human Descript composition. After pilot review, continue with delivery-platform agents as needed, starting with Story 3.6 Canvas Specialist."
+next_workflow_step: "Story 3.11 (Mixed-Fidelity Gamma Generation) is ready-for-dev — critical blocker for Trial 2 completion. Implement before resuming Trial Run 2. Trial 1 Descript assembly still pending (human task). After 3.11, resume Trial 2 pipeline, then continue with Story 3.6 Canvas Specialist."

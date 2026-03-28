@@ -1156,6 +1156,33 @@ So that I always have authoritative, up-to-date API knowledge before production 
 **And** `skills/tech-spec-wrangler/SKILL.md` exists with references and scripts
 **And** unit tests cover changelog detection, doc comparison, and report generation
 
+### Story 3.11: Mixed-Fidelity Gamma Generation System
+
+As a course content producer,
+I want the production pipeline to handle slides with different fidelity requirements within a single deck — creative enhancement for most slides, literal text preservation for assessment-linked slides, and faithful reproduction of SME-provided technical visuals,
+So that every slide gets the right treatment and learners never see content that misrepresents what they'll be tested on or misrepresents technical diagrams provided by subject matter experts.
+
+**FRs covered:** FR15 (tool manipulation through standardized interfaces), FR34 (learning objectives alignment), FR10 (human checkpoint gates)
+
+**Origin:** Trial Run 2 fidelity audit (2026-03-28). Party Mode consensus + parallel research team validation.
+
+**Three fidelity classes:** `creative` (default — Gamma `generate` mode), `literal-text` (Gamma `preserve` mode with strict constraints), `literal-visual` (Gamma `preserve` mode + user-rebranded image via inline URL).
+
+**Acceptance Criteria:**
+
+**Given** Irene produces a slide brief with mixed fidelity requirements
+**When** the brief includes slides tagged `fidelity: literal-text` or `fidelity: literal-visual`
+**Then** Gary partitions the slides into creative and literal groups
+**And** Gary runs two separate Gamma API calls: `generate` mode for creative slides, `preserve` mode for literal slides
+**And** for `literal-visual` slides, Gary embeds user-provided image URLs inline in the inputText
+**And** for `literal-visual` slides, Gary sets `imageOptions.source: noImages` to prevent competing AI visuals
+**And** Gary reassembles all PNGs in original slide order with a provenance manifest documenting source call and fidelity class per slide
+**And** the unified `gary_slide_output` array is indistinguishable from a single-call generation for downstream consumers
+**And** when all slides are `creative` (default), Gary runs exactly one API call — no regression from pre-story behavior
+**And** Marcus surfaces `literal-visual` slides to the user for Imagine processing before Gary runs
+**And** Marcus validates all image URLs are HTTPS-accessible before unblocking Gary
+**And** the Quality Reviewer applies fidelity-appropriate review criteria per the provenance manifest
+
 ---
 
 ## Epic 4: Workflow Coordination & State Infrastructure

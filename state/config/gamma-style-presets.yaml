@@ -83,7 +83,7 @@ presets:
       # --- Visuals ---
       imageOptions:
         source: aiGenerated
-        model: nano-banana-2-mini
+        model: gemini-3.1-flash-image-mini   # Gamma UI name: "Nano Banana 2 Mini"
         stylePreset: illustration        # Named API tile — style field ignored by API
         keywords:                        # Stored as hint; Gary may add to additionalInstructions
           - vector

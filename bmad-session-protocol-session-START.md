@@ -1,6 +1,22 @@
-# BMAD v6 Session Protocol: Multi-Agent Course Content Production
+# BMAD v6 Session Protocol: Start-of-Session
 
-This file is the single source for how BMAD sessions are run for the **course-DEV-IDE-with-AGENTS** project across Cursor Composer and Claude Code chats.
+Companion to `bmad-session-protocol-session-WRAPUP.md`. Together these two files guarantee reliable context transfer between sessions.
+
+### Context transfer contract
+
+The startup protocol **reads** certain files; the wrapup protocol **writes** them. Every read must have a corresponding write, or context is lost.
+
+| File | Startup reads | Wrapup writes | Role |
+|------|:---:|:---:|------|
+| `next-session-start-here.md` | Step 1 | Step 7 | **Forward-looking hot-start** — next actions, branch, risks, gotchas |
+| `docs/project-context.md` | Step 1 | Step 5 | Current state, key decisions, architecture summary |
+| `docs/agent-environment.md` | Step 1 | Step 5 | MCP/API/tool/skill inventory for agents |
+| `bmm-workflow-status.yaml` | Step 5 | Step 3 | BMAD phase and workflow transitions |
+| `sprint-status.yaml` | Step 5 | Step 4a | Epic/story Kanban state |
+| `SESSION-HANDOFF.md` | — | Step 8 | **Backward-looking record** — lessons, decisions, validation (permanent archive; startup does not read) |
+| Guides (user/admin/dev) | Step 5 on-demand | Step 9a | Large stable docs — updated only when content changes |
+
+> **Key principle:** `next-session-start-here.md` is the sole ramp-up document for the next session. Any risk, blocker, or unresolved issue that affects the next session MUST appear there, not only in SESSION-HANDOFF.
 
 ---
 
@@ -20,6 +36,8 @@ Use this section the first time you open this BMAD project in a new tool context
    - `config/content-standards.yaml` (voice, audience, accessibility defaults)
    - `.env` file (Canvas API, CourseArc, other platform credentials)
 4. Once confirmed, proceed to the **Start-of-Session** sequence below.
+
+> **Gitignore caveat:** `.env`, `state/runtime/*.db`, and binary media under `course-content/` are all gitignored. File-search tools (glob, find, ripgrep) that respect `.gitignore` will not see them. Always verify gitignored files by **reading the file directly** (e.g. `Read .env`), never by pattern search. This applies to Cold Start checks and Hot Start step 6.
 
 ---
 
@@ -58,16 +76,22 @@ Some subsequent steps are implementation-only; skip those steps in earlier phase
 
 ### 5. Review BMAD status artifacts
 
-Review (if they exist):
-- `_bmad-output/planning-artifacts/` (PRD, architecture, epics/stories)
+**Always read** (small, frequently changing):
 - `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/brainstorming/` (active brainstorming sessions)
-- user guide in /docs
-- admin guide in /docs
-- dev guide in /docs
 
-Interaction Testing: Confirm presence, if appropriate at this phase of the project work, of an 'Interaction test' for a newly created agent.  The test should be modeled on the interaction test guide now available in the project.
+**Scan for relevance** (read only the listing or headers, not full content):
+- `_bmad-output/planning-artifacts/` (PRD, architecture, epics/stories)
+- `_bmad-output/brainstorming/` (active brainstorming sessions)
+
+**Read on demand** (large, stable documents — read only when the session objective involves onboarding, system development, or cross-cutting changes):
+- `docs/user-guide.md` (~260 lines)
+- `docs/admin-guide.md` (~475 lines)
+- `docs/dev-guide.md` (~730 lines)
+
+These guides are already summarized in `docs/project-context.md` (loaded in Step 1). Read the full guide only when you need detail beyond what the project context provides.
+
+**Interaction Testing:** Confirm presence, if appropriate at this phase of the project work, of an 'Interaction test' for a newly created agent. The test should be modeled on the interaction test guide now available in the project.
 
 If these files don't exist yet, note their absence — the project may be in early ideation phase.
 
@@ -76,7 +100,7 @@ If these files don't exist yet, note their absence — the project may be in ear
 **For course content sessions**:
 - Review `course-content/staging/` for pending human review items
 - Check `config/content-standards.yaml` for current voice/accessibility requirements  
-- Verify `.env` has required platform credentials loaded
+- Verify `.env` has required platform credentials loaded — **read the file directly** (`.env` is gitignored; pattern searches will not find it)
 - Review active workflow docs in `docs/workflow/` (at minimum `human-in-the-loop.md`)
 
 *Skip if the session objective is pure system development (orchestrator, skills) only.*

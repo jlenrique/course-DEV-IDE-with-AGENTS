@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-28
+last_updated: 2026-03-28  # Story 3.11 mixed-fidelity added (Trial 2 blocker)
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -82,6 +82,7 @@ development_status:
   3-8-canva-specialist-agent: backlog  # manual-tool agent pattern; was 3.7
   3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
+  3-11-mixed-fidelity-gamma-generation: ready-for-dev  # fidelity classification system: creative/literal-text/literal-visual; two-call split generation; Trial 2 blocker
   epic-3-retrospective: optional
 
   # === EPIC 4: Workflow Coordination & State Infrastructure ===

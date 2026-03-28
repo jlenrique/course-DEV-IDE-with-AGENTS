@@ -2,32 +2,53 @@
 
 ## Immediate Next Action
 
-**Trial Run 2 is queued.** Marcus is activated and waiting on source material confirmation.
+**Implement Story 3.11: Mixed-Fidelity Gamma Generation System** — this is a critical blocker for Trial Run 2.
 
-Target: **Part 2: The Macro Trends & The Case for Change** (C1-M1)
+Story file: `_bmad-output/implementation-artifacts/3-11-mixed-fidelity-gamma-generation.md`
+Status: `ready-for-dev`
 
-Pipeline entry point: `source-wrangler` → Irene P1 → Gate 1 → Gary → Gate 2 → Irene P2 → Gate 3 → ElevenLabs → Compositor → Gate 4 → Descript
+Story 3.11 introduces a three-class fidelity system (`creative`, `literal-text`, `literal-visual`) that enables Gary to generate decks where some slides are creatively enhanced by Gamma and others preserve exact text or user-provided images. Irene classifies slides in the slide brief, Marcus handles fidelity discovery at run start and asset validation, Gary partitions API calls by fidelity class.
 
-**Before invoking Marcus:** Confirm whether source material comes from the existing SME PDF (`course-content/courses/TEJAL_Course 01 Mod 01 Notes 2026-03-16.pdf`) or a separate document. Marcus will route source-wrangler accordingly.
+**Implementation order:**
+1. Task 1: Irene's slide brief schema (fidelity fields)
+2. Task 2: Gary's context envelope schema (fidelity, diagram_cards, provenance)
+3. Task 3: Gary's two-call split generation logic in `gamma_operations.py`
+4. Task 4: Marcus's fidelity discovery interview + delegation protocol
+5. Task 5: Quality Reviewer fidelity-aware review criteria
+6. Task 6: Memory hooks for fidelity learning
+7. Task 7: Regression validation
 
-**Style preset for Trial 2:** `hil-2026-apc-nejal-A` (Approach A — Nano Banana 2 Mini, illustration stylePreset, generate/detailed, 10 cards). Confirmed canonical.
-
-**Audio briefing for Irene:** Vary narration segment LENGTH deliberately — heavier conceptual slides get more text/time, lighter transitional slides get less. Trial 1 audio was "very good" but too uniform in duration.
+**After 3.11 is complete:** Resume Trial Run 2 with corrected Slide 10 (knowledge check teaser with all 10 KC topics, generated in `preserve` mode).
 
 ---
+
+**Trial Run 2 (Macro Trends & Case for Change) — HALTED pending Story 3.11:**
+
+- Source bundle ready: `course-content/staging/ad-hoc/source-bundles/trial2-macro-trends/extracted.md`
+- Lesson plan: `course-content/staging/ad-hoc/LP-C1M1-macro-trends-case-for-change.md`
+- Slide brief: `course-content/staging/ad-hoc/SB-C1M1-macro-trends-case-for-change.md`
+- Gamma generation (pre-halt): `https://gamma.app/docs/xhu9ykb264e87jf` (10 slides, slides 1-9 approved, slide 10 needs fidelity fix)
+- PDF: `course-content/staging/ad-hoc/gamma-c1m1-macro-trends-trial2/The-Macro-Trends-and-The-Case-for-Change.pdf`
+- Halt reason: Slide 10 content fidelity gap — Gamma's `generate` mode reframed/merged/embellished KC topic list
+- Credits remaining: 7,290
 
 **Trial Run 1 (Physician as Innovator) — Descript assembly still pending (Gate 5 / human task):**
 
 Bundle: `course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/`
-- `visuals/` — 10 PNGs (local disk, gitignored)
-- `audio/` — 10 MP3s (local disk, gitignored)
-- `captions/` — 10 VTTs ✅ tracked
-- `DESCRIPT-ASSEMBLY-GUIDE.md` ✅ tracked
-- `manifest.yaml` ✅ tracked
 
-Assembly guide is complete. Follow it in Descript to produce the final video.
+---
 
-**Before Descript (automation):** `.venv\Scripts\python.exe skills/compositor/scripts/compositor_operations.py sync-visuals <manifest.yaml>` then `guide <manifest.yaml> <DESCRIPT-ASSEMBLY-GUIDE.md>` after any new bundle is finalized.
+## Critical Discovery This Session
+
+**Gamma API `textMode` is deck-level, not per-card.** You cannot mix `generate` and `preserve` within a single API call. This is the root constraint driving Story 3.11's two-call architecture. Also confirmed:
+- `additionalInstructions` is global (5000 chars, all cards)
+- Reference image upload is UI-only (not in API as of 2026-03-28)
+- Inline image URLs in `inputText` ARE supported — Gamma fetches and re-hosts on its CDN
+- `imageOptions.source: noImages` prevents competing AI visuals when injecting user images
+- Gamma UI supports copy-paste cards between documents (for manual merge if desired)
+- Gamma Imagine (standalone image generation) is UI-only — no API surface
+
+**Mixed-fidelity solution:** Two (or three) Gamma API calls per deck, partitioned by fidelity class. Each call produces a separate, complete, editable Gamma document with a formulaic name (e.g., `C1-M1-P2-Macro-Trends_creative_s01-s09`). PNGs from all calls merge into a single ordered set for the production pipeline.
 
 ---
 
@@ -35,80 +56,31 @@ Assembly guide is complete. Follow it in Descript to produce the final video.
 
 **Startup:** `git checkout dev/next-session` && `git pull origin dev/next-session`
 
-## Current Status — STORIES 3.1–3.5, 3.9, 3.10 COMPLETE
+## Current Status — STORIES 3.1–3.5, 3.9, 3.10 COMPLETE; 3.11 READY-FOR-DEV
 
-- **Story 3.1 (Gary)**: DONE - 10+6 files, 29 tests
-- **Story 3.2 (Irene + Quinn-R)**: DONE - 12+6+10 files, 28 tests
-- **Story 3.3 (Kira)**: DONE - API client, Kira agent, kling-video skill, comparison video set
-- **Story 3.3.1 (Composition Harmonization + Gary Deck)**: DONE
-- **Story 3.4 (Voice Director / ElevenLabs)**: DONE
-- **Story 3.5 (Compositor + Intent Contract)**: DONE
-- **Story 3.9 (Source Wrangler)**: DONE — PDF extraction, Gamma URL guard, local preflight added
-- **Story 3.10 (Tech Spec Wrangler)**: DONE
-- **Epic 2**: COMPLETE (6/6 stories, 55 tests)
-- **Epic 1**: COMPLETE (11/11 stories, 117 tests)
-- **Total tests**: 76 passing (gamma-api-mastery + source-wrangler)
+- **Story 3.11 (Mixed-Fidelity Gamma Generation)**: READY-FOR-DEV — 32 ACs, 7 task groups
+- **Stories 3.1–3.5, 3.9, 3.10**: DONE
+- **Stories 3.6–3.8**: BACKLOG (Canvas, Qualtrics, Canva)
+- **Epic 2**: COMPLETE (6/6 stories)
+- **Epic 1**: COMPLETE (11/11 stories)
 
-## Gary Style Preset System (added this session)
+## Key File Paths for Story 3.11
 
-`state/config/gamma-style-presets.yaml` — two presets for HIL 2026 APC:
-
-| Preset | Approach | Model | StylePreset | Status |
-|--------|----------|-------|-------------|--------|
-| `hil-2026-apc-nejal-A` | A (named tile, proven) | `nano-banana-2-mini` | `illustration` | **Default — use this** |
-| `hil-2026-apc-nejal-B` | B (custom + text, experimental) | `flux-kontext-pro` | `custom` | Experimental |
-
-**Key facts:**
-- `imageOptions.stylePreset` is a real API field (added Feb 27, 2026). Named values: `illustration`, `lineArt`, `photorealistic`, `abstract`, `3D`, `custom`.
-- When `stylePreset` is named (not `custom`), `imageOptions.style` is IGNORED by the API.
-- `additionalInstructions` CONCATENATES across cascade layers (preset base + content-type + envelope).
-- Reference image upload (Gamma UI "Add style references") is UI-only — not in API yet. `referenceImagePath` in Approach B is a design-intent field for Marcus/Gary to study.
-- Full model list (20+ models) now in `skills/gamma-api-mastery/references/parameter-catalog.md`.
-
-## Git & Content Storage (clarified this session)
-
-**Binary media is NOT tracked in git.** `.gitignore` now excludes `course-content/**/*.{pdf,pptx,docx,jpg,jpeg,png,mp3,wav,zip,gif,webp}`.
-
-**What git tracks:** agent skills, scripts, configs, `.md`/`.yaml`/`.json`/`.vtt` text artifacts.
-
-**What lives on disk (Box Drive):** all binary media — slides, audio, PDFs, source documents.
-
-## Composition Architecture (Resolved 2026-03-27)
-
-### Pipeline
-```
-Marcus → Irene P1 → Marcus/[Gate 1] → Gary → Marcus/[Gate 2] →
-Irene P2 → Marcus/[Gate 3] → ElevenLabs → Marcus → Kira →
-Marcus → Quinn-R pre-comp → Compositor → Descript →
-Quinn-R post-comp → Marcus/[Gate 4] → Canvas
-```
-
-### Key Design Decisions
-- **Silent video always** from Kling (`sound-off`)
-- **ElevenLabs owns all audio** (narration, SFX, music)
-- **Segment manifest** (YAML) = single source of truth
-- **Descript** = sole composition platform (manual-tool pattern)
-- **Four HIL gates**: lesson plan → slides → script+manifest → final video
-- **VO variation**: Irene writes varied-length segments (not uniform duration) — brief for transitional slides, longer for conceptual-heavy slides
-
-## Gamma API — New Knowledge (2026-03-28)
-
-- `imageOptions.stylePreset` confirmed in API (Feb 27, 2026 changelog)
-- `imageOptions.style` only respected when `stylePreset: custom`
-- Reference image upload = UI-only (not in API as of 2026-03-28)
-- `stylePreset: custom` + `flux-kontext-pro` = Approach B for style-reference matching
-- `ideogram-v3` = best for text accuracy in AI images (medical diagrams, text-bearing slides)
-- Gamma Imagine = UI-only canvas, no API surface
+| File | Role |
+|---|---|
+| `skills/bmad-agent-content-creator/references/template-slide-brief.md` | Add fidelity fields |
+| `skills/bmad-agent-content-creator/references/delegation-protocol.md` | Fidelity classification heuristics |
+| `skills/bmad-agent-gamma/references/context-envelope-schema.md` | Add fidelity, diagram_cards, provenance |
+| `skills/gamma-api-mastery/scripts/gamma_operations.py` | Partition, reassemble, URL validation |
+| `skills/bmad-agent-marcus/references/conversation-mgmt.md` | Fidelity discovery queries, Imagine handoff |
+| `skills/bmad-agent-marcus/references/checkpoint-coord.md` | Visual asset delivery checkpoint |
+| `skills/bmad-agent-quality-reviewer/references/review-protocol.md` | Fidelity-aware review criteria |
 
 ## Gotchas
-- **Binary media in `course-content/`**: gitignored — files live on local disk only. Source-wrangler reads from local paths.
-- **Compositor:** `sync-visuals` copies approved PNGs into `<manifest_folder>/visuals/` and patches manifest paths in place; regenerate assembly guide after.
-- **Style preset flatten**: Approach A keywords → `_keywordsHint` (not sent to API). Approach B keywords → appended to `style` string.
+
+- **Binary media in `course-content/`**: gitignored — files live on local disk only
 - PowerShell doesn't support `&&` chaining
 - `.venv` with Python 3.13
-- Kling API credits are SEPARATE from consumer credits
-- Kling status endpoint is type-specific: `/v1/videos/text2video/{id}`
-- Kling text rendering produces garbled characters — use Gary for text-bearing visuals
-- `pyjwt` in requirements.txt for Kling JWT auth
-- Cross-skill Python imports use `importlib.util` loader pattern
-- GammaClient.list_themes() requires dotenv load in Python scripts
+- GammaClient requires `dotenv.load_dotenv()` before instantiation in scripts
+- `numCards` is ignored when `cardSplit: inputTextBreaks` — card count controlled by `---` separators
+- Gamma credits: 7,290 remaining (90 used this session for Trial 2 creative generation)

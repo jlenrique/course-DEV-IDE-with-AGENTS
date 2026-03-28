@@ -247,7 +247,8 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 
 1. **Epic 1: Repository Environment & Agent Infrastructure** - Cursor plugin foundation, Python infrastructure, state management, pre-flight checks, testing, **API/MCP integration for Gamma, ElevenLabs, Canvas**
 2. **Epic 2: Master Agent Architecture & Development** - Conversational orchestrator creation via bmad-agent-builder, coordination protocols, parameter intelligence, **run mode management (ad-hoc/default switch)**
-3. **Epic 3: Core Tool Integrations** - Specialty agent creation (Gamma, ElevenLabs, Canvas) via bmad-agent-builder, tool mastery skills, **source wrangler (Notion + Box Drive)**
+3. **Epic 2A: Fidelity Assurance & APP Intelligence Infrastructure** - Fidelity maturity audit, sensory bridges skill, provenance protocol, Fidelity Assessor agent, gate-by-gate verification (G0–G6), cumulative drift tracking, leaky neck remediation, APP maturity audit skill. **Implements the GOLD document architecture.**
+4. **Epic 3: Core Tool Integrations** - Specialty agent creation (Gamma, ElevenLabs, Canvas) via bmad-agent-builder, tool mastery skills, **source wrangler (Notion + Box Drive)**
 4. **Epic 4: Workflow Coordination & State Infrastructure** - Production run management, quality gates, run reporting, learning loop closure
 5. **Epic 5: Unified Content Production Engine** - Additional tool agents, multi-modal assembly, style orchestration
 6. **Epic 6: LMS Platform Integration & Delivery** - CourseArc agent, enhanced Canvas, SCORM packaging
@@ -662,6 +663,347 @@ So that I can experiment freely without impacting production state, or work in f
 **And** a promotion checklist fires QA gates when ad-hoc assets are promoted to production paths (future story)
 
 **Design Note:** This story implements Phase 1 of the modality matrix (binary switch). Future evolution (FR80) will add per-level granularity (course/module/lesson/asset) and additional modes (write-only, read-only). The switch is implemented as a gate on the state management layer -- agents behave identically in both modes; the infrastructure handles routing.
+
+---
+
+## Epic 2A: Fidelity Assurance & APP Intelligence Infrastructure
+
+**Goal**: The Agentic Production Platform (APP) has systematic fidelity assurance at every production gate (G0–G6), with deterministic fidelity contracts, agentic evaluation, sensory bridges for multimodal artifact perception, provenance traceability, and a dedicated Fidelity Assessor agent — so that every artifact produced by the pipeline is verified as faithful to its source of truth before quality review or human checkpoint.
+
+**Motivation**: A Party Mode consultation (2026-03-28) and parallel independent analysis established that the APP is at **Level 0 for fidelity assurance**: zero independent fidelity evaluation at any gate, perception unconfirmed or blind for audio/video, no provenance traceability, and cumulative drift undetected. This epic implements the architecture documented in `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` (the "GOLD document").
+
+**Design Principles Governing This Epic:**
+
+1. **Three-Layer Intelligence Model** — Every fidelity capability has: L1 deterministic contracts (invariant standards in YAML), L2 agentic evaluation (judgment that evolves with LLM capability), L3 learning memory (sidecars that improve over time).
+2. **Hourglass Model** — Intelligence is applied broadly at synthesis (top) and creative execution (bottom), with strict deterministic contracts at the narrow neck (schema validation, parameter binding, API calls). Intelligence must not be used to enforce constraints that can be handled by deterministic code.
+3. **Leaky Neck Diagnostic** — Any point where agentic judgment enforces a constraint that could be a schema rule, parameter value, or validation script is a design defect to be remediated.
+4. **Sensory Horizon Principle** — An agent cannot verify the fidelity of an artifact it cannot perceive. Sensory bridges must exist for every modality the pipeline produces.
+
+**FRs covered:** FR23, FR24, FR25, FR27, FR48 (quality/audit from original PRD). Additionally introduces fidelity-specific requirements beyond the original PRD scope — provenance traceability, multimodal perception, cumulative drift detection — documented in the GOLD document.
+
+**Prerequisite:** Epic 2 complete (Marcus, coordination protocols, parameter intelligence, mode management all in place).
+
+**Relationship to Epic 3:** This epic creates the fidelity infrastructure that Epic 3's tool specialists (Gary, Irene, ElevenLabs, etc.) operate within. Story 3.11 (Mixed-Fidelity Gamma Generation) is on hold pending this epic's foundational stories. After this epic's G2-G3 stories are complete, Story 3.11 should be revisited to incorporate the fidelity verification it currently lacks.
+
+---
+
+### Story 2A-1: APP Fidelity Maturity Audit & L1 Contract Definitions
+
+As an APP architect,
+I want a formalized fidelity maturity audit of the current pipeline with explicit L1 fidelity contracts defined for all production gates,
+So that we have a measured baseline, testable acceptance criteria for fidelity at every gate, and a repeatable audit methodology.
+
+**Acceptance Criteria:**
+
+**Given** the current APP pipeline with agents Marcus, Irene, Gary, Quinn-R, Kira, ElevenLabs Voice Director, and the Compositor skill
+**When** the fidelity maturity audit is executed
+**Then** an audit report is produced covering all 7 gates (G0–G6) evaluated against four pillars: L1 Contracts, L2 Evaluation, L3 Memory, Perception
+**And** each gate receives a maturity score (ABSENT / WEAK / PARTIAL / GOOD / STRONG) per pillar with evidence
+**And** a Leaky Neck report identifies all points where agentic judgment currently enforces deterministic constraints
+**And** L1 fidelity contracts are defined in YAML for gates G0 through G6:
+  - G0 (Source Bundle): extraction completeness criteria — section coverage, media capture, metadata preservation
+  - G1 (Lesson Plan): LO coverage of source themes, Bloom's alignment, content structure completeness
+  - G2 (Slide Brief): LO traceability per slide, fidelity classification accuracy, content item completeness
+  - G3 (Generated Slides): text preservation for literal slides, content coverage for creative slides, image placement for literal-visual slides
+  - G4 (Narration Script): script-to-slide correspondence, assessment reference accuracy, terminology consistency
+  - G5 (Audio): spoken text match to script, pronunciation accuracy, timing/WPM compliance
+  - G6 (Composition): segment order, audio-visual sync, assembly completeness against manifest
+**And** the L1 contracts are stored in `state/config/fidelity-contracts/` as versioned, human-reviewable YAML files
+**And** the Hourglass Model and Leaky Neck diagnostic are documented as architectural references in `docs/`
+**And** the Three-Layer Intelligence Model is documented as an architectural reference in `docs/`
+
+**Design Note:** This story produces the contracts and baseline that every subsequent story in this epic builds upon. The audit methodology itself becomes a skill in Story 2A-9.
+
+---
+
+### Story 2A-2: Sensory Bridges Skill
+
+As any agent in the APP pipeline,
+I want shared sensory bridge scripts that convert multimodal artifacts (images, audio, PDF, video) into structured agent-interpretable representations,
+So that I can perceive and verify artifacts I could not otherwise interpret.
+
+**Acceptance Criteria:**
+
+**Given** a production pipeline that produces PNG slides, MP3/WAV narration, PDF exports, and MP4 video
+**When** an agent needs to interpret a non-text artifact
+**Then** a shared `sensory-bridges` skill exists at `skills/sensory-bridges/` with SKILL.md, references, and scripts
+
+**Image bridge (`scripts/png_to_agent.py`):**
+**Given** a PNG or JPG file path
+**When** the image bridge is invoked
+**Then** it produces a structured output containing: full text extraction (OCR), layout description (columns, sections, headers, images), visual element inventory, and a confidence score
+**And** the output format is JSON with fields: `extracted_text`, `layout_description`, `visual_elements[]`, `confidence` (HIGH/MEDIUM/LOW)
+**And** unit tests verify extraction accuracy against known slide PNGs from Trial Run 1 or 2
+
+**Audio bridge (`scripts/audio_to_agent.py`):**
+**Given** an MP3 or WAV file path
+**When** the audio bridge is invoked
+**Then** it produces a timestamped transcript using ElevenLabs STT or local Whisper
+**And** the output includes: `transcript_text`, `timestamped_words[]` (word + start_ms + end_ms), `total_duration_ms`, `wpm`, `confidence`
+**And** unit tests verify transcription accuracy against known narration files from Trial Run 1
+
+**PDF bridge (`scripts/pdf_to_agent.py`):**
+**Given** a PDF file path
+**When** the PDF bridge is invoked
+**Then** it extracts text content page-by-page and any embedded images as separate PNG files
+**And** the output includes: `pages[]` (page_number + text + image_paths[]), `total_pages`, `confidence`
+
+**Universal Perception Protocol:**
+**Given** any agent consuming a multimodal artifact
+**When** the agent receives the artifact
+**Then** it follows the five-step protocol: Receive → Perceive (invoke bridge) → Confirm (state interpretation with confidence) → Proceed (if confidence ≥ threshold) → Escalate (if confidence < threshold)
+**And** the protocol is documented as a skill reference at `skills/sensory-bridges/references/perception-protocol.md`
+**And** the protocol reference is consumable by all agents via standard skill reference loading
+
+**Design Note:** Video bridge (`video_to_agent.py` using ffmpeg + STT) is deferred to Story 2A-7 when G6 comes into scope. Image and audio bridges are the immediate priorities for G3 and G5 verification.
+
+---
+
+### Story 2A-3: Provenance Protocol — Source Reference Traceability
+
+As the Fidelity Assessor (and any reviewing agent),
+I want every pedagogical content field in every artifact schema to carry a `source_ref` citation linking it to its upstream origin,
+So that I can trace any content item backward through the pipeline to the original SME material without full-document search.
+
+**Acceptance Criteria:**
+
+**Given** the artifact schemas used across the production pipeline
+**When** the Provenance Protocol is implemented
+**Then** the following schemas are updated with mandatory `source_ref` fields:
+
+**Lesson plan template** (`skills/bmad-agent-content-creator/references/template-lesson-plan.md`):
+- Each learning objective includes `source_ref` citing the section/page of the source bundle it derives from
+- Each content block includes `source_ref` citing its origin in the source bundle
+
+**Slide brief template** (`skills/bmad-agent-content-creator/references/template-slide-brief.md`):
+- Each slide's `content_items[]` include `source_ref` citing the lesson plan LO or content block
+- Fidelity classification rationale includes `source_ref` to the source material signal that triggered the classification
+
+**Context envelope schema** (`skills/bmad-agent-gamma/references/context-envelope-schema.md`):
+- `source_ref` fields pass through from slide brief to Gary's input, enabling provenance in the return envelope
+- Provenance manifest in the return envelope maps each generated card to its `source_ref` chain
+
+**Narration script template** (new or extended):
+- Each narration segment includes `source_ref` citing the lesson plan section and the slide number it complements
+
+**Segment manifest** (existing, extended):
+- Each segment definition includes `source_ref` linking to narration script segment and slide brief slide
+
+**And** a provenance chain can be traversed from any downstream artifact (e.g., narration segment) back to the original source bundle section in no more than 3 hops
+**And** `source_ref` format is standardized as `{filename}#{section_path}` (e.g., `extracted.md#Chapter 2 > Knowledge Check`)
+**And** Irene's SKILL.md and delegation protocol are updated to instruct her to populate `source_ref` fields when producing artifacts
+
+**Design Note:** This is a schema-only story — no new agents or scripts. It establishes the traceability infrastructure that the Fidelity Assessor (Story 2A-4) consumes. Irene is the primary producer of `source_ref` annotations; other agents pass them through.
+
+---
+
+### Story 2A-4: Fidelity Assessor Agent — Foundation (G2-G3)
+
+As a course content producer,
+I want an independent Fidelity Assessor agent that verifies whether production artifacts are faithful to their source of truth at each gate,
+So that fidelity failures are caught automatically before quality review or human checkpoint — and the system's fidelity evaluation improves over time as LLM capabilities advance.
+
+**Acceptance Criteria:**
+
+**Agent creation (via bmad-agent-builder):**
+**Given** the GOLD document's Fidelity Assessor specification and the Three-Layer Intelligence Model
+**When** the Fidelity Assessor agent is created through six-phase discovery
+**Then** `skills/bmad-agent-fidelity-assessor/SKILL.md` exists with persona, identity, communication style, and principles
+**And** the agent's role is strictly forensic: "Is this output faithful to its source of truth?"
+**And** the agent is distinct from Quinn-R (quality) in role, mandate, and assessment criteria
+**And** the agent has a memory sidecar at `_bmad/memory/fidelity-assessor-sidecar/` with index.md, patterns.md, chronology.md, access-boundaries.md
+
+**Three-layer architecture:**
+**And** L1 contracts are loaded from `state/config/fidelity-contracts/` (produced in Story 2A-1)
+**And** L2 evaluation logic is in the agent's judgment layer — starts with structural comparison and keyword/item coverage, designed to evolve with LLM capability
+**And** L3 memory captures fidelity assessment outcomes, drift patterns, user corrections, and gate-specific learnings in the sidecar
+
+**Fidelity Trace Report (standard output):**
+**And** every assessment produces a Fidelity Trace Report with findings categorized as Omissions, Inventions, or Alterations
+**And** each finding includes: gate, artifact location, severity (critical/high/medium), source reference, output reference, suggested remediation
+**And** the report includes a gate-level pass/fail verdict with overall fidelity score
+
+**G2 coverage (slide brief vs. lesson plan):**
+**Given** Irene produces a slide brief with `source_ref` annotations
+**When** the Fidelity Assessor evaluates G2
+**Then** it verifies every lesson plan LO is covered by at least one slide
+**And** it verifies fidelity classifications (`literal-text`, `literal-visual`, `creative`) are appropriate based on source material signals
+**And** it verifies `content_items` trace to lesson plan sections via `source_ref`
+**And** Omissions (missing LOs), Inventions (slides without LO traceability), and Alterations (misclassified fidelity) are reported
+
+**G3 coverage (generated slides vs. slide brief):**
+**Given** Gary produces slides and downloads PNGs
+**When** the Fidelity Assessor evaluates G3
+**Then** it invokes the image sensory bridge (`png_to_agent.py`) on each PNG
+**And** it confirms perception of each slide with confidence level before evaluating
+**And** for `literal-text` slides: verifies all `content_items` from the slide brief appear verbatim in the extracted text
+**And** for `literal-visual` slides: verifies the specified image is present and text is preserved
+**And** for `creative` slides: verifies content coverage — all `content_items` themes are represented even if creatively enhanced
+**And** Omissions, Inventions, and Alterations are reported per slide with slide number and content item references
+
+**Circuit breaker:**
+**And** a fidelity failure (any critical or high-severity finding) halts the pipeline at that gate
+**And** the failure is reported to Marcus with the Fidelity Trace Report
+**And** Marcus routes the artifact back to the producing agent for correction before the human checkpoint
+
+**Marcus integration:**
+**And** Marcus's delegation flow is updated to invoke the Fidelity Assessor after each producing agent returns results at G2 and G3
+**And** Marcus's conversation management reference documents the fidelity checkpoint workflow
+**And** the Fidelity Assessor runs BEFORE Quinn-R at each gate — fidelity is a precondition for quality
+
+**Design Note:** This is the most substantial story in the epic. It may need decomposition during sprint planning. The agent creation via bmad-agent-builder should be a separate task from the G2/G3 integration and circuit breaker implementation.
+
+---
+
+### Story 2A-5: G0-G1 Fidelity — Source Bundle & Lesson Plan Verification
+
+As a course content producer,
+I want the Fidelity Assessor to verify source bundle extraction completeness (G0) and lesson plan faithfulness to the source material (G1),
+So that the entire downstream pipeline inherits a faithful baseline from the very first step.
+
+**Acceptance Criteria:**
+
+**G0 (Source Bundle — extracted.md vs. original SME materials):**
+**Given** the source wrangler produces `extracted.md` from SME materials (Notion, Box, PDFs, URLs)
+**When** the Fidelity Assessor evaluates G0
+**Then** it compares the extracted bundle against available source material metadata (section count, heading structure, page count for PDFs)
+**And** it identifies potential extraction gaps: sections present in the original but absent in the extraction
+**And** for PDF sources, it invokes the PDF sensory bridge to verify text extraction quality
+**And** Omissions (missing sections), Inventions (content not in source), and Alterations (structural changes) are reported
+**And** extraction confidence is scored and reported to Marcus
+
+**G1 (Lesson Plan — LOs vs. source bundle themes):**
+**Given** Irene produces a lesson plan with `source_ref` annotations
+**When** the Fidelity Assessor evaluates G1
+**Then** it verifies that every major theme in the source bundle is represented in at least one learning objective
+**And** it verifies `source_ref` links are valid — the cited section exists in the source bundle
+**And** it verifies Bloom's level assignments are consistent with the pedagogical activity described
+**And** Omissions (source themes not covered by any LO), Inventions (LOs without source material basis), and Alterations (source themes misrepresented) are reported
+
+**Marcus integration:**
+**And** Marcus's delegation flow invokes the Fidelity Assessor at G0 (after source wrangling) and G1 (after Irene Pass 1 lesson plan)
+**And** fidelity failures at G0 route back to the source wrangler for re-extraction
+**And** fidelity failures at G1 route back to Irene for revision
+
+---
+
+### Story 2A-6: Existing Agent Perception Upgrades
+
+As Irene, Gary, and Quinn-R,
+We want to adopt the universal perception protocol with sensory bridges when we consume multimodal artifacts,
+So that we confirm our interpretation of non-text artifacts before acting on them — eliminating silent misperception.
+
+**Acceptance Criteria:**
+
+**Irene (Pass 2 — writing narration for actual slides):**
+**Given** Gary has generated slides and downloaded PNGs
+**When** Irene begins Pass 2 (narration script + segment manifest)
+**Then** Irene receives PNG file paths in her context envelope
+**And** Irene invokes the image sensory bridge on each PNG
+**And** Irene confirms her interpretation of each slide: "I see Slide N shows [description]. Confidence: HIGH/MEDIUM/LOW."
+**And** Irene writes narration that accurately describes and complements the actual visual content she confirmed seeing
+**And** if confidence is LOW for any slide, Irene flags it to Marcus for human clarification before writing narration
+
+**Gary (self-assessment of generated output):**
+**Given** Gary has generated slides and downloaded PNGs
+**When** Gary performs self-assessment
+**Then** Gary invokes the image sensory bridge on each PNG
+**And** Gary confirms his perception before scoring: "I see [description]. Checking against slide brief..."
+**And** Gary's self-assessment scores are based on confirmed perception, not assumed output
+
+**Quinn-R (quality review of multimodal artifacts):**
+**Given** Quinn-R receives artifacts for quality review
+**When** the artifacts include PNGs, audio files, or other non-text assets
+**Then** Quinn-R invokes the appropriate sensory bridge
+**And** Quinn-R confirms interpretation before scoring quality dimensions
+**And** quality scores are based on confirmed perception
+
+**And** all three agents' SKILL.md files and relevant references are updated to include the perception protocol
+**And** the perception confirmation is visible in the agent's output (not silent)
+
+---
+
+### Story 2A-7: G4-G5 Fidelity — Script & Audio Verification
+
+As a course content producer,
+I want the Fidelity Assessor to verify narration script fidelity against the actual slides (G4) and audio fidelity against the narration script (G5),
+So that what the learner hears accurately matches what they see, and what was spoken matches what was written.
+
+**Acceptance Criteria:**
+
+**G4 (Narration Script — script vs. lesson plan + actual slide PNGs):**
+**Given** Irene produces a narration script with `source_ref` annotations after confirming slide perception
+**When** the Fidelity Assessor evaluates G4
+**Then** it verifies each narration segment references an existing slide by number
+**And** it invokes the image sensory bridge on referenced slides and verifies the narration describes content actually visible on the slide
+**And** it verifies assessment references in narration match the lesson plan's assessment items exactly
+**And** it verifies medical/clinical terminology is consistent between narration and slides
+**And** Omissions (slides without narration), Inventions (narration describing content not on slides), and Alterations (terminology inconsistencies) are reported
+
+**G5 (Audio — spoken narration vs. narration script):**
+**Given** ElevenLabs generates audio from the narration script
+**When** the Fidelity Assessor evaluates G5
+**Then** it invokes the audio sensory bridge (`audio_to_agent.py`) to produce a timestamped transcript
+**And** it compares the transcript against the narration script text
+**And** it checks WPM against the target range (130–170 for instructional narration)
+**And** it checks pronunciation of medical terms against the pronunciation guide in the narration script
+**And** Omissions (script words not spoken), Inventions (spoken words not in script — hallucinated audio), and Alterations (pronunciation errors changing meaning) are reported
+
+**Video bridge (deferred scope):**
+**And** `video_to_agent.py` is created for future G6 use: ffmpeg-based keyframe extraction + audio channel transcription via STT
+**And** G6 fidelity assessment is documented as a future story (manual Descript composition requires export before verification)
+
+---
+
+### Story 2A-8: Cumulative Drift Tracking & Leaky Neck Remediation
+
+As a course content producer,
+I want the Fidelity Assessor to track cumulative fidelity drift across the entire pipeline and I want all leaky necks in the pipeline remediated,
+So that small per-gate fidelity losses don't compound into large divergence from SME intent, and all deterministic constraints are enforced deterministically.
+
+**Acceptance Criteria:**
+
+**Cumulative drift tracking:**
+**Given** the Provenance Protocol provides `source_ref` chains from any artifact back to G0
+**When** the Fidelity Assessor evaluates G3 or later
+**Then** it performs both a **local** check (this gate's output vs. this gate's input) and a **global** check (this gate's output vs. the original source bundle at G0)
+**And** global fidelity is scored as a percentage of source themes still faithfully represented
+**And** drift thresholds are configurable per production mode:
+  - Ad-hoc: global drift warning at 20%, failure at 40%
+  - Production: global drift warning at 10%, failure at 20%
+  - Regulated: global drift warning at 5%, failure at 10%
+**And** drift warnings and failures are reported to Marcus in the Fidelity Trace Report
+**And** the Fidelity Assessor's memory sidecar captures drift patterns: which types of content drift most, at which gates, and under which conditions
+
+**Leaky Neck remediation:**
+**Given** the Leaky Neck report from Story 2A-1 identified points where agentic judgment enforces deterministic constraints
+**When** each identified leak is remediated
+**Then** the enforcement is moved from natural-language agent instructions to schema rules, parameter bindings, or validation scripts
+**And** each remediation is documented with before/after evidence
+**And** the Leaky Neck report is updated to reflect resolved items
+**And** a regression test confirms the deterministic enforcement produces correct results
+
+---
+
+### Story 2A-9: APP Maturity Audit Skill
+
+As an APP maintainer,
+I want a repeatable skill that audits the APP pipeline against the Three-Layer Model, Hourglass Model, and Sensory Horizon principle,
+So that I can re-evaluate APP maturity after any architectural change and track improvement over time.
+
+**Acceptance Criteria:**
+
+**Given** the fidelity infrastructure from Stories 2A-1 through 2A-8 is in place
+**When** the `app-maturity-audit` skill is invoked
+**Then** it produces:
+  - A **four-pillar heat map** (L1 Contracts, L2 Evaluation, L3 Memory, Perception) for all gates (G0–G6)
+  - A **Leaky Neck report** identifying remaining points where intelligence enforces deterministic constraints
+  - A **Sensory Horizon report** listing all artifact modalities and their bridge coverage status
+  - A **cumulative drift summary** from the most recent production run
+  - A **maturity delta** comparing current scores against the previous audit
+**And** the skill is stored at `skills/app-maturity-audit/SKILL.md`
+**And** the skill can be invoked by Marcus, by the user directly, or as part of a session startup protocol
+**And** audit results are stored in `_bmad-output/implementation-artifacts/` with timestamps for historical comparison
 
 ---
 

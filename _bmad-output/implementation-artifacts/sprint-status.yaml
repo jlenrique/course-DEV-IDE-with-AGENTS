@@ -67,6 +67,22 @@ development_status:
   2-6-run-mode-management: done
   epic-2-retrospective: done
 
+  # === EPIC 2A: Fidelity Assurance & APP Intelligence Infrastructure ===
+  # Added 2026-03-28: Implements GOLD document architecture (party-mode-fidelity-assurance-architecture.md)
+  # Prerequisite: Epic 2 complete. Must complete before resuming Epic 3 tool specialist work.
+  # Story 3.11 on hold pending this epic's G2-G3 stories.
+  epic-2a: in-progress
+  2a-1-fidelity-maturity-audit-l1-contracts: backlog    # audit baseline, L1 contract definitions for G0-G6, architectural references
+  2a-2-sensory-bridges-skill: backlog                   # png_to_agent, audio_to_agent, pdf_to_agent, universal perception protocol
+  2a-3-provenance-protocol: backlog                     # source_ref fields in all artifact schemas, traceability chain
+  2a-4-fidelity-assessor-agent-foundation: backlog      # agent creation, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker
+  2a-5-g0-g1-fidelity-verification: backlog             # source bundle completeness (G0), lesson plan faithfulness (G1)
+  2a-6-agent-perception-upgrades: backlog               # Irene, Gary, Quinn-R adopt universal perception protocol
+  2a-7-g4-g5-fidelity-verification: backlog             # narration script vs slides (G4), audio vs script via STT (G5)
+  2a-8-cumulative-drift-leaky-neck: backlog             # global fidelity metric, drift thresholds, leaky neck remediation
+  2a-9-app-maturity-audit-skill: backlog                # repeatable audit skill producing heat map + reports
+  epic-2a-retrospective: optional
+
   # === EPIC 3: Core Tool Specialist Agents & Mastery Skills ===
   # Re-sequenced 2026-03-27: 3.3.1 harmonization added, Compositor added as 3.5, Canvas→3.6,
   # Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10. 11 stories total.
@@ -82,7 +98,7 @@ development_status:
   3-8-canva-specialist-agent: backlog  # manual-tool agent pattern; was 3.7
   3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
-  3-11-mixed-fidelity-gamma-generation: ready-for-dev  # fidelity classification system: creative/literal-text/literal-visual; two-call split generation; Trial 2 blocker
+  3-11-mixed-fidelity-gamma-generation: on-hold  # ON HOLD pending Epic 2A fidelity infrastructure (2026-03-28). Fidelity classification system needs independent verification before implementation.
   epic-3-retrospective: optional
 
   # === EPIC 4: Workflow Coordination & State Infrastructure ===

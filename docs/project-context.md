@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 3 IN PROGRESS — Stories 3.1-3.5, 3.9, and 3.10 complete)
-**Architecture Status:** 10 Epics, 80 FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). Epic 3 in progress (Story 3.1 DONE — Gary/Gamma; Story 3.2 DONE — Irene/Content Creator + Quinn-R/Quality Reviewer; Story 3.3 DONE — Kira/Kling Video Specialist; Story 3.3.1 DONE — Composition Architecture Harmonization + Gary Deck Enhancement; Story 3.4 DONE — Voice Director + `elevenlabs-audio` skill + expanded ElevenLabs client + live timestamp and manifest smokes; Story 3.5 DONE — compositor skill + Descript Assembly Guide + `behavioral_intent` contract formalization across the pipeline; Story 3.9 DONE — `source-wrangler` skill + `NotionClient` + URL/HTML/Box ingestion + Playwright-assisted capture path + agent bundles; Story 3.10 DONE — `tech-spec-wrangler` skill + active doc-source coverage for creative/composition tools + proof refresh report and sidecar logging). Remaining non-delivery option: 3.8 Canva (manual-tool pattern). Delivery/platform agents begin at 3.6 Canvas and beyond.
+**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epic 1 DONE, Epic 2 DONE, Epic 2A IN PROGRESS, Epic 3 PAUSED)
+**Architecture Status:** 11 Epics (Epic 2A added 2026-03-28), 80+ FRs, Complete Architecture - Recast for BMad Agent + Cursor Plugin Approach + APP Fidelity Assurance Architecture
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). **Epic 2A in progress** (Fidelity Assurance & APP Intelligence Infrastructure — 9 stories, 0 complete). Epic 3 paused at 7/11 stories done (Stories 3.1-3.5, 3.9, 3.10 DONE; Story 3.11 ON HOLD pending Epic 2A; Stories 3.6-3.8 backlog).
 
 ## Purpose
 
@@ -135,7 +135,22 @@ resources/
 - [x] **EPIC 2 COMPLETE**: Stories 2.2–2.6 all done. Production-coordination skill (4 scripts, 4 refs, 40 tests). Marcus references updated for workflow management, delegation, parameter intelligence, pre-flight, and mode management.
 - [x] **EXEMPLAR-DRIVEN DEVELOPMENT**: Woodshed skill created (`skills/woodshed/`), exemplar library scaffolded (`resources/exemplars/` per tool), comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, and L-level difficulty system all in place. 5 Gamma exemplars provided (L1-L4.2). Smoke test validated: Gamma API produces single-card output, PDF export/download works (205KB), 5 credits/card. GammaClient needs parameter name updates (inputText, textMode, exportAs). Epic 3 stories updated with exemplar reproduction as acceptance criteria.
 - [x] **STORY 3.3.1 (Composition Architecture Harmonization + Gary Deck)**: DONE — Party Mode composition decisions implemented: segment manifest as Irene artifact, two-pass Irene model, Irene/Quinn-R/Kira/Marcus/Gary all updated, architecture.md updated with pipeline graph, tool inventory updated (Descript as sole composition platform), Gary deck mode + theme/template preview (TP capability), gary_slide_output return field, GammaClient.list_themes() live-tested (10 themes). Epic 3 re-sequenced to 11 stories: Compositor added as 3.5, Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10.
-- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (11 stories — Stories 3.1-3.5, 3.9, and 3.10 DONE, 3.6 Canvas backlog, 3.7 Qualtrics backlog, 3.8 Canva backlog)
+- [ ] **Epic 2A: Fidelity Assurance & APP Intelligence Infrastructure** (9 stories — NEW 2026-03-28. Fidelity maturity audit, sensory bridges, provenance protocol, Fidelity Assessor agent, gate-by-gate verification G0-G6, cumulative drift, leaky neck remediation, APP maturity audit. GOLD document: `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md`)
+- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (11 stories — Stories 3.1-3.5, 3.9, and 3.10 DONE, 3.6 Canvas backlog, 3.7 Qualtrics backlog, 3.8 Canva backlog, **3.11 ON HOLD pending Epic 2A**)
+
+## APP Design Principles & Fidelity Architecture (Added 2026-03-28)
+
+See `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` (GOLD document) for full analysis.
+
+- **Agentic Production Platform (APP):** Formal naming — the IDE is the runtime environment for a network of specialized agents. The platform gets smarter over time as LLMs improve and agent memory accumulates.
+- **Three-Layer Intelligence Model:** L1 deterministic contracts (invariant standards), L2 agentic evaluation (evolves with LLM capability), L3 learning memory (compound improvement via sidecars). Applies to every APP capability.
+- **Hourglass Model:** Wide cognitive top (synthesis) → narrow deterministic neck (schema/parameter binding) → wide cognitive bottom (creative execution). Intelligence must not enforce constraints that can be deterministic.
+- **Leaky Neck Diagnostic:** Any point where agentic judgment enforces a deterministic constraint is a design defect.
+- **Sensory Horizon:** Agents cannot verify what they cannot perceive. Sensory bridges (image, audio, PDF, video) with mandatory confirmation protocol.
+- **Fidelity Assessor:** New forensic agent distinct from Quinn-R. Produces Fidelity Trace Reports (Omissions/Inventions/Alterations). Circuit breaker on failure. Runs before quality review.
+- **Provenance Protocol:** Mandatory `source_ref` fields in all artifact schemas for traceable provenance chains.
+- **Current maturity:** Level 0 for fidelity assurance — zero independent evaluation, perception blind for audio/video.
+- **Epic 2A** implements the full architecture in 9 stories. Story 3.11 on hold pending Epic 2A.
 
 ## Composition Architecture (Added 2026-03-27)
 

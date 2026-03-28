@@ -42,7 +42,7 @@ Update `docs/project-context.md` only if rules, phase, or architecture changed t
 
 **For content creation sessions**:
 - Move completed content from `course-content/staging/` to `course-content/courses/` if human-approved
-- Update content workflow status in `workflows/`
+- Update content workflow status in `docs/workflow/` (and `workflows/` if your project later adds that directory)
 - Log any platform integration results or issues
 
 *Skip if no content creation occurred this session.*

@@ -1,7 +1,7 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-03-26 | **Project Phase:** Epic 2 (Master Orchestrator in progress)
+**Last Updated:** 2026-03-27 | **Project Phase:** 4-Implementation (Epic 3 in progress)
 
 ---
 
@@ -354,7 +354,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 |-------|----------|--------|
 | `pre-flight-check` | `skills/pre-flight-check/` | Active |
 | `bmad-agent-marcus` | `skills/bmad-agent-marcus/` | Active (Epic 2) |
-| `production-coordination` | planned | Epic 4 |
+| `production-coordination` | `skills/production-coordination/` | Active (Epic 2) |
 | `run-reporting` | planned | Epic 4 |
 | `parameter-intelligence` | planned | Epic 3 |
 | `source-wrangler` | `skills/source-wrangler/` | Active (Story 3.9) |
@@ -700,7 +700,9 @@ course-DEV-IDE-with-AGENTS/
 │   ├── implementation-artifacts/      ← Story artifacts, sprint/workflow status
 │   └── brainstorming/                 ← Session docs (Marcus coaching, etc.)
 │
-├── bmad-session-protocol.md           ← How to run BMAD sessions
+├── bmad-session-protocol-session-START.md   ← BMAD start-of-session protocol
+├── bmad-session-protocol-session-WRAPUP.md  ← BMAD end-of-session protocol
+├── bmad-session-protocol-session-MISC.md    ← BMAD reference notes
 ├── next-session-start-here.md         ← Hot-start context for next session
 └── SESSION-HANDOFF.md                 ← Session record and handoff context
 ```
@@ -719,7 +721,9 @@ These are the authoritative sources — this guide references them rather than d
 | **Directory Responsibilities** | `docs/directory-responsibilities.md` | Configuration hierarchy, resolution rules, anti-patterns |
 | **Tool Access Matrix** | `resources/tool-inventory/tool-access-matrix.md` | 17 tools classified by access tier |
 | **Style Bible** | `resources/style-bible/master-style-bible.md` | Brand identity, content standards, tool prompts |
-| **Session Protocol** | `bmad-session-protocol.md` | Cold start, hot start, shutdown, cross-context handoff |
+| **Session Protocol (Start)** | `bmad-session-protocol-session-START.md` | Cold start + hot start sequence |
+| **Session Protocol (Wrap-up)** | `bmad-session-protocol-session-WRAPUP.md` | End-of-session shutdown and handoff |
+| **Session Protocol (Reference)** | `bmad-session-protocol-session-MISC.md` | BMAD workflow reference notes |
 | **Project Context** | `docs/project-context.md` | Current state, key decisions, repository contract |
 | **HIL Workflow** | `docs/workflow/human-in-the-loop.md` | Staging → review → promotion → publish |
 | **Agent Environment** | `docs/agent-environment.md` | MCP setup, API guidance, BMad alignment |

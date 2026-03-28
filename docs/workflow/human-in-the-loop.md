@@ -4,7 +4,7 @@ Goal: you stay the instructor of record; agents draft and refactor; you approve 
 
 ## Stages
 
-1. **Intent** — You describe outcomes, week structure, and constraints (time, modality, platform). Agents pull defaults from `config/content-standards.yaml`.
+1. **Intent** — You describe outcomes, week structure, and constraints (time, modality, platform). Agents use `resources/style-bible/master-style-bible.md` as authoritative standards, with `config/content-standards.yaml` as fallback defaults.
 2. **Draft in staging** — Agents write under `course-content/staging/<short-label>/` (e.g. `staging/m03-intro-ai/`). No direct edits to published `courses/` until you promote.
 3. **Your pass** — You edit for accuracy, examples, and policy. Optionally run editorial / adversarial review skills on the staged path.
 4. **Promote** — Move or copy approved material into `course-content/courses/<course-slug>/module-XX/...`.

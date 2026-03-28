@@ -23,7 +23,7 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "36 stories across 10 epics (Story 3.8 added for tech spec wrangler skill)"
+    note: "36 stories across 10 epics (Epic 3 re-sequenced: Compositor 3.5, Canvas 3.6, Qualtrics 3.7, Canva 3.8, Source Wrangler 3.9, Tech Spec Wrangler 3.10)"
     stories_count: 36
     epics_count: 10
   ux_design:
@@ -80,4 +80,4 @@ key_decisions:
   - "GARY DECK ENHANCEMENT (2026-03-27): Deck mode added (numCards ranges per content type, cardSplit strategies, deck additionalInstructions). Theme/template preview (TP capability) via list_themes_and_templates — presents available Gamma themes + registered templates before generation. gary_slide_output return field feeds Irene Pass 2. GammaClient.list_themes() verified live (returns 10 themes including 2026 HIL APC institutional theme)."
   - "COMPOSITOR SKILL (Story 3.5, NEW): Reads completed segment manifest (all agent write-back fields populated) → generates Descript Assembly Guide. Proof of concept: real C1-M1 lesson end-to-end assembly. Added as new story between ElevenLabs (3.4) and Canvas (3.6). Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10. Epic 3 now 11 stories."
 
-next_workflow_step: "Story 3.9 Source Wrangler is implemented (skill + NotionClient + web/Playwright path). Next: controlled slide + narration -> Descript pilot (Kira out of scope); then delivery-platform agents (3.6+) as needed."
+next_workflow_step: "Pilot assembly bundle is ready for human Descript composition. After pilot review, continue with delivery-platform agents as needed, starting with Story 3.6 Canvas Specialist."

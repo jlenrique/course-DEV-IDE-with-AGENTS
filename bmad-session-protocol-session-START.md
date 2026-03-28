@@ -77,7 +77,7 @@ If these files don't exist yet, note their absence — the project may be in ear
 - Review `course-content/staging/` for pending human review items
 - Check `config/content-standards.yaml` for current voice/accessibility requirements  
 - Verify `.env` has required platform credentials loaded
-- Review any active content workflows in `workflows/`
+- Review active workflow docs in `docs/workflow/` (at minimum `human-in-the-loop.md`)
 
 *Skip if the session objective is pure system development (orchestrator, skills) only.*
 

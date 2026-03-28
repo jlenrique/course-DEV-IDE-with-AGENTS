@@ -40,6 +40,7 @@ There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token*
 | **Production coordination** | `skills/production-coordination/` | Workflow stages, delegation, mode management, style guide | Active |
 | **Tech spec wrangler** | `skills/tech-spec-wrangler/` | Tool API doc refresh, research, validation via Ref MCP; ensures agents always have current API knowledge | Active |
 | **Source wrangler** | `skills/source-wrangler/` | Notion + Box + URL/HTML ingestion; Playwright-saved page processing; `extracted.md` bundles for specialists | Active |
+| **Sensory bridges** | `skills/sensory-bridges/` | Multimodal perception: PPTX, image, audio (ElevenLabs STT), PDF, video bridges with canonical schema, confidence rubric, and universal perception protocol | Active |
 
 ## APIs and credentials
 

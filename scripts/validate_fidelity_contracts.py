@@ -1,16 +1,21 @@
-"""Validate structural completeness of all fidelity contract YAML files.
+"""Validate fidelity contracts and check contract-protocol alignment.
 
 Checks that every contract in state/config/fidelity-contracts/ conforms
-to the schema defined in _schema.yaml.
+to the schema defined in _schema.yaml. Also verifies that Vera's gate
+evaluation protocol references the correct perception modalities from
+the contracts (contract-protocol parity check).
 """
 
+import re
 import sys
 from pathlib import Path
 
 import yaml
 
 
-CONTRACTS_DIR = Path(__file__).resolve().parent.parent / "state" / "config" / "fidelity-contracts"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CONTRACTS_DIR = PROJECT_ROOT / "state" / "config" / "fidelity-contracts"
+VERA_PROTOCOL = PROJECT_ROOT / "skills" / "bmad-agent-fidelity-assessor" / "references" / "gate-evaluation-protocol.md"
 
 REQUIRED_TOP_LEVEL = {"gate", "gate_name", "producing_agent", "source_of_truth", "criteria"}
 
@@ -21,7 +26,7 @@ REQUIRED_CRITERION = {"id", "name", "description", "fidelity_class", "severity",
 VALID_SEVERITIES = {"critical", "high", "medium"}
 VALID_EVAL_TYPES = {"deterministic", "agentic"}
 VALID_FIDELITY_CLASSES = {"creative", "literal-text", "literal-visual"}
-VALID_MODALITIES = {"image", "audio", "pdf", "video", None}
+VALID_MODALITIES = {"image", "audio", "pdf", "pptx", "video", None}
 
 
 def validate_contract(filepath: Path) -> list[str]:
@@ -94,6 +99,45 @@ def validate_contract(filepath: Path) -> list[str]:
     return errors
 
 
+def check_protocol_parity(contract_files: list[Path]) -> list[str]:
+    """Check that Vera's gate evaluation protocol references match contract modalities.
+
+    Scans the protocol markdown for criterion IDs with modality annotations
+    and verifies they match the contract YAML.
+    """
+    warnings: list[str] = []
+    if not VERA_PROTOCOL.exists():
+        return ["Vera's gate-evaluation-protocol.md not found — skipping parity check"]
+
+    protocol_text = VERA_PROTOCOL.read_text(encoding="utf-8")
+
+    contract_modalities: dict[str, str | None] = {}
+    for filepath in contract_files:
+        with open(filepath, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            continue
+        for criterion in data.get("criteria", []):
+            cid = criterion.get("id", "")
+            modality = criterion.get("perception_modality")
+            if criterion.get("requires_perception"):
+                contract_modalities[cid] = modality
+
+    modality_pattern = re.compile(r"\*\*([\w-]+)\s+\([^)]*modality:\s*(\w+)\)")
+    for match in modality_pattern.finditer(protocol_text):
+        criterion_id = match.group(1)
+        protocol_modality = match.group(2)
+        if criterion_id in contract_modalities:
+            contract_mod = contract_modalities[criterion_id]
+            if contract_mod and protocol_modality != contract_mod:
+                warnings.append(
+                    f"PARITY MISMATCH {criterion_id}: protocol says '{protocol_modality}', "
+                    f"contract says '{contract_mod}'"
+                )
+
+    return warnings
+
+
 def main() -> int:
     contract_files = sorted(CONTRACTS_DIR.glob("g*.yaml"))
     if not contract_files:
@@ -119,6 +163,16 @@ def main() -> int:
             total_errors += len(errors)
         else:
             print(f"PASS  {filepath.name} ({n_criteria} criteria)")
+
+    parity_warnings = check_protocol_parity(contract_files)
+    if parity_warnings:
+        print(f"\n--- Contract-Protocol Parity Check ---")
+        for w in parity_warnings:
+            print(f"  WARN  {w}")
+        total_errors += len(parity_warnings)
+    else:
+        print(f"\n--- Contract-Protocol Parity Check ---")
+        print("  PASS  All protocol modality references match contracts")
 
     print(f"\n{'='*50}")
     print(f"Files: {len(contract_files)}  Criteria: {total_criteria}  Errors: {total_errors}")

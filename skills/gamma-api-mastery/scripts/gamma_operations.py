@@ -203,12 +203,35 @@ def _flatten_preset_params(preset: dict[str, Any]) -> dict[str, Any]:
     return params
 
 
+VOCABULARY_TO_TEXTMODE = {
+    "generate": "generate",
+    "preserve": "preserve",
+    "preserve-strict": "preserve",
+}
+
+VOCABULARY_TO_IMAGE_SOURCE = {
+    "ai-generated": "aiGenerated",
+    "no-images": "noImages",
+    "theme-accent": "themeAccent",
+    "user-provided": "aiGenerated",
+}
+
+VOCABULARY_LAYOUT_TEMPLATES = {
+    "single-column": "Single column layout. One content area, full width.",
+    "two-column": "Two-column parallel layout. Side-by-side comparison.",
+    "full-bleed-image": "Full-bleed image layout. Image fills the slide.",
+    "data-table": "Data table layout. Clean tabular presentation with headers.",
+    "unconstrained": "",
+}
+
+
 def merge_parameters(
     style_defaults: dict[str, Any],
     content_template: dict[str, Any],
     envelope_overrides: dict[str, Any],
     *,
     style_preset: dict[str, Any] | None = None,
+    fidelity_class: str = "creative",
 ) -> dict[str, Any]:
     """Merge parameters following the priority cascade.
 
@@ -217,17 +240,12 @@ def merge_parameters(
         2. style preset (if provided)
         3. content type template
         4. context envelope overrides
+        5. fidelity vocabulary enforcement (for literal slides)
 
-    The ``style_preset`` layer is optional for backward compatibility.
-    When Gary resolves a named preset via ``resolve_style_preset()``,
-    pass the result here so its parameters sit between style guide
-    defaults and content type templates.
-
-    Special handling for ``additionalInstructions``: values from all
-    layers are **concatenated** (separated by a space) rather than
-    overridden.  This lets the preset provide a base instruction
-    (e.g., "keep the style uniform") while content-type and envelope
-    layers append specifics.
+    When fidelity_class is 'literal-text' or 'literal-visual', the
+    fidelity-control vocabulary fields (text_treatment, image_treatment,
+    layout_constraint, content_scope) override free-text
+    additionalInstructions.
     """
     sources = [style_defaults]
     if style_preset:
@@ -235,7 +253,7 @@ def merge_parameters(
     sources.extend([content_template, envelope_overrides])
 
     merged: dict[str, Any] = {}
-    ai_parts: list[str] = []  # additionalInstructions fragments
+    ai_parts: list[str] = []
 
     for source in sources:
         for key, value in source.items():
@@ -247,10 +265,73 @@ def merge_parameters(
                 else:
                     merged[key] = value
 
-    if ai_parts:
-        merged["additionalInstructions"] = " ".join(ai_parts)
+    if fidelity_class in ("literal-text", "literal-visual"):
+        text_treatment = merged.pop("text_treatment", "preserve")
+        image_treatment = merged.pop("image_treatment", "no-images")
+        layout_constraint = merged.pop("layout_constraint", "unconstrained")
+        content_scope = merged.pop("content_scope", "exact-input-only")
+
+        merged["textMode"] = VOCABULARY_TO_TEXTMODE.get(text_treatment, "preserve")
+        merged["imageOptions"] = {"source": VOCABULARY_TO_IMAGE_SOURCE.get(image_treatment, "noImages")}
+
+        layout_instruction = VOCABULARY_LAYOUT_TEMPLATES.get(layout_constraint, "")
+        scope_instruction = (
+            "Output ONLY the provided text. Do not add content, steps, or diagrams."
+            if content_scope == "exact-input-only"
+            else ""
+        )
+        deterministic_ai = " ".join(filter(None, [layout_instruction, scope_instruction]))
+        if deterministic_ai:
+            merged["additionalInstructions"] = deterministic_ai
+    else:
+        merged.pop("text_treatment", None)
+        merged.pop("image_treatment", None)
+        merged.pop("layout_constraint", None)
+        merged.pop("content_scope", None)
+        if ai_parts:
+            merged["additionalInstructions"] = " ".join(ai_parts)
 
     return merged
+
+
+def execute_generation(
+    params: dict[str, Any],
+    *,
+    slides: list[dict[str, Any]] | None = None,
+    module_lesson_part: str = "",
+    diagram_cards: list[dict[str, Any]] | None = None,
+    client: GammaClient | None = None,
+) -> dict[str, Any]:
+    """Production entry point for slide generation.
+
+    Routes to mixed-fidelity two-call split when slides contain different
+    fidelity classes, or to single-call generation when all slides share
+    the same class (or no fidelity data is provided).
+
+    Args:
+        params: Merged parameter dict.
+        slides: Optional list of slide dicts with 'fidelity' fields. If
+            provided and mixed fidelity is detected, routes to two-call split.
+        module_lesson_part: Identifier for doc naming (required for mixed fidelity).
+        diagram_cards: Optional literal-visual image URL entries.
+        client: Optional pre-configured GammaClient.
+
+    Returns:
+        For single-call: completed generation data.
+        For mixed-fidelity: dict with gary_slide_output, provenance, generation_mode, calls_made.
+    """
+    if slides:
+        groups = partition_by_fidelity(slides)
+        has_creative = len(groups["creative"]) > 0
+        has_literal = len(groups["literal"]) > 0
+
+        if has_creative and has_literal:
+            return generate_deck_mixed_fidelity(
+                slides, params, module_lesson_part,
+                client=client, diagram_cards=diagram_cards,
+            )
+
+    return generate_slide(params, client=client)
 
 
 def generate_slide(
@@ -258,7 +339,10 @@ def generate_slide(
     *,
     client: GammaClient | None = None,
 ) -> dict[str, Any]:
-    """Execute a text-based Gamma generation with merged parameters.
+    """Execute a single text-based Gamma API call with merged parameters.
+
+    This is the low-level single-call function. For production use with
+    fidelity-aware routing, use ``execute_generation()`` instead.
 
     Args:
         params: Merged parameter dict with at least ``input_text``
@@ -387,3 +471,307 @@ def download_export(
     logger.info("Downloaded %d bytes to %s", len(resp.content), output_path)
 
     return output_path
+
+
+def generate_deck_mixed_fidelity(
+    slides: list[dict[str, Any]],
+    base_params: dict[str, Any],
+    module_lesson_part: str,
+    *,
+    client: GammaClient | None = None,
+    diagram_cards: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Orchestrate two-call split generation for mixed-fidelity decks.
+
+    When a deck contains both creative and literal slides, Gamma's deck-level
+    textMode constraint requires two separate API calls: one in generate mode
+    for creative slides and one in preserve mode for literal slides. This
+    function partitions, generates, and reassembles the output.
+
+    Args:
+        slides: List of slide dicts with 'slide_number', 'content', 'fidelity'.
+        base_params: Merged parameters from the cascade (style guide + preset + template + envelope).
+        module_lesson_part: Identifier for doc naming (e.g., "C1-M1-P2-Macro-Trends").
+        client: Optional pre-configured GammaClient.
+        diagram_cards: Optional list of literal-visual image URL entries.
+
+    Returns:
+        Dict with 'gary_slide_output', 'provenance', 'generation_mode', 'calls_made'.
+    """
+    if client is None:
+        client = GammaClient()
+
+    groups = partition_by_fidelity(slides)
+    creative_slides = groups["creative"]
+    literal_slides = groups["literal"]
+
+    if diagram_cards:
+        card_map = {dc["card_number"]: dc for dc in diagram_cards}
+    else:
+        card_map = {}
+
+    creative_results: list[dict[str, Any]] = []
+    literal_results: list[dict[str, Any]] = []
+    calls_made = 0
+
+    if creative_slides:
+        creative_params = {**base_params, "textMode": "generate"}
+        creative_params.pop("text_mode", None)
+        creative_input = "\n---\n".join(s.get("content", "") for s in creative_slides)
+        creative_nums = [s["slide_number"] for s in creative_slides]
+        title = build_doc_title(module_lesson_part, "creative", creative_nums)
+        creative_params["input_text"] = f"{title}\n---\n{creative_input}"
+        creative_params["num_cards"] = len(creative_slides)
+        creative_params["card_split"] = "inputTextBreaks"
+
+        gen_result = generate_slide(creative_params, client=client)
+        calls_made += 1
+        creative_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
+
+        for i, slide in enumerate(creative_slides):
+            card_num = slide["slide_number"]
+            creative_results.append({
+                "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
+                "file_path": None,
+                "card_number": card_num,
+                "visual_description": f"[pending export — creative slide {card_num}]",
+                "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
+                "generation_id": creative_gen_id,
+                "fidelity": "creative",
+            })
+
+    if literal_slides:
+        literal_params = {**base_params}
+        literal_params["textMode"] = "preserve"
+        literal_params["text_mode"] = "preserve"
+        literal_params.pop("additionalInstructions", None)
+        literal_params["additional_instructions"] = (
+            "Output ONLY the provided text. Do not add content, steps, "
+            "or diagrams beyond what is given. Do not embellish or expand."
+        )
+        literal_params["image_options"] = {"source": "noImages"}
+
+        literal_input_parts = []
+        for s in literal_slides:
+            content = s.get("content", "")
+            if s["slide_number"] in card_map:
+                img_url = card_map[s["slide_number"]]["image_url"]
+                is_valid, reason = validate_image_url(img_url)
+                if not is_valid:
+                    raise ValueError(
+                        f"diagram_cards card_number {s['slide_number']}: "
+                        f"image URL validation failed: {reason} — URL: {img_url}"
+                    )
+                content = f"![diagram]({img_url})\n\n{content}"
+                literal_params["image_options"] = {"source": "aiGenerated"}
+            literal_input_parts.append(content)
+
+        literal_nums = [s["slide_number"] for s in literal_slides]
+        title = build_doc_title(module_lesson_part, "literal", literal_nums)
+        literal_params["input_text"] = f"{title}\n---\n" + "\n---\n".join(literal_input_parts)
+        literal_params["num_cards"] = len(literal_slides)
+        literal_params["card_split"] = "inputTextBreaks"
+
+        gen_result = generate_slide(literal_params, client=client)
+        calls_made += 1
+        literal_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
+
+        for i, slide in enumerate(literal_slides):
+            card_num = slide["slide_number"]
+            fidelity = slide.get("fidelity", "literal-text")
+            literal_results.append({
+                "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
+                "file_path": None,
+                "card_number": card_num,
+                "visual_description": f"[pending export — {fidelity} slide {card_num}]",
+                "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
+                "generation_id": literal_gen_id,
+                "fidelity": fidelity,
+            })
+
+    if not creative_slides and not literal_slides:
+        return {"gary_slide_output": [], "provenance": [], "generation_mode": "text", "calls_made": 0}
+
+    unified = reassemble_slide_output(creative_results, literal_results)
+
+    return {
+        "gary_slide_output": [
+            {
+                "slide_id": r["slide_id"],
+                "file_path": r.get("file_path"),
+                "card_number": r["card_number"],
+                "visual_description": r.get("visual_description", ""),
+                "source_ref": r.get("source_ref", ""),
+            }
+            for r in unified
+        ],
+        "provenance": [
+            {
+                "card_number": r["card_number"],
+                "source_call": r["source_call"],
+                "generation_id": r.get("generation_id", ""),
+                "fidelity": r.get("fidelity", "creative"),
+            }
+            for r in unified
+        ],
+        "generation_mode": "text",
+        "calls_made": calls_made,
+    }
+
+
+def partition_by_fidelity(
+    slides: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Partition slide brief slides into creative and literal groups.
+
+    Args:
+        slides: List of slide dicts, each with at minimum 'slide_number',
+                'content', and 'fidelity' (defaults to 'creative').
+
+    Returns:
+        Dict with keys 'creative' and 'literal', each containing the
+        slides assigned to that group with their original slide numbers preserved.
+    """
+    creative: list[dict[str, Any]] = []
+    literal: list[dict[str, Any]] = []
+
+    for slide in slides:
+        fidelity = slide.get("fidelity", "creative")
+        if fidelity in ("literal-text", "literal-visual"):
+            literal.append(slide)
+        else:
+            creative.append(slide)
+
+    return {"creative": creative, "literal": literal}
+
+
+def build_doc_title(
+    module_lesson_part: str,
+    fidelity_class: str,
+    slide_numbers: list[int],
+) -> str:
+    """Build a formulaic Gamma document title for archival integrity.
+
+    Pattern: {module-lesson-part}_{fidelity-class}_{slide-range}
+    Examples: C1-M1-P2-Macro-Trends_creative_s01-s09
+              C1-M1-P2-Macro-Trends_literal_s10
+    """
+    if len(slide_numbers) == 1:
+        slide_range = f"s{slide_numbers[0]:02d}"
+    else:
+        slide_range = f"s{min(slide_numbers):02d}-s{max(slide_numbers):02d}"
+    return f"{module_lesson_part}_{fidelity_class}_{slide_range}"
+
+
+def reassemble_slide_output(
+    creative_results: list[dict[str, Any]],
+    literal_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Reassemble results from two Gamma calls into unified slide output.
+
+    Both lists should contain dicts with 'card_number' for ordering.
+    Returns a unified list sorted by card_number with provenance metadata.
+    """
+    all_results = []
+
+    for item in creative_results:
+        item["source_call"] = "creative"
+        item["fidelity"] = "creative"
+        all_results.append(item)
+
+    for item in literal_results:
+        item["source_call"] = "literal"
+        all_results.append(item)
+
+    all_results.sort(key=lambda x: x.get("card_number", 0))
+    return all_results
+
+
+def validate_image_url(url: str, timeout: int = 10) -> tuple[bool, str]:
+    """Validate that an image URL is HTTPS-accessible with an image content type.
+
+    Returns:
+        (is_valid, reason) tuple.
+    """
+    if not url.startswith("https://"):
+        return False, "URL must use HTTPS"
+
+    image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
+    has_image_ext = any(url.lower().split("?")[0].endswith(ext) for ext in image_extensions)
+
+    try:
+        resp = requests.head(url, timeout=timeout, allow_redirects=True)
+        if resp.status_code != 200:
+            return False, f"HTTP {resp.status_code}"
+
+        content_type = resp.headers.get("content-type", "")
+        if "image/" in content_type or has_image_ext:
+            return True, "OK"
+
+        return False, f"Content-Type '{content_type}' is not an image type and URL lacks image extension"
+    except requests.RequestException as e:
+        return False, f"Request failed: {e}"
+
+
+if __name__ == "__main__":
+    import json
+    import sys
+
+    usage = (
+        "Usage: python gamma_operations.py <command> [args]\n"
+        "Commands:\n"
+        "  generate <input_text_file> [--fidelity-json <slides_json>] [--module <id>]\n"
+        "  validate-url <url>\n"
+        "  merge-params <style_json> <template_json> <envelope_json> [--fidelity-class <class>]"
+    )
+
+    if len(sys.argv) < 2:
+        print(usage)
+        sys.exit(1)
+
+    cmd = sys.argv[1]
+
+    if cmd == "validate-url" and len(sys.argv) >= 3:
+        valid, reason = validate_image_url(sys.argv[2])
+        print(json.dumps({"valid": valid, "reason": reason}))
+        sys.exit(0 if valid else 1)
+
+    if cmd == "merge-params" and len(sys.argv) >= 5:
+        style = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+        template = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))
+        envelope = json.loads(Path(sys.argv[4]).read_text(encoding="utf-8"))
+        fc = "creative"
+        if "--fidelity-class" in sys.argv:
+            fc = sys.argv[sys.argv.index("--fidelity-class") + 1]
+        result = merge_parameters(style, template, envelope, fidelity_class=fc)
+        print(json.dumps(result, indent=2))
+        sys.exit(0)
+
+    if cmd == "generate" and len(sys.argv) >= 3:
+        input_text = Path(sys.argv[2]).read_text(encoding="utf-8")
+        slides_data = None
+        module_id = ""
+        diagram_cards_data = None
+
+        if "--fidelity-json" in sys.argv:
+            idx = sys.argv.index("--fidelity-json") + 1
+            slides_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+        if "--module" in sys.argv:
+            idx = sys.argv.index("--module") + 1
+            module_id = sys.argv[idx]
+        if "--diagram-cards" in sys.argv:
+            idx = sys.argv.index("--diagram-cards") + 1
+            diagram_cards_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+
+        params = {"input_text": input_text, "textMode": "generate"}
+        result = execute_generation(
+            params,
+            slides=slides_data,
+            module_lesson_part=module_id,
+            diagram_cards=diagram_cards_data,
+        )
+        print(json.dumps(result, indent=2, default=str))
+        sys.exit(0)
+
+    print(usage)
+    sys.exit(1)

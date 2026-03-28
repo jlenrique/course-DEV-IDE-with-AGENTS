@@ -33,6 +33,7 @@ _gamma_ops_mod = _load_module(
 )
 download_export = _gamma_ops_mod.download_export
 generate_slide = _gamma_ops_mod.generate_slide
+execute_generation = _gamma_ops_mod.execute_generation
 load_style_guide_gamma = _gamma_ops_mod.load_style_guide_gamma
 
 _woodshed_mod = _load_module(

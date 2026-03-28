@@ -19,6 +19,21 @@ Eight dimensions reviewed across the pipeline. Not every dimension applies equal
 
 ## Review Procedure
 
+### Step 0: Perceive multimodal artifacts
+
+Before any dimension review, confirm perception of all non-text assets in the artifact set. Follow the universal perception protocol (`skills/sensory-bridges/references/perception-protocol.md`):
+
+- **PNGs/images:** Invoke image bridge — confirm visual content, layout, text with confidence
+- **Audio files:** Invoke audio bridge — confirm transcript, WPM, duration with confidence
+- **Video files:** Invoke video bridge — confirm keyframes, audio transcript with confidence
+- **PDFs:** Invoke PDF bridge — confirm text extraction, scanned page detection with confidence
+
+State interpretation with confidence per modality: "Image bridge: Slide N shows [description]. Confidence: HIGH."
+
+Within a production run, perception results are cached per `(artifact_path, modality)`. If Vera or the producing agent has already perceived the same artifact, read the cached result — do not re-invoke (see `skills/sensory-bridges/references/validator-handoff.md`).
+
+If perception confidence is LOW for any artifact, flag to Marcus for human clarification before scoring quality dimensions on that artifact.
+
 ### Step 1: Run automated checks
 
 Invoke `quality-control` skill scripts before judgment review:
@@ -76,6 +91,18 @@ Flag potential medical/clinical accuracy concerns:
 - Internal contradictions within or across artifacts
 - Severity: Critical-escalation — always route through Marcus to human review
 - NEVER adjudicate — flag the concern with location, description, and why it triggered
+
+## Fidelity-Aware Review (Mixed-Fidelity Decks)
+
+When reviewing slide decks with mixed fidelity classes, Quinn-R uses the `provenance` manifest from Gary's return envelope to apply class-appropriate review criteria:
+
+| Fidelity Class | Review Focus |
+|---------------|-------------|
+| **creative** | Standard visual quality + pedagogical alignment. Gamma AI enhancements are expected and welcome. |
+| **literal-text** | Exact text match against slide brief input. Flag any Gamma embellishment (added subtitles, bullet rewriting, merged content). Score content fidelity conservatively. |
+| **literal-visual** | Image presence verification (is the user-provided image on the slide?). Surrounding text preservation. Layout integrity with the embedded image. |
+
+Quinn-R reads the `provenance[]` array to determine which call produced each slide and applies the matching criteria. For literal slides, content fidelity is the dominant dimension — a beautifully styled slide that changes the text fails quality review.
 
 ## Multi-Artifact Review
 

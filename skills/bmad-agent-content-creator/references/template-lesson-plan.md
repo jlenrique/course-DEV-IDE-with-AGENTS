@@ -25,6 +25,7 @@ For each content block in the lesson sequence:
 - **Estimated Duration:** {minutes}
 - **Key Terminology:** {terms that must appear}
 - **Behavioral / Affective Goal:** {credible | moving | alarming | attention-reset | reflective | provocative | urgent}
+- **Fidelity Signal:** {creative | literal-text | literal-visual | none} — optional early indicator if source material strongly suggests a fidelity class for downstream slide production. Irene applies full classification in the slide brief; this field provides a planning-stage signal.
 
 **Content Summary:**
 {Brief description of what this block covers and its pedagogical purpose}

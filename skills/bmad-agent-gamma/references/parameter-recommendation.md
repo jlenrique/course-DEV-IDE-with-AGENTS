@@ -18,19 +18,19 @@ See `./references/style-guide-integration.md` for the canonical six-level merge 
 
 ## Embellishment Control
 
-Gamma adds content even in `textMode: preserve`. Proactively include constraining `additionalInstructions` when content fidelity matters:
+**For literal slides (`literal-text`, `literal-visual`):** Do NOT use free-text `additionalInstructions`. Instead, use the fidelity-control vocabulary fields in the slide brief (`text_treatment`, `image_treatment`, `layout_constraint`, `content_scope`). The `merge_parameters()` function in `gamma_operations.py` maps these vocabulary fields directly to Gamma API parameters — `additionalInstructions` is derived deterministically from the vocabulary, not composed as free text. Use `execute_generation()` as the production entry point.
 
-- **Strict faithful**: `"Output ONLY the provided text. Do not add content, steps, or diagrams beyond what is given. Do not embellish or expand."`
-- **Moderate control**: `"Stay close to the provided content. Minor formatting adjustments are acceptable but do not add new information."`
-- **Creative freedom**: Omit constraint — allow Gamma to enhance
+**For creative slides:** Free-text `additionalInstructions` is permitted and useful for guiding Gamma's creative interpretation.
 
-Track which constraint phrasings produce the best fidelity outcomes in `patterns.md`.
+Track which vocabulary combinations and creative guidance phrasings produce the best fidelity outcomes in `patterns.md`.
 
 ## Image Control
 
-- `imageOptions.source: "noImages"` — use for faithful reproduction and text-focused slides
-- `imageOptions.source: "pexels"` or `"webFreeToUse"` — use for production slides needing stock imagery
-- `imageOptions.source: "aiGenerated"` — use when custom visuals are explicitly requested
+- **For literal slides:** Image handling is derived from `image_treatment` vocabulary field → maps to `imageOptions.source` via `merge_parameters()`
+- **For creative slides:** Set `imageOptions.source` directly:
+  - `"noImages"` — text-focused slides
+  - `"pexels"` or `"webFreeToUse"` — production slides needing stock imagery
+  - `"aiGenerated"` — custom visuals explicitly requested
 
 ## Deck Mode Parameter Guidance
 

@@ -22,9 +22,9 @@ criteria:
     fidelity_class: [literal-text]
     severity: critical
     evaluation_type: agentic
-    check: "For each content_item in slide_brief.slides[fidelity=literal-text].content: item text appears verbatim in the PNG extracted text (via image sensory bridge)"
+    check: "For each content_item in slide_brief.slides[fidelity=literal-text].content: item text appears verbatim in the PPTX extracted text (via pptx sensory bridge; fallback to image bridge if PPTX unavailable)"
     requires_perception: true
-    perception_modality: image
+    perception_modality: pptx
 
   - id: "G3-03"
     name: "Literal visual placement"
@@ -42,9 +42,9 @@ criteria:
     fidelity_class: [creative]
     severity: high
     evaluation_type: agentic
-    check: "For each content_item in slide_brief.slides[fidelity=creative].content: the theme/concept is semantically present in the PNG extracted text — creative reframing is acceptable, theme omission is not"
+    check: "For each content_item in slide_brief.slides[fidelity=creative].content: the theme/concept is semantically present in the PPTX extracted text — creative reframing is acceptable, theme omission is not (fallback to image bridge if PPTX unavailable)"
     requires_perception: true
-    perception_modality: image
+    perception_modality: pptx
 
   - id: "G3-05"
     name: "No harmful invention"
@@ -52,9 +52,9 @@ criteria:
     fidelity_class: [creative, literal-text, literal-visual]
     severity: critical
     evaluation_type: agentic
-    check: "PNG extracted text does not contain domain-specific factual assertions (drug names, dosages, statistics, clinical recommendations) absent from the slide brief"
+    check: "PPTX extracted text does not contain domain-specific factual assertions (drug names, dosages, statistics, clinical recommendations) absent from the slide brief (fallback to image bridge if PPTX unavailable)"
     requires_perception: true
-    perception_modality: image
+    perception_modality: pptx
 
   - id: "G3-06"
     name: "Provenance manifest completeness"

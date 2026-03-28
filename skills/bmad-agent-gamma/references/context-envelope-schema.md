@@ -35,8 +35,31 @@ parameters_ready: false                     # true = skip greet/mastery, fast-pa
 parameter_overrides:                        # explicit Gamma API params that override all defaults
   numCards: 1
   textMode: "preserve"
-  additionalInstructions: "Chart layout with labeled axes"
+  additionalInstructions: "Chart layout with labeled axes"  # creative slides only — literal slides use fidelity-control vocabulary (text_treatment, image_treatment, layout_constraint, content_scope) via merge_parameters()
 run_mode: "default"                         # default | ad-hoc
+
+# FIDELITY — per-slide classification from Irene's slide brief (Story 3.11)
+fidelity_per_slide:                          # populated by Marcus from Irene's slide brief
+  - slide_number: 1
+    fidelity: "creative"                     # creative | literal-text | literal-visual
+  - slide_number: 10
+    fidelity: "literal-text"
+    fidelity_rationale: "Knowledge check teaser — exact topics from source"
+
+fidelity_guidance:                           # user's fidelity preferences from Marcus discovery
+  literal_visuals:
+    - description: "Dual-axis chart from page 7"
+      source_ref: "TEJAL_Notes.pdf#page7"
+      rebranded_asset_path: "course-content/staging/.../rebranded-assets/slide-03-chart.png"
+  literal_text:
+    - description: "10 KC topics from Chapters 2 & 3"
+      source_ref: "extracted.md#Chapter 2 Knowledge Check"
+
+diagram_cards:                               # literal-visual slides with hosted image URLs
+  - card_number: 3
+    image_url: "https://gamma.app/hosted/..."  # HTTPS, publicly accessible, image extension
+    placement_note: "Primary visual, full-width"
+    required: true
 
 # DECK MODE — multi-slide generation
 deck_mode: false                            # true = apply deck parameter guidance
@@ -105,6 +128,16 @@ quality_assessment:
   embellishment_detected: true
   embellishment_details:
     - "Gamma added subtitle 'Bridging Two Worlds' not in input"
+
+provenance:                                  # per-card fidelity provenance (Story 3.11)
+  - card_number: 1
+    source_call: "creative"                  # creative | literal (which Gamma API call)
+    generation_id: "abc123"                  # Gamma generation ID
+    fidelity: "creative"                     # fidelity class from slide brief
+  - card_number: 10
+    source_call: "literal"
+    generation_id: "def456"
+    fidelity: "literal-text"
 
 generation_mode: "text"                     # text | from-template
 template_used: null                         # gammaId if from-template, null if text generation

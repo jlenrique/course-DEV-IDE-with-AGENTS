@@ -539,6 +539,18 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - FR79: Mode switch shall persist within a session until explicitly changed by the user
 - FR80: System shall support future evolution to a per-level (course/module/lesson/asset) modality matrix with additional modes (write-only, read-only)
 
+### Agent Governance & Authority (Added 2026-03-28)
+- FR81: System shall maintain an explicit run baton for every active production run, containing run_id, orchestrator identity, current gate, invocation_mode, allowed delegate graph, escalation target, and blocking authority
+- FR82: During an active production run, every specialist agent shall check the run baton before performing user-facing actions — if the user invokes a specialist directly during a Marcus-led run, the default behavior shall redirect to Marcus unless the user explicitly enters standalone consult mode
+- FR83: Every delegated context envelope shall carry invocation_mode (delegated/standalone), current_gate, authority_chain, decision_scope, and allowed_outputs — specialists shall not expand beyond the specified scope
+- FR84: System shall maintain a single authoritative lane matrix defining which agent owns which judgment dimension — orchestration, instructional design, tool execution, perception, fidelity verification, and quality assessment shall each have exactly one owner
+- FR85: Specialist agents shall not report authoritative judgment on dimensions outside their lane — tool specialists report execution quality only (layout integrity, parameter confidence, embellishment risk), not content fidelity or pedagogical alignment
+- FR86: The lane matrix shall be maintained as a central document and briefly restated in each specialist's SKILL.md to ensure local awareness matches global authority
+- FR87: Every agent revision shall pass a mandatory quality scan (structure, prompt craft, cohesion, execution efficiency, script opportunities) before acceptance — agent QA is a release gate, not optional
+- FR88: Sensory bridge perception results shall be computed once per artifact per production run and cached — both the Fidelity Assessor and Quality Reviewer shall consume the same canonical perception output, never performing independent interpretation passes
+- FR89: System shall provide observability hooks for gate pass rates, fidelity scores (O/I/A counts), quality trends, and agent performance metrics to support production intelligence reporting
+- FR90: Lane boundary violations detected during production runs shall be logged as governance findings and surfaced in run reports for systematic remediation
+
 ## Non-Functional Requirements
 
 ### Performance

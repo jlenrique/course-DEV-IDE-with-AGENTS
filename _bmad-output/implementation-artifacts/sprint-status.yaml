@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-28  # Story 3.11 mixed-fidelity added (Trial 2 blocker)
+last_updated: 2026-03-28  # Epic 2A COMPLETE (9/9), Story 3.11 DONE, roadmap rebaselined. Next: Epic 4A.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -70,17 +70,17 @@ development_status:
   # === EPIC 2A: Fidelity Assurance & APP Intelligence Infrastructure ===
   # Added 2026-03-28: Implements GOLD document architecture (party-mode-fidelity-assurance-architecture.md)
   # Prerequisite: Epic 2 complete. Must complete before resuming Epic 3 tool specialist work.
-  # Story 3.11 on hold pending this epic's G2-G3 stories.
-  epic-2a: in-progress
+  # Story 3.11 original G2-G3 dependency is satisfied; it remains deferred while remaining mixed-fidelity safeguards in Epic 2A are completed.
+  epic-2a: done  # ALL 9 STORIES COMPLETE — Fidelity Assurance & APP Intelligence Infrastructure — done 2026-03-28
   2a-1-fidelity-maturity-audit-l1-contracts: done  # audit baseline, L1 contracts (38 criteria), validation script, arch docs — done 2026-03-28
   2a-2-sensory-bridges-skill: done                        # 5 bridges, 34 tests, perception schema, confidence rubric, protocol, validator handoff — done 2026-03-28
   2a-3-provenance-protocol: done                         # source_ref in 5 templates + context envelope, grammar spec, delegation protocol updated — done 2026-03-28
-  2a-4-fidelity-assessor-agent-foundation: backlog      # agent creation, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker
-  2a-5-g0-g1-fidelity-verification: backlog             # source bundle completeness (G0), lesson plan faithfulness (G1)
-  2a-6-agent-perception-upgrades: backlog               # Irene, Gary, Quinn-R adopt universal perception protocol
-  2a-7-g4-g5-fidelity-verification: backlog             # narration script vs slides (G4), audio vs script via STT (G5)
-  2a-8-cumulative-drift-leaky-neck: backlog             # global fidelity metric, drift thresholds, leaky neck remediation
-  2a-9-app-maturity-audit-skill: backlog                # repeatable audit skill producing heat map + reports
+  2a-4-fidelity-assessor-agent-foundation: done  # Vera agent, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker, Marcus integration — done 2026-03-28
+  2a-5-g0-g1-fidelity-verification: done                   # source bundle completeness (G0), lesson plan faithfulness (G1) — done 2026-03-28
+  2a-6-agent-perception-upgrades: done                    # Irene, Gary, Quinn-R adopt universal perception protocol — done 2026-03-28
+  2a-7-g4-g5-fidelity-verification: done                  # narration script vs slides (G4), audio vs script via STT (G5) — done 2026-03-28
+  2a-8-cumulative-drift-leaky-neck: done                  # source_ref resolver, drift tracking, fidelity-control vocab — done 2026-03-28
+  2a-9-app-maturity-audit-skill: done                     # repeatable audit skill — four-pillar protocol, heat map, delta — done 2026-03-28
   epic-2a-retrospective: optional
 
   # === EPIC 3: Core Tool Specialist Agents & Mastery Skills ===
@@ -98,48 +98,55 @@ development_status:
   3-8-canva-specialist-agent: backlog  # manual-tool agent pattern; was 3.7
   3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
-  3-11-mixed-fidelity-gamma-generation: on-hold  # ON HOLD pending Epic 2A fidelity infrastructure (2026-03-28). Fidelity classification system needs independent verification before implementation.
+  3-11-mixed-fidelity-gamma-generation: done  # Mixed-fidelity system: Irene fidelity fields, Gary two-call split, Marcus discovery, Quinn-R fidelity-aware review, 12 tests — done 2026-03-28
   epic-3-retrospective: optional
 
+  # === EPIC 4A: Agent Governance, Quality Optimization & APP Observability ===
+  # Added 2026-03-28: Run baton, lane matrix, envelope governance, agent QA gate, observability.
+  # Must complete before Epic 4. Depends on Epic 2A complete.
+  epic-4a: backlog
+  4a-1-run-baton-authority-contract: backlog
+  4a-2-lane-matrix-judgment-boundaries: backlog
+  4a-3-envelope-governance-extensions: backlog
+  4a-4-agent-qa-release-gate: backlog
+  4a-5-perception-caching-observability: backlog
+  epic-4a-retrospective: optional
+
   # === EPIC 4: Workflow Coordination & State Infrastructure ===
+  # Dependency: Epic 4A must be complete before Epic 4.
+  # Updated 2026-03-28: Stories 4.2 and 4.4 depend on governance layer (run baton, lane matrix, Vera integration).
   epic-4: backlog
   4-1-production-run-lifecycle: backlog
-  4-2-quality-gate-coordination: backlog
+  4-2-quality-gate-coordination: backlog  # depends on 4A run baton + lane matrix
   4-3-content-entity-management: backlog
-  4-4-production-intelligence-reporting: backlog
+  4-4-production-intelligence-reporting: backlog  # depends on 4A observability hooks
   4-5-export-platform-deployment: backlog
   epic-4-retrospective: optional
 
-  # === EPIC 5: Unified Content Production Engine ===
+  # === EPIC 5: Tool Capability Expansion (Rebaselined 2026-03-28) ===
+  # Narrowed: 5.2 dropped (compositor delivers assembly), 5.3 merged (Quinn-R + style guide),
+  # 5.4 edited (Panopto done, Kling pulled forward). 2 stories remain.
   epic-5: backlog
-  5-1-expanded-tool-specialist-agents: backlog
-  5-2-multi-modal-assembly-coordination: backlog
-  5-3-style-orchestration-brand-consistency: backlog
-  5-4-tier2-api-integrations-botpress-wondercraft-kling: backlog
+  5-1-expanded-tool-specialist-agents: backlog  # Vyond, Midjourney, Articulate (manual-tool pattern)
+  5-4-remaining-tier2-api-integrations: backlog  # Botpress, Wondercraft only (Panopto, Kling already done)
   epic-5-retrospective: optional
 
-  # === EPIC 6: LMS Platform Integration & Delivery ===
+  # === EPIC 6: LMS Platform Integration & Delivery (Rebaselined 2026-03-28) ===
+  # 6.2 merged into Story 3.6 (Canvas specialist). 1 story remains.
   epic-6: backlog
   6-1-coursearc-specialist-agent: backlog
-  6-2-enhanced-canvas-integration: backlog
   epic-6-retrospective: optional
 
-  # === EPIC 7: Multi-Platform Intelligence Matrix ===
-  epic-7: backlog
-  7-1-platform-allocation-agent: backlog
-  epic-7-retrospective: optional
+  # === EPIC G: Governance Synthesis & Intelligence Optimization (Replaces Epics 7+8+9, 2026-03-28) ===
+  # Platform allocation → Marcus intelligence extension. Tool review → tech-spec-wrangler synthesis.
+  # Documentation → sidecar synthesis. 2 stories.
+  epic-g: backlog
+  g-1-platform-allocation-intelligence: backlog  # replaces Epic 7
+  g-2-tool-ecosystem-monitoring-synthesis: backlog  # replaces Epics 8 + 9
+  epic-g-retrospective: optional
 
-  # === EPIC 8: Tool Review & Optimization Intelligence ===
-  epic-8: backlog
-  8-1-tool-review-agent: backlog
-  epic-8-retrospective: optional
-
-  # === EPIC 9: Living Architecture Documentation System ===
-  epic-9: backlog
-  9-1-self-improving-documentation-agent: backlog
-  epic-9-retrospective: optional
-
-  # === EPIC 10: Strategic Production Orchestration ===
+  # === EPIC 10: Strategic Production Orchestration (Deferred, Rebaselined 2026-03-28) ===
+  # Deferred until governance + observability matures. Depends on Epic 4 + Epic G.
   epic-10: backlog
   10-1-predictive-workflow-optimization: backlog
   epic-10-retrospective: optional

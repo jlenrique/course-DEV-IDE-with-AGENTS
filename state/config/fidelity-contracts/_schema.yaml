@@ -29,7 +29,7 @@ schema_version: "1.0"
 #       # agentic: requires LLM judgment (semantic coverage, clinical accuracy, visual interpretation)
 #     check: "{human-readable test}"    # The assertion to evaluate
 #     requires_perception: false        # true if a sensory bridge is needed to evaluate
-#     perception_modality: null         # image | audio | pdf | video (if requires_perception)
+#     perception_modality: null         # image | audio | pdf | pptx | video (if requires_perception)
 
 required_fields:
   gate: true

@@ -2,85 +2,61 @@
 
 ## Immediate Next Action
 
-**Create and implement Story 2A-4: Fidelity Assessor Agent — Foundation (G2-G3)**
+**Begin Epic 4A: Agent Governance, Quality Optimization & APP Observability**
 
-This is the most substantial story in Epic 2A. It requires:
-1. Creating the Fidelity Assessor agent via `bmad-agent-builder` (six-phase discovery)
-2. Implementing G2 evaluation (slide brief vs. lesson plan fidelity checking)
-3. Implementing G3 evaluation (generated slides vs. slide brief, using PPTX and image sensory bridges)
-4. Building the Fidelity Trace Report output format (Omissions/Inventions/Alterations)
-5. Implementing the circuit breaker and operating policy
-6. Integrating with Marcus's delegation flow
-
-Story file needs to be created first (2A-4 is still `backlog` — no detailed story file exists yet). Use the epic AC from `_bmad-output/planning-artifacts/epics.md` (search for "Story 2A-4") as the source for the detailed story file.
+Story 4A-1 (Run Baton & Authority Contract) is the first story. See `_bmad-output/planning-artifacts/epics.md` for full AC.
 
 ---
 
-## Current Status — Epic 2A: 3/9 stories DONE
+## Current Status
 
-| Story | Status | Key Deliverables |
-|-------|--------|-----------------|
-| **2A-1** | DONE | Fidelity audit baseline, 7 L1 contracts (38 criteria), `validate_fidelity_contracts.py`, `docs/app-design-principles.md`, `docs/fidelity-gate-map.md` (role matrix, operating policy) |
-| **2A-2** | DONE | 5 sensory bridges (pptx, image, audio, pdf, video) at `skills/sensory-bridges/`, canonical perception schema, confidence rubric, universal perception protocol, validator handoff spec, 34 tests |
-| **2A-3** | DONE | `source_ref` fields in 5 live templates (lesson plan, slide brief, narration script, segment manifest, context envelope), `docs/source-ref-grammar.md`, delegation protocol updated |
-| **2A-4** | BACKLOG | Fidelity Assessor agent — next to implement |
-| **2A-5 through 2A-9** | BACKLOG | G0-G1 fidelity, agent perception upgrades, G4-G5, drift tracking, maturity audit skill |
+| Epic | Status | Stories |
+|------|--------|---------|
+| Epic 1 | DONE | 11/11 |
+| Epic 2 | DONE | 6/6 |
+| **Epic 2A** | **DONE** | **9/9** — Vera (G0-G5), sensory bridges, perception protocol, source_ref resolver, drift tracking, fidelity-control vocabulary, maturity audit |
+| **Epic 3** | **8/11 done** | 3.1-3.5, 3.9, 3.10, 3.11 done. 3.6-3.8 deferred. |
+| **Epic 4A** | **NEXT** | 5 stories: run baton, lane matrix, envelope governance, agent QA gate, perception caching + observability |
 
-**Story 3.11** remains ON HOLD pending Epic 2A's G2-G3 coverage.
+**Roadmap rebaselined 2026-03-28:** 9 epics, 40 stories. Epics 7+8+9 collapsed into Epic G. Epic 5 trimmed. Epic 6.2 merged into 3.6. PRD updated with FR81-FR90 (governance). Architecture updated with governance section.
 
 ---
 
-## Critical Discoveries This Session
+## Key Deliverables This Session
 
-**APP Design Principles established (Party Mode + Gemini synthesis):**
-- **Three-Layer Intelligence Model:** L1 deterministic contracts (invariant), L2 agentic evaluation (evolves), L3 learning memory (compounds)
-- **Hourglass Model:** Wide cognitive → narrow deterministic neck → wide cognitive
-- **Leaky Neck Diagnostic:** Intelligence must not enforce constraints that can be deterministic
-- **Sensory Horizon:** Agents cannot verify what they cannot perceive
-
-**GOLD document:** `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` — the synthesized architecture from both teams. Treat as authoritative for Epic 2A implementation.
-
-**Key implementation decisions:**
-- PPTX bridge is the **primary deterministic path** for G3 text verification (exact text objects, not OCR)
-- ElevenLabs Scribe v2 STT is the audio bridge (word-level timestamps, keyterm prompting, ≤5% WER English, accepts video files directly)
-- `python-pptx` added to `requirements.txt`
-- All sensory bridges use a canonical request/response JSON schema — no free-form output
-- Confidence calibration rubric defines operational meaning of HIGH/MEDIUM/LOW per modality
-- Fidelity-control vocabulary (Story 2A-8) will replace free-text `additionalInstructions` for literal slides
-
-**10 implementer-grade findings were addressed** in Stories 2A-1 through 2A-9 (perception schema, confidence rubric, source_ref grammar, fidelity-control vocabulary, Gary-Irene handoff normalization, role matrix, validator integration, scanned PDF gap, operating policy, drift resolver).
+- **Epic 2A complete** (Stories 2A-4 through 2A-9)
+- **Story 3.11** (mixed-fidelity Gamma generation) — `execute_generation()` production entry point, `merge_parameters()` vocabulary enforcement, `generate_deck_mixed_fidelity()` two-call orchestrator, URL validation wired
+- **Full roadmap rebaseline** — PRD (10 new FRs), architecture (governance section), epics restructured
+- **Three Party Mode consultations** — mixed-fidelity compatibility, video pipeline, downstream epic audit
+- **Two external code reviews** with all findings resolved
 
 ---
 
 ## Branch
 
-**`dev/story-3.11-mixed-fidelity`** (note: branch was created for 3.11 but now carries Epic 2A work)
-
-**Startup:** `git checkout dev/story-3.11-mixed-fidelity`
+**`dev/story-3.11-mixed-fidelity`** (carries all Epic 2A + 3.11 work)
 
 ---
 
-## Key File Paths for Story 2A-4
+## Key File Paths for Epic 4A
 
 | File | Role |
 |---|---|
-| `_bmad-output/planning-artifacts/epics.md` | Epic 2A story ACs (search "Story 2A-4") |
-| `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` | GOLD document — Fidelity Assessor spec |
-| `state/config/fidelity-contracts/` | L1 contracts the Assessor evaluates against |
-| `skills/sensory-bridges/` | Bridges the Assessor invokes for G3 perception |
-| `docs/fidelity-gate-map.md` | Role matrix, operating policy, gate definitions |
-| `docs/app-design-principles.md` | Three-Layer Model, Hourglass, design principles |
-| `docs/source-ref-grammar.md` | source_ref format the Assessor resolves |
-| `skills/bmad-agent-content-creator/references/template-slide-brief.md` | G2 source of truth |
-| `skills/bmad-agent-gamma/references/context-envelope-schema.md` | G3 output contract |
-| `skills/bmad-agent-quality-reviewer/references/review-protocol.md` | Quinn-R's dimensions (boundary reference) |
-| `skills/bmad-agent-marcus/references/conversation-mgmt.md` | Marcus delegation flow to update |
+| `_bmad-output/planning-artifacts/epics.md` | Epic 4A story ACs (search "Epic 4A") |
+| `_bmad-output/planning-artifacts/architecture.md` | Governance architecture section |
+| `_bmad-output/planning-artifacts/prd.md` | FR81-FR90 (governance FRs) |
+| `docs/fidelity-gate-map.md` | Role matrix (to be extended to lane matrix) |
+| `docs/app-design-principles.md` | Three-Layer Model, Hourglass |
+| `skills/bmad-agent-marcus/references/conversation-mgmt.md` | Current delegation flow to update with baton |
+
+## Session Lesson (Carry Forward)
+
+**Before marking any story done, verify the execution path end-to-end.** This session had repeated findings of "helpers without callers" — functions that were tested in isolation but not wired into production call paths. The fix each time was to create orchestrator functions, CLI entry points, or non-test callers. **The check**: for every new Python function, confirm at least one non-test call site exists. For every new agent protocol step, confirm the referenced script has a CLI entry point.
 
 ## Gotchas
 
-- **Branch name mismatch:** Branch is `dev/story-3.11-mixed-fidelity` but we're working Epic 2A — this is intentional, the branch was repurposed
-- PowerShell doesn't support `&&` chaining — use `;` or sequential commands
-- Python 3.13 is the active interpreter (pyenv), not the 3.10 in `.pyenv/versions/3.10.5`
-- `skills/` directories use hyphens (e.g., `sensory-bridges`) which are invalid Python package names — use `conftest.py` with `importlib.util.spec_from_file_location` for test imports (see `skills/sensory-bridges/scripts/tests/conftest.py` for pattern)
-- 2 pre-existing test failures: venv detection (running outside venv) and style guide `brand` key — not regressions
-- Gamma credits: 7,290 remaining
+- Branch name mismatch: `dev/story-3.11-mixed-fidelity` carries governance work too
+- PowerShell: no `&&` chaining
+- Python 3.13 via pyenv
+- 2 pre-existing test failures (venv detection, style guide brand key)
+- Kling test collection error (missing jwt module)

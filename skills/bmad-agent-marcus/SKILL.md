@@ -102,6 +102,12 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, segment manifest; Kira always produces silent video |
 | Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | active | Voice/tone standards, segment manifest |
 | Descript composition assembly guide | `compositor` | active | Completed segment manifest path |
+| Fidelity verification — G0 (source bundle completeness) | `fidelity-assessor` (Vera) | active | Gate, bundle dir, source material paths, fidelity contracts path, run mode. See `./references/conversation-mgmt.md` for envelope spec. |
+| Fidelity verification — G1 (lesson plan vs. source bundle) | `fidelity-assessor` (Vera) | active | Gate, lesson plan path, bundle dir. Vera runs BEFORE Quinn-R — fidelity is a precondition for quality. |
+| Fidelity verification — G2 (slide brief vs. lesson plan) | `fidelity-assessor` (Vera) | active | Gate, slide brief path, lesson plan path. |
+| Fidelity verification — G3 (generated slides vs. slide brief) | `fidelity-assessor` (Vera) | active | Gate, PPTX + PNG paths, slide brief path. |
+| Fidelity verification — G4 (narration script vs. slides + lesson plan) | `fidelity-assessor` (Vera) | active | Gate, narration script, segment manifest, perception_artifacts, lesson plan. |
+| Fidelity verification — G5 (audio vs. narration script) | `fidelity-assessor` (Vera) | active | Gate, audio file paths, narration script. Vera invokes audio bridge for STT. |
 | Quality assurance — pre-composition pass | `quality-reviewer` (Quinn-R) | active | Segment manifest path, audio/video asset paths, `review_pass: pre-composition` |
 | Quality assurance — post-composition pass | `quality-reviewer` (Quinn-R) | active | Final MP4, VTT paths, `review_pass: post-composition` |
 | LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned (Story 3.6) | Allocation policy, exemplar matrices |

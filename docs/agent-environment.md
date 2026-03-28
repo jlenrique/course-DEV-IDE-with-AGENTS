@@ -41,6 +41,8 @@ There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token*
 | **Tech spec wrangler** | `skills/tech-spec-wrangler/` | Tool API doc refresh, research, validation via Ref MCP; ensures agents always have current API knowledge | Active |
 | **Source wrangler** | `skills/source-wrangler/` | Notion + Box + URL/HTML ingestion; Playwright-saved page processing; `extracted.md` bundles for specialists | Active |
 | **Sensory bridges** | `skills/sensory-bridges/` | Multimodal perception: PPTX, image, audio (ElevenLabs STT), PDF, video bridges with canonical schema, confidence rubric, and universal perception protocol | Active |
+| **Fidelity Assessor (Vera)** | `skills/bmad-agent-fidelity-assessor/` | Forensic fidelity verification at G0-G5. O/I/A taxonomy, Fidelity Trace Reports, circuit breaker. Runs before Quinn-R at every gate. | Active |
+| **APP Maturity Audit** | `skills/app-maturity-audit/` | Repeatable four-pillar audit (L1 contracts, L2 evaluation, L3 memory, perception) with heat map, leaky neck, sensory horizon, and drift reports | Active |
 
 ## APIs and credentials
 

@@ -25,7 +25,7 @@ This is the **skill layer** in the three-layer architecture: Gary (agent — jud
 
 | Script | Purpose | Invoked By |
 |--------|---------|------------|
-| `gamma_operations.py` | Load style guide defaults, resolve style presets, merge with request params, call GammaClient, poll, export, download artifact | Gary (PR, SG, SP, CT capabilities) |
+| `gamma_operations.py` | Production entry point (`execute_generation`): fidelity-aware routing (single-call or two-call split), style guide merge with vocabulary enforcement, URL validation for diagram_cards, GammaClient calls, poll, export, download | Gary (PR, SG, SP, CT capabilities) |
 | `gamma_evaluator.py` | Analyze exemplars, derive reproduction specs, execute reproductions, compare against rubric | Gary (ES capability) via woodshed skill |
 
 ## Reference Index
@@ -35,6 +35,17 @@ This is the **skill layer** in the three-layer architecture: Gary (agent — jud
 | `parameter-catalog.md` | Full Gamma API parameter space with educational guidance | Gary needs parameter details beyond content-type templates |
 | `context-optimization.md` | Pre-built parameter templates per content type | Gary's CT capability maps content type to params |
 | `doc-sources.yaml` | URLs for mandatory doc refresh before woodshed cycles | Gary's ES capability runs doc refresh |
+
+## Production Entry Point
+
+**`execute_generation()`** is the production entry point for all slide generation. It handles fidelity-aware routing automatically:
+
+- If `slides` parameter includes mixed fidelity classes → dispatches to `generate_deck_mixed_fidelity()` (two-call split: creative in `generate` mode, literal in `preserve` mode with vocabulary-derived constraints)
+- If all slides are the same class or no fidelity data → dispatches to `generate_slide()` (single call)
+- `merge_parameters()` enforces the fidelity-control vocabulary for literal slides: `text_treatment` → `textMode`, `image_treatment` → `imageOptions.source`, free-text `additionalInstructions` stripped for literal slides
+- `diagram_cards` image URLs are validated via `validate_image_url()` before generation proceeds — unreachable URLs halt generation with an error
+
+Gary should always use `execute_generation()` for production runs. `generate_slide()` is the low-level single-call function used internally and for woodshed/debugging.
 
 ## Generation Modes
 

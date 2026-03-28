@@ -1603,9 +1603,11 @@ So that every slide gets the right treatment and learners never see content that
 
 ## Epic 4: Workflow Coordination & State Infrastructure
 
-**Goal**: Users can execute persistent, recoverable production workflows with comprehensive run intelligence, quality gate coordination, and systematic learning capture.
+**Goal**: Users can execute persistent, recoverable production workflows with comprehensive run intelligence, quality gate coordination (including Vera fidelity checks before Quinn-R quality review at every gate), and systematic learning capture.
 
 **FRs covered:** FR7, FR8, FR9, FR10, FR11, FR12, FR23, FR24, FR25, FR26, FR27, FR28, FR29, FR30, FR31, FR32, FR33, FR34, FR35, FR48, FR49, FR50, FR51, FR52
+
+**Dependency:** Epic 4A (Agent Governance & Observability) MUST be completed before Epic 4. Story 4.2 (Quality Gate Coordination) depends on the run baton, lane matrix, and envelope governance extensions from Epic 4A. Story 4.4 (Production Intelligence) depends on the observability hooks from Epic 4A.
 
 ### Story 4.1: Production Run Lifecycle Management
 
@@ -1694,11 +1696,280 @@ So that finished course assets reach Canvas, CourseArc, or other platforms ready
 
 ---
 
-## Epic 5: Unified Content Production Engine
+## Epic 4A: Agent Governance, Quality Optimization & APP Observability (Added 2026-03-28)
 
-**Goal**: Users can create sophisticated multi-modal content through coordinated visual, audio, and assembly agent collaboration with expanded tool integration.
+**Goal**: Establish the authority model, lane boundaries, and observability infrastructure that constrain how agents interact within production runs — preventing judgment overlap, enabling governance-aware delegation, and making agent quality a release gate.
 
-**FRs covered:** FR45, FR46, FR47
+**FRs covered:** FR81, FR82, FR83, FR84, FR85, FR86, FR87, FR88, FR89, FR90
+
+**Dependency:** Epic 2A (Fidelity Assurance) must be complete. Epic 4A must complete before Epic 4 (Workflow Coordination).
+
+**Design source:** Party Mode consensus session (2026-03-28) + parallel GPT-5.4 architectural review. Architecture section: `architecture.md#Agent Governance & Authority Architecture`.
+
+### Story 4A-1: Run Baton & Authority Contract
+
+As a production user,
+I want an explicit authority contract for every active production run that agents check before acting,
+So that specialist agents operate within a clear delegation hierarchy and users can seamlessly switch between orchestrated production and standalone consultation.
+
+**Acceptance Criteria:**
+
+**Given** Marcus creates a production run
+**When** the run baton is initialized
+**Then** the baton contains `run_id`, `orchestrator`, `current_gate`, `invocation_mode`, `allowed_delegates`, `escalation_target`, and `blocking_authority`
+**And** the baton is persisted in a location accessible to all agents within the session
+**And** Marcus updates `current_gate` as the pipeline progresses through fidelity and quality gates
+
+**Given** a user directly invokes a specialist agent while Marcus holds an active baton
+**When** the specialist checks the baton
+**Then** the specialist redirects to Marcus by default: "Marcus is running [run_id], currently at [gate]. Redirect, or enter standalone consult mode?"
+**And** if the user explicitly requests standalone consult mode, the specialist operates outside the production flow with no baton authority
+**And** the standalone session does not affect the active production run state
+
+**Given** a production run completes or is cancelled
+**When** Marcus closes the run
+**Then** the baton is cleared — specialists no longer redirect
+
+**Design Note:** The baton is a lightweight YAML/JSON structure, not a database record. It can live in the session context or as a transient file in `state/runtime/`. It does NOT require new Python infrastructure — it's a coordination contract enforced by agent markdown, similar to how `run_mode` is currently enforced.
+
+---
+
+### Story 4A-2: Lane Matrix & Judgment Boundary Cleanup
+
+As a system architect,
+I want a single authoritative lane matrix defining which agent owns which judgment dimension,
+So that no two agents produce conflicting authoritative assessments on the same dimension.
+
+**Acceptance Criteria:**
+
+**Given** the APP has multiple assessment agents (Vera, Quinn-R, producing agents)
+**When** the lane matrix is published
+**Then** `docs/lane-matrix.md` exists with one row per judgment dimension, one owner per row, and a "NOT Owned By" column for clarity
+**And** the matrix covers: orchestration, instructional design, tool execution quality, perception, source fidelity, quality standards, content accuracy (flag only), and platform deployment
+**And** no dimension is claimed by more than one agent
+
+**Given** the lane matrix is published
+**When** existing agent SKILL.md files are audited
+**Then** Gary's self-assessment scope is narrowed to execution quality only (layout integrity, parameter confidence, embellishment risk) — pedagogical alignment commentary is removed
+**And** Irene's delegation protocol clarifies that she reviews delegated prose for behavioral intent achievement, not as a quality gate
+**And** Quinn-R's "intent fidelity" dimension is clarified as a quality dimension about learner effect, not source-faithfulness (which is Vera's lane)
+**And** each specialist's SKILL.md briefly restates their lane from the central matrix
+
+**Design Note:** The lane matrix extends `docs/fidelity-gate-map.md` (which already covers Vera vs Quinn-R) to ALL agents. It should be compatible with the role matrix — not a replacement.
+
+---
+
+### Story 4A-3: Envelope Governance Extensions
+
+As a specialist agent,
+I want every context envelope to carry explicit governance fields so I know my scope and authority,
+So that I never exceed my delegated responsibilities or produce outputs outside my allowed scope.
+
+**Acceptance Criteria:**
+
+**Given** Marcus delegates work to any specialist
+**When** the context envelope is constructed
+**Then** it includes a `governance` block with: `invocation_mode` (delegated/standalone), `current_gate`, `authority_chain`, `decision_scope`, and `allowed_outputs`
+**And** the governance block is documented in Marcus's conversation-mgmt.md envelope specification
+
+**Given** a specialist receives an envelope with governance fields
+**When** the specialist processes the request
+**Then** the specialist validates that its planned outputs are within `allowed_outputs`
+**And** the specialist validates that its judgment stays within `decision_scope`
+**And** any work outside scope is flagged and returned to the `authority_chain` for routing
+
+**And** all existing context envelope schemas (Gary, Irene, Kira, ElevenLabs, Vera, Quinn-R) are updated to include the governance block
+
+---
+
+### Story 4A-4: Agent QA Release Gate
+
+As a system maintainer,
+I want every agent revision to pass a mandatory quality scan before acceptance,
+So that structural defects, prompt craft issues, and lane violations are caught before they become runtime drift.
+
+**Acceptance Criteria:**
+
+**Given** a new agent or agent revision is proposed
+**When** the quality gate runs
+**Then** `bmad-agent-builder` quality optimizer scans for: structure compliance, prompt craft quality, cohesion, execution efficiency, and script opportunities
+**And** pass/fail criteria are defined per scan dimension
+**And** failures block acceptance — the agent must be revised and re-scanned
+
+**Given** the release gate process is defined
+**When** an agent passes the quality scan
+**Then** the scan results are archived in `skills/reports/bmad-agent-{name}/quality-scan/` with timestamp
+
+**And** the dev-story workflow and create-story workflow reference the agent QA gate as a required step for agent-creation stories
+**And** the process is documented in a shared reference accessible to all developers
+
+**Design Note:** This does not require new tooling — `bmad-agent-builder` already has the quality optimizer. This story formalizes it as a release gate in the workflow.
+
+---
+
+### Story 4A-5: Perception Caching & Observability Foundation
+
+As a production user,
+I want sensory bridge perception results cached within a run and governance metrics captured for reporting,
+So that agents don't waste resources re-perceiving artifacts and I can track governance health over time.
+
+**Acceptance Criteria:**
+
+**Given** a sensory bridge is invoked during a production run
+**When** the perception result is generated
+**Then** the result is cached with key `(artifact_path, modality)` within the run scope
+**And** subsequent requests for the same artifact and modality return the cached result without re-invoking the bridge
+**And** the caching mechanism is documented in `skills/sensory-bridges/references/validator-handoff.md`
+
+**Given** production gates are evaluated during a run
+**When** gate results are recorded
+**Then** observability hooks capture: gate pass rates, fidelity scores (O/I/A counts per gate), quality dimension scores, and agent performance metrics
+**And** these metrics feed into Story 4.4 (Production Intelligence) when Epic 4 is implemented
+
+**And** lane boundary violations detected during runs are logged as governance findings with agent, dimension, and context
+**And** governance findings are included in run completion reports
+
+**Design Note:** The perception caching may require a simple Python utility in `skills/sensory-bridges/scripts/` to manage the cache. The observability hooks are initially captured in the Fidelity Trace Report and quality review report — formal aggregation happens in Epic 4.
+
+---
+
+## Epic 5: Tool Capability Expansion (Rebaselined 2026-03-28)
+
+**Goal**: Expand the APP's tool ecosystem with specialist agents for remaining creative tools. Narrowed from "Unified Content Production Engine" — compositor, source wrangler, and tech-spec-wrangler capabilities originally planned here are already delivered.
+
+**FRs covered:** FR45, FR46, FR47 (partially — assembly coordination FR45 is complete via compositor)
+
+**Rebaseline rationale:** Story 5.2 (Multi-Modal Assembly) is fully delivered by the compositor skill (Story 3.5). Story 5.3 (Style Orchestration) is partially delivered by Quinn-R + style guide infrastructure. Story 5.4 needs editing (Panopto already done, Kling pulled forward).
+
+### Story 5.1: Expanded Tool Specialist Agents (Vyond, Midjourney, Articulate)
+
+As a user,
+I want specialist agents for the remaining manual-tool creative platforms,
+So that Marcus can consult them for step-by-step instructions when production plans involve tools without API access.
+
+**Acceptance Criteria:**
+
+**Given** bmad-agent-builder creates agents for each manual tool
+**When** expanded tool specialists are available
+**Then** `skills/bmad-agent-vyond/SKILL.md` exists with storyboard specs, scene construction, timing, and Vyond Studio step-by-step guidance
+**And** `skills/bmad-agent-midjourney/SKILL.md` exists with v6/v7 parameter mastery, medical/scientific visualization prompting, and Discord/web workflow guidance
+**And** `skills/bmad-agent-articulate/SKILL.md` exists with Storyline/Rise specs, branching scenario design, SCORM packaging, and review guidance
+**And** all agents follow the manual-tool pattern established by Canva specialist (Story 3.8): knowledge-only, no API skills, no woodshed, human-reviewed instruction quality
+**And** all agents have memory sidecars and interaction test guides
+**And** Marcus's specialist registry includes all new agents with appropriate content type routing
+
+**Design Note:** CapCut specialist is deferred until API access matures. Midjourney official API may become available — upgrade path documented in agent.
+
+---
+
+### Story 5.4: Remaining Tier 2 API Integrations (Botpress, Wondercraft)
+
+As a developer,
+I want API clients for the remaining Tier 2 tools with genuine unbuilt integrations,
+So that chatbot and podcast production capabilities are available to the APP.
+
+**Acceptance Criteria:**
+
+**Given** Python infrastructure and `.env` keys
+**When** API clients are built
+**Then** `scripts/api_clients/botpress_client.py` exists with conversation management, NLU, and bot deployment capabilities
+**And** `scripts/api_clients/wondercraft_client.py` exists with podcast generation, voice synthesis, and episode management
+**And** both clients extend `BaseAPIClient` with retry, pagination, and error handling
+**And** integration tests verify API connectivity
+
+**Design Note:** Panopto client is already built (Story 1.11). Kling client is already built (Story 3.3). This story covers only genuinely unbuilt Tier 2 integrations. Specialist agents for these tools would be separate stories if needed.
+
+---
+
+## Epic 6: LMS Platform Integration & Delivery (Rebaselined 2026-03-28)
+
+**Goal**: Deploy content seamlessly to educational platforms with automated formatting, compliance, and integration.
+
+**Rebaseline rationale:** Epic 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist) — foundational Canvas API client is already built (Story 1.8). The Canvas specialist story becomes a two-phase effort: basic specialist (3.6) then enhanced grading/analytics (phase 2 within 3.6).
+
+### Story 6.1: CourseArc Specialist Agent & LTI Integration
+
+As a user,
+I want a CourseArc specialist agent with LTI 1.3 compliance knowledge,
+So that interactive content is deployed to CourseArc with proper embedding in Canvas.
+
+**Acceptance Criteria:**
+
+**Given** `skills/bmad-agent-coursearc/SKILL.md` is created via bmad-agent-builder
+**When** CourseArc deployment is needed
+**Then** the agent provides LTI 1.3 integration guidance for Canvas-CourseArc embedding
+**And** SCORM packaging specifications for portable content
+**And** interactive content block guidance (sorting activities, flip cards, virtual patient drills)
+**And** WCAG 2.1 AA compliance verification for interactive elements
+**And** the agent follows the manual-tool pattern (no API — CourseArc is LTI/SCORM only)
+
+---
+
+## Epic G: Governance Synthesis & Intelligence Optimization (Replaces Epics 7, 8, 9 — Rebaselined 2026-03-28)
+
+**Goal**: Consolidate platform allocation intelligence, tool ecosystem monitoring, and documentation synthesis into Marcus intelligence extensions and shared governance infrastructure — not standalone agents.
+
+**Rebaseline rationale:** Original Epics 7 (Platform Allocation Agent), 8 (Tool Review Agent), and 9 (Self-Improving Documentation Agent) were designed before the APP had shared-skill infrastructure (tech-spec-wrangler, woodshed, sensory bridges, memory sidecars). Most of their planned capabilities now exist as shared skills or agent memory patterns. What remains is synthesis and governance, not new standalone agents.
+
+### Story G.1: Platform Allocation Intelligence (Replaces Epic 7)
+
+As a user,
+I want Marcus to recommend optimal platform placement for each content piece,
+So that slides, videos, assessments, and interactive modules land on the platform best suited for their instructional purpose.
+
+**Acceptance Criteria:**
+
+**Given** Marcus loads allocation policies from `resources/exemplars/` and course context from `state/config/course_context.yaml`
+**When** a production plan includes platform deployment
+**Then** Marcus analyzes content type, grading requirements, interactivity level, and accessibility needs
+**And** recommends platform allocation (Canvas, CourseArc, Panopto, direct embed) with reasoning
+**And** the user can accept, modify, or override recommendations conversationally
+**And** allocation decisions are captured in Marcus's memory sidecar for pattern learning
+
+**Design Note:** This is a Marcus intelligence extension, not a standalone agent. The allocation matrix lives in `resources/exemplars/` — the same location it already occupies.
+
+---
+
+### Story G.2: Tool Ecosystem Monitoring & Documentation Synthesis (Replaces Epics 8 + 9)
+
+As a system maintainer,
+I want periodic synthesis of tool capability changes, agent learning patterns, and production outcomes into actionable reports,
+So that the APP stays current with tool evolution and accumulated intelligence is accessible without reading every sidecar file.
+
+**Acceptance Criteria:**
+
+**Given** tech-spec-wrangler already monitors tool API documentation for changes
+**When** a periodic review is requested (or triggered by run reporting)
+**Then** tool capability changes detected by tech-spec-wrangler are surfaced in a synthesis report
+**And** agent memory sidecar patterns are summarized across all specialists — recurring issues, calibration trends, effective parameter patterns
+**And** governance health metrics (lane violations, baton redirects, perception cache hit rates) are aggregated
+**And** the synthesis report is written to `docs/` or `_bmad-output/` for human review
+**And** actionable recommendations (doc updates, agent revisions, contract changes) are prioritized
+
+**Design Note:** This is a periodic synthesis process, not a persistent agent. It leverages existing infrastructure: tech-spec-wrangler for tool monitoring, memory sidecars for agent learning, and production run records for metrics. Could be implemented as a Marcus capability or a standalone skill.
+
+---
+
+## Epic 10: Strategic Production Orchestration (Deferred — Rebaselined 2026-03-28)
+
+**Goal**: Master orchestrator evolves with predictive optimization and sophisticated coordination capabilities based on accumulated production intelligence.
+
+**Dependency:** Requires Epic 4 (run lifecycle, reporting) and Epic G (governance synthesis) to provide sufficient telemetry data. Deferred until governance and observability infrastructure matures.
+
+### Story 10.1: Predictive Workflow Optimization
+
+As a user,
+I want the orchestrator to predict optimal workflows based on accumulated production intelligence,
+So that each new production run is more efficient than the last.
+
+**Acceptance Criteria:**
+
+**Given** the orchestrator has memory from multiple production runs
+**When** a new production run is initiated
+**Then** the orchestrator suggests optimized workflow sequences based on similar past runs
+**And** predicted bottlenecks are identified with preemptive mitigation recommendations
+**And** resource allocation suggestions optimize tool usage and timing
+**And** the user can accept, modify, or override predictive recommendations through conversation
 
 ### Story 5.1: Expanded Tool Specialist Agents (Vyond, Midjourney, CapCut, Articulate)
 

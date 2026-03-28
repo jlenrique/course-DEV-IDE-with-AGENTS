@@ -730,3 +730,90 @@ All converge into the same pipeline and Descript workflow:
 
 - **Pre-composition pass:** WPM (130-170), VTT monotonicity, segment coverage, video duration vs narration (±0.5s)
 - **Post-composition pass:** Audio levels (narration -16 LUFS, music -30 LUFS, SFX -20 LUFS), caption sync, accessibility, brand, learning objective alignment
+
+---
+
+## Agent Governance & Authority Architecture (Added 2026-03-28)
+
+_Addresses FR81–FR90. Establishes the authority model that constrains how agents interact within production runs and prevents judgment boundary violations._
+
+_This section is target-state architecture for Epic 4A. Until Epic 4A stories are started and the referenced artifacts are created, these controls are design intent, not a claim that the full governance layer is already live in runtime._
+
+### Run Baton
+
+Every active production run has an explicit **run baton** — a lightweight authority contract that travels with the run:
+
+```yaml
+run_baton:
+  run_id: "C1-M1-P2S1-VID-001"
+  orchestrator: "marcus"
+  current_gate: "G2"
+  invocation_mode: "delegated"     # delegated | standalone
+  allowed_delegates:
+    - fidelity-assessor
+    - quality-reviewer
+    - content-creator
+    - gamma-specialist
+  escalation_target: "marcus"
+  blocking_authority: "human"       # who can waive critical findings
+```
+
+**Baton discipline:** During an active run, every specialist checks the baton before user-facing actions. If the user directly invokes a specialist while Marcus holds the baton, the specialist redirects: "Marcus is running production C1-M1-P2S1-VID-001, currently at Gate 2. Redirect to Marcus, or enter standalone consult mode?"
+
+**Baton lifecycle:** Created by Marcus at run start → transferred through the pipeline with each delegation → closed at run completion or user cancellation.
+
+### Lane Matrix
+
+A single authoritative contract defining which agent owns which judgment dimension. No dimension is claimed by more than one agent. Extends the role matrix in `docs/fidelity-gate-map.md` to cover ALL agents, not just Vera and Quinn-R.
+
+| Dimension | Owner | Scope | NOT Owned By |
+|-----------|-------|-------|-------------|
+| **Orchestration & human interaction** | Marcus | Stage transitions, plan presentation, exception routing, user communication | Any specialist |
+| **Instructional design & pedagogy** | Irene | LO alignment, content structure, Bloom's mapping, writer delegation, behavioral intent | Gary, Quinn-R |
+| **Tool execution quality** | Each specialist (self) | Layout integrity, parameter confidence, embellishment risk, artifact completeness | Other specialists |
+| **Perception** | Sensory Bridges (shared) | Multimodal artifact interpretation, confidence scoring | Individual agents re-interpreting |
+| **Source-to-output fidelity** | Vera | O/I/A traceability, provenance chain, cumulative drift, classification accuracy | Quinn-R, Gary, Irene |
+| **Quality against standards** | Quinn-R | Brand, accessibility, LO alignment, instructional soundness, audio/composition quality | Vera, Irene, Gary |
+| **Content accuracy (medical)** | Quinn-R (flag only) | Potential accuracy concerns flagged, never adjudicated | Any agent (adjudication is human-only) |
+| **Platform deployment** | Platform specialists | Canvas/CourseArc formatting, LTI compliance, grading setup | Marcus, Irene |
+
+**Enforcement (future-state, Epic 4A):** `docs/lane-matrix.md` will be created as the central artifact in Story 4A-2 and then briefly restated in each specialist's SKILL.md. Until Epic 4A implements that document and its companion governance updates, treat this matrix as architecture guidance rather than an already-enforced runtime control surface.
+
+### Envelope Governance Extensions
+
+Every delegated context envelope carries governance fields:
+
+```yaml
+governance:
+  invocation_mode: "delegated"       # delegated | standalone
+  current_gate: "G3"
+  authority_chain: ["marcus"]
+  decision_scope: "slide-generation"
+  allowed_outputs: ["slide_pngs", "pptx", "provenance_manifest"]
+```
+
+Specialists are forbidden from expanding beyond `allowed_outputs` or `decision_scope`. Any work outside scope is flagged and returned to the `authority_chain` for routing.
+
+### Agent QA Release Gate
+
+Before accepting any agent revision (new agent or update), a mandatory quality scan runs:
+
+1. **Structure compliance** — frontmatter, section ordering, path conventions
+2. **Prompt craft** — trigger clauses, description quality, progressive disclosure
+3. **Cohesion** — principles alignment, capability-to-reference consistency
+4. **Execution efficiency** — token budget, redundancy, subagent patterns
+5. **Script opportunities** — deterministic operations that should be code, not prose
+
+The `bmad-agent-builder` quality optimizer provides the tooling. Pass/fail criteria are defined per scan dimension. Failures block acceptance.
+
+### Shared Perception Infrastructure
+
+Perception results are computed once and cached within a production run:
+
+```
+Cache key: (artifact_path, modality)
+Cache scope: production run
+Consumers: Fidelity Assessor, Quality Reviewer, producing agent self-assessment
+```
+
+No agent performs independent interpretation of artifacts that have been perceived through the shared bridges. The canonical perception output from `skills/sensory-bridges/` is the single source of truth for what an artifact contains.

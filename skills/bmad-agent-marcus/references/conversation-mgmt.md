@@ -64,9 +64,53 @@ Three directory tiers provide different layers of configuration. Marcus always r
 
 When delegating to specialists, pass the relevant style-bible sections (matched to domain) plus the tool-specific parameters from `state/config/style_guide.yaml`. Never pass `config/content-standards.yaml` to specialists — it's below their resolution tier.
 
+## Fidelity Discovery (Production Run Start)
+
+Before building the production plan, Marcus asks two standard fidelity discovery questions:
+
+**Visual fidelity query:** "Are there any visuals in the source material — diagrams, charts, flowcharts, framework models — that need to be faithfully reproduced rather than creatively illustrated? If so, please process them in Gamma Imagine and drop the rebranded PNGs into `course-content/staging/ad-hoc/rebranded-assets/` (ad-hoc mode) or `course-content/staging/rebranded-assets/` (default mode)."
+
+**Textual fidelity query:** "Are there any text elements that must appear literally on slides — assessment topics, specific statistics that will be tested, exact terminology from accreditation standards? If so, point me to the source documents or sections, or just describe what needs literal treatment."
+
+User responses are captured in a `fidelity_guidance` block passed to Irene in the context envelope:
+
+```yaml
+fidelity_guidance:
+  literal_visuals:
+    - description: "Dual-axis chart from page 7 of Tejal's notes"
+      source_ref: "TEJAL_Notes.pdf#page7"
+      rebranded_asset_path: "course-content/staging/ad-hoc/rebranded-assets/slide-03-chart.png"
+  literal_text:
+    - description: "Knowledge check teaser — exact 10 KC topics from Chapters 2 & 3"
+      source_ref: "extracted.md#Chapter 2 Knowledge Check"
+```
+
+If the user has no fidelity needs, `fidelity_guidance` is omitted (all slides default to creative).
+
+## Imagine Handoff Checkpoint
+
+After Irene returns the slide brief with fidelity tags, Marcus surfaces `literal-visual` slides to the user:
+
+1. Present tagged slides: "Irene flagged Slides N and M as needing rebranded visuals. Source images are from [source]. Are the rebranded PNGs ready?"
+2. Confirm assets: user drops PNGs to designated location and provides hosted URLs (Phase 1: upload to Gamma workspace, get CDN URL)
+3. Validate URLs: for each `diagram_cards[].image_url`, verify HTTPS-accessible with image content type (uses `validate_image_url()` from `skills/gamma-api-mastery/scripts/gamma_operations.py`)
+4. Build `diagram_cards` block for Gary's envelope:
+   ```yaml
+   diagram_cards:
+     - card_number: 3
+       image_url: "https://gamma.app/hosted/..."
+       placement_note: "Primary visual, full-width"
+       required: true
+   ```
+5. Only unblock Gary delegation after all `diagram_cards` URLs are validated
+
+**Imagine export specs:** Highest resolution, 16:9 aspect ratio, PNG format.
+
+**Asset drop locations:** `course-content/staging/ad-hoc/rebranded-assets/` (ad-hoc) or `course-content/staging/rebranded-assets/` (default).
+
 ## Production Planning
 
-After identifying intent, Marcus builds a production plan:
+After identifying intent and completing fidelity discovery, Marcus builds a production plan:
 
 1. **Consult reference libraries** — Re-read `resources/style-bible/` for brand/visual standards and `resources/exemplars/` for platform allocation policies and pattern matching
 2. **Map content type to workflow** — Use the Content Type Vocabulary table to identify the specialist sequence
@@ -170,22 +214,58 @@ When specialist agents are unavailable (not yet built), Marcus reports the gap a
 User notes + guidance
     │
     ▼
+Marcus -> Source Wrangler: extract SME materials → source bundle (extracted.md + metadata.json)
+    │
+    ▼
+Marcus -> Vera: G0 fidelity check (source bundle completeness)
+    │  (Vera loads extracted.md + metadata.json, checks section coverage, provenance, PDF degradation)
+    │  (Circuit breaker: critical/high → halt/retry to source-wrangler; medium → warning)
+    ▼  (PASS)
 Marcus -> Irene Pass 1: Lesson Plan + Slide Brief
     │
-    ▼  [HIL Gate 1 via Marcus: Review lesson plan]
+    ▼
+Marcus -> Vera: G1 fidelity check (lesson plan vs. source bundle)
+    │  (Vera compares LOs to source themes, validates source_refs, checks structure)
+    │  (Circuit breaker: critical/high → halt/retry to Irene; medium → warning)
+    ▼  (PASS)
+Marcus -> Vera: G2 fidelity check (slide brief vs. lesson plan)
+    │  (Vera loads G2 L1 contract, compares slide brief to lesson plan)
+    │  (Circuit breaker: critical/high → halt/retry to Irene; medium → warning)
+    ▼  (PASS)
+Marcus -> Quinn-R: G2 quality review
     │
-Marcus -> Gary: Gamma slide deck -> PNGs
+    ▼  [HIL Gate 1 via Marcus: Review lesson plan + slide brief]
+    │
+Marcus -> Gary: Gamma slide deck -> PNGs + PPTX
     │  (Gary reads Irene's slide brief from Marcus's envelope; theme/template options routed back through Marcus)
+    ▼
+Marcus -> Vera: G3 fidelity check (generated slides vs. slide brief)
+    │  (Vera invokes PPTX bridge + image bridge, compares to slide brief)
+    │  (Circuit breaker: critical/high → halt/retry to Gary; medium → warning)
+    ▼  (PASS)
+Marcus -> Quinn-R: G3 quality review
+    │
     ▼  [HIL Gate 2 via Marcus: Review slides — CRITICAL: narration cannot start until approved]
     │
 Marcus -> Irene Pass 2: Narration Script + Segment Manifest
-    │  (Irene reads Gary's actual PNGs via Marcus-carried gary_slide_output)
+    │  (Irene reads Gary's actual PNGs via Marcus-carried gary_slide_output + perception_artifacts)
+    ▼
+Marcus -> Vera: G4 fidelity check (narration script vs. lesson plan + actual slides)
+    │  (Vera verifies narration matches perceived slide content and lesson plan assessment items)
+    │  (Circuit breaker: critical/high → halt/retry to Irene; medium → warning)
+    ▼  (PASS)
+Marcus -> Quinn-R: G4 quality review
+    │
     ▼  [HIL Gate 3 via Marcus: Review script & manifest]
     │
 Marcus -> ElevenLabs Agent: narration MP3 + VTT + SFX + music
     │  (reads manifest for narration_text, sfx, music cues, voice selection)
     │  (writes narration_duration, narration_file, narration_vtt back to manifest)
     ▼
+Marcus -> Vera: G5 fidelity check (audio vs. narration script)
+    │  (Vera invokes audio bridge for STT, compares transcript to script, checks WPM and pronunciation)
+    │  (Circuit breaker: critical/high → halt/retry to ElevenLabs; medium → warning)
+    ▼  (PASS)
 Marcus -> Kira: silent video clips
     │  (runs only after Marcus has received narration_duration from ElevenLabs)
     │  (reads manifest for visual_source, visual_mode, narration_duration)
@@ -208,11 +288,67 @@ Done: asset ready for Canvas deployment
 
 **Marcus orchestrates this entire flow.** Key invariants:
 - No user-visible specialist-to-specialist communication. Specialists may depend on prior specialist artifacts, but Marcus always receives, validates, and re-packs those artifacts before the next delegation.
+- **Vera before Quinn-R at every gate** — fidelity is a precondition for quality. If fidelity fails, Quinn-R never sees the artifact.
 - Gary before Irene Pass 2 (narration complements actual slides)
 - ElevenLabs before Kira (Kira needs `narration_duration` to set clip duration)
 - Both before compositor (compositor needs complete manifest)
 - Quinn-R pre-composition before Descript handoff
 - Quinn-R post-composition before Gate 4
+
+## Fidelity Assessor Delegation
+
+When delegating to Vera (Fidelity Assessor), Marcus passes a fidelity context envelope:
+
+**Outbound (to Vera):**
+```yaml
+gate: "G0"                     # G0 | G1 | G2 | G3 (more gates in future stories)
+production_run_id: "{id}"
+artifact_paths:
+  # G0: source bundle directory
+  bundle_dir: "course-content/staging/.../source-bundles/{bundle-name}/"
+  # G1: lesson plan path
+  lesson_plan: "course-content/staging/.../lesson-plan.md"
+  # G2: slide brief path
+  slide_brief: "course-content/staging/.../slide-brief.md"
+  # G3: PPTX + PNG paths
+  pptx: "course-content/staging/.../deck.pptx"
+  pngs: ["course-content/staging/.../card-01.png", "..."]
+source_of_truth_paths:
+  # G0: original source material paths (from metadata.json provenance)
+  source_materials: ["path/to/notion-export.md", "path/to/document.pdf"]
+  # G1: source bundle
+  bundle_dir: "course-content/staging/.../source-bundles/{bundle-name}/"
+  # G2: lesson plan
+  lesson_plan: "course-content/staging/.../lesson-plan.md"
+  # G3: slide brief
+  slide_brief: "course-content/staging/.../slide-brief.md"
+fidelity_contracts_path: "state/config/fidelity-contracts/"
+run_mode: "default"             # or "ad-hoc"
+```
+
+**Inbound (from Vera):**
+```yaml
+status: passed | failed | warning
+gate: "G2"
+verdict:
+  pass: true | false
+  fidelity_score: 0.0-1.0
+  highest_severity: critical | high | medium | none
+findings:
+  omissions: [{...}]
+  inventions: [{...}]
+  alterations: [{...}]
+circuit_breaker:
+  triggered: true | false
+  action: halt | retry | proceed
+  remediation_target: "source-wrangler" | "irene" | "gary" | "elevenlabs-voice-director"
+  remediation_guidance: "..."
+```
+
+**Marcus's circuit breaker handling:**
+- `halt` → Stop pipeline, present full Fidelity Trace Report to user. No auto-retry. Human must review and either waive or request re-work.
+- `retry` → Re-invoke producing agent (Irene at G2, Gary at G3) with Vera's remediation guidance in the envelope. After producing agent revises, re-delegate to Vera for fresh evaluation. If second failure → escalate to user.
+- `proceed` → Pass Vera's findings as advisory attachment to Quinn-R's quality review envelope. Findings are visible at the HIL gate.
 
 ## Irene Two-Pass Delegation
 
@@ -242,7 +378,18 @@ envelope:
       card_number: 1
       visual_description: "{Gary's description of what's on the slide}"
     # ... one entry per Gary PNG
+  perception_artifacts:
+    - slide_id: "slide-01"
+      artifact_path: "course-content/staging/{lesson_id}/slides/card-01.png"
+      modality: "image"
+      confidence: "HIGH"
+      extracted_text: "{text visible on the slide}"
+      layout_description: "{visual layout description}"
+      visual_elements: [{type, description, position}]
+    # ... one perception result per Gary PNG (from sensory bridge cache)
 ```
+
+**Note:** `perception_artifacts[]` is the canonical perception output from the shared sensory bridges — structured, confidence-scored, and auditable. Irene uses this as ground truth for what is visually on screen. `gary_slide_output[].visual_description` remains useful for creative context but is not the authoritative perception. The Fidelity Assessor at G4 can audit Irene's narration against the same `perception_artifacts[]`, creating a closed auditable loop.
 
 ## Compositor Delegation
 

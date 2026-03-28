@@ -12,7 +12,7 @@ Sidecar location: `{project-root}/_bmad/memory/gamma-specialist-sidecar/`
 |------|---------|-------------|
 | `index.md` | Active context, mastery status, quick-access preferences | Default: full. Ad-hoc: transient section only |
 | `access-boundaries.md` | Read/write/deny zones | Set at build time, read-only at runtime |
-| `patterns.md` | Learned parameter effectiveness, content type mappings, embellishment control phrases | Default mode only (append) |
+| `patterns.md` | Learned parameter effectiveness, content type mappings, embellishment control phrases, fidelity-specific learnings (constraint effectiveness per fidelity class, image placement results, visual consistency across split calls, edge cases in preserve mode) | Default mode only (append) |
 | `chronology.md` | Slide generation history, exemplar mastery milestones | Default mode only (append) |
 
 ## Write Discipline

@@ -1,6 +1,6 @@
 # Story 3.11: Mixed-Fidelity Gamma Generation System
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -248,9 +248,33 @@ The user processes SME images in Gamma Imagine (UI), exports as high-res 16:9 PN
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude claude-4.6-opus (via Cursor)
 
 ### Debug Log References
+No issues. No Party Mode needed — fidelity infrastructure from Epic 2A fully supports this story.
 
 ### Completion Notes List
+- Irene slide brief: per-slide `fidelity`, `fidelity_rationale`, `source_image`, `visual_treatment` fields added. Fidelity Classification Guide with heuristics and source signals appended.
+- Irene lesson plan: `Fidelity Signal` field added to content block schema for planning-stage indicators.
+- Gary context envelope: `fidelity_per_slide`, `fidelity_guidance`, `diagram_cards` inbound fields added. `provenance` array added to outbound return.
+- Gary operations: `partition_by_fidelity()`, `build_doc_title()`, `reassemble_slide_output()`, `validate_image_url()` — 4 functions, 12 tests all passing.
+- Marcus: Fidelity Discovery section added (two standard queries + `fidelity_guidance` block). Imagine Handoff Checkpoint added (surfaces literal-visual slides, validates URLs, builds `diagram_cards`).
+- Quinn-R: Fidelity-Aware Review section added to review protocol — class-appropriate criteria using provenance manifest.
+- Memory integration: fidelity pattern categories added to Gary (constraint effectiveness, image placement), Irene (classification patterns, user corrections), Marcus (discovery preferences, checkpoint patterns).
+- Epic 2A fidelity-control vocabulary (Story 2A-8) reconciled: `text_treatment`/`image_treatment`/`layout_constraint`/`content_scope` are the deterministic controls; `fidelity`/`fidelity_rationale`/`source_image` are the per-slide classification fields. Complementary, not overlapping.
+- 38 contracts valid, parity check PASS, 23 new tests pass (12 fidelity partition + 11 source_ref resolver).
 
 ### File List
+**Modified:**
+- `skills/bmad-agent-content-creator/references/template-slide-brief.md` (fidelity fields + classification guide)
+- `skills/bmad-agent-content-creator/references/template-lesson-plan.md` (fidelity signal field)
+- `skills/bmad-agent-content-creator/references/memory-system.md` (fidelity classification patterns)
+- `skills/bmad-agent-gamma/references/context-envelope-schema.md` (fidelity_per_slide, diagram_cards, fidelity_guidance, provenance)
+- `skills/bmad-agent-gamma/references/memory-system.md` (fidelity learning categories)
+- `skills/gamma-api-mastery/scripts/gamma_operations.py` (4 new functions)
+- `skills/bmad-agent-marcus/references/conversation-mgmt.md` (fidelity discovery, Imagine handoff)
+- `skills/bmad-agent-marcus/references/memory-system.md` (fidelity discovery patterns)
+- `skills/bmad-agent-quality-reviewer/references/review-protocol.md` (fidelity-aware review section)
+
+**New:**
+- `skills/gamma-api-mastery/scripts/tests/test_partition_fidelity.py` (12 tests)

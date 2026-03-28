@@ -18,7 +18,10 @@ from scripts.api_clients.notion_client import NotionClient
 
 
 class GammaDocsURLNotSupportedError(ValueError):
-    """Hosted Gamma doc URLs cannot be fetched via HTTP; use Gary / Gamma API or Playwright capture."""
+    """Hosted Gamma doc URLs cannot be fetched via HTTP.
+
+    Use Gary / Gamma API or Playwright capture instead.
+    """
 
 
 def is_gamma_app_docs_url(url: str) -> bool:

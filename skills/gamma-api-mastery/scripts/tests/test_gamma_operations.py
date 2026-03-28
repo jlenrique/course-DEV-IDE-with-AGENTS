@@ -6,13 +6,11 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 _PROJECT_ROOT = str(Path(__file__).resolve().parents[4])
 sys.path.insert(0, _PROJECT_ROOT)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import gamma_operations
-from gamma_operations import (
+import gamma_operations  # noqa: E402
+from gamma_operations import (  # noqa: E402
     download_export,
     generate_from_template,
     generate_slide,

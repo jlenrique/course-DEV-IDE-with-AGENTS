@@ -74,7 +74,7 @@ development_status:
   epic-2a: in-progress
   2a-1-fidelity-maturity-audit-l1-contracts: done  # audit baseline, L1 contracts (38 criteria), validation script, arch docs — done 2026-03-28
   2a-2-sensory-bridges-skill: done                        # 5 bridges, 34 tests, perception schema, confidence rubric, protocol, validator handoff — done 2026-03-28
-  2a-3-provenance-protocol: in-progress                  # source_ref fields in all artifact schemas, traceability chain — dev started 2026-03-28
+  2a-3-provenance-protocol: done                         # source_ref in 5 templates + context envelope, grammar spec, delegation protocol updated — done 2026-03-28
   2a-4-fidelity-assessor-agent-foundation: backlog      # agent creation, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker
   2a-5-g0-g1-fidelity-verification: backlog             # source bundle completeness (G0), lesson plan faithfulness (G1)
   2a-6-agent-perception-upgrades: backlog               # Irene, Gary, Quinn-R adopt universal perception protocol

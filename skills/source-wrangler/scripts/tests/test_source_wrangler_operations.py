@@ -12,7 +12,7 @@ import pytest
 from pypdf import PdfWriter
 
 _MODULE_DIR = Path(__file__).resolve().parents[1]
-_REPO_ROOT = _MODULE_DIR.parents[3]
+_REPO_ROOT = _MODULE_DIR.parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 

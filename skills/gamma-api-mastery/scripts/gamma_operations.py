@@ -152,12 +152,30 @@ def resolve_style_preset(
 def _flatten_preset_params(preset: dict[str, Any]) -> dict[str, Any]:
     """Extract and flatten parameters from a preset for merge.
 
-    Pulls ``theme_id`` from the preset top level into the parameter dict
-    so the merge cascade includes it.
+    - Pulls ``theme_id`` from the preset top level into the parameter dict.
+    - Merges ``imageOptions.keywords`` into ``imageOptions.style`` if the
+      API doesn't support a separate keywords field (keywords are appended
+      as comma-separated values to the style string).
     """
     params = dict(preset.get("parameters", {}))
     if preset.get("theme_id") and "themeId" not in params:
         params["themeId"] = preset["theme_id"]
+
+    # Merge keywords into imageOptions.style for API compatibility.
+    # The Gamma UI has separate keyword chips, but the API uses a single
+    # style string.  Keep the keywords list in the preset for clarity,
+    # and append them to the style string here at flatten time.
+    img = params.get("imageOptions")
+    if isinstance(img, dict):
+        keywords = img.pop("keywords", None)
+        if keywords and isinstance(keywords, list):
+            style_base = img.get("style", "")
+            kw_str = ", ".join(keywords)
+            if style_base:
+                img["style"] = f"{style_base}, {kw_str}"
+            else:
+                img["style"] = kw_str
+
     return params
 
 
@@ -180,6 +198,12 @@ def merge_parameters(
     When Gary resolves a named preset via ``resolve_style_preset()``,
     pass the result here so its parameters sit between style guide
     defaults and content type templates.
+
+    Special handling for ``additionalInstructions``: values from all
+    layers are **concatenated** (separated by a space) rather than
+    overridden.  This lets the preset provide a base instruction
+    (e.g., "keep the style uniform") while content-type and envelope
+    layers append specifics.
     """
     sources = [style_defaults]
     if style_preset:
@@ -187,10 +211,21 @@ def merge_parameters(
     sources.extend([content_template, envelope_overrides])
 
     merged: dict[str, Any] = {}
+    ai_parts: list[str] = []  # additionalInstructions fragments
+
     for source in sources:
         for key, value in source.items():
             if value is not None and value != "":
-                merged[key] = value
+                if key == "additionalInstructions":
+                    fragment = str(value).strip()
+                    if fragment:
+                        ai_parts.append(fragment)
+                else:
+                    merged[key] = value
+
+    if ai_parts:
+        merged["additionalInstructions"] = " ".join(ai_parts)
+
     return merged
 
 

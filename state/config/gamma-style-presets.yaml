@@ -18,9 +18,15 @@
 #   parameters:     Gamma API parameters applied when this preset is active
 #     textMode:     generate | condense | preserve
 #     textOptions:  {amount, tone, audience, language}
-#     imageOptions: {source, model, style}
+#     imageOptions: {source, model, style, keywords}
+#       keywords:   List of extra keywords for image style consistency (e.g. vector, minimalist)
 #     cardOptions:  {dimensions}
-#     additionalInstructions: base instructions (content-type-specific additions are merged on top)
+#     format:       presentation | document | social | webpage
+#     formatVariant: classic | traditional | modern (UI sub-type; may be UI-only)
+#     numCards:     Default card count for this preset (overridable by content-type or envelope)
+#     additionalInstructions: >-
+#       Base instructions always applied with this preset. Content-type-specific and
+#       envelope instructions are APPENDED (not replaced) during merge.
 #   provenance:     How this preset was established
 #     source:       "pilot-run" | "exemplar-match" | "user-defined" | "gary-proposed"
 #     established:  ISO date
@@ -30,36 +36,60 @@
 # MERGE BEHAVIOR: Preset parameters slot into the cascade at level 3 of 6:
 #   1. API defaults → 2. Style guide → 3. STYLE PRESET → 4. Content type template
 #   → 5. Context envelope overrides → 6. Gary per-request judgment
-# A preset value is overridden by anything at levels 4-6.
+# A preset value is overridden by anything at levels 4-6, EXCEPT additionalInstructions
+# which uses CONCATENATION (preset base + content-type additions + envelope additions).
 
 presets:
   - name: hil-2026-apc-nejal
     description: >-
-      HIL 2026 APC branded deck style — Recraft V3 line-drawing imagery,
-      condensed minimal text, classic card design. Matches client-approved
-      exemplar from C1M1 physician-innovator pilot (attempt 4).
+      HIL 2026 APC branded deck style — Nano Banana 2 Mini AI imagery with
+      illustration art style, vector/minimalist/flat-color/linework/bold keywords,
+      detailed text in generate mode, classic card design, 10-card default.
+      Canonical look-and-feel for all Gamma productions under this project.
+      Populated from approved Gamma Prompt Editor screenshot (2026-03-27).
     scope: "*"
     theme_id: njim9kuhfnljvaa
     theme_name: "2026 HIL APC Nejal"
     parameters:
-      textMode: condense
+      # --- Text ---
+      textMode: generate
       textOptions:
-        amount: brief
+        amount: detailed
         language: en
+
+      # --- Visuals ---
       imageOptions:
         source: aiGenerated
-        model: recraft-v3
-        style: >-
-          Line drawing, clean black ink lines on white, minimal fill,
-          editorial medical infographic, no shading, no photorealism
+        model: nano-banana-2-mini
+        style: illustration
+        keywords:
+          - vector
+          - minimalist
+          - flat-color
+          - linework
+          - bold
+
+      # --- Layout ---
       cardOptions:
         dimensions: "16x9"
+      format: presentation
+      formatVariant: classic
+
+      # --- Generation defaults ---
+      numCards: 10
+      additionalInstructions: >-
+        Keep the style of all the images uniform.
+
     provenance:
       source: exemplar-match
       established: "2026-03-27"
       notes: >-
-        Derived from CLIENT_EXEMPLAR_GAMMA_SETTINGS.md captured during
-        C1M1 physician-innovator pilot. Attempt 4 (recraft-v3 + condense +
-        brief + line-drawing) matched the client-approved Gamma UI settings.
+        Populated from Gamma Prompt Editor screenshot captured during active
+        production. Theme "2026 HIL APC Nejal" (njim9kuhfnljvaa) with
+        Nano Banana 2 Mini model (20 credits/image), illustration art style,
+        vector + minimalist + flat-color + linework + bold keywords,
+        generate mode with detailed text, classic card design, 10 cards,
+        "keep the style of all the images uniform" as base instruction.
+        Supersedes v1 (recraft-v3 + condense/brief from pilot attempt 4).
         See course-content/staging/ad-hoc/gamma-c1m1-physician-innovator-pilot/.
-    version: 1
+    version: 2

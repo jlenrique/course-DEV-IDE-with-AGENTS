@@ -29,16 +29,48 @@ Presets live in `state/config/gamma-style-presets.yaml` (git-versioned, human-re
   theme_id: njim9kuhfnljvaa           # Gamma API theme ID
   theme_name: "2026 HIL APC Nejal"    # Human-readable (display only)
   parameters:                          # Gamma API params applied at cascade level 3
-    textMode: condense
-    textOptions: {amount: brief, language: en}
-    imageOptions: {source: aiGenerated, model: recraft-v3, style: "..."}
-    cardOptions: {dimensions: "16x9"}
+    # --- Text ---
+    textMode: generate                 # generate | condense | preserve
+    textOptions:
+      amount: detailed                 # brief | concise | detailed | extensive (maps to Gamma UI text amount)
+      language: en
+
+    # --- Visuals ---
+    imageOptions:
+      source: aiGenerated
+      model: nano-banana-2-mini        # AI image model (from Gamma model picker)
+      style: illustration              # Art style tile (Photo, Illustration, Abstract, 3D, etc.)
+      keywords:                        # Extra keywords for image consistency (Gamma UI keyword chips)
+        - vector
+        - minimalist
+        - flat-color
+        - linework
+        - bold
+
+    # --- Layout ---
+    cardOptions:
+      dimensions: "16x9"
+    format: presentation
+    formatVariant: classic             # UI card design mode (classic | traditional | modern); may be UI-only
+
+    # --- Generation defaults ---
+    numCards: 10                        # Default card count (overridable by content-type or envelope)
+    additionalInstructions: >-         # Base instructions ALWAYS applied; concatenated (not replaced)
+      Keep the style of all the images uniform.
+
   provenance:
     source: exemplar-match             # pilot-run | exemplar-match | user-defined | gary-proposed
     established: "2026-03-27"
     notes: "..."
-  version: 1
+  version: 2
 ```
+
+### Field Notes
+
+- **`imageOptions.keywords`**: Stored as a list in the preset for clarity. At flatten time, keywords are appended to the `imageOptions.style` string (comma-separated) for API compatibility, since the Gamma API doesn't have a separate keywords parameter.
+- **`formatVariant`**: Captures the Gamma UI's card design mode (Classic, Traditional, Modern). This may be UI-only — no confirmed API mapping. Stored as design intent; Gary includes it in `additionalInstructions` if needed.
+- **`numCards`**: Preset-level default. Overridden by content-type-mapping (`numCards: auto` for lecture decks, `3-5` for case studies, etc.) and by the context envelope.
+- **`additionalInstructions`**: Uses **concatenation**, not replacement. The preset provides a base instruction; content-type-specific and envelope instructions are appended. This ensures "keep the style uniform" always fires while allowing "one concept per card" to be added for lecture decks.
 
 ---
 
@@ -66,7 +98,7 @@ Presets slot into the parameter cascade at **level 3 of 6**:
 6. Gary per-request judgment
 ```
 
-A preset value is overridden by anything at levels 4-6. This means content-type-specific `additionalInstructions` and envelope overrides always win, which is the correct behavior — the preset provides the visual baseline, and higher layers specialize.
+A preset value is overridden by anything at levels 4-6, **except `additionalInstructions`** which uses concatenation — all layers contribute fragments that are joined into a single instruction string. This means the preset's base instruction ("keep the style uniform") is always present, while content-type-specific additions ("one concept per card") and envelope additions are appended.
 
 ---
 

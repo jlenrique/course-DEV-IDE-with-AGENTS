@@ -216,20 +216,28 @@ presets:
     theme_id: njim9kuhfnljvaa
     theme_name: "2026 HIL APC Nejal"
     parameters:
-      textMode: condense
+      textMode: generate
       textOptions:
-        amount: brief
+        amount: detailed
         language: en
       imageOptions:
         source: aiGenerated
-        model: recraft-v3
-        style: "Line drawing"
+        model: nano-banana-2-mini
+        style: illustration
+        keywords:
+          - vector
+          - minimalist
+          - flat-color
       cardOptions:
         dimensions: "16x9"
+      format: presentation
+      formatVariant: classic
+      numCards: 10
+      additionalInstructions: "Keep the style of all the images uniform."
     provenance:
       source: exemplar-match
       established: "2026-03-27"
-    version: 1
+    version: 2
   - name: startup-bold
     description: Bold startup style
     scope: "C2"
@@ -293,8 +301,8 @@ class TestLoadStylePreset:
         path = _write_presets(tmp_path)
         params = load_style_preset("hil-2026-apc-nejal", path=path)
         assert params is not None
-        assert params["textMode"] == "condense"
-        assert params["imageOptions"]["model"] == "recraft-v3"
+        assert params["textMode"] == "generate"
+        assert params["imageOptions"]["model"] == "nano-banana-2-mini"
 
     def test_returns_none_for_unknown_name(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
@@ -313,7 +321,7 @@ class TestResolveStylePreset:
     def test_resolve_by_theme_id(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
         result = resolve_style_preset(theme_id="njim9kuhfnljvaa", path=path)
-        assert result["textMode"] == "condense"
+        assert result["textMode"] == "generate"
         assert result["themeId"] == "njim9kuhfnljvaa"
 
     def test_resolve_by_scope_most_specific(self, tmp_path: Path) -> None:
@@ -387,3 +395,95 @@ class TestMergeParametersWithPreset:
             {"exportAs": "pdf"},
         )
         assert result == {"format": "presentation", "numCards": 1, "exportAs": "pdf"}
+
+
+class TestFlattenPresetKeywords:
+    """Tests for keyword → style string merging in _flatten_preset_params."""
+
+    def test_keywords_appended_to_style(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
+        style = result["imageOptions"]["style"]
+        assert "illustration" in style
+        assert "vector" in style
+        assert "minimalist" in style
+        assert "flat-color" in style
+
+    def test_keywords_removed_from_dict(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
+        assert "keywords" not in result["imageOptions"]
+
+    def test_no_keywords_leaves_style_unchanged(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("startup-bold", path=path)
+        assert result["imageOptions"]["style"] == "Photographic editorial"
+
+    def test_preset_includes_new_fields(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
+        assert result["numCards"] == 10
+        assert result["format"] == "presentation"
+        assert result["formatVariant"] == "classic"
+        assert "Keep the style" in result["additionalInstructions"]
+
+
+class TestMergeAdditionalInstructionsConcatenation:
+    """Tests for additionalInstructions concatenation across layers."""
+
+    def test_preset_base_plus_content_type(self) -> None:
+        result = merge_parameters(
+            {},
+            {"additionalInstructions": "One concept per card."},
+            {},
+            style_preset={"additionalInstructions": "Keep style uniform."},
+        )
+        ai = result["additionalInstructions"]
+        assert "Keep style uniform." in ai
+        assert "One concept per card." in ai
+        # Preset comes before content template
+        assert ai.index("Keep style uniform.") < ai.index("One concept per card.")
+
+    def test_all_three_layers_concatenated(self) -> None:
+        result = merge_parameters(
+            {"additionalInstructions": "Base."},
+            {"additionalInstructions": "Content-type."},
+            {"additionalInstructions": "Envelope."},
+            style_preset={"additionalInstructions": "Preset."},
+        )
+        ai = result["additionalInstructions"]
+        assert ai == "Base. Preset. Content-type. Envelope."
+
+    def test_empty_fragments_skipped(self) -> None:
+        result = merge_parameters(
+            {"additionalInstructions": ""},
+            {},
+            {"additionalInstructions": "Only this."},
+            style_preset={"additionalInstructions": ""},
+        )
+        assert result["additionalInstructions"] == "Only this."
+
+    def test_no_additional_instructions_anywhere(self) -> None:
+        result = merge_parameters(
+            {"format": "presentation"},
+            {},
+            {},
+            style_preset={"textMode": "generate"},
+        )
+        assert "additionalInstructions" not in result
+
+    def test_other_params_still_override(self) -> None:
+        """Non-AI params still use last-wins, only AI concatenates."""
+        result = merge_parameters(
+            {"textMode": "preserve"},
+            {"textMode": "condense"},
+            {},
+            style_preset={
+                "textMode": "generate",
+                "additionalInstructions": "Preset base.",
+            },
+        )
+        # textMode: content template wins (later in cascade)
+        assert result["textMode"] == "condense"
+        # additionalInstructions: concatenated
+        assert result["additionalInstructions"] == "Preset base."

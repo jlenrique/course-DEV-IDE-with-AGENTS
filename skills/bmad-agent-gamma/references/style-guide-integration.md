@@ -22,10 +22,12 @@ Parameters are resolved in this order (later wins):
 
 1. **API defaults** — Gamma's own defaults for unspecified parameters
 2. **Style guide** — `tool_parameters.gamma` values (if non-empty)
-3. **Style preset** — Named visual-identity preset from `state/config/gamma-style-presets.yaml` (if resolved via SP capability). Adds image model, image style, text mode, card dimensions, and other parameters that supplement the theme. Resolved by preset name, theme_id match, or scope match. See `./style-preset-library.md`.
+3. **Style preset** — Named visual-identity preset from `state/config/gamma-style-presets.yaml` (if resolved via SP capability). Adds image model, image style + keywords, text mode, format variant, default card count, base `additionalInstructions`, and other parameters that supplement the theme. Resolved by preset name, theme_id match, or scope match. See `./style-preset-library.md`.
 4. **Content type template** — from content-type-mapping.md (if applicable)
 5. **Context envelope** — Marcus's delegation overrides
 6. **Per-request adjustment** — Gary's judgment based on specific content analysis
+
+**Special: `additionalInstructions` concatenation.** Unlike other parameters where later levels override earlier ones, `additionalInstructions` is **concatenated** across all levels. The preset provides a base instruction (e.g., "Keep the style of all the images uniform"), content-type templates append specifics (e.g., "One key concept per card"), and envelope overrides add final adjustments. All fragments are joined with a space.
 
 ## Style Bible Consultation
 

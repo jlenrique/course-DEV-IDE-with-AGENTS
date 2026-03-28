@@ -97,8 +97,9 @@ Folder IDs for organizing output in Gamma workspace.
 AI image model when source is `aiGenerated`. Options in Gamma docs reference.
 
 #### `imageOptions.style` (string, 1-500 chars, optional)
-Artistic style guidance when source is `aiGenerated`.
+Artistic style guidance when source is `aiGenerated`. The Gamma UI presents this as a tile picker (Photo, Illustration, Abstract, 3D, etc.) plus a free-text field. The API accepts a single string that combines the art style and any additional keywords.
 - **Medical ed guidance**: `"Professional medical, clean, corporate"` or `"Data visualization, minimal, high contrast"`
+- **Style preset integration**: When a style preset includes `imageOptions.keywords` (e.g., `[vector, minimalist, flat-color, linework, bold]`), these are appended to the style string at flatten time: `"illustration, vector, minimalist, flat-color, linework, bold"`. See `style-preset-library.md`.
 
 ### cardOptions (object)
 

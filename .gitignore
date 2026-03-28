@@ -9,6 +9,20 @@
 secrets/
 course-content/**/private/
 
+# Course content — binary media files (stored on Box Drive / local disk, not git)
+# Text artifacts (.md, .yaml, .json, .vtt, .csv) remain tracked — they're agent output.
+course-content/**/*.pdf
+course-content/**/*.pptx
+course-content/**/*.docx
+course-content/**/*.jpg
+course-content/**/*.jpeg
+course-content/**/*.png
+course-content/**/*.mp3
+course-content/**/*.wav
+course-content/**/*.zip
+course-content/**/*.gif
+course-content/**/*.webp
+
 # State runtime (SQLite + backups)
 state/runtime/*.db
 state/runtime/*.db-journal

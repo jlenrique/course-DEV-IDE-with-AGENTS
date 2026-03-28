@@ -152,29 +152,54 @@ def resolve_style_preset(
 def _flatten_preset_params(preset: dict[str, Any]) -> dict[str, Any]:
     """Extract and flatten parameters from a preset for merge.
 
-    - Pulls ``theme_id`` from the preset top level into the parameter dict.
-    - Merges ``imageOptions.keywords`` into ``imageOptions.style`` if the
-      API doesn't support a separate keywords field (keywords are appended
-      as comma-separated values to the style string).
+    Handles two image style modes:
+
+    **Approach A — Named stylePreset (tile selection):**
+        ``imageOptions.stylePreset`` is a named value (e.g., ``illustration``,
+        ``lineArt``, ``photorealistic``, ``abstract``, ``3D``).
+        ``imageOptions.keywords`` are appended as comma-separated text to
+        ``imageOptions.style`` to add specificity (``style`` is ignored by
+        the API when stylePreset is named, but Gary can add keywords to
+        ``additionalInstructions`` as fallback context).
+        ``referenceImagePath`` is stripped — not used in named mode.
+
+    **Approach B — Custom stylePreset (text prompt):**
+        ``imageOptions.stylePreset`` is ``"custom"``.
+        ``imageOptions.style`` is the full style prompt (1-500 chars).
+        ``imageOptions.keywords`` are appended to the style prompt string.
+        ``referenceImagePath`` is preserved as a hint for Marcus to use
+        when crafting or refining the custom style prompt.
+
+    Also pulls ``theme_id`` from the preset top level into ``themeId``.
+    Also strips ``referenceImagePath`` from ``imageOptions`` in named mode
+    (it's a design-intent field for Approach B only).
     """
     params = dict(preset.get("parameters", {}))
     if preset.get("theme_id") and "themeId" not in params:
         params["themeId"] = preset["theme_id"]
 
-    # Merge keywords into imageOptions.style for API compatibility.
-    # The Gamma UI has separate keyword chips, but the API uses a single
-    # style string.  Keep the keywords list in the preset for clarity,
-    # and append them to the style string here at flatten time.
     img = params.get("imageOptions")
     if isinstance(img, dict):
+        img = dict(img)  # shallow copy so we don't mutate the preset
+        params["imageOptions"] = img
+
+        style_preset_value = img.get("stylePreset", "")
         keywords = img.pop("keywords", None)
-        if keywords and isinstance(keywords, list):
-            style_base = img.get("style", "")
-            kw_str = ", ".join(keywords)
-            if style_base:
-                img["style"] = f"{style_base}, {kw_str}"
-            else:
-                img["style"] = kw_str
+        kw_str = ", ".join(keywords) if keywords and isinstance(keywords, list) else ""
+
+        if style_preset_value == "custom":
+            # Approach B: style is the prompt; append keywords to it
+            if kw_str:
+                style_base = img.get("style", "").strip()
+                img["style"] = f"{style_base}, {kw_str}" if style_base else kw_str
+            # referenceImagePath stays — Marcus uses it to craft/refine the prompt
+        else:
+            # Approach A: named tile — style field is ignored by API for named presets.
+            # Store keywords as a hint string in a separate key Gary can use in
+            # additionalInstructions if needed. Remove referenceImagePath.
+            if kw_str:
+                img["_keywordsHint"] = kw_str  # Gary reads this, not sent to API
+            img.pop("referenceImagePath", None)
 
     return params
 

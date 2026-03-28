@@ -20,57 +20,103 @@ Presets live in `state/config/gamma-style-presets.yaml` (git-versioned, human-re
 
 ---
 
+## Two Style Approaches
+
+Presets support two approaches for image style specification. Gary selects based on the `approach` field:
+
+### Approach A — Named `stylePreset` (proven, default)
+
+Uses `imageOptions.stylePreset` with a named tile value (`illustration`, `lineArt`, `photorealistic`, `abstract`, `3D`). This is the **screenshot-exact configuration** — what you set in the Gamma Prompt Editor and got right. Use this as the default.
+
+```yaml
+approach: A
+parameters:
+  imageOptions:
+    source: aiGenerated
+    model: nano-banana-2-mini
+    stylePreset: illustration        # Named API tile — style field IGNORED by API
+    keywords:                        # Gary adds to additionalInstructions as hint
+      - vector
+      - minimalist
+      - flat-color
+      - linework
+      - bold
+```
+
+**Flatten behavior**: `stylePreset` goes to API as-is. `keywords` become `_keywordsHint` (Gary may include in `additionalInstructions`). `style` field not sent.
+
+### Approach B — `custom` stylePreset + text prompt (experimental)
+
+Uses `imageOptions.stylePreset: custom` so the `style` text string drives generation. Requires a reference PNG for Marcus/Gary to study when crafting/refining the style prompt. Use `flux-kontext-pro` — designed for style-reference controlled generation.
+
+```yaml
+approach: B
+parameters:
+  imageOptions:
+    source: aiGenerated
+    model: flux-kontext-pro          # Best for style-reference matching
+    stylePreset: custom              # Enables style field as prompt
+    style: >-
+      Line drawing illustration. Clean black ink lines on white background.
+      Minimal fill, no shading, no photorealism. Editorial medical infographic
+      style. Vector aesthetic with bold linework. Flat-color accents only.
+    keywords:                        # Appended to style string at flatten time
+      - vector
+      - minimalist
+    referenceImagePath: >-           # Gary reads this PNG to craft/refine style prompt
+      course-content/staging/ad-hoc/.../1_Physician-as-Innovator.png
+```
+
+**Flatten behavior**: `style` + `keywords` are merged into a single style prompt string. `referenceImagePath` is preserved for Gary to read (not sent to API).
+
+**Note on reference image upload (UI-only):** In the Gamma UI, uploading a reference PNG auto-sets the tile to `custom` and Gamma generates a style embedding from the image internally. This is **not yet available in the API**. `referenceImagePath` is a design-intent field — Gary reads the PNG and writes a precise `style` description. When Gamma adds API support for reference images, this field will map directly.
+
+---
+
 ## Preset Schema
 
 ```yaml
-- name: hil-2026-apc-nejal           # Unique key (kebab-case)
-  description: "..."                   # What this look-and-feel is for
-  scope: "*"                           # "*", "C1", "C1 > M1", "C1 > M1 > L3"
-  theme_id: njim9kuhfnljvaa           # Gamma API theme ID
-  theme_name: "2026 HIL APC Nejal"    # Human-readable (display only)
-  parameters:                          # Gamma API params applied at cascade level 3
-    # --- Text ---
-    textMode: generate                 # generate | condense | preserve
+- name: hil-2026-apc-nejal-A        # Unique key (kebab-case). Suffix -A or -B for approach.
+  description: "..."
+  approach: A                        # A (named stylePreset) | B (custom + text prompt)
+  scope: "*"                         # "*", "C1", "C1 > M1", "C1 > M1 > L3"
+  theme_id: njim9kuhfnljvaa
+  theme_name: "2026 HIL APC Nejal"
+  parameters:
+    textMode: generate
     textOptions:
-      amount: detailed                 # brief | concise | detailed | extensive (maps to Gamma UI text amount)
+      amount: detailed               # brief | concise | detailed | extensive
       language: en
-
-    # --- Visuals ---
     imageOptions:
       source: aiGenerated
-      model: nano-banana-2-mini        # AI image model (from Gamma model picker)
-      style: illustration              # Art style tile (Photo, Illustration, Abstract, 3D, etc.)
-      keywords:                        # Extra keywords for image consistency (Gamma UI keyword chips)
-        - vector
-        - minimalist
-        - flat-color
-        - linework
-        - bold
-
-    # --- Layout ---
+      model: nano-banana-2-mini
+      stylePreset: illustration      # Approach A: named tile
+      keywords: [vector, minimalist, flat-color, linework, bold]
+      # stylePreset: custom          # Approach B: enables style string
+      # style: "..."                 # Approach B: full style prompt
+      # referenceImagePath: "..."    # Approach B: PNG for prompt crafting
     cardOptions:
       dimensions: "16x9"
     format: presentation
-    formatVariant: classic             # UI card design mode (classic | traditional | modern); may be UI-only
-
-    # --- Generation defaults ---
-    numCards: 10                        # Default card count (overridable by content-type or envelope)
-    additionalInstructions: >-         # Base instructions ALWAYS applied; concatenated (not replaced)
+    formatVariant: classic
+    numCards: 10
+    additionalInstructions: >-
       Keep the style of all the images uniform.
-
   provenance:
-    source: exemplar-match             # pilot-run | exemplar-match | user-defined | gary-proposed
+    source: exemplar-match
     established: "2026-03-27"
     notes: "..."
-  version: 2
+  version: 1
 ```
 
 ### Field Notes
 
-- **`imageOptions.keywords`**: Stored as a list in the preset for clarity. At flatten time, keywords are appended to the `imageOptions.style` string (comma-separated) for API compatibility, since the Gamma API doesn't have a separate keywords parameter.
-- **`formatVariant`**: Captures the Gamma UI's card design mode (Classic, Traditional, Modern). This may be UI-only — no confirmed API mapping. Stored as design intent; Gary includes it in `additionalInstructions` if needed.
-- **`numCards`**: Preset-level default. Overridden by content-type-mapping (`numCards: auto` for lecture decks, `3-5` for case studies, etc.) and by the context envelope.
-- **`additionalInstructions`**: Uses **concatenation**, not replacement. The preset provides a base instruction; content-type-specific and envelope instructions are appended. This ensures "keep the style uniform" always fires while allowing "one concept per card" to be added for lecture decks.
+- **`imageOptions.stylePreset`**: The API field that maps to the UI tile buttons. When named (not `custom`), `style` is ignored by the API. Added to Gamma API Feb 27, 2026.
+- **`imageOptions.keywords`**: Stored as a list. Approach A: becomes `_keywordsHint` (for `additionalInstructions` injection). Approach B: appended to `style` string.
+- **`imageOptions.referenceImagePath`**: Approach B only. Design-intent field. Gary reads the PNG file to study the visual language and write/refine the `style` prompt. Not sent to API.
+- **`formatVariant`**: UI card design mode (Classic, Traditional, Modern). May be UI-only. Stored as design intent.
+- **`numCards`**: Preset-level default, overridden by content-type-mapping and context envelope.
+- **`additionalInstructions`**: Concatenated across all cascade layers, not overridden.
 
 ---
 

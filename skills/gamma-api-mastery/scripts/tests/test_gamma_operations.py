@@ -210,8 +210,9 @@ class TestDownloadExport:
 
 _SAMPLE_PRESETS_YAML = """\
 presets:
-  - name: hil-2026-apc-nejal
-    description: HIL branded deck
+  - name: hil-2026-apc-nejal-A
+    description: HIL branded deck Approach A
+    approach: A
     scope: "*"
     theme_id: njim9kuhfnljvaa
     theme_name: "2026 HIL APC Nejal"
@@ -223,7 +224,7 @@ presets:
       imageOptions:
         source: aiGenerated
         model: nano-banana-2-mini
-        style: illustration
+        stylePreset: illustration
         keywords:
           - vector
           - minimalist
@@ -237,9 +238,33 @@ presets:
     provenance:
       source: exemplar-match
       established: "2026-03-27"
-    version: 2
+    version: 1
+  - name: hil-2026-apc-nejal-B
+    description: HIL branded deck Approach B
+    approach: B
+    scope: "*"
+    theme_id: njim9kuhfnljvaa
+    theme_name: "2026 HIL APC Nejal"
+    parameters:
+      textMode: generate
+      imageOptions:
+        source: aiGenerated
+        model: flux-kontext-pro
+        stylePreset: custom
+        style: "Line drawing illustration. Clean black ink on white."
+        keywords:
+          - vector
+          - minimalist
+        referenceImagePath: "course-content/staging/ad-hoc/ref.png"
+      numCards: 10
+      additionalInstructions: "Keep the style of all the images uniform."
+    provenance:
+      source: gary-proposed
+      established: "2026-03-27"
+    version: 1
   - name: startup-bold
     description: Bold startup style
+    approach: A
     scope: "C2"
     theme_id: theme_startup_xyz
     theme_name: "Startup Bold"
@@ -248,7 +273,7 @@ presets:
       imageOptions:
         source: aiGenerated
         model: flux-2-pro
-        style: "Photographic editorial"
+        stylePreset: photorealistic
     provenance:
       source: user-defined
       established: "2026-03-28"
@@ -268,26 +293,28 @@ class TestListStylePresets:
     def test_returns_all_presets(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
         presets = list_style_presets(path=path)
-        assert len(presets) == 2
+        assert len(presets) == 3  # A, B, startup-bold
 
     def test_filters_by_scope_wildcard(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
         presets = list_style_presets(scope="C1", path=path)
-        # Only wildcard preset matches C1
-        assert len(presets) == 1
-        assert presets[0]["name"] == "hil-2026-apc-nejal"
+        # Only wildcard presets match C1 (A and B are both scope="*")
+        names = [p["name"] for p in presets]
+        assert "hil-2026-apc-nejal-A" in names
+        assert "hil-2026-apc-nejal-B" in names
+        assert "startup-bold" not in names
 
     def test_filters_by_scope_exact(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
         presets = list_style_presets(scope="C2", path=path)
-        # Both wildcard and C2 match
-        assert len(presets) == 2
+        # Wildcard (A + B) and C2 match
+        assert len(presets) == 3
 
     def test_filters_by_scope_prefix(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
         presets = list_style_presets(scope="C2 > M1", path=path)
-        # Both wildcard and C2 match (C2 > M1 starts with C2)
-        assert len(presets) == 2
+        # Wildcard (A + B) and C2 all match
+        assert len(presets) == 3
 
     def test_returns_empty_when_file_missing(self, tmp_path: Path) -> None:
         presets = list_style_presets(path=tmp_path / "nonexistent.yaml")
@@ -299,7 +326,7 @@ class TestLoadStylePreset:
 
     def test_loads_by_name(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
-        params = load_style_preset("hil-2026-apc-nejal", path=path)
+        params = load_style_preset("hil-2026-apc-nejal-A", path=path)
         assert params is not None
         assert params["textMode"] == "generate"
         assert params["imageOptions"]["model"] == "nano-banana-2-mini"
@@ -318,11 +345,12 @@ class TestResolveStylePreset:
         assert result["textMode"] == "generate"
         assert result["imageOptions"]["model"] == "flux-2-pro"
 
-    def test_resolve_by_theme_id(self, tmp_path: Path) -> None:
+    def test_resolve_by_theme_id_returns_first_match(self, tmp_path: Path) -> None:
+        # Both A and B share the same theme_id; first in file wins
         path = _write_presets(tmp_path)
         result = resolve_style_preset(theme_id="njim9kuhfnljvaa", path=path)
-        assert result["textMode"] == "generate"
         assert result["themeId"] == "njim9kuhfnljvaa"
+        assert result["imageOptions"]["model"] == "nano-banana-2-mini"  # A comes first
 
     def test_resolve_by_scope_most_specific(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
@@ -344,7 +372,7 @@ class TestResolveStylePreset:
 
     def test_flatten_includes_theme_id(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
-        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
+        result = resolve_style_preset("hil-2026-apc-nejal-A", path=path)
         assert result["themeId"] == "njim9kuhfnljvaa"
 
 
@@ -398,30 +426,50 @@ class TestMergeParametersWithPreset:
 
 
 class TestFlattenPresetKeywords:
-    """Tests for keyword → style string merging in _flatten_preset_params."""
+    """Tests for keyword handling in _flatten_preset_params."""
 
-    def test_keywords_appended_to_style(self, tmp_path: Path) -> None:
+    def test_approach_a_keywords_become_hint(self, tmp_path: Path) -> None:
+        """Approach A: keywords stored as _keywordsHint, not in style."""
         path = _write_presets(tmp_path)
-        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
-        style = result["imageOptions"]["style"]
-        assert "illustration" in style
+        result = resolve_style_preset("hil-2026-apc-nejal-A", path=path)
+        img = result["imageOptions"]
+        # stylePreset preserved as named value
+        assert img["stylePreset"] == "illustration"
+        # keywords become hint, not appended to style
+        assert "_keywordsHint" in img
+        assert "vector" in img["_keywordsHint"]
+        # no 'style' key sent (API ignores it for named stylePreset)
+        assert "style" not in img
+        # keywords list removed
+        assert "keywords" not in img
+
+    def test_approach_a_no_reference_image_path(self, tmp_path: Path) -> None:
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("hil-2026-apc-nejal-A", path=path)
+        assert "referenceImagePath" not in result["imageOptions"]
+
+    def test_approach_b_keywords_appended_to_style(self, tmp_path: Path) -> None:
+        """Approach B: keywords appended to style prompt string."""
+        path = _write_presets(tmp_path)
+        result = resolve_style_preset("hil-2026-apc-nejal-B", path=path)
+        img = result["imageOptions"]
+        assert img["stylePreset"] == "custom"
+        style = img["style"]
+        assert "Line drawing" in style
         assert "vector" in style
         assert "minimalist" in style
-        assert "flat-color" in style
+        assert "keywords" not in img
 
-    def test_keywords_removed_from_dict(self, tmp_path: Path) -> None:
+    def test_approach_b_reference_image_path_preserved(self, tmp_path: Path) -> None:
+        """Approach B: referenceImagePath kept for Gary to study."""
         path = _write_presets(tmp_path)
-        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
-        assert "keywords" not in result["imageOptions"]
+        result = resolve_style_preset("hil-2026-apc-nejal-B", path=path)
+        assert "referenceImagePath" in result["imageOptions"]
+        assert "ref.png" in result["imageOptions"]["referenceImagePath"]
 
-    def test_no_keywords_leaves_style_unchanged(self, tmp_path: Path) -> None:
+    def test_approach_a_preset_includes_new_fields(self, tmp_path: Path) -> None:
         path = _write_presets(tmp_path)
-        result = resolve_style_preset("startup-bold", path=path)
-        assert result["imageOptions"]["style"] == "Photographic editorial"
-
-    def test_preset_includes_new_fields(self, tmp_path: Path) -> None:
-        path = _write_presets(tmp_path)
-        result = resolve_style_preset("hil-2026-apc-nejal", path=path)
+        result = resolve_style_preset("hil-2026-apc-nejal-A", path=path)
         assert result["numCards"] == 10
         assert result["format"] == "presentation"
         assert result["formatVariant"] == "classic"

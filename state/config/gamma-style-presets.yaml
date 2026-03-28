@@ -1,34 +1,52 @@
 # Gamma Style Presets — Named visual identity specifications for reproducible slide production.
 #
-# Each preset maps a human-readable name to a complete set of Gamma API parameters
-# that, combined with a theme, fully specify the look and feel of generated slides.
-# Presets are resolved by Gary's SP (Style Preset) capability and injected into the
-# parameter merge cascade between style guide defaults and content type templates.
+# Each preset maps a human-readable name to the full set of Gamma API parameters
+# needed to reproduce a specific look and feel.
 #
-# GOVERNANCE: User creates and approves presets (they're git-versioned). Gary may
-# PROPOSE preset additions or modifications based on run outcomes, but proposals go
-# through HIL review before being saved here. No autonomous preset mutation.
+# TWO STYLE APPROACHES:
+#
+# Approach A — Named stylePreset (proven, screenshot-exact):
+#   imageOptions.stylePreset is a named API tile value (illustration, lineArt,
+#   photorealistic, abstract, 3D). The style field is IGNORED by the API for
+#   named presets. Keywords are stored as hints Gary can add to
+#   additionalInstructions for model guidance. This is the primary/default
+#   approach — it reflects what worked in the Gamma UI.
+#
+# Approach B — Custom stylePreset (text prompt, experimental):
+#   imageOptions.stylePreset: custom. The style field IS the prompt (1-500 chars).
+#   Keywords are appended to the style string. referenceImagePath points to a
+#   PNG Gary/Marcus can use when crafting or refining the prompt. Not in API yet
+#   but stored as design intent; Marcus uses the path to study the reference and
+#   write a better style description.
+#
+# GOVERNANCE: User creates and approves presets (git-versioned). Gary may PROPOSE
+# additions or modifications based on run outcomes, but proposals go through HIL
+# review before being saved here. No autonomous preset mutation.
 #
 # SCHEMA per preset:
-#   name:           Human-readable preset name (unique key)
+#   name:           Unique key (kebab-case)
 #   description:    What this look-and-feel is for
-#   scope:          Where it applies — "*" (all), "C1" (course), "C1 > M1" (module), etc.
+#   approach:       A (named stylePreset) | B (custom stylePreset + text prompt)
+#   scope:          "*" | "C1" | "C1 > M1" | "C1 > M1 > L3"
 #   theme_id:       Gamma theme ID from GET /v1.0/themes
-#   theme_name:     Human-readable theme name (for display; theme_id is authoritative)
-#   parameters:     Gamma API parameters applied when this preset is active
+#   theme_name:     Human-readable (display only; theme_id is authoritative)
+#   parameters:
 #     textMode:     generate | condense | preserve
 #     textOptions:  {amount, tone, audience, language}
-#     imageOptions: {source, model, style, keywords}
-#       keywords:   List of extra keywords for image style consistency (e.g. vector, minimalist)
-#     cardOptions:  {dimensions}
-#     format:       presentation | document | social | webpage
-#     formatVariant: classic | traditional | modern (UI sub-type; may be UI-only)
-#     numCards:     Default card count for this preset (overridable by content-type or envelope)
-#     additionalInstructions: >-
-#       Base instructions always applied with this preset. Content-type-specific and
-#       envelope instructions are APPENDED (not replaced) during merge.
-#   provenance:     How this preset was established
-#     source:       "pilot-run" | "exemplar-match" | "user-defined" | "gary-proposed"
+#     imageOptions:
+#       source:           aiGenerated | noImages | pexels | ...
+#       model:            AI image model string (see parameter-catalog.md)
+#       stylePreset:      illustration | lineArt | photorealistic | abstract | 3D | custom
+#       style:            [Approach B only] Free-text style prompt (1-500 chars)
+#       keywords:         [Approach A] List of extra style keywords (appended as hint)
+#       referenceImagePath: [Approach B] Local path to reference PNG for prompt crafting
+#     cardOptions:        {dimensions}
+#     format:             presentation | document | ...
+#     formatVariant:      classic | traditional | modern (UI sub-type; may be UI-only)
+#     numCards:           Default card count
+#     additionalInstructions: Base instructions (concatenated, not overridden)
+#   provenance:
+#     source:       pilot-run | exemplar-match | user-defined | gary-proposed
 #     established:  ISO date
 #     notes:        Free text
 #   version:        Integer, incremented on each edit
@@ -36,17 +54,22 @@
 # MERGE BEHAVIOR: Preset parameters slot into the cascade at level 3 of 6:
 #   1. API defaults → 2. Style guide → 3. STYLE PRESET → 4. Content type template
 #   → 5. Context envelope overrides → 6. Gary per-request judgment
-# A preset value is overridden by anything at levels 4-6, EXCEPT additionalInstructions
-# which uses CONCATENATION (preset base + content-type additions + envelope additions).
+# additionalInstructions uses CONCATENATION across all levels (not override).
 
 presets:
-  - name: hil-2026-apc-nejal
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # APPROACH A — Named stylePreset (screenshot-exact, proven in production)
+  # Use this by default for all HIL 2026 APC productions.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: hil-2026-apc-nejal-A
     description: >-
-      HIL 2026 APC branded deck style — Nano Banana 2 Mini AI imagery with
-      illustration art style, vector/minimalist/flat-color/linework/bold keywords,
-      detailed text in generate mode, classic card design, 10-card default.
-      Canonical look-and-feel for all Gamma productions under this project.
-      Populated from approved Gamma Prompt Editor screenshot (2026-03-27).
+      HIL 2026 APC branded deck — Approach A (named stylePreset tile).
+      Exact values from approved Gamma Prompt Editor screenshot: Nano Banana
+      2 Mini model, illustration tile, vector/minimalist/flat-color/linework/bold
+      keywords, generate/detailed text, classic card design, 10-card default.
+      Primary approach — use this unless explicitly testing Approach B.
+    approach: A
     scope: "*"
     theme_id: njim9kuhfnljvaa
     theme_name: "2026 HIL APC Nejal"
@@ -61,13 +84,79 @@ presets:
       imageOptions:
         source: aiGenerated
         model: nano-banana-2-mini
-        style: illustration
-        keywords:
+        stylePreset: illustration        # Named API tile — style field ignored by API
+        keywords:                        # Stored as hint; Gary may add to additionalInstructions
           - vector
           - minimalist
           - flat-color
           - linework
           - bold
+
+      # --- Layout ---
+      cardOptions:
+        dimensions: "16x9"
+      format: presentation
+      formatVariant: classic             # UI card design mode (may be UI-only)
+
+      # --- Generation defaults ---
+      numCards: 10
+      additionalInstructions: >-
+        Keep the style of all the images uniform.
+
+    provenance:
+      source: exemplar-match
+      established: "2026-03-27"
+      notes: >-
+        Populated from approved Gamma Prompt Editor screenshot (2026-03-27).
+        Nano Banana 2 Mini (20 cr/image), illustration stylePreset tile,
+        vector + minimalist + flat-color + linework + bold keywords,
+        generate/detailed, classic, 10 cards.
+        Supersedes plain 'hil-2026-apc-nejal' (v2).
+    version: 1
+
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # APPROACH B — Custom stylePreset + text prompt (experimental)
+  # Use when Marcus has a reference PNG and can craft a precise style prompt.
+  # Prior attempts with generic text produced suboptimal results; a reference
+  # image + richer prompt may close the gap.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: hil-2026-apc-nejal-B
+    description: >-
+      HIL 2026 APC branded deck — Approach B (custom stylePreset + text prompt).
+      Experimental. Uses stylePreset: custom so imageOptions.style drives
+      generation. Requires a reference PNG for Marcus to craft/refine the
+      style prompt. flux-kontext-pro recommended — designed for style-reference
+      workflows. Populate referenceImagePath before use.
+    approach: B
+    scope: "*"
+    theme_id: njim9kuhfnljvaa
+    theme_name: "2026 HIL APC Nejal"
+    parameters:
+      # --- Text ---
+      textMode: generate
+      textOptions:
+        amount: detailed
+        language: en
+
+      # --- Visuals ---
+      imageOptions:
+        source: aiGenerated
+        model: flux-kontext-pro          # Designed for style-reference workflows
+        stylePreset: custom              # Enables style field as prompt
+        style: >-
+          Line drawing illustration. Clean black ink lines on white background.
+          Minimal fill, no shading, no photorealism. Editorial medical infographic
+          style. Vector aesthetic with bold linework. Flat-color accents only.
+          Consistent visual language across all slides.
+        keywords:                        # Appended to style string at flatten time
+          - vector
+          - minimalist
+          - flat-color
+          - linework
+          - bold
+        referenceImagePath: >-          # Gary/Marcus: read this PNG to refine style prompt
+          course-content/staging/ad-hoc/gamma-c1m1-physician-innovator-pilot/v2-recraft-svg/png/1_Physician-as-Innovator.png
 
       # --- Layout ---
       cardOptions:
@@ -81,15 +170,15 @@ presets:
         Keep the style of all the images uniform.
 
     provenance:
-      source: exemplar-match
+      source: gary-proposed
       established: "2026-03-27"
       notes: >-
-        Populated from Gamma Prompt Editor screenshot captured during active
-        production. Theme "2026 HIL APC Nejal" (njim9kuhfnljvaa) with
-        Nano Banana 2 Mini model (20 credits/image), illustration art style,
-        vector + minimalist + flat-color + linework + bold keywords,
-        generate mode with detailed text, classic card design, 10 cards,
-        "keep the style of all the images uniform" as base instruction.
-        Supersedes v1 (recraft-v3 + condense/brief from pilot attempt 4).
-        See course-content/staging/ad-hoc/gamma-c1m1-physician-innovator-pilot/.
-    version: 2
+        Experimental approach. Prior custom-text attempts produced suboptimal
+        results — style description was too generic. This version uses
+        flux-kontext-pro (designed for style-reference generation) and a richer
+        500-char style prompt informed by the approved exemplar.
+        referenceImagePath points to the approved slide 1 PNG from the pilot
+        — Marcus should read this image and refine the style string before
+        running. Requires user HIL approval of output before promoting to
+        primary approach.
+    version: 1

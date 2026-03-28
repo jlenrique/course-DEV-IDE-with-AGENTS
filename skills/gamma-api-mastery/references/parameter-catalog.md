@@ -94,12 +94,45 @@ Folder IDs for organizing output in Gamma workspace.
 - **Medical ed guidance**: Use `noImages` for text-focused faithful reproduction. Use `pexels` for professional imagery. Never use `giphy` for medical education.
 
 #### `imageOptions.model` (string, optional)
-AI image model when source is `aiGenerated`. Options in Gamma docs reference.
+AI image model when source is `aiGenerated`. Full current list (as of 2026-03-27 API refresh):
+
+| Tier | Models |
+|------|--------|
+| **Standard** | `flux-2-klein`, `flux-kontext-fast`, `imagen-3-flash`, `luma-photon-flash-1`, `qwen-image-fast`, `qwen-image`, `flux-2-pro`, `ideogram-v3-turbo`, `imagen-4-fast`, `luma-photon-1`, `recraft-v4`, `leonardo-phoenix` |
+| **Advanced** | `flux-2-flex`, `flux-2-max`, `flux-kontext-pro`, `ideogram-v3`, `imagen-4-pro`, `recraft-v3`, `gemini-3-pro-image`, `gemini-2.5-flash-image`, `gpt-image-1-medium`, `dall-e-3` |
+| **Premium** | `gemini-3.1-flash-image-mini`, `recraft-v3-svg`, `recraft-v4-svg`, `ideogram-v3-quality`, `gemini-3.1-flash-image`, `gemini-3-pro-image-hd`, `gemini-3.1-flash-image-hd` |
+| **Ultra** | `imagen-4-ultra`, `gpt-image-1-high`, `recraft-v4-pro` |
+
+**Medical ed guidance by use case:**
+- **Style-reference matching (Approach B)**: `flux-kontext-pro` — designed for style-reference controlled generation; best for "make it look like this exemplar"
+- **Text accuracy in images**: `ideogram-v3` / `ideogram-v3-quality` — specifically strong at rendering readable text; use for text-bearing concept slides
+- **Illustration/lineart**: `recraft-v3`, `recraft-v4`, `nano-banana-2-mini` — proven for editorial medical illustration style
+- **Photorealistic**: `flux-2-pro`, `luma-photon-1`, `imagen-4-fast`
+- **High quality / production**: `gpt-image-1-high`, `recraft-v4-pro`, `imagen-4-ultra`
+- **Fast/cheap iteration**: `flux-2-klein`, `flux-kontext-fast`, `ideogram-v3-turbo`
+
+#### `imageOptions.stylePreset` (string, optional) — **added Feb 27, 2026**
+Named art style tile. **When set to a named value, `imageOptions.style` is IGNORED.**
+
+| Value | Gamma UI tile | Use |
+|-------|---------------|-----|
+| `photorealistic` | Photo | Clinical photography aesthetic |
+| `illustration` | Illustration | Diagrams, infographics, editorial art |
+| `abstract` | Abstract | Conceptual, atmospheric backgrounds |
+| `3D` | 3D | Volumetric, dimensional graphics |
+| `lineArt` | (line art tile) | Clean line-drawing style |
+| `custom` | Custom (auto-set on reference upload) | Free-form style via `style` prompt |
+
+- **Approach A**: Set `stylePreset` to a named value. `style` field unused by API.
+- **Approach B**: Set `stylePreset: custom`. `style` field IS the prompt (1-500 chars).
+- **Reference image upload** (UI-only, not in API): When a user uploads a PNG in the Gamma UI "Add style references" area, the tile switches to `custom` and Gamma generates a style embedding from the image. **Not yet exposed as an API parameter.** Use `referenceImagePath` in the style preset as a design-intent record — Gary/Marcus reads the image to craft a better `style` prompt.
+- **Medical ed guidance**: Use `illustration` for most HIL 2026 content (Approach A). Use `custom` + `flux-kontext-pro` for Approach B style-matching experiments.
 
 #### `imageOptions.style` (string, 1-500 chars, optional)
-Artistic style guidance when source is `aiGenerated`. The Gamma UI presents this as a tile picker (Photo, Illustration, Abstract, 3D, etc.) plus a free-text field. The API accepts a single string that combines the art style and any additional keywords.
-- **Medical ed guidance**: `"Professional medical, clean, corporate"` or `"Data visualization, minimal, high contrast"`
-- **Style preset integration**: When a style preset includes `imageOptions.keywords` (e.g., `[vector, minimalist, flat-color, linework, bold]`), these are appended to the style string at flatten time: `"illustration, vector, minimalist, flat-color, linework, bold"`. See `style-preset-library.md`.
+- **Only respected when `imageOptions.stylePreset` is `custom` or when `stylePreset` is not set.**
+- When `stylePreset` is a named tile, this field is ignored by the API.
+- **Approach B prompt guidance**: Be specific about line weight, fill, shading, color palette, and medium. "Line drawing, clean black ink lines on white, minimal fill, editorial medical infographic, no shading, no photorealism, vector aesthetic, flat-color accents only" performs better than generic descriptions.
+- **Style preset integration**: See `style-preset-library.md` for how keywords are appended at flatten time.
 
 ### cardOptions (object)
 

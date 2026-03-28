@@ -73,7 +73,7 @@ development_status:
   # Story 3.11 on hold pending this epic's G2-G3 stories.
   epic-2a: in-progress
   2a-1-fidelity-maturity-audit-l1-contracts: done  # audit baseline, L1 contracts (38 criteria), validation script, arch docs — done 2026-03-28
-  2a-2-sensory-bridges-skill: backlog                   # png_to_agent, audio_to_agent, pdf_to_agent, universal perception protocol
+  2a-2-sensory-bridges-skill: ready-for-dev              # 5 bridges (png, audio, pdf, pptx, video), perception schema, confidence rubric, protocol — story file created 2026-03-28
   2a-3-provenance-protocol: backlog                     # source_ref fields in all artifact schemas, traceability chain
   2a-4-fidelity-assessor-agent-foundation: backlog      # agent creation, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker
   2a-5-g0-g1-fidelity-verification: backlog             # source bundle completeness (G0), lesson plan faithfulness (G1)

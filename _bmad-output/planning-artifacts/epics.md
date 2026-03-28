@@ -748,12 +748,46 @@ So that I can perceive and verify artifacts I could not otherwise interpret.
 **Then** it extracts text content page-by-page and any embedded images as separate PNG files
 **And** the output includes: `pages[]` (page_number + text + image_paths[]), `total_pages`, `confidence`
 
+**Canonical Perception Schema:**
+**Given** the need for a machine-readable contract between agents and sensory bridges
+**When** the sensory bridges skill is built
+**Then** a canonical request/response JSON schema is defined at `skills/sensory-bridges/references/perception-schema.md` specifying:
+  - **Request schema:** `{ artifact_path, modality (image|audio|pdf|video), gate, requesting_agent, purpose }`
+  - **Response schema:** `{ modality, artifact_path, extracted_content (modality-specific fields), confidence (HIGH|MEDIUM|LOW), confidence_rationale, perception_timestamp }`
+**And** image response includes: `extracted_text`, `layout_description`, `visual_elements[]`, `slide_title`, `text_blocks[]`
+**And** audio response includes: `transcript_text`, `timestamped_words[]`, `total_duration_ms`, `wpm`, `pronunciation_flags[]`
+**And** all sensory bridge scripts accept and return this schema — no free-form output
+**And** the schema is referenced in `context-envelope-schema.md` as the standard perception artifact format for agent-to-agent handoff of multimodal interpretations
+
+**Confidence Calibration Rubric:**
+**Given** that HIGH, MEDIUM, and LOW confidence have no operational definition
+**When** the perception protocol is documented
+**Then** a modality-specific calibration rubric is defined at `skills/sensory-bridges/references/confidence-rubric.md` specifying:
+  - **Image HIGH:** All text blocks extracted with ≥95% OCR confidence; layout unambiguous; all visual elements identifiable
+  - **Image MEDIUM:** Text extraction ≥80% confidence OR layout ambiguous (e.g., overlapping elements) OR ≥1 visual element unidentifiable
+  - **Image LOW:** Text extraction <80% confidence OR layout unparseable OR image corrupt/blank
+  - **Audio HIGH:** Transcript word-error-rate <5% estimated; no unintelligible segments; medical terms recognized
+  - **Audio MEDIUM:** WER 5-15% estimated OR ≥1 unintelligible segment <3s OR ≥1 medical term unrecognized
+  - **Audio LOW:** WER >15% OR unintelligible segments >3s OR heavy background noise
+  - **PDF HIGH:** All pages extracted with text; no OCR-only pages detected
+  - **PDF MEDIUM:** ≥1 page is OCR-only (scanned) but text extracted; embedded images detected
+  - **PDF LOW:** ≥1 page completely unreadable; scanned without OCR; corrupt
+**And** thresholds are configurable per production mode (ad-hoc may accept MEDIUM where production requires HIGH)
+**And** the rubric is calibrated empirically during early production runs and updated in the sidecar
+
 **Universal Perception Protocol:**
 **Given** any agent consuming a multimodal artifact
 **When** the agent receives the artifact
-**Then** it follows the five-step protocol: Receive → Perceive (invoke bridge) → Confirm (state interpretation with confidence) → Proceed (if confidence ≥ threshold) → Escalate (if confidence < threshold)
+**Then** it follows the five-step protocol: Receive → Perceive (invoke bridge) → Confirm (state interpretation with confidence per rubric) → Proceed (if confidence ≥ gate threshold) → Escalate (if confidence < threshold)
 **And** the protocol is documented as a skill reference at `skills/sensory-bridges/references/perception-protocol.md`
 **And** the protocol reference is consumable by all agents via standard skill reference loading
+
+**Validator Integration:**
+**Given** Quinn-R already has deterministic validators (`accessibility_checker.py`, `brand_validator.py`) and reserves audio/composition validators
+**When** sensory bridges produce structured output
+**Then** the bridge output format is designed to be consumable by BOTH the Fidelity Assessor (source traceability checks) AND Quinn-R's existing validators (quality checks)
+**And** sensory bridge outputs feed into the existing validation stack — they do not create a second parallel validation infrastructure
+**And** the handoff between perception outputs and validators is specified in `skills/sensory-bridges/references/validator-handoff.md`
 
 **Design Note:** Video bridge (`video_to_agent.py` using ffmpeg + STT) is deferred to Story 2A-7 when G6 comes into scope. Image and audio bridges are the immediate priorities for G3 and G5 verification.
 
@@ -790,10 +824,20 @@ So that I can trace any content item backward through the pipeline to the origin
 - Each segment definition includes `source_ref` linking to narration script segment and slide brief slide
 
 **And** a provenance chain can be traversed from any downstream artifact (e.g., narration segment) back to the original source bundle section in no more than 3 hops
-**And** `source_ref` format is standardized as `{filename}#{section_path}` (e.g., `extracted.md#Chapter 2 > Knowledge Check`)
-**And** Irene's SKILL.md and delegation protocol are updated to instruct her to populate `source_ref` fields when producing artifacts
 
-**Design Note:** This is a schema-only story — no new agents or scripts. It establishes the traceability infrastructure that the Fidelity Assessor (Story 2A-4) consumes. Irene is the primary producer of `source_ref` annotations; other agents pass them through.
+**Source_ref Grammar and Resolver:**
+**And** `source_ref` format is specified as a formal grammar (not just examples):
+  - Format: `{filename}#{path_expression}`
+  - `filename`: relative path from project root (e.g., `course-content/staging/ad-hoc/source-bundles/trial2-macro-trends/extracted.md`)
+  - `path_expression`: `>` delimited section path (e.g., `Chapter 2 > Knowledge Check > Item 3`) OR line range (e.g., `L45-L62`) OR heading anchor (e.g., `## Macro Trends Overview`)
+  - Resolver rules: path expression is matched top-down (first `>` segment is top-level heading, second is sub-section, etc.); line ranges are stable within a versioned artifact; heading anchors use markdown heading text
+**And** a resolver function `resolve_source_ref(source_ref_string, base_path) → (file_content_slice, confidence)` is specified (implementation in Story 2A-8 for drift tracking; specification here)
+**And** evidence retention: when the Fidelity Assessor resolves a `source_ref`, the resolved content slice is captured in the Fidelity Trace Report as `source_evidence` alongside the `output_evidence` — creating a self-contained, auditable comparison record
+
+**And** Irene's SKILL.md and delegation protocol are updated to instruct her to populate `source_ref` fields when producing artifacts
+**And** a validation function `validate_source_refs(artifact_path) → (valid_refs[], broken_refs[])` is specified to check that all `source_ref` citations in an artifact resolve to existing content (implementation in Story 2A-4)
+
+**Design Note:** This is primarily a schema and specification story — it establishes the traceability grammar, resolver spec, and evidence retention rules that the Fidelity Assessor (Story 2A-4) and drift tracking (Story 2A-8) implement. The live template modifications (adding `source_ref` fields to lesson plan, slide brief, narration script, segment manifest) are the concrete changes. Note: these templates currently have NO `source_ref` fields — only objective and pairing references exist.
 
 ---
 
@@ -841,10 +885,14 @@ So that fidelity failures are caught automatically before quality review or huma
 **And** for `creative` slides: verifies content coverage — all `content_items` themes are represented even if creatively enhanced
 **And** Omissions, Inventions, and Alterations are reported per slide with slide number and content item references
 
-**Circuit breaker:**
-**And** a fidelity failure (any critical or high-severity finding) halts the pipeline at that gate
-**And** the failure is reported to Marcus with the Fidelity Trace Report
-**And** Marcus routes the artifact back to the producing agent for correction before the human checkpoint
+**Circuit breaker and operating policy:**
+**And** a fidelity failure triggers the response defined in the Fidelity Trace Report operating policy (from `docs/fidelity-gate-map.md`, produced in Story 2A-1):
+  - **Critical finding:** Immediate circuit break — pipeline halts, artifact returned to producing agent, Marcus notified with full Fidelity Trace Report. No retry without human review.
+  - **High finding:** Circuit break — producing agent receives report and may retry once with specific remediation guidance. Second failure escalates to Marcus + human.
+  - **Medium finding:** Warning — logged in report, artifact proceeds to Quinn-R and human checkpoint with findings attached. No circuit break.
+  - **Remediation owner:** The producing agent for that gate (Irene at G1/G2, Gary at G3, ElevenLabs at G5). Marcus is the escalation path. Human is the waiver authority.
+  - **Maximum retries:** 2 per gate per production run before mandatory human escalation.
+  - **Waiver:** Only the human (via Marcus) can waive a critical or high finding. Waivers are logged in the Fidelity Trace Report with rationale.
 
 **Marcus integration:**
 **And** Marcus's delegation flow is updated to invoke the Fidelity Assessor after each producing agent returns results at G2 and G3
@@ -871,6 +919,7 @@ So that the entire downstream pipeline inherits a faithful baseline from the ver
 **And** for PDF sources, it invokes the PDF sensory bridge to verify text extraction quality
 **And** Omissions (missing sections), Inventions (content not in source), and Alterations (structural changes) are reported
 **And** extraction confidence is scored and reported to Marcus
+**And** if source materials include scanned/OCR PDFs (detected by the PDF sensory bridge's confidence rubric), the Fidelity Assessor flags a `degraded_source` warning identifying affected pages. The source wrangler currently excludes scanned PDFs from text extraction — this means G0 fidelity cannot be fully assured for scanned inputs. The warning is surfaced to Marcus so the human can provide manual transcription or alternative source material before the pipeline proceeds on an incomplete baseline.
 
 **G1 (Lesson Plan — LOs vs. source bundle themes):**
 **Given** Irene produces a lesson plan with `source_ref` annotations
@@ -903,6 +952,13 @@ So that we confirm our interpretation of non-text artifacts before acting on the
 **And** Irene confirms her interpretation of each slide: "I see Slide N shows [description]. Confidence: HIGH/MEDIUM/LOW."
 **And** Irene writes narration that accurately describes and complements the actual visual content she confirmed seeing
 **And** if confidence is LOW for any slide, Irene flags it to Marcus for human clarification before writing narration
+
+**Gary→Irene handoff normalization:**
+**And** the `gary_slide_output[].visual_description` free-text field in the context envelope is supplemented (not replaced) by the canonical perception schema output from the image sensory bridge. Irene's Pass 2 envelope receives BOTH:
+  - `gary_slide_output[]` (Gary's editorial descriptions — useful for creative context)
+  - `perception_artifacts[]` (normalized sensory bridge output per slide — auditable, structured, confidence-scored)
+**And** Irene's narration decisions reference the normalized `perception_artifacts[]` as the ground truth for what is visually on screen, not the free-text `visual_description`
+**And** the Fidelity Assessor at G4 can audit Irene's narration against the same `perception_artifacts[]` — creating a closed, auditable loop
 
 **Gary (self-assessment of generated output):**
 **Given** Gary has generated slides and downloaded PNGs
@@ -975,10 +1031,28 @@ So that small per-gate fidelity losses don't compound into large divergence from
 **And** drift warnings and failures are reported to Marcus in the Fidelity Trace Report
 **And** the Fidelity Assessor's memory sidecar captures drift patterns: which types of content drift most, at which gates, and under which conditions
 
+**Source_ref resolver implementation:**
+**Given** the resolver grammar specified in Story 2A-3
+**When** the Fidelity Assessor performs global drift checks
+**Then** a `resolve_source_ref()` function implements the grammar: parses `{filename}#{path_expression}`, locates the file, extracts the content slice matching the path expression (heading hierarchy via `>`, line range via `L{n}-L{m}`, heading anchor via `## text`)
+**And** resolved content is cached per production run to avoid redundant file reads during multi-gate assessment
+**And** evidence retention: every global drift check captures `{ source_ref, resolved_source_slice, output_slice, comparison_result, gate }` as a self-contained evidence record in the Fidelity Trace Report — enabling audit without re-resolving references
+**And** targeted lookup: the resolver uses `source_ref` path expressions for direct section extraction rather than full-document re-read — making global drift checks proportional to the number of references, not the size of the source bundle
+
 **Leaky Neck remediation:**
 **Given** the Leaky Neck report from Story 2A-1 identified points where agentic judgment enforces deterministic constraints
 **When** each identified leak is remediated
 **Then** the enforcement is moved from natural-language agent instructions to schema rules, parameter bindings, or validation scripts
+
+**Fidelity-control vocabulary (replacing free-text constraint channels):**
+**And** specifically, the `additionalInstructions` free-text field in the slide brief and context envelope is replaced (for fidelity-relevant constraints) with a finite, deterministic **fidelity-control vocabulary**:
+  - `text_treatment`: `generate` | `preserve` | `preserve-strict` (maps to Gamma `textMode` parameter)
+  - `image_treatment`: `ai-generated` | `no-images` | `theme-accent` | `user-provided` (maps to Gamma `imageOptions.source` parameter)
+  - `layout_constraint`: `single-column` | `two-column` | `full-bleed-image` | `data-table` | `unconstrained` (maps to structured `additionalInstructions` templates, not free text)
+  - `content_scope`: `exact-input-only` | `guided-enhancement` | `creative-freedom` (controls Gamma's embellishment behavior)
+**And** the `additionalInstructions` field remains available for creative guidance on `creative`-class slides ONLY — it is prohibited for `literal-text` and `literal-visual` slides where deterministic controls must apply
+**And** the Fidelity Assessor verifies at G2 that `literal-text` and `literal-visual` slides use vocabulary controls, not free-text constraints
+
 **And** each remediation is documented with before/after evidence
 **And** the Leaky Neck report is updated to reflect resolved items
 **And** a regression test confirms the deterministic enforcement produces correct results

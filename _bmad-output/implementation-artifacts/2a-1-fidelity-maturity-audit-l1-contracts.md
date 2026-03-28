@@ -30,6 +30,7 @@ The Party Mode consultation (2026-03-28) and parallel Gemini analysis establishe
 7. A Leaky Neck report section identifies all points where agentic judgment currently enforces constraints that could be deterministic (schema validation, parameter binding, or code check)
 8. Each leak includes: location (agent + reference file + specific instruction), what constraint is being enforced agentically, and a proposed deterministic alternative
 9. Known leak from Story 3.11 pre-analysis is included: Gamma `additionalInstructions` for text preservation → should be `textMode: preserve` parameter binding
+9a. The Leaky Neck report specifically flags the **free-text fidelity-control channels** still exposed in the slide brief (`additionalInstructions` field at `template-slide-brief.md`) and context envelope (`parameter_overrides.additionalInstructions` at `context-envelope-schema.md`). These invite natural-language constraint enforcement that should be replaced with a finite, deterministic fidelity-control vocabulary. Remediation is deferred to Story 2A-8, but the leak must be documented here.
 
 ### L1 Fidelity Contracts
 
@@ -56,6 +57,7 @@ The Party Mode consultation (2026-03-28) and parallel Gemini analysis establishe
     - Media capture: referenced images/diagrams noted in metadata even if not extracted (PDF limitation)
     - Metadata completeness: `metadata.json` has valid `provenance[]` entries with `kind`, `ref`, `fetched_at`
     - No content invention: `extracted.md` contains only content traceable to source materials
+    - Degraded source detection: if source materials include scanned/OCR PDFs (not machine-readable text), the contract flags a `degraded_source` warning with affected page ranges. The source wrangler currently leaves scanned PDFs out of scope (`source-wrangler/SKILL.md`), so G0 fidelity for scanned inputs is inherently limited. The contract must acknowledge this boundary rather than silently passing incomplete extractions.
 13. **G1 (Lesson Plan)** contract includes criteria for:
     - Source theme coverage: every major theme in the source bundle is represented by at least one learning objective
     - LO structure: each LO has `Bloom's Level` tag and traces to a content block
@@ -101,13 +103,17 @@ The Party Mode consultation (2026-03-28) and parallel Gemini analysis establishe
     - The Three-Layer Intelligence Model (L1 contracts, L2 agentic evaluation, L3 learning memory) with examples
     - The Hourglass Model (wide cognitive → narrow deterministic neck → wide cognitive) with ASCII diagram
     - The Leaky Neck diagnostic with the repeatable test question
-    - The Sensory Horizon principle
+    - The Sensory Horizon principle and the requirement for a canonical perception request/response schema (schema itself is delivered in Story 2A-2)
+    - Confidence calibration: the requirement for a modality-specific rubric defining what HIGH, MEDIUM, and LOW confidence mean operationally (rubric itself is delivered in Story 2A-2; this doc establishes the requirement and rationale)
     - How the two models interact (Hourglass governs flow topology, Three-Layer governs assessment architecture)
 20. `docs/fidelity-gate-map.md` is created documenting:
     - The seven fidelity gates (G0–G6) with producing agent, source of truth, and artifact type at each gate
     - The relationship between fidelity gates (G0–G6) and HIL gates (Gate 1–4): fidelity gates are automated pre-checks; HIL gates are human checkpoints
     - The Fidelity Assessor → Quinn-R → Human ordering at each gate
+    - **Role matrix:** For each gate, a table specifying exactly which agent owns which assessment dimension. Resolves boundary overlaps between Fidelity Assessor (source traceability), Quinn-R (quality standards, intent fidelity, audio quality, composition integrity), and producing agents (self-assessment). No dimension may be claimed by more than one agent; the matrix eliminates duplicated judgments and inconsistent blockers.
     - The Fidelity Trace Report format (Omissions / Inventions / Alterations)
+    - **Fidelity Trace Report operating policy:** A decision table specifying, for each severity level (critical/high/medium), the response action (circuit-break, retry, escalate, waiver), maximum retry count, remediation owner (producing agent, Marcus, or human), escalation path, and waiver authority. This policy governs what happens after a fidelity finding — not just its format.
+    - **Validator integration model:** How sensory bridge outputs feed into both the Fidelity Assessor's traceability checks AND Quinn-R's existing deterministic validators (`accessibility_checker.py`, `brand_validator.py`, and reserved audio/composition validators). The fidelity infrastructure complements the existing validation stack — it does not create a second one.
 
 ### Validation
 
@@ -129,7 +135,8 @@ The Party Mode consultation (2026-03-28) and parallel Gemini analysis establishe
   - [ ] 2.1 Review all agent reference files for natural-language enforcement of deterministic constraints
   - [ ] 2.2 Review Marcus delegation envelopes for constraints passed as `additionalInstructions` that could be parameter bindings
   - [ ] 2.3 Review Gary's generation logic for natural-language fidelity enforcement vs. API parameter binding
-  - [ ] 2.4 Compile leaky neck findings into a section of the audit report
+  - [ ] 2.4 Review slide brief and context envelope for free-text constraint channels (`additionalInstructions`, `user_constraints`) that invite leaky neck failures — propose finite fidelity-control vocabulary as deterministic replacement
+  - [ ] 2.5 Compile leaky neck findings into a section of the audit report
 
 - [ ] Task 3: Create L1 fidelity contract directory and schema (AC: #10, #11)
   - [ ] 3.1 Create `state/config/fidelity-contracts/` directory
@@ -151,7 +158,7 @@ The Party Mode consultation (2026-03-28) and parallel Gemini analysis establishe
 
 - [ ] Task 7: Create architectural reference documents (AC: #19, #20)
   - [ ] 7.1 Create `docs/app-design-principles.md` covering Three-Layer Model, Hourglass Model, Leaky Neck diagnostic, Sensory Horizon principle
-  - [ ] 7.2 Create `docs/fidelity-gate-map.md` covering G0–G6 definitions, HIL gate mapping, Fidelity Assessor ordering, Fidelity Trace Report format
+  - [ ] 7.2 Create `docs/fidelity-gate-map.md` covering G0–G6 definitions, HIL gate mapping, Fidelity Assessor ordering, role matrix, Fidelity Trace Report format and operating policy, validator integration model
 
 - [ ] Task 8: Validate all deliverables (AC: #21, #22, #23)
   - [ ] 8.1 Run `validate_fidelity_contracts.py` against all 7 contract files — all pass

@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epics 1, 2, 2A DONE, Epic 3 IN PROGRESS)
-**Architecture Status:** 9 Epics (Rebaselined 2026-03-28: Epic 4A governance added, Epics 7+8+9 collapsed into Epic G, Epic 5 trimmed, Epic 6.2 merged into 3.6), 90 FRs (FR81-FR90 governance added), Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). **Epic 2A COMPLETE** (9/9 stories: Vera fidelity assessor covering G0-G5, sensory bridges, perception protocol, source_ref resolver, drift tracking, maturity audit skill). **Epic 3: 8/11 done** (Stories 3.1-3.5, 3.9, 3.10, 3.11 DONE; Stories 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva DEFERRED). **Next: Epic 4A** (Agent Governance, Quality Optimization & APP Observability).
+**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epics 1, 2, 2A, 4A, 4 DONE, Epic 3 IN PROGRESS)
+**Architecture Status:** 9 Epics (Rebaselined 2026-03-28: Epic 4A governance added, Epics 7+8+9 collapsed into Epic G, Epic 5 trimmed, Epic 6.2 merged into 3.6; **2026-03-29: Epic 4A Story 4A-6 added**), **91 FRs** (FR81–FR91 governance includes ad-hoc ledger boundary), Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). **Epic 2A COMPLETE** (9/9 stories: Vera fidelity assessor covering G0-G5, sensory bridges, perception protocol, source_ref resolver, drift tracking, maturity audit skill). **Epic 3: 8/11 done** (Stories 3.1-3.5, 3.9, 3.10, 3.11 DONE; Stories 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva DEFERRED). **Epic 4A COMPLETE** (4A-1 through 4A-6). **Epic 4 COMPLETE** (4.1 through 4.5). **Next focus:** live-profile (`--run-live`) stabilization, then resume Epic 3 deferred queue.
 
 ## Purpose
 
@@ -156,14 +156,14 @@ See `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` (
 
 Party Mode consensus + parallel GPT-5.4 architectural review identified significant overlap between completed Epics 1-3/2A work and downstream epic scope. Rebaseline applied:
 
-- **Epic 4A added** (Agent Governance, Quality Optimization & APP Observability): 5 stories — run baton, lane matrix, envelope governance, agent QA gate, perception caching + observability. Must complete before Epic 4. FRs FR81-FR90 added to PRD.
+- **Epic 4A** (Agent Governance, Quality Optimization & APP Observability): **6 stories** — run baton, lane matrix, envelope governance, agent QA gate, perception caching + observability (**`run_mode` tagging; ad-hoc excluded from course-progress metrics**), **ad-hoc ledger & learning enforcement (4A-6, FR91)**. Must complete before Epic 4. FRs FR81–FR91 on PRD.
 - **Epic 4 updated**: Dependency on 4A. Stories 4.2 (Quality Gates) and 4.4 (Reporting) updated to assume governance layer + Vera fidelity checks.
 - **Epic 5 trimmed**: Story 5.2 (Assembly Coordination) dropped — compositor skill delivers this. Story 5.3 (Style Orchestration) merged into governance. Story 5.4 edited — Panopto and Kling already done. 2 stories remain.
 - **Epic 6 trimmed**: Story 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist). 1 story remains.
 - **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): 2 stories — platform allocation as Marcus intelligence extension, tool/doc synthesis as periodic process.
 - **Epic 10 deferred**: Predictive optimization requires Epic 4 + Epic G telemetry. 1 story, deferred.
 
-**Net: 11 epics → 9 epics, 46 stories → 40 stories.** Architecture updated with governance section.
+**Net: 11 epics → 9 epics, 46 stories → 40 stories** (historical rebaseline); **+Story 4A-6 → 41 stories** (2026-03-29). Architecture updated with governance section.
 
 ## Composition Architecture (Added 2026-03-27)
 

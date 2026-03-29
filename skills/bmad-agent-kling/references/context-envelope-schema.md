@@ -29,6 +29,24 @@ source_assets:
   bridge_graphic: null
 target_duration: "5"
 run_mode: "default"
+governance:
+  invocation_mode: "delegated"      # delegated | standalone
+  current_gate: "G3"
+  authority_chain: ["marcus", "quality-reviewer"]
+  decision_scope:
+    owned_dimensions:
+      - "tool_execution_quality.video"
+    restricted_dimensions:
+      - "source_fidelity"
+      - "quality_standards"
+      - "instructional_design"
+  allowed_outputs:
+    - "artifact_paths"
+    - "video_operation"
+    - "generation_choices"
+    - "quality_assessment"
+    - "recommendations"
+    - "errors"
 negative_prompt_overrides:
   - "no text overlays"
   - "no watermarks"
@@ -42,6 +60,18 @@ negative_prompt_overrides:
 | `video_type` | yes | Must map to a known type in content-type-mapping.md |
 | `instructional_purpose` | yes | Why this clip exists in the lesson |
 | `learning_objectives` | yes | Kira never generates without clear pedagogical grounding |
+| `governance` | yes | Delegation authority contract: invocation mode, gate, authority chain, decision scope, allowed outputs |
+
+### Governance Enforcement
+
+Before execution, Kira validates:
+
+- planned outputs are contained in `governance.allowed_outputs`
+- planned judgments stay inside `governance.decision_scope.owned_dimensions` (canonical values in `docs/governance-dimensions-taxonomy.md`)
+
+If out of scope, Kira must return a `scope_violation` payload and route to `governance.authority_chain[0]`.
+
+`scope_violation.route_to` must equal `governance.authority_chain[0]`.
 
 ## Outbound Return (Kira ? Marcus)
 
@@ -69,6 +99,7 @@ quality_assessment:
 recommendations:
   - "Usable as-is for Slide 1 concept overlay"
 errors: []
+scope_violation: null                 # object when out-of-scope work is requested
 ```
 
 ### Return Rules
@@ -77,3 +108,4 @@ errors: []
 - `status: plan_only` is used when a required source asset is missing but Kira can still specify the next step
 - `generation_choices` always records the exact model, mode, duration, and exclusions used
 - `quality_assessment` is Kira's self-assessment before Quinn-R review
+- `scope_violation` uses shape `{detected, reason, requested_work, route_to, details}` when governance boundaries are exceeded

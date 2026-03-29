@@ -37,6 +37,24 @@ parameter_overrides:                        # explicit Gamma API params that ove
   textMode: "preserve"
   additionalInstructions: "Chart layout with labeled axes"  # creative slides only — literal slides use fidelity-control vocabulary (text_treatment, image_treatment, layout_constraint, content_scope) via merge_parameters()
 run_mode: "default"                         # default | ad-hoc
+governance:
+  invocation_mode: "delegated"             # delegated | standalone
+  current_gate: "G3"
+  authority_chain: ["marcus", "quality-reviewer"]
+  decision_scope:
+    owned_dimensions:
+      - "tool_execution_quality.slides"
+    restricted_dimensions:
+      - "source_fidelity"
+      - "quality_standards"
+      - "instructional_design"
+  allowed_outputs:
+    - "artifact_paths"
+    - "gary_slide_output"
+    - "quality_assessment"
+    - "parameter_decisions"
+    - "recommendations"
+    - "flags"
 
 # FIDELITY — per-slide classification from Irene's slide brief (Story 3.11)
 fidelity_per_slide:                          # populated by Marcus from Irene's slide brief
@@ -87,10 +105,22 @@ theme_selection_required: false             # true = Gary presents TP preview be
 | `parameters_ready` | no | `false` | When `true`, triggers expert fast-path |
 | `parameter_overrides` | no | {} | Explicit Gamma API params; override all merge levels |
 | `run_mode` | no | `"default"` | Controls memory write behavior |
+| `governance` | yes | — | Delegation authority contract: invocation mode, gate, authority chain, decision scope, allowed outputs |
 | `deck_mode` | no | `false` | When `true`, applies deck-specific parameter guidance (numCards ranges, cardSplit, deck additionalInstructions) |
 | `num_cards` | no | null | Explicit numCards override; null = Gary decides per content type guidance |
 | `card_split` | no | `"auto"` | `"auto"` (Gamma decides) or `"inputTextBreaks"` (split on `\n---\n`) |
 | `theme_selection_required` | no | `false` | When `true`, Gary presents theme/template preview (TP capability) and waits for selection before generating |
+
+### Governance Enforcement
+
+Before generation, Gary validates:
+
+- planned outputs are a subset of `governance.allowed_outputs`
+- planned judgments stay within `governance.decision_scope.owned_dimensions` (canonical values in `docs/governance-dimensions-taxonomy.md`)
+
+If not, Gary must return a scope violation to `governance.authority_chain[0]` and not execute out-of-scope work.
+
+`scope_violation.route_to` must equal `governance.authority_chain[0]`.
 
 ## Outbound Return (Gary → Marcus)
 
@@ -120,11 +150,9 @@ gary_slide_output:
 quality_assessment:
   overall_score: 0.87
   dimensions:
-    brand_compliance: 0.9
-    content_fidelity: 0.85
     layout_integrity: 0.9
-    accessibility: 1.0
-    pedagogical_alignment: 0.8
+    parameter_confidence: 0.84
+    embellishment_risk_control: 0.87
   embellishment_detected: true
   embellishment_details:
     - "Gamma added subtitle 'Bridging Two Worlds' not in input"
@@ -168,6 +196,8 @@ save_to_style_guide:
 errors: []
 
 memory_mode: "default"
+
+scope_violation: null                        # object when out-of-scope work is requested
 ```
 
 ### Return Field Rules
@@ -179,7 +209,7 @@ memory_mode: "default"
 | `status` | yes | `success`, `revision_needed`, or `failed` |
 | `artifact_paths` | yes | Empty array if failed; includes both PDF (review) and PNG per card (production) |
 | `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description, source_ref}` — one per generated card; passed to Irene Pass 2. `source_ref` traces each card to its slide brief origin. |
-| `quality_assessment` | yes | Structured scores; see quality-assessment.md for dimensions |
+| `quality_assessment` | yes | Structured execution-quality scores (`layout_integrity`, `parameter_confidence`, `embellishment_risk_control`); see quality-assessment.md |
 | `generation_mode` | yes | `"text"` or `"from-template"` — which endpoint was used |
 | `template_used` | if from-template | The `gammaId` used; null for text generation |
 | `parameter_decisions` | yes | Exact Gamma API params used (for learning and reproducibility) |
@@ -188,3 +218,4 @@ memory_mode: "default"
 | `save_to_style_guide` | if default mode | Params to persist; absent in ad-hoc mode |
 | `errors` | yes | Empty array if none; structured error details if failed |
 | `memory_mode` | yes | Echo the active run mode |
+| `scope_violation` | if out-of-scope | `{detected, reason, requested_work, route_to, details}` for authority-chain rerouting |

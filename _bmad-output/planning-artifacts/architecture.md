@@ -735,7 +735,7 @@ All converge into the same pipeline and Descript workflow:
 
 ## Agent Governance & Authority Architecture (Added 2026-03-28)
 
-_Addresses FR81–FR90. Establishes the authority model that constrains how agents interact within production runs and prevents judgment boundary violations._
+_Addresses FR81–FR91 (including ad-hoc ledger boundary, FR91). Establishes the authority model that constrains how agents interact within production runs and prevents judgment boundary violations._
 
 _This section is target-state architecture for Epic 4A. Until Epic 4A stories are started and the referenced artifacts are created, these controls are design intent, not a claim that the full governance layer is already live in runtime._
 

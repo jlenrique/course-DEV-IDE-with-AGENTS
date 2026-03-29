@@ -1,5 +1,7 @@
 """Tests for bridge_utils shared utilities."""
 
+import json
+import threading
 import pytest
 from unittest.mock import patch
 from pathlib import Path
@@ -7,11 +9,13 @@ from pathlib import Path
 from skills.sensory_bridges.scripts.bridge_utils import (
     build_request,
     build_response,
+    perceive,
     validate_response,
     VALID_MODALITIES,
     VALID_CONFIDENCE,
     SCHEMA_VERSION,
 )
+from skills.sensory_bridges.scripts.perception_cache import PerceptionCache
 
 
 class TestBuildRequest:
@@ -105,3 +109,62 @@ class TestValidateResponse:
             errors = validate_response(resp)
             modality_errors = [e for e in errors if f"{modality}-specific" in e]
             assert len(modality_errors) > 0, f"No modality-specific validation for {modality}"
+
+
+class TestPerceptionCache:
+    @patch("skills.sensory_bridges.scripts.png_to_agent.analyze_image")
+    def test_perceive_uses_run_cache(self, mock_analyze, tmp_path):
+        artifact = tmp_path / "test.png"
+        artifact.write_bytes(b"fake-png-bytes")
+
+        mock_analyze.return_value = {
+            "schema_version": SCHEMA_VERSION,
+            "modality": "image",
+            "artifact_path": str(artifact),
+            "confidence": "HIGH",
+            "confidence_rationale": "synthetic",
+            "perception_timestamp": "2026-01-01T00:00:00Z",
+            "extracted_text": "",
+            "layout_description": "test",
+        }
+
+        first = perceive(
+            artifact_path=artifact,
+            modality="image",
+            gate="G2",
+            requesting_agent="tester",
+            run_id="CACHE-RUN-1",
+            use_cache=True,
+        )
+        second = perceive(
+            artifact_path=artifact,
+            modality="image",
+            gate="G2",
+            requesting_agent="tester",
+            run_id="CACHE-RUN-1",
+            use_cache=True,
+        )
+
+        assert first["modality"] == "image"
+        assert second["modality"] == "image"
+        assert mock_analyze.call_count == 1
+
+    def test_cache_concurrent_puts_keep_all_entries(self, tmp_path):
+        cache = PerceptionCache("CACHE-CONCURRENT", runtime_dir=tmp_path)
+
+        def worker(idx: int) -> None:
+            artifact = tmp_path / f"asset-{idx}.png"
+            cache.put(
+                artifact_path=artifact,
+                modality="image",
+                result={"id": idx, "modality": "image"},
+            )
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(20)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        raw = json.loads(cache.cache_path.read_text(encoding="utf-8"))
+        assert len(raw.get("entries", {})) == 20

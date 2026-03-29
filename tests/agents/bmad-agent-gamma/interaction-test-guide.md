@@ -57,7 +57,7 @@ Verify Gary activates correctly, communicates in agent-to-agent style, handles d
 ## Scenario 7: Quality Self-Assessment
 **Trigger:** After any generation
 **Expected:**
-- [ ] Returns structured quality scores (brand_compliance, content_fidelity, layout_integrity, accessibility, pedagogical_alignment)
+- [ ] Returns structured quality scores (layout_integrity, parameter_confidence, embellishment_risk_control)
 - [ ] Includes embellishment detection (true/false with details)
 - [ ] Scores are conservative (honest, not optimistic)
 

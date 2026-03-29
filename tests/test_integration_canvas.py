@@ -6,9 +6,13 @@ Uses read-only endpoints only.
 
 from __future__ import annotations
 
+import pytest
+
 from tests.conftest import requires_canvas
 
 
+@pytest.mark.live_api
+@pytest.mark.timeout(60)
 @requires_canvas
 class TestCanvasLive:
     def test_client_instantiates(self):

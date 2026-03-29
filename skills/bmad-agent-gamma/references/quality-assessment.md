@@ -1,6 +1,6 @@
 # Output Quality Assessment (QA)
 
-Evaluate generated slides against style bible standards and return structured self-assessment to Marcus.
+Evaluate generated slides for execution-quality only and return structured self-assessment to Marcus.
 
 ## Perception Before Assessment
 
@@ -13,19 +13,28 @@ Before scoring any dimension, invoke the image sensory bridge on each generated 
 
 Within a production run, perception results are cached per `(artifact_path, modality)` — if Vera has already perceived the same PNG, Gary reads the cached result (see `skills/sensory-bridges/references/validator-handoff.md`).
 
+## Lane Boundaries
+
+Gary's QA lane is execution-only. Gary self-assesses:
+- layout integrity
+- parameter confidence
+- embellishment risk
+
+Gary does not self-score these dimensions:
+- learning objective alignment or pedagogical soundness (Irene and Quinn-R lanes)
+- brand consistency or accessibility compliance (Quinn-R lane)
+- source-faithfulness, provenance, or traceability (Vera lane)
+- learner-effect intent fidelity (Quinn-R lane)
+
 ## Assessment Dimensions
 
 Score each dimension 0.0-1.0:
 
 | Dimension | What to Check | Weight (L1-L2) | Weight (L3-L4) |
 |-----------|--------------|:---:|:---:|
-| **Brand compliance** | Correct palette, typography per style bible, professional medical aesthetic | 0.25 | 0.20 |
-| **Content fidelity** | Input content preserved without unauthorized additions, correct text, no hallucinated data | 0.30 | 0.25 |
-| **Layout integrity** | Requested layout pattern achieved (parallel columns, cards, narrative arc, etc.) | 0.25 | 0.20 |
-| **Accessibility** | WCAG 2.1 AA contrast, color independence, readable at target sizes | 0.10 | 0.10 |
-| **Pedagogical alignment** | Slide serves stated learning objective, appropriate Bloom's level treatment | 0.10 | 0.15 |
-| **Intent fidelity** | Visual rhetoric and emphasis match the requested behavioral/affective effect | — | 0.10 |
-| **Content completeness** | All required content elements present, nothing critical missing | — | 0.10 |
+| **Layout integrity** | Requested visual structure is correctly executed (parallel columns, cards, hierarchy, spacing) | 0.45 | 0.40 |
+| **Parameter confidence** | Selected API parameters are appropriate and stable for the requested pattern | 0.35 | 0.30 |
+| **Embellishment risk control** | Unauthorized additions are absent or explicitly flagged with impact | 0.20 | 0.30 |
 
 ## Embellishment Detection
 
@@ -40,19 +49,16 @@ Report as: `embellishment_detected: true/false`, with specific items listed.
 
 ```yaml
 quality_assessment:
-  overall_score: 0.87
+  overall_score: 0.86
   dimensions:
-    brand_compliance: 0.9
-    content_fidelity: 0.85
     layout_integrity: 0.9
-    accessibility: 1.0
-    pedagogical_alignment: 0.8
-    intent_fidelity: 0.85
+    parameter_confidence: 0.82
+    embellishment_risk_control: 0.86
   embellishment_detected: true
   embellishment_details:
     - "Gamma added a subtitle 'Bridging Two Worlds' not in the input"
   flags:
-    - "Content fidelity below 0.9 — recommend human review of added subtitle"
+    - "Unauthorized subtitle added; flagged for downstream Quinn-R and Vera review"
   recommendation: "approve_with_note"
 ```
 
@@ -63,16 +69,4 @@ quality_assessment:
 - **0.5-0.69**: Needs revision — flag specific issues
 - **Below 0.5**: Reject — provide root cause for rework
 
-Be conservative. Honest assessment protects the user from publishing subpar content.
-
-## Intent-Fidelity Guidance
-
-If Irene or Marcus specifies `behavioral_intent`, assess whether the slide's hierarchy, contrast, density, and imagery support that effect:
-
-- `credible` -> restrained, professional, evidence-forward
-- `alarming` -> tension without melodrama; strong contrast and visual consequence
-- `moving` -> emotionally resonant, human-centered, not sentimental clutter
-- `attention-reset` -> visual simplification, pause beat, deliberate focus shift
-- `reflective` -> slower, calmer visual rhythm with space to think
-
-If the output is technically correct but emotionally flat or mismatched, score `intent_fidelity` down and flag for Gate 2 review.
+Be conservative. Honest execution self-assessment protects the pipeline from avoidable downstream rework.

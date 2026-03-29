@@ -26,6 +26,23 @@ skip_no_creds = pytest.mark.skipif(
 )
 
 
+def _int_env(name: str, default: int) -> int:
+    """Read int env var safely with fallback."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+KLING_TEST_POLL_INTERVAL = _int_env("KLING_TEST_POLL_INTERVAL", 3)
+KLING_TEST_MAX_ATTEMPTS = _int_env("KLING_TEST_MAX_ATTEMPTS", 20)
+KLING_TEST_TIMEOUT_SECONDS = _int_env("KLING_TEST_TIMEOUT_SECONDS", 120)
+KLING_TEST_TIMEOUT_LONG_SECONDS = _int_env("KLING_TEST_TIMEOUT_LONG_SECONDS", 150)
+
+
 class TestJWTTokenGeneration:
     """Test JWT token generation without live API."""
 
@@ -61,6 +78,8 @@ class TestKlingClientInit:
         assert client._secret_key == "env_sk"
 
 
+@pytest.mark.live_api
+@pytest.mark.timeout(KLING_TEST_TIMEOUT_SECONDS)
 @skip_no_creds
 class TestKlingTextToVideo:
     """Live API tests for text-to-video generation."""
@@ -84,6 +103,8 @@ class TestKlingTextToVideo:
         print(f"Text-to-video task created: {task_id}")
 
 
+@pytest.mark.live_api
+@pytest.mark.timeout(KLING_TEST_TIMEOUT_LONG_SECONDS)
 @skip_no_creds
 class TestKlingTaskStatus:
     """Live API tests for task status polling."""
@@ -92,6 +113,7 @@ class TestKlingTaskStatus:
     def client(self):
         return KlingClient()
 
+    @pytest.mark.timeout(KLING_TEST_TIMEOUT_LONG_SECONDS)
     def test_submit_and_poll_text_to_video(self, client):
         """Submit a minimal video and poll to completion."""
         result = client.text_to_video(
@@ -104,12 +126,18 @@ class TestKlingTaskStatus:
         task_id = result.get("task_id") or result.get("data", {}).get("task_id")
         assert task_id is not None
 
-        final = client.wait_for_completion(task_id, poll_interval=5, max_attempts=60)
+        final = client.wait_for_completion(
+            task_id,
+            poll_interval=KLING_TEST_POLL_INTERVAL,
+            max_attempts=KLING_TEST_MAX_ATTEMPTS,
+        )
         status = final.get("status") or final.get("data", {}).get("status", "")
         assert status.lower() in ("completed", "complete", "done", "success")
         print(f"Task {task_id} completed: {final}")
 
 
+@pytest.mark.live_api
+@pytest.mark.timeout(KLING_TEST_TIMEOUT_LONG_SECONDS)
 @skip_no_creds
 class TestKlingDownload:
     """Live API tests for video download."""
@@ -118,6 +146,7 @@ class TestKlingDownload:
     def client(self):
         return KlingClient()
 
+    @pytest.mark.timeout(KLING_TEST_TIMEOUT_LONG_SECONDS)
     def test_full_generate_and_download(self, client, tmp_path):
         """End-to-end: generate → poll → download."""
         result = client.text_to_video(
@@ -130,7 +159,11 @@ class TestKlingDownload:
         task_id = result.get("task_id") or result.get("data", {}).get("task_id")
         assert task_id is not None
 
-        final = client.wait_for_completion(task_id, poll_interval=5, max_attempts=60)
+        final = client.wait_for_completion(
+            task_id,
+            poll_interval=KLING_TEST_POLL_INTERVAL,
+            max_attempts=KLING_TEST_MAX_ATTEMPTS,
+        )
 
         video_url = None
         data = final.get("data", final)

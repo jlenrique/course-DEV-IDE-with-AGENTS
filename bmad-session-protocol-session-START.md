@@ -54,7 +54,13 @@ Open and read:
 
 ### 2. Confirm branch
 
-Check the current Git branch and checkout the intended working branch if different.
+Check the current Git branch and compare it with the branch instructions recorded in `next-session-start-here.md`.
+
+- If `next-session-start-here.md` includes both a repository baseline branch and a next working branch, use the **next working branch** as the implementation target.
+- If the current branch differs from the recorded target, checkout the recorded target (or create it from baseline if instructed).
+- If there is an unexplained mismatch, treat `next-session-start-here.md` as stale and record a reconciliation note for wrap-up Step 7 before ending the session.
+
+> **Post-merge convention:** If your team merges to `master` at session end, the next session may open on `master` first. In that case, use the startup commands in `next-session-start-here.md` to checkout/create the next working branch.
 
 ### 3. Identify session target
 

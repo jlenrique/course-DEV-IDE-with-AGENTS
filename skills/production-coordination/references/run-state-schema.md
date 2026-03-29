@@ -4,6 +4,8 @@
 
 Documents the SQLite schema for production runs and the JSON envelope format used for agent communication.
 
+This reference also documents how transient run authority (`run baton`) relates to persisted run state.
+
 ## SQLite Table: `production_runs`
 
 Defined in `scripts/state_management/db_init.py`:
@@ -71,6 +73,27 @@ When `manage_run.py status` is called, it returns:
   "updated_at": "2026-03-26T15:45:00"
 }
 ```
+
+## Run Cancellation
+
+`manage_run.py cancel <run_id>` sets run status to `cancelled` and clears any active baton for the run.
+
+## Run Baton (Transient Authority Contract)
+
+Authority is tracked separately from SQLite in lightweight JSON files at:
+
+`state/runtime/run_baton.<run_id>.json`
+
+The baton carries:
+- `run_id`
+- `orchestrator`
+- `current_gate`
+- `invocation_mode`
+- `allowed_delegates`
+- `escalation_target`
+- `blocking_authority`
+
+Use `manage_baton.py` to initialize, read, update, and close baton state.
 
 ## Related Tables
 

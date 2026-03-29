@@ -55,6 +55,46 @@ requires_panopto = pytest.mark.skipif(
     reason="PANOPTO_BASE_URL or PANOPTO_CLIENT_ID not set",
 )
 
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register CLI options for optional live API test execution."""
+    parser.addoption(
+        "--run-live",
+        action="store_true",
+        default=False,
+        help="Run tests marked as live_api (disabled by default).",
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register custom markers used in this repository."""
+    config.addinivalue_line(
+        "markers",
+        "live_api: marks tests that call live third-party APIs",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config,
+    items: list[pytest.Item],
+) -> None:
+    """Exclude live API tests from default runs unless explicitly requested."""
+    if config.getoption("--run-live"):
+        return
+
+    selected: list[pytest.Item] = []
+    deselected: list[pytest.Item] = []
+
+    for item in items:
+        if "live_api" in item.keywords:
+            deselected.append(item)
+        else:
+            selected.append(item)
+
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+        items[:] = selected
+
 # ---------------------------------------------------------------------------
 # Register skill scripts with dashed directory names for clean imports
 # ---------------------------------------------------------------------------

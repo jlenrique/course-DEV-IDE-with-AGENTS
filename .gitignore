@@ -28,6 +28,13 @@ state/runtime/*.db
 state/runtime/*.db-journal
 state/runtime/backup/*.db
 state/runtime/mode_state.json
+state/runtime/ad-hoc-observability/
+state/runtime/perception-cache/
+state/runtime/ad-hoc-runs/
+state/runtime/run_baton.*.json
+
+# Generated run context (runtime artifacts; not source-of-truth docs)
+state/config/runs/
 
 # Python
 .venv/

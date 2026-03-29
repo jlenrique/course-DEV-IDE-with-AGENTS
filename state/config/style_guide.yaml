@@ -8,6 +8,15 @@
 # Those live in resources/style-bible/ (authoritative) and config/content-standards.yaml
 # (bootstrap fallback). See docs/directory-responsibilities.md for the full map.
 
+brand:
+  colors:
+    primary: ""
+    secondary: ""
+    accent: ""
+  fonts:
+    heading: ""
+    body: ""
+
 tool_parameters:
   gamma:
     default_llm: ""         # e.g. "claude-3", "gpt-4o"

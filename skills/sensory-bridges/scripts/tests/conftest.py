@@ -36,6 +36,7 @@ sys.modules["skills.sensory_bridges.scripts"] = type(sys)("skills.sensory_bridge
 sys.modules["skills.sensory_bridges.scripts.bridge_utils"] = bridge_utils
 
 for mod_name, filename in [
+    ("skills.sensory_bridges.scripts.perception_cache", "perception_cache.py"),
     ("skills.sensory_bridges.scripts.pptx_to_agent", "pptx_to_agent.py"),
     ("skills.sensory_bridges.scripts.pdf_to_agent", "pdf_to_agent.py"),
     ("skills.sensory_bridges.scripts.audio_to_agent", "audio_to_agent.py"),

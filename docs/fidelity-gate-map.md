@@ -2,6 +2,8 @@
 
 This document defines the seven fidelity gates (G0–G6), their relationship to HIL gates, the assessment ordering, the role matrix, and the Fidelity Trace Report operating policy.
 
+**Note:** This document is authoritative for fidelity gate sequencing and the Vera vs Quinn-R assessment boundary. The full cross-agent ownership model is documented in `docs/lane-matrix.md`, which extends lane definitions to orchestration, instructional design, tool execution quality, perception, and platform deployment.
+
 ---
 
 ## Gate Definitions
@@ -64,13 +66,13 @@ For each assessment dimension, exactly one agent owns the judgment. No dimension
 | **Accessibility compliance** | Quinn-R | WCAG 2.1 AA |
 | **Learning objective alignment** | Quinn-R | Content maps to LOs per course_context.yaml |
 | **Instructional soundness** | Quinn-R | Cognitive load, scaffolding, sequencing |
-| **Intent fidelity** | Quinn-R | Does the output achieve the intended `behavioral_intent`? |
+| **Intent fidelity** | Quinn-R | Does the finished learner experience achieve the intended `behavioral_intent` effect? |
 | **Content accuracy flags** | Quinn-R | Potential medical accuracy concerns — flagged, never adjudicated |
 | **Audio quality** | Quinn-R | Voice clarity, background noise, production polish |
 | **Composition integrity** | Quinn-R | Final assembly quality, transitions, sync |
-| **Tool parameter quality** | Producing Agent (self-assessment) | Did I use the right API parameters? (Gary's quality_assessment) |
+| **Tool parameter quality** | Producing Agent (self-assessment) | Execution-only self-check: layout integrity, parameter confidence, and embellishment risk control. Excludes pedagogy, quality standards, and source-faithfulness lanes. |
 
-**Key boundary:** The Fidelity Assessor asks "is this *right* relative to the source?" Quinn-R asks "is this *good* against standards?" The producing agent asks "did I use the tool *well*?"
+**Key boundary:** The Fidelity Assessor asks "is this *right* relative to the source?" Quinn-R asks "is this *good* against standards and learner-effect intent?" The producing agent asks "did I execute the tool *well* within my lane?"
 
 ---
 

@@ -1,64 +1,54 @@
-# Session Handoff — 2026-03-28
+# Session Handoff — 2026-03-29
 
-## What Was Completed
+## Scope Completed This Session
 
-### Epic 2A: Fidelity Assurance & APP Intelligence Infrastructure — COMPLETE (9/9 stories)
+- Executed BMAD shutdown protocol tasks for quality gate, artifact review, cleanup, and handoff refresh.
+- Verified branch context and current implementation artifact status.
+- Removed stale generated runtime directories that were not baseline-tracked.
+- Updated startup/handoff and developer docs to reflect current test profile behavior and next priorities.
 
-1. **2A-1 (DONE):** Fidelity audit baseline, 7 L1 contracts (38 criteria), validation script, architectural docs
-2. **2A-2 (DONE):** Sensory Bridges skill — 5 bridges, canonical schema, confidence rubric, 34 tests
-3. **2A-3 (DONE):** Provenance Protocol — `source_ref` in all templates, grammar spec
-4. **2A-4 (DONE):** Vera (Fidelity Assessor) — G2-G3 coverage, Fidelity Trace Report, circuit breaker, Marcus integration
-5. **2A-5 (DONE):** G0-G1 fidelity verification — source bundle completeness, lesson plan faithfulness
-6. **2A-6 (DONE):** Irene, Gary, Quinn-R adopt universal perception protocol with shared bridge cache
-7. **2A-7 (DONE):** G4-G5 fidelity — narration script vs slides (STT-based audio verification)
-8. **2A-8 (DONE):** Cumulative drift tracking, source_ref resolver (11 tests), fidelity-control vocabulary, drift thresholds
-9. **2A-9 (DONE):** APP Maturity Audit skill — four-pillar protocol, heat map, delta reporting
+## Quality Gate Results
 
-### Story 3.11: Mixed-Fidelity Gamma Generation — COMPLETE
+- Default test profile: `155 passed, 23 deselected, 5 warnings`.
+- Live profile: not fully triaged yet; keep as explicit next-step work.
+- Lint (`ruff`): fails with large existing backlog (`1407` issues total).
+- Whitespace check (`git diff --check`): identified trailing whitespace in startup doc and was corrected in this closeout pass.
 
-- Irene slide brief: per-slide fidelity fields + classification guide
-- Gary: `execute_generation()` production entry point routing to `generate_deck_mixed_fidelity()` for two-call split. `merge_parameters()` enforces vocabulary for literal slides. `validate_image_url()` wired into generation flow. Contract-compliant `gary_slide_output` with `slide_id`, `file_path`, `card_number`, `visual_description`, `source_ref`.
-- Marcus: fidelity discovery interview, Imagine handoff checkpoint, `diagram_cards` construction
-- Quinn-R: fidelity-aware review using provenance manifest
-- 12 partition/reassemble/URL tests + 11 resolver tests + 8 drift tests = 31 new tests
+## Environment and Hygiene Actions
 
-### Roadmap Rebaseline
+- Confirmed Python environment: `.venv` / Python 3.13.6.
+- Cleaned generated folders:
+	- `state/config/runs/`
+	- `state/runtime/ad-hoc-observability/`
+	- `state/runtime/perception-cache/`
 
-- **Epic 4A added** (Agent Governance) — 5 stories, FRs FR81-FR90
-- **Epics 7+8+9 collapsed** into Epic G (Governance Synthesis) — 2 stories
-- **Epic 5 trimmed** (2 stories), **Epic 6 trimmed** (1 story, 6.2 merged into 3.6)
-- PRD, architecture, epics, sprint status all updated
+## Current Branch and Closeout Status
 
-### Party Mode Consultations
+- Active branch: `dev/epic-4a-agent-governance`.
+- Merge-to-master was intentionally not performed in this shutdown because:
+	- lint baseline remains unresolved,
+	- live-profile triage remains pending.
 
-- Mixed-fidelity compatibility with fidelity architecture (consensus: harmonious by design)
-- Video pipeline readiness (consensus: architecturally complete, G4-G6 verification future)
-- Downstream epic rebaselining (consensus: 3 epics should collapse, 2 should trim)
-- Epic 4A proposal (consensus: right intervention at right time)
+## Documentation Updated
 
-## What Is Next
+- `next-session-start-here.md` refreshed with next action, quality-gate snapshot, and branch closeout exception.
+- `docs/dev-guide.md` updated with default vs live pytest profile commands.
+- `docs/project-context.md` updated to reflect Epic 4A/Epic 4 completion and post-governance next focus.
+- `docs/agent-environment.md` updated with live-test execution profile notes.
+- `.gitignore` updated to ignore generated runtime paths to reduce workspace pollution.
 
-**Epic 4A: Agent Governance, Quality Optimization & APP Observability**
+## Unresolved / Carry-Forward Items
 
-Story 4A-1 (Run Baton & Authority Contract) is the first story.
+1. Triage and stabilize `--run-live` profile (start with Kling live tests and timeout/runtime behavior).
+2. Decide strategy for large Ruff baseline (incremental policy, scoped cleanup, or baseline suppression approach).
+3. Resume deferred Epic 3 queue only after live-profile reliability path is defined.
 
-## Key Decisions Made
+## Next Session First Commands
 
-1. Vera covers G0-G5 (30 criteria). G6 (composition) remains future.
-2. `execute_generation()` is the production entry point — routes to mixed-fidelity or single-call automatically
-3. Fidelity-control vocabulary enforced in `merge_parameters()` — literal slides cannot use free-text `additionalInstructions`
-4. Cumulative drift check invocable via CLI: `python scripts/fidelity_drift_check.py`
-5. Roadmap rebaselined from 11 epics/46 stories to 9 epics/40 stories
-
-## Unresolved Issues
-
-- 2 pre-existing test failures (venv detection, style guide brand key)
-- `test_integration_kling.py` collection error (missing jwt module)
-- `gary_slide_output[].file_path` is populated as `None` by `generate_deck_mixed_fidelity()` — actual paths are set after export+download step (separate operation)
-- G6 (composition) fidelity verification not yet in Vera
-
-## Validation Summary
-
-- 73 focused tests pass (partition, resolver, drift, gamma_operations)
-- 131 project tests pass (2 known pre-existing failures, 3 skipped)
-- 7 fidelity contracts valid, 38 criteria, parity check PASS
+```bash
+git checkout master
+git pull origin master
+git checkout dev/epic-4a-agent-governance
+.venv\Scripts\python -m pytest tests -v
+.venv\Scripts\python -m pytest tests -v --run-live
+```

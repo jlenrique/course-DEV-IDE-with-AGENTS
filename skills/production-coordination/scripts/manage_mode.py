@@ -43,8 +43,10 @@ def _read_mode(path: Path) -> dict[str, Any]:
 
 def _write_mode(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+    tmp.replace(path)
 
 
 def cmd_get(args: argparse.Namespace) -> dict[str, Any]:

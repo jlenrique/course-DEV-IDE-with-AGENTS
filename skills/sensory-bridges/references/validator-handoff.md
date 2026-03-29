@@ -57,3 +57,15 @@ If both the Fidelity Assessor and Quinn-R need to assess the same PNG,
 the bridge runs once and both consumers read the cached result.
 
 Cache key: `(artifact_path, modality)`. Cache scope: production run.
+
+Implementation notes:
+
+- Runtime cache utility: `skills/sensory-bridges/scripts/perception_cache.py`
+- Dispatcher integration: `skills/sensory-bridges/scripts/bridge_utils.py::perceive(..., run_id=..., run_mode=...)`
+- Cache storage path: `state/runtime/perception-cache/{run_id}.json`
+- Cache lifecycle: run-scoped; clear at run completion/cancel for strict run isolation
+
+Observability linkage:
+
+- Cache hit/miss events are emitted through `skills/production-coordination/scripts/observability_hooks.py`
+- Each event carries `run_mode` so downstream rollups can exclude ad-hoc runs from course progress metrics

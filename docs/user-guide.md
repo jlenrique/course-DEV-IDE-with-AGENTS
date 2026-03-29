@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-03-27 | **Project Phase:** 4-Implementation (Epic 3 in progress)
+**Last Updated:** 2026-03-28 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories done; Epic 2A fidelity stack complete; **Epic 4A** governance next on the roadmap)
 
 ---
 
@@ -58,17 +58,24 @@ Switch modes by telling Marcus:
 Every piece of content follows this path:
 
 ```
-Your Intent → Marcus Plans → Specialists Create → Quality Review → Your Approval → Published
+Your Intent → Marcus Plans → Specialists Create → Fidelity + Quality Review → Your Approval → Published
 ```
 
 1. **Intent** — You describe what you want: learning objectives, audience, constraints, content type
 2. **Planning** — Marcus consults the style bible, checks exemplars, and builds a production plan
 3. **Creation** — Specialist agents generate content (slides, audio, assessments, etc.)
-4. **Quality Review** — Automated quality checks run against your standards
-5. **Your Review** — Marcus presents the work at a checkpoint gate. You approve, request changes, or redirect
-6. **Staging** — Approved content lands in `course-content/staging/` for your final pass
-7. **Promotion** — You (or Marcus at your direction) moves approved content to `course-content/courses/`
-8. **Publishing** — Content is deployed to Canvas, CourseArc, or other platforms
+4. **Fidelity check (Vera)** — For pipeline artifacts, the **Fidelity Assessor (Vera)** checks whether outputs stay faithful to their source of truth (traceability; omissions, inventions, and alterations). Serious issues can stop the run before routine quality review.
+5. **Quality review (Quinn-R)** — The **Quality Guardian (Quinn-R)** checks brand, accessibility, instructional soundness, learner-effect alignment, and related quality dimensions. This is separate from source-faithfulness.
+6. **Your review** — Marcus presents the work at a checkpoint gate. You approve, request changes, or redirect
+7. **Staging** — Drafts land in `course-content/staging/` for your edit and signoff
+8. **Promotion** — You (or Marcus at your direction) move approved content to `course-content/courses/`
+9. **Publishing** — Content is deployed to Canvas, CourseArc, or other platforms (some platform specialists are still on the roadmap; see [Tools in the Ecosystem](#tools-in-the-ecosystem))
+
+Gate order and automated assessment flow are summarized in [`docs/fidelity-gate-map.md`](fidelity-gate-map.md). Which role may judge what (orchestration, pedagogy, tool execution, fidelity) is summarized in [`docs/lane-matrix.md`](lane-matrix.md).
+
+### Production run authority (baton)
+
+When Marcus is running a **production run**, the system may hold an active **run baton** (a small JSON file under `state/runtime/`). If you open a **specialist agent directly** (for example Gary or Irene) while that run is active, the specialist should prompt you: continue with Marcus for the run, or enter **standalone consult mode** for a side conversation that does not change the active run. You do not need to edit baton files yourself; Marcus and the specialists follow the contract in the implementation skills.
 
 ### Checkpoint Gates (Human-in-the-Loop)
 
@@ -76,6 +83,7 @@ You stay the instructor of record. Marcus **never** publishes content without yo
 
 - What was created
 - How it aligns with learning objectives
+- Fidelity findings (when Vera has run) and quality findings (when Quinn-R has run), when relevant
 - Any quality concerns or decisions that need your input
 - A clear recommendation with rationale
 
@@ -203,16 +211,20 @@ You don't need to know how these tools work — Marcus and the specialist agents
 
 | What | Tool | How It's Used |
 |------|------|--------------|
-| **Slides/Presentations** | Gamma | AI-generated professional slides |
-| **Voiceover/Audio** | ElevenLabs | Natural-sounding narration synthesis |
-| **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes |
-| **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation |
-| **Course Dev Notes** | Notion | Pull reference materials into production context |
+| **Slides/Presentations** | Gamma | AI-generated professional slides (specialist **Gary**) |
+| **Voiceover/Audio** | ElevenLabs | Natural-sounding narration synthesis (Voice Director specialist) |
+| **Video** | Kling | Text/image-to-video and related flows (specialist **Kira**) |
+| **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes (API + MCP in repo; **Canvas specialist agent** story is **deferred** on the current roadmap — workflows may use scripts or manual steps until that ships) |
+| **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation (**Qualtrics specialist** story **deferred**) |
+| **Course Dev Notes** | Notion | Pull reference materials into production context (source wrangler + API) |
 | **Source Files** | Box Drive | Access locally synced cloud files |
-| **Design/Graphics** | Canva | Brand-kit-aligned visual design |
-| **Video** | Kling, Panopto | Video generation and hosting |
+| **Design/Graphics** | Canva | Design-guidance pattern; full programmatic specialist **deferred** (API limits) |
+| **Composition** | Descript (manual) | Final assembly of narrated decks; compositor skill produces assembly guides and syncs stills |
+| **Hosting** | Panopto | Video hosting (API client in repo; credential-dependent) |
 
 Some tools (Vyond, CourseArc, Articulate) require manual operation — Marcus provides detailed specs and you execute in the tool's own interface.
+
+**Roadmap note:** Epic 3 still includes Canvas, Qualtrics, and Canva specialist agents, but those stories are **deferred** while governance (**Epic 4A**) and other foundations proceed. Ask Marcus what path is supported today for your institution.
 
 ---
 
@@ -250,7 +262,10 @@ For system setup issues, see the [Admin Guide](admin-guide.md). For technical qu
 
 | Term | Meaning |
 |------|---------|
+| **APP** | **Agentic Production Platform** — this environment: IDE-hosted agents, tools, memory, and governance together |
 | **Marcus** | The master orchestrator agent — your single point of contact |
+| **Vera** | The **Fidelity Assessor** — source-faithfulness and provenance checks (typically before Quinn-R on pipeline artifacts) |
+| **Quinn-R** | The **Quality Guardian** — brand, accessibility, instructional soundness, learner-effect quality, and related standards |
 | **Checkpoint gate** | A pause point where Marcus presents work for your review |
 | **Style bible** | The authoritative brand and content standards document |
 | **Staging** | The review area where agent-created content waits for your approval |
@@ -258,5 +273,6 @@ For system setup issues, see the [Admin Guide](admin-guide.md). For technical qu
 | **Ad-hoc mode** | Experimental mode — assets go to scratch, state tracking paused |
 | **Default mode** | Production mode — full state tracking and learning |
 | **HIL** | Human-in-the-loop — you review and approve before publication |
-| **Specialist agent** | A focused expert (Gamma, ElevenLabs, Canvas, etc.) that Marcus delegates to |
+| **Specialist agent** | A focused expert (e.g. Gary for Gamma, Irene for instructional design) that Marcus delegates to |
 | **Memory sidecar** | Where agents remember preferences and patterns between sessions |
+| **Woodshed** | Exemplar-driven practice workflow agents use to prove tool mastery (optional unless you choose to run it) |

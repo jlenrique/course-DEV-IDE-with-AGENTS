@@ -16,7 +16,35 @@ previous_request_ids: []
 next_request_ids: []
 user_constraints: []
 run_mode: "default"
+governance:
+  invocation_mode: "delegated"      # delegated | standalone
+  current_gate: "G5"
+  authority_chain: ["marcus", "quality-reviewer"]
+  decision_scope:
+    owned_dimensions:
+      - "tool_execution_quality.audio"
+    restricted_dimensions:
+      - "source_fidelity"
+      - "quality_standards"
+      - "instructional_design"
+  allowed_outputs:
+    - "artifact_paths"
+    - "narration_outputs"
+    - "parameter_decisions"
+    - "recommendations"
+    - "errors"
 ```
+
+### Governance Enforcement
+
+Before synthesis, the Voice Director validates:
+
+- planned outputs are in `governance.allowed_outputs`
+- planned judgments are in `governance.decision_scope.owned_dimensions` (canonical values in `docs/governance-dimensions-taxonomy.md`)
+
+If out-of-scope work is requested, return a `scope_violation` payload and route to `governance.authority_chain[0]`.
+
+`scope_violation.route_to` must equal `governance.authority_chain[0]`.
 
 ## Outbound Return (Voice Director -> Marcus)
 
@@ -39,4 +67,5 @@ parameter_decisions:
   output_format: "mp3_44100_128"
 recommendations: []
 errors: []
+scope_violation: null                # object when out-of-scope work is requested
 ```

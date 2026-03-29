@@ -8,9 +8,13 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 from tests.conftest import requires_elevenlabs
 
 
+@pytest.mark.live_api
+@pytest.mark.timeout(90)
 @requires_elevenlabs
 class TestElevenLabsLive:
     def test_client_instantiates(self):

@@ -1,7 +1,7 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-03-27 | **Project Phase:** 4-Implementation (Epic 3 in progress)
+**Last Updated:** 2026-03-28 | **Project Phase:** 4-Implementation (Epic 3: 8/11; Epic 2A complete; **Epic 4A** governance next; Epic 4+ depend on 4A)
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## Architecture Overview
 
-This project is a **multi-agent collaborative intelligence platform** for medical education course content production. The core concept: a master orchestrator agent (Marcus) conducts a conversation with the user, delegates to specialist agents, which invoke skills backed by Python scripts, which call external tool APIs. Results flow back up the chain through quality gates and human checkpoints.
+This project is a **multi-agent collaborative intelligence platform** (**APP** — Agentic Production Platform) for medical education course content production. The core concept: a master orchestrator agent (Marcus) conducts a conversation with the user, delegates to specialist agents, which invoke skills backed by Python scripts, which call external tool APIs. Results flow back through **fidelity assessment (Vera)**, **quality review (Quinn-R)**, and human checkpoints. Governance artifacts include `docs/lane-matrix.md`, `docs/fidelity-gate-map.md`, run **mode** (`mode_state.json`), and optional run **baton** files under `state/runtime/`.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -78,9 +78,11 @@ The system is built on three independently updatable layers. This separation is 
 |-------|----------|---------------|-----------|
 | **API Clients** | `scripts/api_clients/` | Connectivity, retry, auth, pagination | Built in Epic 1 (DONE) |
 | **Skills** | `skills/{name}/` | Tool expertise, parameter templates, execution orchestration | Built in Epic 3+ |
-| **Agents** | `skills/bmad-agent-{name}/` or `agents/` | Judgment, decision-making, personality, memory | Built in Epic 2+ |
+| **Agents** | `skills/bmad-agent-{name}/` (primary); `agents/` for extras | Judgment, decision-making, personality, memory | Built in Epic 2+ |
 
 **Why this matters:** You can fix an API client without touching any agent or skill. You can refine a skill's parameter templates without changing the API client it wraps. You can update an agent's personality or routing without modifying any skill code. Each layer evolves at its own pace.
+
+**Fidelity and perception (Epic 2A):** Shared **sensory bridges** (`skills/sensory-bridges/`) produce canonical multimodal perception for validators. **Vera** (`skills/bmad-agent-fidelity-assessor/`) owns source-faithfulness judgments; **Quinn-R** owns quality-standard and learner-effect dimensions — see `docs/lane-matrix.md`.
 
 ### Layer Interaction Pattern
 
@@ -107,13 +109,13 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
    - **Scope:** Module 2, Lesson 3
    - **Implied specialist:** Gamma (slide generation)
 4. Marcus reads `state/config/course_context.yaml` to resolve Module 2, Lesson 3 metadata and learning objectives
-5. Marcus checks current run mode (default vs. ad-hoc) from `state/runtime/` or via `./scripts/read-mode-state.py`
+5. Marcus checks current run mode (default vs. ad-hoc) via `state/runtime/mode_state.json` (`skills/production-coordination/scripts/manage_mode.py`) or helper `skills/bmad-agent-marcus/scripts/read-mode-state.py`
 
 ### Phase 2: Source Material Prompting (Marcus → SP capability)
 
 6. Marcus loads `./references/source-prompting.md` (SP capability)
 7. Marcus offers: *"I see Module 2 notes in Notion and some reference PDFs in Box Drive. Want me to pull those in before we start?"*
-8. If user accepts, Marcus delegates to the `source-wrangling` skill (planned) to fetch Notion pages and Box Drive files
+8. If user accepts, Marcus delegates to **`source-wrangler`** (`skills/source-wrangler/`) to fetch Notion pages, Box Drive files, URLs/HTML captures, etc.
 
 ### Phase 3: Production Planning (Marcus → CM capability)
 
@@ -149,43 +151,41 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 22. `GammaClient.wait_for_generation()` polls until completion (3s intervals, up to 120 attempts)
 23. The generated presentation data is returned to the specialist
 
-### Phase 6: Quality Review (Specialist → Quality Gate)
+### Phase 6: Fidelity and quality review
 
-24. The specialist performs a self-assessment against style bible standards
-25. The specialist returns to Marcus:
-    - Artifact path (where the presentation was saved)
-    - Quality self-assessment score
-    - Parameter decisions made (for saving to style guide)
-26. Marcus invokes Quinn-R (`quality-reviewer` agent, active) for independent quality validation
-27. Quinn-R checks: brand consistency, accessibility (WCAG 2.1 AA), learning objective alignment, instructional soundness, content accuracy flags
+24. The specialist performs **execution-only** self-assessment (e.g. Gary: layout integrity, parameter confidence, embellishment risk — see `skills/bmad-agent-gamma/references/quality-assessment.md` and `docs/lane-matrix.md`)
+25. Where applicable, **sensory bridges** confirm perception of PNGs/audio before scoring; cached perception may be reused across Vera and Quinn-R per `skills/sensory-bridges/references/validator-handoff.md`
+26. The specialist returns to Marcus: artifact paths, execution self-assessment, parameter decisions for style guide, and pipeline fields (e.g. `gary_slide_output`, provenance)
+27. Marcus routes the artifact to **Vera** (`bmad-agent-fidelity-assessor`) for **source-faithfulness** (O/I/A, provenance, drift signals) per `docs/fidelity-gate-map.md` — failures can circuit-break before Quinn-R
+28. On pass, Marcus invokes **Quinn-R** (`bmad-agent-quality-reviewer`) for **quality standards**: brand, accessibility (WCAG 2.1 AA), learning objective alignment, instructional soundness, learner-effect intent fidelity, content accuracy flags, audio/composition dimensions as applicable
 
 ### Phase 7: Human Checkpoint (Marcus → User)
 
-28. Marcus loads `./references/checkpoint-coord.md` (HC capability)
-29. Marcus presents the work to the user:
+29. Marcus loads `./references/checkpoint-coord.md` (HC capability)
+30. Marcus presents the work to the user:
     - *"Slides are done — 12 frames covering all three learning objectives for drug interactions. JCPH Navy headers, Medical Teal accents. Quality review passed. Ready for your review."*
-30. User reviews and either approves, requests changes, or redirects
+31. User reviews and either approves, requests changes, or redirects
 
 ### Phase 8: State Updates (if default mode)
 
-31. If approved and in **default mode**:
+32. If approved and in **default mode**:
     - Content saved to `course-content/staging/m02-drug-interactions/`
     - SQLite `production_runs` table updated with run completion
     - SQLite `quality_gates` table updated with review results
     - Marcus's memory sidecar `patterns.md` appended with what worked
     - Marcus's `chronology.md` appended with session record
     - `state/config/style_guide.yaml` updated with any new parameter preferences
-32. If in **ad-hoc mode**:
+33. If in **ad-hoc mode**:
     - Content saved to scratch/staging area
     - No state writes except transient section of Marcus's `index.md`
     - QA results still recorded (QA always runs)
 
 ### Phase 9: Promotion (User-Directed)
 
-33. User reviews content in staging
-34. User tells Marcus to promote: *"Looks good, promote to courses"*
-35. Content moves from `course-content/staging/` to `course-content/courses/`
-36. Platform publishing follows (Canvas API deployment, etc.)
+34. User reviews content in staging
+35. User tells Marcus to promote: *"Looks good, promote to courses"*
+36. Content moves from `course-content/staging/` to `course-content/courses/`
+37. Platform publishing follows (Canvas API, CourseArc/LTI, etc. — **Canvas specialist** and related stories may still be deferred; use existing clients or manual steps as documented in planning artifacts)
 
 ---
 
@@ -199,12 +199,12 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 │  • course_context.yaml                      │  ← Evolves slowly
 │  • style_guide.yaml                         │  ← Agent-writable (learned prefs)
 │  • tool_policies.yaml                       │  ← Admin-managed (run presets)
+│  • fidelity-contracts/ (G0–G6 YAML)         │  ← L1 fidelity criteria
 ├─────────────────────────────────────────────┤
-│  SQLite Runtime (state/runtime/)            │  ← Gitignored, ephemeral
-│  • coordination.db                          │  ← Production runs, coordination,
-│    - production_runs table                  │    quality gates
-│    - agent_coordination table               │  ← Does NOT survive fresh clone
-│    - quality_gates table                    │
+│  SQLite + JSON (state/runtime/)             │  ← Gitignored, ephemeral
+│  • coordination.db + tables               │  ← Production runs, coordination,
+│  • mode_state.json                          │    quality gates; mode + baton
+│  • run_baton.{run_id}.json                  │  ← Does NOT survive fresh clone
 ├─────────────────────────────────────────────┤
 │  Memory Sidecars (_bmad/memory/)            │  ← Git-versioned, append-only
 │  • {agent}-sidecar/                         │  ← Agent learning, expertise
@@ -292,7 +292,7 @@ When Marcus delegates to a specialist, he passes a structured context envelope:
 | Style bible sections | Relevant brand standards for this task |
 | Exemplar references | Applicable worked patterns |
 
-Specialists return: **artifact path** + **quality self-assessment** + **parameter decisions to save**.
+Specialists return: **artifact paths** + **execution self-assessment** (lane-scoped; see `docs/lane-matrix.md`) + **parameter decisions to save** + pipeline-specific payloads (e.g. `gary_slide_output`, provenance).
 
 ### Memory Sidecar Structure
 
@@ -348,22 +348,31 @@ Skills load only what they need:
 
 This keeps context windows manageable — agents don't load 50 pages of reference docs when they only need one capability.
 
-### Current Skills
+### Current Skills (representative)
 
-| Skill | Location | Status |
-|-------|----------|--------|
-| `pre-flight-check` | `skills/pre-flight-check/` | Active |
-| `bmad-agent-marcus` | `skills/bmad-agent-marcus/` | Active (Epic 2) |
-| `production-coordination` | `skills/production-coordination/` | Active (Epic 2) |
-| `run-reporting` | planned | Epic 4 |
-| `parameter-intelligence` | planned | Epic 3 |
-| `source-wrangler` | `skills/source-wrangler/` | Active (Story 3.9) |
-| `gamma-api-mastery` | active | Epic 3 |
-| `elevenlabs-audio` | active | Epic 3 |
-| `tech-spec-wrangler` | active | Epic 3 |
-| `compositor` | `skills/compositor/` | Active (Story 3.5) — `sync-visuals` + Descript Assembly Guide |
-| `canvas-deployment` | planned | Epic 3 |
-| `quality-control` | `skills/quality-control/` | Active (Story 3.2) |
+| Skill | Location | Role |
+|-------|----------|------|
+| `pre-flight-check` | `skills/pre-flight-check/` | MCP/API/doc readiness |
+| `production-coordination` | `skills/production-coordination/` | Run/mode/baton/style-guide helpers |
+| `source-wrangler` | `skills/source-wrangler/` | Notion, Box, URL/HTML ingestion |
+| `tech-spec-wrangler` | `skills/tech-spec-wrangler/` | Doc refresh via Ref MCP |
+| `gamma-api-mastery` | `skills/gamma-api-mastery/` | Gamma generate/export operations |
+| `elevenlabs-audio` | `skills/elevenlabs-audio/` | ElevenLabs TTS operations |
+| `kling-video` | `skills/kling-video/` | Kling video operations |
+| `compositor` | `skills/compositor/` | Segment manifest → Descript guide, `sync-visuals` |
+| `quality-control` | `skills/quality-control/` | Automated brand/a11y helpers + SQLite logging |
+| `woodshed` | `skills/woodshed/` | Exemplar mastery workflow |
+| `sensory-bridges` | `skills/sensory-bridges/` | Multimodal perception for validators |
+| `bmad-agent-fidelity-assessor` | `skills/bmad-agent-fidelity-assessor/` | Vera — fidelity trace reports |
+| `app-maturity-audit` | `skills/app-maturity-audit/` | Four-pillar APP maturity audit |
+| `bmad-agent-marcus` | `skills/bmad-agent-marcus/` | Orchestrator agent (SKILL.md) |
+| `bmad-agent-content-creator` | `skills/bmad-agent-content-creator/` | Irene |
+| `bmad-agent-gamma` | `skills/bmad-agent-gamma/` | Gary |
+| `bmad-agent-elevenlabs` | `skills/bmad-agent-elevenlabs/` | Voice Director |
+| `bmad-agent-kling` | `skills/bmad-agent-kling/` | Kira |
+| `bmad-agent-quality-reviewer` | `skills/bmad-agent-quality-reviewer/` | Quinn-R |
+
+**Planned / roadmap:** run reporting and deeper workflow state (Epic 4, after Epic 4A governance); Canvas deployment skill when Story 3.6 ships.
 
 ### Compositor assembly bundle CLI
 
@@ -436,6 +445,7 @@ class NewToolClient(BaseAPIClient):
 | `QualtricsClient` | `qualtrics_client.py` | X-API-TOKEN (raw) | Surveys, questions, response export |
 | `PanoptoClient` | `panopto_client.py` | Bearer (OAuth2) | Folders, sessions, OAuth2 token refresh |
 | `KlingClient` | `kling_client.py` | JWT (HS256 from access_key+secret_key) | Text-to-video, image-to-video, lip-sync, extend, polling, download |
+| `NotionClient` | `notion_client.py` | Bearer (internal integration token) | Pages/blocks search and read for source wrangling |
 
 ---
 
@@ -552,49 +562,53 @@ See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full 
 
 ## Testing
 
-### Test Structure
+### Test layout
+
+**Root integration suite** — `tests/` (API clients, state, pre-flight, fidelity helpers, Notion, etc.).
+
+**Skill-scoped suites** — many skills ship their own `scripts/tests/` (e.g. `skills/gamma-api-mastery/scripts/tests/`, `skills/sensory-bridges/scripts/tests/`, `skills/production-coordination/scripts/tests/`, `skills/compositor/scripts/tests/`). Run them by path when you change that skill.
 
 ```
-tests/
-├── conftest.py                    ← Shared fixtures, env loading, dev mode support
-├── fixtures/
-│   └── __init__.py
-├── test_integration_gamma.py      ← Live API tests for Gamma
-├── test_integration_elevenlabs.py ← Live API tests for ElevenLabs
-├── test_integration_canvas.py     ← Live API tests for Canvas
-├── test_integration_qualtrics.py  ← Live API tests for Qualtrics
-├── test_integration_canva.py      ← Canva config validation
-├── test_integration_panopto.py    ← Panopto API tests (3 skipped — no creds)
-├── test_preflight_check.py        ← Pre-flight check validation
-├── test_python_infrastructure.py  ← BaseAPIClient, utilities
-├── test_state_management.py       ← SQLite and YAML operations
-└── test_plugin_scaffold.mjs       ← Plugin structure validation (Node.js)
+tests/                               ← Shared repo tests
+├── conftest.py
+├── test_integration_*.py            ← Live API tests (Gamma, ElevenLabs, Canvas, …)
+├── test_preflight_check.py
+├── test_python_infrastructure.py
+├── test_state_management.py
+├── test_fidelity_drift_check.py
+├── test_resolve_source_ref.py
+└── …
+
+skills/*/scripts/tests/              ← Per-skill unit tests (compositor, gamma ops, bridges, …)
 ```
 
 ### Running Tests
 
 ```bash
-# All tests
+# Repo root suite (default profile: excludes tests marked live_api)
 .venv\Scripts\python -m pytest tests/ -v
 
-# Specific test file
-.venv\Scripts\python -m pytest tests/test_integration_gamma.py -v
+# Include live API tests explicitly
+.venv\Scripts\python -m pytest tests/ -v --run-live
+
+# One skill's tests
+.venv\Scripts\python -m pytest skills/compositor/scripts/tests -v
+
+# Broad pass (root + major skills — adjust globs as needed)
+.venv\Scripts\python -m pytest tests skills/gamma-api-mastery/scripts/tests skills/production-coordination/scripts/tests -v
 
 # With dev mode (enhanced logging)
-DEV_MODE=1 .venv\Scripts\python -m pytest tests/ -v
+set DEV_MODE=1
+.venv\Scripts\python -m pytest tests/ -v
 ```
 
-**Current status:** 117 tests pass, 3 skipped (Panopto — no credentials configured).
+**Note:** Total test count changes as stories land; use `pytest --collect-only` for an exact count. By default, tests marked `live_api` are deselected unless `--run-live` is provided. Integration tests can still skip when required credentials are missing.
 
 ### Writing New Tests
 
-Follow the existing pattern in `tests/test_integration_gamma.py`:
-
-1. Import the client from `scripts/api_clients/`
-2. Use `conftest.py` fixtures for environment loading
-3. Test against **live APIs** (this project uses integration tests, not mocks)
-4. Use `pytest.mark.skipif` for tests requiring unavailable credentials
-5. Keep tests read-only where possible (list, get, verify — don't create/delete in production)
+1. Prefer **live API** checks for external tools (with `skipif` when env vars absent), matching existing `tests/test_integration_*.py` patterns.
+2. For skill logic, add tests under that skill's `scripts/tests/` and run with `pytest path/to/tests`.
+3. Keep destructive operations out of shared integration tests where possible.
 
 ---
 
@@ -657,17 +671,20 @@ course-DEV-IDE-with-AGENTS/
 ├── pyproject.toml                     ← Python project config
 ├── requirements.txt                   ← Python dependencies
 │
-├── agents/                            ← Custom agent .md files (auto-discovered by Cursor)
+├── agents/                            ← Optional extra agent .md files (see plugin manifest)
 │   └── README.md
-├── skills/                            ← SKILL.md directories (auto-discovered by Cursor)
-│   ├── bmad-agent-marcus/SKILL.md     ← Master orchestrator agent
-│   └── pre-flight-check/SKILL.md      ← System validation skill
+├── skills/                            ← SKILL.md directories (auto-discovered) — **primary home for agents**
+│   ├── bmad-agent-marcus/             ← Marcus + scripts (e.g. read-mode-state)
+│   ├── bmad-agent-gamma/              ← Gary
+│   ├── pre-flight-check/
+│   ├── production-coordination/       ← manage_mode, manage_baton, style guide, …
+│   └── …                              ← See [Current Skills](#current-skills-representative)
 ├── rules/                             ← .mdc rules for persistent agent behavior guidance
 ├── hooks/                             ← Event-driven automation (sessionStart, sessionEnd)
 ├── commands/                          ← Agent-executable command files
 │
 ├── scripts/
-│   ├── api_clients/                   ← Python API clients (BaseAPIClient + 5 tool clients)
+│   ├── api_clients/                   ← Python API clients (Gamma, ElevenLabs, Canvas, … + Notion, Kling)
 │   ├── state_management/              ← SQLite init, DB operations
 │   ├── utilities/                     ← Env loading, file helpers, logging, dev mode
 │   ├── run_mcp_from_env.cjs          ← MCP wrapper (loads .env secrets at runtime)
@@ -676,8 +693,8 @@ course-DEV-IDE-with-AGENTS/
 │   └── smoke_qualtrics.mjs           ← Targeted Qualtrics smoke test
 │
 ├── state/
-│   ├── config/                        ← YAML runtime configs (git-versioned)
-│   └── runtime/                       ← SQLite database (gitignored)
+│   ├── config/                        ← YAML + fidelity-contracts/ (git-versioned)
+│   └── runtime/                       ← SQLite, mode_state.json, run_baton.*.json (gitignored)
 ├── _bmad/memory/                      ← Agent memory sidecars (git-versioned)
 │
 ├── config/                            ← Static bootstrap defaults
@@ -691,7 +708,7 @@ course-DEV-IDE-with-AGENTS/
 │   ├── courses/                       ← Approved/published content
 │   └── _templates/                    ← Reusable content scaffolds
 │
-├── tests/                             ← 117 passing tests (integration + unit)
+├── tests/                             ← Root pytest suite (integration + unit)
 ├── docs/                              ← This guide + user guide + admin guide + reference docs
 │
 ├── _bmad/                             ← BMad Method configuration
@@ -715,9 +732,12 @@ These are the authoritative sources — this guide references them rather than d
 
 | Document | Location | What It Covers |
 |----------|----------|---------------|
-| **Architecture** | `_bmad-output/planning-artifacts/architecture.md` | Full architectural decisions, patterns, validation |
-| **PRD** | `_bmad-output/planning-artifacts/prd.md` | 80 FRs, success criteria, user journeys, compliance |
-| **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | 10 epics, 35 stories, FR coverage map |
+| **Architecture** | `_bmad-output/planning-artifacts/architecture.md` | Full architectural decisions; governance + APP sections |
+| **PRD** | `_bmad-output/planning-artifacts/prd.md` | **91 FRs** (incl. FR81–FR91 governance), success criteria, journeys |
+| **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | **9 epics, 41 stories** (rebaselined 2026-03-28; +4A-6 2026-03-29); Epic 4A (6 stories) before Epic 4 |
+| **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6, Vera vs Quinn-R ordering, role matrix |
+| **Lane matrix** | `docs/lane-matrix.md` | Cross-agent judgment ownership |
+| **Fidelity architecture (GOLD)** | `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` | APP / three-layer / hourglass / sensory horizon |
 | **Directory Responsibilities** | `docs/directory-responsibilities.md` | Configuration hierarchy, resolution rules, anti-patterns |
 | **Tool Access Matrix** | `resources/tool-inventory/tool-access-matrix.md` | 17 tools classified by access tier |
 | **Style Bible** | `resources/style-bible/master-style-bible.md` | Brand identity, content standards, tool prompts |
@@ -728,3 +748,4 @@ These are the authoritative sources — this guide references them rather than d
 | **HIL Workflow** | `docs/workflow/human-in-the-loop.md` | Staging → review → promotion → publish |
 | **Agent Environment** | `docs/agent-environment.md` | MCP setup, API guidance, BMad alignment |
 | **Marcus Coaching** | `_bmad-output/brainstorming/party-mode-coaching-marcus-orchestrator.md` | Full discovery answers for orchestrator creation |
+| **Sprint / workflow status** | `_bmad-output/implementation-artifacts/sprint-status.yaml`, `bmm-workflow-status.yaml` | Epic and story Kanban + BMM phase |

@@ -550,6 +550,7 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - FR88: Sensory bridge perception results shall be computed once per artifact per production run and cached — both the Fidelity Assessor and Quality Reviewer shall consume the same canonical perception output, never performing independent interpretation passes
 - FR89: System shall provide observability hooks for gate pass rates, fidelity scores (O/I/A counts), quality trends, and agent performance metrics to support production intelligence reporting
 - FR90: Lane boundary violations detected during production runs shall be logged as governance findings and surfaced in run reports for systematic remediation
+- FR91: System shall enforce ad-hoc run mode as a ledger and learning boundary — observability and cache records shall carry `run_mode` (`default` | `ad-hoc`) so sandbox runs are excluded from course/module building progress metrics; coordination databases, production run completion, quality-gate persistence, and durable sidecar learning (`patterns.md`, `chronology.md`) shall not treat ad-hoc runs as institutional production progress unless explicitly redesigned and documented
 
 ## Non-Functional Requirements
 

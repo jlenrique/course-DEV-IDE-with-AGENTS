@@ -363,6 +363,12 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <action>Verify ALL tasks and subtasks are marked [x] (re-scan the story document now)</action>
     <action>Run the full regression suite (do not skip)</action>
     <action>Confirm File List includes every changed file</action>
+    <action>If story scope includes creating or modifying files under `skills/bmad-agent-*/`, enforce Agent QA Release Gate from `docs/workflow/agent-qa-release-gate.md` before marking review:
+      - run quality optimizer scan with required dimensions and thresholds
+      - if any required dimension fails threshold, stop and revise, then re-scan
+      - archive passing scan result to `skills/reports/bmad-agent-{name}/quality-scan/{timestamp}.json`
+      - record archived report path and pass/fail summary in Dev Agent Record completion notes
+    </action>
     <action>Execute enhanced definition-of-done validation</action>
     <action>Update the story Status to: "review"</action>
 
@@ -407,6 +413,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <action if="any task is incomplete">HALT - Complete remaining tasks before marking ready for review</action>
     <action if="regression failures exist">HALT - Fix regression issues before completing</action>
     <action if="File List is incomplete">HALT - Update File List with all changed files</action>
+    <action if="agent story and QA release gate evidence is missing">HALT - Run Agent QA Release Gate and archive passing evidence before completing</action>
     <action if="definition-of-done validation fails">HALT - Address DoD failures before completing</action>
   </step>
 

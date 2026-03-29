@@ -312,6 +312,15 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   file_structure_requirements</template-output>
   <template-output file="{default_output_file}">testing_requirements</template-output>
 
+  <!-- Agent QA release gate requirements -->
+  <action>If story scope includes creating or modifying files under `skills/bmad-agent-*/`, add mandatory tasks for Agent QA Release Gate:
+    - run bmad-agent-builder quality optimizer scan across required dimensions
+    - enforce pass/fail thresholds per dimension
+    - block acceptance on failures and require revision + re-scan
+    - archive scan result in `skills/reports/bmad-agent-{name}/quality-scan/{timestamp}.json`
+    - reference `docs/workflow/agent-qa-release-gate.md`
+  </action>
+
   <!-- Previous story intelligence -->
   <check
     if="previous story learnings available">
@@ -345,6 +354,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 
 <step n="6" goal="Update sprint status and finalize">
   <action>Validate the newly created story file {default_output_file} against `./checklist.md` and apply any required fixes before finalizing</action>
+  <action>For agent stories, verify Agent QA Release Gate tasks are explicitly present before marking ready-for-dev</action>
   <action>Save story document unconditionally</action>
 
   <!-- Update sprint status -->

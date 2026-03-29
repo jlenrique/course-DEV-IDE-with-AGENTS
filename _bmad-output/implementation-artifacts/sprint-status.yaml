@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-28  # Epic 2A COMPLETE (9/9), Story 3.11 DONE, roadmap rebaselined. Next: Epic 4A.
+last_updated: 2026-03-29  # Epic 4A and Epic 4 stories marked done after implementation + focused validation.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -103,24 +103,26 @@ development_status:
 
   # === EPIC 4A: Agent Governance, Quality Optimization & APP Observability ===
   # Added 2026-03-28: Run baton, lane matrix, envelope governance, agent QA gate, observability.
+  # 2026-03-29: Story 4A-6 added — ad-hoc ledger & learning boundary enforcement (FR91).
   # Must complete before Epic 4. Depends on Epic 2A complete.
-  epic-4a: backlog
-  4a-1-run-baton-authority-contract: backlog
-  4a-2-lane-matrix-judgment-boundaries: backlog
-  4a-3-envelope-governance-extensions: backlog
-  4a-4-agent-qa-release-gate: backlog
-  4a-5-perception-caching-observability: backlog
+  epic-4a: done
+  4a-1-run-baton-authority-contract: done
+  4a-2-lane-matrix-judgment-boundaries: done
+  4a-3-envelope-governance-extensions: done
+  4a-4-agent-qa-release-gate: done
+  4a-5-perception-caching-observability: done
+  4a-6-ad-hoc-ledger-enforcement: done
   epic-4a-retrospective: optional
 
   # === EPIC 4: Workflow Coordination & State Infrastructure ===
   # Dependency: Epic 4A must be complete before Epic 4.
   # Updated 2026-03-28: Stories 4.2 and 4.4 depend on governance layer (run baton, lane matrix, Vera integration).
-  epic-4: backlog
-  4-1-production-run-lifecycle: backlog
-  4-2-quality-gate-coordination: backlog  # depends on 4A run baton + lane matrix
-  4-3-content-entity-management: backlog
-  4-4-production-intelligence-reporting: backlog  # depends on 4A observability hooks
-  4-5-export-platform-deployment: backlog
+  epic-4: done
+  4-1-production-run-lifecycle: done
+  4-2-quality-gate-coordination: done  # depends on 4A run baton + lane matrix
+  4-3-content-entity-management: done
+  4-4-production-intelligence-reporting: done  # depends on 4A observability hooks
+  4-5-export-platform-deployment: done
   epic-4-retrospective: optional
 
   # === EPIC 5: Tool Capability Expansion (Rebaselined 2026-03-28) ===

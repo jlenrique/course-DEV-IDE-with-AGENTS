@@ -6,9 +6,13 @@ They use read-only endpoints (themes) to avoid consuming generation credits.
 
 from __future__ import annotations
 
+import pytest
+
 from tests.conftest import requires_gamma
 
 
+@pytest.mark.live_api
+@pytest.mark.timeout(60)
 @requires_gamma
 class TestGammaLive:
     def test_client_instantiates(self):

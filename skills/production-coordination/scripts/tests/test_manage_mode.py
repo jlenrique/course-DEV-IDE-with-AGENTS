@@ -82,6 +82,13 @@ class TestSetMode(unittest.TestCase):
             result = manage_mode.cmd_set(args)
             self.assertIsNotNone(result["switched_at"])
 
+    def test_set_atomic_write_leaves_no_tmp_file(self) -> None:
+        with TempModeFile({"mode": "default"}) as f:
+            args = manage_mode.build_parser().parse_args(["--file", f.path, "set", "ad-hoc"])
+            manage_mode.cmd_set(args)
+            tmp_path = Path(f.path + ".tmp")
+            self.assertFalse(tmp_path.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

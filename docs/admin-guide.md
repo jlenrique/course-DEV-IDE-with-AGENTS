@@ -1,7 +1,7 @@
 # Admin Guide — System Configuration and Operations
 
 **Audience:** System administrators and the project owner responsible for environment setup, tool connectivity, and operational health.
-**Last Updated:** 2026-03-27 | **Project Phase:** 4-Implementation (Epic 3 in progress)
+**Last Updated:** 2026-03-28 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories; Epic 2A complete; **Epic 4A** governance next)
 
 ---
 
@@ -73,9 +73,12 @@ node scripts/heartbeat_check.mjs
 │   ├── config/             ← YAML runtime configs (git-versioned)
 │   │   ├── course_context.yaml
 │   │   ├── style_guide.yaml
-│   │   └── tool_policies.yaml
-│   └── runtime/            ← SQLite database (gitignored)
+│   │   ├── tool_policies.yaml
+│   │   └── fidelity-contracts/   ← L1 fidelity contract YAML per gate (G0–G6)
+│   └── runtime/            ← Ephemeral runtime (gitignored)
 │       ├── coordination.db
+│       ├── mode_state.json       ← default vs ad-hoc mode (manage_mode.py)
+│       ├── run_baton.*.json      ← per-run baton files (manage_baton.py)
 │       └── backup/
 ├── resources/
 │   ├── style-bible/        ← Authoritative brand standards (human-curated)
@@ -86,10 +89,14 @@ node scripts/heartbeat_check.mjs
 │   ├── hooks.json          ← Cursor event hooks
 │   └── scripts/            ← Hook implementation scripts
 ├── scripts/
+│   ├── api_clients/             ← REST clients (includes NotionClient for source wrangling)
 │   ├── run_mcp_from_env.cjs     ← MCP wrapper (loads .env secrets at runtime)
 │   ├── heartbeat_check.mjs      ← Baseline API connectivity check
 │   ├── smoke_elevenlabs.mjs     ← Targeted ElevenLabs smoke test
 │   └── smoke_qualtrics.mjs      ← Targeted Qualtrics smoke test
+├── skills/production-coordination/scripts/
+│   ├── manage_mode.py           ← CLI: read/set default vs ad-hoc mode → mode_state.json
+│   └── manage_baton.py          ← CLI: init/update/close run baton JSON files
 └── _bmad/memory/           ← Agent memory sidecars
 ```
 
@@ -235,7 +242,7 @@ All API clients in `scripts/api_clients/` extend `BaseAPIClient`, which provides
 - Structured error handling (`APIError`, `AuthenticationError`, `RateLimitError`)
 - Raw response access for binary content (audio files, etc.)
 
-Available clients: `GammaClient`, `ElevenLabsClient`, `CanvasClient`, `QualtricsClient`, `PanoptoClient`
+Available clients: `GammaClient`, `ElevenLabsClient`, `CanvasClient`, `QualtricsClient`, `PanoptoClient`, `KlingClient`, `NotionClient`
 
 ---
 
@@ -250,8 +257,9 @@ Three tiers of state serve different purposes. See [docs/directory-responsibilit
 | `state/config/course_context.yaml` | Course hierarchy, modules, learning objectives | Marcus + user |
 | `state/config/style_guide.yaml` | Per-tool parameter preferences (voice IDs, LLM choices, etc.) | Marcus (learned preferences) |
 | `state/config/tool_policies.yaml` | Run presets, quality gate thresholds, retry policy | Admin (rarely changes) |
+| `state/config/fidelity-contracts/` | Versioned L1 criteria per fidelity gate (G0–G6); referenced by Vera and docs | Maintained with architecture |
 
-**Important:** These files contain tool *dial settings* only — brand identity, colors, typography, and voice/tone live in `resources/style-bible/` (see below).
+**Important:** These files contain tool *dial settings* and *fidelity contracts* — brand identity, colors, typography, and voice/tone live in `resources/style-bible/` (see below).
 
 ### SQLite Runtime Database (gitignored)
 
@@ -266,6 +274,17 @@ Located at `state/runtime/coordination.db`. Contains three tables:
 **Initialize:** `python -m scripts.state_management.init_state`
 
 This database does NOT survive a fresh clone. It's operational state only.
+
+### JSON files in `state/runtime/` (gitignored)
+
+Alongside `coordination.db`, the runtime directory may contain:
+
+| File | Purpose |
+|------|---------|
+| `mode_state.json` | Current **default** vs **ad-hoc** mode for the repo (read/write via `skills/production-coordination/scripts/manage_mode.py`) |
+| `run_baton.{run_id}.json` | **Run baton** — authority contract for an active production run (`manage_baton.py`); specialists consult this for redirect vs standalone consult |
+
+These files are created by tooling and agents; admins normally only inspect them when debugging coordination issues.
 
 ### BMad Memory Sidecars (git-versioned)
 
@@ -331,8 +350,10 @@ Defined in `hooks/hooks.json`:
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| `sessionStart` | `hooks/scripts/session-start.mjs` | Placeholder — will invoke pre-flight via Marcus (Story 2.5) |
-| `sessionEnd` | `hooks/scripts/session-end.mjs` | Placeholder — will trigger run reporting (Story 2.5) |
+| `sessionStart` | `hooks/scripts/session-start.mjs` | **Placeholder** — reads hook stdin, returns JSON status; does not run pre-flight yet |
+| `sessionEnd` | `hooks/scripts/session-end.mjs` | **Placeholder** — same pattern; run reporting not wired |
+
+Full hook-driven pre-flight and session-end reporting remain on the **Epic 4 / 4A** roadmap. Until then, rely on conversational pre-flight (`skills/pre-flight-check/`) and manual operational checks.
 
 ---
 
@@ -472,3 +493,12 @@ Edit `state/config/tool_policies.yaml`. Current presets:
 | regulated | 0.95 | Yes | Yes | Yes + audit trail |
 
 Default preset: `draft`. Change the `default_preset` field to switch.
+
+### Run mode and run baton (CLI)
+
+For automation or debugging without opening Cursor chat:
+
+- **Mode:** `python skills/production-coordination/scripts/manage_mode.py get` / `set default` / `set ad-hoc` — persists to `state/runtime/mode_state.json`.
+- **Baton:** `python skills/production-coordination/scripts/manage_baton.py --help` — initialize, read, update gate, close baton files (`run_baton.{run_id}.json`).
+
+Tests for these scripts live under `skills/production-coordination/scripts/tests/`.

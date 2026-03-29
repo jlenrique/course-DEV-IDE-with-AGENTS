@@ -54,6 +54,14 @@ There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token*
 
 Secrets stay in `.env` or your password manager; never commit tokens.
 
+## Test execution profiles
+
+- Default local verification excludes tests marked `live_api`:
+	- `.venv\Scripts\python -m pytest tests -v`
+- Live integration checks require explicit opt-in:
+	- `.venv\Scripts\python -m pytest tests -v --run-live`
+- Live tests still skip when required credentials are missing.
+
 ## BMad alignment
 
 - **Ideation / requirements**: CIS skills (`bmad-product-brief`, `bmad-brainstorming`, design thinking) or full BMM **PRD → UX → Architecture → Epics**.

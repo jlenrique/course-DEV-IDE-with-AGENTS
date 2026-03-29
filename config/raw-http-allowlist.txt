@@ -1,0 +1,15 @@
+# Raw HTTP allowlist
+#
+# Paths listed here are approved locations for direct HTTP calls used by
+# runtime scripts and checks. One path per line, repo-relative.
+#
+# Guardrail checker:
+#   python scripts/utilities/check_raw_http_guardrail.py
+
+scripts/api_clients/base_client.py
+scripts/api_clients/kling_client.py
+scripts/api_clients/panopto_client.py
+skills/gamma-api-mastery/scripts/gamma_operations.py
+skills/pre-flight-check/scripts/preflight_runner.py
+skills/sensory-bridges/scripts/audio_to_agent.py
+skills/source-wrangler/scripts/source_wrangler_operations.py

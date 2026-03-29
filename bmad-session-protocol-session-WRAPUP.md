@@ -79,7 +79,10 @@ Both files are read at startup Step 1 — stale content here means the next sess
 Update `next-session-start-here.md` with:
 - **Immediate next action** (concrete, unambiguous — the first thing the next session should do)
 - **Unresolved issues or blockers** from this session that affect the next session's work (do not bury these only in SESSION-HANDOFF — surface them here)
-- Current branch and startup commands
+- Branch metadata and startup commands:
+  - `Repository baseline branch` after closeout (commonly `master`)
+  - `Next working branch` for implementation in the next session
+  - Exact checkout/create commands for the next working branch
 - Hot-start notes (key file paths, API references, gotchas discovered this session)
 - **Course content context**: staging items pending review, workflow status, platform connection notes
 
@@ -133,11 +136,25 @@ Cross-check that every artifact listed in `SESSION-HANDOFF.md` (artifact update 
 
 **Minimum verification**: story artifact, sprint-status, workflow-status, project-context, and next-session-start-here.
 
+Also verify branch metadata consistency:
+- `next-session-start-here.md` branch instructions match the intended post-closeout Git state
+- Startup commands in `next-session-start-here.md` are executable as written
+
 **Course content verification**: content-standards compliance, human review queue status, platform connectivity.
 
-### 12. Commit
+### 12. Git closeout (default)
 
-If changes were made this session, create a commit with a message summarizing the session's work. Push if the branch tracks a remote.
+Default end-of-session flow is:
+1. Finalize `next-session-start-here.md` branch metadata for expected post-closeout state (baseline + next working branch + startup commands)
+2. Stage all intended changes (`git add ...`)
+3. Commit session work on the working branch with a clear summary message
+4. Checkout and update `master` from `origin/master`
+5. Merge the working branch into `master`
+6. Push `master` to `origin`
+7. Create the **next working branch** from updated `master` (for the next session), and push with upstream
+8. Re-verify `next-session-start-here.md` branch metadata matches reality. If it does not, make a small docs-only follow-up commit and push.
+
+If your team intentionally skips merge-to-master for a session, explicitly record that exception and the exact resume branch in both `next-session-start-here.md` and `SESSION-HANDOFF.md`.
 
 **Course content commit examples**:
 - "Add lesson 3 presentation slides to staging with lesson plan scaffold"

@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import json
 import logging
+import importlib.util
+import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -27,6 +30,111 @@ MODALITY_EXTENSIONS: dict[str, set[str]] = {
     "pptx": {".pptx"},
     "video": {".mp4", ".webm", ".mkv", ".mov", ".avi"},
 }
+
+
+def _load_module_from_path(module_name: str, file_path: Path) -> Any:
+    """Load a module from file path if it is not already imported."""
+    if module_name in sys.modules:
+        return sys.modules[module_name]
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if not spec or not spec.loader:
+        raise ImportError(f"Cannot load module '{module_name}' from {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _resolve_perception_cache_class() -> Any:
+    """Resolve PerceptionCache across package and direct-script execution modes."""
+    try:
+        from skills.sensory_bridges.scripts.perception_cache import PerceptionCache
+
+        return PerceptionCache
+    except Exception:
+        local = Path(__file__).resolve().parent / "perception_cache.py"
+        module = _load_module_from_path("skills.sensory_bridges.scripts.perception_cache", local)
+        return module.PerceptionCache
+
+
+def _record_cache_observability(
+    *,
+    run_id: str,
+    artifact_path: str,
+    modality: str,
+    hit: bool,
+    run_mode: str | None,
+) -> None:
+    """Best-effort cache observability that must not break perception."""
+    try:
+        try:
+            from skills.production_coordination.scripts.observability_hooks import record_cache_event
+        except Exception:
+            hooks_path = (
+                Path(__file__).resolve().parents[2]
+                / "production-coordination"
+                / "scripts"
+                / "observability_hooks.py"
+            )
+            module = _load_module_from_path(
+                "skills.production_coordination.scripts.observability_hooks",
+                hooks_path,
+            )
+            record_cache_event = module.record_cache_event
+
+        record_cache_event(
+            run_id=run_id,
+            artifact_path=artifact_path,
+            modality=modality,
+            hit=hit,
+            run_mode=run_mode,
+        )
+    except Exception:  # pragma: no cover - observability must never break perception
+        logger.debug("Unable to record cache event", exc_info=True)
+
+
+def _derive_run_mode(run_id: str, explicit_mode: str | None) -> str:
+    """Derive run mode from explicit input or run-scoped state."""
+    if explicit_mode in {"default", "ad-hoc"}:
+        return explicit_mode
+
+    runtime_dir = None
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "state" / "runtime"
+        if candidate.is_dir():
+            runtime_dir = candidate
+            break
+    if runtime_dir is None:
+        return "default"
+
+    ad_hoc_path = runtime_dir / "ad-hoc-runs" / f"{run_id}.json"
+    if ad_hoc_path.exists():
+        return "ad-hoc"
+
+    db_path = runtime_dir / "coordination.db"
+    if not db_path.exists():
+        return "default"
+
+    try:
+        conn = sqlite3.connect(str(db_path))
+        row = conn.execute(
+            "SELECT context_json FROM production_runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+        conn.close()
+    except Exception:
+        return "default"
+
+    if not row or not row[0]:
+        return "default"
+
+    try:
+        context = json.loads(row[0])
+    except (json.JSONDecodeError, TypeError):
+        return "default"
+
+    mode = str(context.get("mode", "default"))
+    return mode if mode in {"default", "ad-hoc"} else "default"
 
 
 def build_request(
@@ -129,29 +237,74 @@ def perceive(
     gate: str,
     requesting_agent: str,
     purpose: str = "",
+    run_id: str | None = None,
+    run_mode: str | None = None,
+    use_cache: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Top-level dispatcher: invoke the appropriate bridge for the modality."""
     request = build_request(artifact_path, modality, gate, requesting_agent, purpose)
 
+    cache = None
+    if run_id and use_cache:
+        try:
+            PerceptionCache = _resolve_perception_cache_class()
+            cache = PerceptionCache(run_id)
+            effective_mode = _derive_run_mode(run_id, run_mode)
+            cached = cache.get(request["artifact_path"], modality)
+            if cached is not None:
+                _record_cache_observability(
+                    run_id=run_id,
+                    artifact_path=request["artifact_path"],
+                    modality=modality,
+                    hit=True,
+                    run_mode=effective_mode,
+                )
+                return cached
+
+            _record_cache_observability(
+                run_id=run_id,
+                artifact_path=request["artifact_path"],
+                modality=modality,
+                hit=False,
+                run_mode=effective_mode,
+            )
+        except Exception:  # pragma: no cover - cache is best-effort
+            logger.debug("Unable to initialize perception cache", exc_info=True)
+
     if modality == "pptx":
         from skills.sensory_bridges.scripts.pptx_to_agent import extract_pptx
-        return extract_pptx(request["artifact_path"], gate=gate, **kwargs)
+        result = extract_pptx(request["artifact_path"], gate=gate, **kwargs)
+        if cache is not None:
+            cache.put(request["artifact_path"], modality, result)
+        return result
 
     if modality == "pdf":
         from skills.sensory_bridges.scripts.pdf_to_agent import extract_pdf
-        return extract_pdf(request["artifact_path"], gate=gate, **kwargs)
+        result = extract_pdf(request["artifact_path"], gate=gate, **kwargs)
+        if cache is not None:
+            cache.put(request["artifact_path"], modality, result)
+        return result
 
     if modality == "audio":
         from skills.sensory_bridges.scripts.audio_to_agent import transcribe_audio
-        return transcribe_audio(request["artifact_path"], gate=gate, **kwargs)
+        result = transcribe_audio(request["artifact_path"], gate=gate, **kwargs)
+        if cache is not None:
+            cache.put(request["artifact_path"], modality, result)
+        return result
 
     if modality == "image":
         from skills.sensory_bridges.scripts.png_to_agent import analyze_image
-        return analyze_image(request["artifact_path"], gate=gate, **kwargs)
+        result = analyze_image(request["artifact_path"], gate=gate, **kwargs)
+        if cache is not None:
+            cache.put(request["artifact_path"], modality, result)
+        return result
 
     if modality == "video":
         from skills.sensory_bridges.scripts.video_to_agent import extract_video
-        return extract_video(request["artifact_path"], gate=gate, **kwargs)
+        result = extract_video(request["artifact_path"], gate=gate, **kwargs)
+        if cache is not None:
+            cache.put(request["artifact_path"], modality, result)
+        return result
 
     raise ValueError(f"No bridge implemented for modality '{modality}'")

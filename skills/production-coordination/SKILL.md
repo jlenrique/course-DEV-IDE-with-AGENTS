@@ -20,8 +20,13 @@ Marcus invokes this skill when a user initiates a production run, when stages co
 | Record checkpoint | Mark a stage as awaiting human review | `./scripts/manage_run.py checkpoint` |
 | Record approval | Record user approval and advance past a checkpoint | `./scripts/manage_run.py approve` |
 | Complete run | Finalize a run with completion timestamp | `./scripts/manage_run.py complete` |
+| Cancel run | Cancel a run and clear runtime authority baton | `./scripts/manage_run.py cancel` |
 | Query status | Get current run state as JSON for conversational reporting | `./scripts/manage_run.py status` |
 | List runs | List active or recent production runs | `./scripts/manage_run.py list` |
+| Init baton | Create authority baton for an active run | `./scripts/manage_baton.py init` |
+| Update baton gate | Update baton `current_gate` as pipeline advances | `./scripts/manage_baton.py update-gate` |
+| Check specialist call | Enforce redirect-vs-standalone behavior on direct specialist invocation | `./scripts/manage_baton.py check-specialist` |
+| Close baton | Clear baton at run completion/cancellation | `./scripts/manage_baton.py close` |
 
 ## Usage from Marcus
 
@@ -30,10 +35,12 @@ Marcus invokes these commands through his CM (Conversation Management) capabilit
 **Typical flow:**
 1. User requests content → Marcus parses intent, calls `generate-production-plan.py`
 2. User approves plan → Marcus calls `manage_run.py create` with the plan's stages
-3. Each stage completes → Marcus calls `manage_run.py advance`
-4. Human checkpoint reached → Marcus calls `manage_run.py checkpoint`, presents work for review
-5. User approves → Marcus calls `manage_run.py approve`
-6. All stages done → Marcus calls `manage_run.py complete`
+3. Marcus initializes authority baton → `manage_baton.py init` (delegated mode + allowed delegates)
+4. Each gate transition → Marcus calls `manage_baton.py update-gate`
+5. Each stage completes → Marcus calls `manage_run.py advance`
+6. Human checkpoint reached → Marcus calls `manage_run.py checkpoint`, presents work for review
+7. User approves → Marcus calls `manage_run.py approve`
+8. All stages done → Marcus calls `manage_run.py complete` (auto-clears baton)
 
 | Log delegation | Record specialist delegation events for tracking | `./scripts/log_coordination.py log` |
 | Query history | View coordination events for a run | `./scripts/log_coordination.py history` |
@@ -43,3 +50,4 @@ Marcus invokes these commands through his CM (Conversation Management) capabilit
 - `./references/workflow-lifecycle.md` — Stage transition rules, dependency management, recovery procedures
 - `./references/run-state-schema.md` — SQLite schema reference, JSON status envelope format
 - `./references/delegation-protocol.md` — Context envelope spec, specialist matching, graceful degradation
+- `./references/baton-lifecycle.md` — Run baton authority contract, specialist redirect protocol, closeout semantics

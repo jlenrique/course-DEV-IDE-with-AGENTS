@@ -9,12 +9,29 @@ production run tracking and pattern analysis.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+try:
+    from scripts.utilities.ad_hoc_persistence_guard import enforce_ad_hoc_boundary
+except ModuleNotFoundError:
+    def _load_guard_module() -> Any:
+        for parent in Path(__file__).resolve().parents:
+            candidate = parent / "scripts" / "utilities" / "ad_hoc_persistence_guard.py"
+            if candidate.exists():
+                spec = importlib.util.spec_from_file_location("ad_hoc_persistence_guard_local", candidate)
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    return module
+        raise
+
+    enforce_ad_hoc_boundary = _load_guard_module().enforce_ad_hoc_boundary
 
 
 def find_project_root() -> Path:
@@ -46,6 +63,17 @@ def connect_db(db_path: Path | str | None = None) -> sqlite3.Connection:
 
 def cmd_log(args: argparse.Namespace) -> dict[str, Any]:
     """Record a coordination event."""
+    guard = enforce_ad_hoc_boundary("coordination_audit_db", getattr(args, "run_mode", None))
+    if not guard["allowed"]:
+        return {
+            "logged": False,
+            "run_id": args.run_id,
+            "agent": args.agent,
+            "action": args.action,
+            "code": guard["code"],
+            "reason": guard["reason"],
+        }
+
     conn = connect_db(args.db)
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -59,6 +87,7 @@ def cmd_log(args: argparse.Namespace) -> dict[str, Any]:
     conn.close()
 
     return {
+        "logged": True,
         "event_id": event_id,
         "run_id": args.run_id,
         "agent": args.agent,
@@ -106,6 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_log.add_argument("--agent", required=True, help="Agent name")
     p_log.add_argument("--action", required=True, help="Action type (delegated, completed, failed)")
     p_log.add_argument("--payload", help="JSON payload")
+    p_log.add_argument("--run-mode", default=None, help="Run mode (default/ad-hoc)")
 
     p_history = sub.add_parser("history", help="Query events for a run")
     p_history.add_argument("run_id", help="Production run ID")

@@ -13,8 +13,10 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import manage_run
 
@@ -106,6 +108,30 @@ def _create_run(db_path: str, run_id: str = "TEST-RUN-001", stages: list | None 
     return manage_run.cmd_create(ns)
 
 
+def _write_baton(runtime_dir: str, run_id: str) -> Path:
+    """Create a transient baton file for a run."""
+    runtime = Path(runtime_dir)
+    runtime.mkdir(parents=True, exist_ok=True)
+    path = runtime / f"run_baton.{run_id}.json"
+    path.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "orchestrator": "marcus",
+                "current_gate": "G2",
+                "invocation_mode": "delegated",
+                "allowed_delegates": ["gamma-specialist"],
+                "escalation_target": "marcus",
+                "blocking_authority": "human",
+                "active": True,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 class TestCreateRun(unittest.TestCase):
     def test_create_basic(self) -> None:
         with TempDB() as db:
@@ -134,6 +160,72 @@ class TestCreateRun(unittest.TestCase):
             self.assertIn("error", result)
             self.assertIn("already exists", result["error"])
 
+    def test_create_ad_hoc_is_transient(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            run_id = f"ADHOC-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "--runtime-dir", rt,
+                "create",
+                "--run-id", run_id,
+                "--content-type", "assessment",
+                "--course", "C1",
+                "--module", "M1",
+                "--mode", "ad-hoc",
+                "--stages-json", json.dumps([{"stage": "draft", "specialist": "content-creator"}]),
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertFalse(result["persisted"])
+            self.assertEqual(result["mode"], "ad-hoc")
+            for path in result["context_paths"].values():
+                self.assertTrue(str(path).startswith(rt))
+
+            canonical_dir = Path(__file__).resolve().parents[4] / "state" / "config" / "runs" / run_id
+            self.assertFalse(canonical_dir.exists())
+
+            conn = sqlite3.connect(db.path)
+            count = conn.execute("SELECT COUNT(*) FROM production_runs WHERE run_id = ?", (run_id,)).fetchone()[0]
+            conn.close()
+            self.assertEqual(count, 0)
+
+    def test_create_default_writes_canonical_context(self) -> None:
+        with TempDB() as db:
+            run_id = f"DEFAULT-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertTrue(result["persisted"])
+            self.assertEqual(result["mode"], "default")
+
+            canonical_dir = Path(__file__).resolve().parents[4] / "state" / "config" / "runs" / run_id
+            self.assertTrue(canonical_dir.exists())
+            self.assertTrue((canonical_dir / "course_context.yaml").exists())
+            for child in canonical_dir.glob("*"):
+                child.unlink(missing_ok=True)
+            canonical_dir.rmdir()
+
+    def test_create_ad_hoc_without_db_still_succeeds(self) -> None:
+        with tempfile.TemporaryDirectory() as rt:
+            missing_db = Path(rt) / "missing.db"
+            args = manage_run.build_parser().parse_args([
+                "--db", str(missing_db),
+                "--runtime-dir", rt,
+                "create",
+                "--run-id", "ADHOC-NODB-001",
+                "--mode", "ad-hoc",
+                "--course", "C1",
+                "--module", "M1",
+                "--stages-json", json.dumps([{"stage": "draft", "specialist": "content-creator"}]),
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertFalse(result["persisted"])
+            self.assertEqual(result["mode"], "ad-hoc")
+
 
 class TestAdvanceRun(unittest.TestCase):
     def test_advance_first_stage(self) -> None:
@@ -157,6 +249,31 @@ class TestAdvanceRun(unittest.TestCase):
             args = manage_run.build_parser().parse_args(["--db", db.path, "advance", "TEST-RUN-001"])
             result = manage_run.cmd_advance(args)
             self.assertIn("error", result)
+
+    def test_advance_updates_baton_gate(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            _create_run(db.path, run_id="RUN-GATE")
+            baton_path = _write_baton(rt, "RUN-GATE")
+
+            args = manage_run.build_parser().parse_args(
+                ["--db", db.path, "--runtime-dir", rt, "advance", "RUN-GATE"]
+            )
+            result = manage_run.cmd_advance(args)
+            self.assertTrue(result["baton_gate_updated"])
+            self.assertEqual(result["baton_gate_sync"]["status"], "updated")
+
+            baton_data = json.loads(baton_path.read_text(encoding="utf-8"))
+            self.assertEqual(baton_data["current_gate"], "slides")
+
+    def test_advance_without_baton_reports_not_found_sync(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            _create_run(db.path, run_id="RUN-NO-BATON")
+            args = manage_run.build_parser().parse_args(
+                ["--db", db.path, "--runtime-dir", rt, "advance", "RUN-NO-BATON"]
+            )
+            result = manage_run.cmd_advance(args)
+            self.assertFalse(result["baton_gate_updated"])
+            self.assertEqual(result["baton_gate_sync"]["status"], "not-found")
 
 
 class TestCheckpoint(unittest.TestCase):
@@ -228,6 +345,86 @@ class TestComplete(unittest.TestCase):
             self.assertIn("error", result)
             self.assertIn("unapproved", result)
 
+    def test_complete_closes_baton(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            stages = [{"stage": "s1", "specialist": "t"}]
+            _create_run(db.path, run_id="RUN-CLOSE", stages=stages)
+            _write_baton(rt, "RUN-CLOSE")
+            cache_dir = Path(rt) / "perception-cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_file = cache_dir / "RUN-CLOSE.json"
+            cache_file.write_text("{}", encoding="utf-8")
+
+            manage_run.cmd_checkpoint(
+                manage_run.build_parser().parse_args(["--db", db.path, "checkpoint", "RUN-CLOSE"])
+            )
+            manage_run.cmd_approve(
+                manage_run.build_parser().parse_args(["--db", db.path, "approve", "RUN-CLOSE"])
+            )
+
+            args = manage_run.build_parser().parse_args(
+                ["--db", db.path, "--runtime-dir", rt, "complete", "RUN-CLOSE"]
+            )
+            result = manage_run.cmd_complete(args)
+            self.assertEqual(result["status"], "completed")
+            self.assertTrue(result["baton_closed"])
+            self.assertEqual(result["baton_close"]["status"], "closed")
+            self.assertTrue(result["cache_cleared"])
+            self.assertFalse((Path(rt) / "run_baton.RUN-CLOSE.json").exists())
+            self.assertFalse(cache_file.exists())
+
+
+class TestCancel(unittest.TestCase):
+    def test_cancel_run(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            _create_run(db.path, run_id="RUN-CANCEL")
+            _write_baton(rt, "RUN-CANCEL")
+            cache_dir = Path(rt) / "perception-cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_file = cache_dir / "RUN-CANCEL.json"
+            cache_file.write_text("{}", encoding="utf-8")
+
+            args = manage_run.build_parser().parse_args(
+                ["--db", db.path, "--runtime-dir", rt, "cancel", "RUN-CANCEL"]
+            )
+            result = manage_run.cmd_cancel(args)
+            self.assertEqual(result["status"], "cancelled")
+            self.assertTrue(result["baton_closed"])
+            self.assertEqual(result["baton_close"]["status"], "closed")
+            self.assertTrue(result["cache_cleared"])
+            self.assertFalse((Path(rt) / "run_baton.RUN-CANCEL.json").exists())
+            self.assertFalse(cache_file.exists())
+
+    def test_cancel_without_baton_reports_not_found(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            _create_run(db.path, run_id="RUN-CANCEL-NO-BATON")
+            args = manage_run.build_parser().parse_args(
+                ["--db", db.path, "--runtime-dir", rt, "cancel", "RUN-CANCEL-NO-BATON"]
+            )
+            result = manage_run.cmd_cancel(args)
+            self.assertEqual(result["status"], "cancelled")
+            self.assertFalse(result["baton_closed"])
+            self.assertEqual(result["baton_close"]["status"], "not-found")
+
+    def test_cancel_completed_run_disallowed(self) -> None:
+        with TempDB() as db:
+            stages = [{"stage": "s1", "specialist": "t"}]
+            _create_run(db.path, run_id="RUN-FINAL", stages=stages)
+            manage_run.cmd_checkpoint(
+                manage_run.build_parser().parse_args(["--db", db.path, "checkpoint", "RUN-FINAL"])
+            )
+            manage_run.cmd_approve(
+                manage_run.build_parser().parse_args(["--db", db.path, "approve", "RUN-FINAL"])
+            )
+            manage_run.cmd_complete(
+                manage_run.build_parser().parse_args(["--db", db.path, "complete", "RUN-FINAL"])
+            )
+
+            args = manage_run.build_parser().parse_args(["--db", db.path, "cancel", "RUN-FINAL"])
+            result = manage_run.cmd_cancel(args)
+            self.assertIn("error", result)
+            self.assertIn("Cannot cancel", result["error"])
+
 
 class TestStatus(unittest.TestCase):
     def test_status_basic(self) -> None:
@@ -246,6 +443,46 @@ class TestStatus(unittest.TestCase):
             args = manage_run.build_parser().parse_args(["--db", db.path, "status", "NOPE"])
             result = manage_run.cmd_status(args)
             self.assertIn("error", result)
+
+
+class TestResume(unittest.TestCase):
+    def test_resume_db_run(self) -> None:
+        with TempDB() as db:
+            _create_run(db.path, run_id="RUN-RESUME")
+            p = manage_run.build_parser()
+            manage_run.cmd_advance(p.parse_args(["--db", db.path, "advance", "RUN-RESUME"]))
+            result = manage_run.cmd_resume(p.parse_args(["--db", db.path, "resume", "RUN-RESUME"]))
+            self.assertEqual(result["status"], "in-progress")
+            self.assertTrue(result["persisted"])
+
+    def test_resume_ad_hoc_run(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            p = manage_run.build_parser()
+            create = manage_run.cmd_create(
+                p.parse_args([
+                    "--db", db.path,
+                    "--runtime-dir", rt,
+                    "create",
+                    "--run-id", "RUN-RESUME-ADHOC",
+                    "--mode", "ad-hoc",
+                    "--stages-json", json.dumps([
+                        {"stage": "draft", "specialist": "content-creator"},
+                        {"stage": "review", "specialist": "human"},
+                    ]),
+                ])
+            )
+            self.assertFalse(create["persisted"])
+
+            result = manage_run.cmd_resume(
+                p.parse_args([
+                    "--db", db.path,
+                    "--runtime-dir", rt,
+                    "resume",
+                    "RUN-RESUME-ADHOC",
+                ])
+            )
+            self.assertEqual(result["mode"], "ad-hoc")
+            self.assertFalse(result["persisted"])
 
 
 class TestList(unittest.TestCase):
@@ -309,6 +546,39 @@ class TestFullLifecycle(unittest.TestCase):
             status = manage_run.cmd_status(p.parse_args(["--db", db.path, "status", "LIFECYCLE-001"]))
             self.assertEqual(status["status"], "completed")
             self.assertEqual(status["stages_completed"], 2)
+
+    def test_full_lifecycle_with_baton_sync_and_close(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            stages = [
+                {"stage": "draft", "specialist": "content-creator"},
+                {"stage": "review", "specialist": "human"},
+            ]
+            _create_run(db.path, "LIFECYCLE-BATON-001", stages=stages)
+            _write_baton(rt, "LIFECYCLE-BATON-001")
+
+            p = manage_run.build_parser()
+            advance1 = manage_run.cmd_advance(
+                p.parse_args(["--db", db.path, "--runtime-dir", rt, "advance", "LIFECYCLE-BATON-001"])
+            )
+            self.assertTrue(advance1["baton_gate_updated"])
+            self.assertEqual(advance1["baton_gate_sync"]["status"], "updated")
+
+            cp = manage_run.cmd_checkpoint(
+                p.parse_args(["--db", db.path, "checkpoint", "LIFECYCLE-BATON-001"])
+            )
+            self.assertEqual(cp["status"], "awaiting-review")
+
+            approve = manage_run.cmd_approve(
+                p.parse_args(["--db", db.path, "approve", "LIFECYCLE-BATON-001"])
+            )
+            self.assertEqual(approve["next_action"], "complete")
+
+            complete = manage_run.cmd_complete(
+                p.parse_args(["--db", db.path, "--runtime-dir", rt, "complete", "LIFECYCLE-BATON-001"])
+            )
+            self.assertEqual(complete["status"], "completed")
+            self.assertTrue(complete["baton_closed"])
+            self.assertEqual(complete["baton_close"]["status"], "closed")
 
 
 if __name__ == "__main__":

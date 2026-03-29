@@ -148,6 +148,24 @@ When delegating to a specialist agent or skill, Marcus passes a **context envelo
 - Relevant style bible sections (matched to specialist domain)
 - Applicable exemplar references
 - Any previous revision feedback
+- Governance block with:
+  - `invocation_mode` (`delegated` or `standalone`)
+  - `current_gate` (active pipeline gate/stage)
+  - `authority_chain` (ordered non-empty routing chain; first hop is escalation target)
+  - `decision_scope` (judgment dimensions the specialist owns vs restricted)
+  - `allowed_outputs` (artifact/output types the specialist may emit in this call)
+
+Use canonical `decision_scope` values from `docs/governance-dimensions-taxonomy.md`.
+
+Specialists must enforce governance constraints before work execution:
+- planned output types must be contained in `governance.allowed_outputs`
+- planned judgments must be contained in `governance.decision_scope.owned_dimensions`
+- out-of-scope requests must be returned to `governance.authority_chain[0]` with a `scope_violation` payload
+
+`authority_chain` routing rule:
+- Specialists do not traverse the chain.
+- Specialists always set `route_to = authority_chain[0]` and return control.
+- Marcus owns all subsequent rerouting decisions.
 
 **Inbound (from specialist):**
 
@@ -175,6 +193,7 @@ downstream_routing:
   requires_hil_gate: true
   next_input_artifacts: ["course-content/staging/..."]
 issues: ["...", "..."]  # empty if none
+scope_violation: null       # object when request exceeds allowed outputs or decision scope
 ```
 
 ## Run Finalization
@@ -207,6 +226,31 @@ When the user approves a production plan and Marcus begins executing the workflo
 6. **Check status** — At any point, `manage_run.py status {run_id}` returns JSON with current stage, completion count, and mode. Marcus translates this into natural reporting.
 
 When specialist agents are unavailable (not yet built), Marcus reports the gap at step 2 and suggests alternatives — see graceful degradation in the Capabilities section of SKILL.md.
+
+## Run Baton & Authority Contract
+
+For every active production run, Marcus maintains a lightweight run baton in `state/runtime/` using `manage_baton.py`.
+
+**Baton required fields:**
+- `run_id`
+- `orchestrator`
+- `current_gate`
+- `invocation_mode`
+- `allowed_delegates`
+- `escalation_target`
+- `blocking_authority`
+
+**Lifecycle discipline:**
+1. At run start, initialize baton: `manage_baton.py init <run_id> ...`
+2. At each gate transition, update gate: `manage_baton.py update-gate <run_id> <gate>`
+3. On run completion/cancellation, baton clears automatically via `manage_run.py complete|cancel`
+
+**Direct specialist invocation guardrail:**
+If a user invokes a specialist directly during an active Marcus-run pipeline, specialists should respond:
+
+"Marcus is running [run_id], currently at [gate]. Redirect, or enter standalone consult mode?"
+
+If user explicitly chooses standalone consult mode, specialist may proceed in consult-only behavior and must not mutate active production run state.
 
 ## Full Pipeline Dependency Graph (Narrated Lesson)
 
@@ -324,6 +368,16 @@ source_of_truth_paths:
   slide_brief: "course-content/staging/.../slide-brief.md"
 fidelity_contracts_path: "state/config/fidelity-contracts/"
 run_mode: "default"             # or "ad-hoc"
+governance:
+  invocation_mode: "delegated"
+  current_gate: "G2"
+  authority_chain: ["marcus", "quality-reviewer"]
+  decision_scope:
+    owned_dimensions: ["source_fidelity"]
+    restricted_dimensions: ["quality_standards", "instructional_design"]
+  allowed_outputs:
+    - "fidelity_trace_report"
+    - "fidelity_findings"
 ```
 
 **Inbound (from Vera):**
@@ -362,6 +416,14 @@ envelope:
   module_lesson: {module}/{lesson}
   learning_objectives: [{...}]
   pass: 1
+  governance:
+    invocation_mode: "delegated"
+    current_gate: "G1"
+    authority_chain: ["marcus"]
+    decision_scope:
+      owned_dimensions: ["instructional_design"]
+      restricted_dimensions: ["source_fidelity", "quality_standards"]
+    allowed_outputs: ["lesson_plan", "slide_brief"]
 ```
 
 **Second delegation (Pass 2 — after Gate 2 approval):**
@@ -372,6 +434,14 @@ envelope:
   module_lesson: {module}/{lesson}
   learning_objectives: [{...}]
   pass: 2
+  governance:
+    invocation_mode: "delegated"
+    current_gate: "G4"
+    authority_chain: ["marcus", "fidelity-assessor", "quality-reviewer"]
+    decision_scope:
+      owned_dimensions: ["instructional_design"]
+      restricted_dimensions: ["source_fidelity", "quality_standards"]
+    allowed_outputs: ["narration_script", "segment_manifest", "pairing_references"]
   gary_slide_output:
     - slide_id: "slide-01"
       file_path: "course-content/staging/{lesson_id}/slides/card-01.png"
@@ -400,6 +470,14 @@ envelope:
   production_run_id: {id}
   segment_manifest: "course-content/staging/{lesson_id}/manifest.yaml"
   output_path: "course-content/staging/{lesson_id}/descript-assembly-guide.md"
+  governance:
+    invocation_mode: "delegated"
+    current_gate: "G5"
+    authority_chain: ["marcus", "quality-reviewer"]
+    decision_scope:
+      owned_dimensions: ["tool_execution_quality.composition"]
+      restricted_dimensions: ["source_fidelity", "quality_standards", "instructional_design"]
+    allowed_outputs: ["artifact_paths", "recommendations"]
 ```
 
 Until Story 3.5 is implemented, Marcus presents the completed manifest to the user and guides manual Descript assembly using the composition architecture decision record as reference.

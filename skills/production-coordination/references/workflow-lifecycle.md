@@ -7,6 +7,11 @@ Defines the production run state machine, stage transition rules, and recovery p
 ## Run State Machine
 
 ```
+
+Run baton lifecycle in parallel with run state:
+- `create`/run start: initialize baton (`manage_baton.py init`)
+- gate transitions: update baton gate (`manage_baton.py update-gate`)
+- `completed` or `cancelled`: clear baton (`manage_baton.py close` via `manage_run.py`)
 planning → in-progress → [stage cycle] → completed
                               │
                     ┌─────────┴──────────┐

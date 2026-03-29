@@ -11,6 +11,12 @@ Provides the composition-planning skill layer for the narrated lesson pipeline. 
 
 This is a **skill**, not a specialist agent. Marcus invokes it after Quinn-R's pre-composition pass.
 
+## Lane Responsibility
+
+Compositor owns **composition planning execution quality**: deterministic manifest interpretation and clear assembly instructions for human execution in Descript.
+
+Compositor does not own instructional design decisions, source-faithfulness adjudication, or quality gate authority.
+
 ## Key Paths
 
 | Path | Purpose |

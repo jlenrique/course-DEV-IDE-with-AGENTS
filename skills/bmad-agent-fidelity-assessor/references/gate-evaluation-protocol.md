@@ -32,9 +32,34 @@ source_of_truth_paths:
   slide_brief: "course-content/staging/.../slide-brief.md"
 fidelity_contracts_path: "state/config/fidelity-contracts/"
 run_mode: "default"
+governance:
+  invocation_mode: "delegated"      # delegated | standalone
+  current_gate: "G3"
+  authority_chain: ["marcus", "quality-reviewer"]
+  decision_scope:
+    owned_dimensions:
+      - "source_fidelity"
+    restricted_dimensions:
+      - "quality_standards"
+      - "instructional_design"
+      - "tool_execution_quality.slides"
+      - "tool_execution_quality.video"
+      - "tool_execution_quality.audio"
+  allowed_outputs:
+    - "fidelity_trace_report"
+    - "fidelity_findings"
+    - "circuit_breaker"
 ```
 
 Validate that all required paths are present and files are accessible. If any critical path is missing, HALT and report to Marcus.
+
+Validate governance boundaries before evaluation:
+- Planned outputs must be in `governance.allowed_outputs`
+- Planned judgments must remain in `governance.decision_scope.owned_dimensions` (canonical values in `docs/governance-dimensions-taxonomy.md`)
+
+If out-of-scope work is requested, return a scope violation payload to `governance.authority_chain[0]` and stop processing that request.
+
+`scope_violation.route_to` must equal `governance.authority_chain[0]`.
 
 ## Step 2: Load L1 Contract
 

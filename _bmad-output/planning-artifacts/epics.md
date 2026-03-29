@@ -1675,6 +1675,7 @@ So that the system learns and improves from each production run.
 **And** bottleneck identification highlights stages that took longest or required most rework
 **And** optimization recommendations are generated based on run analysis
 **And** comparative analysis against previous runs shows improvement trends
+**And** production intelligence rollups and trend comparisons **exclude** `run_mode: ad-hoc` (using `run_mode` tags from Story 4A-5 observability) so sandbox runs never skew course/module building progress metrics
 **And** the orchestrator presents the report conversationally: "Here's how the run went..."
 **And** learning insights are captured in agent memory sidecars for future workflow optimization
 
@@ -1700,7 +1701,7 @@ So that finished course assets reach Canvas, CourseArc, or other platforms ready
 
 **Goal**: Establish the authority model, lane boundaries, and observability infrastructure that constrain how agents interact within production runs — preventing judgment overlap, enabling governance-aware delegation, and making agent quality a release gate.
 
-**FRs covered:** FR81, FR82, FR83, FR84, FR85, FR86, FR87, FR88, FR89, FR90
+**FRs covered:** FR81, FR82, FR83, FR84, FR85, FR86, FR87, FR88, FR89, FR90, FR91
 
 **Dependency:** Epic 2A (Fidelity Assurance) must be complete. Epic 4A must complete before Epic 4 (Workflow Coordination).
 
@@ -1824,12 +1825,43 @@ So that agents don't waste resources re-perceiving artifacts and I can track gov
 **Given** production gates are evaluated during a run
 **When** gate results are recorded
 **Then** observability hooks capture: gate pass rates, fidelity scores (O/I/A counts per gate), quality dimension scores, and agent performance metrics
+**And** every observability record emitted by this story carries `run_mode` (`default` | `ad-hoc`) and sufficient run identity (`run_id` or explicit sandbox sentinel) so downstream aggregations can filter correctly
+**And** aggregation rules for course/module building progress (and any Epic 4 production intelligence rollups) **exclude** `run_mode: ad-hoc` — sandbox runs never feed course progress metrics
 **And** these metrics feed into Story 4.4 (Production Intelligence) when Epic 4 is implemented
 
 **And** lane boundary violations detected during runs are logged as governance findings with agent, dimension, and context
 **And** governance findings are included in run completion reports
 
 **Design Note:** The perception caching may require a simple Python utility in `skills/sensory-bridges/scripts/` to manage the cache. The observability hooks are initially captured in the Fidelity Trace Report and quality review report — formal aggregation happens in Epic 4.
+
+---
+
+### Story 4A-6: Ad-Hoc Mode Ledger & Learning Boundary (Enforcement)
+
+As a production user,
+I want ad-hoc mode to be enforced as a hard boundary on persistence and learning,
+So that I can complete end-to-end runs in a sandbox without those runs advancing the course/module ledger or training long-lived platform memory.
+
+**Acceptance Criteria:**
+
+**Given** the system is in ad-hoc mode (`state/runtime/mode_state.json` and/or run `context.mode`)
+**When** coordination scripts or agents would persist production state
+**Then** SQLite writes that imply production run history, coordination audit trails, or quality-gate persistence for the institutional record are **refused or no-op** with a clear machine-readable reason (or an equivalent fail-closed policy documented in code)
+**And** Marcus sidecar updates are limited to the **transient ad-hoc session section** of `index.md` only — no writes to `patterns.md` or `chronology.md` driven by ad-hoc runs
+**And** run finalization behavior matches `skills/bmad-agent-marcus/references/conversation-mgmt.md` (ad-hoc skips durable finalization steps; user still receives a summary)
+
+**Given** `manage_run.py` (or successor run lifecycle tooling) is invoked
+**When** mode is ad-hoc
+**Then** behavior is aligned with `skills/bmad-agent-marcus/references/mode-management.md` — no accidental “tracked run with an ad-hoc flag” that still mutates the production ledger
+
+**Given** quality-control or specialist scripts write to SQLite
+**When** mode is ad-hoc
+**Then** persistence matches agent contracts (e.g. quality review executes but **does not** log to SQLite in ad-hoc where specified)
+
+**And** unit or integration tests lock the boundary (at minimum: mode detection + representative forbidden write paths)
+**And** a short normative contract doc exists (e.g. `docs/ad-hoc-contract.md`) listing invariants and pointing to this story
+
+**Design Note:** Story 4A-5 ensures observability is **tagged** so sandbox work is filterable; this story ensures the **platform does not learn or accrue course progress** from ad-hoc runs at the persistence layer. Epic 4 Story 4.4 must consume `run_mode` when building comparative/course progress reports.
 
 ---
 

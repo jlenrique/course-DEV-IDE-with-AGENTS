@@ -1,0 +1,19 @@
+{
+  "timestamp": "20260328T232148",
+  "agent_name": "marcus",
+  "scanner": "bmad-agent-builder-quality-optimizer",
+  "threshold": 0.8,
+  "dimensions": {
+    "structure_compliance": 0.9,
+    "prompt_craft_quality": 0.9,
+    "cohesion": 0.7,
+    "execution_efficiency": 0.9,
+    "script_opportunity_analysis": 0.9
+  },
+  "failed_dimensions": [
+    "cohesion"
+  ],
+  "status": "fail",
+  "blocking": true,
+  "notes": ""
+}

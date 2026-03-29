@@ -37,7 +37,45 @@ style_bible_sections:
   - "visual-hierarchy"
 exemplar_refs: []
 revision_feedback: null
+governance:
+  invocation_mode: "delegated"
+  current_gate: "G3"
+  authority_chain: ["marcus", "quality-reviewer"]
+  decision_scope:
+    owned_dimensions: ["tool_execution_quality.slides"]
+    restricted_dimensions: ["source_fidelity", "quality_standards", "instructional_design"]
+  allowed_outputs: ["artifact_paths", "quality_assessment", "parameter_decisions", "recommendations"]
 ```
+
+Use canonical `decision_scope` values from `docs/governance-dimensions-taxonomy.md`.
+
+Routing rules:
+- Specialists must set `scope_violation.route_to = governance.authority_chain[0]`
+- Specialists do not traverse `authority_chain`; Marcus performs rerouting.
+
+## Run Baton Governance
+
+Marcus initializes a run baton at production run start and updates `current_gate` as the pipeline advances.
+
+Specialists invoked directly by the user must check baton state before acting:
+
+```bash
+manage_baton.py check-specialist <specialist>
+```
+
+If an active baton exists, default behavior is redirect:
+
+"Marcus is running [run_id], currently at [gate]. Redirect, or enter standalone consult mode?"
+
+If the user explicitly requests standalone consult mode, specialist can proceed but must not mutate active production run state.
+
+Delegated specialist calls from Marcus should pass delegated context:
+
+```bash
+manage_baton.py check-specialist <specialist> --delegated-call --run-id <run_id>
+```
+
+Baton closes automatically when run is completed or cancelled via `manage_run.py`.
 
 **Inbound (from specialist):**
 ```yaml
@@ -52,6 +90,7 @@ parameter_decisions:
     rationale: "Matched style bible visual identity"
 status: "completed"
 issues: []
+scope_violation: null
 ```
 
 ## Graceful Degradation

@@ -11,6 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import log_coordination
 
@@ -60,7 +61,7 @@ class TestLogEvent(unittest.TestCase):
             args = log_coordination.build_parser().parse_args([
                 "--db", db.path, "log",
                 "--run-id", "RUN-001", "--agent", "gamma-specialist",
-                "--action", "delegated",
+                "--action", "delegated", "--run-mode", "default",
             ])
             result = log_coordination.cmd_log(args)
             self.assertEqual(result["run_id"], "RUN-001")
@@ -74,7 +75,7 @@ class TestLogEvent(unittest.TestCase):
             args = log_coordination.build_parser().parse_args([
                 "--db", db.path, "log",
                 "--run-id", "RUN-001", "--agent", "gamma-specialist",
-                "--action", "delegated", "--payload", payload,
+                "--action", "delegated", "--payload", payload, "--run-mode", "default",
             ])
             result = log_coordination.cmd_log(args)
             self.assertIn("event_id", result)
@@ -85,13 +86,29 @@ class TestLogEvent(unittest.TestCase):
                 args = log_coordination.build_parser().parse_args([
                     "--db", db.path, "log",
                     "--run-id", "RUN-001", "--agent", "gamma-specialist",
-                    "--action", action,
+                    "--action", action, "--run-mode", "default",
                 ])
                 log_coordination.cmd_log(args)
 
             hist_args = log_coordination.build_parser().parse_args(["--db", db.path, "history", "RUN-001"])
             result = log_coordination.cmd_history(hist_args)
             self.assertEqual(result["count"], 3)
+
+    def test_log_ad_hoc_is_noop(self) -> None:
+        with TempDB() as db:
+            args = log_coordination.build_parser().parse_args([
+                "--db", db.path, "log",
+                "--run-id", "RUN-001", "--agent", "gamma-specialist",
+                "--action", "delegated", "--run-mode", "ad-hoc",
+            ])
+            result = log_coordination.cmd_log(args)
+            self.assertFalse(result["logged"])
+            self.assertEqual(result["code"], "NOOP_AD_HOC")
+
+            conn = sqlite3.connect(db.path)
+            count = conn.execute("SELECT COUNT(*) FROM agent_coordination").fetchone()[0]
+            conn.close()
+            self.assertEqual(count, 0)
 
 
 class TestHistory(unittest.TestCase):
@@ -107,7 +124,7 @@ class TestHistory(unittest.TestCase):
             for agent in ["content-creator", "gamma-specialist", "quality-reviewer"]:
                 args = log_coordination.build_parser().parse_args([
                     "--db", db.path, "log",
-                    "--run-id", "RUN-002", "--agent", agent, "--action", "delegated",
+                    "--run-id", "RUN-002", "--agent", agent, "--action", "delegated", "--run-mode", "default",
                 ])
                 log_coordination.cmd_log(args)
 
@@ -122,7 +139,7 @@ class TestHistory(unittest.TestCase):
             args = log_coordination.build_parser().parse_args([
                 "--db", db.path, "log",
                 "--run-id", "RUN-003", "--agent", "quality-reviewer",
-                "--action", "completed", "--payload", payload,
+                "--action", "completed", "--payload", payload, "--run-mode", "default",
             ])
             log_coordination.cmd_log(args)
 

@@ -148,10 +148,10 @@ Reference inputs:
 
 When a production plan stage requires a specialist:
 
-1. **Check availability** — Verify the specialist definition exists at `agents/{name}.md` or `skills/bmad-agent-{name}/SKILL.md`. If neither exists, gracefully degrade (see `production-coordination/references/delegation-protocol.md`).
+1. **Check availability** — Resolve specialist path from `skills/bmad-agent-marcus/references/specialist-registry.yaml`. If the specialist is missing from the registry or the resolved path does not exist, gracefully degrade (see `production-coordination/references/delegation-protocol.md`).
 2. **Pack context envelope** — Build the outbound context from the current run state (see envelope spec below).
 3. **Log delegation** — `log_coordination.py log --run-id {id} --agent {specialist} --action delegated --payload '{envelope}'`
-4. **Invoke specialist** — Load `agents/{name}.md` when present; otherwise load `skills/bmad-agent-{name}/SKILL.md`. Present the context envelope as the task.
+4. **Invoke specialist** — Load the registry-resolved `SKILL.md` path for the target specialist and present the context envelope as the task.
 5. **Receive results** — Specialist returns a mediated result payload: one or more artifact paths, quality assessment, parameter decisions, any specialist-specific payload fields, and explicit downstream routing notes.
 6. **Log completion** — `log_coordination.py log --run-id {id} --agent {specialist} --action completed --payload '{result}'`
 7. **Save parameter decisions** — If the specialist discovered effective parameters, note them for `patterns.md` (default mode).

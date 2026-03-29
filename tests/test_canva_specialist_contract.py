@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
+REGISTRY_PATH = (
+    ROOT / "skills" / "bmad-agent-marcus" / "references" / "specialist-registry.yaml"
+)
 
 
 def test_canva_specialist_skill_exists_with_visual_designer_identity() -> None:
@@ -89,17 +94,15 @@ def test_marcus_lists_canva_specialist_as_active() -> None:
     assert "active (Story 3.8)" in marcus
 
 
-def test_canva_agent_wrapper_exists() -> None:
-    wrapper = ROOT / "agents" / "canva-specialist.md"
-    assert wrapper.exists()
+def test_canva_specialist_registry_mapping_exists() -> None:
+    registry = yaml.safe_load(REGISTRY_PATH.read_text(encoding="utf-8"))
+    specialists = registry.get("specialists", {})
 
-    content = wrapper.read_text(encoding="utf-8")
-    assert "# Cora (Visual Designer)" in content
-    assert "skills/canva-design/SKILL.md" in content
+    assert "canva-specialist" in specialists
+    assert specialists["canva-specialist"]["path"] == "skills/bmad-agent-canva/SKILL.md"
 
 
 def test_canva_config_precedence_rule_is_documented() -> None:
-    wrapper = (ROOT / "agents" / "canva-specialist.md").read_text(encoding="utf-8")
     specialist = (ROOT / "skills" / "bmad-agent-canva" / "SKILL.md").read_text(
         encoding="utf-8"
     )
@@ -107,6 +110,5 @@ def test_canva_config_precedence_rule_is_documented() -> None:
         encoding="utf-8"
     )
 
-    assert "Configuration precedence" in wrapper
     assert "Configuration precedence" in specialist
     assert "Configuration precedence" in design

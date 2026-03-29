@@ -7,12 +7,15 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+REGISTRY_PATH = (
+    ROOT / "skills" / "bmad-agent-marcus" / "references" / "specialist-registry.yaml"
+)
 
 
 SPECIALISTS = {
     "vyond": {
+        "identifier": "vyond-specialist",
         "skill": ROOT / "skills" / "bmad-agent-vyond" / "SKILL.md",
-        "wrapper": ROOT / "agents" / "vyond-specialist.md",
         "sidecar": ROOT / "_bmad" / "memory" / "vyond-specialist-sidecar",
         "interaction_guide": ROOT
         / "tests"
@@ -36,8 +39,8 @@ SPECIALISTS = {
         / "sample-blocked-response.yaml",
     },
     "midjourney": {
+        "identifier": "midjourney-specialist",
         "skill": ROOT / "skills" / "bmad-agent-midjourney" / "SKILL.md",
-        "wrapper": ROOT / "agents" / "midjourney-specialist.md",
         "sidecar": ROOT / "_bmad" / "memory" / "midjourney-specialist-sidecar",
         "interaction_guide": ROOT
         / "tests"
@@ -61,8 +64,8 @@ SPECIALISTS = {
         / "sample-blocked-response.yaml",
     },
     "articulate": {
+        "identifier": "articulate-specialist",
         "skill": ROOT / "skills" / "bmad-agent-articulate" / "SKILL.md",
-        "wrapper": ROOT / "agents" / "articulate-specialist.md",
         "sidecar": ROOT / "_bmad" / "memory" / "articulate-specialist-sidecar",
         "interaction_guide": ROOT
         / "tests"
@@ -138,22 +141,24 @@ def test_manual_tool_skills_exist_and_declared() -> None:
         assert "manual-tool" in content.lower(), specialist
         assert "no api" in content.lower() or "no api client" in content.lower(), specialist
         assert "human_review_required" in content, specialist
+        for field in EXPECTED_RETURN_FIELDS[specialist]:
+            assert field in content, f"{specialist}: missing {field} in skill return contract"
 
 
-def test_manual_tool_wrappers_exist() -> None:
+def test_manual_tool_specialists_are_registered() -> None:
     expected_routes = {
-        "vyond": "skills/bmad-agent-vyond/SKILL.md",
-        "midjourney": "skills/bmad-agent-midjourney/SKILL.md",
-        "articulate": "skills/bmad-agent-articulate/SKILL.md",
+        "vyond-specialist": "skills/bmad-agent-vyond/SKILL.md",
+        "midjourney-specialist": "skills/bmad-agent-midjourney/SKILL.md",
+        "articulate-specialist": "skills/bmad-agent-articulate/SKILL.md",
     }
 
-    for specialist, paths in SPECIALISTS.items():
-        content = paths["wrapper"].read_text(encoding="utf-8")
-        assert expected_routes[specialist] in content
-        assert "Return Contract" in content, specialist
-        assert "review-sign-off.md" in content, specialist
-        for field in EXPECTED_RETURN_FIELDS[specialist]:
-            assert field in content, f"{specialist}: missing {field} in wrapper return contract"
+    registry = yaml.safe_load(REGISTRY_PATH.read_text(encoding="utf-8"))
+    specialists = registry.get("specialists", {})
+
+    for _, paths in SPECIALISTS.items():
+        specialist_id = paths["identifier"]
+        assert specialist_id in specialists
+        assert specialists[specialist_id].get("path") == expected_routes[specialist_id]
 
 
 def test_sidecars_and_interaction_guides_exist() -> None:

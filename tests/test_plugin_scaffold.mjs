@@ -57,12 +57,12 @@ for (const key of autoDiscoverKeys) {
 
 // --- AC #2: Directory Structure ---
 console.log("\n=== AC #2: Directory Structure ===");
-const requiredDirs = ["agents", "skills", "rules", "commands", "hooks", "hooks/scripts"];
+const requiredDirs = ["skills", "rules", "commands", "hooks", "hooks/scripts"];
 for (const dir of requiredDirs) {
   assert(isDir(dir), `${dir}/ directory exists`);
 }
 
-const readmeFiles = ["agents/README.md", "skills/README.md", "commands/README.md", "rules/README.md"];
+const readmeFiles = ["skills/README.md", "commands/README.md", "rules/README.md"];
 for (const f of readmeFiles) {
   assert(fileExists(f), `${f} exists`);
 }

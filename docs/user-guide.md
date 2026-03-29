@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-03-28 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories done; Epic 2A fidelity stack complete; **Epic 4A** governance next on the roadmap)
+**Last Updated:** 2026-03-29 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories done; Epic 2A fidelity stack complete; **Epic 4A** governance next on the roadmap)
 
 ---
 
@@ -202,6 +202,53 @@ Before promoting content from staging:
 ### Narrated slide assembly (Descript)
 
 For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+
+### Hypothetical full run: narrated deck + custom diagrams + motion (repo-aligned)
+
+The table below is a **walkthrough**, not a guarantee every automation path is one-click. It reflects **agents and skills that exist in this repository** as of the doc date. Invented names illustrate where files land.
+
+**Hypothetical identifiers**
+
+| Item | Example value |
+|------|----------------|
+| Production run id | `APP-RUN-C1M3L2-HTN-20260330` |
+| Lesson slug (folder) | `C1-M3-L2-ambulatory-bp` |
+| Topic | Ambulatory blood-pressure patterns in resistant hypertension |
+| Custom diagrams (must become URLs for Gamma API) | `https://media.university.example/course-assets/htn-renal-diagram.png` (slide 4), `https://media.university.example/course-assets/abpm-48h-grid.png` (slide 7) |
+
+**Where things live (path formula)**
+
+| Mode | Control docs + lesson artifacts | Source bundles (optional) | Notes |
+|------|----------------------------------|----------------------------|--------|
+| **Default** | `course-content/staging/{lessonSlug}/` | `course-content/staging/source-bundles/{runId-or-slug}/` | Marcus aligns paths with `state/runtime/mode_state.json` via `skills/production-coordination/scripts/manage_mode.py` (see `skills/bmad-agent-marcus/references/mode-management.md`). |
+| **Ad-hoc** | Under `course-content/staging/ad-hoc/…` (e.g. `ad-hoc/source-bundles/{slug}/`) | Same scratch tree | No durable ledger/sidecar learning; QA still runs (`docs/ad-hoc-contract.md`). |
+
+Place the **assembly bundle** (manifest, guide, `audio/`, `captions/`, `visuals/` after sync) in one folder under the lesson staging path above—e.g. `course-content/staging/C1-M3-L2-ambulatory-bp/assembly-bundle/`.
+
+**Custom images and Gamma**
+
+The Gamma stack does **not** take arbitrary local file paths inside the JSON body the way a desktop app might. For slides that must **embed specific diagrams**, the repo implements **`diagram_cards`**: a list of `{ "card_number": <n>, "image_url": "<https://...>" }` passed into `skills/gamma-api-mastery/scripts/gamma_operations.py` → `execute_generation(...)`. In code today, those URLs are merged into **literal** slide text inside **`generate_deck_mixed_fidelity`** (when the deck mixes **creative** and **literal** slides). URLs are **validated** (`validate_image_url`) and embedded as `![diagram](url)` before the API call. **You (or your org) must host the PNGs at stable HTTPS URLs** Gamma can fetch (CDN, learning object repository, signed static host, etc.). Tell Marcus early: *“Slides 4 and 7 are literal—here are the two HTTPS URLs; everything else is creative Gamma.”* That dependency belongs in the **slide brief** and in Marcus’s production plan. *Implementation note:* an **all-literal** deck with `diagram_cards` may require the same mixed-fidelity orchestration or an explicit developer pass—confirm with `gamma_operations.execute_generation` behavior before relying on it for edge layouts. Creative slides without fixed assets still use Gamma’s normal `imageOptions` / generation path.
+
+**End-to-end step table**
+
+| Step | You / Marcus (conversation) | Delegated to | Skill / script / client (exists in repo) | Artifact(s) produced | Blueprint / contract at this phase | Typical location (default mode) |
+|------|----------------------------|--------------|-------------------------------------------|------------------------|-----------------------------------|--------------------------------|
+| 0 | *“Marcus, default mode, draft preset, run `APP-RUN-C1M3L2-HTN-20260330`.”* Optional: *“Run pre-flight.”* | Marcus | `skills/pre-flight-check/`, `skills/bmad-agent-marcus/scripts/read-mode-state.py`, `manage_mode.py` | Mode confirmed; green/red tool status | `state/config/tool_policies.yaml`, style bible | `state/runtime/mode_state.json` |
+| 1 (opt.) | *“Pull Module 3 hypertension notes from Notion.”* | Source wrangler (via Marcus) | `skills/source-wrangler/` + `scripts/api_clients/notion_client.py` | `extracted.md`, `metadata.json` | Source bundle as G0 input | `course-content/staging/source-bundles/APP-RUN-C1M3L2-HTN-20260330/` |
+| 2 | Marcus proposes plan; you confirm LOs and constraints | Irene (content-creator) | `skills/bmad-agent-content-creator/SKILL.md` | `lesson-plan.md`, `slide-brief.md` (example names) | **Pass 1 blueprint:** lesson plan + slide brief | `course-content/staging/C1-M3-L2-ambulatory-bp/` |
+| 3 | **HIL Gate 1** — you approve or revise pedagogy | You | — | Signed-off brief | Same | — |
+| 4 | *“Slides 4 & 7 use these HTTPS diagram URLs; rest creative.”* | Gary (gamma specialist) | `skills/bmad-agent-gamma/` → `skills/gamma-api-mastery/scripts/gamma_operations.py` → `scripts/api_clients/gamma_client.py` | Gamma deck + exports (e.g. PPTX/PNG paths), `gary_slide_output` metadata | Slide brief + style bible | `course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/` (representative) |
+| 5 | **HIL Gate 2** — you approve visuals | You | — | Approved slide set | — | — |
+| 6 | Marcus delegates Pass 2 | Irene | `skills/bmad-agent-content-creator/` + `references/template-segment-manifest.md` | `narration-script.md`, `segment-manifest.yaml` | **Pass 2 blueprint:** script + manifest (paired) | Same lesson folder |
+| 7 | **HIL Gate 3** — you approve script/audio plan | You | — | Locked manifest + script | — | — |
+| 8 | Fidelity + quality on pipeline artifacts | Vera, Quinn-R | `skills/bmad-agent-fidelity-assessor/`, `skills/bmad-agent-quality-reviewer/`, optional `skills/quality-control/scripts/*`, `skills/sensory-bridges/` | Trace reports, quality notes | `docs/fidelity-gate-map.md`, `state/config/fidelity-contracts/` | Logs per governance; ad-hoc excludes some durable writes |
+| 9 | Manifest-driven audio | Voice Director (ElevenLabs) | `skills/elevenlabs-audio/scripts/elevenlabs_operations.py` + `scripts/api_clients/` | Per-segment MP3, VTT, optional SFX/music; manifest write-back (`narration_duration`, paths) | Approved **segment manifest** | `…/assembly-bundle/audio/`, `…/captions/` |
+| 10 | Silent B-roll / motion segments | Kira | `skills/bmad-agent-kling/` → `skills/kling-video/scripts/kling_operations.py` | Silent MP4s; manifest `visual_file` / `visual_duration` for Kira rows | Manifest timing from step 9 | `…/assembly-bundle/video/` (example) |
+| 11 | Pre-composition QA | Quinn-R | `skills/bmad-agent-quality-reviewer/` + quality-control helpers | Pre-composition report | Manifest + assets | — |
+| 12 | Assembly instructions | Marcus → compositor | `skills/compositor/scripts/compositor_operations.py` (`sync-visuals`, `guide`) | `DESCRIPT-ASSEMBLY-GUIDE.md`, localized `visuals/` | **Completed manifest** + guide | `…/assembly-bundle/` |
+| 13 | Final edit | You | **Descript** (manual) | Exported lesson video / project | Guide + bundle | Outside repo or user-chosen export path |
+
+**Compositor deliverable:** You should see a **single folder** containing `segment-manifest.yaml` (with paths filled in), `DESCRIPT-ASSEMBLY-GUIDE.md`, narration and caption files, optional SFX/music stems, silent Kling MP4s, and **`visuals/`** with Gate-2-approved slide PNGs after `sync-visuals`—ready for Descript import.
 
 ---
 

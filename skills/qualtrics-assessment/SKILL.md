@@ -20,7 +20,7 @@ Provides deterministic Qualtrics assessment operations for the Qualtrics special
 
 | Script | Purpose | Invoked By |
 |---|---|---|
-| qualtrics_operations.py | Validates assessment plans, creates surveys/questions, emits objective trace summary | agents/qualtrics-specialist.md |
+| qualtrics_operations.py | Validates assessment plans, creates surveys/questions, emits objective trace summary | skills/bmad-agent-marcus/references/specialist-registry.yaml entry qualtrics-specialist |
 
 ## Output Contract
 

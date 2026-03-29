@@ -78,7 +78,7 @@ The system is built on three independently updatable layers. This separation is 
 |-------|----------|---------------|-----------|
 | **API Clients** | `scripts/api_clients/` | Connectivity, retry, auth, pagination | Built in Epic 1 (DONE) |
 | **Skills** | `skills/{name}/` | Tool expertise, parameter templates, execution orchestration | Built in Epic 3+ |
-| **Agents** | `skills/bmad-agent-{name}/` (primary); `agents/` for extras | Judgment, decision-making, personality, memory | Built in Epic 2+ |
+| **Agents** | `skills/bmad-agent-{name}/` | Judgment, decision-making, personality, memory | Built in Epic 2+ |
 
 **Why this matters:** You can fix an API client without touching any agent or skill. You can refine a skill's parameter templates without changing the API client it wraps. You can update an agent's personality or routing without modifying any skill code. Each layer evolves at its own pace.
 
@@ -701,8 +701,6 @@ course-DEV-IDE-with-AGENTS/
 ├── pyproject.toml                     ← Python project config
 ├── requirements.txt                   ← Python dependencies
 │
-├── agents/                            ← Optional extra agent .md files (see plugin manifest)
-│   └── README.md
 ├── skills/                            ← SKILL.md directories (auto-discovered) — **primary home for agents**
 │   ├── bmad-agent-marcus/             ← Marcus + scripts (e.g. read-mode-state)
 │   ├── bmad-agent-gamma/              ← Gary

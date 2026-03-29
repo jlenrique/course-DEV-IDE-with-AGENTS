@@ -1,0 +1,45 @@
+version: 1
+notes: Canonical specialist resolution for Marcus delegation. Paths are repo-relative.
+specialists:
+  content-creator:
+    path: skills/bmad-agent-content-creator/SKILL.md
+    status: active
+  gamma-specialist:
+    path: skills/bmad-agent-gamma/SKILL.md
+    status: active
+  kling-specialist:
+    path: skills/bmad-agent-kling/SKILL.md
+    status: active
+  elevenlabs-specialist:
+    path: skills/bmad-agent-elevenlabs/SKILL.md
+    status: active
+  vyond-specialist:
+    path: skills/bmad-agent-vyond/SKILL.md
+    status: active
+  midjourney-specialist:
+    path: skills/bmad-agent-midjourney/SKILL.md
+    status: active
+  articulate-specialist:
+    path: skills/bmad-agent-articulate/SKILL.md
+    status: active
+  compositor:
+    path: skills/compositor/SKILL.md
+    status: active
+  fidelity-assessor:
+    path: skills/bmad-agent-fidelity-assessor/SKILL.md
+    status: active
+  quality-reviewer:
+    path: skills/bmad-agent-quality-reviewer/SKILL.md
+    status: active
+  canva-specialist:
+    path: skills/bmad-agent-canva/SKILL.md
+    status: active
+  canvas-specialist:
+    path: skills/canvas-deployment/SKILL.md
+    status: active
+  qualtrics-specialist:
+    path: skills/qualtrics-assessment/SKILL.md
+    status: active
+  coursearc-specialist:
+    path: skills/bmad-agent-coursearc/SKILL.md
+    status: active

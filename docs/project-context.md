@@ -11,13 +11,13 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 
 ## Critical Implementation Model
 
-**Agents are .md files** created through `bmad-agent-builder` six-phase conversational discovery process, following BMad SKILL.md standard. They live in `agents/` directory and are auto-discovered by Cursor's plugin system.
+**Agents are skill directories** created through `bmad-agent-builder` six-phase conversational discovery process, following BMad SKILL.md standard. They live under `skills/bmad-agent-{name}/` and are discovered through the skills layer.
 
 **Skills are SKILL.md directories** providing tool-specific capabilities with progressive disclosure (`references/`), Python code execution (`scripts/`), and output templates (`assets/`).
 
 **Python infrastructure** provides supporting code for API clients, state management, and file operations - invoked from agent skills when code execution is required.
 
-**Cursor plugin packaging** via `.cursor-plugin/plugin.json` enables native IDE integration with auto-discovery of agents, skills, rules, commands, hooks, and MCP servers.
+**Cursor plugin packaging** via `.cursor-plugin/plugin.json` enables native IDE integration with auto-discovery of skills, rules, commands, hooks, and MCP servers.
 
 **BMad memory sidecars** provide persistent agent learning through `_bmad/memory/{skillName}-sidecar/` with index.md (context), patterns.md (learned preferences), chronology.md (history), and access-boundaries.md (scope control).
 
@@ -31,7 +31,7 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 - **Python infrastructure** in scripts/ for API clients, state management, file operations
 
 ### Cursor Plugin Architecture (Confirmed)
-- `.cursor-plugin/plugin.json` manifest with auto-discovery of agents/, skills/, rules/
+- `.cursor-plugin/plugin.json` manifest with auto-discovery of skills/, rules/
 - `.mcp.json` for tool server definitions bundled in plugin
 - `hooks/hooks.json` for event-driven automation (sessionStart → pre-flight, afterFileEdit → quality, sessionEnd → reporting)
 - `rules/*.mdc` for persistent agent behavior guidance
@@ -66,7 +66,6 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 ### Repository Contract (Confirmed)
 ```
 .cursor-plugin/   # Cursor plugin manifest
-agents/           # Custom agent .md files (auto-discovered)
 skills/           # SKILL.md directories with references/ + scripts/ (auto-discovered)
   woodshed/       # Shared exemplar mastery skill (study, reproduce, compare, regress)
 rules/            # .mdc rules files for agent guidance

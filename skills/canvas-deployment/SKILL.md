@@ -22,7 +22,7 @@ Provides deterministic Canvas deployment operations for the Canvas specialist (D
 
 | Script | Purpose | Invoked By |
 |---|---|---|
-| `canvas_operations.py` | Manifest validation, accessibility pre-check, Canvas creation calls, module verification, rollback, confirmation URL output | `agents/canvas-specialist.md` |
+| `canvas_operations.py` | Manifest validation, accessibility pre-check, Canvas creation calls, module verification, rollback, confirmation URL output | `skills/bmad-agent-marcus/references/specialist-registry.yaml` entry `canvas-specialist` |
 
 ## Deployment Output Contract
 

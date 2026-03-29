@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
+REGISTRY_PATH = (
+    ROOT / "skills" / "bmad-agent-marcus" / "references" / "specialist-registry.yaml"
+)
 
 
 def test_coursearc_skill_exists_with_manual_tool_contract() -> None:
@@ -48,14 +53,14 @@ def test_coursearc_sidecar_has_boundaries() -> None:
     assert "## Deny" in boundaries
 
 
-def test_coursearc_agent_wrapper_exists_for_marcus_delegation() -> None:
-    wrapper = ROOT / "agents" / "coursearc-specialist.md"
-    assert wrapper.exists()
+def test_coursearc_specialist_registry_mapping_exists_for_marcus_delegation() -> None:
+    registry = yaml.safe_load(REGISTRY_PATH.read_text(encoding="utf-8"))
+    specialists = registry.get("specialists", {})
 
-    content = wrapper.read_text(encoding="utf-8")
-    assert "skills/bmad-agent-coursearc/SKILL.md" in content
-    assert "status" in content
-    assert "evidence_requirements" in content
+    assert "coursearc-specialist" in specialists
+    assert (
+        specialists["coursearc-specialist"]["path"] == "skills/bmad-agent-coursearc/SKILL.md"
+    )
 
 
 def test_coursearc_references_include_evidence_expectations() -> None:

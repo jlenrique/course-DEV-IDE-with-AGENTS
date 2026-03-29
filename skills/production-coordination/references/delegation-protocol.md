@@ -11,9 +11,12 @@ Marcus matches content type to specialist using the routing tables in his SKILL.
 1. **External Specialist Agents table** — maps content domains to agent identifiers
 2. **Content Type Vocabulary** in `conversation-mgmt.md` — maps content types to primary/secondary specialists
 
-When a production plan stage identifies a specialist (e.g., `gamma-specialist`), Marcus checks whether that agent is available:
-- **Available**: Agent SKILL.md exists at `skills/bmad-agent-{name}/SKILL.md` or `agents/{name}.md`
-- **Unavailable**: Agent does not exist yet (status: `planned`)
+When a production plan stage identifies a specialist (e.g., `gamma-specialist`), Marcus checks whether that specialist is available using:
+- `skills/bmad-agent-marcus/references/specialist-registry.yaml`
+
+Availability rules:
+- **Available**: Specialist key exists in the registry and the mapped `SKILL.md` path exists.
+- **Unavailable**: Specialist key is missing, status is not active, or mapped path is missing.
 
 ## Context Envelope
 

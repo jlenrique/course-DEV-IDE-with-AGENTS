@@ -62,6 +62,23 @@ Check the current Git branch and compare it with the branch instructions recorde
 
 > **Post-merge convention:** If your team merges to `master` at session end, the next session may open on `master` first. In that case, use the startup commands in `next-session-start-here.md` to checkout/create the next working branch.
 
+### 2a. Worktree and IDE alignment guard (mandatory)
+
+Run these commands in every active IDE terminal (for example, VS Code and Cursor) and confirm they match:
+- `git worktree list`
+- `git rev-parse --show-toplevel`
+- `git branch --show-current`
+
+Expected result for aligned sessions:
+- Same `--show-toplevel` path in each IDE
+- Same current branch in each IDE
+- No unexpected extra worktree directories in `git worktree list`
+
+If a stale worktree appears (directory was manually removed earlier), run:
+- `git worktree prune --verbose`
+
+If one IDE points to a different worktree path, stop and re-open that IDE on the intended project path before making changes.
+
 ### 3. Identify session target
 
 - **If in brainstorming/ideation phase**: identify which brainstorming session to continue or which analysis skill to run

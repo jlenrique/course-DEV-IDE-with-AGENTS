@@ -142,6 +142,19 @@ Also verify branch metadata consistency:
 
 **Course content verification**: content-standards compliance, human review queue status, platform connectivity.
 
+### 11a. Worktree hygiene closeout (mandatory)
+
+Before Git closeout, run:
+- `git worktree list`
+
+If a temporary merge/investigation worktree was created during the session, remove it now:
+- `git worktree remove <path-to-temporary-worktree>`
+
+If a temporary worktree directory was deleted manually outside Git, clean stale metadata:
+- `git worktree prune --verbose`
+
+If you intentionally keep more than one worktree, record why and the exact paths in `next-session-start-here.md` Step 7.
+
 ### 12. Git closeout (default)
 
 Default end-of-session flow is:
@@ -152,7 +165,8 @@ Default end-of-session flow is:
 5. Merge the working branch into `master`
 6. Push `master` to `origin`
 7. Create the **next working branch** from updated `master` (for the next session), and push with upstream
-8. Re-verify `next-session-start-here.md` branch metadata matches reality. If it does not, make a small docs-only follow-up commit and push.
+8. Re-run `git worktree list` and verify only intended worktrees remain registered
+9. Re-verify `next-session-start-here.md` branch metadata matches reality. If it does not, make a small docs-only follow-up commit and push.
 
 If your team intentionally skips merge-to-master for a session, explicitly record that exception and the exact resume branch in both `next-session-start-here.md` and `SESSION-HANDOFF.md`.
 

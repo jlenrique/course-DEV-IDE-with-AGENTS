@@ -1,0 +1,22 @@
+status: guidance-ready
+recommended_workflow: "Build storyboard in Vyond Studio, then perform export handoff review"
+step_by_step_instructions:
+  - "Create 16:9 project and define runtime target"
+  - "Build scenes in approved storyboard order"
+  - "Validate accessibility notes per scene before export"
+storyboard_payload:
+  lesson_context:
+    course_id: "BIO-101"
+    module_id: "M2"
+    lesson_id: "L4"
+  scenes:
+    - scene_id: "S1"
+      duration_seconds: 18
+      objective_signal: "Introduce process overview"
+    - scene_id: "S2"
+      duration_seconds: 22
+      objective_signal: "Demonstrate key decision point"
+human_review_required: true
+warnings:
+  - "Narration pacing may require fine tuning"
+blockers: []

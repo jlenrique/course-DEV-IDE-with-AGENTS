@@ -16,6 +16,15 @@ Validates that the collaborative intelligence tool ecosystem is operational befo
 - After environment changes (new API keys, updated MCP config)
 - Periodically to detect tool capability changes
 
+For full run readiness, pair this with runtime checks:
+
+1. `.venv/Scripts/python -m scripts.utilities.app_session_readiness`
+2. `.venv/Scripts/python -m skills.pre-flight-check.scripts.preflight_runner`
+
+Or run both together via:
+
+- `.venv/Scripts/python -m scripts.utilities.app_session_readiness --with-preflight`
+
 ## Invocation
 
 ### Manual (agent chat)

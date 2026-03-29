@@ -1,0 +1,15 @@
+status: blocked
+recommended_workflow: "Complete missing accessibility evidence and rerun verification"
+step_by_step_instructions:
+  - "Collect keyboard traversal evidence"
+  - "Collect contrast measurements"
+  - "Repeat SCORM and WCAG gate"
+review_checklists:
+  scorm: []
+  wcag: []
+human_review_required: true
+warnings:
+  - "Accessibility evidence is incomplete"
+blockers:
+  - "Missing WCAG verification artifacts"
+route_to: "marcus"

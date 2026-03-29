@@ -4,6 +4,8 @@
 **Scope:** Agentic Production Platform (APP) — multi-step workflows with review, repair, and study of inputs/outputs.  
 **Method:** Repository review against a formal rubric; analytic “party mode” lens (Architect, Orchestrator, Fidelity, QA, Tooling, Reliability). This document is not a transcript of a live Party Mode session.
 
+**See also:** [app-logging-channels.md](./app-logging-channels.md) — authoritative three-channel map for operators (SQLite vs artifacts vs tool logs).
+
 ---
 
 ## 1. Formal evaluation framework

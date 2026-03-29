@@ -1,4 +1,14 @@
 tool: qualtrics
 agent: bmad-agent-qualtrics
 description: "Exemplar library for the Qualtrics specialist agent (Assessment Architect)"
-exemplars: []
+exemplars:
+  - id: "L1-survey-inventory-snapshot"
+    level: "L1"
+    difficulty: simple
+    status: mastered
+    creative_status: locked
+    mastered_at: "2026-03-29"
+    blocked_at: null
+    total_attempts: 1
+    description: "Read-only Qualtrics survey inventory snapshot for baseline API mastery"
+    artifact_type: qualtrics-survey-inventory

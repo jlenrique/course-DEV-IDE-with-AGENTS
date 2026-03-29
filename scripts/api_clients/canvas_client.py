@@ -187,3 +187,89 @@ class CanvasClient(BaseAPIClient):
         yield from self.get_paginated(
             f"/courses/{course_id}/enrollments", params=params
         )
+
+
+def reproduce_course_snapshot(
+    course_id: int | str | None = None,
+) -> dict[str, Any]:
+    """Capture a read-only Canvas course snapshot for woodshed reproduction.
+
+    This helper enables `skills/woodshed/scripts/reproduce_exemplar.py`
+    to call Canvas through a deterministic module-level function.
+    """
+    client = CanvasClient()
+    courses = list(client.list_courses())
+
+    resolved_course_id = course_id
+    if resolved_course_id in (None, ""):
+        if not courses:
+            return {
+                "status": "no-courses",
+                "reason": "No accessible Canvas courses available",
+                "course": None,
+                "module_count": 0,
+                "page_count": 0,
+                "assignment_count": 0,
+                "quiz_count": 0,
+                "sampled_module_names": [],
+            }
+        resolved_course_id = courses[0].get("id")
+
+    if not isinstance(resolved_course_id, (int, str)):
+        return {
+            "status": "error",
+            "reason": "Resolved Canvas course ID has unsupported type",
+            "course": None,
+            "module_count": 0,
+            "page_count": 0,
+            "assignment_count": 0,
+            "quiz_count": 0,
+            "sampled_module_names": [],
+        }
+
+    if isinstance(resolved_course_id, str):
+        resolved_course_id = resolved_course_id.strip()
+        if not resolved_course_id:
+            return {
+                "status": "error",
+                "reason": "Resolved Canvas course ID is empty",
+                "course": None,
+                "module_count": 0,
+                "page_count": 0,
+                "assignment_count": 0,
+                "quiz_count": 0,
+                "sampled_module_names": [],
+            }
+
+    try:
+        course = client.get_course(resolved_course_id)
+        modules = list(client.list_modules(resolved_course_id))
+        pages = list(client.list_pages(resolved_course_id))
+        assignments = list(client.list_assignments(resolved_course_id))
+        quizzes = list(client.list_quizzes(resolved_course_id))
+    except Exception as exc:  # pragma: no cover - defensive API failure path
+        return {
+            "status": "error",
+            "reason": str(exc),
+            "course": None,
+            "module_count": 0,
+            "page_count": 0,
+            "assignment_count": 0,
+            "quiz_count": 0,
+            "sampled_module_names": [],
+        }
+
+    return {
+        "status": "ok",
+        "course": {
+            "id": course.get("id"),
+            "name": course.get("name"),
+        },
+        "module_count": len(modules),
+        "page_count": len(pages),
+        "assignment_count": len(assignments),
+        "quiz_count": len(quizzes),
+        "sampled_module_names": [
+            module.get("name") for module in modules[:5]
+        ],
+    }

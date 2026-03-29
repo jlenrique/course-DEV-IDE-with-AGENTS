@@ -31,6 +31,15 @@
 
 There is no universal "Canvas MCP" in the wild; treat **Canvas as HTTPS + token** via small scripts in `integrations/canvas/` or your existing Python tooling. CourseArc is primarily **LTI 1.3 / SCORM** for delivery into Canvas, not a substitute for Canvas's content APIs.
 
+## Manual-tool specialists (active)
+
+- `skills/bmad-agent-vyond/` — animation storyboard and Vyond Studio build guidance
+- `skills/bmad-agent-midjourney/` — bespoke visual prompt packages for Discord/web workflows
+- `skills/bmad-agent-articulate/` — Storyline/Rise interaction and SCORM authoring guidance
+- `skills/bmad-agent-coursearc/` — CourseArc LTI 1.3 embedding and SCORM deployment guidance
+
+These specialists are guidance-only (manual-tool pattern): no API runtime, no woodshed execution path.
+
 ## Shared Skills (available to all agents)
 
 | Skill | Path | Purpose | Status |

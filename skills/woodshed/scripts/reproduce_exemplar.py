@@ -14,6 +14,7 @@ Example:
 import argparse
 import importlib
 import json
+import os
 import sys
 import time
 from datetime import datetime
@@ -38,6 +39,27 @@ CIRCUIT_BREAKER_DEFAULTS = {
     "max_total_attempts": 7,
     "max_consecutive_no_improvement": 2,
 }
+
+
+def load_project_env() -> None:
+    """Load PROJECT_ROOT/.env keys into process env when missing.
+
+    This mirrors test harness behavior so woodshed runs can use configured
+    API credentials without requiring users to export variables manually.
+    """
+    env_path = PROJECT_ROOT / ".env"
+    if not env_path.exists():
+        return
+
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        raw = line.strip()
+        if not raw or raw.startswith("#") or "=" not in raw:
+            continue
+        key, value = raw.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if key and value and key not in os.environ:
+            os.environ[key] = value
 
 
 def load_reproduction_spec(tool: str, exemplar_id: str) -> dict:
@@ -113,8 +135,20 @@ def load_api_client(tool: str):
             f"No API client mapping for tool '{tool}'. "
             f"Known tools: {list(TOOL_CLIENT_MAP.keys())}"
         )
-    sys.path.insert(0, str(API_CLIENTS_DIR.parent))
-    return importlib.import_module(f"api_clients.{client_module_name}")
+
+    # Support both direct api_clients imports and scripts.api_clients imports.
+    scripts_root = API_CLIENTS_DIR.parent
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    if str(scripts_root) not in sys.path:
+        sys.path.insert(0, str(scripts_root))
+
+    try:
+        return importlib.import_module(
+            f"scripts.api_clients.{client_module_name}"
+        )
+    except ModuleNotFoundError:
+        return importlib.import_module(f"api_clients.{client_module_name}")
 
 
 def build_run_log(
@@ -194,6 +228,8 @@ def reproduce(
     Returns:
         Dict with attempt metadata, output path, run log path, and result.
     """
+    load_project_env()
+
     breaker = check_circuit_breaker(tool, exemplar_id, session_attempt)
     if breaker:
         return {

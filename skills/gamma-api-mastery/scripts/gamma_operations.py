@@ -19,6 +19,13 @@ from scripts.api_clients.gamma_client import GammaClient
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _log_run_suffix(run_id: str | None) -> str:
+    """Optional APP run correlation for logs (additive; no behavior change)."""
+    if run_id is None or not str(run_id).strip():
+        return ""
+    return f" run_id={str(run_id).strip()}"
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
 STYLE_PRESETS_PATH = PROJECT_ROOT / "state" / "config" / "gamma-style-presets.yaml"
 STAGING_DIR = PROJECT_ROOT / "course-content" / "staging"
@@ -301,6 +308,7 @@ def execute_generation(
     module_lesson_part: str = "",
     diagram_cards: list[dict[str, Any]] | None = None,
     client: GammaClient | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Production entry point for slide generation.
 
@@ -315,6 +323,7 @@ def execute_generation(
         module_lesson_part: Identifier for doc naming (required for mixed fidelity).
         diagram_cards: Optional literal-visual image URL entries.
         client: Optional pre-configured GammaClient.
+        run_id: Optional APP production run id for log correlation.
 
     Returns:
         For single-call: completed generation data.
@@ -328,16 +337,17 @@ def execute_generation(
         if has_creative and has_literal:
             return generate_deck_mixed_fidelity(
                 slides, params, module_lesson_part,
-                client=client, diagram_cards=diagram_cards,
+                client=client, diagram_cards=diagram_cards, run_id=run_id,
             )
 
-    return generate_slide(params, client=client)
+    return generate_slide(params, client=client, run_id=run_id)
 
 
 def generate_slide(
     params: dict[str, Any],
     *,
     client: GammaClient | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute a single text-based Gamma API call with merged parameters.
 
@@ -348,6 +358,7 @@ def generate_slide(
         params: Merged parameter dict with at least ``input_text``
             and ``text_mode``.
         client: Optional pre-configured GammaClient.
+        run_id: Optional APP production run id for log correlation.
 
     Returns:
         Completed generation data including ``gammaUrl`` and
@@ -389,7 +400,11 @@ def generate_slide(
 
     result = client.generate(input_text, text_mode, **gen_kwargs)
     gen_id = result.get("generationId") or result.get("id", "")
-    logger.info("Generation started: %s", gen_id)
+    logger.info(
+        "Gamma generation started: generation_id=%s%s",
+        gen_id,
+        _log_run_suffix(run_id),
+    )
 
     completed = client.wait_for_generation(gen_id)
     return completed
@@ -401,6 +416,7 @@ def generate_from_template(
     params: dict[str, Any] | None = None,
     *,
     client: GammaClient | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute a template-based Gamma generation.
 
@@ -409,6 +425,7 @@ def generate_from_template(
         prompt: Content/instructions for the template.
         params: Optional additional params (theme_id, export_as, etc.).
         client: Optional pre-configured GammaClient.
+        run_id: Optional APP production run id for log correlation.
 
     Returns:
         Completed generation data.
@@ -432,7 +449,12 @@ def generate_from_template(
 
     result = client.generate_from_template(gamma_id, prompt, **gen_kwargs)
     gen_id = result.get("generationId") or result.get("id", "")
-    logger.info("Template generation started: %s (template: %s)", gen_id, gamma_id)
+    logger.info(
+        "Gamma template generation started: generation_id=%s template_id=%s%s",
+        gen_id,
+        gamma_id,
+        _log_run_suffix(run_id),
+    )
 
     completed = client.wait_for_generation(gen_id)
     return completed
@@ -442,6 +464,8 @@ def download_export(
     export_url: str,
     output_dir: Path | str | None = None,
     filename: str | None = None,
+    *,
+    run_id: str | None = None,
 ) -> Path:
     """Download an exported artifact from a signed URL.
 
@@ -449,6 +473,7 @@ def download_export(
         export_url: Signed download URL from completed generation.
         output_dir: Directory to save to. Defaults to staging.
         filename: Output filename. Auto-derived from URL if not provided.
+        run_id: Optional APP production run id for log correlation.
 
     Returns:
         Path to the downloaded file.
@@ -468,7 +493,12 @@ def download_export(
     resp = requests.get(export_url, timeout=120)
     resp.raise_for_status()
     output_path.write_bytes(resp.content)
-    logger.info("Downloaded %d bytes to %s", len(resp.content), output_path)
+    logger.info(
+        "Gamma export downloaded: bytes=%d path=%s%s",
+        len(resp.content),
+        output_path,
+        _log_run_suffix(run_id),
+    )
 
     return output_path
 
@@ -480,6 +510,7 @@ def generate_deck_mixed_fidelity(
     *,
     client: GammaClient | None = None,
     diagram_cards: list[dict[str, Any]] | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Orchestrate two-call split generation for mixed-fidelity decks.
 
@@ -494,6 +525,7 @@ def generate_deck_mixed_fidelity(
         module_lesson_part: Identifier for doc naming (e.g., "C1-M1-P2-Macro-Trends").
         client: Optional pre-configured GammaClient.
         diagram_cards: Optional list of literal-visual image URL entries.
+        run_id: Optional APP production run id for log correlation.
 
     Returns:
         Dict with 'gary_slide_output', 'provenance', 'generation_mode', 'calls_made'.
@@ -524,7 +556,7 @@ def generate_deck_mixed_fidelity(
         creative_params["num_cards"] = len(creative_slides)
         creative_params["card_split"] = "inputTextBreaks"
 
-        gen_result = generate_slide(creative_params, client=client)
+        gen_result = generate_slide(creative_params, client=client, run_id=run_id)
         calls_made += 1
         creative_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
 
@@ -572,7 +604,7 @@ def generate_deck_mixed_fidelity(
         literal_params["num_cards"] = len(literal_slides)
         literal_params["card_split"] = "inputTextBreaks"
 
-        gen_result = generate_slide(literal_params, client=client)
+        gen_result = generate_slide(literal_params, client=client, run_id=run_id)
         calls_made += 1
         literal_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
 
@@ -721,6 +753,7 @@ if __name__ == "__main__":
         "Usage: python gamma_operations.py <command> [args]\n"
         "Commands:\n"
         "  generate <input_text_file> [--fidelity-json <slides_json>] [--module <id>]\n"
+        "    [--diagram-cards <json>] [--run-id <production_run_id>]\n"
         "  validate-url <url>\n"
         "  merge-params <style_json> <template_json> <envelope_json> [--fidelity-class <class>]"
     )
@@ -763,12 +796,19 @@ if __name__ == "__main__":
             idx = sys.argv.index("--diagram-cards") + 1
             diagram_cards_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
 
+        run_id_cli: str | None = None
+        if "--run-id" in sys.argv:
+            idx = sys.argv.index("--run-id") + 1
+            if idx < len(sys.argv):
+                run_id_cli = sys.argv[idx]
+
         params = {"input_text": input_text, "textMode": "generate"}
         result = execute_generation(
             params,
             slides=slides_data,
             module_lesson_part=module_id,
             diagram_cards=diagram_cards_data,
+            run_id=run_id_cli,
         )
         print(json.dumps(result, indent=2, default=str))
         sys.exit(0)

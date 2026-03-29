@@ -602,7 +602,37 @@ set DEV_MODE=1
 .venv\Scripts\python -m pytest tests/ -v
 ```
 
-**Note:** Total test count changes as stories land; use `pytest --collect-only` for an exact count. By default, tests marked `live_api` are deselected unless `--run-live` is provided. Integration tests can still skip when required credentials are missing.
+**Note:** Total test count changes as stories land; use `pytest --collect-only` for an exact count.
+
+- By default, tests marked `live_api` are deselected unless `--run-live` is provided.
+- Slower/flakier end-to-end live tests are marked `live_api_e2e` and require an additional `--run-live-e2e` flag.
+- For Kling specifically, use `KLING_LIVE_STRICT=1` when you want queue-timeouts to fail the run instead of xfail.
+
+Examples:
+
+```powershell
+# Stable live canary coverage (recommended default)
+.venv\Scripts\python -m pytest tests/test_integration_kling.py --run-live -v
+
+# Full live E2E Kling coverage (opt-in)
+.venv\Scripts\python -m pytest tests/test_integration_kling.py --run-live --run-live-e2e -v
+
+# Strict mode (timeout becomes failure)
+set KLING_LIVE_STRICT=1
+.venv\Scripts\python -m pytest tests/test_integration_kling.py --run-live --run-live-e2e -v
+```
+
+### Ruff Lint Policy (Ratchet)
+
+The project uses a ratchet policy so delivery can continue while lint debt is reduced incrementally:
+
+1. Keep the existing backlog as a temporary baseline.
+2. New/changed Python files must be Ruff-clean.
+3. Full-project Ruff count must not rise above baseline.
+
+Policy details and command examples:
+
+- `docs/workflow/ruff-ratchet-policy.md`
 
 ### Writing New Tests
 

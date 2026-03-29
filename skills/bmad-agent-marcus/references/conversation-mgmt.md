@@ -29,12 +29,15 @@ Marcus recognizes these content types, each mapping to different specialist agen
 | Lecture slides only | `gamma-specialist` (Gary) | `content-creator` (slide brief), `quality-reviewer` | Marcus -> Irene slide brief -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> approve |
 | Narrated slides (no video) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Marcus -> Irene P1 -> Marcus -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Quinn-R pre-comp -> Descript -> Marcus/[Gate 4] |
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
-| Assessment / quiz | `content-creator` | `canvas-specialist`, `quality-reviewer` | Draft → alignment check → review → LMS publish |
+| Assessment / quiz | `content-creator` | `qualtrics-specialist`, `canvas-specialist`, `quality-reviewer` | Draft → objective alignment check → Qualtrics/Canvas routing → review → publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
 | Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Marcus -> script intake -> ElevenLabs -> Marcus/review -> approve |
 | Video clip (B-roll / concept) | `kling-specialist` (Kira) | `content-creator` (brief), `quality-reviewer` | Brief → generation → download → review |
+| Animated explainer | `vyond-specialist` | `content-creator`, `quality-reviewer` | Brief -> storyboard -> scene build guidance -> review -> approve |
+| Bespoke medical illustration | `midjourney-specialist` | `content-creator`, `quality-reviewer` | Prompt package -> user generation loop -> review -> approve |
 | Infographic | `canva-specialist` (Story 3.8) | `content-creator` (copy), `quality-reviewer` | Copy → design guidance → user executes in Canva → review |
-| Interactive module | `content-creator` | `canvas-specialist`, `assembly-coordinator` | Design → build → assemble → review → approve |
+| Interactive module (authoring) | `articulate-specialist` | `content-creator`, `quality-reviewer` | Design -> branching/interaction spec -> user authoring in Storyline/Rise -> review |
+| CourseArc deployment | `coursearc-specialist` | `articulate-specialist`, `quality-reviewer` | LTI setup -> SCORM checks -> accessibility verification -> Canvas embed checklist |
 
 ## Course Structure Awareness
 
@@ -122,17 +125,43 @@ After identifying intent and completing fidelity discovery, Marcus builds a prod
 
 For skeleton plan generation from templates, invoke `./scripts/generate-production-plan.py` with content type and module structure.
 
+## Platform Allocation Intelligence (Story G.1)
+
+When a production plan includes deployment routing, Marcus invokes
+`./scripts/platform_allocation.py` with a content profile and applies the
+result as a recommendation, not a hard lock.
+
+Required behavior:
+
+1. Present recommendation with reasoning from the allocation matrix.
+2. Offer conversational options: accept, modify, or override.
+3. If user modifies or overrides, rerun or record the final decision.
+4. Save final allocation rationale to Marcus sidecar patterns for learning.
+
+Reference inputs:
+
+- `resources/exemplars/_shared/platform-allocation-matrix.yaml`
+- `state/config/course_context.yaml`
+- `resources/exemplars/policies/canvas-coursearc-platform-allocation-policy.md`
+
 ## Specialist Delegation
 
 When a production plan stage requires a specialist:
 
-1. **Check availability** — Verify the specialist SKILL.md exists at `skills/bmad-agent-{name}/SKILL.md`. If not, gracefully degrade (see `production-coordination/references/delegation-protocol.md`).
+1. **Check availability** — Verify the specialist definition exists at `agents/{name}.md` or `skills/bmad-agent-{name}/SKILL.md`. If neither exists, gracefully degrade (see `production-coordination/references/delegation-protocol.md`).
 2. **Pack context envelope** — Build the outbound context from the current run state (see envelope spec below).
 3. **Log delegation** — `log_coordination.py log --run-id {id} --agent {specialist} --action delegated --payload '{envelope}'`
-4. **Invoke specialist** — Load the specialist SKILL.md. Present the context envelope as the task.
+4. **Invoke specialist** — Load `agents/{name}.md` when present; otherwise load `skills/bmad-agent-{name}/SKILL.md`. Present the context envelope as the task.
 5. **Receive results** — Specialist returns a mediated result payload: one or more artifact paths, quality assessment, parameter decisions, any specialist-specific payload fields, and explicit downstream routing notes.
 6. **Log completion** — `log_coordination.py log --run-id {id} --agent {specialist} --action completed --payload '{result}'`
 7. **Save parameter decisions** — If the specialist discovered effective parameters, note them for `patterns.md` (default mode).
+
+If specialist status is `blocked`, Marcus must execute blocked recovery:
+
+1. Summarize blocker cause and impact in user-facing language.
+2. Offer recovery options: resolve input gap, skip stage, or reroute to alternate specialist.
+3. If user chooses skip/reroute, log decision rationale in coordination and continue run.
+4. If user chooses resolve, gather missing inputs and re-dispatch the same stage.
 
 When specialist is unavailable: acknowledge the gap, suggest what can be done now (outline, planning), skip the stage, and continue the workflow.
 

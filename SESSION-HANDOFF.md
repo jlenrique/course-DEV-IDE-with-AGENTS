@@ -2,53 +2,67 @@
 
 ## Scope Completed This Session
 
-- Executed BMAD shutdown protocol tasks for quality gate, artifact review, cleanup, and handoff refresh.
-- Verified branch context and current implementation artifact status.
-- Removed stale generated runtime directories that were not baseline-tracked.
-- Updated startup/handoff and developer docs to reflect current test profile behavior and next priorities.
+- Completed Story 5.4: hardened Botpress/Wondercraft API paths and expanded payload-contract unit coverage.
+- Completed Story G.2: added tool ecosystem synthesis engine, governance aggregation, recommendation prioritization, and generated report artifact.
+- Completed Story 10.1: added predictive workflow optimization engine, recommendation contract (accept/modify/override), and generated report artifact.
+- Updated sprint/story artifacts to reflect completed status for Stories 5.4, G.2, and 10.1 and closed Epics 5, G, and 10.
+- Executed shutdown wrapup updates for startup/handoff/workflow context files.
 
 ## Quality Gate Results
 
-- Default test profile: `155 passed, 23 deselected, 5 warnings`.
-- Live profile: not fully triaged yet; keep as explicit next-step work.
-- Lint (`ruff`): fails with large existing backlog (`1407` issues total).
-- Whitespace check (`git diff --check`): identified trailing whitespace in startup doc and was corrected in this closeout pass.
+- `git diff --check`: pass (after fixing one trailing-whitespace finding in `g-3-app-session-readiness-health-monitoring.md`).
+- `ruff check` (targeted files touched in Story 5.4/G.2/10.1 wave): pass.
+- `pytest` targeted regression:
+	- `tests/test_botpress_client.py`
+	- `tests/test_wondercraft_client.py`
+	- `skills/bmad-agent-marcus/scripts/tests/test_tool_ecosystem_synthesis.py`
+	- `skills/bmad-agent-marcus/scripts/tests/test_predictive_workflow_optimization.py`
+	- Result: `15 passed`.
 
-## Environment and Hygiene Actions
+## Branch and Closeout Status
 
-- Confirmed Python environment: `.venv` / Python 3.13.6.
-- Cleaned generated folders:
-	- `state/config/runs/`
-	- `state/runtime/ad-hoc-observability/`
-	- `state/runtime/perception-cache/`
+- Active branch: `dev/session-20260328`.
+- Working tree remains broad (`97` modified paths) and includes more than this single story wave.
+- Merge-to-master was intentionally not executed in this wrapup pass pending curated staging/commit review.
 
-## Current Branch and Closeout Status
+## Documentation and Artifacts Updated
 
-- Active branch: `dev/epic-4a-agent-governance`.
-- Merge-to-master was intentionally not performed in this shutdown because:
-	- lint baseline remains unresolved,
-	- live-profile triage remains pending.
-
-## Documentation Updated
-
-- `next-session-start-here.md` refreshed with next action, quality-gate snapshot, and branch closeout exception.
-- `docs/dev-guide.md` updated with default vs live pytest profile commands.
-- `docs/project-context.md` updated to reflect Epic 4A/Epic 4 completion and post-governance next focus.
-- `docs/agent-environment.md` updated with live-test execution profile notes.
-- `.gitignore` updated to ignore generated runtime paths to reduce workspace pollution.
+- Startup guide refreshed:
+	- `next-session-start-here.md`
+- Workflow status refreshed:
+	- `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
+- Project context refreshed:
+	- `docs/project-context.md`
+- Story artifacts added/updated:
+	- `_bmad-output/implementation-artifacts/5-4-remaining-tier2-api-integrations.md`
+	- `_bmad-output/implementation-artifacts/g-2-tool-ecosystem-monitoring-synthesis.md`
+	- `_bmad-output/implementation-artifacts/10-1-predictive-workflow-optimization.md`
+	- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- Generated reports:
+	- `_bmad-output/implementation-artifacts/reports/tool-ecosystem-synthesis-report.json`
+	- `skills/reports/predictive-workflow/C1-M1-20260329T034147.json`
 
 ## Unresolved / Carry-Forward Items
 
-1. Triage and stabilize `--run-live` profile (start with Kling live tests and timeout/runtime behavior).
-2. Decide strategy for large Ruff baseline (incremental policy, scoped cleanup, or baseline suppression approach).
-3. Resume deferred Epic 3 queue only after live-profile reliability path is defined.
+1. Perform curated Git closeout on `dev/session-20260328` (stage, commit, and decide merge timing).
+2. Run full-suite and live-profile validation if release-level signoff is needed beyond targeted regression.
+3. Decide how to handle repository-wide lint baseline outside this scoped implementation wave.
+
+## Artifact Completeness Checklist
+
+- [x] Story artifacts updated for current completed stories.
+- [x] Sprint status updated.
+- [x] Workflow status updated.
+- [x] Project context updated.
+- [x] Next-session startup doc updated.
+- [x] Session handoff updated.
 
 ## Next Session First Commands
 
 ```bash
 git checkout master
 git pull origin master
-git checkout dev/epic-4a-agent-governance
-.venv\Scripts\python -m pytest tests -v
-.venv\Scripts\python -m pytest tests -v --run-live
+git checkout dev/session-20260328
+git status --short
+.venv\Scripts\python -m pytest tests/test_botpress_client.py tests/test_wondercraft_client.py skills/bmad-agent-marcus/scripts/tests/test_tool_ecosystem_synthesis.py skills/bmad-agent-marcus/scripts/tests/test_predictive_workflow_optimization.py -q
 ```

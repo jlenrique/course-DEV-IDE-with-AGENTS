@@ -54,6 +54,14 @@ requires_panopto = pytest.mark.skipif(
     not (os.environ.get("PANOPTO_BASE_URL") and os.environ.get("PANOPTO_CLIENT_ID")),
     reason="PANOPTO_BASE_URL or PANOPTO_CLIENT_ID not set",
 )
+requires_botpress = pytest.mark.skipif(
+    not os.environ.get("BOTPRESS_API_KEY"),
+    reason="BOTPRESS_API_KEY not set",
+)
+requires_wondercraft = pytest.mark.skipif(
+    not os.environ.get("WONDERCRAFT_API_KEY"),
+    reason="WONDERCRAFT_API_KEY not set",
+)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -64,6 +72,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=False,
         help="Run tests marked as live_api (disabled by default).",
     )
+    parser.addoption(
+        "--run-live-e2e",
+        action="store_true",
+        default=False,
+        help="Run tests marked as live_api_e2e (disabled by default).",
+    )
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -72,6 +86,10 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "live_api: marks tests that call live third-party APIs",
     )
+    config.addinivalue_line(
+        "markers",
+        "live_api_e2e: marks slower/flakier live end-to-end API tests",
+    )
 
 
 def pytest_collection_modifyitems(
@@ -79,14 +97,16 @@ def pytest_collection_modifyitems(
     items: list[pytest.Item],
 ) -> None:
     """Exclude live API tests from default runs unless explicitly requested."""
-    if config.getoption("--run-live"):
-        return
-
     selected: list[pytest.Item] = []
     deselected: list[pytest.Item] = []
 
+    run_live = config.getoption("--run-live")
+    run_live_e2e = config.getoption("--run-live-e2e")
+
     for item in items:
-        if "live_api" in item.keywords:
+        if "live_api" in item.keywords and not run_live:
+            deselected.append(item)
+        elif "live_api_e2e" in item.keywords and not run_live_e2e:
             deselected.append(item)
         else:
             selected.append(item)

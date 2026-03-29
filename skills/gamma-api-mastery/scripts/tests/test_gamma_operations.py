@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parents[4])
 sys.path.insert(0, _PROJECT_ROOT)
@@ -124,6 +127,16 @@ class TestGenerateSlide:
         )
         mock_client.wait_for_generation.assert_called_once_with("gen-123")
         assert result["status"] == "completed"
+
+    def test_log_includes_run_id_when_provided(self, caplog: pytest.LogCaptureFixture) -> None:
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-runid"}
+        mock_client.wait_for_generation.return_value = {"id": "gen-runid", "status": "completed"}
+        params = {"input_text": "x", "text_mode": "generate"}
+        with caplog.at_level(logging.INFO, logger="gamma_operations"):
+            generate_slide(params, client=mock_client, run_id="RUN-ABC-99")
+        assert any("RUN-ABC-99" in r.message for r in caplog.records)
+        assert any("generation_id=" in r.message for r in caplog.records)
 
     def test_handles_camelcase_params(self) -> None:
         mock_client = MagicMock()

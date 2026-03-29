@@ -41,7 +41,8 @@ def test_all_content_types() -> None:
     """All content types produce valid output."""
     content_types = [
         "lecture-slides", "case-study", "assessment", "discussion-prompt",
-        "video-script", "voiceover", "interactive-module",
+        "video-script", "animated-explainer", "bespoke-medical-illustration",
+        "voiceover", "interactive-module", "coursearc-deployment",
     ]
     for ct in content_types:
         result = subprocess.run(
@@ -80,7 +81,8 @@ def test_human_checkpoint_present() -> None:
     """All content type workflows include at least one human checkpoint."""
     content_types = [
         "lecture-slides", "case-study", "assessment", "discussion-prompt",
-        "video-script", "voiceover", "interactive-module",
+        "video-script", "animated-explainer", "bespoke-medical-illustration",
+        "voiceover", "interactive-module", "coursearc-deployment",
     ]
     for ct in content_types:
         result = subprocess.run(

@@ -1,0 +1,12 @@
+snapshot_schema:
+  required_fields:
+    - status
+    - course
+    - module_count
+    - page_count
+    - assignment_count
+    - quiz_count
+    - sampled_module_names
+  semantics:
+    status: "ok when Canvas data retrieval succeeds"
+    sampled_module_names: "first few module names for quick human verification"

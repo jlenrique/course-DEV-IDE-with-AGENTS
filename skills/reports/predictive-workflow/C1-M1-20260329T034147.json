@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-03-29T03:41:47",
+  "run_context": {
+    "course_code": "C1",
+    "module_id": "M1",
+    "preset": "production",
+    "content_type": ""
+  },
+  "similar_runs_considered": 0,
+  "similar_run_ids": [],
+  "ad_hoc_runs_excluded": 0,
+  "workflow_sequence_recommendation": {
+    "recommended_sequence": [],
+    "confidence": "low"
+  },
+  "predicted_bottlenecks": [],
+  "resource_allocation_suggestions": [],
+  "options": {
+    "accept": {
+      "action": "use_recommended_sequence",
+      "sequence": []
+    },
+    "modify": "Adjust stage order or specialist assignment, then re-run prediction.",
+    "override": "Proceed with custom workflow and capture reason for sidecar learning."
+  }
+}

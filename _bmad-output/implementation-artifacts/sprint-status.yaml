@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-28 (Story 3.9 Source Wrangler implemented)
+# last_updated: 2026-03-30 (Stories 5.4, G.2, and 10.1 completed; Epics 5, G, and 10 now complete)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-29  # Epic 4A and Epic 4 stories marked done after implementation + focused validation.
+last_updated: 2026-03-30  # Stories 5.4, G.2, and 10.1 implemented and validated; Epics 5, G, and 10 complete.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -86,16 +86,16 @@ development_status:
   # === EPIC 3: Core Tool Specialist Agents & Mastery Skills ===
   # Re-sequenced 2026-03-27: 3.3.1 harmonization added, Compositor added as 3.5, Canvas→3.6,
   # Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10. 11 stories total.
-  epic-3: in-progress
+  epic-3: done
   3-1-gamma-specialist-agent: done
   3-2-content-creator-quality-reviewer-agents: done  # instructional design director + BMad writer delegation, human review validation
   3-3-kling-video-specialist-agent: done  # API client, Kira agent, kling-video skill, comparison video set, human-reviewed
   3-3-1-composition-architecture-harmonization: done  # agent updates, segment manifest, Gary deck mode, re-sequencing — DONE 2026-03-27
   3-4-elevenlabs-specialist-agent: done  # Voice Director, elevenlabs-audio skill, expanded client, tests, live timestamp and manifest smokes
   3-5-compositor-skill: done  # compositor skill, proof assembly guide, behavioral intent contract formalized
-  3-6-canvas-specialist-agent: backlog  # was 3.5
-  3-7-qualtrics-specialist-agent: backlog  # was 3.6
-  3-8-canva-specialist-agent: backlog  # manual-tool agent pattern; was 3.7
+  3-6-canvas-specialist-agent: done  # Deployment Director + canvas-deployment skill + woodshed exemplar reproduction
+  3-7-qualtrics-specialist-agent: done  # Assessment Architect + qualtrics-assessment skill + woodshed exemplar reproduction
+  3-8-canva-specialist-agent: done  # Visual Designer manual-tool specialist + canva-design knowledge skill
   3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
   3-11-mixed-fidelity-gamma-generation: done  # Mixed-fidelity system: Irene fidelity fields, Gary two-call split, Marcus discovery, Quinn-R fidelity-aware review, 12 tests — done 2026-03-28
@@ -128,27 +128,28 @@ development_status:
   # === EPIC 5: Tool Capability Expansion (Rebaselined 2026-03-28) ===
   # Narrowed: 5.2 dropped (compositor delivers assembly), 5.3 merged (Quinn-R + style guide),
   # 5.4 edited (Panopto done, Kling pulled forward). 2 stories remain.
-  epic-5: backlog
-  5-1-expanded-tool-specialist-agents: backlog  # Vyond, Midjourney, Articulate (manual-tool pattern)
-  5-4-remaining-tier2-api-integrations: backlog  # Botpress, Wondercraft only (Panopto, Kling already done)
+  epic-5: done
+  5-1-expanded-tool-specialist-agents: done  # Vyond, Midjourney, Articulate (manual-tool pattern) completed with adversarial mitigation closure
+  5-4-remaining-tier2-api-integrations: done  # Botpress + Wondercraft API clients hardened with integration and unit coverage
   epic-5-retrospective: optional
 
   # === EPIC 6: LMS Platform Integration & Delivery (Rebaselined 2026-03-28) ===
-  # 6.2 merged into Story 3.6 (Canvas specialist). 1 story remains.
-  epic-6: backlog
-  6-1-coursearc-specialist-agent: backlog
+  # 6.2 merged into Story 3.6 (Canvas specialist). 6.1 completed as manual-tool specialist.
+  epic-6: done
+  6-1-coursearc-specialist-agent: done  # CourseArc specialist wrapper + manual-tool guidance hardening + contract tests
   epic-6-retrospective: optional
 
   # === EPIC G: Governance Synthesis & Intelligence Optimization (Replaces Epics 7+8+9, 2026-03-28) ===
   # Platform allocation → Marcus intelligence extension. Tool review → tech-spec-wrangler synthesis.
-  # Documentation → sidecar synthesis. 2 stories.
-  epic-g: backlog
-  g-1-platform-allocation-intelligence: backlog  # replaces Epic 7
-  g-2-tool-ecosystem-monitoring-synthesis: backlog  # replaces Epics 8 + 9
+  # Documentation → sidecar synthesis. +G.3 session readiness / health monitoring (2026-03-30).
+  epic-g: done
+  g-1-platform-allocation-intelligence: done  # matrix-driven platform recommendation logic + tests + sidecar learning
+  g-2-tool-ecosystem-monitoring-synthesis: done  # synthesis script + governance aggregation + recommendations + tests
+  g-3-app-session-readiness-health-monitoring: done  # runtime readiness service + tests + docs + Marcus/preflight references
   epic-g-retrospective: optional
 
   # === EPIC 10: Strategic Production Orchestration (Deferred, Rebaselined 2026-03-28) ===
   # Deferred until governance + observability matures. Depends on Epic 4 + Epic G.
-  epic-10: backlog
-  10-1-predictive-workflow-optimization: backlog
+  epic-10: done
+  10-1-predictive-workflow-optimization: done
   epic-10-retrospective: optional

@@ -1,0 +1,16 @@
+status: blocked
+recommended_workflow: "Collect missing script and objective map, then rerun storyboard planning"
+step_by_step_instructions:
+  - "Request approved script"
+  - "Request objective map"
+  - "Return to Vyond storyboard workflow"
+storyboard_payload:
+  lesson_context: {}
+  scenes: []
+human_review_required: true
+warnings:
+  - "Cannot safely draft scene timings without approved script"
+blockers:
+  - "Missing approved script"
+  - "Missing objective map"
+route_to: "marcus"

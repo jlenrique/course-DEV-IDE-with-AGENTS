@@ -1,0 +1,45 @@
+status: guidance-ready
+recommended_workflow: "Draft branching map, implement interactions, run SCORM and WCAG verification"
+step_by_step_instructions:
+  - "Build scene map aligned to objectives"
+  - "Implement branching and remediation loops"
+  - "Run SCORM and WCAG verification matrix"
+review_checklists:
+  scorm:
+    - "Manifest and launch path verified"
+    - "Gradebook reporting validated"
+  wcag:
+    - criterion: "2.1.1"
+      result: "pass"
+      evidence_path: "evidence/wcag/keyboard-path.md"
+    - criterion: "2.4.7"
+      result: "pass"
+      evidence_path: "evidence/wcag/focus-visible.png"
+    - criterion: "1.4.3"
+      result: "pass"
+      evidence_path: "evidence/wcag/contrast-report.csv"
+    - criterion: "2.1.2"
+      result: "pass"
+      evidence_path: "evidence/wcag/no-keyboard-trap.md"
+    - criterion: "2.4.3"
+      result: "pass"
+      evidence_path: "evidence/wcag/focus-order.md"
+    - criterion: "1.4.10"
+      result: "pass"
+      evidence_path: "evidence/wcag/reflow-check.md"
+    - criterion: "1.3.1"
+      result: "pass"
+      evidence_path: "evidence/wcag/info-relationships.md"
+    - criterion: "1.3.2"
+      result: "pass"
+      evidence_path: "evidence/wcag/meaningful-sequence.md"
+    - criterion: "1.1.1"
+      result: "pass"
+      evidence_path: "evidence/wcag/non-text-content.md"
+    - criterion: "3.3.2"
+      result: "pass"
+      evidence_path: "evidence/wcag/labels-instructions.md"
+human_review_required: true
+warnings:
+  - "Final LMS smoke test still required"
+blockers: []

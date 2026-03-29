@@ -1,0 +1,14 @@
+status: blocked
+recommended_workflow: "Escalate ambiguous realism requirements to Marcus before generation"
+prompt_packages: []
+iteration_log: []
+step_by_step_instructions:
+  - "Document ambiguity in requested realism"
+  - "Route to Marcus for adjudication"
+  - "Resume after constraints are clarified"
+human_review_required: true
+warnings:
+  - "Conflicting style references may cause unsafe realism drift"
+blockers:
+  - "Ambiguous clinical realism constraints"
+route_to: "marcus"

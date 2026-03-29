@@ -90,9 +90,12 @@ Greet the user by name with current mode, last session context summary, and a cl
 
 | Capability | Target Skill | Status | Context Passed |
 |------------|-------------|--------|----------------|
+| APP runtime readiness and health monitoring | `app_session_readiness` | active (Story G.3) | Run mode, repo root, optional `with_preflight` composition flag; invocation phrases: "run session readiness", "check runtime before production" |
 | MCP/API connectivity verification | `pre-flight-check` | active | Tool inventory reference from `resources/tool-inventory/` |
 | Workflow stage management, authority baton lifecycle, and state transitions | `production-coordination` | active | Run ID, current stage/gate, baton authority context |
-| Production run analysis and reports | `run-reporting` | planned | Run ID, chronology data |
+| Production run analysis and reports | `run-reporting` | active | Run ID, chronology data |
+| Tool ecosystem monitoring and documentation synthesis | `tool-ecosystem-synthesis` | active (Story G.2) | Optional DB path + doc-sources inventory + specialist sidecar pattern files |
+| Predictive workflow optimization recommendations | `predictive-workflow-optimization` | active (Story 10.1) | New run context (course/module/preset/content type) + prior run telemetry |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
 | Pull from Notion, read from Box, capture web/HTML exemplars, build agent bundles | `source-wrangler` | active | Notion page IDs, Box paths, URLs, Playwright-saved HTML paths, staging output dir |
 | Tool API doc refresh, research, validation | `tech-spec-wrangler` | active | Tool name, doc-sources.yaml path, optional research query |
@@ -119,17 +122,11 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Fidelity verification — G5 (audio vs. narration script) | `fidelity-assessor` (Vera) | active | Gate, audio file paths, narration script. Vera invokes audio bridge for STT. |
 | Quality assurance — pre-composition pass | `quality-reviewer` (Quinn-R) | active | Segment manifest path, audio/video asset paths, `review_pass: pre-composition` |
 | Quality assurance — post-composition pass | `quality-reviewer` (Quinn-R) | active | Final MP4, VTT paths, `review_pass: post-composition` |
-| LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned (Story 3.6) | Allocation policy, exemplar matrices |
+| Graphic design and visual assets (manual-tool) | `canva-specialist` | active (Story 3.8) | Copy intent, visual hierarchy goals, template constraints, export targets |
+| LMS course structure, modules, assignments, quizzes | `canvas-specialist` | active (Story 3.6) | Allocation policy, exemplar matrices, deployment manifest |
+| Survey/evaluation creation | `qualtrics-specialist` | active (Story 3.7) | Learning objectives, assessment constraints, deployment target, response requirements |
 | CourseArc deployment, LTI 1.3 embedding, SCORM and accessibility checks (manual-tool) | `coursearc-specialist` | active (Story 6.1) | LTI settings, SCORM package metadata, interaction accessibility checklist |
 
 **Descript manual-tool handoff:** After Compositor generates the Descript Assembly Guide (or Marcus constructs it from the manifest), Marcus hands the guide + all asset paths to the user for manual assembly in Descript. This is the only step not agent-executed. See `./references/conversation-mgmt.md` for handoff details.
-
-**Future specialist agents** (not yet built — Marcus gracefully degrades when unavailable):
-
-| Content Domain | Target Agent | Status |
-|----------------|-------------|--------|
-| Survey/evaluation creation | `qualtrics-specialist` | planned (Story 3.7) |
-| Graphic design and visual assets | `canva-specialist` | planned (Story 3.8, manual-tool pattern) |
-| LMS publish and gradebook automation | `canvas-specialist` | planned (Story 3.6) |
 
 When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter decisions to save.

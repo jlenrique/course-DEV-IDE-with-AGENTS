@@ -90,6 +90,24 @@ class QualtricsClient(BaseAPIClient):
         }
         return self._result(self.post("/survey-definitions", json=payload))
 
+    def update_survey_options(
+        self,
+        survey_id: str,
+        *,
+        question_numbering: bool = True,
+        progress_bar: bool = True,
+    ) -> dict[str, Any]:
+        """Best-effort survey option updates for common assessment defaults."""
+        payload = {
+            "SurveyOptions": {
+                "QuestionNumbering": "ON" if question_numbering else "OFF",
+                "ProgressBarDisplay": "Bar" if progress_bar else "None",
+            }
+        }
+        return self._result(
+            self.put(f"/survey-definitions/{survey_id}/options", json=payload)
+        )
+
     # -- Questions --
 
     def list_questions(self, survey_id: str) -> list[dict[str, Any]]:
@@ -182,3 +200,71 @@ class QualtricsClient(BaseAPIClient):
                 f"/surveys/{survey_id}/export-responses/{progress_id}"
             )
         )
+
+
+def reproduce_survey_snapshot(page_size: int = 5) -> dict[str, Any]:
+    """Capture a read-only Qualtrics inventory snapshot for woodshed.
+
+    This helper supports skills/woodshed/scripts/reproduce_exemplar.py by
+    providing a deterministic module-level function for API reproduction.
+    """
+    client = QualtricsClient()
+
+    if isinstance(page_size, bool) or not isinstance(page_size, int) or page_size < 1:
+        return {
+            "status": "error",
+            "reason": "page_size must be a positive integer",
+            "user": None,
+            "survey_count": 0,
+            "sample_surveys": [],
+        }
+
+    try:
+        user = client.whoami()
+        surveys = client.list_surveys(page_size=page_size)
+    except Exception as exc:  # pragma: no cover - defensive API failure path
+        return {
+            "status": "error",
+            "reason": str(exc),
+            "user": None,
+            "survey_count": 0,
+            "sample_surveys": [],
+        }
+
+    if not isinstance(user, dict):
+        return {
+            "status": "error",
+            "reason": "Qualtrics whoami response was not an object",
+            "user": None,
+            "survey_count": 0,
+            "sample_surveys": [],
+        }
+
+    normalized_surveys: list[dict[str, str]] = []
+    for survey in surveys[: min(page_size, 5)]:
+        if not isinstance(survey, dict):
+            continue
+        normalized_surveys.append(
+            {
+                "id": str(
+                    survey.get("id")
+                    or survey.get("SurveyID")
+                    or ""
+                ),
+                "name": str(
+                    survey.get("name")
+                    or survey.get("SurveyName")
+                    or ""
+                ),
+            }
+        )
+
+    return {
+        "status": "ok",
+        "user": {
+            "id": user.get("userId") or user.get("id"),
+            "name": user.get("userName") or user.get("name"),
+        },
+        "survey_count": len(surveys),
+        "sample_surveys": normalized_surveys,
+    }

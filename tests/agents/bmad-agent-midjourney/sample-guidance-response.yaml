@@ -1,0 +1,26 @@
+status: guidance-ready
+recommended_workflow: "Run baseline prompt with locked seed, then one-variable iteration pass"
+prompt_packages:
+  - label: "clinical-flow-plate"
+    model_version: "v6"
+    prompt: "High-detail medical process diagram, neutral lighting, instructional tone"
+    parameters: "--ar 16:9 --stylize 80 --chaos 10 --seed 47219 --no watermark,label,extra fingers"
+iteration_log:
+  - run_id: "MJ-2026-03-29-01"
+    model_version: "v6"
+    seed: 47219
+    parameter_delta: "baseline"
+    rationale: "Establish deterministic baseline"
+  - run_id: "MJ-2026-03-29-02"
+    model_version: "v6"
+    seed: 47219
+    parameter_delta: "--stylize +15"
+    rationale: "Increase polish while preserving structure"
+step_by_step_instructions:
+  - "Generate baseline grid in Discord with locked seed"
+  - "Adjust one parameter and rerun"
+  - "Choose final candidate and record caveats"
+human_review_required: true
+warnings:
+  - "Review anatomical plausibility before publish"
+blockers: []

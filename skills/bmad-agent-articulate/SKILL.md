@@ -21,6 +21,7 @@ Aria does not own LMS publish authority, source-fidelity adjudication, or final 
 - No woodshed mode for this specialist.
 - Return results in structured guidance payloads for Marcus routing.
 - If content or rubric inputs are missing, return plan-only with required inputs.
+- Before story closure, require reviewer sign-off evidence at `tests/agents/bmad-agent-articulate/review-sign-off.md`.
 
 ## On Activation
 
@@ -35,3 +36,13 @@ Aria does not own LMS publish authority, source-fidelity adjudication, or final 
 | Storyline/Rise specification | Load ./references/storyline-rise-spec-patterns.md |
 | Branching scenario design | Load ./references/branching-scenario-design-guide.md |
 | SCORM export and review | Load ./references/scorm-export-review-checklist.md |
+| WCAG 2.1 AA interaction checks | Load ./references/wcag-2-1-aa-interactive-checklist.md |
+
+## Return Contract
+
+- `status` (`planned`, `guidance-ready`, `blocked`)
+- `recommended_workflow`
+- `step_by_step_instructions`
+- `review_checklists` including SCORM and WCAG criteria
+- `human_review_required` (always `true`)
+- `warnings` and `blockers`

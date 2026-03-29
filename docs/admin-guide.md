@@ -309,18 +309,41 @@ Three ways to invoke:
 
 ```bash
 # 1. Through Marcus (conversational)
-# In Cursor chat: "Run pre-flight check" or "Are all tools ready?"
+# In Cursor chat: "Run session readiness" or "Run pre-flight check"
 
-# 2. Programmatic (Python)
-.venv\Scripts\python -m skills.pre-flight-check.scripts.preflight_runner
+# 2. Runtime readiness (Story G.3)
+.venv/Scripts/python -m scripts.utilities.app_session_readiness
 
-# 3. Baseline heartbeat (Node.js — all tools)
+# 3. Runtime + tool ecosystem (two-phase)
+.venv/Scripts/python -m scripts.utilities.app_session_readiness --with-preflight
+
+# 4. Tool pre-flight only (Python)
+.venv/Scripts/python -m skills.pre-flight-check.scripts.preflight_runner
+
+# 5. Baseline heartbeat (Node.js — all tools)
 node scripts/heartbeat_check.mjs
 
-# 4. Targeted smoke tests
+# 6. Targeted smoke tests
 node scripts/smoke_elevenlabs.mjs
 node scripts/smoke_qualtrics.mjs
 ```
+
+### Runtime Readiness Scope (Story G.3)
+
+`app_session_readiness.py` validates APP runtime prerequisites before long runs:
+
+- `state/runtime/coordination.db` presence and schema sanity (auto-init when missing)
+- critical state paths (`state/config`, `state/runtime`) existence and writeability
+- `mode_state.json` readability when present
+- import sanity for production observability/reporting modules
+
+Use `--with-preflight` to compose runtime checks with the existing tool/API pre-flight sequence.
+
+Exit codes:
+
+- `0`: pass
+- `1`: fail
+- `2`: warn with `--strict`
 
 ### What Pre-Flight Checks
 

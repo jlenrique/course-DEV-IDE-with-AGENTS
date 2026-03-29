@@ -38,6 +38,8 @@ class WondercraftClient(BaseAPIClient):
             "WONDERCRAFT_BASE_URL",
             "https://api.wondercraft.ai/v1",
         )).rstrip("/")
+        if not normalized_base.endswith("/v1"):
+            normalized_base = f"{normalized_base}/v1"
 
         super().__init__(
             base_url=normalized_base,

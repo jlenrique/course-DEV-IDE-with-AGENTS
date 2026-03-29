@@ -1,0 +1,31 @@
+type: object
+required:
+  - status
+  - user
+  - survey_count
+  - sample_surveys
+properties:
+  status:
+    type: string
+    enum: [ok, error]
+  user:
+    type: object
+    nullable: true
+    properties:
+      id:
+        type: [string, integer, "null"]
+      name:
+        type: [string, "null"]
+  survey_count:
+    type: integer
+    minimum: 0
+  sample_surveys:
+    type: array
+    items:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string

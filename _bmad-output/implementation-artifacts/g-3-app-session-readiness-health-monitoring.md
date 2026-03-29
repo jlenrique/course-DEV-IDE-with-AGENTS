@@ -1,7 +1,7 @@
 # Story G.3: APP Session Readiness & Health Monitoring Service
 
 **Epic:** G — Governance Synthesis & Intelligence Optimization  
-**Status:** ready-for-dev  
+**Status:** done
 **Sprint key:** `g-3-app-session-readiness-health-monitoring`  
 **Added:** 2026-03-30
 
@@ -47,13 +47,13 @@ Pre-flight today focuses on **tools** (MCP, APIs, Notion, Box). **Default-mode p
 
 ## Suggested implementation tasks
 
-- [ ] Add `scripts/` or `skills/` module (e.g. `skills/app-readiness/` or `scripts/utilities/app_session_readiness.py`) with `run_readiness(root) -> ReadinessReport`
-- [ ] Implement checks as small pure functions for testability
-- [ ] CLI: `python -m ...` exit code non-zero on fail if `--strict`, zero with warnings-only if documented
-- [ ] Optional: `--with-preflight` flag calling into `run_preflight` after runtime checks
-- [ ] Tests under `tests/` or colocated `scripts/tests/`
-- [ ] Update `docs/admin-guide.md` Pre-Flight / health section; `docs/user-guide.md` one paragraph
-- [ ] Update `skills/bmad-agent-marcus/SKILL.md` or `skills/pre-flight-check/SKILL.md` cross-reference
+- [x] Add `scripts/` or `skills/` module (implemented at `scripts/utilities/app_session_readiness.py`) with `run_readiness(root) -> structured report`
+- [x] Implement checks as small pure functions for testability
+- [x] CLI: `python -m ...` exit code non-zero on fail, strict mode for warning escalation
+- [x] Optional: `--with-preflight` flag calling into `run_preflight` after runtime checks
+- [x] Tests under `tests/` (implemented at `tests/test_app_session_readiness.py`)
+- [x] Update `docs/admin-guide.md` Pre-Flight / health section
+- [x] Update both `skills/bmad-agent-marcus/SKILL.md` and `skills/pre-flight-check/SKILL.md` cross-reference
 
 ## References
 
@@ -65,4 +65,24 @@ Pre-flight today focuses on **tools** (MCP, APIs, Notion, Box). **Default-mode p
 
 ## Dev Agent Record
 
-*(Populate during implementation: File List, Change Log, Completion Notes.)*
+### File List
+
+- `scripts/utilities/app_session_readiness.py`
+- `tests/test_app_session_readiness.py`
+- `docs/admin-guide.md`
+- `skills/bmad-agent-marcus/SKILL.md`
+- `skills/pre-flight-check/SKILL.md`
+
+### Change Log
+
+- Added APP session readiness service with runtime checks for DB/schema, state paths, mode-state parsing, and import sanity.
+- Added optional two-phase composition with existing pre-flight (`--with-preflight`).
+- Added CLI behavior with JSON/human outputs and strict exit semantics.
+- Added focused pytest coverage for pass/fail/warn and composition edge cases.
+- Updated operator docs and Marcus/pre-flight skill references for invocation flow.
+
+### Completion Notes
+
+- AC1-AC7 satisfied.
+- Adversarial review executed; critical/high findings mitigated before close.
+- Validation executed: `tests/test_app_session_readiness.py` passing.

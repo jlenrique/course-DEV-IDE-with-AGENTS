@@ -10,6 +10,11 @@ from scripts.api_clients.base_client import APIError
 from scripts.api_clients.wondercraft_client import WondercraftClient
 
 
+def test_base_url_normalized_to_v1() -> None:
+    client = WondercraftClient(api_key="k", base_url="https://api.wondercraft.ai")
+    assert client.base_url.endswith("/v1")
+
+
 def test_check_connectivity_handles_auth_error_as_reachable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -47,3 +52,30 @@ def test_wait_for_job_failed_raises(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(RuntimeError, match="bad script"):
         client.wait_for_job("job-2", poll_interval=0, max_attempts=2)
+
+
+def test_create_scripted_podcast_includes_voice_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = WondercraftClient(api_key="k")
+    captured: dict[str, object] = {}
+
+    def fake_post(endpoint: str, json: dict[str, object] | None = None) -> dict[str, object]:
+        captured["endpoint"] = endpoint
+        captured["json"] = json or {}
+        return {"id": "pod-1"}
+
+    monkeypatch.setattr(client, "post", fake_post)
+    result = client.create_scripted_podcast(
+        "Podcast",
+        "Script",
+        voice_id="voice-7",
+    )
+
+    assert result == {"id": "pod-1"}
+    assert captured["endpoint"] == "/podcast/scripted"
+    assert captured["json"] == {
+        "title": "Podcast",
+        "script": "Script",
+        "voiceId": "voice-7",
+    }

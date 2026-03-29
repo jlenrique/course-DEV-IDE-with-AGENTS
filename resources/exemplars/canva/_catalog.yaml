@@ -1,4 +1,7 @@
 tool: canva
 agent: bmad-agent-canva
-description: "Exemplar library for the Canva specialist agent (Visual Designer)"
+description: |
+  Reference catalog for the Canva specialist agent (Visual Designer).
+  Story 3.8 is manual-tool only; automated woodshed exemplars are intentionally deferred.
+  Follow-up exemplar scope is captured in _bmad/memory/canva-specialist-sidecar/chronology.md.
 exemplars: []

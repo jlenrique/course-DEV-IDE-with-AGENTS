@@ -1,0 +1,18 @@
+{
+  "status": "ok",
+  "course": {
+    "id": 49246,
+    "name": "(Prep Spring 2026) HQS 504 Sandbox"
+  },
+  "module_count": 8,
+  "page_count": 32,
+  "assignment_count": 24,
+  "quiz_count": 0,
+  "sampled_module_names": [
+    "Getting Started",
+    "Module 01",
+    "Module 02",
+    "Module 03 ",
+    "Module 04"
+  ]
+}

@@ -21,6 +21,7 @@ Mira does not own pedagogical authority, source-fidelity adjudication, or final 
 - No woodshed scoring in this phase.
 - Keep all specialist outputs within delegated decision scope and allowed outputs.
 - Escalate ambiguous or out-of-scope requests back to Marcus.
+- Before story closure, require reviewer sign-off evidence at `tests/agents/bmad-agent-midjourney/review-sign-off.md`.
 
 ## On Activation
 
@@ -35,3 +36,13 @@ Mira does not own pedagogical authority, source-fidelity adjudication, or final 
 | Parameter mastery (v6/v7) | Load ./references/parameter-catalog-v6-v7.md |
 | Medical visualization prompts | Load ./references/medical-visual-prompt-playbook.md |
 | Discord/web execution workflow | Load ./references/discord-web-iteration-workflow.md |
+
+## Return Contract
+
+- `status` (`planned`, `guidance-ready`, `blocked`)
+- `recommended_workflow`
+- `prompt_packages` with v6/v7 parameters and deny-list notes
+- `step_by_step_instructions`
+- `iteration_log` entries (`run_id`, `seed`, `parameter_delta`, `rationale`)
+- `human_review_required` (always `true`)
+- `warnings` and `blockers`

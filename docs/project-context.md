@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (PRD + Architecture COMPLETE, Epics 1, 2, 2A, 4A, 4 DONE, Epic 3 IN PROGRESS)
+**Phase:** 4-Implementation Closeout (PRD + Architecture COMPLETE, all 9 epics currently marked DONE)
 **Architecture Status:** 9 Epics (Rebaselined 2026-03-28: Epic 4A governance added, Epics 7+8+9 collapsed into Epic G, Epic 5 trimmed, Epic 6.2 merged into 3.6; **2026-03-29: Epic 4A Story 4A-6 added**), **91 FRs** (FR81–FR91 governance includes ad-hoc ledger boundary), Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). **Epic 2A COMPLETE** (9/9 stories: Vera fidelity assessor covering G0-G5, sensory bridges, perception protocol, source_ref resolver, drift tracking, maturity audit skill). **Epic 3: 8/11 done** (Stories 3.1-3.5, 3.9, 3.10, 3.11 DONE; Stories 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva DEFERRED). **Epic 4A COMPLETE** (4A-1 through 4A-6). **Epic 4 COMPLETE** (4.1 through 4.5). **Next focus:** live-profile (`--run-live`) stabilization, then resume Epic 3 deferred queue.
+**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). **Epic 2A COMPLETE** (9/9 stories: Vera fidelity assessor covering G0-G5, sensory bridges, perception protocol, source_ref resolver, drift tracking, maturity audit skill). **Epic 3 COMPLETE** (11/11 stories). **Epic 4A COMPLETE** (4A-1 through 4A-6). **Epic 4 COMPLETE** (4.1 through 4.5). **Epic 5 COMPLETE** (5.1 + 5.4). **Epic 6 COMPLETE** (1/1 story via 6.1). **Epic G COMPLETE** (G.1, G.2, G.3). **Epic 10 COMPLETE** (10.1). **Next focus:** curated branch closeout and optional release-hardening validation (full-suite/live profile).
 
 ## Purpose
 
@@ -136,7 +136,7 @@ resources/
 - [x] **EXEMPLAR-DRIVEN DEVELOPMENT**: Woodshed skill created (`skills/woodshed/`), exemplar library scaffolded (`resources/exemplars/` per tool), comparison rubric, run logging, reflection protocol, circuit breaker, two-mode woodshed (faithful + creative), doc refresh protocol, and L-level difficulty system all in place. 5 Gamma exemplars provided (L1-L4.2). Smoke test validated: Gamma API produces single-card output, PDF export/download works (205KB), 5 credits/card. GammaClient needs parameter name updates (inputText, textMode, exportAs). Epic 3 stories updated with exemplar reproduction as acceptance criteria.
 - [x] **STORY 3.3.1 (Composition Architecture Harmonization + Gary Deck)**: DONE — Party Mode composition decisions implemented: segment manifest as Irene artifact, two-pass Irene model, Irene/Quinn-R/Kira/Marcus/Gary all updated, architecture.md updated with pipeline graph, tool inventory updated (Descript as sole composition platform), Gary deck mode + theme/template preview (TP capability), gary_slide_output return field, GammaClient.list_themes() live-tested (10 themes). Epic 3 re-sequenced to 11 stories: Compositor added as 3.5, Canvas→3.6, Qualtrics→3.7, Canva→3.8, Source Wrangler→3.9, Tech Spec Wrangler→3.10.
 - [x] **Epic 2A: Fidelity Assurance & APP Intelligence Infrastructure** (9/9 stories DONE — Vera agent covering G0-G5, sensory bridges, perception protocol, source_ref resolver, cumulative drift tracking, fidelity-control vocabulary, maturity audit skill. GOLD document: `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md`)
-- [ ] Epic 3: Core Tool Specialist Agents & Mastery Skills (8/11 stories DONE — Stories 3.1-3.5, 3.9, 3.10, **3.11 DONE**. Stories 3.6 Canvas, 3.7 Qualtrics, 3.8 Canva DEFERRED.)
+- [x] Epic 3: Core Tool Specialist Agents & Mastery Skills (11/11 stories DONE — Stories 3.1-3.11 complete, including Story 3.8 Canva specialist.)
 
 ## APP Design Principles & Fidelity Architecture (Added 2026-03-28)
 
@@ -158,10 +158,10 @@ Party Mode consensus + parallel GPT-5.4 architectural review identified signific
 
 - **Epic 4A** (Agent Governance, Quality Optimization & APP Observability): **6 stories** — run baton, lane matrix, envelope governance, agent QA gate, perception caching + observability (**`run_mode` tagging; ad-hoc excluded from course-progress metrics**), **ad-hoc ledger & learning enforcement (4A-6, FR91)**. Must complete before Epic 4. FRs FR81–FR91 on PRD.
 - **Epic 4 updated**: Dependency on 4A. Stories 4.2 (Quality Gates) and 4.4 (Reporting) updated to assume governance layer + Vera fidelity checks.
-- **Epic 5 trimmed**: Story 5.2 (Assembly Coordination) dropped — compositor skill delivers this. Story 5.3 (Style Orchestration) merged into governance. Story 5.4 edited — Panopto and Kling already done. 2 stories remain.
-- **Epic 6 trimmed**: Story 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist). 1 story remains.
-- **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): **3 stories** — platform allocation (G.1), tool/doc synthesis (G.2), **APP session readiness & health monitoring** (G.3, 2026-03-30: SQLite/`state`/imports + report; composes with pre-flight-check).
-- **Epic 10 deferred**: Predictive optimization requires Epic 4 + Epic G telemetry. 1 story, deferred.
+- **Epic 5 trimmed**: Story 5.2 (Assembly Coordination) dropped — compositor skill delivers this. Story 5.3 (Style Orchestration) merged into governance. Story 5.4 edited — Panopto and Kling already done. Story 5.1 and 5.4 are now complete.
+- **Epic 6 trimmed**: Story 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist). Story 6.1 completed.
+- **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): **3 stories** — platform allocation (G.1), tool/doc synthesis (G.2), **APP session readiness & health monitoring** (G.3, 2026-03-30: SQLite/`state`/imports + report; composes with pre-flight-check). Epic G is now complete.
+- **Epic 10**: Predictive optimization requires Epic 4 + Epic G telemetry. Story 10.1 is now complete.
 
 **Net: 11 epics → 9 epics, 46 stories → 40 stories** (historical rebaseline); **+Story 4A-6 → 41 stories** (2026-03-29); **+Story G.3 → 42 stories** (2026-03-30). Architecture updated with governance section.
 

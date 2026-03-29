@@ -48,3 +48,51 @@ def test_create_conversation_requires_bot_id() -> None:
 
     with pytest.raises(ValueError, match="Bot ID is required"):
         client.create_conversation("user-1")
+
+
+def test_send_message_payload_uses_default_bot_and_user(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = BotpressClient(api_key="k", bot_id="bot-1")
+    captured: dict[str, object] = {}
+
+    def fake_post(endpoint: str, json: dict[str, object] | None = None) -> dict[str, object]:
+        captured["endpoint"] = endpoint
+        captured["json"] = json or {}
+        return {"ok": True}
+
+    monkeypatch.setattr(client, "post", fake_post)
+    result = client.send_message("conv-1", "hello world")
+
+    assert result == {"ok": True}
+    assert captured["endpoint"] == "/chat/messages"
+    assert captured["json"] == {
+        "botId": "bot-1",
+        "conversationId": "conv-1",
+        "userId": "user",
+        "type": "text",
+        "payload": {"text": "hello world"},
+    }
+
+
+def test_detect_intent_payload_includes_conversation_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = BotpressClient(api_key="k", bot_id="bot-1")
+    captured: dict[str, object] = {}
+
+    def fake_post(endpoint: str, json: dict[str, object] | None = None) -> dict[str, object]:
+        captured["endpoint"] = endpoint
+        captured["json"] = json or {}
+        return {"intent": "greeting"}
+
+    monkeypatch.setattr(client, "post", fake_post)
+    result = client.detect_intent("hi", conversation_id="conv-9")
+
+    assert result == {"intent": "greeting"}
+    assert captured["endpoint"] == "/chat/intents"
+    assert captured["json"] == {
+        "botId": "bot-1",
+        "text": "hi",
+        "conversationId": "conv-9",
+    }

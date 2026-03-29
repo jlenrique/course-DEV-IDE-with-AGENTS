@@ -1,8 +1,0 @@
-api_method: reproduce_course_snapshot
-parameters: {}
-expected_outputs:
-- type: canvas-course-snapshot
-  format: json
-notes:
-- Uses the shared Canvas client helper in scripts/api_clients/canvas_client.py
-- Reads first accessible course if no explicit course_id is provided

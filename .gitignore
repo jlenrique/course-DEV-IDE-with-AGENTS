@@ -51,6 +51,12 @@ build/
 *.mp4
 uv.lock
 
+# Generated quality scan outputs (timestamped run artifacts)
+skills/reports/**/quality-scan/**
+
+# Generated exemplar reproductions (run logs, comparisons, outputs)
+resources/exemplars/**/reproductions/**
+
 # OS / editor
 .DS_Store
 Thumbs.db

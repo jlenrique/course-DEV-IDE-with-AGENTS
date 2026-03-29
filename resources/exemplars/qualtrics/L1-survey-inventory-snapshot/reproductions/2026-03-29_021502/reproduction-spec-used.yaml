@@ -1,9 +1,0 @@
-api_method: reproduce_survey_snapshot
-parameters:
-  page_size: 5
-expected_outputs:
-- type: qualtrics-survey-inventory
-  format: json
-notes:
-- Uses the shared Qualtrics client helper in scripts/api_clients/qualtrics_client.py
-- Captures whoami identity plus a sample survey inventory set

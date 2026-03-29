@@ -254,6 +254,7 @@ class KlingClient(BaseAPIClient):
         task_type: str = "text2video",
         poll_interval: int = POLL_INTERVAL,
         max_attempts: int = MAX_POLL_ATTEMPTS,
+        timeout_seconds: int | None = None,
     ) -> dict[str, Any]:
         """Poll until a video generation task completes or fails.
 
@@ -262,42 +263,63 @@ class KlingClient(BaseAPIClient):
             task_type: The generation type (text2video, image2video, etc.).
             poll_interval: Seconds between polls.
             max_attempts: Maximum poll attempts before timeout.
+            timeout_seconds: Optional wall-clock timeout budget. If provided,
+                polling stops when this budget is exceeded even if
+                ``max_attempts`` has not been reached.
 
         Returns:
             Final task data including video URL(s).
 
         Raises:
             RuntimeError: If the task fails.
-            TimeoutError: If the task doesn't complete within max_attempts.
+            TimeoutError: If the task doesn't complete within polling limits.
         """
+        started_at = time.monotonic()
+
         for attempt in range(max_attempts):
             data = self.get_task_status(task_id, task_type=task_type)
-            status = data.get("status", data.get("data", {}).get("task_status", ""))
+            data_block = data.get("data", {}) if isinstance(data.get("data"), dict) else {}
+            status = (
+                data.get("status")
+                or data_block.get("status")
+                or data_block.get("task_status")
+                or ""
+            )
+            status_normalized = str(status).lower()
 
-            if status.lower() in ("completed", "complete", "done", "success", "succeed"):
+            if status_normalized in ("completed", "complete", "done", "success", "succeed"):
                 logger.info(
                     "Task %s completed after %d polls", task_id, attempt + 1,
                 )
                 return data
-            if status.lower() in ("failed", "error"):
+            if status_normalized in ("failed", "error"):
                 error_msg = (
                     data.get("error_message")
-                    or data.get("data", {}).get("task_status_msg")
+                    or data_block.get("task_status_msg")
                     or "unknown error"
                 )
                 raise RuntimeError(
                     f"Task {task_id} failed: {error_msg}"
                 )
 
+            elapsed = time.monotonic() - started_at
+            if timeout_seconds is not None and elapsed >= timeout_seconds:
+                raise TimeoutError(
+                    f"Task {task_id} did not complete within {timeout_seconds}s"
+                )
+
             logger.debug(
                 "Task %s status: %s (poll %d/%d)",
-                task_id, status, attempt + 1, max_attempts,
+                task_id, status_normalized, attempt + 1, max_attempts,
             )
             time.sleep(poll_interval)
 
+        timeout_window = max_attempts * poll_interval
+        if timeout_seconds is not None:
+            timeout_window = min(timeout_window, timeout_seconds)
+
         raise TimeoutError(
-            f"Task {task_id} did not complete within "
-            f"{max_attempts * poll_interval}s"
+            f"Task {task_id} did not complete within {timeout_window}s"
         )
 
     # -- Download --

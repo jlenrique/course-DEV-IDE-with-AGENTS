@@ -107,6 +107,9 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy; Gary presents theme/template options before generating |
 | Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, segment manifest; Kira always produces silent video |
 | Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | active | Voice/tone standards, segment manifest |
+| Animation storyboard and build guidance (manual-tool) | `vyond-specialist` | active (Story 5.1) | Character style, scene rhythm, instructional emphasis, accessibility constraints |
+| Bespoke scientific/medical image prompting (manual-tool) | `midjourney-specialist` | active (Story 5.1) | Visual tone, realism constraints, style references, prohibited artifacts |
+| Storyline/Rise interaction authoring guidance (manual-tool) | `articulate-specialist` | active (Story 5.1) | Interaction rubric, branching criteria, remediation rules, SCORM standards |
 | Descript composition assembly guide | `compositor` | active | Completed segment manifest path |
 | Fidelity verification — G0 (source bundle completeness) | `fidelity-assessor` (Vera) | active | Gate, bundle dir, source material paths, fidelity contracts path, run mode. See `./references/conversation-mgmt.md` for envelope spec. |
 | Fidelity verification — G1 (lesson plan vs. source bundle) | `fidelity-assessor` (Vera) | active | Gate, lesson plan path, bundle dir. Vera runs BEFORE Quinn-R — fidelity is a precondition for quality. |
@@ -117,6 +120,7 @@ Greet the user by name with current mode, last session context summary, and a cl
 | Quality assurance — pre-composition pass | `quality-reviewer` (Quinn-R) | active | Segment manifest path, audio/video asset paths, `review_pass: pre-composition` |
 | Quality assurance — post-composition pass | `quality-reviewer` (Quinn-R) | active | Final MP4, VTT paths, `review_pass: post-composition` |
 | LMS course structure, modules, assignments, quizzes | `canvas-specialist` | planned (Story 3.6) | Allocation policy, exemplar matrices |
+| CourseArc deployment, LTI 1.3 embedding, SCORM and accessibility checks (manual-tool) | `coursearc-specialist` | active (Story 6.1) | LTI settings, SCORM package metadata, interaction accessibility checklist |
 
 **Descript manual-tool handoff:** After Compositor generates the Descript Assembly Guide (or Marcus constructs it from the manifest), Marcus hands the guide + all asset paths to the user for manual assembly in Descript. This is the only step not agent-executed. See `./references/conversation-mgmt.md` for handoff details.
 
@@ -126,5 +130,6 @@ Greet the user by name with current mode, last session context summary, and a cl
 |----------------|-------------|--------|
 | Survey/evaluation creation | `qualtrics-specialist` | planned (Story 3.7) |
 | Graphic design and visual assets | `canva-specialist` | planned (Story 3.8, manual-tool pattern) |
+| LMS publish and gradebook automation | `canvas-specialist` | planned (Story 3.6) |
 
 When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter decisions to save.

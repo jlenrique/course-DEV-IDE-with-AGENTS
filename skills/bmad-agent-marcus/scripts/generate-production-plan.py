@@ -66,6 +66,23 @@ CONTENT_TYPE_WORKFLOWS: dict[str, dict[str, Any]] = {
             {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
         ],
     },
+    "animated-explainer": {
+        "label": "Animated Explainer",
+        "stages": [
+            {"stage": "brief", "specialist": "content-creator", "description": "Draft instructional brief for animation"},
+            {"stage": "storyboard", "specialist": "vyond-specialist", "description": "Produce storyboard and Vyond build guidance"},
+            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: instructional clarity and pacing"},
+            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
+        ],
+    },
+    "bespoke-medical-illustration": {
+        "label": "Bespoke Medical Illustration",
+        "stages": [
+            {"stage": "prompting", "specialist": "midjourney-specialist", "description": "Generate parameterized prompt package and iteration plan"},
+            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: visual fidelity and instructional fit"},
+            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
+        ],
+    },
     "voiceover": {
         "label": "Voiceover Narration",
         "stages": [
@@ -80,9 +97,17 @@ CONTENT_TYPE_WORKFLOWS: dict[str, dict[str, Any]] = {
         "label": "Interactive Module",
         "stages": [
             {"stage": "design", "specialist": "content-creator", "description": "Design interaction model and content flow"},
-            {"stage": "build", "specialist": "canvas-specialist", "description": "Build interactive components"},
-            {"stage": "assemble", "specialist": "assembly-coordinator", "description": "Assemble multi-modal elements"},
+            {"stage": "author", "specialist": "articulate-specialist", "description": "Build Storyline/Rise interaction guidance and branching map"},
+            {"stage": "deploy", "specialist": "coursearc-specialist", "description": "Prepare LTI embedding and SCORM deployment checklist"},
             {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: interaction design, accessibility"},
+            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
+        ],
+    },
+    "coursearc-deployment": {
+        "label": "CourseArc Deployment",
+        "stages": [
+            {"stage": "package-check", "specialist": "coursearc-specialist", "description": "Validate LTI 1.3 and SCORM deployment prerequisites"},
+            {"stage": "accessibility-check", "specialist": "quality-reviewer", "description": "Quality gate: WCAG 2.1 AA interactive compliance"},
             {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
         ],
     },

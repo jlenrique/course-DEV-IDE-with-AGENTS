@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-28 (Story 3.9 Source Wrangler implemented)
+# last_updated: 2026-03-30 (Story G.3 APP session readiness added to Epic G)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-29  # Epic 4A and Epic 4 stories marked done after implementation + focused validation.
+last_updated: 2026-03-30  # +Story G.3 backlog; Epic 4A/4 previously marked done.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -141,10 +141,11 @@ development_status:
 
   # === EPIC G: Governance Synthesis & Intelligence Optimization (Replaces Epics 7+8+9, 2026-03-28) ===
   # Platform allocation → Marcus intelligence extension. Tool review → tech-spec-wrangler synthesis.
-  # Documentation → sidecar synthesis. 2 stories.
+  # Documentation → sidecar synthesis. +G.3 session readiness / health monitoring (2026-03-30).
   epic-g: backlog
   g-1-platform-allocation-intelligence: backlog  # replaces Epic 7
   g-2-tool-ecosystem-monitoring-synthesis: backlog  # replaces Epics 8 + 9
+  g-3-app-session-readiness-health-monitoring: backlog  # SQLite/state/runtime + report; composes with pre-flight-check
   epic-g-retrospective: optional
 
   # === EPIC 10: Strategic Production Orchestration (Deferred, Rebaselined 2026-03-28) ===

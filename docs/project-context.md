@@ -160,10 +160,10 @@ Party Mode consensus + parallel GPT-5.4 architectural review identified signific
 - **Epic 4 updated**: Dependency on 4A. Stories 4.2 (Quality Gates) and 4.4 (Reporting) updated to assume governance layer + Vera fidelity checks.
 - **Epic 5 trimmed**: Story 5.2 (Assembly Coordination) dropped — compositor skill delivers this. Story 5.3 (Style Orchestration) merged into governance. Story 5.4 edited — Panopto and Kling already done. 2 stories remain.
 - **Epic 6 trimmed**: Story 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist). 1 story remains.
-- **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): 2 stories — platform allocation as Marcus intelligence extension, tool/doc synthesis as periodic process.
+- **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): **3 stories** — platform allocation (G.1), tool/doc synthesis (G.2), **APP session readiness & health monitoring** (G.3, 2026-03-30: SQLite/`state`/imports + report; composes with pre-flight-check).
 - **Epic 10 deferred**: Predictive optimization requires Epic 4 + Epic G telemetry. 1 story, deferred.
 
-**Net: 11 epics → 9 epics, 46 stories → 40 stories** (historical rebaseline); **+Story 4A-6 → 41 stories** (2026-03-29). Architecture updated with governance section.
+**Net: 11 epics → 9 epics, 46 stories → 40 stories** (historical rebaseline); **+Story 4A-6 → 41 stories** (2026-03-29); **+Story G.3 → 42 stories** (2026-03-30). Architecture updated with governance section.
 
 ## Composition Architecture (Added 2026-03-27)
 

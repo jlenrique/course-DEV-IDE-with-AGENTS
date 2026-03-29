@@ -9,6 +9,7 @@ import json
 import sqlite3
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -188,6 +189,24 @@ class TestRunReporting(unittest.TestCase):
             contents = target.read_text(encoding="utf-8")
             self.assertIn("Longest stage: n/a", contents)
             self.assertIn("Recommendation: n/a", contents)
+
+    def test_observability_summary_includes_error_detail_on_failure(self) -> None:
+        """Low-risk logging: failed observability import/summary must be diagnosable."""
+
+        def _boom(*_a: object, **_k: object) -> None:
+            raise RuntimeError("simulated observability failure")
+
+        fake_obs = types.ModuleType("observability_hooks")
+        fake_obs.summarize_run = _boom
+
+        with patch.dict(sys.modules, {"observability_hooks": fake_obs}):
+            with self.assertLogs("run_reporting", level="WARNING") as cm:
+                summary = run_reporting._observability_summary("RUN-X", db_path=None)
+
+        self.assertEqual(summary["error"], "observability summary unavailable")
+        self.assertEqual(summary["observability_error_type"], "RuntimeError")
+        self.assertIn("simulated observability failure", summary["observability_error_message"])
+        self.assertTrue(any("Observability summary failed" in r.getMessage() for r in cm.records))
 
 
 if __name__ == "__main__":

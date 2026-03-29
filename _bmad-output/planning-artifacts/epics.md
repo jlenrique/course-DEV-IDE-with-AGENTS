@@ -1982,6 +1982,28 @@ So that the APP stays current with tool evolution and accumulated intelligence i
 
 ---
 
+### Story G.3: APP Session Readiness & Health Monitoring Service (Added 2026-03-30)
+
+As a production operator,
+I want a single designed health-check and monitoring path that validates APP runtime infrastructure (not only external tools) and produces an accompanying report at session start or on demand,
+So that real default-mode production work fails fast with diagnosable evidence before long multi-agent runs.
+
+**Acceptance Criteria:**
+
+**Given** Epic 4 coordination and observability infrastructure exists (`coordination.db`, `state/runtime/`, production-coordination scripts, pre-flight-check skill)
+**When** the session readiness service runs (CLI, optional Cursor `sessionStart` hook, or Marcus conversational invoke)
+**Then** it verifies at minimum: SQLite coordination database presence and basic schema/table sanity (or idempotent init path); critical `state/` paths exist and are writable; `mode_state.json` readable when present; Python import sanity for production-coordination / observability modules used by reporting
+**And** it composes with existing `skills/pre-flight-check/` (MCP config, `heartbeat_check.mjs`, Notion, Box Drive, smokes) without duplicating tool logic — either orchestrates the existing runner or documents a two-phase “runtime then tools” invocation
+**And** outputs a **structured report** (JSON and human-readable summary) with per-check pass/fail/skip, error detail, and resolution hints aligned with `docs/admin-guide.md` / `docs/app-logging-channels.md`
+**And** **pytest** covers happy path, missing DB, missing `state/` subtree, and simulated observability/reporting import failure
+**And** Marcus `SKILL.md` and/or `docs/user-guide.md` document how to invoke readiness before production runs
+
+**Dependency:** Epic 4 complete (provides DB and scripts under test). May proceed in parallel with G.1 and G.2.
+
+**Design Note:** This closes the gap between “tools are up” and “APP persistence layer is up.” Optional follow-on: wire `hooks/scripts/session-start.mjs` when hook contract is ready; keep hook behavior non-blocking or configurable to avoid breaking Cursor sessions on strict CI machines.
+
+---
+
 ## Epic 10: Strategic Production Orchestration (Deferred — Rebaselined 2026-03-28)
 
 **Goal**: Master orchestrator evolves with predictive optimization and sophisticated coordination capabilities based on accumulated production intelligence.
@@ -2066,6 +2088,8 @@ So that every content piece maintains professional standards regardless of which
 
 ### Story 5.4: Tier 2 API Integrations (Botpress, Wondercraft, Panopto)
 
+> Legacy note (non-authoritative): this block predates the 2026-03-28 rebaseline. Use the rebaselined Epic 5 section above as the source of truth for active implementation scope.
+
 As a developer,
 I want API clients and specialist agents for the remaining Tier 2 tools in the tool universe,
 So that the full creative tool ecosystem is available for multi-modal content production.
@@ -2086,6 +2110,8 @@ So that the full creative tool ecosystem is available for multi-modal content pr
 ---
 
 ## Epic 6: LMS Platform Integration & Delivery
+
+> Legacy note (non-authoritative): this block predates the 2026-03-28 rebaseline. Use the rebaselined Epic 6 section above as the source of truth for active implementation scope.
 
 **Goal**: Users can deploy content seamlessly to multiple educational platforms with automated formatting, compliance, and integration.
 

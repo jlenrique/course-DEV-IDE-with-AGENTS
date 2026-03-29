@@ -33,8 +33,11 @@ Marcus recognizes these content types, each mapping to different specialist agen
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
 | Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Marcus -> script intake -> ElevenLabs -> Marcus/review -> approve |
 | Video clip (B-roll / concept) | `kling-specialist` (Kira) | `content-creator` (brief), `quality-reviewer` | Brief → generation → download → review |
+| Animated explainer | `vyond-specialist` | `content-creator`, `quality-reviewer` | Brief -> storyboard -> scene build guidance -> review -> approve |
+| Bespoke medical illustration | `midjourney-specialist` | `content-creator`, `quality-reviewer` | Prompt package -> user generation loop -> review -> approve |
 | Infographic | `canva-specialist` (Story 3.8) | `content-creator` (copy), `quality-reviewer` | Copy → design guidance → user executes in Canva → review |
-| Interactive module | `content-creator` | `canvas-specialist`, `assembly-coordinator` | Design → build → assemble → review → approve |
+| Interactive module (authoring) | `articulate-specialist` | `content-creator`, `quality-reviewer` | Design -> branching/interaction spec -> user authoring in Storyline/Rise -> review |
+| CourseArc deployment | `coursearc-specialist` | `articulate-specialist`, `quality-reviewer` | LTI setup -> SCORM checks -> accessibility verification -> Canvas embed checklist |
 
 ## Course Structure Awareness
 

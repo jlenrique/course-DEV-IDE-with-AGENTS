@@ -12,10 +12,13 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+LOGGER = logging.getLogger(__name__)
 
 try:
     from scripts.utilities.ad_hoc_persistence_guard import enforce_ad_hoc_boundary
@@ -153,7 +156,13 @@ def _observability_summary(run_id: str, db_path: Path | str | None = None) -> di
         from observability_hooks import summarize_run
 
         return summarize_run(run_id, db_path=str(db_path) if db_path else None)
-    except Exception:
+    except Exception as exc:
+        LOGGER.warning(
+            "Observability summary failed for run_id=%s: %s",
+            run_id,
+            exc,
+            exc_info=True,
+        )
         return {
             "run_id": run_id,
             "gate_pass_rate": None,
@@ -162,6 +171,8 @@ def _observability_summary(run_id: str, db_path: Path | str | None = None) -> di
             "governance_findings": [],
             "cache_metrics": {"hits": 0, "misses": 0, "hit_rate": None},
             "error": "observability summary unavailable",
+            "observability_error_type": type(exc).__name__,
+            "observability_error_message": str(exc),
         }
 
 

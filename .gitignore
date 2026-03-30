@@ -9,6 +9,9 @@
 secrets/
 course-content/**/private/
 
+# Staging workspace — local / mutable; not versioned
+course-content/staging/
+
 # Course content — binary media files (stored on Box Drive / local disk, not git)
 # Text artifacts (.md, .yaml, .json, .vtt, .csv) remain tracked — they're agent output.
 course-content/**/*.pdf

@@ -403,8 +403,149 @@ Marcus, run compositor sync-visuals on course-content/staging/C1-M3-L2-ambulator
 
 No Marcus prompt required. Open **`DESCRIPT-ASSEMBLY-GUIDE.md`** in `assembly-bundle/`, import assets from **`audio/`**, **`captions/`**, **`video/`**, **`visuals/`**, and export your final program.
 
+### Consolidated prompt sequence (reusable for similar runs)
+
+Use these prompts in order. Keep placeholders (`[ ... ]`) consistent across the full run.
+
+**Prompt 1 — Open run + enforce settings handshake**
+
+```
+Marcus, start a production operations run.
+Run id: [RUN_ID]. Lesson slug: [LESSON_SLUG]. Topic: [TOPIC].
+Confirm both settings before execution: execution mode [tracked/ad-hoc] and quality preset [explore/draft/production/regulated].
+Run pre-flight for required tools and report pass/fail.
+```
+
+**Prompt 2 — Source ingest guardrail (no ad-hoc scripts)**
+
+```
+Marcus, for all source ingest in this run, use only official skill entrypoints and no temporary custom scripts.
+For each ingest, report: entrypoint used, output bundle path, and provenance metadata.
+```
+
+**Prompt 3 — Wrangle primary PDF source**
+
+```
+Marcus, ingest this PDF through source-wrangler official PDF path and write a standard source bundle:
+[PDF_PATH]
+Return extracted.md + metadata.json path and page coverage confirmation.
+```
+
+**Prompt 4 — Wrangle roadmap image source**
+
+```
+Marcus, ingest this roadmap image through the existing image-capable path (sensory-bridges route), then write a standard source bundle:
+[ROADMAP_IMAGE_PATH]
+Return extracted text summary and provenance in metadata.
+```
+
+**Prompt 5 — Consolidate sources into study brief**
+
+```
+Marcus, produce one merged study brief from all source bundles for [RUN_ID].
+Call out any conflicts, ambiguities, or missing context and give a go/no-go recommendation for Irene Pass 1.
+```
+
+**Prompt 6 — Fidelity discovery**
+
+```
+Marcus, run standard fidelity discovery and capture fidelity_guidance for Irene.
+Mark which slides are creative vs literal-text vs literal-visual.
+```
+
+**Prompt 7 — Irene Pass 1**
+
+```
+Marcus, delegate Irene Pass 1 for [LESSON_SLUG] using style bible + merged study brief + fidelity_guidance.
+Produce lesson-plan.md and slide-brief.md in staging.
+```
+
+**Prompt 8 — Gate 1 decision**
+
+```
+Gate 1 decision: [APPROVED or REVISION].
+If revision, apply only the listed changes and re-present lesson-plan.md and slide-brief.md.
+```
+
+**Prompt 9 — Gary deck generation with literal visuals**
+
+```
+Marcus, validate these HTTPS image URLs and build diagram_cards for literal slides:
+- card_number [N]: [URL]
+- card_number [N]: [URL]
+Delegate Gary for mixed-fidelity generation and return gary_slide_output with file_path populated.
+```
+
+**Prompt 10 — Gate 2 decision**
+
+```
+Gate 2 decision: [APPROVED or REVISION].
+If revision, list slide-level edits and regenerate before Pass 2.
+```
+
+**Prompt 11 — Irene Pass 2**
+
+```
+Marcus, delegate Irene Pass 2 using approved gary_slide_output.
+Produce narration-script.md + segment-manifest.yaml with stable segment IDs.
+```
+
+**Prompt 12 — Gate 3 decision**
+
+```
+Gate 3 decision: [APPROVED or REVISION].
+If revision, update script and manifest together before audio/video generation.
+```
+
+**Prompt 13 — Fidelity + quality before spend**
+
+```
+Marcus, run Vera then Quinn-R on current artifacts and summarize blockers before ElevenLabs/Kling spend.
+```
+
+**Prompt 14 — ElevenLabs execution**
+
+```
+Marcus, run manifest-driven ElevenLabs generation and update segment-manifest.yaml with narration_duration, narration_file, and narration_vtt.
+```
+
+**Prompt 15 — Kling execution (if any video segments)**
+
+```
+Marcus, for all segments marked visual_mode video, run Kling with timing tied to narration_duration and write visual_file + visual_duration back to manifest.
+If no video segments exist, explicitly confirm skip.
+```
+
+**Prompt 16 — Pre-composition quality + compositor bundle**
+
+```
+Marcus, run Quinn-R pre-composition review, then run compositor sync-visuals and regenerate DESCRIPT-ASSEMBLY-GUIDE.md.
+Confirm assembly-bundle has manifest, guide, audio, captions, visuals, and optional video.
+```
+
+**Prompt 17 — Trial log update at each milestone**
+
+```
+Marcus, append this run update to the trial running log as Success or Failure with one-line cause and corrective action.
+```
+
+**Prompt 18 — Shift close**
+
+```
+CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output one completed Shift Close Record.
+```
+
 **Trial-run checklist (copy — same steps as # column)**  
 ☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Kling (if any) ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
+
+**Trial-run running log (in progress)**
+
+- 2026-03-29 | Failure | When attempting to study course material, Marcus created an ad-hoc PDF-reading script instead of routing through source wrangler and existing PDF-reading skills.
+- 2026-03-30 | Success | APC C1-M1 SME PDF ingested via **official** `source-wrangler`: `wrangle_local_pdf` + `write_source_bundle` → `course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-2026-03-29/` (`extracted.md`, `metadata.json`, provenance `local_pdf`, pypdf 24/24).
+- 2026-03-30 | Success | `APC Content Roadmap.jpg` ingested via **official** sensory-bridges path: `bridge_utils.perceive(modality=image, gate=G0)` → canonical perception validated with `validate_response`, then **official** `write_source_bundle` → `course-content/staging/ad-hoc/source-bundles/apc-content-roadmap-image/` (includes `raw/perception.json`). Vision transcription supplied per `png_to_agent` / SKILL contract (IDE vision on scaled derivative; **MEDIUM** confidence — verify fine print on full-resolution JPG).
+- 2026-03-30 | Deliverable | Merged planning brief for Irene / Pass 1: `course-content/staging/ad-hoc/source-bundles/apc-c1m1-merged-study-brief.md` (PDF + roadmap synthesis, mismatches, Pass 1 recommendation).
+- 2026-03-30 | Note | Repro CLI for image→bundle (optional): `scripts/utilities/build_image_source_bundle.py` — **thin wrapper only**; it does not replace skill logic and requires a JSON payload with vision fields (`_perception_input.json` pattern).
+- 2026-03-30 | Policy | `scripts/utilities/build_image_source_bundle.py` is a **provisional helper**. Default production ingestion remains Marcus → Source Wrangler (+ sensory-bridges where needed). Use the helper only for reproducible replay when a validated perception payload already exists.
 
 **Compositor deliverable:** One **`assembly-bundle/`** folder: `segment-manifest.yaml`, `DESCRIPT-ASSEMBLY-GUIDE.md`, `audio/`, `captions/`, optional `video/`, **`visuals/`** after `sync-visuals` — ready for Descript.
 

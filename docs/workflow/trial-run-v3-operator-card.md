@@ -62,6 +62,7 @@ Operator rule:
 6. Prompt 6: Pre-dispatch package
 - Confirm required machine artifacts exist:
   - `g2-slide-brief.md`
+  - `gary-slide-content.json`
   - `gary-fidelity-slides.json`
   - `gary-diagram-cards.json`
   - `gary-theme-resolution.json`

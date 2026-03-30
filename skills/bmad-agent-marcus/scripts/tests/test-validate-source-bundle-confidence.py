@@ -1,0 +1,181 @@
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from importlib import util
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[4]
+SCRIPT_PATH = ROOT / "skills" / "bmad-agent-marcus" / "scripts" / "validate-source-bundle-confidence.py"
+
+
+def _load_script_module():
+    spec = util.spec_from_file_location(
+        "validate_source_bundle_confidence_module",
+        SCRIPT_PATH,
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+module = _load_script_module()
+validate_source_bundle_confidence = module.validate_source_bundle_confidence
+
+
+def _write_bundle(tmp_path: Path, *, evidence_confidence: str = "high", planning_readiness: str = "ready", receipt_body: str | None = None) -> tuple[Path, Path]:
+    bundle = tmp_path / "bundle"
+    raw = bundle / "raw"
+    raw.mkdir(parents=True)
+
+    (raw / "perception_roadmap.json").write_text(
+        json.dumps(
+            {
+                "artifact_path": str((tmp_path / "APC Content Roadmap.jpg").resolve()),
+                "confidence": "HIGH",
+                "confidence_rationale": "Minor wording variance possible on smallest labels.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "metadata.json").write_text(
+        json.dumps(
+            {
+                "provenance": [
+                    {
+                        "kind": "local_image",
+                        "ref": str((tmp_path / "APC Content Roadmap.jpg").resolve()),
+                        "note": "sensory-bridges perceive(image,G0); perception raw/perception_roadmap.json; original in raw/APC Content Roadmap.jpg",
+                        "fetched_at": "2026-03-30T00:00:00+00:00",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "extracted.md").write_text(
+        "\n".join(
+            [
+                "## APC Content Roadmap — sensory bridge (G0)",
+                "",
+                "**Ingestion:** Official path on `course-content/courses/APC Content Roadmap.jpg`.",
+                "",
+                "## Bridge confidence",
+                "",
+                "HIGH: Minor wording variance possible on smallest labels.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "ingestion-evidence.md").write_text(
+        "\n".join(
+            [
+                "# Ingestion Evidence",
+                "",
+                "| source_id | pathway_used | extraction_status | coverage_metric | confidence | bundle_location | provenance_summary | planning_readiness |",
+                "|---|---|---|---|---|---|---|---|",
+                f"| SRC-ROADMAP-PNG-01 | official image-capable sensory route (`bridge_utils.perceive`) | pass | roadmap transcription present | {evidence_confidence} | bundle | `kind=local_image`; source file APC Content Roadmap.jpg; perception raw/perception_roadmap.json | {planning_readiness} |",
+                "",
+                "- preflight_reference: bundle/preflight-results.json",
+                "- blocked_sources: none",
+                "- next_action: continue",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    receipt = bundle / "receipt.md"
+    if receipt_body is None:
+        receipt_body = "\n".join(
+            [
+                "### SRC-ROADMAP-PNG-01 (local_image)",
+                "- planning usability: pass",
+                "- fidelity usability: pass",
+            ]
+        )
+    receipt.write_text(receipt_body, encoding="utf-8")
+    return bundle, receipt
+
+
+def test_passes_when_confidence_is_inherited_consistently(tmp_path: Path) -> None:
+    bundle, receipt = _write_bundle(tmp_path)
+
+    result = validate_source_bundle_confidence(bundle, receipt_path=receipt)
+
+    assert result["status"] == "pass"
+    assert result["errors"] == []
+    assert result["checked_sources"][0]["official_confidence"] == "high"
+
+
+def test_fails_when_evidence_downgrades_without_explicit_evidence(tmp_path: Path) -> None:
+    bundle, receipt = _write_bundle(tmp_path, evidence_confidence="medium", planning_readiness="conditional")
+
+    result = validate_source_bundle_confidence(bundle, receipt_path=receipt)
+
+    assert result["status"] == "fail"
+    assert any("does not inherit official confidence" in msg for msg in result["errors"])
+    assert any("planning_readiness is conditional" in msg for msg in result["errors"])
+
+
+def test_passes_when_receipt_records_explicit_downgrade_evidence(tmp_path: Path) -> None:
+    receipt_body = "\n".join(
+        [
+            "### SRC-ROADMAP-PNG-01 (local_image)",
+            "- planning usability: fail",
+            "- fidelity usability: fail",
+            "- explicit downgrade evidence: full-resolution review found missing fine-print labels in course 2 assessment lane.",
+        ]
+    )
+    bundle, receipt = _write_bundle(
+        tmp_path,
+        evidence_confidence="medium",
+        planning_readiness="conditional",
+        receipt_body=receipt_body,
+    )
+
+    result = validate_source_bundle_confidence(bundle, receipt_path=receipt)
+
+    assert result["status"] == "pass"
+
+
+def test_fails_when_receipt_uses_confidence_as_failure_reason_without_explicit_downgrade(tmp_path: Path) -> None:
+    receipt_body = "\n".join(
+        [
+            "### SRC-ROADMAP-PNG-01 (local_image)",
+            "- planning usability: fail",
+            "- fidelity usability: fail",
+            "- failure basis: confidence remains unresolved pending spot-check.",
+        ]
+    )
+    bundle, receipt = _write_bundle(tmp_path, receipt_body=receipt_body)
+
+    result = validate_source_bundle_confidence(bundle, receipt_path=receipt)
+
+    assert result["status"] == "fail"
+    assert any("receipt fails planning/fidelity usability on confidence grounds" in msg for msg in result["errors"])
+
+
+def test_cli_exit_code_and_output(tmp_path: Path) -> None:
+    bundle, receipt = _write_bundle(tmp_path)
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--bundle-dir",
+            str(bundle),
+            "--receipt",
+            str(receipt),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0
+    data = json.loads(proc.stdout)
+    assert data["status"] == "pass"

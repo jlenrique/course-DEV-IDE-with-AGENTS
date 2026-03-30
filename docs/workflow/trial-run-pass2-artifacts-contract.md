@@ -7,6 +7,7 @@ Scope:
 - ingestion-evidence.md
 - irene-packet.md
 - g2-slide-brief.md
+- gary-slide-content.json
 - gary-fidelity-slides.json
 - gary-diagram-cards.json
 - gary-theme-resolution.json
@@ -47,6 +48,11 @@ Required columns:
 - provenance_summary
 - planning_readiness: ready | conditional | blocked
 
+Confidence inheritance rules:
+- If `extracted.md` includes a source-level confidence statement from an official bridge or Source Wrangler pathway, downstream artifacts must inherit that level unless a later reviewer records an explicit downgrade with evidence.
+- A `high` confidence source may still carry non-blocking caution text (for example, minor wording variance on smallest labels). That caution does not by itself force `planning_readiness` below `ready`.
+- Only `medium` or `low` confidence on planning-critical content, or an explicit evidenced downgrade, triggers conditional/blocked handling and spot-check escalation.
+
 Minimum footer block:
 - preflight_reference: path to preflight-results.json
 - blocked_sources: comma-separated source_id list or none
@@ -66,6 +72,7 @@ Required sections in this order:
 Rules:
 - Every recommendation must include a source anchor.
 - Any low-confidence recommendation must be labeled.
+- A non-blocking caution inherited from a `high` confidence source should be surfaced as HIL context only; it must not be rewritten downstream as a blocker without explicit evidence.
 
 Gate 1 decision framing:
 - Include one explicit decision line summarizing:
@@ -117,6 +124,32 @@ Rules:
 - `fidelity` must be one of: creative, literal-text, literal-visual.
 - `queue` must be: creative for creative slides; literal for literal-text and literal-visual slides.
 - slide_number values must be unique and strictly increasing.
+
+## 5A) gary-slide-content.json
+
+Purpose: canonical content-bearing machine payload for Gary dispatch input.
+
+JSON schema (lightweight):
+
+```json
+{
+  "run_id": "string",
+  "lesson_slug": "string",
+  "slides": [
+    {
+      "slide_number": 1,
+      "content": "string",
+      "source_ref": "string"
+    }
+  ]
+}
+```
+
+Rules:
+- One row per slide_number in the planned deck.
+- content must be non-empty for every slide.
+- source_ref must be non-empty for every slide.
+- This artifact carries the generation text payload. `gary-fidelity-slides.json` carries mode/fidelity metadata and queue split.
 
 ## 6) gary-diagram-cards.json
 

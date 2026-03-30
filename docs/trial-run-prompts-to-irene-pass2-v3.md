@@ -21,13 +21,13 @@ Primary contract references:
 
 ## Run Constants (set once)
 
-- RUN_ID: [C1-M1-PRES-ADHOC-YYYYMMDD]
-- LESSON_SLUG: [c1-m1-topic-slug]
-- BUNDLE_PATH: [course-content/staging/ad-hoc/source-bundles/<bundle-folder>]
-- PRIMARY_SOURCE_FILE: [absolute path to primary PDF]
-- OPTIONAL_CONTEXT_ASSETS: [comma-separated list]
-- THEME_SELECTION: [approved theme key for standard slides]
-- THEME_PARAMSET_KEY: [mapped parameter-set key for selected theme]
+- RUN_ID: C1-M1-PRES-ADHOC-20260330
+- LESSON_SLUG: apc-c1m1-tejal-2026030-demo
+- BUNDLE_PATH: course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260330-demo
+- PRIMARY_SOURCE_FILE: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC C1-M1 Tejal 2026-03-29.pdf
+- OPTIONAL_CONTEXT_ASSETS: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC Content Roadmap.jpg
+- THEME_SELECTION: hil-2026-apc-nejal-A
+- THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
 
 ---
 
@@ -96,6 +96,14 @@ Required artifacts under bundle:
 
 `ingestion-evidence.md` must include required columns/footer from the contract.
 
+Confidence handling rule:
+- If an official bridge or Source Wrangler extraction records source confidence inside `extracted.md`, inherit that confidence into `ingestion-evidence.md` unless you have explicit contrary evidence.
+- A `high` confidence note with limited caveats (for example, minor wording variance on smallest labels) is cautionary, not blocking.
+
+Confidence consistency validator:
+- Run `py -3.13 skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --bundle-dir [BUNDLE_PATH]` after writing `extracted.md`, `metadata.json`, and `ingestion-evidence.md`.
+- If the validator fails, stop and correct the confidence drift before continuing.
+
 Fallback (detailed):
 - If any planning-critical section confidence is medium/low:
   - produce anchor-level spot-check list
@@ -125,6 +133,11 @@ Then run internal Vera G0 and return receipt:
 - critical findings
 - remediation target
 
+Gate interpretation rule:
+- Do not downgrade a source from `high` to `medium/low` in Prompt 4 unless the gate records explicit evidence for the downgrade.
+- A `high` confidence source with non-blocking caveats can still pass planning usability and fidelity usability.
+- If a Prompt 4 receipt is written to disk, re-run `py -3.13 skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --bundle-dir [BUNDLE_PATH] --receipt [BUNDLE_PATH]/ingestion-quality-gate-receipt.md` before finalizing the gate decision.
+
 Fallback (detailed):
 - If any dimension fails or G0 fails:
   - provide 2 remediation options
@@ -135,59 +148,141 @@ Fallback (detailed):
 
 ## 5) Irene Pass 1 Structure + Gate 1 Fidelity
 
-Require `irene-pass1.md` with exact structure:
+Marcus, proceed to Prompt 5 for the active trial run.
+
+Use the active run context from this session, not the stale demo constants in the prompt pack header.
+
+Active run context:
+- RUN_ID: C1-M1-PRES-ADHOC-20260330B
+- LESSON_SLUG: apc-c1m1-tejal-20260329
+- BUNDLE_PATH: course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329
+- PRIMARY_SOURCE_FILE: - C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC C1-M1 Tejal 2026-03-29.pdf
+- OPTIONAL_CONTEXT_ASSETS: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC Content Roadmap.jpg
+- THEME_SELECTION: hil-2026-apc-nejal-A
+- THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
+
+Inputs for this step:
+- Irene packet: irene-packet.md
+- Source bundle: extracted.md
+- Source metadata: metadata.json
+- Prompt 4 receipt: ingestion-quality-gate-receipt.md
+
+Requirements:
+
+Create irene-pass1.md with exact structure:
 - executive summary
 - slide plan table
 - literal support plan
 - risks and tradeoffs
 - Gate 1 decision line
-
-Hard constraints:
+- 
+Enforce hard constraints:
 - exactly one mode per slide
 - no mixed-mode labels
 - full literal-visual spec card for each literal-visual slide
 
-Run internal Vera gates before Gate 1 approval:
-- G1 (lesson plan vs source bundle)
-- G2 (slide brief vs lesson plan)
+Before Gate 1 approval, run internal Vera gates:
+- G1: lesson plan vs source bundle
+- G2: slide brief vs lesson plan
 
-Fallback (detailed):
-- If G1/G2 fail:
-  - include omission/invention/alteration findings
-  - include minimal patch targets in Irene output
-  - rerun only failed gate(s), then return consolidated receipt
+If G1 or G2 fail:
+include omission, invention, and alteration findings
+include minimal patch targets in Irene output
+rerun only the failed gate(s)
+return one consolidated compact receipt
 
----
+If G1 and G2 pass:
+write irene-pass1.md under the active bundle directory
+return a compact receipt with:
+stage
+status
+artifacts_written
+validator_results
+gate_decision
+next_action
+Do not advance to Prompt 6 automatically.
+Stop after producing irene-pass1.md and the compact receipt.
 
 ## 6) Gate 1 Approved -> Pre-Dispatch Package Build (No Send)
 
-Build and stop before dispatch.
+Prompt 6
+
+Marcus, proceed to Prompt 6 for the active trial run.
+
+Use the active run context from this session, not the stale demo constants in the prompt pack header.
+
+Active run context:
+
+RUN_ID: C1-M1-PRES-ADHOC-20260330B
+LESSON_SLUG: apc-c1m1-tejal-20260329
+BUNDLE_PATH: course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329
+PRIMARY_SOURCE_FILE: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC C1-M1 Tejal 2026-03-29.pdf
+OPTIONAL_CONTEXT_ASSETS: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC Content Roadmap.jpg
+THEME_SELECTION: hil-2026-apc-nejal-A
+THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
+Precondition for this step:
+
+Gate 1 must be approved for the active run.
+Use the active Prompt 5 outputs, not any demo bundle.
+Inputs for this step:
+
+Source bundle: extracted.md
+Irene packet: irene-packet.md
+Irene Pass 1: course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329/irene-pass1.md
+Task:
+Build the pre-dispatch package for Gary and stop before dispatch.
 
 Required package sections:
-- claim-to-source fidelity matrix
-- literal candidate list and synthesis zones
-- final per-slide singular modes
-- creative + literal queue mapping
-- diagram card mapping
-- theme resolution block
-- all high-fidelity instructional graphics identified (minimum 2 in scope)
-- Gary envelope readiness check
 
-Required machine artifacts:
-- `g2-slide-brief.md`
-- `gary-fidelity-slides.json`
-- `gary-diagram-cards.json`
-- `gary-theme-resolution.json`
-- `gary-outbound-envelope.yaml`
-- `pre-dispatch-package-gary.md`
+claim-to-source fidelity matrix
+literal candidate list and synthesis zones
+final per-slide singular modes
+creative + literal queue mapping
+diagram card mapping
+theme resolution block
+all high-fidelity instructional graphics identified (minimum 2 in scope)
+Gary envelope readiness check
+Required machine artifacts to write under the active bundle:
 
-Fallback (detailed):
-- If any artifact fails contract rules:
-  - return contract violation list by file/field
-  - regenerate only failed artifact(s)
-  - revalidate and stop for approval
+g2-slide-brief.md
+gary-slide-content.json
+gary-fidelity-slides.json
+gary-diagram-cards.json
+gary-theme-resolution.json
+gary-outbound-envelope.yaml
+pre-dispatch-package-gary.md
+Contract rules:
 
----
+Follow trial-run-pass2-artifacts-contract.md exactly.
+g2-slide-brief.md must be derived from irene-pass1.md and must not introduce new pedagogical content.
+gary-slide-content.json must contain one content-bearing row per slide with fields: slide_number, content, source_ref.
+Each slide must preserve exactly one mode: creative, literal-text, or literal-visual.
+gary-fidelity-slides.json slide_number values must be unique and strictly increasing.
+gary-diagram-cards.json must include only literal-visual cards that actually require hosted image handling.
+gary-theme-resolution.json must freeze:
+requested_theme_key
+resolved_theme_key
+resolved_parameter_set
+mapping_source
+mapping_version
+user_confirmation
+gary-outbound-envelope.yaml must carry forward theme_resolution and fidelity_per_slide unchanged from the machine artifacts.
+If any artifact fails contract rules:
+
+return contract violation list by file and field
+regenerate only the failed artifact(s)
+revalidate
+stop and wait for approval
+Return one compact receipt with:
+
+stage
+status
+artifacts_written
+validator_results
+gate_decision
+next_action
+Do not dispatch to Gary in this step.
+Stop after writing the pre-dispatch package and compact receipt.
 
 ## 7) Dispatch + Export + Sort Verification (Single Operation)
 
@@ -204,6 +299,7 @@ Dispatch requirements:
 - request exports and download
 - non-null file_path for every output row
 - normalize card order 1..N
+- use a content-bearing slide payload for dispatch input; metadata-only fidelity payloads are invalid for production dispatch
 
 Required outputs:
 - `gary-dispatch-result.json`

@@ -235,6 +235,56 @@ class TestReportClassification:
         assert len(statuses) == 6
 
 
+class TestNonBlockingToolFailures:
+    def test_botpress_failure_classified_as_blocked_non_blocking(self):
+        from skills.pre_flight_check.scripts.preflight_runner import run_preflight
+
+        root = ROOT
+
+        from skills.pre_flight_check.scripts import preflight_runner as mod
+
+        original_run_node_script = mod.run_node_script
+        original_check_notion_api = mod.check_notion_api
+        original_check_box_drive = mod.check_box_drive
+        original_load_env = mod.load_env
+
+        def fake_run_node_script(script_path, cwd):
+            name = Path(script_path).name
+            if name == "heartbeat_check.mjs":
+                return (
+                    0,
+                    "FAIL: Botpress API -- HTTP 400\n"
+                    "PASS: Gamma API -- Connected (themes endpoint responded)\n",
+                    "",
+                )
+            return 0, "", ""
+
+        try:
+            mod.run_node_script = fake_run_node_script
+            mod.load_env = lambda _path: {}
+            mod.check_notion_api = lambda _env: mod.ToolResult(
+                "Notion", mod.ToolStatus.SKIPPED, "NOTION_API_KEY not set in .env"
+            )
+            mod.check_box_drive = lambda _env: mod.ToolResult(
+                "Box Drive", mod.ToolStatus.SKIPPED, "BOX_DRIVE_PATH not set in .env"
+            )
+
+            report = run_preflight(root)
+
+            botpress_results = [
+                r for r in report.results if r.name.lower().startswith("botpress")
+            ]
+            assert len(botpress_results) == 1
+            assert botpress_results[0].status == mod.ToolStatus.BLOCKED
+            assert "non-blocking" in botpress_results[0].detail.lower()
+            assert not report.has_failures
+        finally:
+            mod.run_node_script = original_run_node_script
+            mod.check_notion_api = original_check_notion_api
+            mod.check_box_drive = original_check_box_drive
+            mod.load_env = original_load_env
+
+
 # ---------------------------------------------------------------------------
 # AC #7: Resolution guidance
 # ---------------------------------------------------------------------------

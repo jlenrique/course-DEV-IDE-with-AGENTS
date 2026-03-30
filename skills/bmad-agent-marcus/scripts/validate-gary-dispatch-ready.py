@@ -80,6 +80,18 @@ def validate_gary_dispatch_ready(payload: dict[str, Any]) -> dict[str, Any]:
             "gary_slide_output card_number sequence must be contiguous and start at 1 (1..N)"
         )
 
+    dispatch_metadata = payload.get("dispatch_metadata")
+    if not isinstance(dispatch_metadata, dict):
+        errors.append(
+            "dispatch_metadata must be present — re-run dispatch with the current "
+            "gamma_operations.py to embed content source provenance"
+        )
+    elif not str(dispatch_metadata.get("slides_content_json_path") or "").strip():
+        errors.append(
+            "dispatch_metadata.slides_content_json_path must be non-empty — "
+            "dispatch must use --slides-content-json to prevent placeholder content"
+        )
+
     return {
         "status": "pass" if not errors else "fail",
         "errors": errors,

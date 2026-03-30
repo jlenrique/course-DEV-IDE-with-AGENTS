@@ -115,6 +115,14 @@ Then write/update these artifacts under [BUNDLE_PATH]:
 
 `ingestion-evidence.md` must follow the required columns and footer block in `docs/workflow/trial-run-pass2-artifacts-contract.md`.
 
+Confidence handling rule:
+- If an official bridge or Source Wrangler extraction records source confidence inside `extracted.md`, inherit that confidence into `ingestion-evidence.md` unless explicit contrary evidence is recorded.
+- A `high` confidence note with limited caveats is cautionary, not blocking.
+
+Confidence consistency validator:
+- Run `py -3.13 skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --bundle-dir [BUNDLE_PATH]` after writing the bundle artifacts.
+- If the validator fails, stop and correct the confidence drift before continuing.
+
 If confidence is medium/low on any planning-critical section, list exact anchors for spot-check and stop.
 
 ---
@@ -148,6 +156,10 @@ Write/update:
 Before moving to Irene Pass 1, run internal Vera G0 (source-bundle fidelity) using the canonical G0 contract and return:
 - verdict: pass/warn/fail
 - critical findings (if any)
+
+Do not downgrade a source from `high` to `medium/low` at this gate without explicit evidence. A `high` confidence source with non-blocking caveats may still pass planning usability and fidelity usability.
+
+If a Prompt 4 receipt is written to disk, re-run `py -3.13 skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --bundle-dir [BUNDLE_PATH] --receipt [BUNDLE_PATH]/ingestion-quality-gate-receipt.md` before finalizing the gate.
 - remediation target (if blocked)
 
 If G0 is fail: stop and remediate before continuing.

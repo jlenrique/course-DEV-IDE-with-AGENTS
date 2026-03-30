@@ -662,6 +662,28 @@ def generate_slide(
         if param_key in params and params[param_key] is not None:
             gen_kwargs[kwarg_key] = params[param_key]
 
+    image_options = gen_kwargs.get("image_options")
+    if isinstance(image_options, dict):
+        helper_keys = {"_keywordsHint", "referenceImagePath"}
+        keywords_hint = image_options.get("_keywordsHint")
+        sanitized_image_options = {
+            k: v
+            for k, v in image_options.items()
+            if k not in helper_keys and not str(k).startswith("_")
+        }
+        gen_kwargs["image_options"] = sanitized_image_options
+
+        if keywords_hint:
+            hint_instruction = f"Visual keyword cues: {keywords_hint}."
+            existing_instruction = gen_kwargs.get("additional_instructions", "")
+            if existing_instruction:
+                if hint_instruction not in existing_instruction:
+                    gen_kwargs["additional_instructions"] = (
+                        f"{existing_instruction} {hint_instruction}"
+                    )
+            else:
+                gen_kwargs["additional_instructions"] = hint_instruction
+
     result = client.generate(input_text, text_mode, **gen_kwargs)
     gen_id = result.get("generationId") or result.get("id", "")
     logger.info(
@@ -813,6 +835,25 @@ def generate_deck_mixed_fidelity(
     literal_results: list[dict[str, Any]] = []
     calls_made = 0
 
+    export_dir_value = base_params.get("export_dir") or base_params.get("exportDir")
+    export_dir = Path(export_dir_value) if export_dir_value else None
+
+    def _resolve_file_path(gen_result: dict[str, Any], label: str) -> str:
+        export_url = gen_result.get("exportUrl")
+        if export_url and export_dir is not None:
+            ext = str(base_params.get("export_as") or base_params.get("exportAs") or "pdf")
+            filename = f"{module_lesson_part}_{label}.{ext}"
+            downloaded = download_export(export_url, output_dir=export_dir, filename=filename, run_id=run_id)
+            return str(downloaded)
+
+        for key in ("gammaUrl", "url", "exportUrl"):
+            value = gen_result.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+
+        generation_id = gen_result.get("generationId") or gen_result.get("id") or "unknown"
+        return f"gamma://generation/{generation_id}"
+
     if creative_slides:
         creative_params = {**base_params, "textMode": "generate"}
         creative_params.pop("text_mode", None)
@@ -826,12 +867,13 @@ def generate_deck_mixed_fidelity(
         gen_result = generate_slide(creative_params, client=client, run_id=run_id)
         calls_made += 1
         creative_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
+        creative_file_path = _resolve_file_path(gen_result, "creative")
 
         for slide in creative_slides:
             card_num = slide["slide_number"]
             creative_results.append({
                 "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
-                "file_path": None,
+                "file_path": creative_file_path,
                 "card_number": card_num,
                 "visual_description": f"[pending export — creative slide {card_num}]",
                 "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
@@ -874,13 +916,14 @@ def generate_deck_mixed_fidelity(
         gen_result = generate_slide(literal_params, client=client, run_id=run_id)
         calls_made += 1
         literal_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
+        literal_file_path = _resolve_file_path(gen_result, "literal")
 
         for slide in literal_slides:
             card_num = slide["slide_number"]
             fidelity = slide.get("fidelity", "literal-text")
             literal_results.append({
                 "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
-                "file_path": None,
+                "file_path": literal_file_path,
                 "card_number": card_num,
                 "visual_description": f"[pending export — {fidelity} slide {card_num}]",
                 "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
@@ -1067,6 +1110,124 @@ def partition_by_fidelity(
     return {"creative": creative, "literal": literal}
 
 
+def normalize_slides_payload(
+    slides_payload: Any,
+    *,
+    default_source_ref: str = "slide-brief.md",
+    allow_placeholder_content: bool = False,
+) -> list[dict[str, Any]]:
+    """Normalize CLI fidelity payloads into dispatch-ready slide rows.
+
+    Accepts either a list of slide dicts or an object containing ``slides``.
+    Adds fallback ``source_ref`` when missing.
+    By default, missing ``content`` is a hard failure to prevent metadata-only
+    dispatches from being sent to Gamma. Placeholder content is available only
+    in explicit debug mode via ``allow_placeholder_content=True``.
+    """
+    if isinstance(slides_payload, list):
+        slides = slides_payload
+    elif isinstance(slides_payload, dict) and isinstance(slides_payload.get("slides"), list):
+        slides = slides_payload["slides"]
+    else:
+        raise ValueError("Invalid slides payload. Expected list or object with 'slides' array.")
+
+    normalized: list[dict[str, Any]] = []
+    missing_content_slides: list[Any] = []
+    for slide in slides:
+        if not isinstance(slide, dict):
+            continue
+
+        row = dict(slide)
+        source_ref = str(row.get("source_ref", "")).strip()
+        if not source_ref:
+            anchors = row.get("source_anchors")
+            if isinstance(anchors, list) and anchors:
+                source_ref = "; ".join(str(a) for a in anchors)
+            elif isinstance(anchors, str) and anchors.strip():
+                source_ref = anchors.strip()
+            else:
+                source_ref = f"{default_source_ref}#Slide {row.get('slide_number', '?')}"
+            row["source_ref"] = source_ref
+
+        content = str(row.get("content", "")).strip()
+        if not content:
+            slide_number = row.get("slide_number", "?")
+            if allow_placeholder_content:
+                fidelity = row.get("fidelity", "creative")
+                title = row.get("title") or row.get("slide_title") or f"Slide {slide_number}"
+                row["content"] = (
+                    f"{title}\n\n"
+                    f"[{fidelity} slide placeholder derived from pre-dispatch artifacts. "
+                    f"Source anchors: {source_ref}]"
+                )
+            else:
+                missing_content_slides.append(slide_number)
+
+        normalized.append(row)
+
+    if missing_content_slides:
+        missing_str = ", ".join(str(n) for n in missing_content_slides)
+        raise ValueError(
+            "Slides payload missing required content for slide_number(s): "
+            f"{missing_str}. Provide a content-bearing payload via "
+            "--slides-content-json (or include content in --fidelity-json). "
+            "Use --allow-placeholder-content only for debug workflows."
+        )
+
+    return normalized
+
+
+def merge_slide_content(
+    fidelity_slides_payload: Any,
+    slide_content_payload: Any,
+    *,
+    default_source_ref: str = "slide-brief.md",
+    allow_placeholder_content: bool = False,
+) -> list[dict[str, Any]]:
+    """Merge fidelity metadata rows with content-bearing slide rows by number."""
+    fidelity_rows = normalize_slides_payload(
+        fidelity_slides_payload,
+        default_source_ref=default_source_ref,
+        allow_placeholder_content=True,
+    )
+    content_rows = normalize_slides_payload(
+        slide_content_payload,
+        default_source_ref=default_source_ref,
+        allow_placeholder_content=False,
+    )
+
+    content_by_slide: dict[Any, dict[str, Any]] = {
+        row.get("slide_number"): row for row in content_rows
+    }
+    merged_rows: list[dict[str, Any]] = []
+    missing_content_slides: list[Any] = []
+
+    for row in fidelity_rows:
+        merged = dict(row)
+        content_row = content_by_slide.get(row.get("slide_number"))
+        if content_row:
+            if content_row.get("content"):
+                merged["content"] = content_row["content"]
+            if content_row.get("source_ref"):
+                merged["source_ref"] = content_row["source_ref"]
+        elif not allow_placeholder_content:
+            missing_content_slides.append(row.get("slide_number", "?"))
+        merged_rows.append(merged)
+
+    if missing_content_slides:
+        missing_str = ", ".join(str(n) for n in missing_content_slides)
+        raise ValueError(
+            "Slides payload missing required content for slide_number(s): "
+            f"{missing_str}. Provide a content-bearing payload via --slides-content-json."
+        )
+
+    return normalize_slides_payload(
+        merged_rows,
+        default_source_ref=default_source_ref,
+        allow_placeholder_content=allow_placeholder_content,
+    )
+
+
 def build_doc_title(
     module_lesson_part: str,
     fidelity_class: str,
@@ -1154,7 +1315,11 @@ if __name__ == "__main__":
     usage = (
         "Usage: python gamma_operations.py <command> [args]\n"
         "Commands:\n"
-        "  generate <input_text_file> [--fidelity-json <slides_json>] [--module <id>]\n"
+        "  generate <input_text_file> [--params-json <params_json>]\n"
+        "    [--style-preset <preset_name>] [--theme-resolution-json <theme_json>]\n"
+        "    [--slides-content-json <slides_content_json>]\n"
+        "    [--fidelity-json <slides_json>] [--module <id>]\n"
+        "    [--allow-placeholder-content]\n"
         "    [--diagram-cards <json>] [--run-id <production_run_id>]\n"
         "  list-themes-templates [--scope <scope>] [--content-type <type>] [--limit <n>]\n"
         "  validate-url <url>\n"
@@ -1186,18 +1351,70 @@ if __name__ == "__main__":
     if cmd == "generate" and len(sys.argv) >= 3:
         input_text = Path(sys.argv[2]).read_text(encoding="utf-8")
         slides_data = None
+        raw_fidelity_data: Any | None = None
+        raw_slide_content_data: Any | None = None
         module_id = ""
         diagram_cards_data = None
+        params: dict[str, Any] = {"input_text": input_text, "textMode": "generate"}
+        allow_placeholder_content = "--allow-placeholder-content" in sys.argv
+
+        if "--params-json" in sys.argv:
+            idx = sys.argv.index("--params-json") + 1
+            params = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+
+        if "--style-preset" in sys.argv:
+            idx = sys.argv.index("--style-preset") + 1
+            preset_name = sys.argv[idx]
+            style_preset_params = resolve_style_preset(preset_name)
+            params = merge_parameters({}, {}, params, style_preset=style_preset_params)
+
+        if "--theme-resolution-json" in sys.argv:
+            idx = sys.argv.index("--theme-resolution-json") + 1
+            theme_resolution = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+            params["theme_resolution"] = theme_resolution
+            resolved_theme_key = theme_resolution.get("resolved_theme_key")
+            if resolved_theme_key:
+                params["themeId"] = resolved_theme_key
+
+        params.setdefault("input_text", input_text)
+        params.setdefault("textMode", "generate")
+
+        if "--slides-content-json" in sys.argv:
+            idx = sys.argv.index("--slides-content-json") + 1
+            raw_slide_content_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
 
         if "--fidelity-json" in sys.argv:
             idx = sys.argv.index("--fidelity-json") + 1
-            slides_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+            raw_fidelity_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+
+        if raw_fidelity_data is not None and raw_slide_content_data is not None:
+            slides_data = merge_slide_content(
+                raw_fidelity_data,
+                raw_slide_content_data,
+                allow_placeholder_content=allow_placeholder_content,
+            )
+        elif raw_fidelity_data is not None:
+            slides_data = normalize_slides_payload(
+                raw_fidelity_data,
+                allow_placeholder_content=allow_placeholder_content,
+            )
+        elif raw_slide_content_data is not None:
+            slides_data = normalize_slides_payload(
+                raw_slide_content_data,
+                allow_placeholder_content=allow_placeholder_content,
+            )
+
         if "--module" in sys.argv:
             idx = sys.argv.index("--module") + 1
             module_id = sys.argv[idx]
         if "--diagram-cards" in sys.argv:
             idx = sys.argv.index("--diagram-cards") + 1
             diagram_cards_data = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
+            if isinstance(diagram_cards_data, dict):
+                diagram_cards_data = diagram_cards_data.get(
+                    "cards",
+                    diagram_cards_data.get("diagram_cards", []),
+                )
 
         run_id_cli: str | None = None
         if "--run-id" in sys.argv:
@@ -1205,7 +1422,6 @@ if __name__ == "__main__":
             if idx < len(sys.argv):
                 run_id_cli = sys.argv[idx]
 
-        params = {"input_text": input_text, "textMode": "generate"}
         result = execute_generation(
             params,
             slides=slides_data,
@@ -1213,6 +1429,14 @@ if __name__ == "__main__":
             diagram_cards=diagram_cards_data,
             run_id=run_id_cli,
         )
+        # Embed content source provenance for Gate 2 audit trail
+        if isinstance(result, dict):
+            _sc_path: str | None = None
+            if "--slides-content-json" in sys.argv:
+                _sc_idx = sys.argv.index("--slides-content-json") + 1
+                if _sc_idx < len(sys.argv):
+                    _sc_path = sys.argv[_sc_idx]
+            result["dispatch_metadata"] = {"slides_content_json_path": _sc_path}
         print(json.dumps(result, indent=2, default=str))
         sys.exit(0)
 

@@ -23,7 +23,9 @@ from gamma_operations import (  # noqa: E402
     list_style_presets,
     load_style_guide_gamma,
     load_style_preset,
+    merge_slide_content,
     merge_parameters,
+    normalize_slides_payload,
     resolve_style_preset,
     validate_dispatch_ready,
     validate_outbound_contract,
@@ -114,6 +116,111 @@ class TestMergeParameters:
         assert result == {"format": "presentation", "numCards": 1, "exportAs": "pdf"}
 
 
+class TestNormalizeSlidesPayload:
+    def test_accepts_list_payload_unchanged_when_complete(self) -> None:
+        payload = [
+            {
+                "slide_number": 1,
+                "fidelity": "creative",
+                "content": "Slide 1 content",
+                "source_ref": "extracted.md#Page 1",
+            }
+        ]
+        result = normalize_slides_payload(payload)
+        assert len(result) == 1
+        assert result[0]["content"] == "Slide 1 content"
+        assert result[0]["source_ref"] == "extracted.md#Page 1"
+
+    def test_accepts_object_with_slides_and_derives_source_ref(self) -> None:
+        payload = {
+            "run_id": "R1",
+            "slides": [
+                {
+                    "slide_number": 2,
+                    "fidelity": "literal-text",
+                    "source_anchors": ["extracted.md#Page 2", "extracted.md#Page 3"],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="Slides payload missing required content"):
+            normalize_slides_payload(payload)
+
+    def test_allows_placeholders_only_with_explicit_debug_override(self) -> None:
+        payload = {
+            "slides": [
+                {
+                    "slide_number": 2,
+                    "fidelity": "literal-text",
+                    "source_anchors": ["extracted.md#Page 2", "extracted.md#Page 3"],
+                }
+            ]
+        }
+        result = normalize_slides_payload(payload, allow_placeholder_content=True)
+        assert len(result) == 1
+        assert "extracted.md#Page 2; extracted.md#Page 3" == result[0]["source_ref"]
+        assert "placeholder derived from pre-dispatch artifacts" in result[0]["content"]
+
+    def test_invalid_payload_raises(self) -> None:
+        with pytest.raises(ValueError, match="Expected list or object with 'slides' array"):
+            normalize_slides_payload({"slides": "not-a-list"})
+
+
+class TestMergeSlideContent:
+    def test_merges_content_rows_into_fidelity_rows(self) -> None:
+        fidelity_payload = {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "fidelity": "creative",
+                    "source_anchors": ["extracted.md#Page 1"],
+                },
+                {
+                    "slide_number": 2,
+                    "fidelity": "literal-text",
+                    "source_anchors": ["extracted.md#Page 2"],
+                },
+            ]
+        }
+        content_payload = {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "content": "Creative content",
+                    "source_ref": "extracted.md#Page 1",
+                },
+                {
+                    "slide_number": 2,
+                    "content": "Literal content",
+                    "source_ref": "extracted.md#Page 2",
+                },
+            ]
+        }
+
+        merged = merge_slide_content(fidelity_payload, content_payload)
+
+        assert len(merged) == 2
+        assert merged[0]["fidelity"] == "creative"
+        assert merged[0]["content"] == "Creative content"
+        assert merged[1]["fidelity"] == "literal-text"
+        assert merged[1]["content"] == "Literal content"
+        assert "placeholder derived from pre-dispatch artifacts" not in merged[1]["content"]
+
+    def test_missing_content_in_merged_payload_fails_without_debug_override(self) -> None:
+        fidelity_payload = {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "fidelity": "creative",
+                    "source_anchors": ["extracted.md#Page 1"],
+                }
+            ]
+        }
+        content_payload = {"slides": []}
+
+        with pytest.raises(ValueError, match="Slides payload missing required content"):
+            merge_slide_content(fidelity_payload, content_payload)
+
+
 class TestGenerateSlide:
     """Tests for text-based generation."""
 
@@ -172,6 +279,55 @@ class TestGenerateSlide:
         call_args = mock_client.generate.call_args
         assert call_args[0][0] == "CamelCase input"
         assert call_args[0][1] == "generate"
+
+    def test_strips_internal_image_option_helper_keys(self) -> None:
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-789"}
+        mock_client.wait_for_generation.return_value = {"status": "completed"}
+
+        params = {
+            "input_text": "Deck content",
+            "text_mode": "generate",
+            "imageOptions": {
+                "source": "aiGenerated",
+                "model": "gemini-3.1-flash-image-mini",
+                "stylePreset": "illustration",
+                "_keywordsHint": "vector, minimalist",
+                "referenceImagePath": "course-content/staging/ad-hoc/ref.png",
+            },
+            "additionalInstructions": "Keep style uniform.",
+        }
+
+        generate_slide(params, client=mock_client)
+
+        _, kwargs = mock_client.generate.call_args
+        image_options = kwargs["image_options"]
+        assert "_keywordsHint" not in image_options
+        assert "referenceImagePath" not in image_options
+        assert image_options["source"] == "aiGenerated"
+        assert image_options["model"] == "gemini-3.1-flash-image-mini"
+
+    def test_promotes_keywords_hint_to_additional_instructions(self) -> None:
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-790"}
+        mock_client.wait_for_generation.return_value = {"status": "completed"}
+
+        params = {
+            "input_text": "Deck content",
+            "text_mode": "generate",
+            "imageOptions": {
+                "source": "aiGenerated",
+                "_keywordsHint": "vector, minimalist",
+            },
+            "additionalInstructions": "Keep style uniform.",
+        }
+
+        generate_slide(params, client=mock_client)
+
+        _, kwargs = mock_client.generate.call_args
+        ai_text = kwargs["additional_instructions"]
+        assert "Keep style uniform." in ai_text
+        assert "Visual keyword cues: vector, minimalist." in ai_text
 
 
 class TestGenerateFromTemplate:
@@ -706,6 +862,32 @@ class TestGaryOutboundContract:
         desc = result["gary_slide_output"][0]["visual_description"].lower()
         assert "pending export" not in desc
 
+    def test_mixed_fidelity_file_path_populated_from_generation_urls(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal card", "fidelity": "literal-text"},
+        ]
+
+        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal", "gammaUrl": "https://gamma.app/docs/literal"},
+            ]
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        output = result["gary_slide_output"]
+        assert len(output) == 2
+        assert output[0]["file_path"] == "https://gamma.app/docs/creative"
+        assert output[1]["file_path"] == "https://gamma.app/docs/literal"
+
     def test_validate_outbound_contract_raises_on_missing_required_field(self) -> None:
         payload = {
             "gary_slide_output": [],
@@ -880,3 +1062,110 @@ class TestThemeMappingHandshake:
         assert result["theme_resolution"]["resolved_theme_key"] == "theme_abc"
         assert result["parameter_decisions"]["resolved_parameter_set"] == "hil-2026-apc-nejal-A"
         assert result["flags"]["theme_mapping_verified"] is True
+
+
+class TestGoldenPathDispatch:
+    """Integration test: merge_slide_content → execute_generation → validate_dispatch_ready.
+
+    Locks in the full proven dispatch path (content-agnostic):
+      fidelity payload (metadata only) + content payload →
+      merge_slide_content() → execute_generation() → validate_dispatch_ready().
+
+    This catches regressions to the routing logic that selects merge_slide_content()
+    over normalize_slides_payload() when both content sources are present. The test
+    uses minimal representative rows matching the production fidelity split pattern
+    (creative / literal-text / literal-visual) but carries no course-specific content.
+    """
+
+    def _fidelity_payload(self) -> dict:
+        return {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "fidelity": "creative",
+                    "queue": "creative",
+                    "source_anchors": ["extracted.md#Page 1"],
+                },
+                {
+                    "slide_number": 2,
+                    "fidelity": "literal-text",
+                    "queue": "literal",
+                    "source_anchors": ["extracted.md#Page 2"],
+                },
+                {
+                    "slide_number": 3,
+                    "fidelity": "literal-visual",
+                    "queue": "literal",
+                    "source_anchors": ["extracted.md#Page 3"],
+                },
+            ]
+        }
+
+    def _content_payload(self) -> dict:
+        return {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "content": "Clinicians run a problem-solving loop every day.",
+                    "source_ref": "extracted.md#Page 1",
+                },
+                {
+                    "slide_number": 2,
+                    "content": "Healthcare costs and administrative waste continue to rise.",
+                    "source_ref": "extracted.md#Page 2",
+                },
+                {
+                    "slide_number": 3,
+                    "content": "The roadmap from clinician to innovator.",
+                    "source_ref": "extracted.md#Page 3",
+                },
+            ]
+        }
+
+    def test_merge_to_execute_to_validate_dispatch_ready(self) -> None:
+        """Full data path: merge_slide_content → execute_generation → validate_dispatch_ready."""
+        fidelity_payload = self._fidelity_payload()
+        content_payload = self._content_payload()
+        params = {
+            "themeId": "theme_golden",
+            **_valid_theme_resolution(),
+        }
+
+        # Step 1: merge — must produce content-bearing rows aligned to fidelity metadata
+        merged = merge_slide_content(fidelity_payload, content_payload)
+
+        assert len(merged) == 3
+        assert merged[0]["fidelity"] == "creative"
+        assert merged[0]["content"] == "Clinicians run a problem-solving loop every day."
+        assert merged[1]["fidelity"] == "literal-text"
+        assert merged[2]["fidelity"] == "literal-visual"
+        assert all(
+            "placeholder derived from pre-dispatch artifacts" not in s.get("content", "")
+            for s in merged
+        ), "no slide may carry placeholder text after merge"
+
+        # Step 2: dispatch — mocked at generate_slide boundary (2 calls: creative + literal)
+        with patch.object(gamma_operations, "generate_slide") as mock_gen:
+            mock_gen.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal", "gammaUrl": "https://gamma.app/docs/literal"},
+            ]
+            result = execute_generation(
+                params,
+                slides=merged,
+                module_lesson_part="GOLDEN-PATH-01",
+                run_id="GOLDEN-PATH-01",
+            )
+
+        assert mock_gen.call_count == 2, "mixed fidelity must produce exactly 2 API calls"
+
+        # Step 3: validate output shape
+        assert "gary_slide_output" in result
+        output = result["gary_slide_output"]
+        assert len(output) == 3
+        assert result["calls_made"] == 2
+        assert all(s.get("file_path") for s in output), "every slide must have file_path"
+        assert all(s.get("source_ref") for s in output), "every slide must have source_ref"
+
+        # Step 4: Gate 2 dispatch contract must pass (low-level validator)
+        validate_dispatch_ready(result)

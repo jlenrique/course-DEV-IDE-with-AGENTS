@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "APP: Session Readiness + Preflight",
+      "type": "shell",
+      "command": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "scripts.utilities.app_session_readiness",
+        "--with-preflight"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "APP: Session Readiness + Preflight (JSON)",
+      "type": "shell",
+      "command": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "scripts.utilities.app_session_readiness",
+        "--with-preflight",
+        "--json-only"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "APP: Preflight Only",
+      "type": "shell",
+      "command": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "skills.pre-flight-check.scripts.preflight_runner"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "APP: Heartbeat Only",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "scripts/heartbeat_check.mjs"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

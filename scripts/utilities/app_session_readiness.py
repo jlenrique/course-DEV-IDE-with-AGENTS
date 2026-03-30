@@ -275,17 +275,39 @@ def _check_import_sanity(root: Path) -> CheckResult:
 
 
 def _run_preflight_phase(root: Path) -> CheckResult:
+    preflight_module = None
+
     try:
         preflight_module = importlib.import_module(
             "skills.pre_flight_check.scripts.preflight_runner"
         )
-    except (ImportError, ModuleNotFoundError) as exc:
-        return CheckResult(
-            name="preflight_tools",
-            status="fail",
-            detail=f"Pre-flight module import failed: {type(exc).__name__}: {exc}",
-            resolution="Restore pre-flight skill module before using --with-preflight.",
-        )
+    except (ImportError, ModuleNotFoundError):
+        # Repo keeps this skill in a hyphenated folder name.
+        preflight_path = root / "skills" / "pre-flight-check" / "scripts" / "preflight_runner.py"
+        if not preflight_path.exists():
+            return CheckResult(
+                name="preflight_tools",
+                status="fail",
+                detail="Pre-flight module import failed and file path fallback was not found",
+                resolution="Restore pre-flight skill module before using --with-preflight.",
+            )
+        try:
+            module_name = "preflight_runner_fallback"
+            spec = importlib.util.spec_from_file_location(module_name, preflight_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Cannot load spec for {preflight_path}")
+            preflight_module = importlib.util.module_from_spec(spec)
+            import sys
+
+            sys.modules[module_name] = preflight_module
+            spec.loader.exec_module(preflight_module)
+        except Exception as exc:
+            return CheckResult(
+                name="preflight_tools",
+                status="fail",
+                detail=f"Pre-flight module fallback load failed: {type(exc).__name__}: {exc}",
+                resolution="Restore pre-flight skill module before using --with-preflight.",
+            )
 
     try:
         tool_status = preflight_module.ToolStatus

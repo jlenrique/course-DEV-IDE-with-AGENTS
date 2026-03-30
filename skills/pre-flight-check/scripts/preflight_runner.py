@@ -160,14 +160,17 @@ def run_node_script(script_path: Path, cwd: Path) -> tuple[int, str, str]:
 
 # -- Heartbeat Output Parser --
 
-HEARTBEAT_PATTERN = re.compile(r"\s*(PASS|FAIL|SKIP):\s*(.+?)\s*(?:--|—)\s*(.+)")
+# Accept '--', a true em dash, and common mojibake form ('â€”') seen on some Windows setups.
+HEARTBEAT_PATTERN = re.compile(r"\s*(PASS|FAIL|SKIP):\s*(.+?)\s*(?:--|—|â€”)+\s*(.+)")
+ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def parse_heartbeat_output(output: str) -> list[dict[str, str]]:
     """Parse PASS/FAIL/SKIP lines from heartbeat_check.mjs output."""
     results = []
     for line in output.splitlines():
-        m = HEARTBEAT_PATTERN.match(line)
+        clean_line = ANSI_ESCAPE_PATTERN.sub("", line)
+        m = HEARTBEAT_PATTERN.match(clean_line)
         if m:
             results.append({
                 "status": m.group(1),
@@ -335,6 +338,10 @@ def run_preflight(root: Path | None = None) -> PreflightReport:
     for hr in heartbeat_results:
         tool_name = hr["name"]
         mcp_key = tool_name.lower().replace(" ", "-").replace("_", "-")
+        for suffix in ("-api", "-mcp"):
+            if mcp_key.endswith(suffix):
+                mcp_key = mcp_key[: -len(suffix)]
+                break
 
         if hr["status"] == "PASS":
             if mcp_key in mcp_servers or any(mcp_key in k for k in mcp_servers):

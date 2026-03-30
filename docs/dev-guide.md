@@ -1,7 +1,7 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-03-28 | **Project Phase:** 4-Implementation (Epic 3: 8/11; Epic 2A complete; **Epic 4A** governance next; Epic 4+ depend on 4A)
+**Last Updated:** 2026-03-29 | **Project Phase:** 4-Implementation (Epic 3: 8/11; Epic 2A complete; **Epic 4A** governance next; Epic 4+ depend on 4A)
 
 ---
 
@@ -96,6 +96,8 @@ Agent (.md)  ──reads──>  Skill (SKILL.md + references/)  ──invokes�
 ---
 
 ## Typical Run Walk-Through
+
+For a **step-by-step trial** aligned with instructor copy-paste prompts, staging layout, and HIL gates, see the **Happy-path walkthrough** section in [`docs/user-guide.md`](user-guide.md) (same pipeline as below, with paths and checklist).
 
 Here's what happens step-by-step when a user says: **"Marcus, create a presentation on drug interactions for Module 2, Lesson 3."**
 
@@ -217,9 +219,14 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 
 ### Mode-Aware Write Rules
 
-The ad-hoc/default mode switch is a **gate on the state management layer**, not on agents. Agents behave identically in both modes — the infrastructure handles routing:
+Run settings use two independent axes:
 
-| State Target | Default Mode | Ad-Hoc Mode |
+- Execution mode: `tracked` (alias `default`) vs `ad-hoc`
+- Quality preset: `explore`, `draft`, `production`, `regulated`
+
+Execution mode is a **gate on the state management layer**, not on agents. Agents behave identically in both execution modes — the infrastructure handles routing:
+
+| State Target | Tracked/Default Mode | Ad-Hoc Mode |
 |-------------|:------------:|:-----------:|
 | SQLite tables | Full write | Suppressed |
 | YAML configs | Full write | Suppressed |
@@ -229,6 +236,8 @@ The ad-hoc/default mode switch is a **gate on the state management layer**, not 
 | Memory sidecar `access-boundaries.md` | Read-only | Read-only |
 | Quality gate execution | Always | Always |
 | Asset output | `course-content/staging/` | Scratch/staging area |
+
+Quality preset is applied separately by policy thresholds and validators; it does not redefine persistence routing.
 
 ---
 
@@ -773,6 +782,7 @@ These are the authoritative sources — this guide references them rather than d
 | **Session Protocol (Wrap-up)** | `bmad-session-protocol-session-WRAPUP.md` | End-of-session shutdown and handoff |
 | **Session Protocol (Reference)** | `bmad-session-protocol-session-MISC.md` | BMAD workflow reference notes |
 | **Project Context** | `docs/project-context.md` | Current state, key decisions, repository contract |
+| **User Guide (happy path)** | `docs/user-guide.md` (Happy-path walkthrough) | Trial planner: Marcus model prompts, X-ray table, staging tree, Gates 1–3, compositor handoff |
 | **HIL Workflow** | `docs/workflow/human-in-the-loop.md` | Staging → review → promotion → publish |
 | **Agent Environment** | `docs/agent-environment.md` | MCP setup, API guidance, BMad alignment |
 | **Marcus Coaching** | `_bmad-output/brainstorming/party-mode-coaching-marcus-orchestrator.md` | Full discovery answers for orchestrator creation |

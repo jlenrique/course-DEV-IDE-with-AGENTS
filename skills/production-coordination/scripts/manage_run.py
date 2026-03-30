@@ -154,6 +154,23 @@ def _load_run_preset_policy(preset: str | None) -> dict[str, Any]:
     return default_policy
 
 
+def _normalize_execution_mode(mode: str | None) -> str | None:
+    """Normalize execution-mode aliases to canonical persisted values."""
+    if mode is None:
+        return "default"
+    token = str(mode).strip().lower()
+    if token == "tracked":
+        return "default"
+    if token in {"default", "ad-hoc"}:
+        return token
+    return None
+
+
+def _execution_mode_label(mode: str | None) -> str:
+    """Return user-facing execution mode label."""
+    return "tracked" if (mode or "default") == "default" else "ad-hoc"
+
+
 def _ad_hoc_runs_dir(runtime_dir: str | None = None) -> Path:
     """Resolve ad-hoc transient run store directory."""
     path = _runtime_dir(runtime_dir) / "ad-hoc-runs"
@@ -357,7 +374,11 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
 
     selected_preset = args.preset or "draft"
     preset_policy = _load_run_preset_policy(selected_preset)
-    mode = args.mode or "default"
+    mode = _normalize_execution_mode(args.mode)
+    if mode is None:
+        return {
+            "error": f"Invalid mode: {args.mode}. Must be 'tracked', 'default', or 'ad-hoc'."
+        }
 
     context = {
         "content_type": args.content_type or "unknown",
@@ -451,6 +472,7 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
             "created_at": now,
             "persisted": False,
             "mode": mode,
+            "execution_mode": _execution_mode_label(mode),
             "code": guard["code"],
             "reason": guard["reason"],
             "ad_hoc_state": str(_ad_hoc_run_path(run_id, args.runtime_dir)),
@@ -490,6 +512,7 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
         "created_at": now,
         "persisted": True,
         "mode": context.get("mode", "default"),
+        "execution_mode": _execution_mode_label(context.get("mode", "default")),
         "preset_policy": preset_policy,
         "cross_run_links": cross_run_links,
         "context_paths": context_paths,
@@ -1140,6 +1163,8 @@ def cmd_list(args: argparse.Namespace) -> dict[str, Any]:
             "purpose": r["purpose"],
             "status": r["status"],
             "content_type": ctx.get("content_type", ""),
+            "mode": ctx.get("mode", "default"),
+            "execution_mode": _execution_mode_label(ctx.get("mode", "default")),
             "updated_at": r["updated_at"],
             "persisted": True,
         })
@@ -1165,6 +1190,7 @@ def cmd_list(args: argparse.Namespace) -> dict[str, Any]:
                 "updated_at": run.get("updated_at"),
                 "persisted": False,
                 "mode": "ad-hoc",
+                "execution_mode": "ad-hoc",
             }
         )
 
@@ -1199,7 +1225,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--preset", default="draft",
         help="Run preset (explore/draft/production/regulated)",
     )
-    p_create.add_argument("--mode", default="default", help="Run mode (default/ad-hoc)")
+    p_create.add_argument(
+        "--mode",
+        choices=["tracked", "default", "ad-hoc"],
+        default="default",
+        help="Execution mode (tracked/default/ad-hoc)",
+    )
     p_create.add_argument("--stages-json", help="JSON array of stage objects")
 
     # advance

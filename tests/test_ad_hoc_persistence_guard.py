@@ -43,3 +43,9 @@ def test_strict_invalid_mode_state_blocks_durable_writes(tmp_path: Path) -> None
     assert result["allowed"] is False
     assert result["run_mode"] == "ad-hoc"
     assert result["code"] == "NOOP_AD_HOC_AMBIGUOUS_MODE"
+
+
+def test_tracked_alias_resolves_to_default() -> None:
+    result = guard.enforce_ad_hoc_boundary("production_run_db", "tracked")
+    assert result["allowed"] is True
+    assert result["run_mode"] == "default"

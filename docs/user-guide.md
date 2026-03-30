@@ -39,19 +39,38 @@ Marcus is a veteran executive producer for medical education content. You talk t
 
 Think of Marcus as your **general contractor**: you describe what you want built, Marcus assembles the right specialists, manages the work, and brings you results for approval at every stage.
 
-### Two Modes: Default and Ad-Hoc
+### Run Setting Axis 1: Execution Mode (Tracked/Default vs Ad-Hoc)
 
-| Mode | Purpose | Assets Go To | State Tracking |
+| Execution Mode | Purpose | Assets Go To | State Tracking |
 |------|---------|-------------|----------------|
-| **Default** | Full production runs | `course-content/staging/` → your review → `course-content/courses/` | Full — preferences learned, patterns captured |
+| **Tracked (default)** | Full production operations with persistent run records | `course-content/staging/` → your review → `course-content/courses/` | Full — preferences learned, patterns captured |
 | **Ad-Hoc** | Experimentation and quick exploration | Scratch/staging area | Paused — nothing permanent saved |
 
 Switch modes by telling Marcus:
 - *"Switch to ad-hoc mode"* — for experimenting without committing
-- *"Switch to default mode"* — for production work
+- *"Switch to tracked mode"* or *"Switch to default mode"* — resume full tracking (same setting)
 - *"What mode am I in?"* — Marcus confirms your current mode
 
 **Quality checks always run in both modes.** The difference is only whether the system remembers your preferences for next time.
+
+### Run Setting Axis 2: Quality Preset (Explore vs Draft vs Production)
+
+Marcus uses run presets that control how strictly quality is enforced:
+
+| Preset | When to Use | Human Review | Quality Level |
+|--------|------------|:------------:|:-------------:|
+| **explore** | Quick experiments, idea generation | No | Minimal |
+| **draft** | Working drafts, iterative development | Yes | Standard |
+| **production** | Publication-ready artifact strictness | Yes | Full pipeline |
+| **regulated** | Compliance-grade (accreditation) | Yes | Strictest + audit trail |
+
+The default preset is **draft**. Tell Marcus: *"Use production preset for this run."*
+
+Important terminology:
+- "Production session" can mean operating the APP for real course work (not developing the APP).
+- "Production preset" is the quality strictness level on the preset axis.
+
+These are related but not the same setting.
 
 ### The Content Workflow
 
@@ -151,16 +170,7 @@ To update the style bible, edit the file directly. Changes take effect on the ne
 
 ### Run Presets
 
-Marcus uses run presets that control how strictly quality is enforced:
-
-| Preset | When to Use | Human Review | Quality Level |
-|--------|------------|:------------:|:-------------:|
-| **explore** | Quick experiments, idea generation | No | Minimal |
-| **draft** | Working drafts, iterative development | Yes | Standard |
-| **production** | Publication-ready content | Yes | Full pipeline |
-| **regulated** | Compliance-grade (accreditation) | Yes | Strictest + audit trail |
-
-The default is **draft**. Tell Marcus to switch: *"Use production preset for this run."*
+Run presets are the quality-strictness axis (separate from execution mode). If no preset is specified, Marcus uses **draft**.
 
 ---
 
@@ -203,52 +213,200 @@ Before promoting content from staging:
 
 For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
-### Hypothetical full run: narrated deck + custom diagrams + motion (repo-aligned)
+### Happy-path walkthrough: user + Marcus + “X-ray” (planner / checklist)
 
-The table below is a **walkthrough**, not a guarantee every automation path is one-click. It reflects **agents and skills that exist in this repository** as of the doc date. Invented names illustrate where files land.
+This section is **one coherent story**: a **full-featured narrated presentation** with **HTTPS-hosted custom images** on selected slides (literal cards), **creative** Gamma for the rest, **ElevenLabs** audio, optional **Kling** silent clips, then **compositor → Descript**. Use it as (1) a **narrative walkthrough**, (2) a **trial-run planner**, and (3) a **step checklist**—same steps, three roles.
 
-**Hypothetical identifiers**
+**Is this clear and doable?** Yes: it matches how the repo is designed (Irene two-pass, mixed-fidelity Gamma + `diagram_cards`, manifest SSOT, compositor bundle). **What to watch anyway:**
+
+- **Chat vs state:** Marcus should persist mode via `manage_mode.py` / `mode_state.json`, not only say “we’re in ad-hoc” in chat.
+- **New Cursor thread:** Paste **run id** + lesson slug + paths so context isn’t lost.
+- **Two Gamma jobs** (creative + literal): ensure exports are **mapped to `card_number`** and `gary_slide_output[].file_path` is real before Pass 2.
+- **Costs:** Gamma / ElevenLabs / Kling spend ramps **after Gate 3**—that gate protects budget.
+- **All-literal decks** with only `diagram_cards`: confirm `execute_generation` path with devs (mixed creative+literal is the well-wired happy path here).
+- **URLs:** Custom images must pass **`validate_image_url`** (HTTPS, image content-type)—see Marcus **Imagine handoff** in `skills/bmad-agent-marcus/references/conversation-mgmt.md`.
+
+**Hypothetical run identifiers**
 
 | Item | Example value |
 |------|----------------|
 | Production run id | `APP-RUN-C1M3L2-HTN-20260330` |
 | Lesson slug (folder) | `C1-M3-L2-ambulatory-bp` |
 | Topic | Ambulatory blood-pressure patterns in resistant hypertension |
-| Custom diagrams (must become URLs for Gamma API) | `https://media.university.example/course-assets/htn-renal-diagram.png` (slide 4), `https://media.university.example/course-assets/abpm-48h-grid.png` (slide 7) |
+| Custom diagrams (HTTPS for `diagram_cards`) | Slide 4: `https://media.university.example/course-assets/htn-renal-diagram.png` — Slide 7: `https://media.university.example/course-assets/abpm-48h-grid.png` |
 
-**Where things live (path formula)**
+**Phase 1 vs Phase 2 — what you review (instructor checkpoints)**
 
-| Mode | Control docs + lesson artifacts | Source bundles (optional) | Notes |
-|------|----------------------------------|----------------------------|--------|
-| **Default** | `course-content/staging/{lessonSlug}/` | `course-content/staging/source-bundles/{runId-or-slug}/` | Marcus aligns paths with `state/runtime/mode_state.json` via `skills/production-coordination/scripts/manage_mode.py` (see `skills/bmad-agent-marcus/references/mode-management.md`). |
-| **Ad-hoc** | Under `course-content/staging/ad-hoc/…` (e.g. `ad-hoc/source-bundles/{slug}/`) | Same scratch tree | No durable ledger/sidecar learning; QA still runs (`docs/ad-hoc-contract.md`). |
+| Phase | Blueprint you own | Open / edit these (typical names) | You are checking |
+|-------|-------------------|-------------------------------------|------------------|
+| **Irene Pass 1** (before Gary) | Lesson plan + **slide brief** | `lesson-plan.md`, `slide-brief.md` under lesson staging | LOs, sequence, **which slides are `creative` vs `literal-text` / `literal-visual`**, where custom URLs will land, voice of content |
+| **Irene Pass 2** (after Gate 2, before heavy audio/video spend) | **Paired** narration script + **segment manifest** | `narration-script.md`, `segment-manifest.yaml` | Spoken copy matches **approved slide PNGs** (including embedded custom art), segment IDs line up, `visual_mode` / `music` / `sfx` intent, Kling segments if any |
 
-Place the **assembly bundle** (manifest, guide, `audio/`, `captions/`, `visuals/` after sync) in one folder under the lesson staging path above—e.g. `course-content/staging/C1-M3-L2-ambulatory-bp/assembly-bundle/`.
+Always edit **script + manifest together** so segment IDs and copy do not drift.
 
-**Custom images and Gamma**
+**Where control docs and assets live (default mode happy path)**
 
-The Gamma stack does **not** take arbitrary local file paths inside the JSON body the way a desktop app might. For slides that must **embed specific diagrams**, the repo implements **`diagram_cards`**: a list of `{ "card_number": <n>, "image_url": "<https://...>" }` passed into `skills/gamma-api-mastery/scripts/gamma_operations.py` → `execute_generation(...)`. In code today, those URLs are merged into **literal** slide text inside **`generate_deck_mixed_fidelity`** (when the deck mixes **creative** and **literal** slides). URLs are **validated** (`validate_image_url`) and embedded as `![diagram](url)` before the API call. **You (or your org) must host the PNGs at stable HTTPS URLs** Gamma can fetch (CDN, learning object repository, signed static host, etc.). Tell Marcus early: *“Slides 4 and 7 are literal—here are the two HTTPS URLs; everything else is creative Gamma.”* That dependency belongs in the **slide brief** and in Marcus’s production plan. *Implementation note:* an **all-literal** deck with `diagram_cards` may require the same mixed-fidelity orchestration or an explicit developer pass—confirm with `gamma_operations.execute_generation` behavior before relying on it for edge layouts. Creative slides without fixed assets still use Gamma’s normal `imageOptions` / generation path.
+Path roots follow `skills/bmad-agent-marcus/references/mode-management.md`. **Ad-hoc:** prefix lesson and bundle paths with `course-content/staging/ad-hoc/` (and use `ad-hoc/source-bundles/…` for wrangler); no durable ledger/sidecar learning (`docs/ad-hoc-contract.md`).
 
-**End-to-end step table**
+```
+course-content/staging/
+├── source-bundles/APP-RUN-C1M3L2-HTN-20260330/     # optional G0: extracted.md, metadata.json
+└── C1-M3-L2-ambulatory-bp/                         # lesson workspace
+    ├── lesson-plan.md
+    ├── slide-brief.md                              # fidelity_per_slide; drives Gary
+    ├── gamma-export/                               # Gary exports: PNG/PDF; unified order by card_number
+    ├── narration-script.md
+    ├── segment-manifest.yaml                       # SSOT for assembly; filled in downstream
+    └── assembly-bundle/                            # single folder for Descript handoff
+        ├── segment-manifest.yaml                   # copy or canonical; paths updated after sync-visuals
+        ├── DESCRIPT-ASSEMBLY-GUIDE.md
+        ├── audio/
+        ├── captions/
+        ├── video/                                  # optional Kling MP4s
+        └── visuals/                                # after compositor sync-visuals: slide stills localized here
+```
 
-| Step | You / Marcus (conversation) | Delegated to | Skill / script / client (exists in repo) | Artifact(s) produced | Blueprint / contract at this phase | Typical location (default mode) |
-|------|----------------------------|--------------|-------------------------------------------|------------------------|-----------------------------------|--------------------------------|
-| 0 | *“Marcus, default mode, draft preset, run `APP-RUN-C1M3L2-HTN-20260330`.”* Optional: *“Run pre-flight.”* | Marcus | `skills/pre-flight-check/`, `skills/bmad-agent-marcus/scripts/read-mode-state.py`, `manage_mode.py` | Mode confirmed; green/red tool status | `state/config/tool_policies.yaml`, style bible | `state/runtime/mode_state.json` |
-| 1 (opt.) | *“Pull Module 3 hypertension notes from Notion.”* | Source wrangler (via Marcus) | `skills/source-wrangler/` + `scripts/api_clients/notion_client.py` | `extracted.md`, `metadata.json` | Source bundle as G0 input | `course-content/staging/source-bundles/APP-RUN-C1M3L2-HTN-20260330/` |
-| 2 | Marcus proposes plan; you confirm LOs and constraints | Irene (content-creator) | `skills/bmad-agent-content-creator/SKILL.md` | `lesson-plan.md`, `slide-brief.md` (example names) | **Pass 1 blueprint:** lesson plan + slide brief | `course-content/staging/C1-M3-L2-ambulatory-bp/` |
-| 3 | **HIL Gate 1** — you approve or revise pedagogy | You | — | Signed-off brief | Same | — |
-| 4 | *“Slides 4 & 7 use these HTTPS diagram URLs; rest creative.”* | Gary (gamma specialist) | `skills/bmad-agent-gamma/` → `skills/gamma-api-mastery/scripts/gamma_operations.py` → `scripts/api_clients/gamma_client.py` | Gamma deck + exports (e.g. PPTX/PNG paths), `gary_slide_output` metadata | Slide brief + style bible | `course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/` (representative) |
-| 5 | **HIL Gate 2** — you approve visuals | You | — | Approved slide set | — | — |
-| 6 | Marcus delegates Pass 2 | Irene | `skills/bmad-agent-content-creator/` + `references/template-segment-manifest.md` | `narration-script.md`, `segment-manifest.yaml` | **Pass 2 blueprint:** script + manifest (paired) | Same lesson folder |
-| 7 | **HIL Gate 3** — you approve script/audio plan | You | — | Locked manifest + script | — | — |
-| 8 | Fidelity + quality on pipeline artifacts | Vera, Quinn-R | `skills/bmad-agent-fidelity-assessor/`, `skills/bmad-agent-quality-reviewer/`, optional `skills/quality-control/scripts/*`, `skills/sensory-bridges/` | Trace reports, quality notes | `docs/fidelity-gate-map.md`, `state/config/fidelity-contracts/` | Logs per governance; ad-hoc excludes some durable writes |
-| 9 | Manifest-driven audio | Voice Director (ElevenLabs) | `skills/elevenlabs-audio/scripts/elevenlabs_operations.py` + `scripts/api_clients/` | Per-segment MP3, VTT, optional SFX/music; manifest write-back (`narration_duration`, paths) | Approved **segment manifest** | `…/assembly-bundle/audio/`, `…/captions/` |
-| 10 | Silent B-roll / motion segments | Kira | `skills/bmad-agent-kling/` → `skills/kling-video/scripts/kling_operations.py` | Silent MP4s; manifest `visual_file` / `visual_duration` for Kira rows | Manifest timing from step 9 | `…/assembly-bundle/video/` (example) |
-| 11 | Pre-composition QA | Quinn-R | `skills/bmad-agent-quality-reviewer/` + quality-control helpers | Pre-composition report | Manifest + assets | — |
-| 12 | Assembly instructions | Marcus → compositor | `skills/compositor/scripts/compositor_operations.py` (`sync-visuals`, `guide`) | `DESCRIPT-ASSEMBLY-GUIDE.md`, localized `visuals/` | **Completed manifest** + guide | `…/assembly-bundle/` |
-| 13 | Final edit | You | **Descript** (manual) | Exported lesson video / project | Guide + bundle | Outside repo or user-chosen export path |
+`state/runtime/mode_state.json` — default vs ad-hoc. `resources/style-bible/master-style-bible.md` — authoritative look/feel (read fresh each run).
 
-**Compositor deliverable:** You should see a **single folder** containing `segment-manifest.yaml` (with paths filled in), `DESCRIPT-ASSEMBLY-GUIDE.md`, narration and caption files, optional SFX/music stems, silent Kling MP4s, and **`visuals/`** with Gate-2-approved slide PNGs after `sync-visuals`—ready for Descript import.
+**Custom images → Gary (happy path = mixed deck)**
+
+Deck includes **both** creative slides and **literal** slides 4 & 7. Marcus builds **`diagram_cards`** for those card numbers; `skills/gamma-api-mastery/scripts/gamma_operations.py` **`generate_deck_mixed_fidelity`** runs two Gamma calls, then **`reassemble_slide_output`** sorts by **`card_number`**. URLs must be HTTPS-fetchable image URLs.
+
+**Walkthrough table — user view, X-ray, review, paths**
+
+The **model prompts** for each step (what to type to Marcus) are in the next subsection—use them with the same step numbers.
+
+| # | You ↔ Marcus (summary) | X-ray — APP behind the scenes | Review ✓ (planner tick) | Paths / artifacts (default mode) |
+|---|-------------------------|----------------------------------|-------------------------|-----------------------------------|
+| 0 | Open the run: mode, run id, pre-flight | `read-mode-state.py`, `manage_mode.py` → `mode_state.json`; pre-flight skill checks MCP/API | ☐ Mode is default (or ad-hoc if you intend trial scratch) ☐ Tools green for Gamma, EL, Kling | `state/runtime/mode_state.json` |
+| 1 | Answer fidelity questions (literal slides, exact text) | Marcus fills `fidelity_guidance` for Irene; Imagine handoff later for URLs (`conversation-mgmt.md`) | ☐ You listed slides needing **literal** treatment ☐ HTTPS URLs ready **before** Gary for diagram slides | Optional PNG drop: `course-content/staging/rebranded-assets/` |
+| 2 (opt.) | Optional source pull | Source wrangler → Notion client | ☐ Bundle usable for Irene | `source-bundles/APP-RUN-C1M3L2-HTN-20260330/extracted.md` |
+| 3 | Kick off Irene Pass 1; review outputs | Irene Pass 1: `bmad-agent-content-creator` | **☐ PHASE 1 REVIEW:** `lesson-plan.md` + `slide-brief.md` — LOs, order, **fidelity per slide** | `…/C1-M3-L2-ambulatory-bp/lesson-plan.md`, `slide-brief.md` |
+| 4 | **HIL Gate 1** — approve or revise pedagogy | Human checkpoint; no API spend for slides yet | ☐ Gate 1 sign-off | — |
+| 5 | Supply validated HTTPS URLs; delegate Gary | `validate_image_url`; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ URLs validated ☐ Gary unblocked only after URLs OK | `gamma-export/` (exports + `gary_slide_output` metadata) |
+| 6 | **HIL Gate 2** — approve deck | PDF for human review per Gary SKILL; PNG for pipeline | ☐ Visuals on-brand ☐ Literal slides match supplied art ☐ Order matches lesson | Slide PNGs under `gamma-export/` (representative) |
+| 7 | Irene Pass 2 after Gate 2 | Irene sees **`gary_slide_output`**; writes narration + manifest | **☐ PHASE 2 REVIEW:** `narration-script.md` + `segment-manifest.yaml` — copy matches **approved** slides | Same lesson folder |
+| 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before EL + Kling spend | ☐ Gate 3 sign-off | — |
+| 9 | Confirm fidelity + quality runs (or ask Marcus to run them) | `bmad-agent-fidelity-assessor`, `bmad-agent-quality-reviewer`, optional `quality-control` scripts, sensory bridges | ☐ No critical blockers (or you accept override) | Reports per governance; ad-hoc: transient observability |
+| 10 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
+| 11 | Delegate Kling for video segments (if any) | `kling_operations.py`; durations follow narration | ☐ MP4 paths on manifest | `assembly-bundle/video/` |
+| 12 | Quinn-R pre-composition (or ask Marcus to invoke) | `review_pass: pre-composition` | ☐ Pre-composition OK | — |
+| 13 | Run compositor bundle | `compositor_operations.py` | ☐ `visuals/` populated ☐ Guide readable | `assembly-bundle/` |
+| 14 | Descript assembly (you) | Manual; follow `DESCRIPT-ASSEMBLY-GUIDE.md` | ☐ Final export matches intent | User-chosen export location |
+
+**Model prompts for Marcus (copy-paste — happy path)**
+
+Replace bracketed bits with your lesson; keep **run id** and **paths** consistent across a single trial.
+
+**Step 0 — Mode, run id, pre-flight**
+
+```
+Marcus, I’m starting a production run. Use default mode and the draft preset unless I say otherwise.
+Run id: APP-RUN-C1M3L2-HTN-20260330. Lesson folder slug: C1-M3-L2-ambulatory-bp.
+Topic: ambulatory BP patterns in resistant hypertension for advanced learners.
+Please persist mode with manage_mode if needed, confirm mode_state.json, run pre-flight for Gamma, ElevenLabs, and Kling, and report status.
+```
+
+*Ad-hoc trial variant:* same text but ask for **ad-hoc mode** and paths under `course-content/staging/ad-hoc/…`.
+
+**Step 1 — Fidelity discovery**
+
+```
+Marcus, run your standard fidelity discovery for this run.
+For visuals: slides 4 and 7 must be literal-visual with fixed diagrams I’ll supply as HTTPS URLs; all other slides are creative Gamma.
+For text: [e.g. no exact exam items on slides / or list what must be literal].
+Capture this in fidelity_guidance for Irene.
+```
+
+**Step 2 — Source material (optional)**
+
+```
+Marcus, pull my Module 3 hypertension development notes from Notion into a source bundle for run APP-RUN-C1M3L2-HTN-20260330 and point Irene at extracted.md for context.
+```
+
+**Step 3 — Irene Pass 1**
+
+```
+Marcus, delegate Irene Pass 1 for lesson C1-M3-L2-ambulatory-bp. Use the style bible and fidelity_guidance.
+Produce lesson-plan.md and slide-brief.md under course-content/staging/C1-M3-L2-ambulatory-bp/ with fidelity per slide (creative vs literal-text vs literal-visual).
+```
+
+**Step 4 — HIL Gate 1 (Phase 1 review)**
+
+```
+Gate 1: I’ve reviewed lesson-plan.md and slide-brief.md in staging. APPROVED — proceed to Imagine URL handoff and Gary.
+```
+*Or for changes:* `Gate 1: REVISION — [specific edits to objectives, slide order, or fidelity tags]. Please have Irene update the briefs before we generate slides.`
+
+**Step 5 — HTTPS URLs + Gary (diagram_cards)**
+
+```
+Marcus, here are the validated HTTPS image URLs for diagram_cards (literal slides only):
+- card_number 4: https://media.university.example/course-assets/htn-renal-diagram.png
+- card_number 7: https://media.university.example/course-assets/abpm-48h-grid.png
+Please validate each URL with validate_image_url, build diagram_cards for Gary’s envelope, and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download.
+```
+
+**Step 6 — HIL Gate 2 (deck review)**
+
+```
+Gate 2: I’ve reviewed the PDF and PNGs. APPROVED — slides match style bible; literal slides 4 and 7 match my supplied art; card order is correct. Proceed to Irene Pass 2.
+```
+*Or:* `Gate 2: REVISION — [slide numbers and requested changes]. Regenerate or adjust before Pass 2.`
+
+**Step 7 — Irene Pass 2**
+
+```
+Marcus, delegate Irene Pass 2 using the approved gary_slide_output. Write narration-script.md and segment-manifest.yaml in course-content/staging/C1-M3-L2-ambulatory-bp/, paired by segment id. Include [any Kling video segments / music-SFX intent] per manifest template.
+```
+
+**Step 8 — HIL Gate 3 (script + manifest)**
+
+```
+Gate 3: I’ve reviewed narration-script.md and segment-manifest.yaml together. APPROVED — proceed to Vera, Quinn-R, then ElevenLabs and Kling per the locked manifest.
+```
+*Or:* `Gate 3: REVISION — [segment ids and edits]. Update both files before audio generation.`
+
+**Step 9 — Fidelity + quality (after Gate 3)**
+
+```
+Marcus, run the pipeline fidelity and quality checks on the current artifacts per fidelity-gate-map (Vera then Quinn-R as applicable). Summarize blockers before we spend on ElevenLabs.
+```
+
+**Step 10 — ElevenLabs**
+
+```
+Marcus, delegate the Voice Director to run manifest-driven narration (and any specified SFX/music) from elevenlabs-audio, writing outputs under course-content/staging/C1-M3-L2-ambulatory-bp/assembly-bundle/ and updating segment-manifest.yaml with narration_duration, narration_file, and narration_vtt paths.
+```
+
+**Step 11 — Kling (if manifest has video segments)**
+
+```
+Marcus, delegate Kira for every segment with visual_mode video per the manifest, using narration_duration for timing. Save silent MP4s under assembly-bundle/video/ and write back visual_file and visual_duration on the manifest.
+```
+
+*If no video segments:* skip or say `No Kling segments in this run — skip step 11.`
+
+**Step 12 — Quinn-R pre-composition**
+
+```
+Marcus, invoke Quinn-R pre-composition review on the assembly bundle and manifest. Report pass/fail before compositor.
+```
+
+**Step 13 — Compositor**
+
+```
+Marcus, run compositor sync-visuals on course-content/staging/C1-M3-L2-ambulatory-bp/assembly-bundle/segment-manifest.yaml (or the canonical manifest path you’re using), then regenerate DESCRIPT-ASSEMBLY-GUIDE.md in the same folder. Confirm visuals/ contains Gate-2-approved stills.
+```
+
+**Step 14 — Descript (you)**
+
+No Marcus prompt required. Open **`DESCRIPT-ASSEMBLY-GUIDE.md`** in `assembly-bundle/`, import assets from **`audio/`**, **`captions/`**, **`video/`**, **`visuals/`**, and export your final program.
+
+**Trial-run checklist (copy — same steps as # column)**  
+☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Kling (if any) ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
+
+**Compositor deliverable:** One **`assembly-bundle/`** folder: `segment-manifest.yaml`, `DESCRIPT-ASSEMBLY-GUIDE.md`, `audio/`, `captions/`, optional `video/`, **`visuals/`** after `sync-visuals` — ready for Descript.
 
 ---
 

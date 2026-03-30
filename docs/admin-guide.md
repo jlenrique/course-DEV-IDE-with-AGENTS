@@ -1,7 +1,7 @@
 # Admin Guide — System Configuration and Operations
 
 **Audience:** System administrators and the project owner responsible for environment setup, tool connectivity, and operational health.
-**Last Updated:** 2026-03-28 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories; Epic 2A complete; **Epic 4A** governance next)
+**Last Updated:** 2026-03-29 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories; Epic 2A complete; **Epic 4A** governance next)
 
 ---
 
@@ -475,6 +475,16 @@ Git-versioned in `state/config/`. If corrupted, restore from git history: `git c
 ---
 
 ## Operational Procedures
+
+### Trial run: narrated deck happy path (operator checklist)
+
+Before the instructional lead follows the **Happy-path walkthrough** in [`docs/user-guide.md`](user-guide.md) (section *Happy-path walkthrough: user + Marcus + “X-ray”*) with their own content, confirm:
+
+1. **`.env`** — `GAMMA_API_KEY`, `ELEVENLABS_API_KEY`, and Kling keys as needed; no secrets committed.
+2. **Pre-flight** — `node scripts/heartbeat_check.mjs` (or Marcus-driven pre-flight) green for the tools in scope.
+3. **Mode** — `skills/production-coordination/scripts/manage_mode.py` reflects **default** vs **ad-hoc**; ad-hoc routes under `course-content/staging/ad-hoc/` per `docs/ad-hoc-contract.md`.
+4. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
+5. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Adding a New Tool Integration
 

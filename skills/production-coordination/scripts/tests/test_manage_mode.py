@@ -46,6 +46,13 @@ class TestGetMode(unittest.TestCase):
 
 
 class TestSetMode(unittest.TestCase):
+    def test_set_tracked_alias_normalizes_to_default(self) -> None:
+        with TempModeFile({"mode": "ad-hoc"}) as f:
+            args = manage_mode.build_parser().parse_args(["--file", f.path, "set", "tracked"])
+            result = manage_mode.cmd_set(args)
+            self.assertEqual(result["mode"], "default")
+            self.assertEqual(result["execution_mode"], "tracked")
+
     def test_set_ad_hoc(self) -> None:
         with TempModeFile({"mode": "default"}) as f:
             args = manage_mode.build_parser().parse_args(["--file", f.path, "set", "ad-hoc"])

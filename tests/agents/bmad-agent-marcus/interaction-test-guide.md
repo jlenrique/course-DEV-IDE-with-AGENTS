@@ -25,6 +25,7 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 
 **Expected behavior:**
 - Marcus loads `./references/init.md` (first-run onboarding) since no sidecar exists
+- Marcus performs a session settings handshake before execution planning
 - Asks discovery questions: your name, course context, style bible status, exemplar library status, tool availability
 - Greets warmly, not with a system-status dump
 - Offers to run a pre-flight check
@@ -33,6 +34,9 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 - [ ] Marcus introduces himself by name and role (Creative Production Orchestrator)
 - [ ] Uses the veteran executive producer persona — calm, professional, not robotic
 - [ ] Asks for your name (or addresses you if config has it)
+- [ ] Displays execution mode (tracked/default or ad-hoc)
+- [ ] Displays quality preset (explore/draft/production/regulated)
+- [ ] Asks to confirm or change both settings before starting production actions
 - [ ] Mentions or checks for `state/config/course_context.yaml`
 - [ ] Mentions or checks for `resources/style-bible/`
 - [ ] Mentions or checks for `resources/exemplars/`
@@ -46,20 +50,44 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 
 ---
 
-## Test 2: Mode Awareness
+## Test 1A: Session Settings Handshake Is Mandatory
 
-**What to say (after activation):**
-> What mode are we in?
+**Trigger:** Fresh session activation.
+
+**What to say:**
+> Talk to Marcus
 
 **Expected behavior:**
-- Marcus reports current mode (should be "default" for fresh session)
-- Explains briefly what the mode means
+- Marcus asks/displays/confirms both axes before run execution or specialist delegation
+- Defaults are proposed if unspecified: execution mode `tracked` and quality preset `draft`
+
+**Pass criteria:**
+- [ ] Includes both axis labels in one confirmation step: execution mode + quality preset
+- [ ] Uses clear keep/change prompt before starting work
+- [ ] Does NOT start production run creation or delegation before user confirms settings
+
+**Fail criteria:**
+- Starts planning execution without settings confirmation
+- Mentions only one axis and omits the other
+
+---
+
+## Test 2: Settings Awareness
+
+**What to say (after activation):**
+> What settings are active?
+
+**Expected behavior:**
+- Marcus reports current execution mode (should be "tracked" or "default" alias for fresh session)
+- Marcus reports current quality preset (should be "draft" unless changed)
+- Explains briefly what each axis means
 - Does NOT require being asked twice
 
 **Pass criteria:**
-- [ ] Reports "default mode" (or reads from `mode_state.json` if present)
+- [ ] Reports execution mode clearly (tracked/default alias or ad-hoc)
+- [ ] Reports quality preset clearly (explore/draft/production/regulated)
 - [ ] Explanation is conversational, not a raw config dump
-- [ ] Mentions key implications: "full state tracking, assets go to production staging"
+- [ ] Mentions key implications for both axes: persistence boundary and quality strictness
 
 ---
 
@@ -70,12 +98,13 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 
 **Expected behavior:**
 - Marcus confirms the switch with an unambiguous statement
-- Covers all affected systems in the confirmation
+- Covers all affected systems in the confirmation and restates quality preset
 
 **Pass criteria:**
 - [ ] Confirmation includes: assets route to staging scratch
 - [ ] Confirmation includes: state tracking paused
 - [ ] Confirmation includes: QA still active
+- [ ] Confirmation restates active quality preset
 - [ ] Tells you how to switch back ("say 'default mode' or 'full throttle'")
 - [ ] Does NOT ask "are you sure?" — respects the request
 
@@ -87,13 +116,14 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 > Let's go full throttle
 
 **Expected behavior:**
-- Marcus switches back to default mode
+- Marcus switches back to tracked/default execution mode
 - Confirms the change
 
 **Pass criteria:**
-- [ ] Reports "default mode" restored
+- [ ] Reports tracked/default execution mode restored
 - [ ] Mentions state tracking resumed
 - [ ] Mentions assets route to production staging
+- [ ] Restates active quality preset
 - [ ] Mentions clearing ad-hoc session context
 
 ---
@@ -285,7 +315,8 @@ Run these in a **fresh Cursor chat session** to avoid context contamination. Say
 - Reports current stage, completed stages, and next steps conversationally
 
 **Pass criteria:**
-- [ ] Reports current mode (default/ad-hoc)
+- [ ] Reports current execution mode (tracked/default alias or ad-hoc)
+- [ ] Reports current quality preset
 - [ ] Reports active run and content type
 - [ ] Shows completed vs total stages
 - [ ] Identifies current stage and specialist

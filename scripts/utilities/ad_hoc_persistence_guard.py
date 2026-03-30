@@ -46,6 +46,21 @@ _ALLOWED_IN_AD_HOC = {
     "transient_observability",
 }
 
+_MODE_ALIASES = {
+    "tracked": "default",
+}
+
+
+def _normalize_mode(mode: str | None) -> str | None:
+    """Normalize mode tokens so aliases resolve consistently."""
+    if mode is None:
+        return None
+    token = str(mode).strip().lower()
+    token = _MODE_ALIASES.get(token, token)
+    if token in {"default", "ad-hoc"}:
+        return token
+    return None
+
 
 def _ambiguous_mode_policy() -> str:
     """Resolve ambiguity policy for missing/corrupt mode state.
@@ -59,9 +74,10 @@ def _ambiguous_mode_policy() -> str:
 
 def _resolve_run_mode_details(explicit_mode: str | None = None) -> dict[str, Any]:
     """Resolve run mode with metadata about fallback and ambiguity handling."""
-    if explicit_mode in {"default", "ad-hoc"}:
+    normalized_explicit = _normalize_mode(explicit_mode)
+    if normalized_explicit in {"default", "ad-hoc"}:
         return {
-            "mode": explicit_mode,
+            "mode": normalized_explicit,
             "source": "explicit",
             "ambiguous": False,
             "policy": _ambiguous_mode_policy(),
@@ -87,7 +103,7 @@ def _resolve_run_mode_details(explicit_mode: str | None = None) -> dict[str, Any
             "policy": policy,
         }
 
-    mode = str(data.get("mode", "default")).strip().lower()
+    mode = _normalize_mode(str(data.get("mode", "default")))
     if mode not in {"default", "ad-hoc"}:
         return {
             "mode": "ad-hoc" if policy == "strict" else "default",

@@ -153,6 +153,22 @@ class TestCreateRun(unittest.TestCase):
             self.assertIn("C1", result["run_id"])
             self.assertIn("M3", result["run_id"])
 
+    def test_create_tracked_alias_normalizes_to_default(self) -> None:
+        with TempDB() as db:
+            run_id = f"TRACKED-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+                "--mode", "tracked",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertTrue(result["persisted"])
+            self.assertEqual(result["mode"], "default")
+            self.assertEqual(result["execution_mode"], "tracked")
+
     def test_create_duplicate_id(self) -> None:
         with TempDB() as db:
             _create_run(db.path, "DUP-001")

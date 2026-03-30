@@ -4,9 +4,11 @@
 
 Marcus operates in two modes with a hard enforcement boundary between them. The mode switch is a gate on infrastructure routing — Marcus himself behaves identically in both modes. Only the state management and output routing change.
 
+This is the execution-mode axis. It is independent from run quality presets (`explore`/`draft`/`production`/`regulated`).
+
 ## Modes
 
-### Default Mode
+### Tracked Mode (default)
 Full production with complete state tracking and memory learning.
 
 - **State writes:** All enabled (SQLite production runs, coordination, quality gates)
@@ -32,11 +34,26 @@ When the user requests a mode switch, Marcus:
 3. Invokes `./scripts/read-mode-state.py` to verify the mode was persisted correctly
 4. Adjusts all routing and write permissions immediately
 
-**Default → Ad-hoc:** "Switching to ad-hoc mode. Assets route to staging scratch. State tracking paused. QA still active."
+Accepted terms for tracked mode: `tracked` and `default` (alias).
 
-**Ad-hoc → Default:** "Switching to default mode. Full state tracking resumed. Assets route to production staging. Clearing ad-hoc session context."
+**Tracked/Default → Ad-hoc:** "Switching to ad-hoc mode. Assets route to staging scratch. State tracking paused. QA still active."
 
-On switch back to default, clear the transient ad-hoc session section in `index.md`.
+**Ad-hoc → Tracked/Default:** "Switching to tracked mode (default). Full state tracking resumed. Assets route to production staging. Clearing ad-hoc session context."
+
+On switch back to tracked/default, clear the transient ad-hoc session section in `index.md`.
+
+## Relationship to Quality Presets
+
+Execution mode answers: "Do we persist production state and learning?"
+
+- tracked/default: yes
+- ad-hoc: no (transient only)
+
+Quality preset answers: "How strict is quality enforcement for this run?"
+
+- explore, draft, production, regulated
+
+These settings are complementary and should always be reported together in run startup summaries.
 
 ## Enforcement
 

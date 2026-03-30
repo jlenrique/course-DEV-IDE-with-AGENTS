@@ -1,5 +1,7 @@
 # Tool Policies — Run presets, quality gates, and fallback strategies.
 # Controls how strictly the system enforces quality at each production stage.
+# Note: run presets are quality strictness only. Execution mode
+# (tracked/default vs ad-hoc) is configured separately via mode_state.json.
 
 run_presets:
   explore:

@@ -4,6 +4,25 @@
 
 This capability covers understanding what the user wants to produce, mapping it to a multi-agent workflow, and orchestrating the production plan. This is Marcus's core operational loop — the bridge between user intent and specialist execution.
 
+## Session-Start Settings Handshake (Mandatory)
+
+At the beginning of each fresh session, Marcus must ask, display, and confirm both run-setting axes before production execution:
+
+- **Execution mode**: `tracked` (alias `default`) or `ad-hoc`
+- **Quality preset**: `explore`, `draft`, `production`, or `regulated`
+
+Rules:
+- If either axis is unspecified, Marcus proposes defaults (`tracked`, `draft`) and asks for confirmation.
+- Marcus must not start run execution or specialist delegation until both settings are confirmed.
+- If user changes either setting, Marcus restates both axes and reconfirms.
+
+Required prompt shape:
+"Session settings check: execution mode is [tracked/ad-hoc] and quality preset is [explore/draft/production/regulated]. Keep these or change one before we start?"
+
+Terminology disambiguation:
+- "Production session" means real APP operations for course-content work (not APP development).
+- "Production preset" is only the quality strictness level.
+
 ## Intent Parsing
 
 When the user describes what they want to produce, Marcus identifies:
@@ -67,7 +86,7 @@ Three directory tiers provide different layers of configuration. Marcus always r
 
 When delegating to specialists, pass the relevant style-bible sections (matched to domain) plus the tool-specific parameters from `state/config/style_guide.yaml`. Never pass `config/content-standards.yaml` to specialists — it's below their resolution tier.
 
-## Fidelity Discovery (Production Run Start)
+## Fidelity Discovery (After Settings Confirmation)
 
 Before building the production plan, Marcus asks two standard fidelity discovery questions:
 
@@ -239,9 +258,13 @@ In ad-hoc mode, steps 2-4 are skipped (no state writes). Step 5 still runs — t
 
 ## Run Execution
 
-When the user approves a production plan and Marcus begins executing the workflow, Marcus uses the `production-coordination` skill to manage run state:
+When the user approves a production plan and Marcus begins executing the workflow, Marcus uses the `production-coordination` skill to manage run state.
 
-1. **Create run** — `manage_run.py create --content-type {type} --course {code} --module {mod} --stages-json '{stages}'`
+Precondition: Session-Start Settings Handshake has already confirmed both execution mode and quality preset.
+
+Run using the confirmed settings:
+
+1. **Create run** — `manage_run.py create --content-type {type} --course {code} --module {mod} --preset {preset} --mode {execution_mode} --stages-json '{stages}'`
    Returns a run ID. Marcus stores this for the session and reports: "Production run started — run ID [id]. First up: [stage description]."
 
 2. **Advance through stages** — As each stage completes (specialist returns output), call `manage_run.py advance {run_id}`. Marcus reports the next stage conversationally.
@@ -252,7 +275,7 @@ When the user approves a production plan and Marcus begins executing the workflo
 
 5. **Finalize** — When all stages are approved, call `manage_run.py complete {run_id}`. Marcus runs the Run Finalization sequence below.
 
-6. **Check status** — At any point, `manage_run.py status {run_id}` returns JSON with current stage, completion count, and mode. Marcus translates this into natural reporting.
+6. **Check status** — At any point, `manage_run.py status {run_id}` returns JSON with current stage, completion count, execution mode, and quality preset. Marcus translates this into natural reporting.
 
 When specialist agents are unavailable (not yet built), Marcus reports the gap at step 2 and suggests alternatives — see graceful degradation in the Capabilities section of SKILL.md.
 

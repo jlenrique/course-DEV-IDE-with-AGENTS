@@ -11,6 +11,9 @@ Use this as the end-of-session production prompt paired with startup protocol.
 - Every active run must be closed to exactly one terminal state before shift close.
 - The session must end with one completed Shift Close Record.
 
+Run-setting reminder:
+- Execution mode (`tracked/default` vs `ad-hoc`) and quality preset (`explore`/`draft`/`production`/`regulated`) are distinct settings and must both be represented in handoff context.
+
 ## 1. Run Closure Gate
 
 For each active run, set exactly one state:
@@ -64,6 +67,7 @@ Create handoff with:
 - first required next-shift action
 - owner per open item
 - environment constraints discovered
+- execution mode + quality preset for each still-open run
 
 ## 6. Workspace Hygiene Gate
 

@@ -10,6 +10,13 @@ Use this as the first-session startup prompt when operating the app for real cou
 - Specialist work is delegated behind Marcus per registry and baton rules.
 - If any critical gate fails, fail closed: do not start or resume production run execution.
 - The session must end this protocol with a single completed Shift Open Record.
+- Use two run-setting axes explicitly:
+	- Execution mode: `tracked` (alias `default`) or `ad-hoc`
+	- Quality preset: `explore`, `draft`, `production`, or `regulated`
+
+Terminology note:
+- "Production session" here means real APP operations (not APP development).
+- "Production preset" means the quality strictness level on the preset axis.
 
 ## Preconditions
 
@@ -25,6 +32,18 @@ Record:
 - Start timestamp (local + UTC)
 - Session purpose
 - Planned duration
+
+## 1a. Run Settings Alignment Gate
+
+Declare and confirm both settings before any run execution:
+
+- Execution mode (`tracked/default` or `ad-hoc`)
+- Quality preset (`explore`/`draft`/`production`/`regulated`)
+
+Pass criteria:
+
+- Settings are explicitly stated and unambiguous.
+- Operator intent is clear: production operations context vs app-development context.
 
 ## 2. Workspace and Branch Integrity Gate
 
@@ -127,11 +146,16 @@ At completion, output one and only one Shift Open Record using this structure:
 - Session objective:
 
 ## Gate Results
+- Run Settings Alignment: pass | fail
 - Workspace/Branch Integrity: pass | fail
 - Runtime/Governance: pass | fail
 - Dependency Preflight: pass | fail
 - Active Run Recovery: pass | fail
 - Quality Gate Posture: pass | fail
+
+## Active Settings
+- Execution mode: tracked | ad-hoc
+- Quality preset: explore | draft | production | regulated
 
 ## Blocking Issues
 - Issue:

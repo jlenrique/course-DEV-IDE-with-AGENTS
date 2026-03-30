@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""Manage run mode (default / ad-hoc) state.
+"""Manage run mode (tracked/default / ad-hoc) state.
 
 Reads and writes the persistent mode state file at
 `state/runtime/mode_state.json`.
@@ -13,6 +13,27 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+
+_MODE_ALIASES = {
+    "tracked": "default",
+}
+
+
+def _normalize_mode(value: str | None) -> str | None:
+    """Normalize mode names to canonical persisted values."""
+    if value is None:
+        return None
+    mode = str(value).strip().lower()
+    mode = _MODE_ALIASES.get(mode, mode)
+    if mode in {"default", "ad-hoc"}:
+        return mode
+    return None
+
+
+def _execution_mode_label(canonical_mode: str) -> str:
+    """Return user-facing execution-mode label for the canonical mode."""
+    return "tracked" if canonical_mode == "default" else "ad-hoc"
 
 
 def find_project_root() -> Path:
@@ -35,7 +56,10 @@ def _read_mode(path: Path) -> dict[str, Any]:
     if path.exists():
         try:
             with open(path, encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, dict):
+                    data["mode"] = _normalize_mode(data.get("mode")) or "default"
+                    return data
         except (json.JSONDecodeError, OSError):
             pass
     return {"mode": "default", "switched_at": None, "switched_by": "system"}
@@ -53,34 +77,44 @@ def cmd_get(args: argparse.Namespace) -> dict[str, Any]:
     """Read the current mode."""
     path = Path(args.file) if args.file else get_mode_file()
     data = _read_mode(path)
+    mode = _normalize_mode(str(data.get("mode", "default"))) or "default"
     return {
-        "mode": data.get("mode", "default"),
+        "mode": mode,
+        "execution_mode": _execution_mode_label(mode),
         "switched_at": data.get("switched_at"),
     }
 
 
 def cmd_set(args: argparse.Namespace) -> dict[str, Any]:
     """Set the run mode."""
-    if args.mode not in ("default", "ad-hoc"):
-        return {"error": f"Invalid mode: {args.mode}. Must be 'default' or 'ad-hoc'."}
+    target_mode = _normalize_mode(args.mode)
+    if not target_mode:
+        return {
+            "error": (
+                f"Invalid mode: {args.mode}. Must be 'tracked', 'default', or 'ad-hoc'."
+            )
+        }
 
     path = Path(args.file) if args.file else get_mode_file()
     old = _read_mode(path)
+    previous_mode = _normalize_mode(str(old.get("mode", "default"))) or "default"
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
     new_data = {
-        "mode": args.mode,
+        "mode": target_mode,
         "switched_at": now,
         "switched_by": "marcus",
-        "previous_mode": old.get("mode", "default"),
+        "previous_mode": previous_mode,
     }
     _write_mode(path, new_data)
 
     return {
-        "mode": args.mode,
-        "previous_mode": old.get("mode", "default"),
+        "mode": target_mode,
+        "execution_mode": _execution_mode_label(target_mode),
+        "previous_mode": previous_mode,
+        "previous_execution_mode": _execution_mode_label(previous_mode),
         "switched_at": now,
-        "changed": old.get("mode", "default") != args.mode,
+        "changed": previous_mode != target_mode,
     }
 
 
@@ -92,8 +126,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("get", help="Read current mode")
 
-    p_set = sub.add_parser("set", help="Set the run mode")
-    p_set.add_argument("mode", choices=["default", "ad-hoc"], help="Target mode")
+    p_set = sub.add_parser("set", help="Set the execution mode")
+    p_set.add_argument(
+        "mode",
+        choices=["tracked", "default", "ad-hoc"],
+        help="Target mode ('tracked' is an alias of 'default')",
+    )
 
     return parser
 

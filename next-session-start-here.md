@@ -1,12 +1,27 @@
 # Next Session Start Here
 
-## Immediate Next Action
+> **Scope note:** This file tracks APP **project development** state only.
+> For production content operations, use `docs/workflow/production-session-launcher.md`.
 
-Finalize Git closeout for the completed backlog wave on `dev/session-20260328`:
+## Current Dev State (as of 2026-03-30)
 
-1. Review and stage intended files.
-2. Commit with a scoped closeout message.
-3. Decide whether to merge to `master` now or continue branch-side cleanup first.
+- `master` reconciled and pushed: `663a3f37` (contains RUN/Sunday-2026-03-29 + RUN/Monday-2026-03-30 outputs)
+- All 42 tracked stories marked `done`
+- Active branch: `RUN/Monday-2026-03-30` — clean, up-to-date with origin
+- No in-progress stories or open dev blockers
+
+## Open Housekeeping Items
+
+- **PR #1** (`feat: Add VS Code tasks for session readiness and preflight checks`) — open against `master`, review and merge or close at next dev session
+- **Botpress HTTP 400** — non-blocking known issue; no story filed; skip unless explicitly scoped
+
+## Next Dev Session Entry Point
+
+No immediate action required. When starting a new dev session:
+
+1. `git branch --show-current` + `git status --short` — confirm clean state
+2. Review and resolve PR #1
+3. Check `_bmad-output/implementation-artifacts/sprint-status.yaml` for any newly filed stories
 
 ---
 

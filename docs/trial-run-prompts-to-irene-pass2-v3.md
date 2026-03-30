@@ -21,13 +21,13 @@ Primary contract references:
 
 ## Run Constants (set once)
 
-- RUN_ID: [C1-M1-PRES-ADHOC-YYYYMMDD]
-- LESSON_SLUG: [c1-m1-topic-slug]
-- BUNDLE_PATH: [course-content/staging/ad-hoc/source-bundles/<bundle-folder>]
-- PRIMARY_SOURCE_FILE: [absolute path to primary PDF]
-- OPTIONAL_CONTEXT_ASSETS: [comma-separated list]
-- THEME_SELECTION: [approved theme key for standard slides]
-- THEME_PARAMSET_KEY: [mapped parameter-set key for selected theme]
+- RUN_ID: C1-M1-PRES-ADHOC-20260330
+- LESSON_SLUG: apc-c1m1-tejal-2026030-demo
+- BUNDLE_PATH: course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260330-demo
+- PRIMARY_SOURCE_FILE: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC C1-M1 Tejal 2026-03-29.pdf
+- OPTIONAL_CONTEXT_ASSETS: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC Content Roadmap.jpg
+- THEME_SELECTION: hil-2026-apc-nejal-A
+- THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
 
 ---
 

@@ -83,6 +83,20 @@ Pass criteria:
 
 Run the production preflight skill/commands.
 
+Canonical command (VS Code terminal or terminal):
+
+```
+.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight
+```
+
+Alternate (JSON log output):
+
+```
+.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
+```
+
+VS Code shortcut: `Tasks: Run Task` → `APP: Session Readiness + Preflight`
+
 Minimum checks:
 
 - Required MCP servers reachable.

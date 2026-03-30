@@ -215,6 +215,15 @@ BLOCKED_TOOLS = {
     "Canva": "OAuth redirect rejected by Cursor — use Connect API directly when needed",
 }
 
+# Tools in this map are checked and reported, but connectivity failures do not
+# block trial-run readiness because they are out of current production scope.
+NON_BLOCKING_FAIL_TOOLS = {
+    "botpress": (
+        "Botpress is not in the current production workflow; connectivity is "
+        "reported as deferred and does not block trial-run readiness."
+    ),
+}
+
 
 # -- Notion API Check --
 
@@ -357,12 +366,21 @@ def run_preflight(root: Path | None = None) -> PreflightReport:
                     detail=hr["detail"],
                 ))
         elif hr["status"] == "FAIL":
-            report.add(ToolResult(
-                name=tool_name,
-                status=ToolStatus.FAILED,
-                detail=hr["detail"],
-                resolution=get_resolution(hr["detail"]),
-            ))
+            normalized = tool_name.lower().replace(" api", "").replace(" mcp", "").strip()
+            if normalized in NON_BLOCKING_FAIL_TOOLS:
+                report.add(ToolResult(
+                    name=tool_name,
+                    status=ToolStatus.BLOCKED,
+                    detail=f"{hr['detail']} (non-blocking for current production scope)",
+                    resolution=NON_BLOCKING_FAIL_TOOLS[normalized],
+                ))
+            else:
+                report.add(ToolResult(
+                    name=tool_name,
+                    status=ToolStatus.FAILED,
+                    detail=hr["detail"],
+                    resolution=get_resolution(hr["detail"]),
+                ))
         elif hr["status"] == "SKIP":
             if "not set" in hr["detail"]:
                 report.add(ToolResult(

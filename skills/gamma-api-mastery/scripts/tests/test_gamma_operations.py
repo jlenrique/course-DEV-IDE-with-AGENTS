@@ -1062,3 +1062,110 @@ class TestThemeMappingHandshake:
         assert result["theme_resolution"]["resolved_theme_key"] == "theme_abc"
         assert result["parameter_decisions"]["resolved_parameter_set"] == "hil-2026-apc-nejal-A"
         assert result["flags"]["theme_mapping_verified"] is True
+
+
+class TestGoldenPathDispatch:
+    """Integration test: merge_slide_content → execute_generation → validate_dispatch_ready.
+
+    Locks in the full proven dispatch path (content-agnostic):
+      fidelity payload (metadata only) + content payload →
+      merge_slide_content() → execute_generation() → validate_dispatch_ready().
+
+    This catches regressions to the routing logic that selects merge_slide_content()
+    over normalize_slides_payload() when both content sources are present. The test
+    uses minimal representative rows matching the production fidelity split pattern
+    (creative / literal-text / literal-visual) but carries no course-specific content.
+    """
+
+    def _fidelity_payload(self) -> dict:
+        return {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "fidelity": "creative",
+                    "queue": "creative",
+                    "source_anchors": ["extracted.md#Page 1"],
+                },
+                {
+                    "slide_number": 2,
+                    "fidelity": "literal-text",
+                    "queue": "literal",
+                    "source_anchors": ["extracted.md#Page 2"],
+                },
+                {
+                    "slide_number": 3,
+                    "fidelity": "literal-visual",
+                    "queue": "literal",
+                    "source_anchors": ["extracted.md#Page 3"],
+                },
+            ]
+        }
+
+    def _content_payload(self) -> dict:
+        return {
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "content": "Clinicians run a problem-solving loop every day.",
+                    "source_ref": "extracted.md#Page 1",
+                },
+                {
+                    "slide_number": 2,
+                    "content": "Healthcare costs and administrative waste continue to rise.",
+                    "source_ref": "extracted.md#Page 2",
+                },
+                {
+                    "slide_number": 3,
+                    "content": "The roadmap from clinician to innovator.",
+                    "source_ref": "extracted.md#Page 3",
+                },
+            ]
+        }
+
+    def test_merge_to_execute_to_validate_dispatch_ready(self) -> None:
+        """Full data path: merge_slide_content → execute_generation → validate_dispatch_ready."""
+        fidelity_payload = self._fidelity_payload()
+        content_payload = self._content_payload()
+        params = {
+            "themeId": "theme_golden",
+            **_valid_theme_resolution(),
+        }
+
+        # Step 1: merge — must produce content-bearing rows aligned to fidelity metadata
+        merged = merge_slide_content(fidelity_payload, content_payload)
+
+        assert len(merged) == 3
+        assert merged[0]["fidelity"] == "creative"
+        assert merged[0]["content"] == "Clinicians run a problem-solving loop every day."
+        assert merged[1]["fidelity"] == "literal-text"
+        assert merged[2]["fidelity"] == "literal-visual"
+        assert all(
+            "placeholder derived from pre-dispatch artifacts" not in s.get("content", "")
+            for s in merged
+        ), "no slide may carry placeholder text after merge"
+
+        # Step 2: dispatch — mocked at generate_slide boundary (2 calls: creative + literal)
+        with patch.object(gamma_operations, "generate_slide") as mock_gen:
+            mock_gen.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal", "gammaUrl": "https://gamma.app/docs/literal"},
+            ]
+            result = execute_generation(
+                params,
+                slides=merged,
+                module_lesson_part="GOLDEN-PATH-01",
+                run_id="GOLDEN-PATH-01",
+            )
+
+        assert mock_gen.call_count == 2, "mixed fidelity must produce exactly 2 API calls"
+
+        # Step 3: validate output shape
+        assert "gary_slide_output" in result
+        output = result["gary_slide_output"]
+        assert len(output) == 3
+        assert result["calls_made"] == 2
+        assert all(s.get("file_path") for s in output), "every slide must have file_path"
+        assert all(s.get("source_ref") for s in output), "every slide must have source_ref"
+
+        # Step 4: Gate 2 dispatch contract must pass (low-level validator)
+        validate_dispatch_ready(result)

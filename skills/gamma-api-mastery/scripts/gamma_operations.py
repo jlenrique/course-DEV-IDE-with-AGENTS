@@ -1429,6 +1429,14 @@ if __name__ == "__main__":
             diagram_cards=diagram_cards_data,
             run_id=run_id_cli,
         )
+        # Embed content source provenance for Gate 2 audit trail
+        if isinstance(result, dict):
+            _sc_path: str | None = None
+            if "--slides-content-json" in sys.argv:
+                _sc_idx = sys.argv.index("--slides-content-json") + 1
+                if _sc_idx < len(sys.argv):
+                    _sc_path = sys.argv[_sc_idx]
+            result["dispatch_metadata"] = {"slides_content_json_path": _sc_path}
         print(json.dumps(result, indent=2, default=str))
         sys.exit(0)
 

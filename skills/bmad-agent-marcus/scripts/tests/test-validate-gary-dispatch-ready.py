@@ -56,6 +56,7 @@ def _valid_payload() -> dict[str, object]:
             "mapping_version": "1",
             "user_confirmation": True,
         },
+        "dispatch_metadata": {"slides_content_json_path": "gary-slide-content.json"},
     }
 
 
@@ -162,6 +163,8 @@ def test_cli_accepts_yaml_payload(tmp_path: Path) -> None:
                                 "  mapping_source: state/config/gamma-style-presets.yaml",
                                 "  mapping_version: '1'",
                                 "  user_confirmation: true",
+                                "dispatch_metadata:",
+                                "  slides_content_json_path: gary-slide-content.json",
                         ]
                 ),
                 encoding="utf-8",
@@ -177,6 +180,26 @@ def test_cli_accepts_yaml_payload(tmp_path: Path) -> None:
         assert proc.returncode == 0
         data = json.loads(proc.stdout)
         assert data["status"] == "pass"
+
+
+def test_fails_when_dispatch_metadata_absent() -> None:
+    payload = _valid_payload()
+    del payload["dispatch_metadata"]  # type: ignore[attr-defined]
+
+    result = validate_gary_dispatch_ready(payload)
+
+    assert result["status"] == "fail"
+    assert any("dispatch_metadata must be present" in msg for msg in result["errors"])
+
+
+def test_fails_when_slides_content_json_path_empty() -> None:
+    payload = _valid_payload()
+    payload["dispatch_metadata"] = {"slides_content_json_path": ""}  # type: ignore[index]
+
+    result = validate_gary_dispatch_ready(payload)
+
+    assert result["status"] == "fail"
+    assert any("slides_content_json_path must be non-empty" in msg for msg in result["errors"])
 
 
 def test_cli_returns_exception_payload_on_malformed_json(tmp_path: Path) -> None:

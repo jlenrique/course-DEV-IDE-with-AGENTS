@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-30 (Stories 5.4, G.2, and 10.1 completed; Epics 5, G, and 10 now complete)
+# last_updated: 2026-03-30 (Stories 11.1-11.4 completed with Party Mode + adversarial closure; Epic 11 done)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-30  # Stories 5.4, G.2, and 10.1 implemented and validated; Epics 5, G, and 10 complete.
+last_updated: 2026-03-30  # Stories 11.1-11.4 completed with party-mode consensus + adversarial remediation; Epic 11 complete.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -153,3 +153,13 @@ development_status:
   epic-10: done
   10-1-predictive-workflow-optimization: done
   epic-10-retrospective: optional
+
+  # === EPIC 11: APP Trial Remediation & Run Contract Hardening (Added 2026-03-30) ===
+  # IMPORTANT: All prior APP epics remain complete/done. Epic 11 captures follow-on mitigation from
+  # ad-hoc trial run C1-M1-PRES-ADHOC-20260330 and starts with a mandatory due-diligence phase.
+  epic-11: done
+  11-1-trial-due-diligence-and-findings-matrix: done
+  11-2-gary-outbound-contract-completeness-and-validation-gate: done
+  11-3-irene-pass2-perception-grounding-enforcement: done
+  11-4-theme-selection-parameter-mapping-handshake-enforcement: done
+  epic-11-retrospective: optional

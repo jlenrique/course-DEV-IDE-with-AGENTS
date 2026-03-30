@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-30 (Stories 5.4, G.2, and 10.1 closed; all 42 tracked stories marked done)
+# Last Updated: 2026-03-30 (Stories 11.1-11.4 completed; Epic 11 done; all APP epics complete)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "42 stories across 9 epics (rebaselined 2026-03-28; Story G.3 added 2026-03-30); all tracked stories currently done."
-    stories_count: 42
-    epics_count: 9
+    note: "Legacy baseline: 42 stories across 9 epics completed. Epic 11 remediation stories 11.1-11.4 are now done."
+    stories_count: 46
+    epics_count: 10
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "42 stories across 9 epics tracked; stories 5.4, G.2, and 10.1 completed; Epics 5, G, and 10 closed."
+    note: "All legacy APP epics remain done; Epic 11 remediation stories 11.1-11.4 are complete."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -89,5 +89,9 @@ key_decisions:
   - "EPIC 4A + EPIC 4 COMPLETE (2026-03-29): Added ad-hoc persistence guard, observability hooks, run-scoped perception cache, lifecycle resume/context linking upgrades, quality gate coordinator, content entity manager, production run reporting, deployment coordinator, schema extensions, contract docs, and focused validation (59 passing tests)."
   - "STORY G.3 BACKLOG (2026-03-30): Epic G gains APP session readiness & health monitoring — coordination DB + state/ + import sanity + structured report; composes with pre-flight-check; pytest + docs. Implementation artifact: _bmad-output/implementation-artifacts/g-3-app-session-readiness-health-monitoring.md"
   - "BACKLOG COMPLETION WAVE (2026-03-30): Story 5.4 (Tier-2 API integration hardening), Story G.2 (tool ecosystem synthesis), and Story 10.1 (predictive workflow optimization) implemented and validated; Epics 5, G, and 10 marked done."
+  - "EPIC 11 OPENED (2026-03-30): APP trial remediation added as follow-on work only after confirming all legacy epics remain complete; due-diligence-first phase required before mitigation implementation."
+  - "EPIC 11 STORY FILES CREATED (2026-03-30): 11.1-11.4 implementation artifacts created with finding-linked acceptance checklists; due-diligence matrix initialized."
+  - "EPIC 11 EXECUTION (2026-03-30): Story 11.1 finalized with evidence scan and adversarial closure; Story 11.2 implemented in gamma_operations with contract validation and 44 passing targeted tests."
+  - "EPIC 11 CLOSED (2026-03-30): Story 11.3 added Marcus Pass 2 dual-input validator + tests; Story 11.4 added theme-mapping handshake enforcement + tests; targeted suite at 54 passed."
 
-next_workflow_step: "Implementation backlog is complete. Next session should perform curated git closeout and optional full-suite/live-profile release hardening."
+next_workflow_step: "Optional: run Epic 11 retrospective and prepare git closeout/release hardening checklist."

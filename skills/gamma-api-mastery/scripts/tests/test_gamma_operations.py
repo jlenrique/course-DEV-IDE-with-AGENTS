@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import gamma_operations  # noqa: E402
 from gamma_operations import (  # noqa: E402
     download_export,
+    generate_deck_mixed_fidelity,
     generate_from_template,
     generate_slide,
     list_style_presets,
@@ -22,6 +23,8 @@ from gamma_operations import (  # noqa: E402
     load_style_preset,
     merge_parameters,
     resolve_style_preset,
+    validate_outbound_contract,
+    validate_theme_mapping_handshake,
 )
 
 
@@ -546,3 +549,146 @@ class TestMergeAdditionalInstructionsConcatenation:
         assert result["textMode"] == "condense"
         # additionalInstructions: concatenated
         assert result["additionalInstructions"] == "Preset base."
+
+
+class TestGaryOutboundContract:
+    """Tests for Story 11.2 outbound contract enforcement."""
+
+    def test_mixed_fidelity_output_contains_required_fields(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal card", "fidelity": "literal-text"},
+        ]
+
+        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+            mock_generate.side_effect = [{"id": "gen-creative"}, {"id": "gen-literal"}]
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "exportAs": "png",
+                    "requested_theme_key": "hil-2026-apc-nejal-A",
+                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
+                    "mapping_source": "state/config/gamma-style-presets.yaml",
+                    "mapping_version": "1",
+                    "user_confirmation": True,
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        for required_key in (
+            "gary_slide_output",
+            "quality_assessment",
+            "parameter_decisions",
+            "recommendations",
+            "flags",
+        ):
+            assert required_key in result
+
+        assert result["flags"]["run_validation_artifact_pointer"].startswith(
+            "run://C1-M1-PRES-ADHOC-20260330/"
+        )
+        assert result["calls_made"] == 2
+
+    def test_visual_description_policy_avoids_pending_export_placeholders(self) -> None:
+        slides = [{"slide_number": 1, "content": "Creative card", "fidelity": "creative"}]
+
+        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+            mock_generate.return_value = {"id": "gen-creative"}
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "requested_theme_key": "hil-2026-apc-nejal-A",
+                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
+                    "mapping_source": "state/config/gamma-style-presets.yaml",
+                    "mapping_version": "1",
+                    "user_confirmation": True,
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        desc = result["gary_slide_output"][0]["visual_description"].lower()
+        assert "pending export" not in desc
+
+    def test_validate_outbound_contract_raises_on_missing_required_field(self) -> None:
+        payload = {
+            "gary_slide_output": [],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+        }
+        payload.pop("quality_assessment")
+        with pytest.raises(ValueError, match=r"Missing required field\(s\): quality_assessment"):
+            validate_outbound_contract(payload)
+
+
+class TestThemeMappingHandshake:
+    """Tests for Story 11.4 theme-selection -> parameter mapping gate."""
+
+    def test_theme_handshake_missing_fields_fails(self) -> None:
+        with pytest.raises(ValueError, match=r"Missing required field\(s\):"):
+            validate_theme_mapping_handshake(
+                {
+                    "requested_theme_key": "hil-2026-apc-nejal-A",
+                    "resolved_theme_key": "theme_abc",
+                    # missing resolved_parameter_set, mapping_source,
+                    # mapping_version, user_confirmation
+                }
+            )
+
+    def test_theme_handshake_requires_explicit_confirmation(self) -> None:
+        with pytest.raises(ValueError, match="user_confirmation must be explicit"):
+            validate_theme_mapping_handshake(
+                {
+                    "requested_theme_key": "hil-2026-apc-nejal-A",
+                    "resolved_theme_key": "theme_abc",
+                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
+                    "mapping_source": "state/config/gamma-style-presets.yaml",
+                    "mapping_version": "1",
+                    "user_confirmation": False,
+                }
+            )
+
+    def test_mixed_fidelity_requires_theme_handshake(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal", "fidelity": "literal-text"},
+        ]
+        with pytest.raises(ValueError, match="Theme mapping handshake failed"):
+            generate_deck_mixed_fidelity(
+                slides,
+                {"themeId": "theme_abc"},
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+    def test_mixed_fidelity_theme_handshake_in_payload(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal", "fidelity": "literal-text"},
+        ]
+
+        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+            mock_generate.side_effect = [{"id": "gen-creative"}, {"id": "gen-literal"}]
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "requested_theme_key": "hil-2026-apc-nejal-A",
+                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
+                    "mapping_source": "state/config/gamma-style-presets.yaml",
+                    "mapping_version": "1",
+                    "user_confirmation": "approved",
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        assert result["theme_resolution"]["requested_theme_key"] == "hil-2026-apc-nejal-A"
+        assert result["theme_resolution"]["resolved_theme_key"] == "theme_abc"
+        assert result["parameter_decisions"]["resolved_parameter_set"] == "hil-2026-apc-nejal-A"
+        assert result["flags"]["theme_mapping_verified"] is True

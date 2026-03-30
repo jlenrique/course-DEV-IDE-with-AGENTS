@@ -305,6 +305,7 @@ Marcus, I’m starting a production run. Use default mode and the draft preset u
 Run id: APP-RUN-C1M3L2-HTN-20260330. Lesson folder slug: C1-M3-L2-ambulatory-bp.
 Topic: ambulatory BP patterns in resistant hypertension for advanced learners.
 Please persist mode with manage_mode if needed, confirm mode_state.json, run pre-flight for Gamma, ElevenLabs, and Kling, and report status.
+Also run `py -3.13 -m scripts.utilities.venv_health_check`; if `overall_status` is `fail`, stop and report `one_step_repair` before any delegation.
 ```
 
 *Ad-hoc trial variant:* same text but ask for **ad-hoc mode** and paths under `course-content/staging/ad-hoc/…`.

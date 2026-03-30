@@ -2025,6 +2025,76 @@ So that each new production run is more efficient than the last.
 **And** resource allocation suggestions optimize tool usage and timing
 **And** the user can accept, modify, or override predictive recommendations through conversation
 
+---
+
+## Epic 11: APP Trial Remediation & Run Contract Hardening (Added 2026-03-30)
+
+**Goal**: Convert ad-hoc trial findings into enforceable run controls while preserving the demonstrated success path (mixed-fidelity slide generation with nuanced card mapping and exports).
+
+**Execution guardrail:** This epic explicitly starts only after confirming all prior APP epics remain complete/done in BMAD control docs.
+
+### Phase 1 (Mandatory): Due Diligence
+
+Analyze trial logs/artifacts against expected contracts and produce finding-linked mitigation requirements before coding changes.
+
+### Story 11.1: Trial Due Diligence & Findings Matrix
+
+As a production operator,
+I want a formal evidence review of trial artifacts against expected APP contracts,
+So that mitigation work is traceable, severity-ranked, and non-regressive.
+
+**Acceptance Criteria:**
+
+**Given** trial run artifacts, envelope files, dispatch logs, and handoff prompts
+**When** due diligence is executed
+**Then** a findings matrix is produced with: finding ID, severity, evidence path, expected behavior, actual behavior, and owner
+**And** findings include both strengths to preserve and gaps to remediate
+**And** each mitigation requirement references one or more finding IDs
+
+### Story 11.2: Gary Outbound Contract Completeness & Validation Gate
+
+As Marcus/Gary pipeline maintainers,
+I want Gary outbound payloads to include all required contract fields with pre-dispatch and post-dispatch validation,
+So that downstream agents receive complete execution-quality evidence.
+
+**Acceptance Criteria:**
+
+**Given** Gary dispatch preparation and run result assembly
+**When** contract validation runs
+**Then** outbound artifacts include `gary_slide_output`, `quality_assessment`, `parameter_decisions`, `recommendations`, and `flags`
+**And** missing required fields block progression with targeted remediation guidance
+**And** validation output is logged in run artifacts for auditability
+
+### Story 11.3: Irene Pass 2 Perception Grounding Enforcement
+
+As an instructional production pipeline owner,
+I want Irene Pass 2 to require canonical perception artifacts in addition to slide outputs,
+So that narration uses auditable visual ground truth rather than inferred visuals.
+
+**Acceptance Criteria:**
+
+**Given** Irene Pass 2 handoff construction
+**When** required inputs are validated
+**Then** both `gary_slide_output` and `perception_artifacts` are required
+**And** missing perception artifacts block Pass 2 delegation with explicit missing-field diagnostics
+**And** handoff docs and checks clearly distinguish supplementary creative descriptions from perception ground truth
+
+### Story 11.4: Theme Selection -> Parameter Mapping Handshake Enforcement
+
+As a production operator,
+I want theme selection and mapped parameter set confirmation to be explicit and user-confirmed before Gary dispatch,
+So that standard slides are generated with the intended visual system and parameter controls.
+
+**Acceptance Criteria:**
+
+**Given** standard-slide generation planning
+**When** pre-dispatch validation executes
+**Then** user-approved theme selection and resolved parameter-set mapping are required and recorded
+**And** mismatch or missing mapping triggers a stop-and-clarify flow
+**And** run artifacts include a durable theme-resolution record consumed by downstream gates
+
+---
+
 ### Story 5.1: Expanded Tool Specialist Agents (Vyond, Midjourney, CapCut, Articulate)
 
 As a user,

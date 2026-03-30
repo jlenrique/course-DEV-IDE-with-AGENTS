@@ -15,17 +15,31 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import gamma_operations  # noqa: E402
 from gamma_operations import (  # noqa: E402
     download_export,
+    execute_generation,
     generate_deck_mixed_fidelity,
     generate_from_template,
     generate_slide,
+    list_themes_and_templates,
     list_style_presets,
     load_style_guide_gamma,
     load_style_preset,
     merge_parameters,
     resolve_style_preset,
+    validate_dispatch_ready,
     validate_outbound_contract,
     validate_theme_mapping_handshake,
 )
+
+
+def _valid_theme_resolution() -> dict[str, object]:
+    return {
+        "requested_theme_key": "hil-2026-apc-nejal-A",
+        "resolved_theme_key": "theme_abc",
+        "resolved_parameter_set": "hil-2026-apc-nejal-A",
+        "mapping_source": "state/config/gamma-style-presets.yaml",
+        "mapping_version": "1",
+        "user_confirmation": True,
+    }
 
 
 class TestLoadStyleGuideGamma:
@@ -551,6 +565,93 @@ class TestMergeAdditionalInstructionsConcatenation:
         assert result["additionalInstructions"] == "Preset base."
 
 
+class TestListThemesAndTemplates:
+    """Tests for TP capability in gamma_operations."""
+
+    def test_returns_themes_and_templates(self, tmp_path: Path) -> None:
+        style_file = tmp_path / "style_guide.yaml"
+        style_file.write_text(
+            """
+tool_parameters:
+  gamma:
+    templates:
+      - name: C1 lesson template
+        gamma_id: gamma_tpl_1
+        scope: C1
+        content_type: lecture-slides
+      - name: Global fallback
+        gamma_id: gamma_tpl_2
+        scope: "*"
+        content_type: "*"
+""".strip(),
+            encoding="utf-8",
+        )
+
+        mock_client = MagicMock()
+        mock_client.list_themes.return_value = [{"id": "theme_abc", "name": "Theme A"}]
+
+        result = list_themes_and_templates(
+            scope="C1 > M1",
+            content_type="lecture-slides",
+            client=mock_client,
+            style_guide_path=style_file,
+        )
+
+        assert len(result["themes"]) == 1
+        assert len(result["templates"]) == 2
+        names = [t.get("name") for t in result["templates"]]
+        assert "C1 lesson template" in names
+        assert "Global fallback" in names
+
+    def test_api_failure_degrades_to_templates_only(self, tmp_path: Path) -> None:
+        style_file = tmp_path / "style_guide.yaml"
+        style_file.write_text(
+            "tool_parameters:\n  gamma:\n    templates:\n      - name: fallback\n        gamma_id: t1\n        scope: '*'\n        content_type: '*'\n",
+            encoding="utf-8",
+        )
+        mock_client = MagicMock()
+        mock_client.list_themes.side_effect = RuntimeError("Gamma unavailable")
+
+        result = list_themes_and_templates(
+            scope="C1",
+            content_type="lecture-slides",
+            client=mock_client,
+            style_guide_path=style_file,
+        )
+
+        assert result["themes"] == []
+        assert len(result["templates"]) == 1
+
+
+class TestExecuteGenerationThemeEnforcement:
+    """Regression tests for execute_generation theme handshake behavior."""
+
+    def test_slides_path_requires_theme_handshake(self) -> None:
+        with pytest.raises(ValueError, match="Theme mapping handshake failed"):
+            execute_generation(
+                {"input_text": "hello", "textMode": "generate"},
+                slides=[{"slide_number": 1, "content": "A", "fidelity": "creative"}],
+            )
+
+    def test_slides_path_enforces_handshake_before_generate(self) -> None:
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-1"}
+        mock_client.wait_for_generation.return_value = {"id": "gen-1", "status": "completed"}
+
+        result = execute_generation(
+            {
+                "input_text": "hello",
+                "textMode": "generate",
+                **_valid_theme_resolution(),
+                "themeId": "theme_abc",
+            },
+            slides=[{"slide_number": 1, "content": "A", "fidelity": "creative"}],
+            client=mock_client,
+        )
+
+        assert result["status"] == "completed"
+
+
 class TestGaryOutboundContract:
     """Tests for Story 11.2 outbound contract enforcement."""
 
@@ -567,11 +668,7 @@ class TestGaryOutboundContract:
                 {
                     "themeId": "theme_abc",
                     "exportAs": "png",
-                    "requested_theme_key": "hil-2026-apc-nejal-A",
-                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
-                    "mapping_source": "state/config/gamma-style-presets.yaml",
-                    "mapping_version": "1",
-                    "user_confirmation": True,
+                    **_valid_theme_resolution(),
                 },
                 "C1-M1-PRES-ADHOC-20260330",
                 run_id="C1-M1-PRES-ADHOC-20260330",
@@ -600,11 +697,7 @@ class TestGaryOutboundContract:
                 slides,
                 {
                     "themeId": "theme_abc",
-                    "requested_theme_key": "hil-2026-apc-nejal-A",
-                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
-                    "mapping_source": "state/config/gamma-style-presets.yaml",
-                    "mapping_version": "1",
-                    "user_confirmation": True,
+                    **_valid_theme_resolution(),
                 },
                 "C1-M1-PRES-ADHOC-20260330",
                 run_id="C1-M1-PRES-ADHOC-20260330",
@@ -620,9 +713,108 @@ class TestGaryOutboundContract:
             "parameter_decisions": {},
             "recommendations": [],
             "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
         }
         payload.pop("quality_assessment")
         with pytest.raises(ValueError, match=r"Missing required field\(s\): quality_assessment"):
+            validate_outbound_contract(payload)
+
+    def test_validate_outbound_contract_requires_source_ref_when_slide_present(self) -> None:
+        payload = {
+            "gary_slide_output": [
+                {
+                    "slide_id": "s-1",
+                    "file_path": "course-content/staging/card-01.png",
+                    "card_number": 1,
+                    "visual_description": "desc",
+                    "source_ref": "",
+                }
+            ],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
+        }
+        with pytest.raises(ValueError, match=r"source_ref must be a non-empty string"):
+            validate_outbound_contract(payload)
+
+    def test_validate_outbound_contract_strict_mode_requires_file_path(self) -> None:
+        payload = {
+            "gary_slide_output": [
+                {
+                    "slide_id": "s-1",
+                    "file_path": None,
+                    "card_number": 1,
+                    "visual_description": "desc",
+                    "source_ref": "slide-brief.md#Slide 1",
+                }
+            ],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
+        }
+        with pytest.raises(ValueError, match=r"file_path must be a non-empty string"):
+            validate_outbound_contract(payload, require_dispatch_paths=True)
+
+    def test_validate_dispatch_ready_uses_strict_file_path_mode(self) -> None:
+        payload = {
+            "gary_slide_output": [
+                {
+                    "slide_id": "s-1",
+                    "file_path": None,
+                    "card_number": 1,
+                    "visual_description": "desc",
+                    "source_ref": "slide-brief.md#Slide 1",
+                }
+            ],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
+        }
+        with pytest.raises(ValueError, match=r"file_path must be a non-empty string"):
+            validate_dispatch_ready(payload)
+
+    def test_validate_outbound_contract_allows_empty_slide_output(self) -> None:
+        payload = {
+            "gary_slide_output": [],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
+        }
+        validate_outbound_contract(payload)
+
+    def test_validate_outbound_contract_requires_theme_resolution(self) -> None:
+        payload = {
+            "gary_slide_output": [],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+        }
+        with pytest.raises(ValueError, match=r"Missing required field\(s\): theme_resolution"):
+            validate_outbound_contract(payload)
+
+    def test_validate_outbound_contract_rejects_invalid_theme_resolution(self) -> None:
+        payload = {
+            "gary_slide_output": [],
+            "quality_assessment": {},
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": {
+                "requested_theme_key": "a",
+                "resolved_theme_key": "b",
+                # missing required fields
+            },
+        }
+        with pytest.raises(ValueError, match="Theme mapping handshake failed"):
             validate_outbound_contract(payload)
 
 
@@ -678,11 +870,7 @@ class TestThemeMappingHandshake:
                 slides,
                 {
                     "themeId": "theme_abc",
-                    "requested_theme_key": "hil-2026-apc-nejal-A",
-                    "resolved_parameter_set": "hil-2026-apc-nejal-A",
-                    "mapping_source": "state/config/gamma-style-presets.yaml",
-                    "mapping_version": "1",
-                    "user_confirmation": "approved",
+                    **_valid_theme_resolution(),
                 },
                 "C1-M1-PRES-ADHOC-20260330",
                 run_id="C1-M1-PRES-ADHOC-20260330",

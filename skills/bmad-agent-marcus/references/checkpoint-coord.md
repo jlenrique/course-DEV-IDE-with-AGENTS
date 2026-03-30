@@ -19,6 +19,10 @@ The production pipeline has four mandatory human checkpoints. Each gate has defi
 
 ### HIL Gate 2 — Slides Review
 **Timing:** After Gary generates slides; before Irene Pass 2
+**Pre-approval technical gate:**
+- Run `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload <gary-dispatch-result.json>`
+- Require `status: pass` before presenting approval decision options
+**Dispatch checks enforced:** non-empty `file_path`, non-empty `source_ref`, non-empty slide set, contiguous `card_number` sequence `1..N`
 **What to review:** Gary's Gamma slide PNGs (visual quality, brand compliance, content accuracy, layout clarity)
 **Review criteria:** Brand consistency (JCPH Navy, Medical Teal, Montserrat), visual hierarchy, content fidelity to slide brief, accessibility contrast, professional medical aesthetic, and fit to the approved `behavioral_intent`
 **Approve → next step:** Gary's PNG paths passed to Irene for Pass 2 (narration + manifest). This is the most important gate — narration cannot be written until slides are approved.
@@ -51,6 +55,11 @@ At each checkpoint, Marcus:
 5. **Requests explicit decision** — Ask for one of: approve, reject with reason, or request specific revisions
 
 Example (Gate 2): "Here's the cardiac physiology slide deck — 14 frames covering all four learning objectives. Intended effect: credible with an attention-reset on the complication slide. Style bible: JCPH Navy headers, Medical Teal highlights. Gary's self-assessment: all objectives covered, visual hierarchy consistent, one accessibility note on contrast ratio for Figure 3. This is the critical gate — once you approve, I'll send these to Irene for narration. What's your call?"
+
+Gate 2 validation presentation order:
+1. Show dispatch-readiness validation result (`pass`/`fail`) and key checks.
+2. If `fail`, show blocking errors and stop for remediation.
+3. If `pass`, present slide review package and request explicit user decision.
 
 ---
 

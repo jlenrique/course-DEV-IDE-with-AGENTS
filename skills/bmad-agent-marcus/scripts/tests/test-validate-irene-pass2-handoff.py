@@ -31,7 +31,12 @@ validate_irene_pass2_handoff = module.validate_irene_pass2_handoff
 def test_fails_when_perception_artifacts_missing() -> None:
     payload = {
         "gary_slide_output": [
-            {"slide_id": "s-1", "card_number": 1},
+            {
+                "slide_id": "s-1",
+                "card_number": 1,
+                "file_path": "course-content/staging/card-01.png",
+                "source_ref": "slide-brief.md#Slide 1",
+            },
         ]
     }
 
@@ -45,8 +50,18 @@ def test_fails_when_perception_artifacts_missing() -> None:
 def test_fails_when_perception_does_not_cover_all_gary_slide_ids() -> None:
     payload = {
         "gary_slide_output": [
-            {"slide_id": "s-1", "card_number": 1},
-            {"slide_id": "s-2", "card_number": 2},
+            {
+                "slide_id": "s-1",
+                "card_number": 1,
+                "file_path": "course-content/staging/card-01.png",
+                "source_ref": "slide-brief.md#Slide 1",
+            },
+            {
+                "slide_id": "s-2",
+                "card_number": 2,
+                "file_path": "course-content/staging/card-02.png",
+                "source_ref": "slide-brief.md#Slide 2",
+            },
         ],
         "perception_artifacts": [
             {"slide_id": "s-1", "sensory_bridge": "Bridge text"},
@@ -62,8 +77,18 @@ def test_fails_when_perception_does_not_cover_all_gary_slide_ids() -> None:
 def test_passes_when_required_inputs_present_and_aligned() -> None:
     payload = {
         "gary_slide_output": [
-            {"slide_id": "s-1", "card_number": 1},
-            {"slide_id": "s-2", "card_number": 2},
+            {
+                "slide_id": "s-1",
+                "card_number": 1,
+                "file_path": "course-content/staging/card-01.png",
+                "source_ref": "slide-brief.md#Slide 1",
+            },
+            {
+                "slide_id": "s-2",
+                "card_number": 2,
+                "file_path": "course-content/staging/card-02.png",
+                "source_ref": "slide-brief.md#Slide 2",
+            },
         ],
         "perception_artifacts": [
             {"slide_id": "s-1", "sensory_bridge": "Bridge one"},
@@ -77,14 +102,25 @@ def test_passes_when_required_inputs_present_and_aligned() -> None:
     assert result["missing_fields"] == []
     assert result["consistency"]["missing_perception_for"] == []
     assert result["order_check"]["strictly_ascending"] is True
+    assert result["order_check"]["contiguous_from_one"] is True
     assert "expected location hint" in result["remediation_hint"]
 
 
-def test_reports_non_strict_order_for_card_numbers() -> None:
+def test_fails_for_non_contiguous_card_numbers() -> None:
     payload = {
         "gary_slide_output": [
-            {"slide_id": "s-1", "card_number": 2},
-            {"slide_id": "s-2", "card_number": 2},
+            {
+                "slide_id": "s-1",
+                "card_number": 2,
+                "file_path": "course-content/staging/card-01.png",
+                "source_ref": "slide-brief.md#Slide 1",
+            },
+            {
+                "slide_id": "s-2",
+                "card_number": 3,
+                "file_path": "course-content/staging/card-02.png",
+                "source_ref": "slide-brief.md#Slide 2",
+            },
         ],
         "perception_artifacts": [
             {"slide_id": "s-1"},
@@ -94,8 +130,39 @@ def test_reports_non_strict_order_for_card_numbers() -> None:
 
     result = validate_irene_pass2_handoff(payload)
 
-    assert result["status"] == "pass"
-    assert result["order_check"]["strictly_ascending"] is False
+    assert result["status"] == "fail"
+    assert result["order_check"]["strictly_ascending"] is True
+    assert result["order_check"]["contiguous_from_one"] is False
+    assert any("contiguous and start at 1" in msg for msg in result["errors"])
+
+
+def test_fails_when_file_path_or_source_ref_missing() -> None:
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "s-1",
+                "card_number": 1,
+                "file_path": "",
+                "source_ref": "slide-brief.md#Slide 1",
+            },
+            {
+                "slide_id": "s-2",
+                "card_number": 2,
+                "file_path": "course-content/staging/card-02.png",
+                "source_ref": "",
+            },
+        ],
+        "perception_artifacts": [
+            {"slide_id": "s-1"},
+            {"slide_id": "s-2"},
+        ],
+    }
+
+    result = validate_irene_pass2_handoff(payload)
+
+    assert result["status"] == "fail"
+    assert result["consistency"]["missing_file_path_for"] == ["s-1"]
+    assert result["consistency"]["missing_source_ref_for"] == ["s-2"]
 
 
 @pytest.mark.parametrize(
@@ -103,13 +170,27 @@ def test_reports_non_strict_order_for_card_numbers() -> None:
     [
         (
             {
-                "gary_slide_output": [{"slide_id": "s-1", "card_number": 1}],
+                "gary_slide_output": [
+                    {
+                        "slide_id": "s-1",
+                        "card_number": 1,
+                        "file_path": "course-content/staging/card-01.png",
+                        "source_ref": "slide-brief.md#Slide 1",
+                    }
+                ],
             },
             1,
         ),
         (
             {
-                "gary_slide_output": [{"slide_id": "s-1", "card_number": 1}],
+                "gary_slide_output": [
+                    {
+                        "slide_id": "s-1",
+                        "card_number": 1,
+                        "file_path": "course-content/staging/card-01.png",
+                        "source_ref": "slide-brief.md#Slide 1",
+                    }
+                ],
                 "perception_artifacts": [{"slide_id": "s-1"}],
             },
             0,

@@ -11,6 +11,7 @@ The segment manifest is the **machine-readable production contract** for a lesso
 - Always paired with the narration script (never produced without it)
 - Only in Pass 2 — requires `gary_slide_output` in the context envelope so segment IDs and `visual_file` can reference actual Gary-produced PNGs
 - Every segment in the narration script must have a corresponding manifest entry
+- For segments mapped to Gary slides, populate `gary_slide_id`, `gary_card_number`, and `visual_file` from `gary_slide_output`
 
 ---
 
@@ -22,9 +23,12 @@ title: string               # Human-readable lesson title
 music_bed: string | null    # Overall music direction: "ambient-reflective" | "upbeat-clinical" | "tense-diagnostic" | null
 segments:
   - id: string              # e.g., seg-01, seg-02 (sequential, matches narration script markers)
+    gary_slide_id: string | null      # slide_id from gary_slide_output when segment maps to a Gary slide
+    gary_card_number: int | null      # card_number from gary_slide_output for ordering traceability
     source_ref: string      # Provenance chain: "lesson-plan.md#Block N" — traces this segment to its pedagogical origin
     narration_ref: string   # Pointer to narration script section, e.g., "narration-script.md#segment-1"
     narration_text: string  # Full narration text for this segment (copy from script)
+    duration_estimate_seconds: float | null  # Irene estimate before ElevenLabs writes actual narration_duration
     behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
@@ -42,6 +46,10 @@ segments:
     # ── Written back by Gary or Kira ──
     visual_file: string | null          # relative path to PNG or MP4
     visual_duration: float | null       # seconds (for video segments; null for static-hold)
+
+  # Duration precedence rule:
+  # - Use duration_estimate_seconds for planning before audio generation.
+  # - Once narration_duration is populated by ElevenLabs, downstream tools must treat narration_duration as authoritative.
 ```
 
 ---

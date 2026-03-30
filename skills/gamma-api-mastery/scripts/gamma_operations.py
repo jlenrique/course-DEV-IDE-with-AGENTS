@@ -24,7 +24,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-from scripts.api_clients.gamma_client import GammaClient
+from scripts.api_clients.gamma_client import GammaClient  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ REQUIRED_OUTBOUND_FIELDS = {
     "parameter_decisions",
     "recommendations",
     "flags",
+    "theme_resolution",
 }
 
 REQUIRED_THEME_RESOLUTION_FIELDS = {
@@ -74,6 +75,84 @@ def load_style_guide_gamma() -> dict[str, Any]:
     data = yaml.safe_load(STYLE_GUIDE_PATH.read_text(encoding="utf-8"))
     tool_params = data.get("tool_parameters", {})
     return tool_params.get("gamma", {})
+
+
+def _load_style_guide_templates(path: Path | None = None) -> list[dict[str, Any]]:
+    """Load Gamma template registry entries from style_guide.yaml."""
+    p = path or STYLE_GUIDE_PATH
+    if not p.exists():
+        return []
+    data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        return []
+    gamma_cfg = data.get("tool_parameters", {}).get("gamma", {})
+    templates = gamma_cfg.get("templates", []) if isinstance(gamma_cfg, dict) else []
+    if not isinstance(templates, list):
+        return []
+    return [t for t in templates if isinstance(t, dict)]
+
+
+def _matches_scope(candidate: Any, scope: str | None) -> bool:
+    if scope is None:
+        return True
+    if candidate is None:
+        return False
+    c = str(candidate).strip()
+    if not c:
+        return False
+    if c == "*" or c == scope:
+        return True
+    return scope.startswith(c)
+
+
+def _matches_content_type(candidate: Any, content_type: str | None) -> bool:
+    if content_type is None:
+        return True
+    if candidate is None:
+        return False
+    if isinstance(candidate, list):
+        normalized = {str(v).strip() for v in candidate if str(v).strip()}
+        return "*" in normalized or content_type in normalized
+    c = str(candidate).strip()
+    return c == "*" or c == content_type
+
+
+def list_themes_and_templates(
+    *,
+    scope: str | None = None,
+    content_type: str | None = None,
+    limit: int = 20,
+    client: GammaClient | None = None,
+    style_guide_path: Path | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """Return live Gamma themes and registered templates filtered by context.
+
+    This is the executable TP capability used by Gary to present available
+    themes/templates before generation.
+    """
+    if client is None:
+        client = GammaClient()
+
+    templates = [
+        t
+        for t in _load_style_guide_templates(style_guide_path)
+        if _matches_scope(t.get("scope"), scope)
+        and _matches_content_type(
+            t.get("content_type") or t.get("content_types"),
+            content_type,
+        )
+    ]
+
+    themes: list[dict[str, Any]] = []
+    try:
+        themes = client.list_themes(limit=limit)
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        logger.warning("Gamma theme listing unavailable; continuing with templates only: %s", exc)
+
+    return {
+        "themes": themes,
+        "templates": templates,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +447,10 @@ def execute_generation(
         For mixed-fidelity: dict with gary_slide_output, provenance, generation_mode, calls_made.
     """
     if slides:
+        # Enforce theme-selection handshake for all slide-based dispatches.
+        theme_resolution = resolve_theme_mapping_handshake(params)
+        validate_theme_mapping_handshake(theme_resolution)
+
         groups = partition_by_fidelity(slides)
         has_creative = len(groups["creative"]) > 0
         has_literal = len(groups["literal"]) > 0
@@ -381,7 +464,11 @@ def execute_generation(
     return generate_slide(params, client=client, run_id=run_id)
 
 
-def validate_outbound_contract(payload: dict[str, Any]) -> None:
+def validate_outbound_contract(
+    payload: dict[str, Any],
+    *,
+    require_dispatch_paths: bool = False,
+) -> None:
     """Validate required outbound fields for Gary mixed-fidelity results.
 
     Raises:
@@ -401,6 +488,64 @@ def validate_outbound_contract(payload: dict[str, Any]) -> None:
         raise ValueError(
             "Gary outbound contract validation failed: quality_assessment must be an object"
         )
+    theme_resolution = payload.get("theme_resolution")
+    if not isinstance(theme_resolution, dict):
+        raise ValueError(
+            "Gary outbound contract validation failed: theme_resolution must be an object"
+        )
+    validate_theme_mapping_handshake(theme_resolution)
+
+    slide_output = payload.get("gary_slide_output")
+    if not isinstance(slide_output, list):
+        raise ValueError(
+            "Gary outbound contract validation failed: gary_slide_output must be a list"
+        )
+
+    for idx, item in enumerate(slide_output, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(
+                "Gary outbound contract validation failed: "
+                f"gary_slide_output[{idx}] must be an object"
+            )
+
+        slide_id = item.get("slide_id")
+        if not isinstance(slide_id, str) or not slide_id.strip():
+            raise ValueError(
+                "Gary outbound contract validation failed: "
+                f"gary_slide_output[{idx}].slide_id must be a non-empty string"
+            )
+
+        card_number = item.get("card_number")
+        if not isinstance(card_number, int) or card_number <= 0:
+            raise ValueError(
+                "Gary outbound contract validation failed: "
+                f"gary_slide_output[{idx}].card_number must be a positive integer"
+            )
+
+        source_ref = item.get("source_ref")
+        if not isinstance(source_ref, str) or not source_ref.strip():
+            raise ValueError(
+                "Gary outbound contract validation failed: "
+                f"gary_slide_output[{idx}].source_ref must be a non-empty string"
+            )
+
+        if require_dispatch_paths:
+            file_path = item.get("file_path")
+            if not isinstance(file_path, str) or not file_path.strip():
+                raise ValueError(
+                    "Gary outbound contract validation failed: "
+                    f"gary_slide_output[{idx}].file_path must be a non-empty string "
+                    "for dispatch outputs"
+                )
+
+
+def validate_dispatch_ready(payload: dict[str, Any]) -> None:
+    """Validate Gary payload for dispatch/handoff readiness.
+
+    This strict mode enforces non-empty file paths for every slide output.
+    Use this at the Marcus pre-dispatch gate before Irene Pass 2 handoff.
+    """
+    validate_outbound_contract(payload, require_dispatch_paths=True)
 
 
 def _confirmation_is_true(value: Any) -> bool:
@@ -443,7 +588,10 @@ def validate_theme_mapping_handshake(theme_resolution: dict[str, Any]) -> None:
         for key in REQUIRED_THEME_RESOLUTION_FIELDS
         if key not in theme_resolution
         or theme_resolution.get(key) is None
-        or (isinstance(theme_resolution.get(key), str) and not str(theme_resolution.get(key)).strip())
+        or (
+            isinstance(theme_resolution.get(key), str)
+            and not str(theme_resolution.get(key)).strip()
+        )
     )
     if missing:
         raise ValueError(
@@ -1008,6 +1156,7 @@ if __name__ == "__main__":
         "Commands:\n"
         "  generate <input_text_file> [--fidelity-json <slides_json>] [--module <id>]\n"
         "    [--diagram-cards <json>] [--run-id <production_run_id>]\n"
+        "  list-themes-templates [--scope <scope>] [--content-type <type>] [--limit <n>]\n"
         "  validate-url <url>\n"
         "  merge-params <style_json> <template_json> <envelope_json> [--fidelity-class <class>]"
     )
@@ -1063,6 +1212,31 @@ if __name__ == "__main__":
             module_lesson_part=module_id,
             diagram_cards=diagram_cards_data,
             run_id=run_id_cli,
+        )
+        print(json.dumps(result, indent=2, default=str))
+        sys.exit(0)
+
+    if cmd == "list-themes-templates":
+        scope: str | None = None
+        content_type: str | None = None
+        limit = 20
+        if "--scope" in sys.argv:
+            idx = sys.argv.index("--scope") + 1
+            if idx < len(sys.argv):
+                scope = sys.argv[idx]
+        if "--content-type" in sys.argv:
+            idx = sys.argv.index("--content-type") + 1
+            if idx < len(sys.argv):
+                content_type = sys.argv[idx]
+        if "--limit" in sys.argv:
+            idx = sys.argv.index("--limit") + 1
+            if idx < len(sys.argv):
+                limit = int(sys.argv[idx])
+
+        result = list_themes_and_templates(
+            scope=scope,
+            content_type=content_type,
+            limit=limit,
         )
         print(json.dumps(result, indent=2, default=str))
         sys.exit(0)

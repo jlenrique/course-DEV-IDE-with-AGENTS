@@ -70,6 +70,38 @@ def validate_irene_pass2_handoff(
         isinstance(n, int) and isinstance(m, int) and n < m
         for n, m in zip(card_sequence, card_sequence[1:], strict=False)
     )
+    contiguous_from_one = (
+        bool(card_sequence)
+        and all(isinstance(n, int) for n in card_sequence)
+        and card_sequence == list(range(1, len(card_sequence) + 1))
+    )
+
+    missing_file_path_for: list[str] = []
+    missing_source_ref_for: list[str] = []
+    for item in gary:
+        if not isinstance(item, dict):
+            continue
+        slide_label = str(item.get("slide_id") or item.get("card_number") or "unknown")
+        file_path = item.get("file_path")
+        source_ref = item.get("source_ref")
+        if not isinstance(file_path, str) or not file_path.strip():
+            missing_file_path_for.append(slide_label)
+        if not isinstance(source_ref, str) or not source_ref.strip():
+            missing_source_ref_for.append(slide_label)
+
+    if not contiguous_from_one:
+        errors.append(
+            "gary_slide_output card_number sequence must be contiguous and start at 1 (1..N)"
+        )
+    if missing_file_path_for:
+        errors.append(
+            "gary_slide_output missing non-empty file_path for: " + ", ".join(missing_file_path_for)
+        )
+    if missing_source_ref_for:
+        errors.append(
+            "gary_slide_output missing non-empty source_ref for: "
+            + ", ".join(missing_source_ref_for)
+        )
 
     gary_slide_ids = {
         str(item.get("slide_id"))
@@ -103,11 +135,14 @@ def validate_irene_pass2_handoff(
         "card_sequence": card_sequence,
         "order_check": {
             "strictly_ascending": strictly_ascending,
+            "contiguous_from_one": contiguous_from_one,
         },
         "consistency": {
             "gary_slide_count": len(gary),
             "perception_count": len(perception),
             "missing_perception_for": missing_perception_for,
+            "missing_file_path_for": missing_file_path_for,
+            "missing_source_ref_for": missing_source_ref_for,
         },
         "remediation_hint": remediation_hint,
     }

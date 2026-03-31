@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -48,11 +49,132 @@ def _load_payload(path: Path) -> dict[str, Any]:
     return data
 
 
+def _parse_literal_visual_specs(irene_pass1_path: Path) -> dict[int, dict[str, str]]:
+    text = irene_pass1_path.read_text(encoding="utf-8")
+    if "## literal-visual spec cards" not in text:
+        return {}
+
+    section = text.split("## literal-visual spec cards", 1)[1]
+    next_heading = section.find("\n## ")
+    if next_heading != -1:
+        section = section[:next_heading]
+
+    specs: dict[int, dict[str, str]] = {}
+    blocks = re.split(r"\n###\s+", section)
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        lines = block.splitlines()
+        fields: dict[str, str] = {}
+        for line in lines[1:]:
+            stripped = line.strip()
+            if not stripped.startswith("- ") or ":" not in stripped:
+                continue
+            key, value = stripped[2:].split(":", 1)
+            fields[key.strip()] = value.strip()
+        slide_number = fields.get("slide_number")
+        if slide_number and slide_number.isdigit():
+            specs[int(slide_number)] = fields
+    return specs
+
+
+def _load_diagram_cards(bundle_dir: Path) -> list[dict[str, Any]]:
+    path = bundle_dir / "gary-diagram-cards.json"
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        cards = data.get("cards", [])
+        return cards if isinstance(cards, list) else []
+    return []
+
+
+def _infer_gamma_asset_family(url: str) -> str:
+    normalized = url.lower()
+    if "/generated-images/" in normalized:
+        return "generated-images"
+    if "/design-anything/" in normalized:
+        return "design-anything"
+    return "other"
+
+
+def _validate_literal_visual_authority(bundle_dir: Path) -> list[str]:
+    errors: list[str] = []
+    irene_pass1_path = bundle_dir / "irene-pass1.md"
+    if not irene_pass1_path.exists():
+        return errors
+
+    specs = _parse_literal_visual_specs(irene_pass1_path)
+    if not specs:
+        return errors
+
+    diagram_cards = _load_diagram_cards(bundle_dir)
+    card_map = {
+        card.get("card_number"): card
+        for card in diagram_cards
+        if isinstance(card, dict) and isinstance(card.get("card_number"), int)
+    }
+
+    spec_card_numbers = sorted(specs)
+    diagram_card_numbers = sorted(card_map)
+    if diagram_card_numbers != spec_card_numbers:
+        errors.append(
+            "gary-diagram-cards.json card_number set must exactly match Irene Pass 1 "
+            f"literal-visual cards. expected={spec_card_numbers} actual={diagram_card_numbers}"
+        )
+
+    for card_number, spec in specs.items():
+        card = card_map.get(card_number)
+        if card is None:
+            continue
+
+        expected_source_asset = spec.get("source_asset", "")
+        expected_treatment = spec.get("image_treatment", "")
+        layout_constraint = spec.get("layout_constraint", "")
+
+        actual_source_asset = str(card.get("source_asset", "")).strip()
+        derivation_type = str(card.get("derivation_type", "")).strip()
+        image_url = str(card.get("image_url", "")).strip()
+        asset_family = _infer_gamma_asset_family(image_url)
+
+        if expected_source_asset and actual_source_asset != expected_source_asset:
+            errors.append(
+                f"literal-visual card {card_number} source_asset mismatch: "
+                f"expected {expected_source_asset!r} but found {actual_source_asset!r}"
+            )
+
+        requires_source_derived = expected_treatment == "source-crop" or any(
+            phrase in layout_constraint.lower()
+            for phrase in ("no redrawn substitute", "do not fabricate")
+        )
+        if not requires_source_derived:
+            continue
+
+        if derivation_type not in {"source-crop", "rebranded-source", "user-provided-exact"}:
+            errors.append(
+                f"literal-visual card {card_number} must declare a source-derived derivation_type "
+                f"for Irene image_treatment=source-crop; found {derivation_type!r}"
+            )
+
+        if asset_family == "generated-images":
+            errors.append(
+                f"literal-visual card {card_number} uses a Gamma generated-images asset for a "
+                "source-crop slide; dispatch must fail closed until a source-derived image is staged"
+            )
+
+    return errors
+
+
 def _card_sequence(slides: list[dict[str, Any]]) -> list[int]:
     return [item.get("card_number") for item in slides if isinstance(item, dict)]
 
 
-def validate_gary_dispatch_ready(payload: dict[str, Any]) -> dict[str, Any]:
+def validate_gary_dispatch_ready(
+    payload: dict[str, Any],
+    *,
+    payload_path: Path | None = None,
+) -> dict[str, Any]:
     """Validate dispatch payload for Gate 2 readiness."""
     errors: list[str] = []
 
@@ -92,6 +214,9 @@ def validate_gary_dispatch_ready(payload: dict[str, Any]) -> dict[str, Any]:
             "dispatch must use --slides-content-json to prevent placeholder content"
         )
 
+    if payload_path is not None:
+        errors.extend(_validate_literal_visual_authority(payload_path.parent))
+
     return {
         "status": "pass" if not errors else "fail",
         "errors": errors,
@@ -115,7 +240,7 @@ def main() -> int:
 
     try:
         payload = _load_payload(args.payload)
-        result = validate_gary_dispatch_ready(payload)
+        result = validate_gary_dispatch_ready(payload, payload_path=args.payload)
         print(json.dumps(result, indent=2))
         return 0 if result["status"] == "pass" else 1
     except Exception as exc:

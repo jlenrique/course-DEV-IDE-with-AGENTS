@@ -329,7 +329,21 @@ Fallback (detailed):
 
 ---
 
-## 8) Irene Pass 2 Handoff Gate
+## 8) Irene Pass 2 — Dual-Channel Narration with Inline Perception
+
+Marcus, proceed to Prompt 8 for the active trial run.
+
+Use the active run context from this session, not the stale demo constants in the prompt pack header.
+
+Active run context:
+- RUN_ID: C1-M1-PRES-ADHOC-20260330C
+- LESSON_SLUG: apc-c1m1-tejal-20260329
+- BUNDLE_PATH: course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329
+- PRIMARY_SOURCE_FILE: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\courses\APC C1-M1 Tejal 2026-03-29.pdf
+- THEME_SELECTION: hil-2026-apc-nejal-A
+- THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
+
+### Pre-delegation checks
 
 Proceed only if all are true:
 - card sequence strictly ascending 1..N
@@ -338,13 +352,53 @@ Proceed only if all are true:
 - envelope + run log + dispatch result consistent
 - theme-resolution artifact consistent with dispatch log
 
-Delegate Irene Pass 2 with gary_slide_output as source-of-truth for order and visual paths.
+### Delegation
 
-Required outputs:
+Delegate Irene Pass 2 with `gary_slide_output`.
+Use `gary_slide_output` as source-of-truth for order and visual paths.
+
+Irene generates `perception_artifacts` **inline** during Pass 2:
+- For each slide PNG, Irene reads the image and emits a perception artifact
+  as a side-effect of writing the narration segment.
+- Perception artifacts follow the canonical schema from `sensory-bridges/bridge_utils.py`.
+- The `png_to_agent.py` bridge is a schema wrapper — the LLM agent does the
+  actual visual reading. No separate pre-processing pipeline is required.
+
+### Dual-channel grounding protocol
+
+Irene writes each narration segment using two channels simultaneously:
+
+1. **Slide channel** — what is visually on screen (perceived inline from the slide PNG).
+2. **Source channel** — the extraction content anchored by `source_ref` for each slide.
+
+The balance between channels is governed by the slide's fidelity class, configured in:
+- `state/config/narration-grounding-profiles.yaml` (per-fidelity channel balance)
+- `state/config/narration-script-parameters.yaml` (script-wide style knobs)
+
+Per-fidelity defaults:
+- **creative** (`stance: explain-behind`): Source is primary. Narration teaches the
+  content behind the atmospheric visual. Min 1 substantive source claim per segment.
+- **literal-text** (`stance: read-along`): Slide is primary. Narration paraphrases
+  visible text in conversational language. Source confirms accuracy.
+- **literal-visual** (`stance: walk-through`): Slide is primary. Narration walks
+  through the visual while enriching with at least 1 source-backed insight.
+
+Script-level parameters (from narration-script-parameters.yaml):
+- `narration_density` — target WPM and words-per-slide bounds
+- `slide_echo` — verbatim | paraphrase | inspired (per-fidelity overridable)
+- `visual_narration` — deictic references, description depth, visual silence policy
+- `terminology_treatment` — inline glossing strategy and domain filter
+- `pedagogical_bridging` — transition style between segments
+- `engagement_stance` — narrator posture, direct address, rhetorical questions
+- `source_depth` — how deep into extraction material per fidelity class
+- `pronunciation_sensitivity` — flagging policy for ElevenLabs downstream
+
+### Required outputs
 - `narration-script.md`
 - `segment-manifest.yaml`
+- `perception-artifacts.json` (emitted inline, one entry per slide)
 
-Required segment fields:
+### Required segment fields
 - id
 - gary_card_number
 - gary_slide_id
@@ -353,15 +407,44 @@ Required segment fields:
 - duration_estimate_seconds
 - source_ref
 
-Run internal Vera G4 after Pass 2.
-- If G4 critical: stop and remediate.
-- If G4 non-critical: report and continue with explicit acknowledgment.
+### Post-Pass-2 completeness validation
 
-Fallback (detailed):
-- If handoff fails validation:
+After Irene completes Pass 2, run the handoff validator as a **completeness check**:
+- `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
+
+This confirms:
+- perception_artifacts present and aligned 1:1 with Gary slide_ids
+- card sequence integrity preserved
+- file_path and source_ref populated for all cards
+
+If validator `status: fail`:
+- output exact missing fields by segment id
+- patch missing perception_artifacts or manifest fields
+- rerun validator and return clean receipt
+
+### Post-Pass-2 quality gate
+
+Run internal Vera G4 after Pass 2.
+- G4-01 through G4-06: existing deterministic + agentic checks.
+- **G4-07 (Source depth utilization):** For creative slides, verify narration
+  incorporates at least one substantive claim from source_ref anchors beyond
+  what is visible on the slide PNG. Uses perception_artifacts as visual baseline.
+- If G4 critical: stop and remediate.
+- If G4 non-critical (including G4-07 high-severity): report and continue with
+  explicit acknowledgment.
+- If G4-07 fails, check `narration-grounding-profiles.yaml` alignment before
+  re-delegating Irene — the failure may be a config issue, not a writing issue.
+
+### Fallback (detailed)
+- If handoff validator fails:
   - output exact missing fields by segment id
+  - generate or attach missing perception_artifacts before re-delegation
   - patch manifest/script only where missing
   - rerun Pass 2 handoff validator and return clean receipt
+- If Vera G4 fails on G4-07:
+  - identify which creative slides lack source depth
+  - show the source_ref anchor content vs. the narration text
+  - redraft only the affected segments with `stance: explain-behind` reinforced
 
 ---
 

@@ -202,6 +202,97 @@ def test_fails_when_slides_content_json_path_empty() -> None:
     assert any("slides_content_json_path must be non-empty" in msg for msg in result["errors"])
 
 
+def test_fails_when_source_crop_card_uses_generated_asset(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    (bundle_dir / "irene-pass1.md").write_text(
+        "\n".join(
+            [
+                "## literal-visual spec cards",
+                "",
+                "### LV-01",
+                "",
+                "- slide_number: 2",
+                "- source_asset: `metadata.json#media_references[2]`",
+                "- image_treatment: source-crop",
+                "- layout_constraint: full-width primary visual with no redrawn substitute",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (bundle_dir / "gary-diagram-cards.json").write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "cards": [
+                    {
+                        "card_number": 2,
+                        "image_url": "https://cdn.gamma.app/generated-images/example.png",
+                        "placement_note": "Primary visual, full-width roadmap.",
+                        "required": True,
+                        "source_asset": "`metadata.json#media_references[2]`",
+                        "derivation_type": "source-crop",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_gary_dispatch_ready(
+        _valid_payload(),
+        payload_path=bundle_dir / "gary-dispatch-result.json",
+    )
+
+    assert result["status"] == "fail"
+    assert any("generated-images asset" in msg for msg in result["errors"])
+
+
+def test_passes_when_source_crop_card_uses_source_derived_asset(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    (bundle_dir / "irene-pass1.md").write_text(
+        "\n".join(
+            [
+                "## literal-visual spec cards",
+                "",
+                "### LV-01",
+                "",
+                "- slide_number: 15",
+                "- source_asset: `metadata.json#media_references[2]`",
+                "- image_treatment: source-crop",
+                "- layout_constraint: crop must keep C1 and C2 labels visible at the same time",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (bundle_dir / "gary-diagram-cards.json").write_text(
+        json.dumps(
+            {
+                "run_id": "run-1",
+                "cards": [
+                    {
+                        "card_number": 15,
+                        "image_url": "https://cdn.gamma.app/design-anything/example.png",
+                        "placement_note": "Bridge crop.",
+                        "required": True,
+                        "source_asset": "`metadata.json#media_references[2]`",
+                        "derivation_type": "source-crop",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_gary_dispatch_ready(
+        _valid_payload(),
+        payload_path=bundle_dir / "gary-dispatch-result.json",
+    )
+
+    assert result["status"] == "pass"
+
+
 def test_cli_returns_exception_payload_on_malformed_json(tmp_path: Path) -> None:
         dispatch_path = tmp_path / "bad.json"
         dispatch_path.write_text("{not-json", encoding="utf-8")

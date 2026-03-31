@@ -1,12 +1,17 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""Validate Irene Pass 2 handoff envelope requirements.
+"""Validate Irene Pass 2 completeness — post-Pass-2 check.
 
-Story 11.3 gate:
+Story 11.3 gate (updated for inline perception):
 - Require both gary_slide_output and perception_artifacts.
 - Fail closed with explicit missing-field diagnostics.
 - Preserve Gary card ordering as the source of truth for downstream narration.
+
+Timing: Run AFTER Irene Pass 2 completes, not before delegation.
+Perception artifacts are generated inline by Irene during Pass 2
+(the LLM reads each slide PNG and emits a perception artifact as a
+side-effect of writing narration). This validator confirms completeness.
 """
 
 from __future__ import annotations
@@ -121,7 +126,8 @@ def validate_irene_pass2_handoff(
         )
 
     remediation_hint = (
-        "Generate perception_artifacts via sensory bridges and attach to the Pass 2 envelope"
+        "Perception artifacts are emitted inline during Pass 2. "
+        "If missing, re-run Irene on the affected slides to regenerate perception side-effects"
     )
     if expected_artifact_hint:
         remediation_hint += f" (expected location hint: {expected_artifact_hint})"

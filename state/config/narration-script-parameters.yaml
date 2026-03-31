@@ -1,0 +1,98 @@
+# Narration Script Parameters — script-level tunable knobs for Irene Pass 2.
+#
+# These parameters govern how Irene writes narration across ALL segments.
+# They complement narration-grounding-profiles.yaml (per-fidelity channel balance)
+# with script-wide stylistic and pedagogical controls.
+#
+# Designed in Party Mode Round 4 (2026-03-30).
+# Consumed by: Irene Pass 2, G4 Narration Script gate, quality-reviewer agent.
+# Contract: state/config/fidelity-contracts/g4-narration-script.yaml
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# 1. narration_density — how much to say per slide
+# ---------------------------------------------------------------------------
+narration_density:
+  target_wpm: 150              # speaking rate (ElevenLabs calibration)
+  mean_words_per_slide: 95     # default ballpark across all slides
+  min_words_per_slide: 25      # breathing room for visual-heavy slides
+  max_words_per_slide: 220     # cap on any single segment
+
+# ---------------------------------------------------------------------------
+# 2. slide_echo — how much narration mirrors visible slide text
+# ---------------------------------------------------------------------------
+# Values: verbatim | paraphrase | inspired
+#   verbatim   — reads visible text nearly word-for-word (disclaimers, key defs)
+#   paraphrase — restates in conversational language (default)
+#   inspired   — departs from slide text, uses it as launching point
+slide_echo:
+  default: paraphrase
+  per_fidelity_override:
+    creative: inspired
+    literal-text: paraphrase
+    literal-visual: paraphrase
+  allow_verbatim: true         # permit per-segment override to verbatim
+
+# ---------------------------------------------------------------------------
+# 3. visual_narration — how to handle on-screen visuals in speech
+# ---------------------------------------------------------------------------
+# deictic_references: none | minimal | moderate | frequent
+# description_depth:  identify | summarize | detailed
+visual_narration:
+  deictic_references: moderate
+  description_depth: identify
+  visual_silence_permitted: true   # allow 2-3 sec pauses for full-bleed images
+
+# ---------------------------------------------------------------------------
+# 4. terminology_treatment — when and how to gloss technical terms
+# ---------------------------------------------------------------------------
+# gloss_strategy: inline_appositive | parenthetical_aside | no_gloss
+# gloss_on:       first_mention | every_mention | never
+# audience_assumption: novice | intermediate | expert
+terminology_treatment:
+  gloss_strategy: inline_appositive
+  gloss_on: first_mention
+  audience_assumption: expert
+  gloss_domain_filter:
+    - business
+    - finance
+    - technology
+
+# ---------------------------------------------------------------------------
+# 5. pedagogical_bridging — transition style between segments
+# ---------------------------------------------------------------------------
+# transition_style: conceptual | sequential | question_driven | narrative_arc
+# bridge_density:   every_segment | key_transitions_only
+pedagogical_bridging:
+  transition_style: conceptual
+  bridge_density: every_segment
+
+# ---------------------------------------------------------------------------
+# 6. engagement_stance — narrator-learner relationship
+# ---------------------------------------------------------------------------
+# posture: lecturer | collegial_guide | coach | storyteller
+engagement_stance:
+  posture: collegial_guide
+  direct_address: true            # use "you" for direct engagement
+  rhetorical_questions: moderate  # none | occasional | moderate | frequent
+  clinical_vignettes: permitted   # permitted | encouraged | none
+
+# ---------------------------------------------------------------------------
+# 7. source_depth — how deep into extraction material per fidelity class
+# ---------------------------------------------------------------------------
+# creative:  describe_visual | teach_behind | full_synthesis
+# literal:   confirm_visible | light_enrich | full_synthesis
+source_depth:
+  creative_slides: teach_behind
+  literal_slides: confirm_visible
+
+# ---------------------------------------------------------------------------
+# 8. pronunciation_sensitivity — flagging policy for ElevenLabs downstream
+# ---------------------------------------------------------------------------
+# phonetic_format: IPA_lite | respelling | both
+# flag_threshold:  all_technical | medical_and_proper_nouns | manual_only
+pronunciation_sensitivity:
+  auto_flag: true
+  phonetic_format: IPA_lite
+  flag_threshold: medical_and_proper_nouns

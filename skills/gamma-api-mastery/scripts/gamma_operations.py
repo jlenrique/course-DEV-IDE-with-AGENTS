@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import sys
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -453,7 +455,7 @@ def execute_generation(
 
         groups = partition_by_fidelity(slides)
         has_creative = len(groups["creative"]) > 0
-        has_literal = len(groups["literal"]) > 0
+        has_literal = len(groups["literal-text"]) > 0 or len(groups["literal-visual"]) > 0
 
         if has_creative and has_literal:
             return generate_deck_mixed_fidelity(
@@ -791,6 +793,73 @@ def download_export(
     return output_path
 
 
+def _materialize_exported_slide_paths(
+    downloaded_path: Path,
+    *,
+    requested_format: str | None,
+    expected_card_numbers: list[int],
+    module_lesson_part: str,
+    export_dir: Path,
+    label: str,
+) -> list[str]:
+    """Resolve a downloaded Gamma export into per-slide artifact paths.
+
+    For PNG exports, Gamma may return either a single image (single-card call)
+    or an archive containing one image per card. This helper normalizes both
+    into deterministic per-card PNG paths for downstream compositor use.
+    """
+    if not expected_card_numbers:
+        return []
+
+    normalized_format = (requested_format or "").strip().lower() or None
+    image_extensions = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif", ".heic", ".heif"}
+
+    if normalized_format != "png":
+        return [str(downloaded_path)] * len(expected_card_numbers)
+
+    if zipfile.is_zipfile(downloaded_path):
+        extract_dir = export_dir / f"{module_lesson_part}_{label}"
+        if extract_dir.exists():
+            shutil.rmtree(extract_dir)
+        extract_dir.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(downloaded_path) as archive:
+            archive.extractall(extract_dir)
+
+        extracted_images = sorted(
+            path
+            for path in extract_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in image_extensions
+        )
+        if len(extracted_images) != len(expected_card_numbers):
+            raise ValueError(
+                "Gamma PNG export artifact mismatch: "
+                f"expected {len(expected_card_numbers)} PNG artifacts for {label}, "
+                f"got {len(extracted_images)} from {downloaded_path.name}."
+            )
+
+        resolved_paths: list[str] = []
+        for source_path, card_number in zip(extracted_images, expected_card_numbers, strict=False):
+            target_path = export_dir / f"{module_lesson_part}_slide_{card_number:02d}.png"
+            target_path.write_bytes(source_path.read_bytes())
+            resolved_paths.append(str(target_path))
+        return resolved_paths
+
+    if downloaded_path.suffix.lower() in image_extensions:
+        if len(expected_card_numbers) != 1:
+            raise ValueError(
+                "Gamma PNG export artifact mismatch: "
+                f"expected {len(expected_card_numbers)} PNG artifacts for {label}, got 1."
+            )
+        target_path = export_dir / f"{module_lesson_part}_slide_{expected_card_numbers[0]:02d}.png"
+        target_path.write_bytes(downloaded_path.read_bytes())
+        return [str(target_path)]
+
+    raise ValueError(
+        "Gamma PNG export artifact mismatch: unsupported export payload "
+        f"{downloaded_path.name} for {label}."
+    )
+
+
 def generate_deck_mixed_fidelity(
     slides: list[dict[str, Any]],
     base_params: dict[str, Any],
@@ -827,7 +896,9 @@ def generate_deck_mixed_fidelity(
 
     groups = partition_by_fidelity(slides)
     creative_slides = groups["creative"]
-    literal_slides = groups["literal"]
+    literal_text_slides = groups["literal-text"]
+    literal_visual_slides = groups["literal-visual"]
+    literal_slides = literal_text_slides + literal_visual_slides
 
     card_map = {dc["card_number"]: dc for dc in diagram_cards} if diagram_cards else {}
 
@@ -838,38 +909,52 @@ def generate_deck_mixed_fidelity(
     export_dir_value = base_params.get("export_dir") or base_params.get("exportDir")
     export_dir = Path(export_dir_value) if export_dir_value else None
 
-    def _resolve_file_path(gen_result: dict[str, Any], label: str) -> str:
+    requested_export_format = str(
+        base_params.get("export_as") or base_params.get("exportAs") or ""
+    ).strip().lower() or None
+
+    def _resolve_file_paths(
+        gen_result: dict[str, Any],
+        label: str,
+        card_numbers: list[int],
+    ) -> list[str]:
         export_url = gen_result.get("exportUrl")
         if export_url and export_dir is not None:
-            ext = str(base_params.get("export_as") or base_params.get("exportAs") or "pdf")
+            ext = requested_export_format or "pdf"
             filename = f"{module_lesson_part}_{label}.{ext}"
             downloaded = download_export(export_url, output_dir=export_dir, filename=filename, run_id=run_id)
-            return str(downloaded)
+            return _materialize_exported_slide_paths(
+                downloaded,
+                requested_format=requested_export_format,
+                expected_card_numbers=card_numbers,
+                module_lesson_part=module_lesson_part,
+                export_dir=export_dir,
+                label=label,
+            )
 
         for key in ("gammaUrl", "url", "exportUrl"):
             value = gen_result.get(key)
             if isinstance(value, str) and value.strip():
-                return value
+                return [value] * len(card_numbers)
 
         generation_id = gen_result.get("generationId") or gen_result.get("id") or "unknown"
-        return f"gamma://generation/{generation_id}"
+        return [f"gamma://generation/{generation_id}"] * len(card_numbers)
 
     if creative_slides:
         creative_params = {**base_params, "textMode": "generate"}
         creative_params.pop("text_mode", None)
         creative_input = "\n---\n".join(s.get("content", "") for s in creative_slides)
-        creative_nums = [s["slide_number"] for s in creative_slides]
-        title = build_doc_title(module_lesson_part, "creative", creative_nums)
-        creative_params["input_text"] = f"{title}\n---\n{creative_input}"
+        creative_params["input_text"] = creative_input
         creative_params["num_cards"] = len(creative_slides)
         creative_params["card_split"] = "inputTextBreaks"
 
         gen_result = generate_slide(creative_params, client=client, run_id=run_id)
         calls_made += 1
         creative_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
-        creative_file_path = _resolve_file_path(gen_result, "creative")
+        creative_card_numbers = [slide["slide_number"] for slide in creative_slides]
+        creative_file_paths = _resolve_file_paths(gen_result, "creative", creative_card_numbers)
 
-        for slide in creative_slides:
+        for slide, creative_file_path in zip(creative_slides, creative_file_paths, strict=False):
             card_num = slide["slide_number"]
             creative_results.append({
                 "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
@@ -881,54 +966,115 @@ def generate_deck_mixed_fidelity(
                 "fidelity": "creative",
             })
 
-    if literal_slides:
-        literal_params = {**base_params}
-        literal_params["textMode"] = "preserve"
-        literal_params["text_mode"] = "preserve"
-        literal_params.pop("additionalInstructions", None)
-        literal_params["additional_instructions"] = (
+    def _preserve_instruction(base_instruction: str) -> str:
+        guard = (
             "Output ONLY the provided text. Do not add content, steps, "
             "or diagrams beyond what is given. Do not embellish or expand."
         )
-        literal_params["image_options"] = {"source": "noImages"}
+        return f"{base_instruction} {guard}".strip() if base_instruction else guard
 
-        literal_input_parts = []
-        for s in literal_slides:
-            content = s.get("content", "")
-            if s["slide_number"] in card_map:
-                img_url = card_map[s["slide_number"]]["image_url"]
+    if literal_text_slides:
+        literal_text_params = {**base_params}
+        literal_text_params["textMode"] = "preserve"
+        literal_text_params["text_mode"] = "preserve"
+        base_instruction = str(
+            literal_text_params.pop("additionalInstructions", "")
+            or literal_text_params.pop("additional_instructions", "")
+        ).strip()
+        literal_text_params["additional_instructions"] = _preserve_instruction(base_instruction)
+        literal_text_params["image_options"] = {"source": "noImages"}
+
+        literal_text_input_parts = [s.get("content", "") for s in literal_text_slides]
+        literal_text_params["input_text"] = "\n---\n".join(literal_text_input_parts)
+        literal_text_params["num_cards"] = len(literal_text_slides)
+        literal_text_params["card_split"] = "inputTextBreaks"
+
+        gen_result = generate_slide(literal_text_params, client=client, run_id=run_id)
+        calls_made += 1
+        literal_text_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
+        literal_text_card_numbers = [slide["slide_number"] for slide in literal_text_slides]
+        literal_text_file_paths = _resolve_file_paths(
+            gen_result,
+            "literal-text",
+            literal_text_card_numbers,
+        )
+
+        for slide, literal_text_file_path in zip(
+            literal_text_slides,
+            literal_text_file_paths,
+            strict=False,
+        ):
+            card_num = slide["slide_number"]
+            literal_results.append({
+                "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
+                "file_path": literal_text_file_path,
+                "card_number": card_num,
+                "visual_description": f"[pending export — literal-text slide {card_num}]",
+                "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
+                "generation_id": literal_text_gen_id,
+                "fidelity": "literal-text",
+            })
+
+    if literal_visual_slides:
+        literal_visual_params = {**base_params}
+        literal_visual_params["textMode"] = "preserve"
+        literal_visual_params["text_mode"] = "preserve"
+        base_instruction = str(
+            literal_visual_params.pop("additionalInstructions", "")
+            or literal_visual_params.pop("additional_instructions", "")
+        ).strip()
+        visual_guard = (
+            "Output ONLY the provided text. Keep wording source-locked. "
+            "Use image-dominant layout where an injected image is present; "
+            "supporting text should remain concise and source-grounded. "
+            "Use ONLY the provided image URL when one is injected. "
+            "Do not generate substitute or supplemental visuals."
+        )
+        literal_visual_params["additional_instructions"] = (
+            f"{base_instruction} {visual_guard}".strip() if base_instruction else visual_guard
+        )
+
+        literal_visual_params["image_options"] = {"source": "noImages"}
+
+        for slide in literal_visual_slides:
+            slide_params = {**literal_visual_params}
+            content = slide.get("content", "")
+            card_num = slide["slide_number"]
+            if card_num in card_map:
+                card_payload = card_map[card_num]
+                img_url = card_payload["image_url"]
                 is_valid, reason = validate_image_url(img_url)
                 if not is_valid:
                     raise ValueError(
-                        f"diagram_cards card_number {s['slide_number']}: "
+                        f"diagram_cards card_number {card_num}: "
                         f"image URL validation failed: {reason} — URL: {img_url}"
                     )
-                content = f"![diagram]({img_url})\n\n{content}"
-                literal_params["image_options"] = {"source": "aiGenerated"}
-            literal_input_parts.append(content)
+                placement_note = str(card_payload.get("placement_note", "")).strip()
+                layout_note = (
+                    f"Layout note: {placement_note}" if placement_note else "Layout note: image-dominant composition."
+                )
+                content = f"{img_url}\n\n{layout_note}\n\n{content}"
+            slide_params["input_text"] = content
+            slide_params["num_cards"] = 1
+            slide_params["card_split"] = "inputTextBreaks"
 
-        literal_nums = [s["slide_number"] for s in literal_slides]
-        title = build_doc_title(module_lesson_part, "literal", literal_nums)
-        literal_params["input_text"] = f"{title}\n---\n" + "\n---\n".join(literal_input_parts)
-        literal_params["num_cards"] = len(literal_slides)
-        literal_params["card_split"] = "inputTextBreaks"
+            gen_result = generate_slide(slide_params, client=client, run_id=run_id)
+            calls_made += 1
+            literal_visual_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
+            literal_visual_file_path = _resolve_file_paths(
+                gen_result,
+                f"literal-visual-{card_num:02d}",
+                [card_num],
+            )[0]
 
-        gen_result = generate_slide(literal_params, client=client, run_id=run_id)
-        calls_made += 1
-        literal_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
-        literal_file_path = _resolve_file_path(gen_result, "literal")
-
-        for slide in literal_slides:
-            card_num = slide["slide_number"]
-            fidelity = slide.get("fidelity", "literal-text")
             literal_results.append({
                 "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
-                "file_path": literal_file_path,
+                "file_path": literal_visual_file_path,
                 "card_number": card_num,
-                "visual_description": f"[pending export — {fidelity} slide {card_num}]",
+                "visual_description": f"[pending export — literal-visual slide {card_num}]",
                 "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
-                "generation_id": literal_gen_id,
-                "fidelity": fidelity,
+                "generation_id": literal_visual_gen_id,
+                "fidelity": "literal-visual",
             })
 
     if not creative_slides and not literal_slides:
@@ -1009,12 +1155,13 @@ def generate_deck_mixed_fidelity(
         "theme_id": theme_resolution["resolved_theme_key"],
         "requested_theme_key": theme_resolution["requested_theme_key"],
         "resolved_parameter_set": theme_resolution["resolved_parameter_set"],
-        "text_mode": "mixed (creative=generate, literal=preserve)",
+        "text_mode": "mixed (creative=generate, literal-text=preserve, literal-visual=preserve)",
         "card_split": "inputTextBreaks",
         "num_cards": len(unified),
         "image_options": {
             "literal_default": "noImages",
-            "literal_diagram_override": "aiGenerated" if bool(diagram_cards) else "none",
+            "literal_visual_source": "noImages" if literal_visual_slides else "none",
+            "literal_visual_call_mode": "per-card" if literal_visual_slides else "none",
         },
     }
     if base_params.get("export_as") or base_params.get("exportAs"):
@@ -1037,8 +1184,8 @@ def generate_deck_mixed_fidelity(
     flags = {
         "embellishment_control_used": literal_count > 0,
         "constraint_phrasing": (
-            "Output ONLY the provided text. Do not add content, steps, or "
-            "diagrams beyond what is given."
+            "Output ONLY the provided text. Keep wording source-locked; "
+            "literal-visual slides use image-dominant composition with concise supporting text."
             if literal_count > 0
             else ""
         ),
@@ -1087,27 +1234,34 @@ def generate_deck_mixed_fidelity(
 def partition_by_fidelity(
     slides: list[dict[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
-    """Partition slide brief slides into creative and literal groups.
+    """Partition slide brief slides into creative/literal-text/literal-visual groups.
 
     Args:
         slides: List of slide dicts, each with at minimum 'slide_number',
                 'content', and 'fidelity' (defaults to 'creative').
 
     Returns:
-        Dict with keys 'creative' and 'literal', each containing the
-        slides assigned to that group with their original slide numbers preserved.
+        Dict with keys 'creative', 'literal-text', and 'literal-visual', each
+        containing the slides assigned to that group with original slide numbers preserved.
     """
     creative: list[dict[str, Any]] = []
-    literal: list[dict[str, Any]] = []
+    literal_text: list[dict[str, Any]] = []
+    literal_visual: list[dict[str, Any]] = []
 
     for slide in slides:
         fidelity = slide.get("fidelity", "creative")
-        if fidelity in ("literal-text", "literal-visual"):
-            literal.append(slide)
+        if fidelity == "literal-visual":
+            literal_visual.append(slide)
+        elif fidelity == "literal-text":
+            literal_text.append(slide)
         else:
             creative.append(slide)
 
-    return {"creative": creative, "literal": literal}
+    return {
+        "creative": creative,
+        "literal-text": literal_text,
+        "literal-visual": literal_visual,
+    }
 
 
 def normalize_slides_payload(
@@ -1250,7 +1404,7 @@ def reassemble_slide_output(
     creative_results: list[dict[str, Any]],
     literal_results: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Reassemble results from two Gamma calls into unified slide output.
+    """Reassemble results from Gamma calls into unified slide output.
 
     Both lists should contain dicts with 'card_number' for ordering.
     Returns a unified list sorted by card_number with provenance metadata.
@@ -1267,8 +1421,8 @@ def reassemble_slide_output(
         all_results.append(item)
 
     for item in literal_results:
-        item["source_call"] = "literal"
         fidelity = item.get("fidelity", "literal-text")
+        item["source_call"] = fidelity
         item["visual_description"] = (
             f"{fidelity} slide generated by Gamma for card {item.get('card_number')}; "
             "source text constraints enforced for literal fidelity."

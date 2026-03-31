@@ -1,0 +1,51 @@
+# Narration Grounding Profiles — per-fidelity channel balance for Irene Pass 2.
+#
+# These profiles control how Irene weights slide visuals vs. source extractions
+# when writing narration. Each fidelity class has a default profile that can be
+# overridden per-segment in the narration script stage directions.
+#
+# Designed in Party Mode Round 3 (2026-03-30).
+# Consumed by: Irene Pass 2, G4 Narration Script gate, quality-reviewer agent.
+# Contract: state/config/fidelity-contracts/g4-narration-script.yaml
+
+schema_version: "1.0"
+
+profiles:
+  creative:
+    slide_role: atmospheric
+    source_role: primary
+    stance: explain-behind
+    min_source_claims: 1
+    description: >
+      Creative slides carry mood and atmosphere; the extraction carries substance.
+      Narration must teach the content behind the visual, not merely describe
+      what is on screen. At least one substantive claim from source_ref anchors
+      must appear in the narration segment.
+
+  literal-text:
+    slide_role: primary
+    source_role: confirming
+    stance: read-along
+    min_source_claims: 0
+    description: >
+      Literal-text slides display the exact content the learner needs to read.
+      Narration paraphrases and reinforces the visible text in conversational
+      language. Source extractions confirm accuracy but do not need to add
+      new claims beyond what the slide already shows.
+
+  literal-visual:
+    slide_role: primary
+    source_role: enriching
+    stance: walk-through
+    min_source_claims: 1
+    description: >
+      Literal-visual slides contain SME-provided images, charts, or diagrams
+      that carry instructional weight. Narration walks the learner through
+      the visual while enriching with at least one source-backed insight
+      not directly legible on screen.
+
+# Per-segment override example (used in narration script stage directions):
+# override:
+#   segment: seg-05
+#   profile: literal-text      # override from default creative for this segment
+#   reason: "Slide 5 contains a key definition that must be read aloud"

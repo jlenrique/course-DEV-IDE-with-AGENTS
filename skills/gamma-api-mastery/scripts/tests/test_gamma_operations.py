@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -811,6 +812,13 @@ class TestExecuteGenerationThemeEnforcement:
 class TestGaryOutboundContract:
     """Tests for Story 11.2 outbound contract enforcement."""
 
+    @staticmethod
+    def _write_png_archive(path: Path, names: list[str]) -> Path:
+        with zipfile.ZipFile(path, "w") as archive:
+            for name in names:
+                archive.writestr(name, b"png-bytes")
+        return path
+
     def test_mixed_fidelity_output_contains_required_fields(self) -> None:
         slides = [
             {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
@@ -887,6 +895,412 @@ class TestGaryOutboundContract:
         assert len(output) == 2
         assert output[0]["file_path"] == "https://gamma.app/docs/creative"
         assert output[1]["file_path"] == "https://gamma.app/docs/literal"
+
+    def test_mixed_fidelity_with_literal_visual_uses_three_calls(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal text card", "fidelity": "literal-text"},
+            {"slide_number": 3, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+
+        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
+                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
+            ]
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        assert mock_generate.call_count == 3
+        assert result["calls_made"] == 3
+        assert {p["source_call"] for p in result["provenance"]} == {
+            "creative",
+            "literal-text",
+            "literal-visual",
+        }
+
+    def test_literal_visual_call_uses_noimages_mode_with_strict_source_image_instruction(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal text card", "fidelity": "literal-text"},
+            {"slide_number": 3, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 3,
+                "image_url": "https://example.com/diagram.png",
+                "placement_note": "Use roadmap crop with title-safe top margin.",
+                "required": True,
+            }
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+        ):
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
+                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
+            ]
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "imageOptions": {
+                        "source": "aiGenerated",
+                        "model": "gemini-3.1-flash-image-mini",
+                        "stylePreset": "illustration",
+                    },
+                    "additionalInstructions": "Keep style uniform.",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        literal_text_params = mock_generate.call_args_list[1].args[0]
+        literal_visual_params = mock_generate.call_args_list[2].args[0]
+
+        assert literal_text_params["themeId"] == "theme_abc"
+        assert literal_text_params["image_options"]["source"] == "noImages"
+
+        assert literal_visual_params["themeId"] == "theme_abc"
+        assert literal_visual_params["image_options"] == {"source": "noImages"}
+        assert "Keep style uniform." in literal_visual_params["additional_instructions"]
+        assert "use only the provided image url" in literal_visual_params["additional_instructions"].lower()
+
+    def test_literal_preserve_calls_do_not_prefix_doc_title_into_input_text(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal text card", "fidelity": "literal-text"},
+            {"slide_number": 3, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 3,
+                "image_url": "https://example.com/diagram.png",
+                "placement_note": "Use roadmap crop with title-safe top margin.",
+                "required": True,
+            }
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+        ):
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
+                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
+            ]
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        literal_text_params = mock_generate.call_args_list[1].args[0]
+        literal_visual_params = mock_generate.call_args_list[2].args[0]
+
+        assert not literal_text_params["input_text"].startswith("C1-M1-PRES-ADHOC")
+        assert not literal_visual_params["input_text"].startswith("C1-M1-PRES-ADHOC")
+        assert literal_text_params["input_text"].startswith("Literal text card")
+        assert literal_visual_params["input_text"].startswith("https://example.com/diagram.png")
+
+    def test_creative_call_does_not_prefix_doc_title_into_input_text(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card one", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Creative card two", "fidelity": "creative"},
+        ]
+
+        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+            mock_generate.return_value = {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"}
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        creative_params = mock_generate.call_args_list[0].args[0]
+        assert not creative_params["input_text"].startswith("C1-M1-PRES-ADHOC")
+        assert creative_params["input_text"].startswith("Creative card one")
+
+    def test_multiple_literal_visual_slides_are_generated_in_separate_calls(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal text card", "fidelity": "literal-text"},
+            {"slide_number": 15, "content": "Bridge card A", "fidelity": "literal-visual"},
+            {"slide_number": 16, "content": "Bridge card B", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 15,
+                "image_url": "https://example.com/bridge-a.png",
+                "placement_note": "Crop to transition from Course 1 to Course 2.",
+                "required": True,
+            },
+            {
+                "card_number": 16,
+                "image_url": "https://example.com/bridge-b.png",
+                "placement_note": "Closing crop anchored on leadership identity.",
+                "required": True,
+            },
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+        ):
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
+                {"id": "gen-visual-15", "gammaUrl": "https://gamma.app/docs/literal-visual-15"},
+                {"id": "gen-visual-16", "gammaUrl": "https://gamma.app/docs/literal-visual-16"},
+            ]
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "imageOptions": {
+                        "source": "aiGenerated",
+                        "model": "gemini-3.1-flash-image-mini",
+                        "stylePreset": "illustration",
+                    },
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        assert mock_generate.call_count == 4
+        assert result["calls_made"] == 4
+        assert [p["source_call"] for p in result["provenance"] if p["source_call"] == "literal-visual"] == ["literal-visual", "literal-visual"]
+        third_call = mock_generate.call_args_list[2].args[0]
+        fourth_call = mock_generate.call_args_list[3].args[0]
+        assert "bridge-a.png" in third_call["input_text"].lower()
+        assert "bridge-b.png" in fourth_call["input_text"].lower()
+
+    def test_literal_visual_input_uses_raw_image_url_not_markdown_image_syntax(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 1,
+                "image_url": "https://example.com/roadmap.png",
+                "placement_note": "Use roadmap crop.",
+                "required": True,
+            }
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+        ):
+            mock_generate.return_value = {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"}
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        literal_visual_params = mock_generate.call_args_list[0].args[0]
+        assert literal_visual_params["input_text"].startswith("https://example.com/roadmap.png")
+        assert "![diagram](https://example.com/roadmap.png)" not in literal_visual_params["input_text"]
+
+    def test_literal_visual_input_includes_layout_guidance_for_injected_image(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 2,
+                "image_url": "https://example.com/roadmap.png",
+                "placement_note": "Crop to highlight Course 1 to Course 2 bridge.",
+                "required": True,
+            }
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+        ):
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
+                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
+            ]
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        literal_visual_params = mock_generate.call_args_list[1].args[0]
+        assert "image-dominant" in literal_visual_params["additional_instructions"].lower()
+        assert "crop to highlight course 1 to course 2 bridge" in literal_visual_params["input_text"].lower()
+
+    def test_mixed_fidelity_png_export_assigns_per_slide_paths_from_gamma_artifacts(self, tmp_path: Path) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card 1", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Creative card 2", "fidelity": "creative"},
+            {"slide_number": 3, "content": "Literal text 1", "fidelity": "literal-text"},
+            {"slide_number": 4, "content": "Literal text 2", "fidelity": "literal-text"},
+            {"slide_number": 5, "content": "Literal visual", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 5,
+                "image_url": "https://example.com/diagram.png",
+                "placement_note": "Use the supplied diagram only.",
+                "required": True,
+            }
+        ]
+        creative_archive = self._write_png_archive(
+            tmp_path / "creative-export.zip",
+            ["card-01.png", "card-02.png"],
+        )
+        literal_text_archive = self._write_png_archive(
+            tmp_path / "literal-text-export.zip",
+            ["card-03.png", "card-04.png"],
+        )
+        literal_visual_png = tmp_path / "literal-visual-05.png"
+        literal_visual_png.write_bytes(b"png-bytes")
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "download_export") as mock_download,
+        ):
+            mock_generate.side_effect = [
+                {"id": "gen-creative", "exportUrl": "https://gamma.app/export/creative"},
+                {"id": "gen-literal-text", "exportUrl": "https://gamma.app/export/literal-text"},
+                {"id": "gen-literal-visual", "exportUrl": "https://gamma.app/export/literal-visual"},
+            ]
+            mock_download.side_effect = [creative_archive, literal_text_archive, literal_visual_png]
+
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "exportAs": "png",
+                    "export_dir": str(tmp_path),
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        output = result["gary_slide_output"]
+        assert [item["file_path"] for item in output] == [
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_01.png"),
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_02.png"),
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_03.png"),
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_04.png"),
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_05.png"),
+        ]
+
+    def test_mixed_fidelity_png_export_fails_when_archive_card_count_mismatches(self, tmp_path: Path) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card 1", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Creative card 2", "fidelity": "creative"},
+        ]
+        creative_archive = self._write_png_archive(
+            tmp_path / "creative-export.zip",
+            ["card-01.png"],
+        )
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "download_export", return_value=creative_archive),
+        ):
+            mock_generate.return_value = {
+                "id": "gen-creative",
+                "exportUrl": "https://gamma.app/export/creative",
+            }
+
+            with pytest.raises(ValueError, match="expected 2 PNG artifacts"):
+                generate_deck_mixed_fidelity(
+                    slides,
+                    {
+                        "themeId": "theme_abc",
+                        "exportAs": "png",
+                        "export_dir": str(tmp_path),
+                        **_valid_theme_resolution(),
+                    },
+                    "C1-M1-PRES-ADHOC-20260330",
+                    run_id="C1-M1-PRES-ADHOC-20260330",
+                )
+
+    def test_mixed_fidelity_png_export_ignores_stale_extracted_images_from_prior_runs(self, tmp_path: Path) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative card 1", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Creative card 2", "fidelity": "creative"},
+        ]
+        creative_archive = self._write_png_archive(
+            tmp_path / "creative-export.zip",
+            ["card-01.png", "card-02.png"],
+        )
+        stale_extract_dir = tmp_path / "C1-M1-PRES-ADHOC-20260330_creative"
+        stale_extract_dir.mkdir(parents=True, exist_ok=True)
+        (stale_extract_dir / "stale-card-99.png").write_bytes(b"old")
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "download_export", return_value=creative_archive),
+        ):
+            mock_generate.return_value = {
+                "id": "gen-creative",
+                "exportUrl": "https://gamma.app/export/creative",
+            }
+
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "exportAs": "png",
+                    "export_dir": str(tmp_path),
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        assert [item["file_path"] for item in result["gary_slide_output"]] == [
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_01.png"),
+            str(tmp_path / "C1-M1-PRES-ADHOC-20260330_slide_02.png"),
+        ]
 
     def test_validate_outbound_contract_raises_on_missing_required_field(self) -> None:
         payload = {
@@ -1144,11 +1558,12 @@ class TestGoldenPathDispatch:
             for s in merged
         ), "no slide may carry placeholder text after merge"
 
-        # Step 2: dispatch — mocked at generate_slide boundary (2 calls: creative + literal)
+        # Step 2: dispatch — mocked at generate_slide boundary (3 calls: creative + literal text + literal visual)
         with patch.object(gamma_operations, "generate_slide") as mock_gen:
             mock_gen.side_effect = [
                 {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
-                {"id": "gen-literal", "gammaUrl": "https://gamma.app/docs/literal"},
+                {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
+                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
             ]
             result = execute_generation(
                 params,
@@ -1157,13 +1572,13 @@ class TestGoldenPathDispatch:
                 run_id="GOLDEN-PATH-01",
             )
 
-        assert mock_gen.call_count == 2, "mixed fidelity must produce exactly 2 API calls"
+        assert mock_gen.call_count == 3, "mixed fidelity with literal-visual must produce 3 API calls"
 
         # Step 3: validate output shape
         assert "gary_slide_output" in result
         output = result["gary_slide_output"]
         assert len(output) == 3
-        assert result["calls_made"] == 2
+        assert result["calls_made"] == 3
         assert all(s.get("file_path") for s in output), "every slide must have file_path"
         assert all(s.get("source_ref") for s in output), "every slide must have source_ref"
 

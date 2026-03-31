@@ -164,6 +164,9 @@ JSON schema (lightweight):
     {
       "card_number": 3,
       "image_url": "https://...",
+      "source_asset": "`metadata.json#media_references[2]`",
+      "source_ref": "`extracted.md#Extracted text (roadmap transcription)`",
+      "derivation_type": "source-crop",
       "placement_note": "Primary visual, full-width",
       "required": true
     }
@@ -174,6 +177,10 @@ JSON schema (lightweight):
 Rules:
 - `image_url` must be HTTPS and content-type resolvable as image.
 - `required=true` means dispatch must block if image is unavailable.
+- `source_asset` must point to the Irene-approved origin for the literal-visual card.
+- `source_ref` must point to the governing source text or structured extraction used to justify the card.
+- `derivation_type` must be explicit for auditability: `source-crop`, `rebranded-source`, `user-provided-exact`, or `generated-image`.
+- If Irene Pass 1 specifies `image_treatment: source-crop` or equivalent non-fabrication language, `derivation_type` must be source-derived and `image_url` must not point to Gamma `generated-images` output.
 
 ## 7) gary-theme-resolution.json
 
@@ -212,9 +219,24 @@ Gate contracts live in: `state/config/fidelity-contracts/`
 - G1: `g1-lesson-plan.yaml`
 - G2: `g2-slide-brief.yaml`
 - G3: `g3-generated-slides.yaml`
-- G4: `g4-narration-script.yaml`
+- G4: `g4-narration-script.yaml` (7 criteria, incl. G4-07 source depth utilization)
 
 Shared schema: `state/config/fidelity-contracts/_schema.yaml`
+
+### G4 supporting config files
+
+The G4 narration contract depends on two peer config files that govern Irene's
+narration strategy. G4-07 evaluation explicitly references both:
+
+- `state/config/narration-grounding-profiles.yaml` — per-fidelity channel balance
+  (creative: source-primary; literal-text: slide-primary; literal-visual: balanced)
+- `state/config/narration-script-parameters.yaml` — script-wide style knobs
+  (density, slide_echo, visual_narration, terminology, bridging, engagement,
+  source_depth, pronunciation)
+
+These files are consumed by Irene Pass 2 during generation and by Vera during
+G4 evaluation. Changes to profile defaults may cause G4-07 failures — check
+config alignment before attributing failures to narration writing quality.
 
 ## 10) Validation Policy
 

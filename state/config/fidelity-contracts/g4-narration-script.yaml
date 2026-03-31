@@ -61,3 +61,21 @@ criteria:
     evaluation_type: deterministic
     check: "count(narration_segments) == count(manifest_segments) and narration_ref linkages are valid"
     requires_perception: false
+
+  - id: "G4-07"
+    name: "Source depth utilization"
+    description: >
+      For creative-fidelity slides, narration must incorporate substantive
+      content from the source_ref anchors, not merely describe the visual.
+    fidelity_class: [creative]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      For each creative slide, at least one substantive claim from the
+      extraction source_ref appears in the narration segment beyond
+      what is visible on the slide PNG.
+    requires_perception: true
+    perception_modality: image
+    config_refs:
+      - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"

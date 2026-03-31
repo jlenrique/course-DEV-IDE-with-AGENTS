@@ -85,7 +85,7 @@ Operator rule:
 
 8. Prompt 8: Irene Pass 2 handoff
 - Confirm preconditions:
-  - order 1..N, file_path present, source_ref present, artifacts consistent
+  - order 1..N, file_path present, source_ref present, perception_artifacts aligned, artifacts consistent
 - Delegate Irene Pass 2.
 - Validate handoff envelope:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope <pass2-envelope.json>`

@@ -111,14 +111,20 @@ Greet the user by name with current settings, last session context summary, and 
 
 **Ownership:** Storyboard **creation** (generate HTML/JSON, manifest-derived recap, conversational approval, persist `authorized-storyboard.json`) is **a Marcus skill only**. It is not a separate specialist skill and not owned by Gary or Irene: Gary supplies the dispatch payload; Irene consumes outputs **after** authorization when the runbook says so. Marcus runs this capability end-to-end for the operator.
 
-After Gary’s Gamma dispatch is packaged and **before** Irene Pass 2, Marcus may generate a **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order.
+**Two MVP views (same command, different inputs):**
+
+- **Before Irene (Pass 2):** Gary dispatch only. HTML table includes a **narration** column with *Pending (pre-Pass 2)* for every row — slides-only review.
+- **After Irene:** Same generator, add Irene’s **segment manifest YAML** (`segments[].gary_slide_id` + `narration_text` per `skills/bmad-agent-content-creator/references/template-segment-manifest.md`). Rows with matched script show **slide preview + narration text** in one row (notes-style). Unmatched slides stay *Pending*.
+
+After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate** the **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order; after Pass 2, regenerate with `--segment-manifest` to include script.
 
 1. **Generate** (from repo root, paths adjusted to the run bundle):
 
-   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--print-summary]`
+   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--segment-manifest <manifest.yaml>] [--print-summary]`
 
-   - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html`.
+   - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html` (`storyboard_version` 2; `storyboard_view` is `slides_only` or `slides_with_script`).
    - Resolve local PNGs with `--asset-base` when `file_path` is relative to something other than the payload’s directory.
+   - **`--segment-manifest`:** optional Pass 2 YAML; **PyYAML** required when used.
 
 2. **Review:** Open `storyboard/index.html` in a browser. No approval controls in the page (v1).
 

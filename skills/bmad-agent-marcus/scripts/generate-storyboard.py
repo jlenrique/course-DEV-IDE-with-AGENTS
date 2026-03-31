@@ -6,6 +6,13 @@
 Emits ``storyboard/storyboard.json`` and ``storyboard/index.html`` under
 ``--out-dir``. Use ``summarize`` to print a manifest-derived recap for
 conversational approval (Marcus + operator).
+
+**Before Irene (Pass 2):** Gary dispatch only — each row shows the slide;
+the script column is *Pending (pre–Pass 2)*.
+
+**After Irene:** pass ``--segment-manifest`` (YAML) with ``segments[]`` entries
+that include ``gary_slide_id`` (or ``slide_id``) and ``narration_text`` per
+``template-segment-manifest.md`` — the same row shows slide preview + script.
 """
 
 from __future__ import annotations
@@ -50,12 +57,46 @@ def _is_remote_ref(ref: str) -> bool:
     return parsed.scheme in {"http", "https"}
 
 
+def load_narration_by_slide_id(path: Path) -> dict[str, str]:
+    """Load segment manifest YAML; map gary_slide_id/slide_id → narration_text.
+
+    Multiple segments per slide_id are joined with a horizontal rule separator.
+    """
+    if yaml is None:
+        raise RuntimeError("PyYAML is required for --segment-manifest (YAML) files")
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError("Segment manifest top level must be a mapping")
+    segments = raw.get("segments")
+    if segments is None:
+        return {}
+    if not isinstance(segments, list):
+        raise ValueError("segments must be a list")
+
+    chunks: dict[str, list[str]] = {}
+    for seg in segments:
+        if not isinstance(seg, dict):
+            continue
+        sid_raw = seg.get("gary_slide_id") or seg.get("slide_id")
+        if not isinstance(sid_raw, str) or not sid_raw.strip():
+            continue
+        sid = sid_raw.strip()
+        nt = seg.get("narration_text")
+        if nt is None or not str(nt).strip():
+            continue
+        chunks.setdefault(sid, []).append(str(nt).strip())
+
+    return {k: "\n\n---\n\n".join(v) for k, v in chunks.items()}
+
+
 def build_manifest(
     payload: dict[str, Any],
     *,
     payload_path: Path,
     storyboard_dir: Path,
     asset_base: Path,
+    narration_by_slide_id: dict[str, str] | None = None,
+    segment_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     """Return manifest dict and do not write files."""
     slides_in = payload.get("gary_slide_output")
@@ -93,6 +134,14 @@ def build_manifest(
                 html_asset_ref = file_path_raw
                 asset_status = "missing"
 
+        narration_text = ""
+        narration_status = "pending"
+        if narration_by_slide_id:
+            matched = narration_by_slide_id.get(slide_id)
+            if matched is not None and str(matched).strip():
+                narration_text = str(matched).strip()
+                narration_status = "present"
+
         slides_out.append(
             {
                 "sequence": idx,
@@ -104,16 +153,27 @@ def build_manifest(
                 "display_title": display_title,
                 "asset_status": asset_status,
                 "html_asset_ref": html_asset_ref,
+                "narration_text": narration_text,
+                "narration_status": narration_status,
             }
         )
 
-    return {
-        "storyboard_version": 1,
+    with_script_n = sum(
+        1 for s in slides_out if isinstance(s, dict) and s.get("narration_status") == "present"
+    )
+    view = "slides_with_script" if with_script_n else "slides_only"
+
+    out: dict[str, Any] = {
+        "storyboard_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source_payload": payload_path.resolve().as_posix(),
         "asset_base": asset_base.resolve().as_posix(),
+        "storyboard_view": view,
         "slides": slides_out,
     }
+    if segment_manifest_path is not None:
+        out["segment_manifest_source"] = segment_manifest_path.resolve().as_posix()
+    return out
 
 
 def format_summary(manifest: dict[str, Any]) -> str:
@@ -142,6 +202,19 @@ def format_summary(manifest: dict[str, Any]) -> str:
     )
     if missing_n:
         lines.append(f"Warning: {missing_n} slide(s) have missing local assets.")
+
+    view = str(manifest.get("storyboard_view") or "")
+    narrated = sum(
+        1
+        for s in slides
+        if isinstance(s, dict) and s.get("narration_status") == "present"
+    )
+    if view == "slides_with_script" or narrated:
+        lines.append(
+            f"Narration: {narrated}/{len(slides)} slide(s) have script text attached."
+        )
+    elif manifest.get("segment_manifest_source"):
+        lines.append("Narration: segment manifest provided but no slide matched narration_text.")
     return "\n".join(lines)
 
 
@@ -178,17 +251,29 @@ def render_index_html(manifest: dict[str, Any]) -> str:
         else:
             preview = '<strong class="missing">MISSING</strong>'
 
+        nstat = str(s.get("narration_status") or "pending")
+        ntext = str(s.get("narration_text") or "")
+        if nstat == "present" and ntext.strip():
+            script_cell = (
+                f'<pre class="narration-text">{html.escape(ntext)}</pre>'
+            )
+        else:
+            script_cell = (
+                '<span class="pending-script">Pending (pre-Pass 2)</span>'
+            )
+
         rows.append(
             "<tr>"
             f"<td>{seq}</td><td>{sid}</td><td>{fid}</td><td>{card}</td>"
             f"<td>{preview}</td><td>{title}</td><td>{sref}</td>"
-            f"<td>{fpath}</td><td>{status}</td>"
+            f"<td>{fpath}</td><td>{status}</td><td>{script_cell}</td>"
             "</tr>"
         )
 
-    body_rows = "\n".join(rows) if rows else "<tr><td colspan='9'>No slides</td></tr>"
+    body_rows = "\n".join(rows) if rows else "<tr><td colspan='10'>No slides</td></tr>"
     gen_at = html.escape(str(manifest.get("generated_at", "")))
-    cap = f"Storyboard (view-only) — generated {gen_at}"
+    view = html.escape(str(manifest.get("storyboard_view") or "slides_only"))
+    cap = f"Storyboard (view-only) — {view} — generated {gen_at}"
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -201,6 +286,11 @@ def render_index_html(manifest: dict[str, Any]) -> str:
     th, td {{ border: 1px solid #ccc; padding: 0.35rem 0.5rem; vertical-align: top; }}
     th {{ background: #f4f4f4; text-align: left; }}
     .missing {{ color: #b00020; }}
+    .pending-script {{ color: #666; font-style: italic; }}
+    .narration-text {{
+      white-space: pre-wrap; max-width: 36rem; max-height: 16rem;
+      overflow: auto; margin: 0; font-family: inherit; font-size: 0.9rem;
+    }}
     caption {{ text-align: left; font-weight: bold; margin-bottom: 0.5rem; }}
   </style>
 </head>
@@ -210,7 +300,8 @@ def render_index_html(manifest: dict[str, Any]) -> str:
     <thead>
       <tr>
         <th>#</th><th>slide_id</th><th>fidelity</th><th>card</th>
-        <th>preview</th><th>title</th><th>source_ref</th><th>file_path</th><th>asset_status</th>
+        <th>preview</th><th>title</th><th>source_ref</th><th>file_path</th>
+        <th>asset_status</th><th>narration (Pass 2)</th>
       </tr>
     </thead>
     <tbody>
@@ -240,11 +331,18 @@ def cmd_generate(args: argparse.Namespace) -> int:
     storyboard_dir = (out_dir / "storyboard").resolve()
 
     payload = load_payload(payload_path)
+    segment_manifest_path: Path | None = getattr(args, "segment_manifest", None)
+    narration_map: dict[str, str] | None = None
+    if segment_manifest_path is not None:
+        narration_map = load_narration_by_slide_id(segment_manifest_path)
+
     manifest = build_manifest(
         payload,
         payload_path=payload_path,
         storyboard_dir=storyboard_dir,
         asset_base=asset_base.resolve(),
+        narration_by_slide_id=narration_map,
+        segment_manifest_path=segment_manifest_path,
     )
     write_bundle(manifest, storyboard_dir)
 
@@ -298,6 +396,15 @@ def main() -> int:
         "--strict",
         action="store_true",
         help="Exit 1 if any slide has asset_status missing",
+    )
+    gen.add_argument(
+        "--segment-manifest",
+        type=Path,
+        default=None,
+        help=(
+            "Irene Pass 2 segment manifest YAML "
+            "(segments[].gary_slide_id + narration_text) to attach script per slide"
+        ),
     )
     gen.set_defaults(func=cmd_generate)
 

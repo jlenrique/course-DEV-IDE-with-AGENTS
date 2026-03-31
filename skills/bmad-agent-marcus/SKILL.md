@@ -106,6 +106,33 @@ Greet the user by name with current settings, last session context summary, and 
 | SP | Source material prompting (Notion / Box Drive) | Load `./references/source-prompting.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 
+### Gary slide storyboard (HIL, pre–Irene)
+
+After Gary’s Gamma dispatch is packaged and **before** Irene Pass 2, Marcus may generate a **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order.
+
+1. **Generate** (from repo root, paths adjusted to the run bundle):
+
+   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--print-summary]`
+
+   - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html`.
+   - Resolve local PNGs with `--asset-base` when `file_path` is relative to something other than the payload’s directory.
+
+2. **Review:** Open `storyboard/index.html` in a browser. No approval controls in the page (v1).
+
+3. **Summarize (manifest-only):** Marcus reads aloud the same recap the tool would print:
+
+   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py summarize --manifest <bundle-dir>/storyboard/storyboard.json`
+
+4. **Confirm in chat:** Operator explicitly approves after the recap (count, first/last `slide_id`, fidelity counts).
+
+5. **Authorize (fail closed on overwrite):**
+
+   `python skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py --manifest <bundle-dir>/storyboard/storyboard.json --run-id <RUN_ID> --output <bundle-dir>/authorized-storyboard.json`
+
+   - If `--output` already exists, the script **exits with error** and does not overwrite.
+
+Optional: `--strict` on `generate` exits non-zero when any slide has a **missing** local asset (storyboard files are still written).
+
 ### External Skills
 
 | Capability | Target Skill | Status | Context Passed |

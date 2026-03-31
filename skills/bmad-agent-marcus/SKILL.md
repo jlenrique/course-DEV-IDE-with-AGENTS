@@ -105,8 +105,11 @@ Greet the user by name with current settings, last session context summary, and 
 | MM | Execution mode management (tracked/default / ad-hoc) | Load `./references/mode-management.md` |
 | SP | Source material prompting (Notion / Box Drive) | Load `./references/source-prompting.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
+| SB | Gary slide storyboard — static review bundle + authorized snapshot (HIL, pre–Irene) | This subsection; `./scripts/generate-storyboard.py`; `./scripts/write-authorized-storyboard.py` |
 
 ### Gary slide storyboard (HIL, pre–Irene)
+
+**Ownership:** Storyboard **creation** (generate HTML/JSON, manifest-derived recap, conversational approval, persist `authorized-storyboard.json`) is **a Marcus skill only**. It is not a separate specialist skill and not owned by Gary or Irene: Gary supplies the dispatch payload; Irene consumes outputs **after** authorization when the runbook says so. Marcus runs this capability end-to-end for the operator.
 
 After Gary’s Gamma dispatch is packaged and **before** Irene Pass 2, Marcus may generate a **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order.
 
@@ -132,6 +135,8 @@ After Gary’s Gamma dispatch is packaged and **before** Irene Pass 2, Marcus ma
    - If `--output` already exists, the script **exits with error** and does not overwrite.
 
 Optional: `--strict` on `generate` exits non-zero when any slide has a **missing** local asset (storyboard files are still written).
+
+**Roadmap:** On-demand regen, slide + script after Irene, and linked non-slide assets are specified in `_bmad-output/implementation-artifacts/sb-1-evolving-lesson-storyboard-run-view.md` (Story **SB.1**, Epic **SB**, backlog).
 
 ### External Skills
 

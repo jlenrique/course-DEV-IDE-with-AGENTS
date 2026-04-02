@@ -71,8 +71,10 @@ def test_build_manifest_order_and_asset_status(tmp_path: Path) -> None:
     assert manifest["slides"][0]["asset_status"] == "present"
     assert manifest["slides"][1]["asset_status"] == "missing"
     assert manifest["slides"][2]["asset_status"] == "remote"
-    assert manifest["storyboard_version"] == 2
+    assert manifest["storyboard_version"] == 3
     assert manifest["storyboard_view"] == "slides_only"
+    assert manifest["related_assets"] == []
+    assert len(manifest["rows"]) == 3
     for s in manifest["slides"]:
         assert s["narration_status"] == "pending"
         assert s["narration_text"] == ""
@@ -94,6 +96,13 @@ def test_format_summary_counts_and_endpoints() -> None:
     assert "creative=2" in text
     assert "literal-text=1" in text
     assert "missing local assets" in text
+
+
+def test_format_summary_handles_no_valid_slide_ids() -> None:
+    mod = _load_generate_module()
+    manifest = {"slides": ["not-a-dict", 1, None]}
+    text = mod.format_summary(manifest)
+    assert "zero valid slide_id entries" in text
 
 
 def test_html_contains_missing_marker(tmp_path: Path) -> None:
@@ -167,6 +176,96 @@ segments:
     assert "Third slide only." in html
     summary = mod.format_summary(manifest)
     assert "Narration: 2/3 slide(s) have script text attached." in summary
+
+
+def test_load_related_assets_parses_and_validates(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    storyboard_dir = bundle / "storyboard"
+    storyboard_dir.mkdir(parents=True)
+    (bundle / "extras").mkdir(parents=True)
+    (bundle / "extras" / "a1.mp3").write_bytes(b"x")
+
+    related_json = bundle / "related.json"
+    related_json.write_text(
+        json.dumps(
+            {
+                "related_assets": [
+                    {
+                        "asset_type": "audio",
+                        "label": "Intro narration",
+                        "link": "extras/a1.mp3",
+                        "stage": "generated",
+                    },
+                    {
+                        "asset_type": "source",
+                        "label": "Reference doc",
+                        "link": "https://example.com/ref",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    rows = mod.load_related_assets(
+        related_json,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+    assert len(rows) == 2
+    assert rows[0]["asset_status"] == "present"
+    assert rows[0]["row_kind"] == "related_asset"
+    assert rows[1]["asset_status"] == "remote"
+
+    bad_json = bundle / "bad-related.json"
+    bad_json.write_text(json.dumps([{"asset_type": "video", "link": "x.mp4"}]), encoding="utf-8")
+    try:
+        mod.load_related_assets(bad_json, storyboard_dir=storyboard_dir, asset_base=bundle)
+        raise AssertionError("expected ValueError for missing label")
+    except ValueError as exc:
+        assert "label is required" in str(exc)
+
+
+def test_manifest_and_html_include_related_assets(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    (slides / "s1.png").write_bytes(b"x")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+
+    related_assets = [
+        {
+            "row_kind": "related_asset",
+            "asset_type": "video",
+            "label": "Lesson teaser",
+            "link": "https://example.com/video.mp4",
+            "source_ref": "src-video",
+            "asset_status": "remote",
+            "html_asset_ref": "https://example.com/video.mp4",
+        }
+    ]
+    manifest = mod.build_manifest(
+        _sample_payload(),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        related_assets=related_assets,
+    )
+    assert len(manifest["slides"]) == 3
+    assert len(manifest["rows"]) == 4
+    assert manifest["rows"][-1]["row_kind"] == "related_asset"
+    assert manifest["rows"][-1]["sequence"] == 4
+    assert manifest["related_assets"][0]["sequence"] == 4
+
+    html = mod.render_index_html(manifest)
+    assert "(related)" in html
+    assert "Lesson teaser" in html
+    summary = mod.format_summary(manifest)
+    assert "Related assets: 1 row(s) appended after slides." in summary
 
 
 def test_cli_generate_strict_fails_on_missing(tmp_path: Path) -> None:
@@ -288,6 +387,53 @@ def test_cli_generate_with_segment_manifest(tmp_path: Path) -> None:
     assert data["storyboard_view"] == "slides_with_script"
     html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
     assert "From CLI test." in html
+
+
+def test_cli_generate_with_related_assets(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    (slides / "s1.png").write_bytes(b"x")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
+
+    related_path = bundle / "related-assets.json"
+    related_path.write_text(
+        json.dumps(
+            [
+                {
+                    "asset_type": "interactive",
+                    "label": "Quiz prototype",
+                    "link": "https://example.com/quiz",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_GENERATE_SCRIPT),
+            "generate",
+            "--payload",
+            str(payload_path),
+            "--out-dir",
+            str(bundle),
+            "--related-assets",
+            str(related_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert proc.returncode == 0
+    data = json.loads((bundle / "storyboard" / "storyboard.json").read_text(encoding="utf-8"))
+    assert len(data["related_assets"]) == 1
+    assert data["related_assets"][0]["sequence"] == 4
+    assert data["rows"][-1]["label"] == "Quiz prototype"
+    html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
+    assert "Quiz prototype" in html
 
 
 def test_cli_summarize_subcommand(tmp_path: Path) -> None:

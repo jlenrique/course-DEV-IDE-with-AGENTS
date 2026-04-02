@@ -120,11 +120,12 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 1. **Generate** (from repo root, paths adjusted to the run bundle):
 
-   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--segment-manifest <manifest.yaml>] [--print-summary]`
+   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--segment-manifest <manifest.yaml>] [--related-assets <assets.json|yaml>] [--print-summary]`
 
-   - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html` (`storyboard_version` 2; `storyboard_view` is `slides_only` or `slides_with_script`).
+   - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html` (`storyboard_version` 3; `storyboard_view` is `slides_only` or `slides_with_script`).
    - Resolve local PNGs with `--asset-base` when `file_path` is relative to something other than the payload’s directory.
    - **`--segment-manifest`:** optional Pass 2 YAML; **PyYAML** required when used.
+   - **`--related-assets`:** optional JSON/YAML for non-slide run artifacts (video/audio/interactive/source links) appended after slide rows.
 
 2. **Review:** Open `storyboard/index.html` in a browser. No approval controls in the page (v1).
 
@@ -142,7 +143,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 Optional: `--strict` on `generate` exits non-zero when any slide has a **missing** local asset (storyboard files are still written).
 
-**Roadmap:** On-demand regen, slide + script after Irene, and linked non-slide assets are specified in `_bmad-output/implementation-artifacts/sb-1-evolving-lesson-storyboard-run-view.md` (Story **SB.1**, Epic **SB**, backlog).
+**Roadmap:** Follow-on expansion and governance wiring continue in `_bmad-output/implementation-artifacts/sb-1-evolving-lesson-storyboard-run-view.md` (Story **SB.1**, Epic **SB**).
 
 ### External Skills
 

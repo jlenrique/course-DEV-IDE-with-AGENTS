@@ -290,3 +290,83 @@ def test_cli_exit_code_and_output(tmp_path: Path) -> None:
     assert proc.returncode == 0
     data = json.loads(proc.stdout)
     assert data["status"] == "pass"
+
+
+def test_passes_with_source_file_ingestion_pattern_and_hyphen_heading(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    bundle.mkdir(parents=True)
+    pdf = (tmp_path / "APC C1-M1 Tejal 2026-03-29.pdf").resolve()
+    pdf.write_text("pdf", encoding="utf-8")
+
+    (bundle / "metadata.json").write_text(
+        json.dumps(
+            {
+                "provenance": [
+                    {
+                        "kind": "local_pdf",
+                        "ref": str(pdf),
+                        "note": "pypdf scanned=24/24",
+                        "fetched_at": "2026-04-03T00:00:00+00:00",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "extracted.md").write_text(
+        "\n".join(
+            [
+                "## SRC-PRIMARY-PDF-01 - sensory bridge (G0)",
+                "",
+                f"**Ingestion:** source file {pdf}; official source-wrangler path `wrangle_local_pdf`",
+                "",
+                "## Bridge confidence",
+                "",
+                "HIGH: pypdf extraction completed; focus narrowed to Part 1.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "ingestion-evidence.md").write_text(
+        "\n".join(
+            [
+                "# Ingestion Evidence",
+                "",
+                "| source_id | pathway_used | extraction_status | coverage_metric | confidence | bundle_location | provenance_summary | planning_readiness |",
+                "|---|---|---|---|---|---|---|---|",
+                f"| SRC-PRIMARY-PDF-01 | official | pass | focused | high | extracted.md#SRC-PRIMARY-PDF-01 | source file {pdf}; local_pdf; pypdf scanned=24/24 | ready |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_source_bundle_confidence(bundle)
+
+    assert result["status"] == "pass"
+    assert any(row["source_id"] == "SRC-PRIMARY-PDF-01" for row in result["checked_sources"])
+
+
+def test_wrapper_module_cli_exit_code_and_output(tmp_path: Path) -> None:
+    bundle, receipt = _write_bundle(tmp_path)
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.utilities.validate_source_bundle_confidence",
+            "--bundle-dir",
+            str(bundle),
+            "--receipt",
+            str(receipt),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(ROOT),
+    )
+
+    assert proc.returncode == 0
+    data = json.loads(proc.stdout)
+    assert data["status"] == "pass"

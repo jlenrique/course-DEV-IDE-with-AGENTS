@@ -12,7 +12,7 @@ This card was created during the ad-hoc trial era to provide a VS Code-safe sess
 ## Where to go instead
 
 - **Session launcher:** `docs/workflow/production-session-launcher.md`
-- **Prompt pack:** `docs/trial-run-prompts-to-irene-pass2-v4.md`
+- **Prompt pack:** `docs/workflow/trial-run-prompts-to-irene-pass2-v4.md`
 - **Operator card:** `docs/workflow/trial-run-v3-operator-card.md`
 - **VS Code tasks:** `.vscode/tasks.json` (APP: Session Readiness + Preflight)
 

@@ -162,6 +162,7 @@ Party Mode consensus + parallel GPT-5.4 architectural review identified signific
 - **Epic 6 trimmed**: Story 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist). Story 6.1 completed.
 - **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): **3 stories** — platform allocation (G.1), tool/doc synthesis (G.2), **APP session readiness & health monitoring** (G.3, 2026-03-30: SQLite/`state`/imports + report; composes with pre-flight-check). Epic G is now complete.
 - **2026-04-03:** `scripts.utilities.run_constants` loads frozen **`run-constants.yaml`** per bundle; wired into `app_session_readiness --bundle-dir` and `validate-source-bundle-confidence` when the file exists (contract v1.2).
+- **2026-04-03:** Prompt 3 hardening pass added `scripts.utilities.validate_source_bundle_confidence` as stable CLI wrapper, normalized validator parsing for heading/ingestion format variants, and centralized hyphenated skill loading in `scripts.utilities.skill_module_loader`.
 - **Epic 10**: Predictive optimization requires Epic 4 + Epic G telemetry. Story 10.1 is now complete.
 
 **Net: 11 epics → 9 epics, 46 stories → 40 stories** (historical rebaseline); **+Story 4A-6 → 41 stories** (2026-03-29); **+Story G.3 → 42 stories** (2026-03-30). Architecture updated with governance section.
@@ -178,6 +179,7 @@ See `_bmad-output/brainstorming/party-mode-composition-architecture.md` for full
 - **Four HIL gates:** Lesson plan → slides → script+manifest → final video.
 - **Quinn-R two-pass:** Pre-composition (asset quality) + post-composition (final export).
 - **Irene two-pass:** Pass 1 (lesson plan + slide brief before Gary); Pass 2 (narration script + segment manifest after Gary + HIL Gate 2).
+- **2026-04-03 anti-drift hardening:** Prompt 6B now requires literal-visual operator packet + readiness confirmation before Gary dispatch side effects; Storyboard A (post-Gary) and Storyboard B (post-Irene Pass 2) are explicit approval checkpoints before advancing to subsequent pipeline spend.
 - **Gary deck enhancement:** Deck mode (numCards by content type), theme/template preview (TP capability), gary_slide_output return field.
 - **Seven instructional use cases:** Narrated deck, dialogue, walkthrough, case study, assessment prompt, concept explainer, module bumper — all one pipeline.
 

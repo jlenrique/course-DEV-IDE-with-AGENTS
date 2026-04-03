@@ -49,9 +49,12 @@ Required evidence artifacts:
 - `preflight-results.json`
 - `operator-directives.md` (mandatory for tracked runs; confirms operator provided source-processing instructions or explicitly waived them)
 - `ingestion-evidence.md`
+- `literal-visual-operator-packet.md` (if literal-visual slides were present)
 - Fidelity receipts (G0-G4, as applicable to stages completed)
 - `gary-dispatch-validation-result.json` (if Gary dispatch occurred)
+- `authorized-storyboard.json` (if Gate 2 storyboard approval occurred)
 - Pass 2 handoff validator output (if Irene Pass 2 occurred)
+- post-Pass-2 storyboard evidence (if Storyboard B review occurred)
 - Stage receipts per prompt
 
 Additional evidence:
@@ -84,6 +87,7 @@ Create handoff with:
 - environment constraints discovered
 - execution mode + quality preset for each still-open run
 - operator directives summary (were directives provided? any special treatment still in effect for continuing runs?)
+- storyboard approvals summary (Gate 2 storyboard and post-Pass-2 storyboard, when applicable)
 
 ## 6. Workspace Hygiene Gate
 
@@ -91,11 +95,13 @@ Run:
 
 - `git status --short`
 - `git worktree list`
+- `python -m scripts.utilities.fidelity_walk`
 
 Pass criteria:
 
 - No accidental local code edits in production session context.
 - No unintended temporary worktrees left registered.
+- Fidelity walk report saved under `tests/` using the canonical scripted generator (not ad hoc text generation).
 
 If stale metadata appears, run:
 

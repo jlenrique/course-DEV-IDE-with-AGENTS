@@ -93,6 +93,11 @@ Operator rule:
   - `pre-dispatch-package-gary.md`
 - Go/no-go: no go until approved.
 
+### 6B. Prompt 6B: Literal-visual operator checkpoint
+- Confirm `literal-visual-operator-packet.md` exists and is complete for every literal-visual slide.
+- Confirm operator readiness state is explicit for all required cards.
+- Go/no-go: no go until all required literal-visual cards are operator-ready.
+
 ### 7. Prompt 7: Dispatch + Gate 2
 - Confirm outputs:
   - `gary-dispatch-result.json`
@@ -103,6 +108,10 @@ Operator rule:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
 - Save validator output:
   - `gary-dispatch-validation-result.json`
+- Confirm Storyboard A artifacts and approval:
+  - `storyboard/storyboard.json`
+  - `storyboard/index.html`
+  - `authorized-storyboard.json`
 - Go/no-go: no go if validator `status=fail` or G3 fail.
 - Then explicit Gate 2 approval.
 
@@ -114,6 +123,7 @@ Operator rule:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
 - Run G4.
 - Go/no-go: no go downstream if G4 critical findings.
+- Regenerate Storyboard B (slide + script context) and get explicit approval before downstream audio/script finalization.
 
 ---
 
@@ -135,6 +145,8 @@ Collect and keep:
 - `ingestion-evidence.md`
 - fidelity receipts (G0-G4)
 - `gary-dispatch-validation-result.json`
+- `literal-visual-operator-packet.md` (if literal-visual slides exist)
+- `authorized-storyboard.json`
 - Pass 2 handoff validator output
 - final stage receipts per prompt
 

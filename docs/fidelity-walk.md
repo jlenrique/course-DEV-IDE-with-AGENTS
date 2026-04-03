@@ -17,20 +17,31 @@ Documented redirects are valid. If a placeholder path explicitly declares itself
 
 ## Invoking the Fidelity Walk
 
-Paste the following prompt to Marcus:
+Canonical invocation is the scripted generator:
+
+```powershell
+python -m scripts.utilities.fidelity_walk
+```
+
+Optional explicit output path:
+
+```powershell
+python -m scripts.utilities.fidelity_walk --output tests/fidelity-walk-YYYYMMDD-HHMMSS.md
+```
+
+Operator rule:
+- Do not hand-compose or ad hoc generate Fidelity Walk reports.
+- Treat the scripted output as the source of truth for canonical gate asset names and anti-drift checks.
+- Exit code `0` means `READY`; exit code `1` means remediation is required.
+
+If Marcus is driving the session conversationally, use a prompt that delegates to the scripted generator rather than freehand report writing:
 
 ```
 Run a Fidelity Walk.
 
-Step through the full happy-path orchestration from source intake to Descript package
-aggregation, one gate at a time (G0 → G6). At each step, identify every script, skill,
-resource, and fidelity contract that would be invoked and confirm whether each is present,
-valid, and consistent with its declared inputs/outputs. Surface any gaps, mismatches, or
-remediation needs. Produce a sequenced report — one section per gate — with a final
-summary verdict.
-
-Save the report as a timestamped Markdown file:
-  tests/fidelity-walk-YYYYMMDD-HHMMSS.md
+Invoke `python -m scripts.utilities.fidelity_walk` from the repo root.
+Return the generated report path, overall verdict, critical finding count,
+and any remediation items. Do not substitute guessed gate asset names.
 ```
 
 ---
@@ -67,11 +78,19 @@ Final section must be:
 **Remediation items:** <bulleted list or "None">
 ```
 
+The scripted report also includes a cross-cutting checks section for orchestration,
+sidecars, redirect placeholders, and the contract validator.
+
+Required anti-drift checks in the walk report:
+- Verify Prompt 6B checkpoint exists and blocks Prompt 7 when required literal-visual cards are not operator-ready.
+- Verify Storyboard A checkpoint is required after Gary dispatch and before Gate 2 approval.
+- Verify Storyboard B checkpoint is required after Irene Pass 2 and before downstream audio/script finalization.
+
 ---
 
 ## Output Location
 
-All Fidelity Walk reports are saved to `tests/` with the naming convention:
+By default the generator saves Fidelity Walk reports to `tests/` with the naming convention:
 
 ```
 fidelity-walk-YYYYMMDD-HHMMSS.md

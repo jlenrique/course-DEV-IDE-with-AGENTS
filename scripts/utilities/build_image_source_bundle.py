@@ -21,51 +21,18 @@ Usage (repo root)::
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import sys
-import types
 from pathlib import Path
+
+from scripts.utilities.skill_module_loader import (
+    load_sensory_bridge_utils,
+    load_source_wrangler_operations,
+)
 
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
-
-
-def _load_sensory_bridge_utils(repo: Path):
-    """Register stub packages and load bridge_utils + png_to_agent (per sensory tests conftest)."""
-    scripts = repo / "skills" / "sensory-bridges" / "scripts"
-    if str(repo) not in sys.path:
-        sys.path.insert(0, str(repo))
-
-    def _load_module(name: str, filename: str):
-        if name in sys.modules:
-            return sys.modules[name]
-        spec = importlib.util.spec_from_file_location(name, scripts / filename)
-        assert spec and spec.loader
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[name] = mod
-        spec.loader.exec_module(mod)
-        return mod
-
-    sys.modules["skills"] = types.ModuleType("skills")
-    sys.modules["skills.sensory_bridges"] = types.ModuleType("skills.sensory_bridges")
-    sys.modules["skills.sensory_bridges.scripts"] = types.ModuleType("skills.sensory_bridges.scripts")
-    bridge_utils = _load_module("skills.sensory_bridges.scripts.bridge_utils", "bridge_utils.py")
-    sys.modules["skills.sensory_bridges.scripts.bridge_utils"] = bridge_utils
-    png_mod = _load_module("skills.sensory_bridges.scripts.png_to_agent", "png_to_agent.py")
-    sys.modules["skills.sensory_bridges.scripts.png_to_agent"] = png_mod
-    return bridge_utils
-
-
-def _load_source_wrangler(repo: Path):
-    path = repo / "skills" / "source-wrangler" / "scripts" / "source_wrangler_operations.py"
-    spec = importlib.util.spec_from_file_location("source_wrangler_operations", path)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules["source_wrangler_operations"] = mod
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def main() -> int:
@@ -95,7 +62,7 @@ def main() -> int:
     kw = json.loads(payload_path.read_text(encoding="utf-8"))
     purpose = kw.pop("purpose", "")
 
-    bu = _load_sensory_bridge_utils(repo)
+    bu = load_sensory_bridge_utils(repo)
     result = bu.perceive(
         str(img),
         modality="image",
@@ -111,7 +78,7 @@ def main() -> int:
         print("validate_response errors:", errs, file=sys.stderr)
         return 2
 
-    sw = _load_source_wrangler(repo)
+    sw = load_source_wrangler_operations(repo)
     sections = [
         ("Extracted text (roadmap transcription)", result["extracted_text"]),
         ("Layout and structure", result["layout_description"]),

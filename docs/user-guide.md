@@ -284,9 +284,11 @@ The **model prompts** for each step (what to type to Marcus) are in the next sub
 | 2 (opt.) | Optional source pull | Source wrangler → Notion client | ☐ Bundle usable for Irene | `source-bundles/APP-RUN-C1M3L2-HTN-20260330/extracted.md` |
 | 3 | Kick off Irene Pass 1; review outputs | Irene Pass 1: `bmad-agent-content-creator` | **☐ PHASE 1 REVIEW:** `lesson-plan.md` + `slide-brief.md` — LOs, order, **fidelity per slide** | `…/C1-M3-L2-ambulatory-bp/lesson-plan.md`, `slide-brief.md` |
 | 4 | **HIL Gate 1** — approve or revise pedagogy | Human checkpoint; no API spend for slides yet | ☐ Gate 1 sign-off | — |
-| 5 | Supply literal-visual assets; delegate Gary | `validate_image_url` for hosted refs or tracked-mode preintegration publish/substitution; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ Hosted URLs validated or tracked-mode staging receipt clean ☐ Gary unblocked only after literal-visual inputs are dispatch-ready | `gamma-export/` (exports + `gary_slide_output` metadata; optional `literal_visual_publish`) |
+| 5 | Supply literal-visual assets; build operator packet | Marcus compiles literal-visual list + per-slide build instructions from Irene cards and diagram mapping, then blocks dispatch until all required cards are operator-ready | ☐ `literal-visual-operator-packet.md` reviewed ☐ Operator confirms each required PNG is created and downloaded | `literal-visual-operator-packet.md`, `gary-diagram-cards.json` |
+| 5B | Pre-dispatch confirmation + Gary run | `validate_image_url` for hosted refs or tracked-mode preintegration publish/substitution; explicit pre-dispatch confirmation; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ Hosted URLs validated or tracked-mode staging receipt clean ☐ Explicit confirmation captured before publish/dispatch side effects | `gamma-export/` (exports + `gary_slide_output` metadata; optional `literal_visual_publish`) |
 | 6 | **HIL Gate 2** — approve deck | PDF for human review per Gary SKILL; PNG for pipeline | ☐ Visuals on-brand ☐ Literal slides match supplied art ☐ Order matches lesson | Slide PNGs under `gamma-export/` (representative) |
 | 7 | Irene Pass 2 after Gate 2 | Irene sees **`gary_slide_output`** and narrates from approved local slide PNGs; any `literal_visual_publish` receipt is provenance only | **☐ PHASE 2 REVIEW:** `narration-script.md` + `segment-manifest.yaml` — copy matches **approved** slides | Same lesson folder |
+| 7B | Storyboard review with script context | Marcus regenerates storyboard using `gary-dispatch-result.json` + `segment-manifest.yaml` before audio finalization | ☐ Storyboard row order and script alignment approved explicitly | `storyboard/storyboard.json`, `storyboard/index.html`, `authorized-storyboard.json` |
 | 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before EL + Kling spend | ☐ Gate 3 sign-off | — |
 | 9 | Confirm fidelity + quality runs (or ask Marcus to run them) | `bmad-agent-fidelity-assessor`, `bmad-agent-quality-reviewer`, optional `quality-control` scripts, sensory bridges | ☐ No critical blockers (or you accept override) | Reports per governance; ad-hoc: transient observability |
 | 10 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
@@ -346,7 +348,7 @@ Gate 1: I’ve reviewed lesson-plan.md and slide-brief.md in staging. APPROVED �
 Marcus, here are the literal-visual assets for diagram_cards (literal slides only):
 - card_number 4: https://media.university.example/course-assets/htn-renal-diagram.png
 - card_number 7: course-content/staging/rebranded-assets/abpm-48h-grid.png
-If the run is tracked/default, stage any local preintegration PNGs to the managed Git-host destination before Gary dispatch; if the run is ad-hoc, stop and ask me for HTTPS-hosted URLs instead. Then build diagram_cards for Gary’s envelope and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download and include literal_visual_publish if staging occurred.
+First, produce literal-visual-operator-packet.md with per-slide source context, Irene constraints, and expected preintegration_png_path values, then wait for my explicit confirmation that required local PNGs are ready. After confirmation: if the run is tracked/default, stage any local preintegration PNGs to the managed Git-host destination before Gary dispatch; if the run is ad-hoc, stop and ask me for HTTPS-hosted URLs instead. Then build diagram_cards for Gary’s envelope and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download and include literal_visual_publish if staging occurred.
 ```
 
 **Step 6 — HIL Gate 2 (deck review)**
@@ -368,6 +370,12 @@ Marcus, delegate Irene Pass 2 using the approved gary_slide_output. If Gary retu
 Gate 3: I’ve reviewed narration-script.md and segment-manifest.yaml together. APPROVED — proceed to Vera, Quinn-R, then ElevenLabs and Kling per the locked manifest.
 ```
 *Or:* `Gate 3: REVISION — [segment ids and edits]. Update both files before audio generation.`
+
+**Step 8A — Storyboard review before audio finalization**
+
+```
+Marcus, regenerate storyboard using gary-dispatch-result.json plus segment-manifest.yaml and present the manifest-derived summary. I will approve slide+script alignment here before ElevenLabs generation.
+```
 
 **Step 9 — Fidelity + quality (after Gate 3)**
 

@@ -108,6 +108,13 @@ Stop and wait for approval.
 
 **This step is mandatory.** Ingestion (Prompt 3) cannot proceed without either explicit directives or an explicit "no special directives" acknowledgment from the operator.
 
+Poll timing policy (hard requirement):
+- Start a poll timer when Prompt 2A is issued.
+- Enforce a hard 3-minute reply hold from poll start before any submission can be accepted.
+- Auto-close the poll exactly 15 minutes after poll start if a complete submission is not received.
+- Submissions before the 3-minute mark are invalid and must be re-polled.
+- If the poll auto-closes, keep ingestion blocked and require a new Prompt 2A poll.
+
 Marcus, record the operator's source-processing directives for RUN_ID [RUN_ID].
 
 The operator will provide directives in three categories. For each, record exactly what is stated:
@@ -131,6 +138,10 @@ Required write:
 - `[BUNDLE_PATH]/operator-directives.md` with:
   - run_id
   - timestamp
+  - poll_started_utc
+  - reply_eligible_utc (poll_started_utc + 3 minutes)
+  - poll_close_utc (poll_started_utc + 15 minutes)
+  - poll_status (open | closed-timeout | submitted)
   - operator (from session)
   - focus_directives (list)
   - exclusion_directives (list)
@@ -184,7 +195,7 @@ Confidence handling rule:
 - A `high` confidence note with limited caveats is cautionary, not blocking.
 
 Confidence consistency validator:
-- Run `py -3.13 skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --bundle-dir [BUNDLE_PATH]` after writing bundle artifacts.
+- Run `py -3.13 -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH]` after writing bundle artifacts.
 - If the validator fails, stop and correct the confidence drift before continuing.
 
 Fallback (detailed):
@@ -227,7 +238,7 @@ Gate interpretation rules:
 - Do not downgrade a source from `high` to `medium/low` unless the gate records explicit evidence.
 - A `high` confidence source with non-blocking caveats can still pass planning usability and fidelity usability.
 - Vera G0 must respect operator exclusion directives: content excluded by directive is not an omission.
-- If a receipt is written, re-run `py -3.13 skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --bundle-dir [BUNDLE_PATH] --receipt [BUNDLE_PATH]/ingestion-quality-gate-receipt.md` before finalizing.
+- If a receipt is written, re-run `py -3.13 -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH] --receipt [BUNDLE_PATH]/ingestion-quality-gate-receipt.md` before finalizing.
 
 Fallback (detailed):
 - If any dimension fails or G0 fails:
@@ -351,6 +362,41 @@ Do not dispatch to Gary in this step.
 
 ---
 
+## 6B) Literal-Visual Operator Build + Confirmation (Mandatory Before Dispatch)
+
+Marcus, before Prompt 7, run a mandatory literal-visual operator checkpoint for RUN_ID [RUN_ID].
+
+Inputs for this step:
+- Irene Pass 1: `[BUNDLE_PATH]/irene-pass1.md`
+- Pre-dispatch package: `[BUNDLE_PATH]/pre-dispatch-package-gary.md`
+- Diagram cards: `[BUNDLE_PATH]/gary-diagram-cards.json`
+- Source bundle: `[BUNDLE_PATH]/extracted.md`
+
+Required behavior:
+- Produce a user-facing list of all slides flagged `literal-visual`.
+- For each listed slide, provide an operator build packet with:
+  - slide_number
+  - graphic_id (from Irene literal-visual spec card)
+  - source anchors and extracted context needed to recreate the visual faithfully
+  - Irene constraints (labels/claims to preserve, prohibited embellishments, acceptance checks)
+  - expected local preintegration path (`preintegration_png_path`) from diagram cards
+- Ask the operator to confirm each asset is created in Gamma and downloaded locally as PNG.
+
+Required write:
+- `[BUNDLE_PATH]/literal-visual-operator-packet.md` containing the full per-slide packet and checklist.
+
+Gate rule:
+- Prompt 7 is blocked until all required literal-visual cards are marked operator-ready.
+- If any required card is missing local PNG evidence, return blockers and stop.
+
+Fallback (detailed):
+- If packet fields are incomplete for any slide, regenerate only missing rows and revalidate packet completeness.
+- If operator marks any card as not-ready, keep dispatch blocked and return only unresolved card numbers + required next action.
+
+Return one compact receipt with: stage, status, artifacts_written, validator_results, gate_decision, next_action.
+
+---
+
 ## 7) Dispatch + Export + Sort Verification (Single Operation)
 
 Marcus, dispatch Gary for RUN_ID [RUN_ID] only if all checks are true:
@@ -363,6 +409,7 @@ Marcus, dispatch Gary for RUN_ID [RUN_ID] only if all checks are true:
 
 Dispatch requirements:
 - execute mixed-fidelity generation
+- before publish/dispatch side effects, return a short pre-dispatch report listing literal-visual cards, local PNG paths, and target `site_repo_url`, then require explicit operator confirmation to proceed
 - if local preintegration literal-visual assets are present, supply `site_repo_url` and require `literal_visual_publish.preintegration_ready=true` before Gate 2 review
 - request exports and download
 - non-null file_path for every output row
@@ -386,6 +433,11 @@ If validator `status: fail`:
 
 Required write:
 - `[BUNDLE_PATH]/gary-dispatch-validation-result.json`
+
+Required HIL review (Storyboard A):
+- Generate storyboard from `[BUNDLE_PATH]/gary-dispatch-result.json`.
+- Present manifest-derived summary and obtain explicit Gate 2 approval.
+- Persist `[BUNDLE_PATH]/authorized-storyboard.json` (fail closed on overwrite).
 
 Then run explicit HIL Gate 2 (user approval on Gary slides).
 
@@ -492,6 +544,13 @@ Run internal Vera G4 after Pass 2.
 - If G4 critical: stop and remediate.
 - If G4 non-critical (including G4-07 high-severity): report and continue with explicit acknowledgment.
 - If G4-07 fails, check `narration-grounding-profiles.yaml` alignment before re-delegating Irene — the failure may be a config issue, not a writing issue.
+
+Required HIL review (Storyboard B, before audio/script finalization):
+- Regenerate storyboard with script context using:
+  - Gary payload: `[BUNDLE_PATH]/gary-dispatch-result.json`
+  - Segment manifest: `[BUNDLE_PATH]/segment-manifest.yaml`
+- Present manifest-derived summary for slide+script alignment review.
+- Require explicit operator approval before downstream audio/script finalization (for example ElevenLabs generation).
 
 Fallback (detailed):
 - If handoff validator fails:

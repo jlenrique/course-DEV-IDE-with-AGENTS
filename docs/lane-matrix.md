@@ -20,6 +20,7 @@ Rules:
 | Quality standards | Quinn-R | Brand consistency, accessibility, instructional soundness, learner-effect intent fidelity, audio/composition quality | Vera, producing specialists |
 | Content accuracy (flag only) | Quinn-R | Detect potential medical accuracy concerns and escalate to human review; never adjudicate clinical correctness | All agents (adjudication) |
 | Platform deployment | Active platform specialist for the run* | Canvas/CourseArc/LMS execution details, platform-specific formatting and verification | Marcus, Irene, Vera, Quinn-R |
+| Literal-visual operator checkpoint governance | Marcus | Prompt 6B packet completeness, operator-ready confirmation, pre-dispatch confirmation before Gary side effects | Gary, Irene, Quinn-R |
 
 *Per-run owner selection rule: owner is the specialist explicitly assigned by Marcus for that deployment stage (for example Canvas specialist or CourseArc specialist).
 

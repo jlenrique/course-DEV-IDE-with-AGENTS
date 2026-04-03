@@ -32,9 +32,11 @@ from scripts.utilities.run_constants import (  # noqa: E402
 
 
 CONFIDENCE_ORDER = {"low": 0, "medium": 1, "high": 2}
-SENSORY_HEADING_RE = re.compile(r"^##\s+(.+?)\s+—\s+sensory bridge(?:\s+\(G0\))?\s*$")
+SENSORY_HEADING_RE = re.compile(r"^##\s+(.+?)\s+[—-]\s+sensory bridge(?:\s+\(G0\))?\s*$")
 BRIDGE_CONFIDENCE_RE = re.compile(r"^(HIGH|MEDIUM|LOW):\s*(.*)$")
 SOURCE_FILE_RE = re.compile(r"source file\s+([^;]+)", re.IGNORECASE)
+INGESTION_ON_PATH_RE = re.compile(r"\bon `([^`]+)`")
+INGESTION_SOURCE_FILE_RE = re.compile(r"source file\s+([^;]+)", re.IGNORECASE)
 PERCEPTION_PATH_RE = re.compile(r"perception\s+(raw/[^;]+\.json)", re.IGNORECASE)
 DOWNGRADE_RE = re.compile(r"explicit\s+downgrade\s+evidence\s*:\s*(.+)", re.IGNORECASE)
 
@@ -87,9 +89,13 @@ def _parse_extracted_bridge_confidences(text: str) -> list[dict[str, str]]:
             continue
 
         if line.startswith("**Ingestion:**"):
-            path_match = re.search(r"on `([^`]+)`", line)
+            path_match = INGESTION_ON_PATH_RE.search(line)
             if path_match:
-                current["artifact_ref"] = path_match.group(1)
+                current["artifact_ref"] = path_match.group(1).strip()
+            else:
+                source_match = INGESTION_SOURCE_FILE_RE.search(line)
+                if source_match:
+                    current["artifact_ref"] = source_match.group(1).strip()
             continue
 
         if line.strip() == "## Bridge confidence":
@@ -196,7 +202,6 @@ def validate_source_bundle_confidence(
         note = str(provenance.get("note", ""))
         perception_match = PERCEPTION_PATH_RE.search(note)
         if perception_match:
-            perception_path = bundle_dir / perception_match.group(1).replace("/", str(Path("/")).strip("\\/"))
             perception_path = bundle_dir / Path(perception_match.group(1))
 
         official_confidence = None

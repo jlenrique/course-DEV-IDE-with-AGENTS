@@ -10,6 +10,7 @@ Scope:
 - gary-slide-content.json
 - gary-fidelity-slides.json
 - gary-diagram-cards.json
+- literal-visual-operator-packet.md
 - gary-theme-resolution.json
 - gary-outbound-envelope.yaml
 
@@ -52,6 +53,10 @@ Confidence inheritance rules:
 - If `extracted.md` includes a source-level confidence statement from an official bridge or Source Wrangler pathway, downstream artifacts must inherit that level unless a later reviewer records an explicit downgrade with evidence.
 - A `high` confidence source may still carry non-blocking caution text (for example, minor wording variance on smallest labels). That caution does not by itself force `planning_readiness` below `ready`.
 - Only `medium` or `low` confidence on planning-critical content, or an explicit evidenced downgrade, triggers conditional/blocked handling and spot-check escalation.
+
+Validator parsing compatibility notes:
+- Source extraction headings are accepted as either `## <source_id> — sensory bridge (G0)` or `## <source_id> - sensory bridge (G0)`.
+- Ingestion lines may use either `on \`<absolute-or-relative-path>\`` or `source file <path>; ...` formats.
 
 Minimum footer block:
 - preflight_reference: path to preflight-results.json
@@ -243,7 +248,29 @@ These files are consumed by Irene Pass 2 during generation and by Vera during
 G4 evaluation. Changes to profile defaults may cause G4-07 failures — check
 config alignment before attributing failures to narration writing quality.
 
-## 10) Validation Policy
+## 10) literal-visual-operator-packet.md
+
+Purpose: deterministic operator checkpoint artifact that binds Irene literal-visual
+requirements to user preintegration build actions before Gary dispatch.
+
+Required fields per literal-visual slide row:
+- slide_number
+- graphic_id
+- source_anchors
+- extracted_context_summary
+- labels_or_claims_to_preserve
+- prohibited_embellishments
+- acceptance_checks
+- preintegration_png_path
+- operator_ready (true | false)
+
+Rules:
+- Prompt 7 dispatch is blocked until every `required=true` literal-visual card is
+  `operator_ready=true`.
+- Packet content must be derived from Irene Pass 1 literal-visual cards and
+  `gary-diagram-cards.json` only; do not invent new pedagogical requirements.
+
+## 11) Validation Policy
 
 Before Gary dispatch:
 - required files must exist:
@@ -251,6 +278,7 @@ Before Gary dispatch:
   - gary-slide-content.json
   - gary-fidelity-slides.json
   - gary-diagram-cards.json
+  - literal-visual-operator-packet.md (required when any literal-visual slide exists)
   - gary-theme-resolution.json
   - gary-outbound-envelope.yaml
 - all files must satisfy the field rules in this contract.

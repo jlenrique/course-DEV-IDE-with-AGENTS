@@ -7,7 +7,7 @@ Defines the contract between Marcus (sender) and the Voice Director (receiver).
 ```yaml
 schema_version: "1.0"
 production_run_id: "C1-M1-L1-RUN-001"
-content_type: "narrated-lesson"
+content_type: "narrated-deck-video-export"
 module_lesson: "C1 > M1 > L1"
 segment_manifest: "course-content/staging/C1-M1-L1/manifest.yaml"
 script_path: "course-content/staging/C1-M1-L1/narration-script.md"

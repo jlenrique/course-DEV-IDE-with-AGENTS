@@ -162,10 +162,9 @@ workflow_templates:
         specialist: "human"
         description: "User review and approval"
 
-  narrated-slides:
-    label: "Narrated Presentation"
-    aliases:
-      - "narrated-presentation"
+  narrated-deck-video-export:
+    label: "Narrated Deck Video Export"
+    aliases: []
     stages:
       - stage: "source-wrangling"
         specialist: "source-wrangler"
@@ -227,14 +226,16 @@ workflow_templates:
       - stage: "composition-guide"
         specialist: "compositor"
         description: "Generate Descript assembly guide and sync approved stills into the bundle"
+      - stage: "post-composition-validation"
+        specialist: "quality-reviewer"
+        description: "Validate the exported MP4 and captions after manual assembly"
       - stage: "gate-4"
         specialist: "human"
         description: "User reviews the assembled narrated presentation package"
 
-  narrated-lesson:
-    label: "Narrated Presentation With Video"
-    aliases:
-      - "narrated-presentation-with-video"
+  narrated-lesson-with-video-or-animation:
+    label: "Narrated Lesson With Video Or Animation"
+    aliases: []
     stages:
       - stage: "source-wrangling"
         specialist: "source-wrangler"

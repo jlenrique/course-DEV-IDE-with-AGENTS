@@ -3,11 +3,11 @@
 > Scope note: this file tracks APP project development state only.
 > For production content operations, use docs/workflow/production-session-launcher.md.
 
-## Current Dev State (as of 2026-04-03)
+## Current Dev State (as of 2026-04-03, harmonization pass)
 
 - Active branch: **master** (clean, synced with origin)
 - Working tree: clean — all prior branches merged
-- Latest completed work: workflow template registry infrastructure (2026-04-02) + happy-path simulation v2 (2026-04-03)
+- Latest completed work: workflow template registry harmonization + happy-path simulation v3 (2026-04-03)
 - All BMAD epics: **done** (11 epics, 47 stories, all complete)
 
 ## No Immediate Development Actions Required
@@ -16,8 +16,8 @@ The APP project is complete. Master is production-ready.
 
 To start a **production content run** (not APP development), use:
 - docs/workflow/production-session-launcher.md
-- Tell Marcus: "Let's build a narrated lesson for [course/module/lesson]"
-- Marcus will call `generate-production-plan.py narrated-lesson` and scaffold the 23-stage plan
+- Tell Marcus: "Let's build a narrated slide presentation for video export for [course/module/lesson]"
+- Marcus will call `generate-production-plan.py narrated-deck-video-export` and scaffold the workflow plan
 
 ## For New APP Development Work
 
@@ -33,9 +33,9 @@ Reference: `_bmad-output/implementation-artifacts/sprint-status.yaml` for all ep
 ## Key Infrastructure Added 2026-04-02 → 2026-04-03
 
 - `skills/bmad-agent-marcus/references/workflow-templates.yaml` — YAML registry with 12 workflow templates
-- `narrated-lesson` (23 stages) + `narrated-slides` (19 stages) as first-class template IDs with aliases
+- `narrated-lesson-with-video-or-animation` (23 stages) + `narrated-deck-video-export` (22 stages) as harmonized canonical template IDs
 - `generate-production-plan.py` — now registry-backed (reads YAML, not embedded dict)
-- `tests/Happy Path Simulation Display Screens 2026-04-03.md` — v2 simulation validating all 23 stages with party-mode team review
+- `tests/Happy Path Simulation Display Screens 2026-04-03-harmonization.md` — v3 simulation validating canonical template selection and full stage execution
 
 ## Worktree Hygiene
 

@@ -1,7 +1,7 @@
 # Admin Guide — System Configuration and Operations
 
 **Audience:** System administrators and the project owner responsible for environment setup, tool connectivity, and operational health.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry added 2026-04-02; happy-path simulation v2 completed 2026-04-03)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry harmonization pass completed 2026-04-03)
 
 ---
 
@@ -98,7 +98,7 @@ node scripts/heartbeat_check.mjs
 │   ├── manage_mode.py           ← CLI: read/set default vs ad-hoc mode → mode_state.json
 │   └── manage_baton.py          ← CLI: init/update/close run baton JSON files
 ├── skills/bmad-agent-marcus/references/
-│   └── workflow-templates.yaml  ← Canonical workflow template registry for planner ids and aliases
+│   └── workflow-templates.yaml  ← Canonical workflow template registry for planner IDs (template 1 is alias-free by policy)
 └── _bmad/memory/           ← Agent memory sidecars
 ```
 

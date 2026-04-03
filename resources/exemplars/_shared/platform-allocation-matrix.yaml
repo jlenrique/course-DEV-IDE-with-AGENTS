@@ -15,7 +15,7 @@ rules:
     - instructor_facilitation
 
   preferred_coursearc_content_types:
-    - narrated-lesson
+    - narrated-lesson-with-video-or-animation
     - interactive-module
     - media-rich-lesson
     - orientation

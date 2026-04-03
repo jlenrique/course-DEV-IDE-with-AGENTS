@@ -3,9 +3,7 @@
 Purpose: define lightweight, canonical structures for prompt-pack artifacts used in Marcus -> Irene Pass 2 trial runs.
 
 Scope:
-- run-constants.yaml (optional file; when present, validated by tooling — see §1B)
 - Source authority map rows
-- operator-directives.md
 - ingestion-evidence.md
 - irene-packet.md
 - g2-slide-brief.md
@@ -36,47 +34,6 @@ Required fields:
 Rule:
 - Vera is usually an indirect consumer (via source bundle), not a direct consumer of raw source files.
 
-## 1A) operator-directives.md
-
-Purpose: record the operator's source-processing directives before ingestion begins.
-
-This artifact is **mandatory**. Ingestion (Prompt 3) cannot proceed without either explicit directives or an explicit "no special directives" acknowledgment.
-
-Required sections:
-- run_id
-- timestamp
-- operator
-- focus_directives: list of emphasis instructions (sections, topics, content to prioritize)
-- exclusion_directives: list of content to ignore or deprioritize
-- special_treatment_directives: list of content requiring non-default handling (fidelity overrides, routing overrides)
-
-If the operator has no directives, the file must contain: `"No operator directives — process all source content at default authority levels."`
-
-Governance rules:
-- **Exclusion directives are scope-binding provenance records.** Vera G0 must not flag excluded content as an omission when the exclusion is recorded in this artifact.
-- **Focus directives are emphasis signals.** They prioritize but do not exclude unmentioned content.
-- **Special treatment directives override default fidelity classification** for the specified content only (e.g., forcing a section to literal-visual that would otherwise be creative).
-- This artifact is a first-class input to Source Wrangler (ingestion), Irene (planning), and Vera (gate evaluation).
-- Downstream agents must reference `operator-directives.md` by path in their provenance chains.
-
-## 1B) run-constants.yaml
-
-Purpose: machine-readable, **frozen** per-run values aligned with the v4 prompt pack “Run Constants” block (`RUN_ID`, `lesson_slug`, `bundle_path`, primary source path, optional context assets, theme keys, execution mode, quality preset).
-
-Location: bundle root, filename **`run-constants.yaml`** (same directory as `metadata.json` / `extracted.md` once ingestion exists).
-
-Governance:
-
-- **bundle_path** must be repo-relative (forward slashes) and resolve to the directory that contains this file (the loader fails closed if the path does not match).
-- Downstream scripts and session readiness may load this file; agents should still treat it as authoritative when present and must not contradict it in chat.
-- Optional fields such as `schema_version`, `frozen_at_utc`, and `frozen_note` are allowed for operator audit.
-
-Tooling:
-
-- Load/validate: `python -m scripts.utilities.run_constants --bundle-dir <path> [--verify-paths] [--json]`
-- Session readiness (optional): append `--bundle-dir <path>` to `app_session_readiness` when a frozen bundle exists — adds check `bundle_run_constants`.
-- Source bundle confidence validator: if `run-constants.yaml` exists, validates it (CLI `--repo-root` only when the bundle is resolved against a non-default root, e.g. tests).
-
 ## 2) ingestion-evidence.md
 
 Use a markdown table with one row per ingested source.
@@ -90,7 +47,6 @@ Required columns:
 - bundle_location
 - provenance_summary
 - planning_readiness: ready | conditional | blocked
-- operator_directive_applied: yes | no (if yes, include directive reference from operator-directives.md)
 
 Confidence inheritance rules:
 - If `extracted.md` includes a source-level confidence statement from an official bridge or Source Wrangler pathway, downstream artifacts must inherit that level unless a later reviewer records an explicit downgrade with evidence.
@@ -299,4 +255,4 @@ Before Gary dispatch:
   - gary-outbound-envelope.yaml
 - all files must satisfy the field rules in this contract.
 
-Contract version: 1.2 (added run-constants.yaml §1B + tooling hooks; 1.1 operator-directives.md)
+Contract version: 1.0

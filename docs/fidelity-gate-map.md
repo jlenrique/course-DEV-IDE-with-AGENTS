@@ -20,6 +20,8 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 
 L1 fidelity contracts for each gate are defined in `state/config/fidelity-contracts/g{n}-*.yaml`.
 
+For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth.
+
 ---
 
 ## Fidelity Gates vs. HIL Gates

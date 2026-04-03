@@ -1,10 +1,11 @@
 gate: "G4"
-gate_name: "Narration Script"
+gate_name: "Narration Script + Segment Manifest"
 producing_agent: "irene"
 hil_gate: "Gate 3"
 source_of_truth:
   primary: "Lesson plan + actual post-integration downloaded slide PNGs from gary_slide_output.file_path (perceived via sensory bridge)"
   schema_ref: "skills/bmad-agent-content-creator/references/template-narration-script.md"
+  schema_ref_secondary: "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
 
 criteria:
   - id: "G4-01"

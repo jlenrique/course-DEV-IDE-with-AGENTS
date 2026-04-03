@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-02  # Epic SB done: SB.1 storyboard run-view implemented, tested, closed.
+last_updated: 2026-04-03  # Project closeout: workflow template registry added (registry-backed narrated-lesson + narrated-slides; 10 tests); happy-path simulation v2 completed and saved to tests/.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system

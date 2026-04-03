@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-03-29 | **Project Phase:** 4-Implementation (Epic 3: 8/11 stories done; Epic 2A fidelity stack complete; **Epic 4A** governance next on the roadmap)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; `narrated-lesson` workflow template registry live; happy-path fully validated)
 
 ---
 

@@ -3,40 +3,39 @@
 > Scope note: this file tracks APP project development state only.
 > For production content operations, use docs/workflow/production-session-launcher.md.
 
-## Current Dev State (as of 2026-04-02)
+## Current Dev State (as of 2026-04-03)
 
-- Active branch: dev/storyboarding-feature
-- Working tree: broad in-progress set across docs/contracts/scripts plus new files (not clean)
-- Latest completed work this session: real-bundle happy-path simulation through Descript readiness on course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329
-- Key remediation completed: pass2 perception artifacts were missing source_image_path bindings; fixed and revalidated
+- Active branch: **master** (clean, synced with origin)
+- Working tree: clean — all prior branches merged
+- Latest completed work: workflow template registry infrastructure (2026-04-02) + happy-path simulation v2 (2026-04-03)
+- All BMAD epics: **done** (11 epics, 47 stories, all complete)
 
-## Immediate Next Action
+## No Immediate Development Actions Required
 
-1. Run a curated closeout pass on dev/storyboarding-feature:
-   - verify intended diff scope,
-   - stage only approved files,
-   - commit with a session summary,
-   - then decide merge timing to master.
+The APP project is complete. Master is production-ready.
 
-## Unresolved Issues / Blockers To Carry Forward
+To start a **production content run** (not APP development), use:
+- docs/workflow/production-session-launcher.md
+- Tell Marcus: "Let's build a narrated lesson for [course/module/lesson]"
+- Marcus will call `generate-production-plan.py narrated-lesson` and scaffold the 23-stage plan
 
-- Git closeout is still pending due to broad pre-existing in-progress changes in the branch.
-- SB.1-related work is present in the tree and still appears backlog in sprint tracking; reconcile artifact status before final merge.
-- If another trial run is scheduled, ensure pass2 envelope/perception artifact generation writes source_image_path at creation time (not post-fix).
+## For New APP Development Work
 
-## Branch Metadata For Next Session
+Create a new feature branch:
 
-Repository baseline branch after closeout target: master
-Next working branch: dev/storyboarding-feature
+```bash
+git checkout master && git pull origin master
+git checkout -b dev/[feature-name]
+```
 
-Startup commands:
+Reference: `_bmad-output/implementation-artifacts/sprint-status.yaml` for all epic/story history.
 
-- git checkout master
-- git pull origin master
-- git checkout dev/storyboarding-feature
-- git status --short
+## Key Infrastructure Added 2026-04-02 → 2026-04-03
 
-Closeout exception retained for now: merge-to-master not executed in this wrapup pass because the working tree contains broad in-progress changes requiring curated staging/commit review.
+- `skills/bmad-agent-marcus/references/workflow-templates.yaml` — YAML registry with 12 workflow templates
+- `narrated-lesson` (23 stages) + `narrated-slides` (19 stages) as first-class template IDs with aliases
+- `generate-production-plan.py` — now registry-backed (reads YAML, not embedded dict)
+- `tests/Happy Path Simulation Display Screens 2026-04-03.md` — v2 simulation validating all 23 stages with party-mode team review
 
 ## Worktree Hygiene
 

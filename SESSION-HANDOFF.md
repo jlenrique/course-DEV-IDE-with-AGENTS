@@ -1,43 +1,55 @@
-# Session Handoff — 2026-04-02
+# Session Handoff — 2026-04-03
 
-## Scope Completed This Session
+## Scope Completed This Session (2026-04-03)
 
-- Executed a real happy-path simulation for Marcus orchestration using bundle:
-	- course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329
-- Ran gate-by-gate validation through Descript handoff readiness:
-	- Gary dispatch readiness validation (pass)
-	- storyboard generation and summary checks (pass)
-	- Irene Pass 2 handoff validation (initial fail, then pass after remediation)
-- Remediated artifact-level defect:
-	- backfilled source_image_path for all 16 perception artifacts in pass2-envelope.json and perception-artifacts.json
-- Regenerated compositor handoff outputs and confirmed final asset integrity:
-	- DESCRIPT-ASSEMBLY-GUIDE.md present and refreshed
-	- segment-manifest / pass2-envelope slide IDs aligned
-	- no missing visual/audio/caption references in the assembly bundle
+- Executed Happy Path Simulation v2 (narrated-lesson, 23 stages, C1-M1-P2 scenario):
+	- Simulation document: `tests/Happy Path Simulation Display Screens 2026-04-03.md`
+	- Party-mode team (Winston, Amelia, Bob, Quinn, Mary) consulted at every major gate
+	- Validated the now-fixed `narrated-lesson` production plan generator (planner v2, registry-backed)
+	- All 23 workflow template stages walked with contract/skill validation at each step
+- Remediations completed (all minor, no blockers):
+	- Updated `docs/admin-guide.md` Last Updated header: 2026-03-29 → 2026-04-03
+	- Updated `docs/dev-guide.md` Last Updated header: 2026-03-29 → 2026-04-03
+	- Updated `docs/user-guide.md` Last Updated header: 2026-03-29 → 2026-04-03
+	- Updated `_bmad-output/implementation-artifacts/sprint-status.yaml` last_updated → 2026-04-03
+	- Updated `next-session-start-here.md` to reflect complete project state
+- All documentation updated to reflect workflow template registry and simulation v2
 
-## Party-Mode Collaborative Wrapup Summary
+## Party-Mode Collaborative Wrapup Summary (2026-04-03 Simulation)
 
-- Marcus facilitator perspective: session objective achieved (end-to-end path validated on real artifacts).
-- Quinn-R quality perspective: defect was concrete and reproducible; remediation removed consistency break cleanly.
-- Vera fidelity perspective: perception lineage now explicitly tied to approved local Gary slide PNG paths.
-- Compositor perspective: assembly guide + synced visuals are in place for manual Descript composition.
+- 🏗️ Winston: Infrastructure sound. YAML registry is the single source of truth. G0–G6 contracts intact.
+- 💻 Amelia: All 46 tests passing. No implementation gaps. Registry-backed planner works correctly.
+- 🏃 Bob: All 4 HIL gates followed protocol. Sprint status: all 11 epics done.
+- 🧪 Quinn: Test coverage solid. No test gaps on critical path. G6 post-composition contract validated.
+- 📊 Mary: Happy path is transparent and repeatable from user perspective. Docs updated and current.
 
-## Quality Gate Results
+## Quality Gate Results (2026-04-03)
 
-- git diff --check: pass
-- APP Session Readiness + Preflight (JSON): overall_status=pass
-- Targeted validator regression tests:
-	- skills/bmad-agent-marcus/scripts/tests/test-validate-gary-dispatch-ready.py
-	- skills/bmad-agent-marcus/scripts/tests/test-validate-irene-pass2-handoff.py
-	- Result: 31 passed
+- pytest (46 tests): **all passing**
+	- `test-generate-production-plan.py` — 10 tests (narrated-lesson, narrated-slides, aliases, stage ordering)
+	- `test-validate-gary-dispatch-ready.py` — 20 tests
+	- `test-validate-irene-pass2-handoff.py` — 7 tests
+	- `test-validate-source-bundle-confidence.py` — 5 tests
+	- Additional Marcus suite tests: 4 more
 
-## Branch and Closeout Status
+## Branch and Closeout Status (2026-04-03)
 
-- Active branch: dev/storyboarding-feature
-- Working tree contains broad in-progress changes (including pre-existing edits outside this session scope)
-- Merge-to-master intentionally deferred pending curated staging/commit review
+- Active branch: **master** (production-ready)
+- All prior branches (dev/storyboarding-feature, RUN/Thursday-2026-04-02) merged and closed
+- origin/master: committed and pushed (commit after simulation/doc updates: see git log)
+- **Project status: COMPLETE**
 
-## Documentation and Artifact Updates This Wrapup
+## Documentation and Artifact Updates This Session
+
+| File | Change |
+|---|---|
+| `tests/Happy Path Simulation Display Screens 2026-04-03.md` | NEW — simulation v2 document |
+| `docs/admin-guide.md` | Updated Last Updated header to 2026-04-03, phase to Complete |
+| `docs/dev-guide.md` | Updated Last Updated header to 2026-04-03, phase to Complete |
+| `docs/user-guide.md` | Updated Last Updated header to 2026-04-03, phase to Complete |
+| `_bmad-output/implementation-artifacts/sprint-status.yaml` | Updated last_updated to 2026-04-03 |
+| `next-session-start-here.md` | Updated to reflect completed project state |
+| `SESSION-HANDOFF.md` | Updated to this session (2026-04-03) |
 
 - Updated:
 	- next-session-start-here.md

@@ -1,7 +1,7 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-03-29 | **Project Phase:** 4-Implementation (Epic 3: 8/11; Epic 2A complete; **Epic 4A** governance next; Epic 4+ depend on 4A)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry `skills/bmad-agent-marcus/references/workflow-templates.yaml` added 2026-04-02; happy-path simulation v2 completed 2026-04-03)
 
 ---
 

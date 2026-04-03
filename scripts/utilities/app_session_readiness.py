@@ -242,6 +242,46 @@ def _load_module_from_path(module_name: str, path: Path) -> None:
     spec.loader.exec_module(module)
 
 
+def _check_bundle_run_constants(root: Path, bundle_dir: Path | None) -> CheckResult:
+    """When --bundle-dir is set, require a valid run-constants.yaml if present."""
+    if bundle_dir is None:
+        return CheckResult(
+            name="bundle_run_constants",
+            status="skip",
+            detail="No bundle directory supplied (optional check)",
+            resolution="Pass --bundle-dir to validate frozen run-constants.yaml.",
+        )
+
+    bpath = Path(bundle_dir).resolve()
+    rc_file = bpath / "run-constants.yaml"
+    if not rc_file.is_file():
+        return CheckResult(
+            name="bundle_run_constants",
+            status="skip",
+            detail=f"No run-constants.yaml under {bpath.name} (optional)",
+            resolution="Add run-constants.yaml when freezing a tracked run.",
+        )
+
+    try:
+        from scripts.utilities.run_constants import RunConstantsError, load_run_constants
+
+        load_run_constants(bpath, root=root, verify_paths_exist=False)
+    except RunConstantsError as exc:
+        return CheckResult(
+            name="bundle_run_constants",
+            status="fail",
+            detail=str(exc),
+            resolution="Repair run-constants.yaml or correct --bundle-dir relative to repo root.",
+        )
+
+    return CheckResult(
+        name="bundle_run_constants",
+        status="pass",
+        detail="run-constants.yaml present and valid for this bundle path",
+        resolution="",
+    )
+
+
 def _check_import_sanity(root: Path) -> CheckResult:
     base = root / "skills" / "production-coordination" / "scripts"
     targets = {
@@ -382,6 +422,7 @@ def run_readiness(
     root: Path | None = None,
     *,
     with_preflight: bool = False,
+    bundle_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Run APP runtime readiness checks and return a structured report."""
     root = root or project_root()
@@ -392,6 +433,7 @@ def run_readiness(
         _check_state_directory(root, "state/runtime"),
         _check_mode_state(root),
         _check_import_sanity(root),
+        _check_bundle_run_constants(root, bundle_dir),
     ]
 
     if with_preflight:
@@ -421,6 +463,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Compose runtime readiness with existing tool pre-flight checks.",
     )
     parser.add_argument(
+        "--bundle-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Optional source bundle directory. When set and run-constants.yaml exists there, "
+            "validates frozen run constants against the repo root."
+        ),
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         help="Optional file path to write JSON report.",
@@ -437,7 +488,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    report = run_readiness(root=args.root, with_preflight=args.with_preflight)
+    report = run_readiness(
+        root=args.root,
+        with_preflight=args.with_preflight,
+        bundle_dir=args.bundle_dir,
+    )
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -96,6 +96,8 @@ Alternate (JSON log output):
 .venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
 ```
 
+When a tracked bundle already has **`run-constants.yaml`**, add `--bundle-dir <path-to-bundle>` so readiness also validates frozen run constants (`bundle_run_constants` check).
+
 VS Code shortcut: `Tasks: Run Task` -> `APP: Session Readiness + Preflight`
 
 Minimum checks:

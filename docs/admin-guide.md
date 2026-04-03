@@ -320,6 +320,9 @@ Three ways to invoke:
 # 3. Runtime + tool ecosystem (two-phase)
 .venv/Scripts/python -m scripts.utilities.app_session_readiness --with-preflight
 
+# 3b. Same, plus validate frozen run-constants.yaml under an active bundle (tracked runs)
+.venv/Scripts/python -m scripts.utilities.app_session_readiness --with-preflight --bundle-dir course-content/staging/tracked/source-bundles/<your-bundle>
+
 # 4. Tool pre-flight only (Python)
 .venv/Scripts/python -m skills.pre-flight-check.scripts.preflight_runner
 
@@ -339,8 +342,15 @@ node scripts/smoke_qualtrics.mjs
 - critical state paths (`state/config`, `state/runtime`) existence and writeability
 - `mode_state.json` readability when present
 - import sanity for production observability/reporting modules
+- optional **`bundle_run_constants`** when `--bundle-dir` is set and `run-constants.yaml` exists in that folder (validates YAML + `bundle_path` alignment to repo root)
 
 Use `--with-preflight` to compose runtime checks with the existing tool/API pre-flight sequence.
+
+**Frozen run constants CLI** (read-only, for agents or CI):
+
+```bash
+.venv/Scripts/python -m scripts.utilities.run_constants --bundle-dir <bundle-path> [--verify-paths] [--json]
+```
 
 Exit codes:
 

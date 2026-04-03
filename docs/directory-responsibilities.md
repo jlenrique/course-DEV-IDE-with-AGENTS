@@ -94,6 +94,10 @@ Per-agent persistent learning. Mode-aware write rules apply.
 | `patterns.md` | Learned workflow/parameter patterns | Default mode only (append) |
 | `chronology.md` | Session and production run history | Default mode only (append) |
 
+### `course-content/staging/` — Draft and bundle workspace
+
+Gitignored in full-tree workflows; agents write drafts and **source bundles** here. For **tracked** production runs, a bundle folder may include **`run-constants.yaml`** at its root: frozen `RUN_ID`, repo-relative `bundle_path`, absolute primary source path, theme keys, execution mode, and quality preset. That file is the machine-readable twin of the v4 prompt pack “Run Constants” block; validate with `scripts.utilities.run_constants` (see `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B).
+
 ## Resolution Rules
 
 When an agent needs brand, style, or parameter information:

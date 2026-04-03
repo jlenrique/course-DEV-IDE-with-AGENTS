@@ -161,6 +161,7 @@ Party Mode consensus + parallel GPT-5.4 architectural review identified signific
 - **Epic 5 trimmed**: Story 5.2 (Assembly Coordination) dropped — compositor skill delivers this. Story 5.3 (Style Orchestration) merged into governance. Story 5.4 edited — Panopto and Kling already done. Story 5.1 and 5.4 are now complete.
 - **Epic 6 trimmed**: Story 6.2 (Enhanced Canvas) merged into Story 3.6 (Canvas Specialist). Story 6.1 completed.
 - **Epics 7, 8, 9 collapsed** into Epic G (Governance Synthesis & Intelligence Optimization): **3 stories** — platform allocation (G.1), tool/doc synthesis (G.2), **APP session readiness & health monitoring** (G.3, 2026-03-30: SQLite/`state`/imports + report; composes with pre-flight-check). Epic G is now complete.
+- **2026-04-03:** `scripts.utilities.run_constants` loads frozen **`run-constants.yaml`** per bundle; wired into `app_session_readiness --bundle-dir` and `validate-source-bundle-confidence` when the file exists (contract v1.2).
 - **Epic 10**: Predictive optimization requires Epic 4 + Epic G telemetry. Story 10.1 is now complete.
 
 **Net: 11 epics → 9 epics, 46 stories → 40 stories** (historical rebaseline); **+Story 4A-6 → 41 stories** (2026-03-29); **+Story G.3 → 42 stories** (2026-03-30). Architecture updated with governance section.

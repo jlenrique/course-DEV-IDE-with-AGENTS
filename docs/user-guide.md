@@ -433,6 +433,8 @@ Confirm both settings before execution: execution mode [tracked/ad-hoc] and qual
 Run pre-flight for required tools and report pass/fail.
 ```
 
+**Run constants file (tracked / v4):** After you freeze the v4 “Run Constants” block, save them as **`run-constants.yaml`** in the bundle root (see `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B). Marcus and Python tooling read the same values from that file so `RUN_ID`, paths, and presets do not drift. Optional checks: `python -m scripts.utilities.run_constants --bundle-dir <bundle>` and session readiness with `--bundle-dir` (admin guide).
+
 **Prompt 2 — Source ingest guardrail (no ad-hoc scripts)**
 
 ```

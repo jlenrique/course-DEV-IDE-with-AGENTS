@@ -3,13 +3,14 @@
 Use this card during tracked/production runs to Irene Pass 2.
 
 Primary prompt pack:
-- `docs/trial-run-prompts-to-irene-pass2-v4.md`
+- `docs/workflow/trial-run-prompts-to-irene-pass2-v4.md`
 
 Contracts and validators:
 - `docs/workflow/trial-run-pass2-artifacts-contract.md`
 - `skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py`
 - `skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py`
-- `skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py`
+- `skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py` (loads `run-constants.yaml` when present)
+- `python -m scripts.utilities.run_constants --bundle-dir <bundle>` (optional path verification: `--verify-paths`)
 
 Session launcher:
 - `docs/workflow/production-session-launcher.md`
@@ -34,6 +35,7 @@ Set values in the prompt pack Run Constants block:
 Operator rule:
 - Do not change run constants mid-run.
 - Execution mode must be tracked/default for production runs.
+- Persist accepted constants as **`run-constants.yaml`** in the bundle root (contract §1B); use `app_session_readiness --bundle-dir ...` during shift open if you want an automated alignment check.
 
 ---
 

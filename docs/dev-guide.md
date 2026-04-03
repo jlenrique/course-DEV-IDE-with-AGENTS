@@ -242,6 +242,16 @@ Execution mode is a **gate on the state management layer**, not on agents. Agent
 
 Quality preset is applied separately by policy thresholds and validators; it does not redefine persistence routing.
 
+### Frozen run constants (`run-constants.yaml`)
+
+For **tracked** Irene Pass 2 bundles, operators may place **`run-constants.yaml`** at the bundle root (contract §1B). The loader **`scripts.utilities.run_constants`**:
+
+- Parses required fields (`run_id`, `lesson_slug`, `bundle_path`, `primary_source_file`, theme keys, `execution_mode`, `quality_preset`, optional asset list).
+- **Fails closed** if `bundle_path` (repo-relative) does not resolve to the directory containing the file.
+- Supports `--verify-paths` to require primary/context files on disk.
+
+**Integrations:** `app_session_readiness.run_readiness(..., bundle_dir=...)` adds check `bundle_run_constants`; `validate-source-bundle-confidence.py` rejects inconsistent constants when the YAML is present (`repo_root` parameter for tests). Unit tests: `tests/test_run_constants.py`.
+
 ---
 
 ## Configuration Cascade

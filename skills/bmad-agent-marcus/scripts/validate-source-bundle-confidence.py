@@ -15,8 +15,20 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.utilities.file_helpers import project_root  # noqa: E402
+from scripts.utilities.run_constants import (  # noqa: E402
+    RunConstantsError,
+    load_run_constants,
+    validate_run_id_for_bundle,
+)
 
 
 CONFIDENCE_ORDER = {"low": 0, "medium": 1, "high": 2}
@@ -126,6 +138,7 @@ def validate_source_bundle_confidence(
     bundle_dir: Path,
     *,
     receipt_path: Path | None = None,
+    repo_root: Path | None = None,
 ) -> dict[str, Any]:
     metadata = _load_json(bundle_dir / "metadata.json")
     extracted = (bundle_dir / "extracted.md").read_text(encoding="utf-8", errors="replace")
@@ -147,6 +160,15 @@ def validate_source_bundle_confidence(
     errors: list[str] = []
     warnings: list[str] = []
     checked_sources: list[dict[str, Any]] = []
+
+    if (bundle_dir / "run-constants.yaml").is_file():
+        root = repo_root if repo_root is not None else project_root()
+        try:
+            rc = load_run_constants(bundle_dir, root=root, verify_paths_exist=False)
+            for hint in validate_run_id_for_bundle(rc, bundle_dir):
+                warnings.append(f"run_constants: {hint}")
+        except RunConstantsError as exc:
+            errors.append(f"run_constants: {exc}")
 
     for row in evidence_rows:
         source_id = row.get("source_id", "")
@@ -271,10 +293,20 @@ def main() -> int:
         default=None,
         help="Optional Prompt 4 receipt markdown path for cross-checking gate interpretation",
     )
+    parser.add_argument(
+        "--repo-root",
+        type=Path,
+        default=None,
+        help="Repository root for run-constants.yaml bundle_path resolution (default: auto-discovered)",
+    )
     args = parser.parse_args()
 
     try:
-        result = validate_source_bundle_confidence(args.bundle_dir, receipt_path=args.receipt)
+        result = validate_source_bundle_confidence(
+            args.bundle_dir,
+            receipt_path=args.receipt,
+            repo_root=args.repo_root,
+        )
         print(json.dumps(result, indent=2))
         return 0 if result["status"] == "pass" else 1
     except Exception as exc:

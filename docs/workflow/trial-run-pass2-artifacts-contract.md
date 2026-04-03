@@ -3,6 +3,7 @@
 Purpose: define lightweight, canonical structures for prompt-pack artifacts used in Marcus -> Irene Pass 2 trial runs.
 
 Scope:
+- run-constants.yaml (optional file; when present, validated by tooling — see §1B)
 - Source authority map rows
 - operator-directives.md
 - ingestion-evidence.md
@@ -57,6 +58,24 @@ Governance rules:
 - **Special treatment directives override default fidelity classification** for the specified content only (e.g., forcing a section to literal-visual that would otherwise be creative).
 - This artifact is a first-class input to Source Wrangler (ingestion), Irene (planning), and Vera (gate evaluation).
 - Downstream agents must reference `operator-directives.md` by path in their provenance chains.
+
+## 1B) run-constants.yaml
+
+Purpose: machine-readable, **frozen** per-run values aligned with the v4 prompt pack “Run Constants” block (`RUN_ID`, `lesson_slug`, `bundle_path`, primary source path, optional context assets, theme keys, execution mode, quality preset).
+
+Location: bundle root, filename **`run-constants.yaml`** (same directory as `metadata.json` / `extracted.md` once ingestion exists).
+
+Governance:
+
+- **bundle_path** must be repo-relative (forward slashes) and resolve to the directory that contains this file (the loader fails closed if the path does not match).
+- Downstream scripts and session readiness may load this file; agents should still treat it as authoritative when present and must not contradict it in chat.
+- Optional fields such as `schema_version`, `frozen_at_utc`, and `frozen_note` are allowed for operator audit.
+
+Tooling:
+
+- Load/validate: `python -m scripts.utilities.run_constants --bundle-dir <path> [--verify-paths] [--json]`
+- Session readiness (optional): append `--bundle-dir <path>` to `app_session_readiness` when a frozen bundle exists — adds check `bundle_run_constants`.
+- Source bundle confidence validator: if `run-constants.yaml` exists, validates it (CLI `--repo-root` only when the bundle is resolved against a non-default root, e.g. tests).
 
 ## 2) ingestion-evidence.md
 
@@ -280,4 +299,4 @@ Before Gary dispatch:
   - gary-outbound-envelope.yaml
 - all files must satisfy the field rules in this contract.
 
-Contract version: 1.1 (added operator-directives.md, operator_directive_applied column)
+Contract version: 1.2 (added run-constants.yaml §1B + tooling hooks; 1.1 operator-directives.md)

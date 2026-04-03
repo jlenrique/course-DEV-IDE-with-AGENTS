@@ -23,6 +23,8 @@ Primary contract references:
 
 ## Run Constants (set once)
 
+After acceptance, persist the same fields as **`run-constants.yaml`** in the bundle root so tooling can load them (`python -m scripts.utilities.run_constants --bundle-dir [BUNDLE_PATH]`). See `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B.
+
 - RUN_ID: [e.g., C1-M1-PRES-20260405]
 - LESSON_SLUG: [e.g., apc-c1m1-tejal]
 - BUNDLE_PATH: [e.g., course-content/staging/tracked/source-bundles/<bundle-folder>]

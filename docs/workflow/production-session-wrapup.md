@@ -22,9 +22,14 @@ For each active run, set exactly one state:
 - blocked (reason + owner + next review time)
 - handed off (recipient + acceptance confirmation)
 
+For tracked/default mode:
+- Verify the `production_runs` table in `state/runtime/` reflects the declared terminal state for each run.
+- If any run's database state is inconsistent with the declared closure state, correct it before proceeding.
+
 Fail condition:
 
 - Any run remains implicit/in-progress at close.
+- Any tracked run's database state does not match its declared closure state.
 
 ## 2. Baton and Delegation Closure Gate
 
@@ -38,8 +43,18 @@ Pass criteria:
 
 ## 3. Evidence and Logging Gate
 
-Confirm evidence completeness:
+Confirm evidence completeness for each run closed in this session:
 
+Required evidence artifacts:
+- `preflight-results.json`
+- `operator-directives.md` (mandatory for tracked runs; confirms operator provided source-processing instructions or explicitly waived them)
+- `ingestion-evidence.md`
+- Fidelity receipts (G0-G4, as applicable to stages completed)
+- `gary-dispatch-validation-result.json` (if Gary dispatch occurred)
+- Pass 2 handoff validator output (if Irene Pass 2 occurred)
+- Stage receipts per prompt
+
+Additional evidence:
 - Delegation events logged
 - Completion/failure events logged
 - Human checkpoint decisions recorded
@@ -47,7 +62,7 @@ Confirm evidence completeness:
 
 Fail condition:
 
-- Any required evidence missing.
+- Any required evidence missing for a completed run.
 
 ## 4. Risk and Blocker Capture Gate
 
@@ -68,6 +83,7 @@ Create handoff with:
 - owner per open item
 - environment constraints discovered
 - execution mode + quality preset for each still-open run
+- operator directives summary (were directives provided? any special treatment still in effect for continuing runs?)
 
 ## 6. Workspace Hygiene Gate
 
@@ -109,6 +125,10 @@ At completion, output one and only one Shift Close Record using this structure:
 - End (local):
 - End (UTC):
 
+## Active Settings (echo from Shift Open)
+- Execution mode: tracked | ad-hoc
+- Quality preset: explore | draft | production | regulated
+
 ## Gate Results
 - Run Closure: pass | fail
 - Baton/Delegation Closure: pass | fail
@@ -121,6 +141,11 @@ At completion, output one and only one Shift Close Record using this structure:
 - Completed:
 - Blocked:
 - Handed off:
+
+## Evidence Summary
+- Operator directives recorded: yes | no | n/a (ad-hoc)
+- Fidelity receipts complete: yes | no
+- Validator outputs archived: yes | no
 
 ## Open Risks
 - Risk:

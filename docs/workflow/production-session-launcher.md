@@ -23,8 +23,18 @@ Session behavior contract:
 5. At session close, or when I say CLOSE SHIFT, END SESSION, or WRAP UP, immediately execute docs/workflow/production-session-wrapup.md in full.
 6. Do not end session until exactly one completed Shift Close Record is produced with all gate results and ownership states.
 
+Run settings:
+- Execution mode: tracked/default
+- Quality preset: production
+
+Prompt pack and operator card:
+- Use `docs/trial-run-prompts-to-irene-pass2-v4.md` as default prompt pack.
+- Use `docs/workflow/trial-run-v3-operator-card.md` as operator checklist.
+- The operator will provide run constants and operator directives after Shift Open completes.
+
 ## Notes
 
 - This launcher is for operations sessions only.
 - Use production-session-start.md and production-session-wrapup.md as the source of truth.
 - Keep Marcus as the sole conversational interface unless direct specialist mode is explicitly requested.
+- For first tracked/production runs, review `docs/workflow/first-tracked-run-checklist.md` alongside the prompt pack.

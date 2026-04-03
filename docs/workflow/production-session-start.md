@@ -44,6 +44,7 @@ Pass criteria:
 
 - Settings are explicitly stated and unambiguous.
 - Operator intent is clear: production operations context vs app-development context.
+- For tracked/default mode, confirm SQLite database at `state/runtime/` is accessible and writable.
 
 ## 2. Workspace and Branch Integrity Gate
 
@@ -95,7 +96,7 @@ Alternate (JSON log output):
 .venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
 ```
 
-VS Code shortcut: `Tasks: Run Task` → `APP: Session Readiness + Preflight`
+VS Code shortcut: `Tasks: Run Task` -> `APP: Session Readiness + Preflight`
 
 Minimum checks:
 
@@ -106,17 +107,26 @@ Minimum checks:
 
 ## 5. Active Run Recovery Gate
 
-Review current run state:
+Review current run state from the authoritative source for the declared execution mode:
 
-- Active runs
-- Blocked runs
-- Pending human checkpoints
-- Orphaned stages
+- **Tracked/default mode:** Query `state/runtime/` SQLite database for:
+  - Active runs (status != completed/cancelled)
+  - Blocked runs with pending gates
+  - Pending human checkpoints
+  - Orphaned stages (started but no completion/failure event)
+- **Ad-hoc mode:** Review bundle directories under `course-content/staging/ad-hoc/` for incomplete run artifacts.
+
+For each active/blocked run, confirm:
+
+- Run has a clear owner.
+- Blocked runs have a known blocker reason and next action.
+- No runs are in ambiguous transient state.
 
 Pass criteria:
 
 - Every active run has a clear owner.
 - Every blocked run has a known blocker reason and next action.
+- No orphaned stages remain.
 
 ## 6. Quality Gate Posture
 
@@ -124,11 +134,18 @@ Confirm quality controls are active:
 
 - Human-in-the-loop controls: `docs/workflow/human-in-the-loop.md`
 - Agent QA gate policy: `docs/workflow/agent-qa-release-gate.md`
+- Artifacts contract: `docs/workflow/trial-run-pass2-artifacts-contract.md` (v1.1+, includes operator-directives.md)
+- Current prompt pack: `docs/trial-run-prompts-to-irene-pass2-v4.md`
+- Operator card: `docs/workflow/trial-run-v3-operator-card.md`
 
 For this shift, define:
 
 - Mandatory checkpoints before publish
 - Outputs that require explicit sign-off
+
+Reminder for tracked runs:
+- The v4 prompt pack requires **Operator Directives** (Prompt 2A) before ingestion. The operator should prepare source-processing instructions (focus, exclusion, special treatment) before starting the first run of the shift.
+- For first tracked runs, review `docs/workflow/first-tracked-run-checklist.md` for additional guidance.
 
 ## 7. Decision and Escalation Routing
 
@@ -170,6 +187,8 @@ At completion, output one and only one Shift Open Record using this structure:
 ## Active Settings
 - Execution mode: tracked | ad-hoc
 - Quality preset: explore | draft | production | regulated
+- Prompt pack: v4 | v3 (legacy)
+- Operator card: v4
 
 ## Blocking Issues
 - Issue:

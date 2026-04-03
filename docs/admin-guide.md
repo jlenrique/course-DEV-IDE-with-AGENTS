@@ -115,6 +115,7 @@ All secrets live in `.env` at the project root. **Never commit this file.** Vari
 | **Canvas LMS** | `CANVAS_API_URL`, `CANVAS_ACCESS_TOKEN`, `CANVAS_DOMAIN`, `CANVAS_SUBACCOUNT_ID` | Admin → Developer Keys at your Canvas instance |
 | **Qualtrics** | `QUALTRICS_API_TOKEN`, `QUALTRICS_BASE_URL`, `QUALTRICS_DATA_CENTER_ID`, `QUALTRICS_OWNER_ID`, `QUALTRICS_ORGANIZATION_ID` | Account Settings → Qualtrics IDs |
 | **Notion** | `NOTION_API_KEY`, `NOTION_ROOT_PAGE_ID` | Create internal integration at notion.so/my-integrations (free on all plans) |
+| **GitHub Pages asset hosting** | `GITHUB_PAGES_TOKEN` | Fine-grained PAT scoped to `jlenrique/jlenrique.github.io` with repository **Contents: Read and write** (Metadata read access also recommended) for APP-managed public asset publishing |
 | **Canva** | OAuth-based (handled by MCP) | Currently blocked — see Known Limitations |
 
 ### Tier 2 — API Only (no MCP)

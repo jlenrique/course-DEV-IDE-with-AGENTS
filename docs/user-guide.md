@@ -270,7 +270,7 @@ course-content/staging/
 
 **Custom images → Gary (happy path = mixed deck)**
 
-Deck includes **both** creative slides and **literal** slides 4 & 7. Marcus builds **`diagram_cards`** for those card numbers; `skills/gamma-api-mastery/scripts/gamma_operations.py` **`generate_deck_mixed_fidelity`** runs two Gamma calls, then **`reassemble_slide_output`** sorts by **`card_number`**. URLs must be HTTPS-fetchable image URLs.
+Deck includes **both** creative slides and **literal** slides 4 & 7. Marcus builds **`diagram_cards`** for those card numbers; `skills/gamma-api-mastery/scripts/gamma_operations.py` **`generate_deck_mixed_fidelity`** runs two Gamma calls, then **`reassemble_slide_output`** sorts by **`card_number`**. In tracked/default mode, literal-visual cards may start as local preintegration PNGs and APP will stage them to managed Git hosting before dispatch. In ad-hoc mode, Gary still requires already-hosted HTTPS image URLs.
 
 **Walkthrough table — user view, X-ray, review, paths**
 
@@ -279,13 +279,13 @@ The **model prompts** for each step (what to type to Marcus) are in the next sub
 | # | You ↔ Marcus (summary) | X-ray — APP behind the scenes | Review ✓ (planner tick) | Paths / artifacts (default mode) |
 |---|-------------------------|----------------------------------|-------------------------|-----------------------------------|
 | 0 | Open the run: mode, run id, pre-flight | `read-mode-state.py`, `manage_mode.py` → `mode_state.json`; pre-flight skill checks MCP/API | ☐ Mode is default (or ad-hoc if you intend trial scratch) ☐ Tools green for Gamma, EL, Kling | `state/runtime/mode_state.json` |
-| 1 | Answer fidelity questions (literal slides, exact text) | Marcus fills `fidelity_guidance` for Irene; Imagine handoff later for URLs (`conversation-mgmt.md`) | ☐ You listed slides needing **literal** treatment ☐ HTTPS URLs ready **before** Gary for diagram slides | Optional PNG drop: `course-content/staging/rebranded-assets/` |
+| 1 | Answer fidelity questions (literal slides, exact text) | Marcus fills `fidelity_guidance` for Irene; tracked mode may stage local preintegration PNGs later, ad-hoc still requires pre-hosted URLs | ☐ You listed slides needing **literal** treatment ☐ For tracked mode: local source PNGs identified; for ad-hoc: HTTPS URLs ready before Gary | Optional PNG drop: `course-content/staging/rebranded-assets/` |
 | 2 (opt.) | Optional source pull | Source wrangler → Notion client | ☐ Bundle usable for Irene | `source-bundles/APP-RUN-C1M3L2-HTN-20260330/extracted.md` |
 | 3 | Kick off Irene Pass 1; review outputs | Irene Pass 1: `bmad-agent-content-creator` | **☐ PHASE 1 REVIEW:** `lesson-plan.md` + `slide-brief.md` — LOs, order, **fidelity per slide** | `…/C1-M3-L2-ambulatory-bp/lesson-plan.md`, `slide-brief.md` |
 | 4 | **HIL Gate 1** — approve or revise pedagogy | Human checkpoint; no API spend for slides yet | ☐ Gate 1 sign-off | — |
-| 5 | Supply validated HTTPS URLs; delegate Gary | `validate_image_url`; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ URLs validated ☐ Gary unblocked only after URLs OK | `gamma-export/` (exports + `gary_slide_output` metadata) |
+| 5 | Supply literal-visual assets; delegate Gary | `validate_image_url` for hosted refs or tracked-mode preintegration publish/substitution; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ Hosted URLs validated or tracked-mode staging receipt clean ☐ Gary unblocked only after literal-visual inputs are dispatch-ready | `gamma-export/` (exports + `gary_slide_output` metadata; optional `literal_visual_publish`) |
 | 6 | **HIL Gate 2** — approve deck | PDF for human review per Gary SKILL; PNG for pipeline | ☐ Visuals on-brand ☐ Literal slides match supplied art ☐ Order matches lesson | Slide PNGs under `gamma-export/` (representative) |
-| 7 | Irene Pass 2 after Gate 2 | Irene sees **`gary_slide_output`**; writes narration + manifest | **☐ PHASE 2 REVIEW:** `narration-script.md` + `segment-manifest.yaml` — copy matches **approved** slides | Same lesson folder |
+| 7 | Irene Pass 2 after Gate 2 | Irene sees **`gary_slide_output`** and narrates from approved local slide PNGs; any `literal_visual_publish` receipt is provenance only | **☐ PHASE 2 REVIEW:** `narration-script.md` + `segment-manifest.yaml` — copy matches **approved** slides | Same lesson folder |
 | 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before EL + Kling spend | ☐ Gate 3 sign-off | — |
 | 9 | Confirm fidelity + quality runs (or ask Marcus to run them) | `bmad-agent-fidelity-assessor`, `bmad-agent-quality-reviewer`, optional `quality-control` scripts, sensory bridges | ☐ No critical blockers (or you accept override) | Reports per governance; ad-hoc: transient observability |
 | 10 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
@@ -314,7 +314,7 @@ Also run `py -3.13 -m scripts.utilities.venv_health_check`; if `overall_status` 
 
 ```
 Marcus, run your standard fidelity discovery for this run.
-For visuals: slides 4 and 7 must be literal-visual with fixed diagrams I’ll supply as HTTPS URLs; all other slides are creative Gamma.
+For visuals: slides 4 and 7 must be literal-visual with fixed diagrams. In tracked/default mode I may supply local preintegration PNGs for APP-managed staging; in ad-hoc mode I’ll supply HTTPS URLs. All other slides are creative Gamma.
 For text: [e.g. no exact exam items on slides / or list what must be literal].
 Capture this in fidelity_guidance for Irene.
 ```
@@ -339,13 +339,13 @@ Gate 1: I’ve reviewed lesson-plan.md and slide-brief.md in staging. APPROVED �
 ```
 *Or for changes:* `Gate 1: REVISION — [specific edits to objectives, slide order, or fidelity tags]. Please have Irene update the briefs before we generate slides.`
 
-**Step 5 — HTTPS URLs + Gary (diagram_cards)**
+**Step 5 — Literal-visual assets + Gary (diagram_cards)**
 
 ```
-Marcus, here are the validated HTTPS image URLs for diagram_cards (literal slides only):
+Marcus, here are the literal-visual assets for diagram_cards (literal slides only):
 - card_number 4: https://media.university.example/course-assets/htn-renal-diagram.png
-- card_number 7: https://media.university.example/course-assets/abpm-48h-grid.png
-Please validate each URL with validate_image_url, build diagram_cards for Gary’s envelope, and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download.
+- card_number 7: course-content/staging/rebranded-assets/abpm-48h-grid.png
+If the run is tracked/default, stage any local preintegration PNGs to the managed Git-host destination before Gary dispatch; if the run is ad-hoc, stop and ask me for HTTPS-hosted URLs instead. Then build diagram_cards for Gary’s envelope and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download and include literal_visual_publish if staging occurred.
 ```
 
 **Step 6 — HIL Gate 2 (deck review)**
@@ -358,7 +358,7 @@ Gate 2: I’ve reviewed the PDF and PNGs. APPROVED — slides match style bible;
 **Step 7 — Irene Pass 2**
 
 ```
-Marcus, delegate Irene Pass 2 using the approved gary_slide_output. Write narration-script.md and segment-manifest.yaml in course-content/staging/C1-M3-L2-ambulatory-bp/, paired by segment id. Include [any Kling video segments / music-SFX intent] per manifest template.
+Marcus, delegate Irene Pass 2 using the approved gary_slide_output. If Gary returned literal_visual_publish, pass it as provenance only; Irene should still ground narration on the approved slide PNGs in gary_slide_output. Write narration-script.md and segment-manifest.yaml in course-content/staging/C1-M3-L2-ambulatory-bp/, paired by segment id. Include [any Kling video segments / music-SFX intent] per manifest template.
 ```
 
 **Step 8 — HIL Gate 3 (script + manifest)**
@@ -471,10 +471,10 @@ If revision, apply only the listed changes and re-present lesson-plan.md and sli
 **Prompt 9 — Gary deck generation with literal visuals**
 
 ```
-Marcus, validate these HTTPS image URLs and build diagram_cards for literal slides:
-- card_number [N]: [URL]
-- card_number [N]: [URL]
-Delegate Gary for mixed-fidelity generation and return gary_slide_output with file_path populated.
+Marcus, build diagram_cards for these literal slides:
+- card_number [N]: [HTTPS URL or local preintegration PNG path]
+- card_number [N]: [HTTPS URL or local preintegration PNG path]
+If the run is tracked/default, stage any local preintegration PNGs before Gary dispatch; if the run is ad-hoc, stop unless every card is already HTTPS-hosted. Then delegate Gary for mixed-fidelity generation and return gary_slide_output with file_path populated.
 ```
 
 **Prompt 10 — Gate 2 decision**

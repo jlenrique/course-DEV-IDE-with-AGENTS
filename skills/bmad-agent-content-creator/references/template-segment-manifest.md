@@ -10,6 +10,7 @@ The segment manifest is the **machine-readable production contract** for a lesso
 
 - Always paired with the narration script (never produced without it)
 - Only in Pass 2 — requires `gary_slide_output` in the context envelope so segment IDs and `visual_file` can reference actual Gary-produced PNGs
+- Optional Gary additive metadata (`literal_visual_publish`) may be present for audit context, but segment visuals still resolve from approved local `gary_slide_output` PNG paths
 - Every segment in the narration script must have a corresponding manifest entry
 - For segments mapped to Gary slides, populate `gary_slide_id`, `gary_card_number`, and `visual_file` from `gary_slide_output`
 
@@ -254,5 +255,6 @@ segments:
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment
 - For `static-hold` segments referencing Gary PNGs: populate `visual_file` with the Gary-provided path from `gary_slide_output` immediately — don't leave it null
+- Never replace `visual_file` with Git-host source URLs from `literal_visual_publish`; that receipt is provenance only, while composition uses approved local slide exports
 - Leave ElevenLabs and Kira write-back fields (`narration_duration`, `narration_file`, etc.) as `null` — those agents populate them
 - Save to `course-content/staging/{lesson_id}/manifest.yaml`

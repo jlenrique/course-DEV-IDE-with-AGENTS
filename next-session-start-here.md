@@ -1,101 +1,69 @@
 # Next Session Start Here
 
-> **Scope note:** This file tracks APP **project development** state only.
-> For production content operations, use `docs/workflow/production-session-launcher.md`.
+> Scope note: this file tracks APP project development state only.
+> For production content operations, use docs/workflow/production-session-launcher.md.
 
-## Current Dev State (as of 2026-03-30)
+## Current Dev State (as of 2026-04-02)
 
-- `master` reconciled and pushed: `663a3f37` (contains RUN/Sunday-2026-03-29 + RUN/Monday-2026-03-30 outputs)
-- All 42 tracked stories marked `done`
-- Active branch: `RUN/Monday-2026-03-30` — clean, up-to-date with origin
-- No in-progress stories or open dev blockers
+- Active branch: dev/storyboarding-feature
+- Working tree: broad in-progress set across docs/contracts/scripts plus new files (not clean)
+- Latest completed work this session: real-bundle happy-path simulation through Descript readiness on course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329
+- Key remediation completed: pass2 perception artifacts were missing source_image_path bindings; fixed and revalidated
 
-## Open Housekeeping Items
+## Immediate Next Action
 
-- **PR #1** (`feat: Add VS Code tasks for session readiness and preflight checks`) — open against `master`, review and merge or close at next dev session
-- **Botpress HTTP 400** — non-blocking known issue; no story filed; skip unless explicitly scoped
+1. Run a curated closeout pass on dev/storyboarding-feature:
+   - verify intended diff scope,
+   - stage only approved files,
+   - commit with a session summary,
+   - then decide merge timing to master.
 
-## Next Dev Session Entry Point
+## Unresolved Issues / Blockers To Carry Forward
 
-No immediate action required. When starting a new dev session:
+- Git closeout is still pending due to broad pre-existing in-progress changes in the branch.
+- SB.1-related work is present in the tree and still appears backlog in sprint tracking; reconcile artifact status before final merge.
+- If another trial run is scheduled, ensure pass2 envelope/perception artifact generation writes source_image_path at creation time (not post-fix).
 
-1. `git branch --show-current` + `git status --short` — confirm clean state
-2. Review and resolve PR #1
-3. Check `_bmad-output/implementation-artifacts/sprint-status.yaml` for any newly filed stories
+## Branch Metadata For Next Session
 
----
-
-## Current Status
-
-| Epic | Status | Stories |
-|------|--------|---------|
-| Epic 1 | DONE | 11/11 |
-| Epic 2 | DONE | 6/6 |
-| Epic 2A | DONE | 9/9 |
-| Epic 3 | DONE | 11/11 |
-| Epic 4A | DONE | 6/6 |
-| Epic 4 | DONE | 5/5 |
-| Epic 5 | DONE | 2/2 |
-| Epic 6 | DONE | 1/1 |
-| Epic G | DONE | 3/3 |
-| Epic 10 | DONE | 1/1 |
-
-All 42 tracked stories are currently marked `done` in `_bmad-output/implementation-artifacts/sprint-status.yaml`.
-
----
-
-## Shutdown Quality Gate Snapshot (2026-03-29)
-
-- `git diff --check`: pass (after trailing-whitespace remediation in `g-3-app-session-readiness-health-monitoring.md`).
-- `ruff check` on changed Story 5.4/G.2/10.1 files: pass.
-- Targeted regression tests:
-	- `tests/test_botpress_client.py`
-	- `tests/test_wondercraft_client.py`
-	- `skills/bmad-agent-marcus/scripts/tests/test_tool_ecosystem_synthesis.py`
-	- `skills/bmad-agent-marcus/scripts/tests/test_predictive_workflow_optimization.py`
-	- Result: `15 passed`.
-
----
-
-## Key Deliverables This Session
-
-- Story 5.4 completed: Botpress/Wondercraft hardening and expanded unit coverage.
-- Story G.2 completed: tool ecosystem synthesis engine + prioritized recommendation report.
-- Story 10.1 completed: predictive workflow optimization engine + recommendation report.
-- Sprint tracking updated to mark Stories 5.4/G.2/10.1 and Epics 5/G/10 as done.
-- Story artifacts added:
-	- `_bmad-output/implementation-artifacts/5-4-remaining-tier2-api-integrations.md`
-	- `_bmad-output/implementation-artifacts/g-2-tool-ecosystem-monitoring-synthesis.md`
-	- `_bmad-output/implementation-artifacts/10-1-predictive-workflow-optimization.md`
-
----
-
-## Branch
-
-Repository baseline branch: `master`
-Active working branch: `dev/session-20260328`
+Repository baseline branch after closeout target: master
+Next working branch: dev/storyboarding-feature
 
 Startup commands:
 
-- `git checkout master`
-- `git pull origin master`
-- `git checkout dev/session-20260328`
+- git checkout master
+- git pull origin master
+- git checkout dev/storyboarding-feature
+- git status --short
 
-Closeout exception recorded: merge-to-master was not executed in this wrapup pass because the working tree contains broad in-progress changes requiring curated staging/commit review.
+Closeout exception retained for now: merge-to-master not executed in this wrapup pass because the working tree contains broad in-progress changes requiring curated staging/commit review.
 
----
+## Worktree Hygiene
+
+- git worktree list checked during wrapup.
+- Registered worktrees: only the primary worktree at C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS.
+- No temporary worktree cleanup required this session.
+
+## Quality Gate Snapshot (2026-04-02)
+
+- git diff --check: pass
+- APP task: Session Readiness + Preflight (JSON): overall_status=pass
+- Targeted validator regression tests:
+  - skills/bmad-agent-marcus/scripts/tests/test-validate-gary-dispatch-ready.py
+  - skills/bmad-agent-marcus/scripts/tests/test-validate-irene-pass2-handoff.py
+  - Result: 31 passed
 
 ## Hot-Start Paths
 
-- `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
-- `skills/bmad-agent-marcus/scripts/tool_ecosystem_synthesis.py`
-- `skills/bmad-agent-marcus/scripts/predictive_workflow_optimization.py`
-- `_bmad-output/implementation-artifacts/reports/tool-ecosystem-synthesis-report.json`
-- `skills/reports/predictive-workflow/C1-M1-20260329T034147.json`
+- course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329/pass2-envelope.json
+- course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329/perception-artifacts.json
+- course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329/segment-manifest.yaml
+- course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329/DESCRIPT-ASSEMBLY-GUIDE.md
+- course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-20260329/storyboard/storyboard.json
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/bmm-workflow-status.yaml
 
 ## Gotchas
 
-- The `runTests` tool may not discover nested Marcus script tests reliably by file path; direct `pytest` invocation works.
-- PowerShell chaining uses `;` rather than `&&`.
-- Live integration tests remain opt-in via `--run-live`.
+- runTests tool may not discover these Marcus script tests by file path; direct pytest invocation is reliable.
+- PowerShell chaining uses semicolons, not &&.

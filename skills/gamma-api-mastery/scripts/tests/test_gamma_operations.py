@@ -27,6 +27,7 @@ from gamma_operations import (  # noqa: E402
     merge_slide_content,
     merge_parameters,
     normalize_slides_payload,
+    publish_preintegration_literal_visuals,
     resolve_style_preset,
     validate_dispatch_ready,
     validate_outbound_contract,
@@ -1476,6 +1477,73 @@ class TestThemeMappingHandshake:
         assert result["theme_resolution"]["resolved_theme_key"] == "theme_abc"
         assert result["parameter_decisions"]["resolved_parameter_set"] == "hil-2026-apc-nejal-A"
         assert result["flags"]["theme_mapping_verified"] is True
+
+
+class TestLiteralVisualPreintegrationPublish:
+    """Focused tests for publish helper paths that require no network."""
+
+    def test_publish_noop_in_adhoc_mode(self, tmp_path: Path) -> None:
+        source = tmp_path / "literal-visual.png"
+        source.write_bytes(b"png")
+
+        result = publish_preintegration_literal_visuals(
+            {5: source},
+            "C1-M1-PART",
+            site_repo_url="https://github.com/jlenrique/jlenrique.github.io",
+            mode="ad-hoc",
+            run_id="RUN-ADHOC-NOOP-1",
+        )
+
+        assert result["preintegration_ready"] is False
+        assert result["pushed"] is False
+        assert result["copied_count"] == 0
+        assert result["substituted_cards"] == []
+
+    def test_publish_skips_missing_paths_without_token_requirement(self, tmp_path: Path) -> None:
+        missing = tmp_path / "does-not-exist.png"
+
+        result = publish_preintegration_literal_visuals(
+            {9: missing},
+            "C1-M1-PART",
+            site_repo_url="https://github.com/jlenrique/jlenrique.github.io",
+            mode="default",
+            run_id="RUN-SKIP-1",
+        )
+
+        assert result["preintegration_ready"] is False
+        assert result["pushed"] is False
+        assert result["copied_count"] == 0
+        assert result["skipped"] == [{"card_number": 9, "reason": "missing_local_path"}]
+
+    def test_mixed_fidelity_local_literal_visual_requires_site_repo(self, tmp_path: Path) -> None:
+        source = tmp_path / "local-literal-visual.png"
+        source.write_bytes(b"png")
+        slides = [
+            {"slide_number": 1, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 1,
+                "image_url": str(source),
+                "placement_note": "Use local image",
+                "required": True,
+            }
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            pytest.raises(RuntimeError, match="site_repo_url"),
+        ):
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PART",
+                diagram_cards=diagram_cards,
+                run_id="RUN-LOCAL-MISSING-REPO",
+            )
 
 
 class TestGoldenPathDispatch:

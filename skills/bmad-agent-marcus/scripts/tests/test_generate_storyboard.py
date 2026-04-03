@@ -460,3 +460,110 @@ def test_cli_summarize_subcommand(tmp_path: Path) -> None:
     )
     assert "3 slide(s)" in proc.stdout
     assert "m1-c1" in proc.stdout
+
+
+def test_cli_generate_accepts_run_id(tmp_path: Path) -> None:
+    """--run-id is accepted without error and correlated in Channel-C logs."""
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    (slides / "s1.png").write_bytes(b"x")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_GENERATE_SCRIPT),
+            "generate",
+            "--payload",
+            str(payload_path),
+            "--out-dir",
+            str(bundle),
+            "--run-id",
+            "TEST-RUN-STORYBOARD-001",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert (bundle / "storyboard" / "storyboard.json").is_file()
+
+
+def test_literal_visual_remote_url_preserved_in_storyboard(tmp_path: Path) -> None:
+    """Regression: literal-visual slides with remote URLs (user-provided OR
+    Git-site hosted) must survive storyboard generation unchanged as 'remote'
+    status — not promoted to 'present' or demoted to 'missing'.
+
+    This guards against regressions when the preintegration literal-visual
+    Git-hosting feature replaces user-provided Gamma links with hosted URLs,
+    ensuring the storyboard's asset resolution logic treats both URL shapes
+    identically.
+    """
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    (bundle / "slides").mkdir(parents=True)
+    (bundle / "slides" / "s1.png").write_bytes(b"x")
+
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            },
+            {
+                "slide_id": "m1-c2",
+                "fidelity": "literal-visual",
+                "card_number": 2,
+                "source_ref": "src-b",
+                # User-provided Gamma link (pre-feature state)
+                "file_path": "https://gamma.app/docs/some-deck",
+            },
+            {
+                "slide_id": "m1-c3",
+                "fidelity": "literal-visual",
+                "card_number": 3,
+                "source_ref": "src-c",
+                # Git-site hosted URL (post-feature state)
+                "file_path": "https://jlenrique.github.io/assets/gamma/C1-M1-PRES/slide_03.png",
+            },
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+
+    by_id = {s["slide_id"]: s for s in manifest["slides"]}
+
+    # Creative slide with local file should be present
+    assert by_id["m1-c1"]["asset_status"] == "present"
+    assert by_id["m1-c1"]["fidelity"] == "creative"
+
+    # Both literal-visual slides with remote URLs must stay "remote"
+    assert by_id["m1-c2"]["asset_status"] == "remote", (
+        "literal-visual with user Gamma link must be remote, not missing"
+    )
+    assert by_id["m1-c2"]["fidelity"] == "literal-visual"
+    assert by_id["m1-c3"]["asset_status"] == "remote", (
+        "literal-visual with Git-site hosted URL must be remote, not missing"
+    )
+    assert by_id["m1-c3"]["fidelity"] == "literal-visual"
+
+    # Fidelity counts in summary must include both literal-visual slides
+    summary = mod.format_summary(manifest)
+    assert "literal-visual=2" in summary
+
+    # HTML should render preview links for both remote literal-visual slides
+    rendered = mod.render_index_html(manifest)
+    assert "gamma.app/docs/some-deck" in rendered
+    assert "jlenrique.github.io/assets/gamma" in rendered

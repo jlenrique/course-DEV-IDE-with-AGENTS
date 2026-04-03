@@ -153,7 +153,7 @@ Rules:
 
 ## 6) gary-diagram-cards.json
 
-Purpose: literal-visual card mapping with hosted image locations for Gary dispatch.
+Purpose: literal-visual card mapping for Gary dispatch, supporting either already-hosted HTTPS images or tracked-mode local preintegration PNG staging.
 
 JSON schema (lightweight):
 
@@ -164,6 +164,7 @@ JSON schema (lightweight):
     {
       "card_number": 3,
       "image_url": "https://...",
+      "preintegration_png_path": "course-content/staging/.../diagram-03.png",
       "source_asset": "`metadata.json#media_references[2]`",
       "source_ref": "`extracted.md#Extracted text (roadmap transcription)`",
       "derivation_type": "source-crop",
@@ -175,7 +176,11 @@ JSON schema (lightweight):
 ```
 
 Rules:
-- `image_url` must be HTTPS and content-type resolvable as image.
+- Provide exactly one dispatch-ready image source per card:
+  - **Hosted path:** `image_url` is HTTPS and content-type resolvable as image.
+  - **Tracked-mode staged path:** `preintegration_png_path` points to a local source PNG that APP will publish to managed Git hosting immediately before Gary dispatch.
+- If `preintegration_png_path` is used, the dispatch envelope must also supply `site_repo_url`, execution mode must be tracked/default, and the resulting dispatch payload must record additive `literal_visual_publish` metadata with `preintegration_ready=true` before Gate 2 review.
+- In ad-hoc mode, `preintegration_png_path` is not allowed for production dispatch; pre-host the image and provide HTTPS `image_url` instead.
 - `required=true` means dispatch must block if image is unavailable.
 - `source_asset` must point to the Irene-approved origin for the literal-visual card.
 - `source_ref` must point to the governing source text or structured extraction used to justify the card.
@@ -219,7 +224,7 @@ Gate contracts live in: `state/config/fidelity-contracts/`
 - G1: `g1-lesson-plan.yaml`
 - G2: `g2-slide-brief.yaml`
 - G3: `g3-generated-slides.yaml`
-- G4: `g4-narration-script.yaml` (7 criteria, incl. G4-07 source depth utilization)
+- G4: `g4-narration-script.yaml` (8 criteria, incl. G4-07 source depth utilization and G4-08 perception lineage binding)
 
 Shared schema: `state/config/fidelity-contracts/_schema.yaml`
 
@@ -243,6 +248,7 @@ config alignment before attributing failures to narration writing quality.
 Before Gary dispatch:
 - required files must exist:
   - g2-slide-brief.md
+  - gary-slide-content.json
   - gary-fidelity-slides.json
   - gary-diagram-cards.json
   - gary-theme-resolution.json

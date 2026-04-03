@@ -20,6 +20,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 try:
     import yaml
@@ -28,6 +29,30 @@ except ImportError:  # pragma: no cover - optional for yaml input
 
 
 REQUIRED_PASS2_FIELDS = ("gary_slide_output", "perception_artifacts")
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _is_remote_http_ref(value: str) -> bool:
+    parsed = urlparse(str(value).strip())
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def _resolve_existing_local_path(path_value: str, *, bundle_dir: Path | None) -> Path | None:
+    candidate = Path(path_value)
+    if candidate.is_absolute():
+        return candidate if candidate.is_file() else None
+
+    if bundle_dir is not None:
+        bundle_candidate = (bundle_dir / candidate).resolve()
+        if bundle_candidate.is_file():
+            return bundle_candidate
+
+    project_candidate = (PROJECT_ROOT / candidate).resolve()
+    if project_candidate.is_file():
+        return project_candidate
+
+    return None
 
 
 def _load_payload(path: Path) -> dict[str, Any]:
@@ -50,6 +75,7 @@ def validate_irene_pass2_handoff(
     payload: dict[str, Any],
     *,
     expected_artifact_hint: str | None = None,
+    envelope_path: Path | None = None,
 ) -> dict[str, Any]:
     """Validate required Pass 2 inputs and sequencing integrity."""
     missing_fields = [key for key in REQUIRED_PASS2_FIELDS if key not in payload]
@@ -83,6 +109,11 @@ def validate_irene_pass2_handoff(
 
     missing_file_path_for: list[str] = []
     missing_source_ref_for: list[str] = []
+    non_png_file_path_for: list[str] = []
+    remote_file_path_for: list[str] = []
+    missing_local_png_for: list[str] = []
+    gary_slide_path_by_id: dict[str, str] = {}
+    bundle_dir = envelope_path.parent if envelope_path is not None else None
     for item in gary:
         if not isinstance(item, dict):
             continue
@@ -91,6 +122,21 @@ def validate_irene_pass2_handoff(
         source_ref = item.get("source_ref")
         if not isinstance(file_path, str) or not file_path.strip():
             missing_file_path_for.append(slide_label)
+        else:
+            normalized_path = file_path.strip()
+            if _is_remote_http_ref(normalized_path):
+                remote_file_path_for.append(slide_label)
+            if Path(normalized_path).suffix.lower() != ".png":
+                non_png_file_path_for.append(slide_label)
+            if envelope_path is not None and _resolve_existing_local_path(
+                normalized_path,
+                bundle_dir=bundle_dir,
+            ) is None:
+                missing_local_png_for.append(slide_label)
+
+            slide_id = item.get("slide_id")
+            if isinstance(slide_id, str) and slide_id.strip():
+                gary_slide_path_by_id[slide_id.strip()] = normalized_path
         if not isinstance(source_ref, str) or not source_ref.strip():
             missing_source_ref_for.append(slide_label)
 
@@ -101,6 +147,21 @@ def validate_irene_pass2_handoff(
     if missing_file_path_for:
         errors.append(
             "gary_slide_output missing non-empty file_path for: " + ", ".join(missing_file_path_for)
+        )
+    if remote_file_path_for:
+        errors.append(
+            "gary_slide_output file_path must reference local downloaded PNGs; remote path found for: "
+            + ", ".join(remote_file_path_for)
+        )
+    if non_png_file_path_for:
+        errors.append(
+            "gary_slide_output file_path must end with .png for: "
+            + ", ".join(non_png_file_path_for)
+        )
+    if missing_local_png_for:
+        errors.append(
+            "gary_slide_output file_path does not exist on disk for: "
+            + ", ".join(missing_local_png_for)
         )
     if missing_source_ref_for:
         errors.append(
@@ -125,9 +186,38 @@ def validate_irene_pass2_handoff(
             "perception_artifacts missing slide_id(s): " + ", ".join(missing_perception_for)
         )
 
+    missing_source_image_path_for: list[str] = []
+    mismatched_source_image_path_for: list[str] = []
+    for item in perception:
+        if not isinstance(item, dict):
+            continue
+        slide_id = str(item.get("slide_id") or "").strip()
+        if not slide_id:
+            continue
+        source_image_path = item.get("source_image_path")
+        if not isinstance(source_image_path, str) or not source_image_path.strip():
+            missing_source_image_path_for.append(slide_id)
+            continue
+        normalized_source_path = source_image_path.strip()
+        expected_path = gary_slide_path_by_id.get(slide_id)
+        if expected_path is not None and normalized_source_path != expected_path:
+            mismatched_source_image_path_for.append(slide_id)
+
+    if missing_source_image_path_for:
+        errors.append(
+            "perception_artifacts missing non-empty source_image_path for slide_id(s): "
+            + ", ".join(sorted(set(missing_source_image_path_for)))
+        )
+    if mismatched_source_image_path_for:
+        errors.append(
+            "perception_artifacts source_image_path must match gary_slide_output.file_path for slide_id(s): "
+            + ", ".join(sorted(set(mismatched_source_image_path_for)))
+        )
+
     remediation_hint = (
         "Perception artifacts are emitted inline during Pass 2. "
-        "If missing, re-run Irene on the affected slides to regenerate perception side-effects"
+        "If missing, re-run Irene on the affected slides to regenerate perception side-effects. "
+        "Narration grounding must use local post-integration downloaded PNGs from gary_slide_output"
     )
     if expected_artifact_hint:
         remediation_hint += f" (expected location hint: {expected_artifact_hint})"
@@ -149,6 +239,11 @@ def validate_irene_pass2_handoff(
             "missing_perception_for": missing_perception_for,
             "missing_file_path_for": missing_file_path_for,
             "missing_source_ref_for": missing_source_ref_for,
+            "missing_source_image_path_for": sorted(set(missing_source_image_path_for)),
+            "mismatched_source_image_path_for": sorted(set(mismatched_source_image_path_for)),
+            "non_png_file_path_for": non_png_file_path_for,
+            "remote_file_path_for": remote_file_path_for,
+            "missing_local_png_for": missing_local_png_for,
         },
         "remediation_hint": remediation_hint,
     }
@@ -175,6 +270,7 @@ def main() -> int:
         result = validate_irene_pass2_handoff(
             payload,
             expected_artifact_hint=args.expected_artifact_hint,
+            envelope_path=args.envelope,
         )
         print(json.dumps(result, indent=2))
         return 0 if result["status"] == "pass" else 1

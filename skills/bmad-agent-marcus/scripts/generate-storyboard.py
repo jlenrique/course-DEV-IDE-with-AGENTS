@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import logging
 import os
 import sys
 from collections import Counter
@@ -27,6 +28,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
+logger = logging.getLogger("generate_storyboard")
+
+
+def _log_run_suffix(run_id: str | None) -> str:
+    """Optional APP run correlation for log messages."""
+    if run_id is None or not str(run_id).strip():
+        return ""
+    return f" run_id={str(run_id).strip()}"
 
 try:
     import yaml
@@ -459,6 +469,7 @@ def write_bundle(
 
 
 def cmd_generate(args: argparse.Namespace) -> int:
+    run_id: str | None = getattr(args, "run_id", None)
     payload_path: Path = args.payload
     out_dir: Path = args.out_dir
     asset_base: Path = args.asset_base or payload_path.parent
@@ -493,6 +504,14 @@ def cmd_generate(args: argparse.Namespace) -> int:
         1
         for s in manifest["slides"]
         if isinstance(s, dict) and s.get("asset_status") == "missing"
+    )
+    slide_count = len(manifest.get("slides", []))
+    logger.info(
+        "Storyboard bundle written: slides=%d missing=%d path=%s%s",
+        slide_count,
+        missing,
+        storyboard_dir,
+        _log_run_suffix(run_id),
     )
     print(f"Wrote {storyboard_dir / 'storyboard.json'}")
     print(f"Wrote {storyboard_dir / 'index.html'}")
@@ -557,6 +576,11 @@ def main() -> int:
             "Optional JSON/YAML file with related_assets rows to append after slides "
             "(each entry requires label + link)."
         ),
+    )
+    gen.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional APP production run ID for Channel-C log correlation.",
     )
     gen.set_defaults(func=cmd_generate)
 

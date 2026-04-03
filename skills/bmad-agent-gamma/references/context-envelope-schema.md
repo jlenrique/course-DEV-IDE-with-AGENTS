@@ -73,11 +73,14 @@ fidelity_guidance:                           # user's fidelity preferences from 
     - description: "10 KC topics from Chapters 2 & 3"
       source_ref: "extracted.md#Chapter 2 Knowledge Check"
 
-diagram_cards:                               # literal-visual slides with hosted image URLs
+diagram_cards:                               # literal-visual slides with hosted URLs or tracked-mode local preintegration PNGs
   - card_number: 3
     image_url: "https://gamma.app/hosted/..."  # HTTPS, publicly accessible, image extension
+    preintegration_png_path: null            # optional local PNG path for tracked/default mode staging
     placement_note: "Primary visual, full-width"
     required: true
+
+site_repo_url: null                          # required when any diagram card uses local preintegration path
 
 # DECK MODE — multi-slide generation
 deck_mode: false                            # true = apply deck parameter guidance
@@ -106,10 +109,23 @@ theme_selection_required: false             # true = Gary presents TP preview be
 | `parameter_overrides` | no | {} | Explicit Gamma API params; override all merge levels |
 | `run_mode` | no | `"default"` | Controls memory write behavior |
 | `governance` | yes | — | Delegation authority contract: invocation mode, gate, authority chain, decision scope, allowed outputs |
+| `fidelity_per_slide` | conditional | [] | Required for mixed-fidelity or any literal-* deck; one entry per targeted slide |
+| `fidelity_guidance` | conditional | {} | Discovery-derived literal-text/literal-visual intent and source anchors |
+| `diagram_cards` | conditional | [] | Required for literal-visual cards that need explicit image handling |
 | `deck_mode` | no | `false` | When `true`, applies deck-specific parameter guidance (numCards ranges, cardSplit, deck additionalInstructions) |
 | `num_cards` | no | null | Explicit numCards override; null = Gary decides per content type guidance |
 | `card_split` | no | `"auto"` | `"auto"` (Gamma decides) or `"inputTextBreaks"` (split on `\n---\n`) |
 | `theme_selection_required` | no | `false` | When `true`, Gary presents theme/template preview (TP capability) and waits for selection before generating |
+| `site_repo_url` | conditional | null | Required when any `diagram_cards[*].preintegration_png_path` is present; used for tracked/default preintegration publish + URL substitution |
+
+### Diagram Card Rules
+
+- Dispatch-ready literal-visual cards must provide either:
+  - Hosted HTTPS `image_url`, or
+  - Local `preintegration_png_path` (tracked/default mode only).
+- If any `preintegration_png_path` is provided, `site_repo_url` must be present.
+- In tracked/default mode, Gary stages local preintegration PNGs through gamma operations before dispatch and substitutes hosted URLs automatically.
+- In ad-hoc mode, local preintegration paths fail closed; provide hosted HTTPS URLs instead.
 
 ### Governance Enforcement
 
@@ -170,6 +186,16 @@ provenance:                                  # per-card fidelity provenance (Sto
 generation_mode: "text"                     # text | from-template
 template_used: null                         # gammaId if from-template, null if text generation
 
+literal_visual_publish:                      # optional additive receipt when tracked-mode staging occurred
+  repo_url: "https://github.com/<owner>/<repo>"
+  target_subdir: "assets/gamma/C1-M1-P2S1"
+  preintegration_ready: true
+  copied_count: 2
+  pushed: true
+  url_base: "https://<owner>.github.io/assets/gamma/C1-M1-P2S1"
+  substituted_cards: [3, 7]
+  skipped: []
+
 parameter_decisions:
   theme_id: "theme_abc123"
   text_mode: "preserve"
@@ -212,6 +238,7 @@ scope_violation: null                        # object when out-of-scope work is 
 | `quality_assessment` | yes | Structured execution-quality scores (`layout_integrity`, `parameter_confidence`, `embellishment_risk_control`); see quality-assessment.md |
 | `generation_mode` | yes | `"text"` or `"from-template"` — which endpoint was used |
 | `template_used` | if from-template | The `gammaId` used; null for text generation |
+| `literal_visual_publish` | optional | Additive tracked/default preintegration staging receipt; includes substitution and readiness metadata |
 | `parameter_decisions` | yes | Exact Gamma API params used (for learning and reproducibility) |
 | `recommendations` | yes | Empty array if none; human-readable notes for Marcus |
 | `flags` | yes | Embellishment control, constraint effectiveness |

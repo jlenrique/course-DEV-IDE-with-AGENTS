@@ -41,6 +41,7 @@ pythonpath = ["."]
 asyncio_mode = "auto"
 markers = [
     "live_api: tests that call live third-party APIs; excluded by default unless --run-live is provided",
+    "live_api_e2e: slower/flakier live end-to-end API tests; excluded by default unless --run-live-e2e is provided",
 ]
 
 [build-system]

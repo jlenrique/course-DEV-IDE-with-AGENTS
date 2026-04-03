@@ -3,7 +3,7 @@ gate_name: "Narration Script"
 producing_agent: "irene"
 hil_gate: "Gate 3"
 source_of_truth:
-  primary: "Lesson plan + actual generated slides (PNGs perceived via sensory bridge)"
+  primary: "Lesson plan + actual post-integration downloaded slide PNGs from gary_slide_output.file_path (perceived via sensory bridge)"
   schema_ref: "skills/bmad-agent-content-creator/references/template-narration-script.md"
 
 criteria:
@@ -79,3 +79,16 @@ criteria:
     config_refs:
       - "state/config/narration-grounding-profiles.yaml"
       - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-08"
+    name: "Perception lineage binding"
+    description: >
+      Perception artifacts used for narration grounding must reference the same
+      local post-integration PNG path provided in gary_slide_output for each slide.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: >
+      For each slide_id, perception_artifacts.source_image_path equals
+      gary_slide_output.file_path and the target is a local .png path.
+    requires_perception: false

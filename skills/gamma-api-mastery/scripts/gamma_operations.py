@@ -7,13 +7,17 @@ polling, export, and artifact download.
 
 from __future__ import annotations
 
+import base64
 import logging
 import os
 import shutil
+import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 import yaml
@@ -68,6 +72,235 @@ def _log_run_suffix(run_id: str | None) -> str:
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
 STYLE_PRESETS_PATH = PROJECT_ROOT / "state" / "config" / "gamma-style-presets.yaml"
 STAGING_DIR = PROJECT_ROOT / "course-content" / "staging"
+
+
+def _is_remote_http_ref(value: str) -> bool:
+    """Return True when a string is an HTTP(S) URL."""
+    parsed = urlparse(str(value).strip())
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def _sanitize_publish_segment(value: str) -> str:
+    """Normalize a path-like segment while preventing traversal."""
+    normalized = str(value).replace("\\", "/").strip().strip("/")
+    if not normalized:
+        raise ValueError("module_lesson_part must be a non-empty path segment")
+    parts = [p for p in normalized.split("/") if p]
+    if any(part in {".", ".."} for part in parts):
+        raise ValueError("module_lesson_part must not contain traversal segments")
+    return "/".join(parts)
+
+
+def _run_git_command(
+    args: list[str],
+    *,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+    display_args: list[str] | None = None,
+) -> str:
+    """Run a git command and raise RuntimeError with command context on failure."""
+    full_env = os.environ.copy()
+    if env:
+        full_env.update(env)
+    try:
+        completed = subprocess.run(
+            args,
+            cwd=str(cwd) if cwd else None,
+            check=True,
+            capture_output=True,
+            text=True,
+            env=full_env,
+        )
+    except subprocess.CalledProcessError as exc:  # pragma: no cover - exercised via integration
+        stderr = (exc.stderr or "").strip()
+        stdout = (exc.stdout or "").strip()
+        detail = stderr or stdout or "unknown git error"
+        if (
+            "requested url returned error: 403" in detail.lower()
+            or "permission to" in detail.lower()
+        ):
+            detail = (
+                f"{detail} :: authentication succeeded but write access was denied; "
+                "verify GITHUB_PAGES_TOKEN has repository access and 'Contents: Read and write'"
+            )
+        safe_args = display_args or args
+        raise RuntimeError(f"git command failed: {' '.join(safe_args)} :: {detail}") from exc
+    return (completed.stdout or "").strip()
+
+
+def _github_pages_base_url(repo_url: str) -> str:
+    """Derive the GitHub Pages base URL from a GitHub repository URL."""
+    parsed = urlparse(repo_url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("site_repo_url must be an HTTP(S) URL")
+    parts = [part for part in parsed.path.strip("/").split("/") if part]
+    if len(parts) < 2:
+        raise ValueError("site_repo_url must include owner/repository")
+    owner, repo = parts[0], parts[1]
+    if repo.endswith(".git"):
+        repo = repo[:-4]
+    if repo.lower() == f"{owner.lower()}.github.io":
+        return f"https://{owner}.github.io"
+    return f"https://{owner}.github.io/{repo}"
+
+
+def _git_auth_env(token: str) -> dict[str, str]:
+    """Build git environment enforcing non-interactive PAT-based auth."""
+    basic = base64.b64encode(f"x-access-token:{token}".encode()).decode("ascii")
+    return {
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "Never",
+        "GIT_CONFIG_COUNT": "2",
+        "GIT_CONFIG_KEY_0": "credential.interactive",
+        "GIT_CONFIG_VALUE_0": "never",
+        "GIT_CONFIG_KEY_1": "http.https://github.com/.extraheader",
+        "GIT_CONFIG_VALUE_1": f"AUTHORIZATION: basic {basic}",
+    }
+
+
+def publish_preintegration_literal_visuals(
+    preintegration_map: dict[int, Path | str],
+    module_lesson_part: str,
+    *,
+    site_repo_url: str,
+    site_branch: str = "main",
+    target_subdir: str = "assets/gamma",
+    run_id: str | None = None,
+    mode: str = "default",
+    token_env_var: str = "GITHUB_PAGES_TOKEN",
+) -> dict[str, Any]:
+    """Publish preintegration literal-visual PNGs into the Git-hosted site.
+
+    Returns additive metadata plus a ``url_map`` used to substitute diagram card URLs.
+    """
+    safe_module_part = _sanitize_publish_segment(module_lesson_part)
+    safe_target_subdir = _sanitize_publish_segment(target_subdir)
+    mode_normalized = str(mode or "default").strip().lower()
+
+    result: dict[str, Any] = {
+        "repo_url": site_repo_url,
+        "target_subdir": f"{safe_target_subdir}/{safe_module_part}",
+        "preintegration_ready": False,
+        "copied_count": 0,
+        "pushed": False,
+        "url_base": "",
+        "substituted_cards": [],
+        "skipped": [],
+        "url_map": {},
+    }
+
+    if mode_normalized in {"ad-hoc", "adhoc"}:
+        logger.info(
+            "Literal-visual preintegration publish skipped in ad-hoc mode%s",
+            _log_run_suffix(run_id),
+        )
+        return result
+
+    if not preintegration_map:
+        return result
+
+    resolved_inputs: list[tuple[int, Path, str]] = []
+    for card_number, raw_path in sorted(preintegration_map.items()):
+        source = Path(str(raw_path).strip())
+        if not source.is_absolute():
+            source = (PROJECT_ROOT / source).resolve()
+        if not source.is_file():
+            result["skipped"].append({"card_number": card_number, "reason": "missing_local_path"})
+            continue
+        filename = source.name
+        resolved_inputs.append((card_number, source, filename))
+
+    if not resolved_inputs:
+        return result
+
+    token = (
+        os.environ.get(token_env_var, "").strip()
+        or os.environ.get("GH_PAGES_TOKEN", "").strip()
+        or os.environ.get("GITHUB_TOKEN", "").strip()
+    )
+    if not token:
+        raise RuntimeError(
+            "Literal-visual publish requires GITHUB_PAGES_TOKEN "
+            "(legacy fallback: GH_PAGES_TOKEN, or GITHUB_TOKEN) in the environment"
+        )
+
+    git_auth_env = _git_auth_env(token)
+    pages_base = _github_pages_base_url(site_repo_url)
+    url_base = f"{pages_base}/{safe_target_subdir}/{safe_module_part}"
+    result["url_base"] = url_base
+
+    with tempfile.TemporaryDirectory(prefix="gamma-site-publish-") as temp_dir:
+        temp_path = Path(temp_dir)
+        repo_dir = temp_path / "site-repo"
+        _run_git_command(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                site_branch,
+                site_repo_url,
+                str(repo_dir),
+            ],
+            env=git_auth_env,
+            display_args=[
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                site_branch,
+                site_repo_url,
+                str(repo_dir),
+            ],
+        )
+        _run_git_command(["git", "config", "user.name", "app-gamma-bot"], cwd=repo_dir)
+        _run_git_command(
+            ["git", "config", "user.email", "app-gamma-bot@users.noreply.github.com"],
+            cwd=repo_dir,
+        )
+
+        destination_dir = repo_dir / safe_target_subdir / safe_module_part
+        destination_dir.mkdir(parents=True, exist_ok=True)
+
+        tracked_rel_paths: list[str] = []
+        for card_number, source, filename in resolved_inputs:
+            destination = destination_dir / filename
+            shutil.copy2(source, destination)
+            rel_path = destination.relative_to(repo_dir).as_posix()
+            tracked_rel_paths.append(rel_path)
+            hosted_url = f"{url_base}/{filename}"
+            result["url_map"][card_number] = hosted_url
+            result["substituted_cards"].append(card_number)
+
+        result["copied_count"] = len(tracked_rel_paths)
+        _run_git_command(["git", "add", "--", *tracked_rel_paths], cwd=repo_dir)
+        changed = _run_git_command(
+            ["git", "status", "--porcelain", "--", *tracked_rel_paths],
+            cwd=repo_dir,
+        )
+
+        if changed:
+            message = f"Publish preintegration literal visuals for {safe_module_part}"
+            _run_git_command(["git", "commit", "-m", message], cwd=repo_dir)
+            _run_git_command(
+                ["git", "push", site_repo_url, f"HEAD:{site_branch}"],
+                cwd=repo_dir,
+                env=git_auth_env,
+                display_args=["git", "push", site_repo_url, f"HEAD:{site_branch}"],
+            )
+            result["pushed"] = True
+
+    result["preintegration_ready"] = bool(result["url_map"])
+    logger.info(
+        "Literal-visual preintegration publish complete: copied=%d pushed=%s target=%s%s",
+        result["copied_count"],
+        result["pushed"],
+        result["target_subdir"],
+        _log_run_suffix(run_id),
+    )
+    return result
 
 
 def load_style_guide_gamma() -> dict[str, Any]:
@@ -867,6 +1100,9 @@ def generate_deck_mixed_fidelity(
     *,
     client: GammaClient | None = None,
     diagram_cards: list[dict[str, Any]] | None = None,
+    site_repo_url: str | None = None,
+    site_branch: str = "main",
+    mode: str | None = None,
     run_id: str | None = None,
 ) -> dict[str, Any]:
     """Orchestrate two-call split generation for mixed-fidelity decks.
@@ -883,6 +1119,9 @@ def generate_deck_mixed_fidelity(
         module_lesson_part: Identifier for doc naming (e.g., "C1-M1-P2-Macro-Trends").
         client: Optional pre-configured GammaClient.
         diagram_cards: Optional list of literal-visual image URL entries.
+        site_repo_url: Optional git repo URL for preintegration PNG publish.
+        site_branch: Branch for site repo commit/push.
+        mode: Execution mode (default/tracked or ad-hoc) for side-effect guardrails.
         run_id: Optional APP production run id for log correlation.
 
     Returns:
@@ -900,7 +1139,56 @@ def generate_deck_mixed_fidelity(
     literal_visual_slides = groups["literal-visual"]
     literal_slides = literal_text_slides + literal_visual_slides
 
-    card_map = {dc["card_number"]: dc for dc in diagram_cards} if diagram_cards else {}
+    mutable_diagram_cards = [dict(dc) for dc in (diagram_cards or []) if isinstance(dc, dict)]
+    card_map = {dc["card_number"]: dc for dc in mutable_diagram_cards if "card_number" in dc}
+    literal_visual_publish: dict[str, Any] | None = None
+
+    if literal_visual_slides and mutable_diagram_cards:
+        preintegration_map: dict[int, Path | str] = {}
+        for dc in mutable_diagram_cards:
+            card_number = dc.get("card_number")
+            if not isinstance(card_number, int) or card_number <= 0:
+                continue
+            local_path = str(dc.get("preintegration_png_path", "")).strip()
+            image_url = str(dc.get("image_url", "")).strip()
+            if local_path:
+                preintegration_map[card_number] = local_path
+            elif image_url and not _is_remote_http_ref(image_url):
+                preintegration_map[card_number] = image_url
+
+        if preintegration_map:
+            effective_repo_url = site_repo_url or str(base_params.get("site_repo_url", "")).strip()
+            if not effective_repo_url:
+                raise RuntimeError(
+                    "Local preintegration literal-visual paths were supplied, but site_repo_url "
+                    "was not provided for publish/substitution"
+                )
+            effective_mode = mode or str(
+                base_params.get("mode") or base_params.get("execution_mode") or "default"
+            )
+            literal_visual_publish = publish_preintegration_literal_visuals(
+                preintegration_map,
+                module_lesson_part,
+                site_repo_url=effective_repo_url,
+                site_branch=site_branch,
+                run_id=run_id,
+                mode=effective_mode,
+            )
+            if not literal_visual_publish.get("preintegration_ready"):
+                reason = "ad-hoc mode or unresolved local paths"
+                raise RuntimeError(
+                    "Literal-visual preintegration URLs are not ready for dispatch "
+                    f"({reason})."
+                )
+            for dc in mutable_diagram_cards:
+                card_number = dc.get("card_number")
+                if card_number in literal_visual_publish.get("url_map", {}):
+                    dc["image_url"] = literal_visual_publish["url_map"][card_number]
+            card_map = {
+                dc["card_number"]: dc
+                for dc in mutable_diagram_cards
+                if "card_number" in dc
+            }
 
     creative_results: list[dict[str, Any]] = []
     literal_results: list[dict[str, Any]] = []
@@ -922,7 +1210,12 @@ def generate_deck_mixed_fidelity(
         if export_url and export_dir is not None:
             ext = requested_export_format or "pdf"
             filename = f"{module_lesson_part}_{label}.{ext}"
-            downloaded = download_export(export_url, output_dir=export_dir, filename=filename, run_id=run_id)
+            downloaded = download_export(
+                export_url,
+                output_dir=export_dir,
+                filename=filename,
+                run_id=run_id,
+            )
             return _materialize_exported_slide_paths(
                 downloaded,
                 requested_format=requested_export_format,
@@ -1051,7 +1344,9 @@ def generate_deck_mixed_fidelity(
                     )
                 placement_note = str(card_payload.get("placement_note", "")).strip()
                 layout_note = (
-                    f"Layout note: {placement_note}" if placement_note else "Layout note: image-dominant composition."
+                    f"Layout note: {placement_note}"
+                    if placement_note
+                    else "Layout note: image-dominant composition."
                 )
                 content = f"{img_url}\n\n{layout_note}\n\n{content}"
             slide_params["input_text"] = content
@@ -1227,6 +1522,10 @@ def generate_deck_mixed_fidelity(
         "generation_mode": "text",
         "calls_made": calls_made,
     }
+    if literal_visual_publish is not None:
+        payload["literal_visual_publish"] = {
+            k: v for k, v in literal_visual_publish.items() if k != "url_map"
+        }
     validate_outbound_contract(payload)
     return payload
 

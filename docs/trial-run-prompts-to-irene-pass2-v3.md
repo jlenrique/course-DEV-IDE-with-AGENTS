@@ -258,7 +258,8 @@ g2-slide-brief.md must be derived from irene-pass1.md and must not introduce new
 gary-slide-content.json must contain one content-bearing row per slide with fields: slide_number, content, source_ref.
 Each slide must preserve exactly one mode: creative, literal-text, or literal-visual.
 gary-fidelity-slides.json slide_number values must be unique and strictly increasing.
-gary-diagram-cards.json must include only literal-visual cards that actually require hosted image handling.
+gary-diagram-cards.json must include only literal-visual cards that actually require image handling.
+For tracked/default runs, those cards may carry local `preintegration_png_path` values for APP-managed Git-host staging at dispatch time; for ad-hoc runs, pre-host them and provide HTTPS `image_url` values before dispatch.
 gary-theme-resolution.json must freeze:
 requested_theme_key
 resolved_theme_key
@@ -287,7 +288,7 @@ Stop after writing the pre-dispatch package and compact receipt.
 ## 7) Dispatch + Export + Sort Verification (Single Operation)
 
 Dispatch only if all checks are true:
-- diagram URLs validated as image content
+- diagram inputs are dispatch-ready: either HTTPS image URLs validate as image content, or tracked/default mode provides local preintegration PNGs plus `site_repo_url` for managed staging
 - no unresolved literal-visual blockers
 - envelope READY
 - singular mode preserved
@@ -296,6 +297,8 @@ Dispatch only if all checks are true:
 
 Dispatch requirements:
 - execute mixed-fidelity generation
+- if local preintegration literal-visual assets are present in tracked/default mode, supply `site_repo_url` and require additive `literal_visual_publish.preintegration_ready=true` before Gate 2 review
+- if the run is ad-hoc, do not attempt Git-host staging; stop until HTTPS-hosted literal-visual URLs are supplied
 - request exports and download
 - non-null file_path for every output row
 - normalize card order 1..N
@@ -351,11 +354,13 @@ Proceed only if all are true:
 - source_ref present for all cards
 - envelope + run log + dispatch result consistent
 - theme-resolution artifact consistent with dispatch log
+- if `literal_visual_publish` is present, it is treated as provenance only for Irene; narration still grounds on approved local slide PNGs in `gary_slide_output`
 
 ### Delegation
 
 Delegate Irene Pass 2 with `gary_slide_output`.
 Use `gary_slide_output` as source-of-truth for order and visual paths.
+If Gary returned `literal_visual_publish`, pass it through as audit context only.
 
 Irene generates `perception_artifacts` **inline** during Pass 2:
 - For each slide PNG, Irene reads the image and emits a perception artifact

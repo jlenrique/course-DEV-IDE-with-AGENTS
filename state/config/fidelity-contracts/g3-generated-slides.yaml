@@ -64,3 +64,18 @@ criteria:
     evaluation_type: deterministic
     check: "provenance[] array has one entry per generated card with card_number, source_call, generation_id, and fidelity class"
     requires_perception: false
+
+  - id: "G3-07"
+    name: "Literal-visual preintegration lineage receipt"
+    description: >
+      When literal-visual cards originate from local preintegration assets,
+      dispatch outputs must carry a substitution receipt showing those cards were
+      staged and replaced with hosted inputs before generation.
+    fidelity_class: [literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: >
+      If gary-diagram-cards contains preintegration_png_path for card N,
+      then dispatch payload includes literal_visual_publish.preintegration_ready=true
+      and card N appears in literal_visual_publish.substituted_cards.
+    requires_perception: false

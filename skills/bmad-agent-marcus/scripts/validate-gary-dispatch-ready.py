@@ -15,6 +15,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import Any
 
 try:
@@ -99,6 +100,27 @@ def _infer_gamma_asset_family(url: str) -> str:
     return "other"
 
 
+def _is_remote_http_ref(value: str) -> bool:
+    parsed = urlparse(str(value).strip())
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def _resolve_existing_local_path(path_value: str, *, bundle_dir: Path) -> Path | None:
+    candidate = Path(path_value)
+    if candidate.is_absolute():
+        return candidate if candidate.is_file() else None
+
+    bundle_candidate = (bundle_dir / candidate).resolve()
+    if bundle_candidate.is_file():
+        return bundle_candidate
+
+    project_candidate = (PROJECT_ROOT / candidate).resolve()
+    if project_candidate.is_file():
+        return project_candidate
+
+    return None
+
+
 def _validate_literal_visual_authority(bundle_dir: Path) -> list[str]:
     errors: list[str] = []
     irene_pass1_path = bundle_dir / "irene-pass1.md"
@@ -166,6 +188,97 @@ def _validate_literal_visual_authority(bundle_dir: Path) -> list[str]:
     return errors
 
 
+def _validate_preintegration_publish_receipt(
+    payload: dict[str, Any],
+    *,
+    bundle_dir: Path,
+) -> list[str]:
+    errors: list[str] = []
+    diagram_cards = _load_diagram_cards(bundle_dir)
+    expected_preintegration_cards: list[int] = []
+
+    for card in diagram_cards:
+        if not isinstance(card, dict):
+            continue
+        card_number = card.get("card_number")
+        if not isinstance(card_number, int):
+            continue
+        preintegration_png_path = str(card.get("preintegration_png_path", "")).strip()
+        image_url = str(card.get("image_url", "")).strip()
+        if preintegration_png_path or (image_url and not _is_remote_http_ref(image_url)):
+            expected_preintegration_cards.append(card_number)
+
+    if not expected_preintegration_cards:
+        return errors
+
+    dispatch_metadata = payload.get("dispatch_metadata")
+    if not isinstance(dispatch_metadata, dict):
+        dispatch_metadata = {}
+
+    site_repo_url = str(
+        dispatch_metadata.get("site_repo_url")
+        or payload.get("site_repo_url")
+        or ""
+    ).strip()
+    if not site_repo_url:
+        errors.append(
+            "site_repo_url must be present when diagram cards use local preintegration paths"
+        )
+
+    invocation_mode = str(
+        dispatch_metadata.get("invocation_mode")
+        or payload.get("invocation_mode")
+        or payload.get("mode")
+        or payload.get("execution_mode")
+        or ""
+    ).strip().lower()
+    if invocation_mode in {"ad-hoc", "adhoc"}:
+        errors.append(
+            "Local preintegration paths are not allowed in ad-hoc mode; "
+            "use tracked/default mode or provide hosted HTTPS image_url values"
+        )
+    elif invocation_mode not in {"", "tracked", "default"}:
+        errors.append(
+            "invocation_mode must be tracked/default when local preintegration "
+            f"paths are used; found {invocation_mode!r}"
+        )
+
+    receipt = payload.get("literal_visual_publish")
+    if not isinstance(receipt, dict):
+        errors.append(
+            "literal_visual_publish must be present when diagram cards use local "
+            "preintegration paths"
+        )
+        return errors
+
+    if not bool(receipt.get("preintegration_ready")):
+        errors.append(
+            "literal_visual_publish.preintegration_ready must be true when local "
+            "preintegration paths were supplied"
+        )
+
+    substituted_cards = receipt.get("substituted_cards")
+    if not isinstance(substituted_cards, list):
+        errors.append(
+            "literal_visual_publish.substituted_cards must be an array when local "
+            "preintegration paths are supplied"
+        )
+        return errors
+
+    substituted_set = {
+        int(card) for card in substituted_cards if isinstance(card, int)
+    }
+    expected_set = set(expected_preintegration_cards)
+    if expected_set - substituted_set:
+        missing = sorted(expected_set - substituted_set)
+        errors.append(
+            "literal_visual_publish.substituted_cards missing card_number(s): "
+            + ", ".join(str(v) for v in missing)
+        )
+
+    return errors
+
+
 def _card_sequence(slides: list[dict[str, Any]]) -> list[int]:
     return [item.get("card_number") for item in slides if isinstance(item, dict)]
 
@@ -190,6 +303,43 @@ def validate_gary_dispatch_ready(
         validate_dispatch_ready(payload)
     except ValueError as exc:
         errors.append(str(exc))
+
+    missing_local_png_for: list[str] = []
+    invalid_non_png_for: list[str] = []
+    remote_file_path_for: list[str] = []
+    bundle_dir = payload_path.parent if payload_path is not None else None
+
+    if isinstance(slides, list):
+        for item in slides:
+            if not isinstance(item, dict):
+                continue
+            slide_label = str(item.get("slide_id") or item.get("card_number") or "unknown")
+            file_path = str(item.get("file_path") or "").strip()
+            if not file_path:
+                continue
+            if _is_remote_http_ref(file_path):
+                remote_file_path_for.append(slide_label)
+                continue
+            if Path(file_path).suffix.lower() != ".png":
+                invalid_non_png_for.append(slide_label)
+            if bundle_dir is not None and _resolve_existing_local_path(file_path, bundle_dir=bundle_dir) is None:
+                missing_local_png_for.append(slide_label)
+
+    if remote_file_path_for:
+        errors.append(
+            "gary_slide_output file_path must reference local downloaded PNGs; remote path found for: "
+            + ", ".join(remote_file_path_for)
+        )
+    if invalid_non_png_for:
+        errors.append(
+            "gary_slide_output file_path must end with .png for: "
+            + ", ".join(invalid_non_png_for)
+        )
+    if missing_local_png_for:
+        errors.append(
+            "gary_slide_output file_path does not exist on disk for: "
+            + ", ".join(missing_local_png_for)
+        )
 
     card_sequence = _card_sequence(slides)
     contiguous_from_one = (
@@ -216,6 +366,9 @@ def validate_gary_dispatch_ready(
 
     if payload_path is not None:
         errors.extend(_validate_literal_visual_authority(payload_path.parent))
+        errors.extend(
+            _validate_preintegration_publish_receipt(payload, bundle_dir=payload_path.parent)
+        )
 
     return {
         "status": "pass" if not errors else "fail",
@@ -224,6 +377,9 @@ def validate_gary_dispatch_ready(
             "slide_count": len(slides),
             "card_sequence": card_sequence,
             "contiguous_from_one": contiguous_from_one,
+            "missing_local_png_for": missing_local_png_for,
+            "invalid_non_png_for": invalid_non_png_for,
+            "remote_file_path_for": remote_file_path_for,
         },
     }
 

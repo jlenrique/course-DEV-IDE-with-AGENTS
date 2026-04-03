@@ -2,6 +2,8 @@
 
 **Pass 2 artifact** — produced after Gary's slides are approved at HIL Gate 2. Always paired with a segment manifest (`template-segment-manifest.md`). Segment IDs in this script must exactly match the manifest entries.
 
+Grounding rule: narration is grounded on approved Gary slide PNGs from `gary_slide_output` plus source references. If `literal_visual_publish` is present, treat it as provenance/audit context only (not as the visual truth source for narration).
+
 ## Header
 
 - **Lesson Plan Reference:** LP-{module_id}{lesson_id}
@@ -51,7 +53,7 @@ three-column comparison, narrate "Notice how the revenue gap widens in each deca
 ## Downstream Consumption — ElevenLabs
 
 - **Suggested Voice ID:** {voice from style guide or learned preference}
-- **Estimated Duration:** {word count ÷ 150 wpm = minutes}
+- **Estimated Duration:** {word count ÷ 130-170 wpm = minutes (planning estimate only; narration_duration from ElevenLabs is authoritative)}
 - **Pronunciation Guide:**
   | Term | Pronunciation |
   |------|--------------|

@@ -109,14 +109,14 @@ Greet the user by name with current settings, last session context summary, and 
 
 ### Gary slide storyboard (HIL, pre–Irene)
 
-**Ownership:** Storyboard **creation** (generate HTML/JSON, manifest-derived recap, conversational approval, persist `authorized-storyboard.json`) is **a Marcus skill only**. It is not a separate specialist skill and not owned by Gary or Irene: Gary supplies the dispatch payload; Irene consumes outputs **after** authorization when the runbook says so. Marcus runs this capability end-to-end for the operator.
+**Ownership:** Storyboard **creation** (generate HTML/JSON, manifest-derived recap, conversational approval, persist `authorized-storyboard.json`) is **a Marcus skill only**. It is not a separate specialist skill and not owned by Gary or Irene: Gary supplies the dispatch payload, including any additive `literal_visual_publish` receipt when tracked-mode preintegration staging occurred; Irene consumes outputs **after** authorization when the runbook says so. Marcus runs this capability end-to-end for the operator.
 
 **Two MVP views (same command, different inputs):**
 
 - **Before Irene (Pass 2):** Gary dispatch only. HTML table includes a **narration** column with *Pending (pre-Pass 2)* for every row — slides-only review.
 - **After Irene:** Same generator, add Irene’s **segment manifest YAML** (`segments[].gary_slide_id` + `narration_text` per `skills/bmad-agent-content-creator/references/template-segment-manifest.md`). Rows with matched script show **slide preview + narration text** in one row (notes-style). Unmatched slides stay *Pending*.
 
-After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate** the **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order; after Pass 2, regenerate with `--segment-manifest` to include script.
+After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate** the **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order; after Pass 2, regenerate with `--segment-manifest` to include script. Remote hosted assets remain remote in the storyboard manifest; local slide PNGs remain the review source of truth for Gate 2.
 
 1. **Generate** (from repo root, paths adjusted to the run bundle):
 
@@ -124,8 +124,10 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
    - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html` (`storyboard_version` 3; `storyboard_view` is `slides_only` or `slides_with_script`).
    - Resolve local PNGs with `--asset-base` when `file_path` is relative to something other than the payload’s directory.
+   - Remote URLs are preserved as remote preview links rather than downgraded to missing assets.
    - **`--segment-manifest`:** optional Pass 2 YAML; **PyYAML** required when used.
    - **`--related-assets`:** optional JSON/YAML for non-slide run artifacts (video/audio/interactive/source links) appended after slide rows.
+   - **`--run-id`:** optional APP run identifier for Channel C log correlation.
 
 2. **Review:** Open `storyboard/index.html` in a browser. No approval controls in the page (v1).
 
@@ -133,7 +135,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
    `python skills/bmad-agent-marcus/scripts/generate-storyboard.py summarize --manifest <bundle-dir>/storyboard/storyboard.json`
 
-4. **Confirm in chat:** Operator explicitly approves after the recap (count, first/last `slide_id`, fidelity counts).
+4. **Confirm in chat:** Operator explicitly approves after the recap (count, first/last `slide_id`, fidelity counts). In tracked/default runs, do this only after `validate-gary-dispatch-ready.py` returns clean for the dispatch payload.
 
 5. **Authorize (fail closed on overwrite):**
 
@@ -165,8 +167,8 @@ Optional: `--strict` on `generate` exits non-zero when any slide has a **missing
 | Content Domain | Target Agent | Status | Style Bible Context Passed |
 |----------------|-------------|--------|---------------------------|
 | Instructional design, Pass 1 (lesson plan + slide brief) | `content-creator` (Irene) | active | Learning objectives, Bloom's level, content type, module/lesson, user constraints |
-| Instructional design, Pass 2 (narration script + segment manifest) | `content-creator` (Irene) | active | Same + `gary_slide_output` (PNG paths + visual descriptions) |
-| Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy; Gary presents theme/template options before generating |
+| Instructional design, Pass 2 (narration script + segment manifest) | `content-creator` (Irene) | active | Same + approved `gary_slide_output` (PNG paths + visual descriptions); Irene generates/refreshed `perception_artifacts` inline from those PNGs |
+| Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy; Gary presents theme/template options before generating and may stage tracked-mode literal-visual source assets into managed Git-host storage before dispatch |
 | Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, segment manifest; Kira always produces silent video |
 | Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | active | Voice/tone standards, segment manifest |
 | Animation storyboard and build guidance (manual-tool) | `vyond-specialist` | active (Story 5.1) | Character style, scene rhythm, instructional emphasis, accessibility constraints |

@@ -236,6 +236,7 @@ Execution mode is a **gate on the state management layer**, not on agents. Agent
 | Memory sidecar `access-boundaries.md` | Read-only | Read-only |
 | Quality gate execution | Always | Always |
 | Asset output | `course-content/staging/` | Scratch/staging area |
+| Remote git side effects (commit/push) | Permitted when explicitly requested by feature contract | Suppressed (fail-closed or explicit no-op) |
 
 Quality preset is applied separately by policy thresholds and validators; it does not redefine persistence routing.
 

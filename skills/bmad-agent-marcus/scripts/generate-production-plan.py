@@ -23,95 +23,49 @@ except ImportError:
     yaml = None  # type: ignore[assignment]
 
 
-CONTENT_TYPE_WORKFLOWS: dict[str, dict[str, Any]] = {
-    "lecture-slides": {
-        "label": "Lecture Slides",
-        "stages": [
-            {"stage": "outline", "specialist": "content-creator", "description": "Draft learning-objective-aligned outline"},
-            {"stage": "slides", "specialist": "gamma-specialist", "description": "Generate slide deck from outline"},
-            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: style bible compliance, Bloom's alignment"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-    "case-study": {
-        "label": "Case Study",
-        "stages": [
-            {"stage": "draft", "specialist": "content-creator", "description": "Draft clinical case with learning integration"},
-            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: clinical accuracy, pedagogical alignment"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-    "assessment": {
-        "label": "Assessment / Quiz",
-        "stages": [
-            {"stage": "draft", "specialist": "content-creator", "description": "Draft assessment items aligned to objectives"},
-            {"stage": "alignment-check", "specialist": "quality-reviewer", "description": "Verify assessment-objective tracing"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-            {"stage": "publish", "specialist": "canvas-specialist", "description": "Publish to LMS"},
-        ],
-    },
-    "discussion-prompt": {
-        "label": "Discussion Prompt",
-        "stages": [
-            {"stage": "draft", "specialist": "content-creator", "description": "Draft discussion prompt with facilitation notes"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-            {"stage": "publish", "specialist": "canvas-specialist", "description": "Publish to LMS"},
-        ],
-    },
-    "video-script": {
-        "label": "Video Script",
-        "stages": [
-            {"stage": "draft", "specialist": "content-creator", "description": "Draft video script with visual cues"},
-            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: content accuracy, pacing"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-    "animated-explainer": {
-        "label": "Animated Explainer",
-        "stages": [
-            {"stage": "brief", "specialist": "content-creator", "description": "Draft instructional brief for animation"},
-            {"stage": "storyboard", "specialist": "vyond-specialist", "description": "Produce storyboard and Vyond build guidance"},
-            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: instructional clarity and pacing"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-    "bespoke-medical-illustration": {
-        "label": "Bespoke Medical Illustration",
-        "stages": [
-            {"stage": "prompting", "specialist": "midjourney-specialist", "description": "Generate parameterized prompt package and iteration plan"},
-            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: visual fidelity and instructional fit"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-    "voiceover": {
-        "label": "Voiceover Narration",
-        "stages": [
-            {"stage": "script", "specialist": "content-creator", "description": "Draft narration script"},
-            {"stage": "script-review", "specialist": "quality-reviewer", "description": "Quality gate: tone, clarity, pacing"},
-            {"stage": "script-checkpoint", "specialist": "human", "description": "Script approval before synthesis"},
-            {"stage": "synthesis", "specialist": "elevenlabs-specialist", "description": "Voice synthesis from approved script"},
-            {"stage": "audio-checkpoint", "specialist": "human", "description": "Audio review and approval"},
-        ],
-    },
-    "interactive-module": {
-        "label": "Interactive Module",
-        "stages": [
-            {"stage": "design", "specialist": "content-creator", "description": "Design interaction model and content flow"},
-            {"stage": "author", "specialist": "articulate-specialist", "description": "Build Storyline/Rise interaction guidance and branching map"},
-            {"stage": "deploy", "specialist": "coursearc-specialist", "description": "Prepare LTI embedding and SCORM deployment checklist"},
-            {"stage": "review", "specialist": "quality-reviewer", "description": "Quality gate: interaction design, accessibility"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-    "coursearc-deployment": {
-        "label": "CourseArc Deployment",
-        "stages": [
-            {"stage": "package-check", "specialist": "coursearc-specialist", "description": "Validate LTI 1.3 and SCORM deployment prerequisites"},
-            {"stage": "accessibility-check", "specialist": "quality-reviewer", "description": "Quality gate: WCAG 2.1 AA interactive compliance"},
-            {"stage": "checkpoint", "specialist": "human", "description": "User review and approval"},
-        ],
-    },
-}
+WORKFLOW_TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "references" / "workflow-templates.yaml"
+
+
+def load_workflow_templates(workflow_template_path: Path = WORKFLOW_TEMPLATE_PATH) -> dict[str, dict[str, Any]]:
+    """Load workflow templates from the canonical Marcus registry."""
+    if yaml is None:
+        msg = "pyyaml is required to load workflow templates"
+        raise RuntimeError(msg)
+
+    with open(workflow_template_path, encoding="utf-8") as handle:
+        registry = yaml.safe_load(handle) or {}
+
+    templates = registry.get("workflow_templates")
+    if not isinstance(templates, dict) or not templates:
+        msg = f"Invalid or empty workflow template registry: {workflow_template_path}"
+        raise ValueError(msg)
+
+    return templates
+
+
+def build_workflow_lookup(workflow_templates: dict[str, dict[str, Any]]) -> dict[str, str]:
+    """Build requested content type -> canonical workflow id lookup."""
+    lookup: dict[str, str] = {}
+    for template_id, workflow in workflow_templates.items():
+        keys = [template_id, *workflow.get("aliases", [])]
+        for key in keys:
+            if key in lookup and lookup[key] != template_id:
+                msg = f"Duplicate workflow key detected: {key}"
+                raise ValueError(msg)
+            lookup[key] = template_id
+    return lookup
+
+
+def resolve_workflow(
+    content_type: str,
+    workflow_templates: dict[str, dict[str, Any]],
+    workflow_lookup: dict[str, str],
+) -> tuple[str, dict[str, Any]] | tuple[None, None]:
+    """Resolve aliases to canonical workflow ids."""
+    template_id = workflow_lookup.get(content_type)
+    if template_id is None:
+        return None, None
+    return template_id, workflow_templates[template_id]
 
 
 def load_course_context(course_context_path: Path) -> dict | None:
@@ -130,27 +84,32 @@ def generate_plan(
     module_id: str | None = None,
     lesson_id: str | None = None,
     course_context: dict | None = None,
+    workflow_templates: dict[str, dict[str, Any]] | None = None,
 ) -> str:
     """Generate a markdown production plan for the given content type and scope.
 
     Args:
-        content_type: One of the known content type keys.
+        content_type: One of the known workflow template ids or aliases.
         module_id: Optional module identifier for scope.
         lesson_id: Optional lesson identifier for scope.
         course_context: Optional course context dictionary from YAML.
+        workflow_templates: Optional workflow template registry override.
 
     Returns:
         Markdown string with the production plan.
     """
-    workflow = CONTENT_TYPE_WORKFLOWS.get(content_type)
-    if not workflow:
-        available = ", ".join(sorted(CONTENT_TYPE_WORKFLOWS.keys()))
+    workflow_templates = workflow_templates or load_workflow_templates()
+    workflow_lookup = build_workflow_lookup(workflow_templates)
+    template_id, workflow = resolve_workflow(content_type, workflow_templates, workflow_lookup)
+    if not workflow or not template_id:
+        available = ", ".join(sorted(workflow_lookup.keys()))
         return f"Unknown content type: {content_type}\n\nAvailable types: {available}"
 
     lines: list[str] = []
     lines.append(f"# Production Plan: {workflow['label']}")
     lines.append(f"\n**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     lines.append(f"**Content Type:** {workflow['label']}")
+    lines.append(f"**Workflow Template:** {template_id}")
 
     if module_id:
         lines.append(f"**Module:** {module_id}")
@@ -199,14 +158,17 @@ def generate_plan(
 
 
 def main() -> None:
+    workflow_templates = load_workflow_templates()
+    workflow_lookup = build_workflow_lookup(workflow_templates)
+
     parser = argparse.ArgumentParser(
         description="Generate a skeleton production plan from content type and module structure.",
         epilog="Outputs a markdown production plan to stdout.",
     )
     parser.add_argument(
         "content_type",
-        choices=sorted(CONTENT_TYPE_WORKFLOWS.keys()),
-        help="Type of content to produce.",
+        choices=sorted(workflow_lookup.keys()),
+        help="Type of content or workflow alias to produce.",
     )
     parser.add_argument(
         "--module",
@@ -252,14 +214,20 @@ def main() -> None:
         print(f"Course context loaded: {course_context is not None}", file=sys.stderr)
 
     try:
+        template_id, workflow = resolve_workflow(args.content_type, workflow_templates, workflow_lookup)
+        if not workflow or not template_id:
+            msg = f"Unknown workflow template or alias: {args.content_type}"
+            raise ValueError(msg)
+
         if args.output_json:
-            workflow = CONTENT_TYPE_WORKFLOWS.get(args.content_type)
             output = {
-                "content_type": args.content_type,
-                "label": workflow["label"] if workflow else "Unknown",
+                "content_type": template_id,
+                "requested_content_type": args.content_type,
+                "label": workflow["label"],
+                "aliases": workflow.get("aliases", []),
                 "module": args.module,
                 "lesson": args.lesson,
-                "stages": workflow["stages"] if workflow else [],
+                "stages": workflow["stages"],
                 "generated_at": datetime.now().isoformat(),
             }
             json.dump(output, sys.stdout, indent=2)
@@ -270,6 +238,7 @@ def main() -> None:
                 module_id=args.module,
                 lesson_id=args.lesson,
                 course_context=course_context,
+                workflow_templates=workflow_templates,
             )
             print(plan)
         sys.exit(0)

@@ -97,6 +97,8 @@ node scripts/heartbeat_check.mjs
 ├── skills/production-coordination/scripts/
 │   ├── manage_mode.py           ← CLI: read/set default vs ad-hoc mode → mode_state.json
 │   └── manage_baton.py          ← CLI: init/update/close run baton JSON files
+├── skills/bmad-agent-marcus/references/
+│   └── workflow-templates.yaml  ← Canonical workflow template registry for planner ids and aliases
 └── _bmad/memory/           ← Agent memory sidecars
 ```
 

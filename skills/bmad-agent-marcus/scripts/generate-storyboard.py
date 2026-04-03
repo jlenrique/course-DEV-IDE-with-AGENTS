@@ -204,6 +204,7 @@ def build_manifest(
     narration_by_slide_id: dict[str, str] | None = None,
     segment_manifest_path: Path | None = None,
     related_assets: list[dict[str, Any]] | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Return manifest dict and do not write files."""
     slides_in = payload.get("gary_slide_output")
@@ -281,6 +282,7 @@ def build_manifest(
         "storyboard_view": view,
         "slides": slides_out,
         "related_assets": normalized_related_assets,
+        "run_id": run_id,
         "rows": rows,
     }
     if segment_manifest_path is not None:
@@ -469,7 +471,6 @@ def write_bundle(
 
 
 def cmd_generate(args: argparse.Namespace) -> int:
-    run_id: str | None = getattr(args, "run_id", None)
     payload_path: Path = args.payload
     out_dir: Path = args.out_dir
     asset_base: Path = args.asset_base or payload_path.parent
@@ -489,6 +490,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
             asset_base=asset_base.resolve(),
         )
 
+    run_id: str | None = getattr(args, "run_id", None)
+
     manifest = build_manifest(
         payload,
         payload_path=payload_path,
@@ -497,6 +500,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         narration_by_slide_id=narration_map,
         segment_manifest_path=segment_manifest_path,
         related_assets=related_assets,
+        run_id=run_id,
     )
     write_bundle(manifest, storyboard_dir)
 
@@ -504,14 +508,6 @@ def cmd_generate(args: argparse.Namespace) -> int:
         1
         for s in manifest["slides"]
         if isinstance(s, dict) and s.get("asset_status") == "missing"
-    )
-    slide_count = len(manifest.get("slides", []))
-    logger.info(
-        "Storyboard bundle written: slides=%d missing=%d path=%s%s",
-        slide_count,
-        missing,
-        storyboard_dir,
-        _log_run_suffix(run_id),
     )
     print(f"Wrote {storyboard_dir / 'storyboard.json'}")
     print(f"Wrote {storyboard_dir / 'index.html'}")
@@ -579,8 +575,9 @@ def main() -> int:
     )
     gen.add_argument(
         "--run-id",
+        type=str,
         default=None,
-        help="Optional APP production run ID for Channel-C log correlation.",
+        help="Production run ID for traceability in manifest metadata and logs.",
     )
     gen.set_defaults(func=cmd_generate)
 

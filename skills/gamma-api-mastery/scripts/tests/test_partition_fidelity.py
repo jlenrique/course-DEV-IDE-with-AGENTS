@@ -29,7 +29,8 @@ class TestPartitionByFidelity:
         ]
         result = partition_by_fidelity(slides)
         assert len(result["creative"]) == 2
-        assert len(result["literal"]) == 0
+        assert len(result["literal-text"]) == 0
+        assert len(result["literal-visual"]) == 0
 
     def test_all_literal(self) -> None:
         slides = [
@@ -38,7 +39,8 @@ class TestPartitionByFidelity:
         ]
         result = partition_by_fidelity(slides)
         assert len(result["creative"]) == 0
-        assert len(result["literal"]) == 2
+        assert len(result["literal-text"]) == 1
+        assert len(result["literal-visual"]) == 1
 
     def test_mixed(self) -> None:
         slides = [
@@ -49,15 +51,18 @@ class TestPartitionByFidelity:
         ]
         result = partition_by_fidelity(slides)
         assert len(result["creative"]) == 2
-        assert len(result["literal"]) == 2
+        assert len(result["literal-text"]) == 1
+        assert len(result["literal-visual"]) == 1
         assert result["creative"][0]["slide_number"] == 1
-        assert result["literal"][0]["slide_number"] == 2
+        assert result["literal-text"][0]["slide_number"] == 2
+        assert result["literal-visual"][0]["slide_number"] == 4
 
     def test_default_fidelity_is_creative(self) -> None:
         slides = [{"slide_number": 1, "content": "A"}]
         result = partition_by_fidelity(slides)
         assert len(result["creative"]) == 1
-        assert len(result["literal"]) == 0
+        assert len(result["literal-text"]) == 0
+        assert len(result["literal-visual"]) == 0
 
 
 class TestBuildDocTitle:
@@ -89,7 +94,7 @@ class TestReassembleSlideOutput:
         assert result[0]["source_call"] == "creative"
         assert result[0]["slide_id"] == "test-card-01"
         assert result[1]["card_number"] == 2
-        assert result[1]["source_call"] == "literal"
+        assert result[1]["source_call"] == "literal-text"
         assert result[2]["card_number"] == 3
 
     def test_empty_literal(self) -> None:

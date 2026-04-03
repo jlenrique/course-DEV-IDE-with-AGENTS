@@ -44,9 +44,9 @@ Marcus recognizes these content types, each mapping to different specialist agen
 
 | Content Type | Primary Specialist | Secondary Specialists | Typical Workflow |
 |---|---|---|---|
-| Narrated lesson (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Marcus -> Irene P1 -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Kira -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
+| Narrated lesson (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Workflow template id: `narrated-lesson` (alias: `narrated-presentation-with-video`). Marcus -> Irene P1 -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Kira -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
 | Lecture slides only | `gamma-specialist` (Gary) | `content-creator` (slide brief), `quality-reviewer` | Marcus -> Irene slide brief -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> approve |
-| Narrated slides (no video) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Marcus -> Irene P1 -> Marcus -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Quinn-R pre-comp -> Descript -> Marcus/[Gate 4] |
+| Narrated slides (no video) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Workflow template id: `narrated-slides` (alias: `narrated-presentation`). Marcus -> Irene P1 -> Marcus -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Quinn-R pre-comp -> Descript -> Marcus/[Gate 4] |
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Assessment / quiz | `content-creator` | `qualtrics-specialist`, `canvas-specialist`, `quality-reviewer` | Draft → objective alignment check → Qualtrics/Canvas routing → review → publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
@@ -142,7 +142,7 @@ After identifying intent and completing fidelity discovery, Marcus builds a prod
 6. **Insert checkpoint gates** — Place human review points at quality-critical junctures
 7. **Present plan to user** — Show the planned workflow with stages, specialists, and checkpoints. Recommend the plan with rationale, invite adjustments
 
-For skeleton plan generation from templates, invoke `./scripts/generate-production-plan.py` with content type and module structure.
+For skeleton plan generation from templates, invoke `./scripts/generate-production-plan.py` with a workflow template id or alias and the module structure. The script loads the canonical registry at `./references/workflow-templates.yaml`, so composite workflows and simpler asset workflows share one planning source.
 
 ## Platform Allocation Intelligence (Story G.1)
 

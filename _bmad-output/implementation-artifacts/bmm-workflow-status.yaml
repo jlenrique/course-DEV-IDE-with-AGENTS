@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-03-30 (Stories 11.1-11.4 completed; Epic 11 done; all APP epics complete)
+# Last Updated: 2026-04-02 (Epic SB done: SB.1 storyboard run-view closed; all epics complete)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "Legacy baseline: 42 stories across 9 epics completed. Epic 11 remediation stories 11.1-11.4 are now done."
-    stories_count: 46
-    epics_count: 10
+    note: "All epics complete. 47 stories across 11 epics (including Epic SB storyboard run-view)."
+    stories_count: 47
+    epics_count: 11
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "All legacy APP epics remain done; Epic 11 remediation stories 11.1-11.4 are complete."
+    note: "All epics done (11 epics, 47 stories). Epic SB storyboard run-view closed 2026-04-02."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -93,5 +93,6 @@ key_decisions:
   - "EPIC 11 STORY FILES CREATED (2026-03-30): 11.1-11.4 implementation artifacts created with finding-linked acceptance checklists; due-diligence matrix initialized."
   - "EPIC 11 EXECUTION (2026-03-30): Story 11.1 finalized with evidence scan and adversarial closure; Story 11.2 implemented in gamma_operations with contract validation and 44 passing targeted tests."
   - "EPIC 11 CLOSED (2026-03-30): Story 11.3 added Marcus Pass 2 dual-input validator + tests; Story 11.4 added theme-mapping handshake enforcement + tests; targeted suite at 54 passed."
+  - "EPIC SB CLOSED (2026-04-02): Story SB.1 storyboard run-view implemented across 5 commits. Storyboard evolved from Gary-dispatch-only to on-demand run view with Pass 2 narration merge, related-asset rows, --run-id traceability, and authorized slide snapshots. 14 storyboard tests + 31 validator tests green. Spec-driven implementation (spec-sb-1-storyboard-run-view-refresh.md). Party Mode consensus on --run-id addition and tracking record closeout."
 
-next_workflow_step: "Optional: run Epic 11 retrospective and prepare git closeout/release hardening checklist."
+next_workflow_step: "All epics and stories complete. Project is in production operations mode. Optional: run retrospectives for any epic marked optional."

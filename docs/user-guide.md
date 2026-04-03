@@ -215,7 +215,7 @@ For narrated slide packs, the team assembles in **Descript** using a single **as
 
 ### Happy-path walkthrough: user + Marcus + “X-ray” (planner / checklist)
 
-This section is **one coherent story**: a **full-featured narrated presentation** with **HTTPS-hosted custom images** on selected slides (literal cards), **creative** Gamma for the rest, **ElevenLabs** audio, optional **Kling** silent clips, then **compositor → Descript**. Use it as (1) a **narrative walkthrough**, (2) a **trial-run planner**, and (3) a **step checklist**—same steps, three roles.
+This section is **one coherent story**: a **full-featured narrated presentation** with **HTTPS-hosted custom images** on selected slides (literal cards), **creative** Gamma for the rest, **ElevenLabs** audio, optional **Kling** silent clips, then **compositor → Descript**. In the workflow template registry this path is `narrated-lesson`, with alias `narrated-presentation-with-video`. Use it as (1) a **narrative walkthrough**, (2) a **trial-run planner**, and (3) a **step checklist**—same steps, three roles.
 
 **Is this clear and doable?** Yes: it matches how the repo is designed (Irene two-pass, mixed-fidelity Gamma + `diagram_cards`, manifest SSOT, compositor bundle). **What to watch anyway:**
 

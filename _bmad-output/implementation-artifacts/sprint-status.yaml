@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-03-31 (Epic SB backlog: evolving lesson storyboard / run view — Story SB.1)
+# last_updated: 2026-04-02 (Epic SB done: SB.1 storyboard run-view implemented, tested, closed)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-03-31  # Epic SB backlog: SB.1 evolving lesson storyboard (run view).
+last_updated: 2026-04-02  # Epic SB done: SB.1 storyboard run-view implemented, tested, closed.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -166,5 +166,6 @@ development_status:
 
   # === EPIC SB: Storyboard & run visualization (Marcus-owned) ===
   # Vision: on-demand regen, slide+script, multi-asset links. See sb-1-evolving-lesson-storyboard-run-view.md
-  epic-sb: backlog
-  sb-1-evolving-lesson-storyboard-run-view: backlog
+  epic-sb: done
+  sb-1-evolving-lesson-storyboard-run-view: done
+  epic-sb-retrospective: optional

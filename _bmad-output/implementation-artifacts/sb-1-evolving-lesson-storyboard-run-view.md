@@ -1,7 +1,7 @@
 # Story SB.1: Evolving lesson storyboard (run view)
 
 **Epic:** SB — Storyboard & run visualization *(new; Marcus-owned)*  
-**Status:** backlog  
+**Status:** done  
 **Sprint key:** `sb-1-evolving-lesson-storyboard-run-view`  
 **Added:** 2026-03-31  
 **Depends on:** Storyboard v1 complete (`spec-storyboard-gary-marcus-review.md` — `generate-storyboard.py`, `write-authorized-storyboard.py`, Marcus `SB` capability)
@@ -79,12 +79,21 @@ Each phase should ship with **pytest** on manifest merge logic and a **fixture r
 
 ## Dev Agent Record
 
-*(Populate when implementation starts.)*
+Implementation followed the spec-driven approach in `spec-sb-1-storyboard-run-view-refresh.md` (status: done) and earlier storyboard v1 spec `spec-storyboard-gary-marcus-review.md`. The suggested implementation tasks above were planning-phase guidance; actual delivery was tracked via the spec's execution tasks and acceptance criteria.
 
 ### File List
 
-- *(TBD)*
+- `skills/bmad-agent-marcus/scripts/generate-storyboard.py` — manifest builder, HTML projection, CLI (generate + summarize), segment-manifest merge, related-assets support, `--run-id` traceability
+- `skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py` — authorized slide snapshot writer
+- `skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py` — 14 tests (v1 regression, Pass 2 narration, related assets, CLI, run-id, literal visuals)
+- `skills/bmad-agent-marcus/SKILL.md` — SB capability, operator refresh flow, related-assets input documented
+- `_bmad-output/implementation-artifacts/spec-sb-1-storyboard-run-view-refresh.md` — implementation spec (done)
+- `_bmad-output/implementation-artifacts/spec-storyboard-gary-marcus-review.md` — v1 spec (done)
 
 ### Change Log
 
-- *(TBD)*
+- 2026-04-01: v1 storyboard (Gary dispatch → HTML + authorized snapshot) — commit `48b70ce`
+- 2026-04-01: Pass 2 slide+narration via optional segment manifest — commit `311ae15`
+- 2026-04-02: SB.1 related-asset rows, spec, SKILL.md update — commit `26afb8e`
+- 2026-04-02: Storyboard hardening, validators, session wrapup — commit `4a475ce`
+- 2026-04-02: `--run-id` CLI argument wired for manifest traceability, 14/14 tests green

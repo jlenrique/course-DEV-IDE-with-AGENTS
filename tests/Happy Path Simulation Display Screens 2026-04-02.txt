@@ -1,0 +1,371 @@
+HAPPY PATH SIMULATION: Narrated Lesson — C1-M1-P2 "Macro Trends in Healthcare Innovation"
+Now I'll walk every step of the pipeline as Marcus would execute it, validating each contract handoff. Party team will weigh in at each gate.
+
+STAGE 0: Session Open & Settings Handshake
+Marcus activates. Loads:
+
+_bmad/config.yaml — user_name: Juanl
+Memory sidecar from _bmad/memory/bmad-agent-marcus-sidecar/index.md
+state/runtime/mode_state.json — execution mode: ad-hoc
+Specialist registry: references/specialist-registry.yaml — 9 specialists, all active
+Marcus greets:
+
+"Hey Juanl! Session settings check: execution mode is ad-hoc and quality preset is draft. Assets go to staging scratch. Keep these settings, switch mode, or change preset before we start?"
+
+User confirms. Marcus logs confirmation.
+
+Contract validation:
+
+manage_run.py create accepts --mode ad-hoc and --preset draft
+manage_baton.py init accepts run_id
+🏃 Bob: Settings handshake protocol followed. Both axes confirmed before any work.
+
+STAGE 1: Intent Parsing & Fidelity Discovery
+User says: "Let's build a narrated lesson for C1 Module 1 — Presentation 2: Macro Trends in Healthcare Innovation. I have Tejal's notes in a Notion page and some PDFs in Box."
+
+Marcus parses:
+
+Content type: Narrated lesson (full pipeline) — maps to the full dependency graph
+Scope: C1/M1/P2
+Source materials: Notion + Box
+Marcus runs fidelity discovery (per conversation-mgmt.md):
+
+"Before we plan — two questions. Are there any visuals in Tejal's notes that need faithful reproduction? And any text that must appear literally on slides?"
+
+User: "Yes — there's a dual-axis chart on page 7 that needs to be rebranded, and the 10 Knowledge Check topics from Chapters 2 & 3 must appear exactly."
+
+Marcus captures:
+
+
+fidelity_guidance:
+  literal_visuals:
+    - description: "Dual-axis chart from page 7"
+      source_ref: "TEJAL_Notes.pdf#page7"
+  literal_text:
+    - description: "10 KC topics from Chapters 2 & 3"
+      source_ref: "extracted.md#Chapter 2-3 Knowledge Check"
+Contract validation:
+
+generate-production-plan.py accepts lecture-slides content type — but this is narrated lesson which isn't in the argparse choices. Let me check:
+Bash Check production plan content types
+IN
+cd "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS" && .venv/Scripts/python skills/bmad-agent-marcus/scripts/generate-production-plan.py --help 2>&1 | grep "positional"  -A 5
+
+OUT
+positional arguments:
+  {animated-explainer,assessment,bespoke-medical-illustration,case-study,coursearc-deployment,discussion-prompt,interactive-module,lecture-slides,video-script,voiceover}
+                        Type of content to produce.
+
+options:
+  -h, --help            show this help message and exit
+🏗️ Winston (Architect): Hold on — the production plan generator doesn't have narrated-lesson as a content type. The content type vocabulary in conversation-mgmt.md lists "Narrated lesson (full pipeline)" as the primary workflow, but the plan generator only accepts lecture-slides, video-script, etc. The full narrated pipeline is the most important workflow and it has no plan template.
+
+💻 Amelia: Confirmed gap. generate-production-plan.py covers individual asset types but not the composite narrated-lesson workflow that chains through all specialists.
+
+🏃 Bob: This is a real finding. Marcus would need to construct the full pipeline plan manually from the dependency graph in conversation-mgmt.md rather than from the plan generator. The plan generator is useful for simpler content types but doesn't template the composite pipeline. This should be logged.
+
+📊 Mary: Functionally, Marcus can still orchestrate — he has the full dependency graph documented. But the plan generator gap means there's no script-generated skeleton for the most complex workflow. This is a usability gap, not a blocker.
+
+Consensus: Log as a finding. Continue simulation — Marcus constructs the plan from the dependency graph.
+
+STAGE 2: Source Wrangling
+Marcus delegates to Source Wrangler:
+
+"Pulling Tejal's Notion page and Box references into a source bundle."
+
+Invocation: Source Wrangler builds bundle at course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal/
+
+Contract check: Source Wrangler produces:
+
+extracted.md (clean markdown from Notion + Box + PDF)
+metadata.json (provenance, section map)
+raw/ (original files)
+Validation: validate-source-bundle-confidence.py exists as a Marcus script.
+
+Bash Check source bundle validator
+IN
+cd "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS" && .venv/Scripts/python skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py --help 2>&1
+
+OUT
+usage: validate-source-bundle-confidence.py [-h] --bundle-dir BUNDLE_DIR [--receipt RECEIPT]
+
+Validate source bundle confidence consistency
+
+options:
+  -h, --help            show this help message and exit
+  --bundle-dir BUNDLE_DIR
+                        Path to source bundle directory containing extracted.md, metadata.json, and ingestion-
+                        evidence.md
+  --receipt RECEIPT     Optional Prompt 4 receipt markdown path for cross-checking gate interpretation
+Good — validates extracted.md, metadata.json, and ingestion-evidence.md exist and are consistent.
+
+STAGE 3: Vera G0 — Source Bundle Completeness
+Marcus delegates to Vera with gate G0 envelope pointing to the source bundle.
+
+Contract: Vera loads state/config/fidelity-contracts/g0-source-bundle.yaml, reads extracted.md + metadata.json, checks section coverage, provenance, PDF degradation.
+
+Returns: status: passed, no omissions/inventions/alterations.
+
+🧪 Quinn: G0 contract file exists. Vera's SKILL.md explicitly documents G0 capability. Circuit breaker handling documented in Marcus's conversation-mgmt.md. Clean.
+
+STAGE 4: Irene Pass 1 — Lesson Plan + Slide Brief
+Marcus delegates to Irene with Pass 1 envelope:
+
+pass: 1, content_type: "lesson-plan"
+Learning objectives from course_context.yaml
+fidelity_guidance block with literal visual/text requirements
+governance.allowed_outputs: ["lesson_plan", "slide_brief"]
+Irene produces:
+
+Lesson plan (learning objectives, content outline, Bloom's levels, visual suggestions)
+Slide brief (per-slide: content, fidelity tag creative/literal-text/literal-visual, source_ref, behavioral_intent)
+Downstream annotations for Gary (numCards suggestion, textMode per slide)
+Contract check: Irene's template references exist:
+
+Bash List Irene's reference files
+IN
+ls "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-content-creator/references/" 2>/dev/null
+
+OUT
+delegation-protocol.md
+init.md
+memory-system.md
+pedagogical-framework.md
+save-memory.md
+template-assessment-brief.md
+template-dialogue-script.md
+template-first-person-explainer.md
+template-lesson-plan.md
+template-narration-script.md
+template-segment-manifest.md
+template-slide-brief.md
+All 7 artifact type templates present. Pass 1 templates: template-lesson-plan.md, template-slide-brief.md.
+
+STAGE 5: Vera G1 — Lesson Plan vs Source Bundle
+Marcus delegates to Vera with gate G1.
+
+Contract: Vera loads g1-lesson-plan.yaml, compares LOs to source themes, validates source_refs, checks structure.
+
+Returns: status: passed.
+
+STAGE 6: Vera G2 — Slide Brief vs Lesson Plan
+Marcus delegates to Vera with gate G2.
+
+Contract: Vera loads g2-slide-brief.yaml, compares slide brief to lesson plan.
+
+Returns: status: passed.
+
+STAGE 7: Quinn-R G2 Quality Review
+Marcus delegates to Quinn-R for quality review of lesson plan + slide brief.
+
+Contract check:
+
+Bash Find Quinn-R quality reviewer skill
+IN
+ls "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-quality-reviewer/" 2>/dev/null | head -5 || echo "NOT FOUND - checking alternate path" && ls "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/" 2>/dev/null | grep -i "quality\|quinn"
+
+OUT
+SKILL.md
+references
+bmad-agent-quality-reviewer
+quality-control
+Read c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\skills\bmad-agent-quality-reviewer\SKILL.md
+Quinn-R exists, active, with 8 review dimensions. Contract valid.
+
+STAGE 8: HIL Gate 1 — Lesson Plan Review
+Marcus presents to user:
+
+"Lesson plan and slide brief for C1-M1-P2 are ready. 16 slides covering 4 learning objectives. Irene flagged Slide 3 and Slide 11 as literal-visual (Tejal's chart), Slide 7 as literal-text (KC topics). Quinn-R's pre-review: all clear. Style bible: JCPH Navy headers, Montserrat headings. What's your call?"
+
+User approves. Marcus logs via manage_run.py approve.
+
+🏃 Bob: Gate 1 protocol followed per checkpoint-coord.md. Artifact presented, quality criteria stated, explicit approval requested.
+
+STAGE 9: Imagine Handoff (Literal Visuals)
+Marcus surfaces literal-visual slides:
+
+"Irene flagged Slides 3 and 11 as needing rebranded visuals. Source: Tejal's chart from page 7. Are the rebranded PNGs ready?"
+
+User drops PNGs to course-content/staging/ad-hoc/rebranded-assets/
+
+Marcus validates URLs via gamma_operations.py validate-url <url> — confirms HTTPS-accessible with image content type.
+
+Builds diagram_cards block for Gary's envelope.
+
+Contract validation: validate-url command exists in gamma_operations.py. The Imagine Handoff Checkpoint protocol is fully documented in conversation-mgmt.md.
+
+STAGE 10: Gary — Gamma Slide Generation
+Marcus delegates to Gary with context envelope:
+
+Slide brief from Irene
+diagram_cards for literal-visual slides
+Style bible sections (color palette, typography, visual hierarchy)
+governance.allowed_outputs: ["artifact_paths", "quality_assessment", "parameter_decisions"]
+Gary invokes gamma-api-mastery skill:
+
+merge-params — merges style guide + template + envelope params
+partition_by_fidelity() — splits slides into creative/literal-text/literal-visual groups
+execute_generation() — production entry point for mixed-fidelity generation
+Downloads PNGs + PPTX
+Gary returns: gary_slide_output[] with per-slide: slide_id, file_path, card_number, fidelity, source_ref, visual_description
+
+Contract validation:
+
+partition_by_fidelity tested and green (12 tests)
+execute_generation documented as production entry point
+merge_parameters() enforces fidelity-control vocabulary
+validate-gary-dispatch-ready.py validates outbound contract
+STAGE 11: Marcus — Storyboard Generation
+Marcus generates storyboard (SB capability):
+
+
+python generate-storyboard.py generate --payload gary-dispatch.json --out-dir bundle/ --run-id C1-M1-P2-ADHOC
+Produces storyboard/storyboard.json + storyboard/index.html. Marcus reads aloud summary.
+
+Contract validated: 14 storyboard tests green. storyboard_version: 3, run_id in manifest metadata.
+
+STAGE 12: Vera G3 — Generated Slides vs Slide Brief
+Marcus delegates to Vera with gate G3.
+
+Contract: Vera invokes PPTX bridge + image bridge via sensory-bridges skill, compares to slide brief using g3-generated-slides.yaml L1 contract.
+
+Returns: status: passed.
+
+STAGE 13: Quinn-R G3 Quality Review
+Quinn-R reviews Gary's output: brand consistency, accessibility contrast, visual hierarchy, content fidelity to slide brief.
+
+STAGE 14: HIL Gate 2 — Slides Review (CRITICAL)
+Marcus runs dispatch validation first:
+
+
+python validate-gary-dispatch-ready.py --payload gary-dispatch.json
+Requires: non-empty file_path, non-empty source_ref, contiguous card_number 1..N.
+
+Marcus presents:
+
+"Here's the C1-M1-P2 slide deck — 16 frames covering all 4 learning objectives. Gary's self-assessment: layout integrity 0.92, parameter confidence 0.88. Vera: G3 passed. Quinn-R: brand consistent, one minor contrast note on Slide 11. This is the critical gate — once you approve, I'll send these to Irene for narration. What's your call?"
+
+User approves. Marcus writes authorized storyboard:
+
+
+python write-authorized-storyboard.py --manifest storyboard.json --run-id C1-M1-P2-ADHOC --output authorized-storyboard.json
+🧪 Quinn: Gate 2 protocol is the most important in the pipeline. The dispatch validator is the pre-approval technical gate. The storyboard authorization is fail-closed on overwrite. Both scripts tested and green. Contract solid.
+
+STAGE 15: Irene Pass 2 — Narration Script + Segment Manifest
+Marcus delegates to Irene with Pass 2 envelope:
+
+pass: 2, content_type: "narration-script"
+gary_slide_output[] — PNG paths + visual descriptions
+perception_artifacts[] — from sensory bridge cache
+governance.allowed_outputs: ["narration_script", "segment_manifest", "pairing_references"]
+Irene produces:
+
+Narration script (per-slide script text, voice suggestions, pronunciation guides)
+Segment manifest YAML (per template-segment-manifest.md): segments[].gary_slide_id, narration_text, sfx_cue, music_direction, visual_source, visual_mode, behavioral_intent
+Marcus validates handoff:
+
+
+python validate-irene-pass2-handoff.py --envelope pass2-envelope.json
+Contract validation: 17 Irene Pass 2 handoff tests green. Validates source_image_path presence, slide ID alignment, segment structure.
+
+STAGE 16: Vera G4 — Narration vs Slides + Lesson Plan
+Marcus delegates to Vera with gate G4.
+
+Contract: Vera loads g4-narration-script.yaml, verifies narration matches perceived slide content and lesson plan assessment items.
+
+Returns: status: passed.
+
+STAGE 17: Quinn-R G4 Quality Review
+Quinn-R reviews narration script + manifest: instructional soundness, intent fidelity (learner effect), content accuracy flags.
+
+STAGE 18: HIL Gate 3 — Script & Manifest Review
+Marcus presents:
+
+"Narration script and segment manifest ready. 16 segments, estimated 18 minutes. SFX on 3 segments, background music throughout. Vera: G4 passed. Quinn-R: strong intent fidelity, one pacing note on Segment 12. What's your call?"
+
+User approves.
+
+STAGE 19: ElevenLabs — Audio Generation
+Marcus delegates to ElevenLabs Agent:
+
+Reads manifest for narration_text, voice selection, SFX cues, music direction
+Generates: narration MP3s, VTT captions, SFX assets, background music
+Writes back to manifest: narration_duration, narration_file, narration_vtt
+Contract check:
+
+Bash Check ElevenLabs specialist exists
+IN
+ls "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-elevenlabs/" 2>/dev/null
+
+OUT
+SKILL.md
+references
+ElevenLabs agent exists with SKILL.md and references.
+
+STAGE 20: Vera G5 — Audio vs Narration Script
+Marcus delegates to Vera with gate G5.
+
+Contract: Vera invokes audio bridge for STT, compares transcript to script, checks WPM and pronunciation. Uses g5-audio.yaml contract.
+
+Returns: status: passed.
+
+STAGE 21: Kira — Silent Video Clips
+Marcus delegates to Kira (only after ElevenLabs returns narration_duration):
+
+Reads manifest for visual_source, visual_mode, narration_duration
+Generates silent video clips matched to narration duration
+Writes back: visual_file, visual_duration
+Bash Check Kling specialist exists
+IN
+ls "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-kling/" 2>/dev/null
+
+OUT
+SKILL.md
+references
+Kira agent exists.
+
+STAGE 22: Quinn-R Pre-Composition Validation
+Quinn-R runs pre-composition pass: validates all manifest fields populated, audio/video/slide assets present, segment timing consistent.
+
+STAGE 23: Compositor — Descript Assembly Guide
+Marcus delegates to Compositor skill:
+
+
+python compositor_operations.py sync-visuals manifest.yaml
+python compositor_operations.py guide manifest.yaml DESCRIPT-ASSEMBLY-GUIDE.md
+sync-visuals copies Gate-2-approved stills into the assembly bundle
+guide generates Descript Assembly Guide from completed manifest
+Contract validated: Compositor scripts callable, both subcommands working. Assembly guide format reference exists at compositor/references/assembly-guide-format.md.
+
+STAGE 24: Descript Manual Handoff
+Marcus hands off to user:
+
+"Everything's assembled! Here's your Descript package:
+
+DESCRIPT-ASSEMBLY-GUIDE.md — step-by-step assembly instructions
+Audio: 16 narration MP3s + background music in audio/
+Visuals: Approved slide stills in visuals/, video clips in video/
+Captions: VTT files in captions/
+Track assignments: V1: video/slides, A1: narration, A2: music, A3: SFX
+Open Descript, import the assets, follow the guide. Export as MP4 + VTT when you're happy with it."
+
+User assembles in Descript and exports.
+
+STAGE 25: Quinn-R Post-Composition Validation
+Quinn-R validates final MP4 + VTT: visual-audio sync, caption accuracy, composition integrity, overall instructional quality.
+
+STAGE 26: HIL Gate 4 — Final Video Review
+Marcus presents:
+
+"Final video is back from Quinn-R's post-composition review. 18 minutes, 16 segments, all captions validated. Quinn-R: composition integrity 0.94, one minor audio level note on the music transition at 7:42. What's your call?"
+
+User approves. Asset staged for Canvas deployment.
+
+STAGE 27: Run Finalization
+Marcus runs finalization (per conversation-mgmt.md):
+
+Verify all assets in target locations
+(Ad-hoc mode: skip state writes)
+Present summary
+"Run complete! Here's what we produced: 16-slide narrated lesson, 18-minute video, captions, assembly guide. Everything's in course-content/staging/ad-hoc/. Anything else, or shall we wrap up?"
+

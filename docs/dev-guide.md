@@ -125,7 +125,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 10. Marcus reads `resources/exemplars/` for any relevant worked patterns
 11. Marcus reads `state/config/style_guide.yaml` for Gamma-specific parameter preferences
 12. Marcus reads `state/config/tool_policies.yaml` to determine the active run preset (e.g., `draft`)
-13. Marcus builds a **production plan**: what needs to be created, which specialist handles it, what quality gates apply
+13. Marcus builds a **production plan** from the registry-backed workflow templates in `skills/bmad-agent-marcus/references/workflow-templates.yaml`: what needs to be created, which specialist handles it, and what quality gates apply
 14. Marcus presents the plan to the user for confirmation
 
 ### Phase 4: Specialist Delegation (Marcus → Gary, Gamma Specialist)

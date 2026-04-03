@@ -51,7 +51,7 @@ planning → in-progress → [stage cycle] → completed
 
 ## Stage Sequencing Rules
 
-1. Stages execute in the order defined by `generate-production-plan.py` content type workflows
+1. Stages execute in the order defined by the Marcus workflow template registry loaded by `generate-production-plan.py` (`skills/bmad-agent-marcus/references/workflow-templates.yaml`)
 2. A stage cannot start until the previous stage is `approved` (dependency chain)
 3. Human checkpoint stages (`checkpoint`) block advancement until explicitly approved
 4. Revision loops return to `working` with revision feedback attached

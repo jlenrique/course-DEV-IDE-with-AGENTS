@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-03  # Project closeout: workflow template registry added (registry-backed narrated-lesson + narrated-slides; 10 tests); happy-path simulation v2 completed and saved to tests/.
+last_updated: 2026-04-03  # Project closeout: workflow template registry harmonized (canonical narrated-deck-video-export + narrated-lesson-with-video-or-animation; 10 tests); happy-path simulation v2 completed and saved to tests/.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system

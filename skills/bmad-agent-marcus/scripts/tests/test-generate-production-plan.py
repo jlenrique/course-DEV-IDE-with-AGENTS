@@ -22,8 +22,8 @@ CANONICAL_CONTENT_TYPES = [
     "voiceover",
     "interactive-module",
     "coursearc-deployment",
-    "narrated-slides",
-    "narrated-lesson",
+    "narrated-deck-video-export",
+    "narrated-lesson-with-video-or-animation",
 ]
 
 
@@ -90,25 +90,25 @@ def test_human_checkpoint_present() -> None:
         assert "USER REVIEW" in result.stdout, f"No user checkpoint for {content_type}"
 
 
-def test_alias_resolution_for_narrated_presentation() -> None:
-    """Narrated presentation alias resolves to the narrated slides template."""
-    data = run_plan_json("narrated-presentation")
-    assert data["content_type"] == "narrated-slides"
-    assert data["requested_content_type"] == "narrated-presentation"
-    assert "narrated-presentation" in data["aliases"]
+def test_narrated_deck_video_export_has_no_aliases() -> None:
+    """Canonical template 1 is alias-free by harmonization policy."""
+    data = run_plan_json("narrated-deck-video-export")
+    assert data["content_type"] == "narrated-deck-video-export"
+    assert data["requested_content_type"] == "narrated-deck-video-export"
+    assert data["aliases"] == []
 
 
-def test_alias_resolution_for_video_variant() -> None:
-    """Video workflow alias resolves to the narrated lesson template."""
-    data = run_plan_json("narrated-presentation-with-video")
-    assert data["content_type"] == "narrated-lesson"
-    assert data["requested_content_type"] == "narrated-presentation-with-video"
-    assert "narrated-presentation-with-video" in data["aliases"]
+def test_canonical_video_or_animation_template() -> None:
+    """Canonical template 2 resolves directly and remains alias-free."""
+    data = run_plan_json("narrated-lesson-with-video-or-animation")
+    assert data["content_type"] == "narrated-lesson-with-video-or-animation"
+    assert data["requested_content_type"] == "narrated-lesson-with-video-or-animation"
+    assert data["aliases"] == []
 
 
-def test_narrated_lesson_stage_order() -> None:
-    """Narrated lesson workflow preserves the happy-path dependency order."""
-    data = run_plan_json("narrated-lesson")
+def test_narrated_lesson_with_video_or_animation_stage_order() -> None:
+    """Template 2 preserves full motion-enabled happy-path dependency order."""
+    data = run_plan_json("narrated-lesson-with-video-or-animation")
     stages = [stage["stage"] for stage in data["stages"]]
     assert stages == [
         "source-wrangling",
@@ -138,13 +138,12 @@ def test_narrated_lesson_stage_order() -> None:
 
 
 def test_help_flag_lists_new_workflows() -> None:
-    """Help output includes the new narrated workflow ids and aliases."""
+    """Help output includes harmonized narrated workflow ids."""
     result = run_plan("--help")
     assert result.returncode == 0
     stdout = result.stdout.lower()
-    assert "narrated-lesson" in stdout
-    assert "narrated-presentation" in stdout
-    assert "narrated-presentation-with-video" in stdout
+    assert "narrated-deck-video-export" in stdout
+    assert "narrated-lesson-with-video-or-animation" in stdout
 
 
 if __name__ == "__main__":
@@ -155,9 +154,9 @@ if __name__ == "__main__":
         test_module_and_lesson_args,
         test_markdown_includes_module,
         test_human_checkpoint_present,
-        test_alias_resolution_for_narrated_presentation,
-        test_alias_resolution_for_video_variant,
-        test_narrated_lesson_stage_order,
+        test_narrated_deck_video_export_has_no_aliases,
+        test_canonical_video_or_animation_template,
+        test_narrated_lesson_with_video_or_animation_stage_order,
         test_help_flag_lists_new_workflows,
     ]
     for test in tests:

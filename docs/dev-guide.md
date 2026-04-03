@@ -1,7 +1,7 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry `skills/bmad-agent-marcus/references/workflow-templates.yaml` added 2026-04-02; happy-path simulation v2 completed 2026-04-03)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry harmonization pass completed 2026-04-03)
 
 ---
 
@@ -126,6 +126,8 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 11. Marcus reads `state/config/style_guide.yaml` for Gamma-specific parameter preferences
 12. Marcus reads `state/config/tool_policies.yaml` to determine the active run preset (e.g., `draft`)
 13. Marcus builds a **production plan** from the registry-backed workflow templates in `skills/bmad-agent-marcus/references/workflow-templates.yaml`: what needs to be created, which specialist handles it, and what quality gates apply
+    - Canonical narrated template for slide-to-video export: `narrated-deck-video-export` (alias-free)
+    - Canonical narrated template with custom video/animation generation: `narrated-lesson-with-video-or-animation`
 14. Marcus presents the plan to the user for confirmation
 
 ### Phase 4: Specialist Delegation (Marcus → Gary, Gamma Specialist)

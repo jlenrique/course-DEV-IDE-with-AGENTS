@@ -41,7 +41,7 @@
 
 ## Transient Ad-Hoc Section
 
-- **2026-03-27:** User confirmed **ad-hoc** for narrated-slides pilot (`state/runtime/mode_state.json`). Assets → `course-content/staging/ad-hoc/` (e.g. `ad-hoc/source-bundles/`). State/memory learning suppressed except this section; QA remains active.
+- **2026-03-27:** User confirmed **ad-hoc** for narrated-deck-video-export pilot (`state/runtime/mode_state.json`). Assets → `course-content/staging/ad-hoc/` (e.g. `ad-hoc/source-bundles/`). State/memory learning suppressed except this section; QA remains active.
 - **2026-03-27:** SME PDF confirmed at `course-content/courses/TEJAL_Course 01 Mod 01 Notes 2026-03-16.pdf`. Source bundle for *physician as innovator* AV pilot: `course-content/staging/ad-hoc/source-bundles/pilot-physician-innovator/extracted.md` (+ `metadata.json`).
 - **2026-03-27:** Gate 2 **approved** Gamma **v4** (exemplar-aligned Recraft V3 + line drawing). Pass 2 artifacts: `course-content/staging/ad-hoc/c1m1-physician-innovator-pilot-pass2/` (`NS-...md`, `manifest.yaml`); slides: `v4-exemplar-aligned-recraft-v3/png/`.
 - **2026-03-27:** ElevenLabs manifest narration **complete** — `audio/seg-01..10.mp3`, `captions/seg-01..10.vtt`, Matilda `XrExE9yKIg1WjnnlVkGX`, ~374s total; see `elevenlabs-generation-summary.json`.

@@ -28,9 +28,14 @@ Run settings:
 - Quality preset: production
 
 Prompt pack and operator card:
-- Use `docs/trial-run-prompts-to-irene-pass2-v4.md` as default prompt pack.
+- Use `docs/workflow/trial-run-prompts-to-irene-pass2-v4.md` as default prompt pack.
 - Use `docs/workflow/trial-run-v3-operator-card.md` as operator checklist.
 - The operator will provide run constants and operator directives after Shift Open completes.
+
+Anti-drift controls that must be enforced in this session:
+- Prompt 6B literal-visual operator packet + readiness confirmation before Prompt 7.
+- Storyboard A after Gary dispatch, before Gate 2 approval.
+- Storyboard B after Irene Pass 2, before downstream audio/script finalization.
 
 ## Notes
 

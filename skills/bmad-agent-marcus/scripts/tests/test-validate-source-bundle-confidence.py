@@ -6,6 +6,8 @@ import sys
 from importlib import util
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[4]
 SCRIPT_PATH = ROOT / "skills" / "bmad-agent-marcus" / "scripts" / "validate-source-bundle-confidence.py"
@@ -159,6 +161,115 @@ def test_fails_when_receipt_uses_confidence_as_failure_reason_without_explicit_d
     assert any("receipt fails planning/fidelity usability on confidence grounds" in msg for msg in result["errors"])
 
 
+def _write_minimal_bundle_under_repo(repo: Path) -> Path:
+    """Same shape as _write_bundle but rooted at *repo* (for run-constants path checks)."""
+    bundle = repo / "staging" / "b1"
+    raw = bundle / "raw"
+    raw.mkdir(parents=True)
+    img = repo / "APC Content Roadmap.jpg"
+    img.write_text("png", encoding="utf-8")
+    (raw / "perception_roadmap.json").write_text(
+        json.dumps(
+            {
+                "artifact_path": str(img.resolve()),
+                "confidence": "HIGH",
+                "confidence_rationale": "Minor wording variance possible on smallest labels.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "metadata.json").write_text(
+        json.dumps(
+            {
+                "provenance": [
+                    {
+                        "kind": "local_image",
+                        "ref": str(img.resolve()),
+                        "note": "sensory-bridges perceive(image,G0); perception raw/perception_roadmap.json; original in raw/APC Content Roadmap.jpg",
+                        "fetched_at": "2026-03-30T00:00:00+00:00",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "extracted.md").write_text(
+        "\n".join(
+            [
+                "## APC Content Roadmap — sensory bridge (G0)",
+                "",
+                "**Ingestion:** Official path on `course-content/courses/APC Content Roadmap.jpg`.",
+                "",
+                "## Bridge confidence",
+                "",
+                "HIGH: Minor wording variance possible on smallest labels.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "ingestion-evidence.md").write_text(
+        "\n".join(
+            [
+                "# Ingestion Evidence",
+                "",
+                "| source_id | pathway_used | extraction_status | coverage_metric | confidence | bundle_location | provenance_summary | planning_readiness |",
+                "|---|---|---|---|---|---|---|---|",
+                "| SRC-ROADMAP-PNG-01 | official | pass | ok | high | bundle | `kind=local_image`; source file APC Content Roadmap.jpg; perception raw/perception_roadmap.json | ready |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return bundle
+
+
+def test_run_constants_mismatch_fails(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    bundle = _write_minimal_bundle_under_repo(repo)
+    (repo / "primary.pdf").write_text("pdf", encoding="utf-8")
+    bad = {
+        "run_id": "R1",
+        "lesson_slug": "ls",
+        "bundle_path": "staging/WRONG",
+        "primary_source_file": str((repo / "primary.pdf").resolve()),
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+    }
+    (bundle / "run-constants.yaml").write_text(yaml.safe_dump(bad), encoding="utf-8")
+
+    result = validate_source_bundle_confidence(bundle, repo_root=repo)
+
+    assert result["status"] == "fail"
+    assert any("run_constants:" in e for e in result["errors"])
+
+
+def test_run_constants_aligned_passes_with_repo_root(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    bundle = _write_minimal_bundle_under_repo(repo)
+    (repo / "primary.pdf").write_text("pdf", encoding="utf-8")
+    good = {
+        "run_id": "R1",
+        "lesson_slug": "ls-b1",
+        "bundle_path": "staging/b1",
+        "primary_source_file": str((repo / "primary.pdf").resolve()),
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+    }
+    (bundle / "run-constants.yaml").write_text(yaml.safe_dump(good), encoding="utf-8")
+
+    result = validate_source_bundle_confidence(bundle, repo_root=repo)
+
+    assert result["status"] == "pass"
+    assert not any("run_constants:" in e for e in result["errors"])
+
+
 def test_cli_exit_code_and_output(tmp_path: Path) -> None:
     bundle, receipt = _write_bundle(tmp_path)
 
@@ -174,6 +285,86 @@ def test_cli_exit_code_and_output(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
         check=False,
+    )
+
+    assert proc.returncode == 0
+    data = json.loads(proc.stdout)
+    assert data["status"] == "pass"
+
+
+def test_passes_with_source_file_ingestion_pattern_and_hyphen_heading(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    bundle.mkdir(parents=True)
+    pdf = (tmp_path / "APC C1-M1 Tejal 2026-03-29.pdf").resolve()
+    pdf.write_text("pdf", encoding="utf-8")
+
+    (bundle / "metadata.json").write_text(
+        json.dumps(
+            {
+                "provenance": [
+                    {
+                        "kind": "local_pdf",
+                        "ref": str(pdf),
+                        "note": "pypdf scanned=24/24",
+                        "fetched_at": "2026-04-03T00:00:00+00:00",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "extracted.md").write_text(
+        "\n".join(
+            [
+                "## SRC-PRIMARY-PDF-01 - sensory bridge (G0)",
+                "",
+                f"**Ingestion:** source file {pdf}; official source-wrangler path `wrangle_local_pdf`",
+                "",
+                "## Bridge confidence",
+                "",
+                "HIGH: pypdf extraction completed; focus narrowed to Part 1.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "ingestion-evidence.md").write_text(
+        "\n".join(
+            [
+                "# Ingestion Evidence",
+                "",
+                "| source_id | pathway_used | extraction_status | coverage_metric | confidence | bundle_location | provenance_summary | planning_readiness |",
+                "|---|---|---|---|---|---|---|---|",
+                f"| SRC-PRIMARY-PDF-01 | official | pass | focused | high | extracted.md#SRC-PRIMARY-PDF-01 | source file {pdf}; local_pdf; pypdf scanned=24/24 | ready |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_source_bundle_confidence(bundle)
+
+    assert result["status"] == "pass"
+    assert any(row["source_id"] == "SRC-PRIMARY-PDF-01" for row in result["checked_sources"])
+
+
+def test_wrapper_module_cli_exit_code_and_output(tmp_path: Path) -> None:
+    bundle, receipt = _write_bundle(tmp_path)
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.utilities.validate_source_bundle_confidence",
+            "--bundle-dir",
+            str(bundle),
+            "--receipt",
+            str(receipt),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(ROOT),
     )
 
     assert proc.returncode == 0

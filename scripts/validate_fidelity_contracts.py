@@ -28,6 +28,8 @@ VALID_EVAL_TYPES = {"deterministic", "agentic"}
 VALID_FIDELITY_CLASSES = {"creative", "literal-text", "literal-visual"}
 VALID_MODALITIES = {"image", "audio", "pdf", "pptx", "video", None}
 
+G4_SECONDARY_SCHEMA = "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
+
 
 def validate_contract(filepath: Path) -> list[str]:
     """Validate a single contract file. Returns list of error messages."""
@@ -50,6 +52,13 @@ def validate_contract(filepath: Path) -> list[str]:
         for field in REQUIRED_SOURCE_OF_TRUTH:
             if field not in sot:
                 errors.append(f"source_of_truth missing field: {field}")
+        if data.get("gate") == "G4":
+            secondary_schema = sot.get("schema_ref_secondary")
+            if secondary_schema != G4_SECONDARY_SCHEMA:
+                errors.append(
+                    "source_of_truth missing or invalid field for G4: "
+                    f"schema_ref_secondary must be '{G4_SECONDARY_SCHEMA}'"
+                )
     elif "source_of_truth" in data:
         errors.append("source_of_truth must be a mapping")
 

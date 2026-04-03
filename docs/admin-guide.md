@@ -1,7 +1,7 @@
 # Admin Guide — System Configuration and Operations
 
 **Audience:** System administrators and the project owner responsible for environment setup, tool connectivity, and operational health.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done, 47 stories; v4 production prompt pack with operator directives; tracked/default mode as standard)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry harmonization pass completed 2026-04-03)
 
 ---
 
@@ -379,7 +379,7 @@ Defined in `hooks/hooks.json`:
 | `sessionStart` | `hooks/scripts/session-start.mjs` | **Placeholder** — reads hook stdin, returns JSON status; does not run pre-flight yet |
 | `sessionEnd` | `hooks/scripts/session-end.mjs` | **Placeholder** — same pattern; run reporting not wired |
 
-Hook scripts are placeholders. Full hook-driven automation (auto-preflight on session open, auto-report on session close) is architecturally supported but not wired to production flows. Rely on conversational pre-flight (`skills/pre-flight-check/`), the production session startup protocol (`docs/workflow/production-session-start.md`), and manual operational checks.
+Full hook-driven pre-flight and session-end reporting remain on the **Epic 4 / 4A** roadmap. Until then, rely on conversational pre-flight (`skills/pre-flight-check/`) and manual operational checks.
 
 ---
 
@@ -479,17 +479,15 @@ Git-versioned in `state/config/`. If corrupted, restore from git history: `git c
 
 ## Operational Procedures
 
-### Production run: narrated deck happy path (operator checklist)
+### Trial run: narrated deck happy path (operator checklist)
 
 Before the instructional lead follows the **Happy-path walkthrough** in [`docs/user-guide.md`](user-guide.md) (section *Happy-path walkthrough: user + Marcus + “X-ray”*) with their own content, confirm:
 
 1. **`.env`** — `GAMMA_API_KEY`, `ELEVENLABS_API_KEY`, and Kling keys as needed; no secrets committed.
 2. **Pre-flight** — `node scripts/heartbeat_check.mjs` (or Marcus-driven pre-flight) green for the tools in scope.
-3. **Mode** — `skills/production-coordination/scripts/manage_mode.py` reflects **default** (tracked) for production runs; ad-hoc routes under `course-content/staging/ad-hoc/` per `docs/ad-hoc-contract.md`.
-4. **Literal-visual assets** — In tracked/default mode, literal-visual cards may use local preintegration PNGs that APP stages to managed Git hosting before dispatch. In ad-hoc mode, `diagram_cards` images must be **publicly fetchable HTTPS URLs**.
-5. **Operator directives** — The v4 prompt pack requires **operator directives** (Prompt 2A) before ingestion. The operator provides focus, exclusion, and special treatment instructions — or explicitly confirms “no special directives.”
-6. **Prompt pack and operator card** — Use `docs/trial-run-prompts-to-irene-pass2-v4.md` and `docs/workflow/trial-run-v3-operator-card.md`. For first tracked runs, also review `docs/workflow/first-tracked-run-checklist.md`.
-7. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+3. **Mode** — `skills/production-coordination/scripts/manage_mode.py` reflects **default** vs **ad-hoc**; ad-hoc routes under `course-content/staging/ad-hoc/` per `docs/ad-hoc-contract.md`.
+4. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
+5. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Adding a New Tool Integration
 

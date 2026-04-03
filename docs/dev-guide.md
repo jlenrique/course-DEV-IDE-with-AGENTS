@@ -1,7 +1,7 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done, 47 stories; v4 production prompt pack with operator directives; tracked/default mode as standard)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry harmonization pass completed 2026-04-03)
 
 ---
 
@@ -189,7 +189,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 34. User reviews content in staging
 35. User tells Marcus to promote: *"Looks good, promote to courses"*
 36. Content moves from `course-content/staging/` to `course-content/courses/`
-37. Platform publishing follows via Canvas Deployment Director (Story 3.6), CourseArc specialist (Story 6.1), or manual steps as appropriate
+37. Platform publishing follows (Canvas API, CourseArc/LTI, etc. — **Canvas specialist** and related stories may still be deferred; use existing clients or manual steps as documented in planning artifacts)
 
 ---
 
@@ -384,7 +384,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `bmad-agent-kling` | `skills/bmad-agent-kling/` | Kira |
 | `bmad-agent-quality-reviewer` | `skills/bmad-agent-quality-reviewer/` | Quinn-R |
 
-**All specialist agents and skills are implemented** — including Canvas deployment (Story 3.6), Qualtrics assessment (Story 3.7), and manual-tool specialists (Canva, Vyond, Midjourney, Articulate, CourseArc). Run reporting, governance, and quality coordination are complete (Epics 4, 4A, G).
+**Planned / roadmap:** run reporting and deeper workflow state (Epic 4, after Epic 4A governance); Canvas deployment skill when Story 3.6 ships.
 
 ### Compositor assembly bundle CLI
 
@@ -773,8 +773,8 @@ These are the authoritative sources — this guide references them rather than d
 | Document | Location | What It Covers |
 |----------|----------|---------------|
 | **Architecture** | `_bmad-output/planning-artifacts/architecture.md` | Full architectural decisions; governance + APP sections |
-| **PRD** | `_bmad-output/planning-artifacts/prd.md` | **91 FRs** (incl. FR81–FR91 governance), success criteria, journeys (all implemented) |
-| **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | **11 epics, 47 stories** (all complete); includes Epics 11 (trial remediation) and SB (storyboard run-view) |
+| **PRD** | `_bmad-output/planning-artifacts/prd.md` | **91 FRs** (incl. FR81–FR91 governance), success criteria, journeys |
+| **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | **9 epics, 41 stories** (rebaselined 2026-03-28; +4A-6 2026-03-29); Epic 4A (6 stories) before Epic 4 |
 | **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6, Vera vs Quinn-R ordering, role matrix |
 | **Lane matrix** | `docs/lane-matrix.md` | Cross-agent judgment ownership |
 | **Fidelity architecture (GOLD)** | `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` | APP / three-layer / hourglass / sensory horizon |

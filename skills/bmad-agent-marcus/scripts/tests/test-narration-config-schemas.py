@@ -174,6 +174,20 @@ class TestNarrationScriptParameters:
 # ---- Cross-file consistency tests ----
 
 class TestCrossFileConsistency:
+    def test_g4_gate_name_mentions_segment_manifest(self, g4_contract: dict) -> None:
+        assert g4_contract["gate_name"] == "Narration Script + Segment Manifest"
+
+    def test_g4_source_of_truth_references_segment_manifest_template(
+        self, g4_contract: dict
+    ) -> None:
+        source_of_truth = g4_contract["source_of_truth"]
+        assert source_of_truth["schema_ref"] == (
+            "skills/bmad-agent-content-creator/references/template-narration-script.md"
+        )
+        assert source_of_truth["schema_ref_secondary"] == (
+            "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
+        )
+
     def test_g4_07_references_config_files(self, g4_contract: dict) -> None:
         """G4-07 must reference both narration config files."""
         criteria = g4_contract["criteria"]

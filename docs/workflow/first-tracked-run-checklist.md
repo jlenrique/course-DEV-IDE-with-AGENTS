@@ -30,8 +30,16 @@ For each literal-visual card in gary-diagram-cards.json:
 - [ ] If any preintegration_png_path is used, provide site_repo_url.
 - [ ] If run mode is ad-hoc, do not use preintegration_png_path.
 
+## C2) Gate 6B Operator Packet (Mandatory)
+
+- [ ] Produce literal-visual operator packet at <bundle-dir>/literal-visual-operator-packet.md.
+- [ ] Confirm packet includes, per literal-visual slide: source context, Irene constraints, acceptance checks, and expected preintegration_png_path.
+- [ ] Confirm operator completed Gamma manual build for each required literal-visual and downloaded PNG locally.
+- [ ] Block Prompt 7 until all required literal-visual cards are operator-ready.
+
 ## D) Gary Dispatch and Validation
 
+- [ ] Before publish/dispatch side effects, present pre-dispatch report of literal-visual cards + local PNG paths + site_repo_url and obtain explicit operator confirmation.
 - [ ] Execute Gary mixed-fidelity dispatch.
 - [ ] If local preintegration assets were used, confirm literal_visual_publish exists and shows preintegration_ready=true.
 - [ ] Run validate-gary-dispatch-ready.py against <bundle-dir>/gary-dispatch-result.json.
@@ -51,6 +59,12 @@ For each literal-visual card in gary-diagram-cards.json:
 - [ ] Confirm narration grounding is based on approved local slide PNGs in gary_slide_output.
 - [ ] Treat literal_visual_publish as provenance/audit context only.
 - [ ] Ensure perception_artifacts are present (provided or regenerated inline) and aligned to slide IDs.
+
+## F2) Storyboard Review B (Post-Irene, Pre-Audio)
+
+- [ ] Regenerate storyboard using gary dispatch payload + segment-manifest.yaml so each row can show slide + narration context.
+- [ ] Read manifest-derived summary and obtain explicit operator approval for slide+script alignment.
+- [ ] Do not start downstream audio/script finalization (for example ElevenLabs generation) until this approval is captured.
 
 ## G) Handoff Integrity
 

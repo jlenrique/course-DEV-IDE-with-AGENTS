@@ -1,4 +1,66 @@
 ---
+title: 'Canonical fidelity walk generation and regression hardening'
+type: 'bugfix'
+created: '2026-04-03T00:00:00Z'
+status: 'draft'
+context: ['docs/fidelity-walk.md', 'docs/fidelity-gate-map.md', 'docs/lane-matrix.md']
+---
+
+<frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
+
+## Intent
+
+**Problem:** The latest saved fidelity walk was generated from an ad hoc path that checked the wrong G5 and G6 contract filenames, producing a false remediation report and undermining trust in the release-readiness check.
+
+**Approach:** Add a canonical fidelity-walk generator under the repo's utilities, encode the authoritative per-gate asset map in one place, and cover the gate map, anti-drift checks, and markdown output with regression tests so future reports are generated from validated repo state instead of handwritten assumptions.
+
+## Boundaries & Constraints
+
+**Always:** Preserve the existing G0-G6 gate model and contract names already present in state/config/fidelity-contracts; treat documented redirects as redirects rather than defects; keep the implementation additive and compatible with current production docs and tests; save generated reports into tests using the documented timestamped naming pattern.
+
+**Ask First:** Any change that renames canonical fidelity contracts, weakens an existing gate/anti-drift check, or reclassifies a documented missing asset from remediation to redirect without evidence in repo docs.
+
+**Never:** Patch the symptom by adding fake alias contract files; silently delete the defective report artifact; widen this work into unrelated fidelity or production-prompt refactors.
+
+## I/O & Edge-Case Matrix
+
+| Scenario | Input / State | Expected Output / Behavior | Error Handling |
+|----------|--------------|---------------------------|----------------|
+| HAPPY_PATH | Canonical gate assets and anti-drift docs are present | Generator writes a READY markdown report using canonical G5/G6 contract names and current repo evidence | N/A |
+| MISSING_ASSET | A required gate asset is absent | Report marks the gate as remediation-needed and lists the exact missing path | Continue report generation and surface the missing asset in the summary |
+| REDIRECT_PATH | A superseded path is explicitly documented as redirected | Report marks the item as redirect/documented rather than missing | Do not count the redirect as a critical finding |
+| DOC_DRIFT | Anti-drift checkpoint text is missing from a required doc | Report marks the anti-drift check as failed and includes the missing evidence target | Continue report generation and include the failed check in summary |
+
+</frozen-after-approval>
+
+## Code Map
+
+- `docs/fidelity-walk.md` -- operator-facing procedure and output contract for the canonical walk.
+- `docs/fidelity-gate-map.md` -- authoritative gate ordering and checkpoint expectations.
+- `scripts/validate_fidelity_contracts.py` -- existing contract validation utility to reuse or align with.
+- `tests/fidelity-walk-20260403-111500.md` -- known-good report shape and canonical G5/G6 names.
+- `tests/fidelity-walk-20260403-153321.md` -- defective ad hoc artifact that demonstrates the regression to prevent.
+
+## Tasks & Acceptance
+
+**Execution:**
+- [ ] `scripts/utilities/fidelity_walk.py` -- implement a canonical gate asset registry, anti-drift checks, markdown rendering, and timestamped report writing -- eliminates ad hoc filename drift at the root.
+- [ ] `tests/test_fidelity_walk.py` -- add focused tests for canonical G5/G6 contract mapping, redirect handling, anti-drift checks, and summary/report rendering -- locks the generator against the observed false-negative regression.
+- [ ] `docs/fidelity-walk.md` -- replace prompt-only guidance with the canonical invocation path and clarify that reports must come from the scripted generator -- removes operator ambiguity.
+- [ ] `_bmad-output/implementation-artifacts/epic-11-party-mode-consensus-log.md` -- append the party-mode consensus round covering root cause, remediation choice, and non-regression guardrails -- records the requested consensus artifact.
+
+**Acceptance Criteria:**
+- Given the current repo state, when the canonical fidelity-walk generator runs, then it produces a report that references `state/config/fidelity-contracts/g5-audio.yaml` and `state/config/fidelity-contracts/g6-composition.yaml` and does not flag them as missing.
+- Given a required gate asset is removed in a test fixture, when the generator runs, then the affected gate is reported as remediation-needed and the exact missing path appears in the summary.
+- Given the documented redirect placeholder remains declared in the repo, when the generator evaluates cross-cutting assets, then the redirect is recorded without increasing the critical finding count.
+- Given anti-drift checkpoint text is absent from a required document fixture, when the generator runs, then the anti-drift section records a failure with evidence instead of silently passing.
+
+## Verification
+
+**Commands:**
+- `python -m scripts.utilities.fidelity_walk --output tests/fidelity-walk-YYYYMMDD-HHMMSS.md` -- expected: markdown report is written and uses canonical gate assets.
+- `pytest tests/test_fidelity_walk.py` -- expected: regression suite passes.
+- `pytest` -- expected: full repo test suite passes.---
 title: 'SB.1 preintegration literal-visual publish and URL substitution'
 type: 'feature'
 created: '2026-04-02'

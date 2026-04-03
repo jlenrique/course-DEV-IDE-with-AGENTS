@@ -68,3 +68,17 @@ Decision outcome:
 ## Final Open Questions
 
 - None blocking for Epic 11 closure.
+
+## Round 5 - Fidelity Walk False-Negative Remediation
+
+Question:
+- What is the correct remediation for the reported missing G5/G6 contracts in the latest fidelity walk?
+
+Consensus:
+1. Root cause is a report-generation defect, not a repository contract defect: canonical files are `g5-audio.yaml` and `g6-composition.yaml`.
+2. The fix must be a canonical scripted generator with a single authoritative gate asset map; do not add alias contract files to match bad report output.
+3. Regression coverage must lock canonical G5/G6 names, redirect handling, and anti-drift checkpoint detection.
+4. Operator/control docs must instruct users to invoke the scripted generator and forbid ad hoc fidelity-walk report composition.
+
+Decision outcome:
+- Implement canonical fidelity walk generator in `scripts/utilities/fidelity_walk.py`, add focused tests in `tests/test_fidelity_walk.py`, and update fidelity-walk / wrapup control docs to route all future runs through the script.

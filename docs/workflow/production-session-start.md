@@ -96,6 +96,8 @@ Alternate (JSON log output):
 .venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
 ```
 
+When a tracked bundle already has **`run-constants.yaml`**, add `--bundle-dir <path-to-bundle>` so readiness also validates frozen run constants (`bundle_run_constants` check).
+
 VS Code shortcut: `Tasks: Run Task` -> `APP: Session Readiness + Preflight`
 
 Minimum checks:
@@ -135,8 +137,13 @@ Confirm quality controls are active:
 - Human-in-the-loop controls: `docs/workflow/human-in-the-loop.md`
 - Agent QA gate policy: `docs/workflow/agent-qa-release-gate.md`
 - Artifacts contract: `docs/workflow/trial-run-pass2-artifacts-contract.md` (v1.1+, includes operator-directives.md)
-- Current prompt pack: `docs/trial-run-prompts-to-irene-pass2-v4.md`
+- Current prompt pack: `docs/workflow/trial-run-prompts-to-irene-pass2-v4.md`
 - Operator card: `docs/workflow/trial-run-v3-operator-card.md`
+
+Mandatory anti-drift confirmations for this session:
+- Prompt 6B literal-visual operator checkpoint is required before Prompt 7 dispatch.
+- Storyboard A is required after Gary dispatch and before Gate 2 approval.
+- Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
 
 For this shift, define:
 

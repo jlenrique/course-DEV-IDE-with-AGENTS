@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done, 47 stories; v4 production prompt pack with operator directives; workflow template registry harmonized)
+**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; harmonized workflow template registry live; happy-path fully validated)
 
 ---
 
@@ -121,16 +121,6 @@ Marcus can pull your reference materials into the production context:
 - **Web exemplars** — Share a URL, or save a page with Playwright in Cursor and point Marcus at the HTML file; the **source-wrangler** skill turns captures into `extracted.md` bundles for Irene and Gary
 
 Marcus proactively offers to pull source materials before starting production tasks. Context enrichment before creation beats revision after.
-
-### Operator Directives (Custom Source Instructions)
-
-After source materials are identified but before ingestion begins, you provide **operator directives** — your instructions on how to process the sources. This is a mandatory step (Prompt 2A in the v4 prompt pack). Three categories:
-
-- **Focus** — *"Focus on Section 3 and the case study in Chapter 5"*
-- **Exclude** — *"Ignore Appendix B — it's instructor-only grading notes"*
-- **Special treatment** — *"The diagram on page 14 must be preserved exactly (literal-visual, source-crop)"*
-
-If you have no special instructions, tell Marcus *"No special directives"* — he records the acknowledgment and proceeds. These directives are tracked in `operator-directives.md` and respected by all downstream agents, including Vera's fidelity checks.
 
 ---
 
@@ -253,6 +243,7 @@ This section is **one coherent story**: a **narrated slide presentation exported
 | **Irene Pass 2** (after Gate 2, before heavy audio/video spend) | **Paired** narration script + **segment manifest** | `narration-script.md`, `segment-manifest.yaml` | Spoken copy matches **approved slide PNGs** (including embedded custom art), segment IDs line up, `visual_mode` / `music` / `sfx` intent, Kling segments if any |
 
 Always edit **script + manifest together** so segment IDs and copy do not drift.
+The Gate 4 fidelity contract treats them as a pair too, so any Pass 2 template change must keep both contract references aligned before the run proceeds.
 
 **Where control docs and assets live (default mode happy path)**
 
@@ -290,12 +281,14 @@ The **model prompts** for each step (what to type to Marcus) are in the next sub
 |---|-------------------------|----------------------------------|-------------------------|-----------------------------------|
 | 0 | Open the run: mode, run id, pre-flight | `read-mode-state.py`, `manage_mode.py` → `mode_state.json`; pre-flight skill checks MCP/API | ☐ Mode is default (or ad-hoc if you intend trial scratch) ☐ Tools green for Gamma, EL, Kling | `state/runtime/mode_state.json` |
 | 1 | Answer fidelity questions (literal slides, exact text) | Marcus fills `fidelity_guidance` for Irene; tracked mode may stage local preintegration PNGs later, ad-hoc still requires pre-hosted URLs | ☐ You listed slides needing **literal** treatment ☐ For tracked mode: local source PNGs identified; for ad-hoc: HTTPS URLs ready before Gary | Optional PNG drop: `course-content/staging/rebranded-assets/` |
-| 2 | Source pull + **operator directives** | Source wrangler → Notion client; then record focus/exclusion/special treatment instructions in `operator-directives.md` | ☐ Bundle usable for Irene ☐ Operator directives recorded (or explicitly waived) | `source-bundles/APP-RUN-C1M3L2-HTN-20260330/extracted.md`, `operator-directives.md` |
+| 2 (opt.) | Optional source pull | Source wrangler → Notion client | ☐ Bundle usable for Irene | `source-bundles/APP-RUN-C1M3L2-HTN-20260330/extracted.md` |
 | 3 | Kick off Irene Pass 1; review outputs | Irene Pass 1: `bmad-agent-content-creator` | **☐ PHASE 1 REVIEW:** `lesson-plan.md` + `slide-brief.md` — LOs, order, **fidelity per slide** | `…/C1-M3-L2-ambulatory-bp/lesson-plan.md`, `slide-brief.md` |
 | 4 | **HIL Gate 1** — approve or revise pedagogy | Human checkpoint; no API spend for slides yet | ☐ Gate 1 sign-off | — |
-| 5 | Supply literal-visual assets; delegate Gary | `validate_image_url` for hosted refs or tracked-mode preintegration publish/substitution; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ Hosted URLs validated or tracked-mode staging receipt clean ☐ Gary unblocked only after literal-visual inputs are dispatch-ready | `gamma-export/` (exports + `gary_slide_output` metadata; optional `literal_visual_publish`) |
+| 5 | Supply literal-visual assets; build operator packet | Marcus compiles literal-visual list + per-slide build instructions from Irene cards and diagram mapping, then blocks dispatch until all required cards are operator-ready | ☐ `literal-visual-operator-packet.md` reviewed ☐ Operator confirms each required PNG is created and downloaded | `literal-visual-operator-packet.md`, `gary-diagram-cards.json` |
+| 5B | Pre-dispatch confirmation + Gary run | `validate_image_url` for hosted refs or tracked-mode preintegration publish/substitution; explicit pre-dispatch confirmation; Gary envelope: `fidelity_per_slide` + `diagram_cards`; `execute_generation` → mixed fidelity → reorder by `card_number` | ☐ Hosted URLs validated or tracked-mode staging receipt clean ☐ Explicit confirmation captured before publish/dispatch side effects | `gamma-export/` (exports + `gary_slide_output` metadata; optional `literal_visual_publish`) |
 | 6 | **HIL Gate 2** — approve deck | PDF for human review per Gary SKILL; PNG for pipeline | ☐ Visuals on-brand ☐ Literal slides match supplied art ☐ Order matches lesson | Slide PNGs under `gamma-export/` (representative) |
 | 7 | Irene Pass 2 after Gate 2 | Irene sees **`gary_slide_output`** and narrates from approved local slide PNGs; any `literal_visual_publish` receipt is provenance only | **☐ PHASE 2 REVIEW:** `narration-script.md` + `segment-manifest.yaml` — copy matches **approved** slides | Same lesson folder |
+| 7B | Storyboard review with script context | Marcus regenerates storyboard using `gary-dispatch-result.json` + `segment-manifest.yaml` before audio finalization | ☐ Storyboard row order and script alignment approved explicitly | `storyboard/storyboard.json`, `storyboard/index.html`, `authorized-storyboard.json` |
 | 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before EL + Kling spend | ☐ Gate 3 sign-off | — |
 | 9 | Confirm fidelity + quality runs (or ask Marcus to run them) | `bmad-agent-fidelity-assessor`, `bmad-agent-quality-reviewer`, optional `quality-control` scripts, sensory bridges | ☐ No critical blockers (or you accept override) | Reports per governance; ad-hoc: transient observability |
 | 10 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
@@ -329,16 +322,10 @@ For text: [e.g. no exact exam items on slides / or list what must be literal].
 Capture this in fidelity_guidance for Irene.
 ```
 
-**Step 2 — Source material + operator directives**
+**Step 2 — Source material (optional)**
 
 ```
 Marcus, pull my Module 3 hypertension development notes from Notion into a source bundle for run APP-RUN-C1M3L2-HTN-20260330 and point Irene at extracted.md for context.
-
-Operator directives for this run:
-- FOCUS: Section 3 (Ambulatory BP Monitoring) and the case study on resistant HTN
-- EXCLUDE: Appendix B (instructor-only grading rubric, not student-facing)
-- SPECIAL: The 48-hour ABPM grid on page 14 must be preserved exactly as-is (literal-visual, source-crop)
-Record these in operator-directives.md under the source bundle.
 ```
 
 **Step 3 — Irene Pass 1**
@@ -361,7 +348,7 @@ Gate 1: I’ve reviewed lesson-plan.md and slide-brief.md in staging. APPROVED �
 Marcus, here are the literal-visual assets for diagram_cards (literal slides only):
 - card_number 4: https://media.university.example/course-assets/htn-renal-diagram.png
 - card_number 7: course-content/staging/rebranded-assets/abpm-48h-grid.png
-If the run is tracked/default, stage any local preintegration PNGs to the managed Git-host destination before Gary dispatch; if the run is ad-hoc, stop and ask me for HTTPS-hosted URLs instead. Then build diagram_cards for Gary’s envelope and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download and include literal_visual_publish if staging occurred.
+First, produce literal-visual-operator-packet.md with per-slide source context, Irene constraints, and expected preintegration_png_path values, then wait for my explicit confirmation that required local PNGs are ready. After confirmation: if the run is tracked/default, stage any local preintegration PNGs to the managed Git-host destination before Gary dispatch; if the run is ad-hoc, stop and ask me for HTTPS-hosted URLs instead. Then build diagram_cards for Gary’s envelope and delegate Gary to generate the full deck (mixed creative + literal) with PNG + PDF export into course-content/staging/C1-M3-L2-ambulatory-bp/gamma-export/. Return gary_slide_output with file_path filled after download and include literal_visual_publish if staging occurred.
 ```
 
 **Step 6 — HIL Gate 2 (deck review)**
@@ -383,6 +370,12 @@ Marcus, delegate Irene Pass 2 using the approved gary_slide_output. If Gary retu
 Gate 3: I’ve reviewed narration-script.md and segment-manifest.yaml together. APPROVED — proceed to Vera, Quinn-R, then ElevenLabs and Kling per the locked manifest.
 ```
 *Or:* `Gate 3: REVISION — [segment ids and edits]. Update both files before audio generation.`
+
+**Step 8A — Storyboard review before audio finalization**
+
+```
+Marcus, regenerate storyboard using gary-dispatch-result.json plus segment-manifest.yaml and present the manifest-derived summary. I will approve slide+script alignment here before ElevenLabs generation.
+```
 
 **Step 9 — Fidelity + quality (after Gate 3)**
 
@@ -438,17 +431,6 @@ Run pre-flight for required tools and report pass/fail.
 ```
 Marcus, for all source ingest in this run, use only official skill entrypoints and no temporary custom scripts.
 For each ingest, report: entrypoint used, output bundle path, and provenance metadata.
-```
-
-**Prompt 2A — Operator directives (mandatory)**
-
-```
-Marcus, record my source-processing directives for this run:
-- FOCUS: [sections or topics to emphasize]
-- EXCLUDE: [content to ignore or deprioritize]
-- SPECIAL: [content requiring non-default handling, e.g., literal-visual treatment, pronunciation dictionary feed]
-If I have no special directives, I'll say "no special directives" and you record that.
-Write operator-directives.md under the source bundle.
 ```
 
 **Prompt 3 — Wrangle primary PDF source**
@@ -563,10 +545,10 @@ Marcus, append this run update to the trial running log as Success or Failure wi
 CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output one completed Shift Close Record.
 ```
 
-**Production run checklist (copy — same steps as # column)**  
-☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source + **operator directives** ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Kling (if any) ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
+**Trial-run checklist (copy — same steps as # column)**  
+☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Kling (if any) ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
 
-**Running log (historical trial-run entries from ad-hoc era)**
+**Trial-run running log (in progress)**
 
 - 2026-03-29 | Failure | When attempting to study course material, Marcus created an ad-hoc PDF-reading script instead of routing through source wrangler and existing PDF-reading skills.
 - 2026-03-30 | Success | APC C1-M1 SME PDF ingested via **official** `source-wrangler`: `wrangle_local_pdf` + `write_source_bundle` → `course-content/staging/ad-hoc/source-bundles/apc-c1m1-tejal-2026-03-29/` (`extracted.md`, `metadata.json`, provenance `local_pdf`, pypdf 24/24).
@@ -588,17 +570,17 @@ You don't need to know how these tools work — Marcus and the specialist agents
 | **Slides/Presentations** | Gamma | AI-generated professional slides (specialist **Gary**) |
 | **Voiceover/Audio** | ElevenLabs | Natural-sounding narration synthesis (Voice Director specialist) |
 | **Video** | Kling | Text/image-to-video and related flows (specialist **Kira**) |
-| **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes (API + MCP in repo; **Canvas Deployment Director** specialist agent complete with canvas-deployment skill) |
-| **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation (**Assessment Architect** specialist agent complete with qualtrics-assessment skill) |
+| **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes (API + MCP in repo; **Canvas specialist agent** story is **deferred** on the current roadmap — workflows may use scripts or manual steps until that ships) |
+| **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation (**Qualtrics specialist** story **deferred**) |
 | **Course Dev Notes** | Notion | Pull reference materials into production context (source wrangler + API) |
 | **Source Files** | Box Drive | Access locally synced cloud files |
-| **Design/Graphics** | Canva | Design-guidance specialist (manual-tool pattern; API cannot edit elements directly) |
+| **Design/Graphics** | Canva | Design-guidance pattern; full programmatic specialist **deferred** (API limits) |
 | **Composition** | Descript (manual) | Final assembly of narrated decks; compositor skill produces assembly guides and syncs stills |
 | **Hosting** | Panopto | Video hosting (API client in repo; credential-dependent) |
 
 Some tools (Vyond, CourseArc, Articulate) require manual operation — Marcus provides detailed specs and you execute in the tool's own interface.
 
-**Status note:** All specialist agents are built and validated — Canvas (Story 3.6), Qualtrics (Story 3.7), and Canva (Story 3.8, design-guidance pattern). Canvas and Qualtrics have full API-backed skills with woodshed exemplar reproduction; Canva operates as a manual-tool specialist due to API limitations. Ask Marcus what path is best for your institution.
+**Roadmap note:** Epic 3 still includes Canvas, Qualtrics, and Canva specialist agents, but those stories are **deferred** while governance (**Epic 4A**) and other foundations proceed. Ask Marcus what path is supported today for your institution.
 
 ---
 

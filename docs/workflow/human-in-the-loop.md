@@ -26,3 +26,15 @@ Goal: you stay the instructor of record; agents draft and refactor; you approve 
 - [ ] You personally verified facts and institution-specific policy.
 - [ ] Accessibility checklist from `content-standards.yaml` considered.
 - [ ] Visible in target platform (Canvas page / LTI link) in preview mode.
+
+## Production Checkpoints (Anti-Drift)
+
+For tracked/default production prompt-pack runs, enforce these checkpoints in order:
+
+1. Gate 1 approval after Irene Pass 1 artifacts.
+2. Prompt 6B literal-visual operator packet and readiness confirmation before any Gary dispatch side effects.
+3. Storyboard A review after Gary dispatch output, before Gate 2 approval.
+4. Gate 2 approval before Irene Pass 2 delegation.
+5. Storyboard B review after Irene Pass 2 script/manifest output, before downstream audio/script finalization.
+
+These checkpoints are deterministic safeguards against fidelity drift between slide intent, generated visuals, and final narration/audio outputs.

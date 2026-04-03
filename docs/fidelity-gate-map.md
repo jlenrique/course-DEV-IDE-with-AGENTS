@@ -20,6 +20,8 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 
 L1 fidelity contracts for each gate are defined in `state/config/fidelity-contracts/g{n}-*.yaml`.
 
+For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth.
+
 ---
 
 ## Fidelity Gates vs. HIL Gates
@@ -29,6 +31,11 @@ Fidelity gates are **automated pre-checks** that run before human checkpoints. H
 ```
 G0 → G1 → G2 → [HIL Gate 1] → G3 → [HIL Gate 2] → G4 → [HIL Gate 3] → G5 → G6 → [HIL Gate 4]
 ```
+
+Operational anti-drift checkpoints layered on top of the gate chain:
+- **Prompt 6B checkpoint (pre-G3 dispatch side effects):** literal-visual operator packet and per-card readiness confirmation.
+- **Storyboard A checkpoint (post-G3 generation):** visual order/content approval before Gate 2 progression.
+- **Storyboard B checkpoint (post-G4 output):** slide+script alignment approval before downstream audio/script finalization.
 
 At each HIL gate, the human reviewer has already seen:
 - The Fidelity Assessor's Fidelity Trace Report (Omissions/Inventions/Alterations)

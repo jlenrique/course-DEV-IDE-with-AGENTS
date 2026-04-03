@@ -4,13 +4,13 @@ Purpose: define lightweight, canonical structures for prompt-pack artifacts used
 
 Scope:
 - Source authority map rows
-- operator-directives.md
 - ingestion-evidence.md
 - irene-packet.md
 - g2-slide-brief.md
 - gary-slide-content.json
 - gary-fidelity-slides.json
 - gary-diagram-cards.json
+- literal-visual-operator-packet.md
 - gary-theme-resolution.json
 - gary-outbound-envelope.yaml
 
@@ -35,29 +35,6 @@ Required fields:
 Rule:
 - Vera is usually an indirect consumer (via source bundle), not a direct consumer of raw source files.
 
-## 1A) operator-directives.md
-
-Purpose: record the operator's source-processing directives before ingestion begins.
-
-This artifact is **mandatory**. Ingestion (Prompt 3) cannot proceed without either explicit directives or an explicit "no special directives" acknowledgment.
-
-Required sections:
-- run_id
-- timestamp
-- operator
-- focus_directives: list of emphasis instructions (sections, topics, content to prioritize)
-- exclusion_directives: list of content to ignore or deprioritize
-- special_treatment_directives: list of content requiring non-default handling (fidelity overrides, routing overrides)
-
-If the operator has no directives, the file must contain: `"No operator directives — process all source content at default authority levels."`
-
-Governance rules:
-- **Exclusion directives are scope-binding provenance records.** Vera G0 must not flag excluded content as an omission when the exclusion is recorded in this artifact.
-- **Focus directives are emphasis signals.** They prioritize but do not exclude unmentioned content.
-- **Special treatment directives override default fidelity classification** for the specified content only (e.g., forcing a section to literal-visual that would otherwise be creative).
-- This artifact is a first-class input to Source Wrangler (ingestion), Irene (planning), and Vera (gate evaluation).
-- Downstream agents must reference `operator-directives.md` by path in their provenance chains.
-
 ## 2) ingestion-evidence.md
 
 Use a markdown table with one row per ingested source.
@@ -71,12 +48,15 @@ Required columns:
 - bundle_location
 - provenance_summary
 - planning_readiness: ready | conditional | blocked
-- operator_directive_applied: yes | no (if yes, include directive reference from operator-directives.md)
 
 Confidence inheritance rules:
 - If `extracted.md` includes a source-level confidence statement from an official bridge or Source Wrangler pathway, downstream artifacts must inherit that level unless a later reviewer records an explicit downgrade with evidence.
 - A `high` confidence source may still carry non-blocking caution text (for example, minor wording variance on smallest labels). That caution does not by itself force `planning_readiness` below `ready`.
 - Only `medium` or `low` confidence on planning-critical content, or an explicit evidenced downgrade, triggers conditional/blocked handling and spot-check escalation.
+
+Validator parsing compatibility notes:
+- Source extraction headings are accepted as either `## <source_id> — sensory bridge (G0)` or `## <source_id> - sensory bridge (G0)`.
+- Ingestion lines may use either `on \`<absolute-or-relative-path>\`` or `source file <path>; ...` formats.
 
 Minimum footer block:
 - preflight_reference: path to preflight-results.json
@@ -268,7 +248,29 @@ These files are consumed by Irene Pass 2 during generation and by Vera during
 G4 evaluation. Changes to profile defaults may cause G4-07 failures — check
 config alignment before attributing failures to narration writing quality.
 
-## 10) Validation Policy
+## 10) literal-visual-operator-packet.md
+
+Purpose: deterministic operator checkpoint artifact that binds Irene literal-visual
+requirements to user preintegration build actions before Gary dispatch.
+
+Required fields per literal-visual slide row:
+- slide_number
+- graphic_id
+- source_anchors
+- extracted_context_summary
+- labels_or_claims_to_preserve
+- prohibited_embellishments
+- acceptance_checks
+- preintegration_png_path
+- operator_ready (true | false)
+
+Rules:
+- Prompt 7 dispatch is blocked until every `required=true` literal-visual card is
+  `operator_ready=true`.
+- Packet content must be derived from Irene Pass 1 literal-visual cards and
+  `gary-diagram-cards.json` only; do not invent new pedagogical requirements.
+
+## 11) Validation Policy
 
 Before Gary dispatch:
 - required files must exist:
@@ -276,8 +278,9 @@ Before Gary dispatch:
   - gary-slide-content.json
   - gary-fidelity-slides.json
   - gary-diagram-cards.json
+  - literal-visual-operator-packet.md (required when any literal-visual slide exists)
   - gary-theme-resolution.json
   - gary-outbound-envelope.yaml
 - all files must satisfy the field rules in this contract.
 
-Contract version: 1.1 (added operator-directives.md, operator_directive_applied column)
+Contract version: 1.0

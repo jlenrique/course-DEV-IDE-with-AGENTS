@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 
 import pytest
+import yaml
 
 from scripts.state_management.db_init import init_database
 from scripts.utilities import app_session_readiness as readiness
@@ -53,6 +54,31 @@ def test_run_readiness_happy_path(tmp_path: Path) -> None:
     assert _check_by_name(report, "coordination_db")["status"] == "pass"
     assert _check_by_name(report, "state:state/config")["status"] == "pass"
     assert _check_by_name(report, "imports")["status"] == "pass"
+    assert _check_by_name(report, "bundle_run_constants")["status"] == "skip"
+
+
+def test_run_readiness_validates_run_constants_when_bundle_dir_set(tmp_path: Path) -> None:
+    _setup_minimal_runtime(tmp_path, create_db=True)
+    bundle = tmp_path / "track" / "b1"
+    bundle.mkdir(parents=True)
+    (tmp_path / "primary.pdf").write_text("x", encoding="utf-8")
+    rc_data = {
+        "run_id": "RC-1",
+        "lesson_slug": "b1-lesson",
+        "bundle_path": "track/b1",
+        "primary_source_file": str((tmp_path / "primary.pdf").resolve()),
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "production",
+    }
+    (bundle / "run-constants.yaml").write_text(yaml.safe_dump(rc_data), encoding="utf-8")
+
+    report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
+
+    assert _check_by_name(report, "bundle_run_constants")["status"] == "pass"
+    assert report["overall_status"] == "pass"
 
 
 def test_run_readiness_initializes_missing_db(tmp_path: Path) -> None:
@@ -199,7 +225,7 @@ def test_main_returns_exit_2_for_warn_in_strict_mode(
     monkeypatch.setattr(
         readiness,
         "run_readiness",
-        lambda root=None, with_preflight=False: {
+        lambda root=None, with_preflight=False, bundle_dir=None: {
             "timestamp": "2026-03-29T00:00:00+00:00",
             "root": "x",
             "overall_status": "warn",

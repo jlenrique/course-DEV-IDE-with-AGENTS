@@ -180,6 +180,7 @@ See `_bmad-output/brainstorming/party-mode-composition-architecture.md` for full
 - **Quinn-R two-pass:** Pre-composition (asset quality) + post-composition (final export).
 - **Irene two-pass:** Pass 1 (lesson plan + slide brief before Gary); Pass 2 (narration script + segment manifest after Gary + HIL Gate 2).
 - **2026-04-03 anti-drift hardening:** Prompt 6B now requires literal-visual operator packet + readiness confirmation before Gary dispatch side effects; Storyboard A (post-Gary) and Storyboard B (post-Irene Pass 2) are explicit approval checkpoints before advancing to subsequent pipeline spend.
+- **2026-04-05 literal-visual rendering policy:** literal-visual slides are enforced as full-slide image-only at dispatch input. Supporting prose is moved to Irene Pass 2 narration/script, and Gate 2 preflight validation fails on non-URL literal-visual payload content.
 - **Gary deck enhancement:** Deck mode (numCards by content type), theme/template preview (TP capability), gary_slide_output return field.
 - **Seven instructional use cases:** Narrated deck, dialogue, walkthrough, case study, assessment prompt, concept explainer, module bumper — all one pipeline.
 

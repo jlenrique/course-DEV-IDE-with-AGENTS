@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,11 @@ if str(PROJECT_ROOT) not in sys.path:
 load_dotenv(PROJECT_ROOT / ".env")
 
 from scripts.api_clients.gamma_client import GammaClient  # noqa: E402
+
+_QC_SCRIPTS = PROJECT_ROOT / "skills" / "quality-control" / "scripts"
+if str(_QC_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_QC_SCRIPTS))
+from visual_fill_validator import validate_visual_fill  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +162,55 @@ def _git_auth_env(token: str) -> dict[str, str]:
         "GIT_CONFIG_KEY_1": "http.https://github.com/.extraheader",
         "GIT_CONFIG_VALUE_1": f"AUTHORIZATION: basic {basic}",
     }
+
+
+# ── Gamma export dimensions (16:9 PNG) ──────────────────────
+_GAMMA_EXPORT_WIDTH = 2400
+_GAMMA_EXPORT_HEIGHT = 1350
+
+
+def _composite_full_bleed(
+    source_png: Path,
+    target_png: Path,
+    *,
+    width: int = _GAMMA_EXPORT_WIDTH,
+    height: int = _GAMMA_EXPORT_HEIGHT,
+) -> None:
+    """Scale *source_png* to fill *width*×*height* and write to *target_png*.
+
+    Used as a post-processing step after Gamma renders a literal-visual slide.
+    Gamma's card template applies padding/margins that cannot be overridden via
+    ``additionalInstructions``, so we composite the preintegration source image
+    at the target resolution to guarantee a full-bleed result.
+
+    The image is resized to cover the canvas (``LANCZOS``), cropping edges if the
+    aspect ratio differs.  This preserves the central content at the highest
+    quality while filling the entire slide.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        logger.warning(
+            "Pillow not available — skipping full-bleed composite for %s",
+            source_png.name,
+        )
+        return
+
+    with Image.open(source_png) as img:
+        img = img.convert("RGB")
+        src_w, src_h = img.size
+
+        # Cover-crop: scale so both dimensions meet or exceed target, then
+        # center-crop to exact target size.
+        scale = max(width / src_w, height / src_h)
+        new_w = int(src_w * scale + 0.5)
+        new_h = int(src_h * scale + 0.5)
+        resized = img.resize((new_w, new_h), Image.LANCZOS)
+
+        left = (new_w - width) // 2
+        top = (new_h - height) // 2
+        cropped = resized.crop((left, top, left + width, top + height))
+        cropped.save(target_png, format="PNG")
 
 
 def publish_preintegration_literal_visuals(
@@ -627,6 +682,9 @@ def merge_parameters(
         image_treatment = merged.pop("image_treatment", "no-images")
         layout_constraint = merged.pop("layout_constraint", "unconstrained")
         content_scope = merged.pop("content_scope", "exact-input-only")
+
+        if fidelity_class == "literal-visual":
+            layout_constraint = "full-bleed-image"
 
         merged["textMode"] = VOCABULARY_TO_TEXTMODE.get(text_treatment, "preserve")
         merged["imageOptions"] = {
@@ -1308,66 +1366,130 @@ def generate_deck_mixed_fidelity(
                 "fidelity": "literal-text",
             })
 
+    # ── Literal-visual slides: Template API path ──────────────
+    # Literal-visual slides use Gamma's Create from Template API
+    # (`POST /generations/from-template`) with a single-page Image
+    # card template.  This preserves the Image card layout — the
+    # only reliable way to get full-bleed rendering, since Gamma's
+    # text-based Generate API has no cardType selector and its AI
+    # may place user images as accent thumbnails.
+    _LITERAL_VISUAL_TEMPLATE_ID = "g_gior6s13mvpk8ms"
+    _MAX_TEMPLATE_RETRIES = 3
+    _TEMPLATE_EXPORT_SETTLE_SECONDS = 10
+
     if literal_visual_slides:
-        literal_visual_params = {**base_params}
-        literal_visual_params["textMode"] = "preserve"
-        literal_visual_params["text_mode"] = "preserve"
-        base_instruction = str(
-            literal_visual_params.pop("additionalInstructions", "")
-            or literal_visual_params.pop("additional_instructions", "")
-        ).strip()
-        visual_guard = (
-            "Output ONLY the provided text. Keep wording source-locked. "
-            "Use image-dominant layout where an injected image is present; "
-            "supporting text should remain concise and source-grounded. "
-            "Use ONLY the provided image URL when one is injected. "
-            "Do not generate substitute or supplemental visuals."
-        )
-        literal_visual_params["additional_instructions"] = (
-            f"{base_instruction} {visual_guard}".strip() if base_instruction else visual_guard
-        )
-
-        literal_visual_params["image_options"] = {"source": "noImages"}
-
         for slide in literal_visual_slides:
-            slide_params = {**literal_visual_params}
-            content = slide.get("content", "")
             card_num = slide["slide_number"]
-            if card_num in card_map:
-                card_payload = card_map[card_num]
-                img_url = card_payload["image_url"]
-                is_valid, reason = validate_image_url(img_url)
-                if not is_valid:
-                    raise ValueError(
-                        f"diagram_cards card_number {card_num}: "
-                        f"image URL validation failed: {reason} — URL: {img_url}"
-                    )
-                placement_note = str(card_payload.get("placement_note", "")).strip()
-                layout_note = (
-                    f"Layout note: {placement_note}"
-                    if placement_note
-                    else "Layout note: image-dominant composition."
+            if card_num not in card_map:
+                raise ValueError(
+                    f"literal-visual slide {card_num} requires a diagram_cards entry "
+                    "with dispatch-ready image_url"
                 )
-                content = f"{img_url}\n\n{layout_note}\n\n{content}"
-            slide_params["input_text"] = content
-            slide_params["num_cards"] = 1
-            slide_params["card_split"] = "inputTextBreaks"
 
-            gen_result = generate_slide(slide_params, client=client, run_id=run_id)
-            calls_made += 1
-            literal_visual_gen_id = gen_result.get("generationId", gen_result.get("id", ""))
-            literal_visual_file_path = _resolve_file_paths(
-                gen_result,
-                f"literal-visual-{card_num:02d}",
-                [card_num],
-            )[0]
+            card_payload = card_map[card_num]
+            img_url = card_payload["image_url"]
+            is_valid, reason = validate_image_url(img_url)
+            if not is_valid:
+                raise ValueError(
+                    f"diagram_cards card_number {card_num}: "
+                    f"image URL validation failed: {reason} — URL: {img_url}"
+                )
+
+            placement_note = str(card_payload.get("placement_note", "")).strip()
+            slide_title = f"{module_lesson_part} Slide {card_num:02d}"
+            prompt_parts = [
+                "Replace the image in this card with the image at the "
+                "following URL. Keep the image card layout — the image "
+                "must fill the entire slide with no text overlay.",
+                img_url,
+            ]
+            if placement_note:
+                prompt_parts.append(f"Composition constraint: {placement_note}")
+            prompt_parts.extend(["", f"Title: {slide_title}"])
+
+            template_params: dict[str, Any] = {}
+            if base_params.get("themeId") or base_params.get("theme_id"):
+                template_params["theme_id"] = (
+                    base_params.get("themeId") or base_params.get("theme_id")
+                )
+            if base_params.get("export_as") or base_params.get("exportAs"):
+                template_params["export_as"] = (
+                    base_params.get("export_as") or base_params.get("exportAs")
+                )
+
+            # Retry loop: generate → export → validate fill → retry if blank.
+            literal_visual_file_path: str | None = None
+            literal_visual_gen_id = ""
+            for attempt in range(1, _MAX_TEMPLATE_RETRIES + 1):
+                gen_result = generate_from_template(
+                    _LITERAL_VISUAL_TEMPLATE_ID,
+                    "\n".join(prompt_parts),
+                    template_params,
+                    client=client,
+                    run_id=run_id,
+                )
+                calls_made += 1
+
+                # Gamma reports "completed" before the export renderer
+                # finishes baking the image-card content into the PNG.
+                # A brief delay lets the export catch up.
+                time.sleep(_TEMPLATE_EXPORT_SETTLE_SECONDS)
+
+                literal_visual_gen_id = gen_result.get(
+                    "generationId", gen_result.get("id", "")
+                )
+                literal_visual_file_path = _resolve_file_paths(
+                    gen_result,
+                    f"literal-visual-{card_num:02d}",
+                    [card_num],
+                )[0]
+
+                # Quality gate: validate the exported PNG is not blank.
+                fill_result = validate_visual_fill(literal_visual_file_path)
+                if fill_result.get("passed"):
+                    logger.info(
+                        "literal-visual card %d passed fill validation on attempt %d",
+                        card_num, attempt,
+                    )
+                    break
+
+                logger.warning(
+                    "literal-visual card %d FAILED fill validation on attempt %d/%d: %s",
+                    card_num, attempt, _MAX_TEMPLATE_RETRIES,
+                    fill_result.get("failures", fill_result.get("error", "unknown")),
+                )
+            else:
+                # All retries exhausted — fall back to local composite if
+                # a preintegration PNG is available.
+                preint_path_str = str(card_payload.get("preintegration_png_path", "")).strip()
+                preint_source = Path(preint_path_str) if preint_path_str else None
+                if preint_source and not preint_source.is_absolute():
+                    preint_source = PROJECT_ROOT / preint_source
+
+                if preint_source and preint_source.is_file() and literal_visual_file_path:
+                    target_path = Path(literal_visual_file_path)
+                    _composite_full_bleed(preint_source, target_path)
+                    logger.warning(
+                        "literal-visual card %d: composite fallback from %s → %s",
+                        card_num, preint_source.name, target_path.name,
+                    )
+                else:
+                    logger.error(
+                        "literal-visual card %d still fails fill validation after %d attempts "
+                        "and no preintegration fallback available",
+                        card_num, _MAX_TEMPLATE_RETRIES,
+                    )
 
             literal_results.append({
                 "slide_id": f"{module_lesson_part}-card-{card_num:02d}",
                 "file_path": literal_visual_file_path,
                 "card_number": card_num,
-                "visual_description": f"[pending export — literal-visual slide {card_num}]",
-                "source_ref": slide.get("source_ref", f"slide-brief.md#Slide {card_num}"),
+                "visual_description": (
+                    f"[pending export — literal-visual slide {card_num}]"
+                ),
+                "source_ref": slide.get(
+                    "source_ref", f"slide-brief.md#Slide {card_num}"
+                ),
                 "generation_id": literal_visual_gen_id,
                 "fidelity": "literal-visual",
             })
@@ -1450,13 +1572,15 @@ def generate_deck_mixed_fidelity(
         "theme_id": theme_resolution["resolved_theme_key"],
         "requested_theme_key": theme_resolution["requested_theme_key"],
         "resolved_parameter_set": theme_resolution["resolved_parameter_set"],
-        "text_mode": "mixed (creative=generate, literal-text=preserve, literal-visual=preserve)",
+        "text_mode": "mixed (creative=generate, literal-text=preserve, literal-visual=template)",
         "card_split": "inputTextBreaks",
         "num_cards": len(unified),
         "image_options": {
             "literal_default": "noImages",
             "literal_visual_source": "noImages" if literal_visual_slides else "none",
-            "literal_visual_call_mode": "per-card" if literal_visual_slides else "none",
+            "literal_visual_call_mode": (
+                "per-card" if literal_visual_slides else "none"
+            ),
         },
     }
     if base_params.get("export_as") or base_params.get("exportAs"):
@@ -1479,8 +1603,9 @@ def generate_deck_mixed_fidelity(
     flags = {
         "embellishment_control_used": literal_count > 0,
         "constraint_phrasing": (
-            "Output ONLY the provided text. Keep wording source-locked; "
-            "literal-visual slides use image-dominant composition with concise supporting text."
+            "Literal-text slides: source-locked preserve mode. "
+            "Literal-visual slides: Gamma-rendered full-bleed image-only, "
+            "no on-slide support text."
             if literal_count > 0
             else ""
         ),
@@ -1502,6 +1627,7 @@ def generate_deck_mixed_fidelity(
                 "card_number": r["card_number"],
                 "visual_description": r.get("visual_description", ""),
                 "source_ref": r.get("source_ref", ""),
+                "fidelity": r.get("fidelity", "creative"),
             }
             for r in unified
         ],

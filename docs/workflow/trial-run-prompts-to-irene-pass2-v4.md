@@ -343,6 +343,7 @@ Contract rules:
 - Follow `docs/workflow/trial-run-pass2-artifacts-contract.md` exactly.
 - `g2-slide-brief.md` must be derived from `irene-pass1.md` and must not introduce new pedagogical content.
 - `gary-slide-content.json` must contain one content-bearing row per slide with fields: slide_number, content, source_ref.
+- Literal-visual policy: for literal-visual slides, `gary-slide-content.json.slides[].content` must be image URL only (no explanatory/support text on-slide; move that text to narration/script).
 - Each slide must preserve exactly one mode: creative, literal-text, or literal-visual.
 - `gary-fidelity-slides.json` slide_number values must be unique and strictly increasing.
 - `gary-diagram-cards.json` must include only literal-visual cards that require image handling.
@@ -415,6 +416,7 @@ Dispatch requirements:
 - non-null file_path for every output row
 - normalize card order 1..N
 - use a content-bearing slide payload for dispatch input; metadata-only fidelity payloads are invalid for production dispatch
+- enforce literal-visual image-only payloads at dispatch input: literal-visual content entries are URL-only and must not include supporting prose
 
 Required outputs under [BUNDLE_PATH]:
 - `gary-dispatch-result.json`
@@ -495,7 +497,7 @@ The balance between channels is governed by the slide's fidelity class, configur
 Per-fidelity defaults:
 - **creative** (`stance: explain-behind`): Source is primary. Narration teaches the content behind the atmospheric visual. Min 1 substantive source claim per segment.
 - **literal-text** (`stance: read-along`): Slide is primary. Narration paraphrases visible text in conversational language. Source confirms accuracy.
-- **literal-visual** (`stance: walk-through`): Slide is primary. Narration walks through the visual while enriching with at least 1 source-backed insight.
+- **literal-visual** (`stance: walk-through`): Slide is primary and image-only on-screen. Narration carries the explanatory/support text while walking through the visual, with at least 1 source-backed insight.
 
 Script-level parameters (from narration-script-parameters.yaml):
 - `narration_density` — target WPM and words-per-slide bounds

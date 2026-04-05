@@ -84,7 +84,7 @@ Three fidelity classes, owned by Irene, consumed by Gary:
 17. Gary runs **two separate Gamma API calls** per deck when mixed fidelity is present:
     - **Call 1 (creative):** `textMode: generate`, full preset, standard `imageOptions`
     - **Call 2 (literal):** `textMode: preserve`, same theme/preset, `additionalInstructions: "Output ONLY the provided text. Do not add content, steps, or diagrams beyond what is given."`, `imageOptions.source: noImages` (or `themeAccent` if no user-provided images)
-18. For `literal-visual` slides in Call 2: Gary embeds the `diagram_cards[].image_url` inline in the card's `inputText` block
+18. For `literal-visual` slides: when a local preintegration PNG exists (via `diagram_cards[].preintegration_png_path`) **and** an `export_dir` is set, Gary **bypasses Gamma entirely** and copies the source PNG directly into the export directory as the slide file. This guarantees the image fills 100% of the slide with zero rendering variance. When no local PNG is available, Gary falls back to embedding the `diagram_cards[].image_url` inline in `inputText` with a full-bleed guard instruction.
 19. Gary downloads PNGs from both calls and reassembles with sequential numbering matching original slide order
 20. Gary produces a **provenance manifest** in the return envelope:
     ```yaml

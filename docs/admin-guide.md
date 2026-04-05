@@ -486,8 +486,9 @@ Before the instructional lead follows the **Happy-path walkthrough** in [`docs/u
 1. **`.env`** — `GAMMA_API_KEY`, `ELEVENLABS_API_KEY`, and Kling keys as needed; no secrets committed.
 2. **Pre-flight** — `node scripts/heartbeat_check.mjs` (or Marcus-driven pre-flight) green for the tools in scope.
 3. **Mode** — `skills/production-coordination/scripts/manage_mode.py` reflects **default** vs **ad-hoc**; ad-hoc routes under `course-content/staging/ad-hoc/` per `docs/ad-hoc-contract.md`.
-4. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
-5. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+4. **Literal-visual policy** — literal-visual slides are full-slide image-only. Dispatch payload content for literal-visual slides must be URL-only image references; supporting prose belongs in Irene Pass 2 narration/script.
+5. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
+6. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Adding a New Tool Integration
 
@@ -538,3 +539,6 @@ For automation or debugging without opening Cursor chat:
 - **Baton:** `python skills/production-coordination/scripts/manage_baton.py --help` — initialize, read, update gate, close baton files (`run_baton.{run_id}.json`).
 
 Tests for these scripts live under `skills/production-coordination/scripts/tests/`.
+
+Operational guardrail:
+- Run `skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py` before Gate 2 approval; treat literal-visual non-URL prose findings as hard-stop contract violations.

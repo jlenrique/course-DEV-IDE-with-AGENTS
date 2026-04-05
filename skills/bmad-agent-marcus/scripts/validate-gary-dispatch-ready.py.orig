@@ -1,4 +1,4 @@
-# /// script
+﻿# /// script
 # requires-python = ">=3.10"
 # ///
 """Validate Gary dispatch payload readiness for HIL Gate 2.
@@ -89,153 +89,6 @@ def _load_diagram_cards(bundle_dir: Path) -> list[dict[str, Any]]:
         cards = data.get("cards", [])
         return cards if isinstance(cards, list) else []
     return []
-
-
-_PLANNING_DIRECTIVE_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"instructional content aligned to", re.IGNORECASE),
-]
-
-_HTTP_URL_PATTERN = re.compile(r"https?://\S+", re.IGNORECASE)
-
-
-def _validate_literal_text_content_bearing(
-    bundle_dir: Path,
-    dispatch_metadata: dict[str, Any],
-) -> list[str]:
-    """Check that literal-text slides in gary-slide-content.json contain real
-    source text, not Irene planning directives.
-
-    Requires both gary-slide-content.json (via dispatch_metadata) and
-    gary-fidelity-slides.json to be present. If either is absent the check
-    is skipped gracefully so older run artifacts are not broken.
-
-    Returns a list of error strings (empty = pass).
-    """
-    errors: list[str] = []
-
-    fidelity_path = bundle_dir / "gary-fidelity-slides.json"
-    if not fidelity_path.exists():
-        return errors  # graceful skip -- older run without fidelity file
-
-    slides_content_json_path = str(
-        dispatch_metadata.get("slides_content_json_path") or ""
-    ).strip()
-    if not slides_content_json_path:
-        return errors  # already caught by dispatch_metadata check
-
-    content_path = (bundle_dir / slides_content_json_path).resolve()
-    if not content_path.is_file():
-        # Try relative to project root
-        content_path = (PROJECT_ROOT / slides_content_json_path).resolve()
-    if not content_path.is_file():
-        return errors  # file missing -- structural check already handles absence
-
-    try:
-        fidelity_data = json.loads(fidelity_path.read_text(encoding='utf-8'))
-        content_data = json.loads(content_path.read_text(encoding='utf-8'))
-    except (json.JSONDecodeError, OSError):
-        return errors  # parse failures are separate concerns
-
-    fidelity_slides: list[dict[str, Any]] = fidelity_data.get('slides', [])
-    literal_text_numbers: set[int] = {
-        int(s["slide_number"])
-        for s in fidelity_slides
-        if isinstance(s, dict)
-        and str(s.get('fidelity', '')).strip().lower() == 'literal-text'
-        and isinstance(s.get('slide_number'), int)
-    }
-
-    if not literal_text_numbers:
-        return errors
-
-    content_slides: list[dict[str, Any]] = content_data.get('slides', [])
-    for slide in content_slides:
-        if not isinstance(slide, dict):
-            continue
-        slide_number = slide.get('slide_number')
-        if not isinstance(slide_number, int) or slide_number not in literal_text_numbers:
-            continue
-        content_field = str(slide.get('content') or '').strip()
-        for pattern in _PLANNING_DIRECTIVE_PATTERNS:
-            if pattern.search(content_field):
-                errors.append(
-                    f"gary-slide-content.json slide {slide_number} (literal-text) "
-                    f"content field contains a planning directive rather than actual "
-                    f"source text (matched pattern: {pattern.pattern!r}). "
-                    f"For textMode=preserve, Gamma renders this text verbatim on screen. "
-                    f"Replace with the extracted source text from extracted.md anchor."
-                )
-                break  # one error per slide is sufficient
-
-    return errors
-
-
-def _validate_literal_visual_image_only_content(
-    bundle_dir: Path,
-    dispatch_metadata: dict[str, Any],
-) -> list[str]:
-    """Check literal-visual slides are image-only at dispatch payload level.
-
-    Policy: literal-visual on-slide payload must not include substantive text.
-    Any explanatory text belongs in Irene Pass 2 narration/script.
-    """
-    errors: list[str] = []
-
-    fidelity_path = bundle_dir / "gary-fidelity-slides.json"
-    if not fidelity_path.exists():
-        return errors
-
-    slides_content_json_path = str(
-        dispatch_metadata.get("slides_content_json_path") or ""
-    ).strip()
-    if not slides_content_json_path:
-        return errors
-
-    content_path = (bundle_dir / slides_content_json_path).resolve()
-    if not content_path.is_file():
-        content_path = (PROJECT_ROOT / slides_content_json_path).resolve()
-    if not content_path.is_file():
-        return errors
-
-    try:
-        fidelity_data = json.loads(fidelity_path.read_text(encoding="utf-8"))
-        content_data = json.loads(content_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return errors
-
-    fidelity_slides: list[dict[str, Any]] = fidelity_data.get("slides", [])
-    literal_visual_numbers: set[int] = {
-        int(s["slide_number"])
-        for s in fidelity_slides
-        if isinstance(s, dict)
-        and str(s.get("fidelity", "")).strip().lower() == "literal-visual"
-        and isinstance(s.get("slide_number"), int)
-    }
-
-    if not literal_visual_numbers:
-        return errors
-
-    content_slides: list[dict[str, Any]] = content_data.get("slides", [])
-    for slide in content_slides:
-        if not isinstance(slide, dict):
-            continue
-        slide_number = slide.get("slide_number")
-        if not isinstance(slide_number, int) or slide_number not in literal_visual_numbers:
-            continue
-
-        content_field = str(slide.get("content") or "").strip()
-        if not content_field:
-            continue
-
-        residue = _HTTP_URL_PATTERN.sub("", content_field).strip()
-        if residue:
-            errors.append(
-                f"gary-slide-content.json slide {slide_number} (literal-visual) "
-                "contains on-slide text payload. Policy requires literal-visual slides "
-                "to be image-only; move explanatory text to Irene Pass 2 narration/script."
-            )
-
-    return errors
 
 
 def _infer_gamma_asset_family(url: str) -> str:
@@ -502,12 +355,12 @@ def validate_gary_dispatch_ready(
     dispatch_metadata = payload.get("dispatch_metadata")
     if not isinstance(dispatch_metadata, dict):
         errors.append(
-            "dispatch_metadata must be present - re-run dispatch with the current "
+            "dispatch_metadata must be present ΓÇö re-run dispatch with the current "
             "gamma_operations.py to embed content source provenance"
         )
     elif not str(dispatch_metadata.get("slides_content_json_path") or "").strip():
         errors.append(
-            "dispatch_metadata.slides_content_json_path must be non-empty - "
+            "dispatch_metadata.slides_content_json_path must be non-empty ΓÇö "
             "dispatch must use --slides-content-json to prevent placeholder content"
         )
 
@@ -516,17 +369,6 @@ def validate_gary_dispatch_ready(
         errors.extend(
             _validate_preintegration_publish_receipt(payload, bundle_dir=payload_path.parent)
         )
-        if isinstance(dispatch_metadata, dict):
-            errors.extend(
-                _validate_literal_text_content_bearing(
-                    payload_path.parent, dispatch_metadata
-                )
-            )
-            errors.extend(
-                _validate_literal_visual_image_only_content(
-                    payload_path.parent, dispatch_metadata
-                )
-            )
 
     return {
         "status": "pass" if not errors else "fail",

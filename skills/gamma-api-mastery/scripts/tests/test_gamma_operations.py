@@ -903,13 +903,27 @@ class TestGaryOutboundContract:
             {"slide_number": 2, "content": "Literal text card", "fidelity": "literal-text"},
             {"slide_number": 3, "content": "Literal visual card", "fidelity": "literal-visual"},
         ]
+        diagram_cards = [
+            {
+                "card_number": 3,
+                "image_url": "https://example.com/diagram.png",
+                "required": True,
+            }
+        ]
 
-        with patch.object(gamma_operations, "generate_slide") as mock_generate:
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
+        ):
             mock_generate.side_effect = [
                 {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
                 {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
-                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
             ]
+            mock_template.return_value = {
+                "id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
             result = generate_deck_mixed_fidelity(
                 slides,
                 {
@@ -917,10 +931,12 @@ class TestGaryOutboundContract:
                     **_valid_theme_resolution(),
                 },
                 "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
                 run_id="C1-M1-PRES-ADHOC-20260330",
             )
 
-        assert mock_generate.call_count == 3
+        assert mock_generate.call_count == 2
+        assert mock_template.call_count == 1
         assert result["calls_made"] == 3
         assert {p["source_call"] for p in result["provenance"]} == {
             "creative",
@@ -928,7 +944,7 @@ class TestGaryOutboundContract:
             "literal-visual",
         }
 
-    def test_literal_visual_call_uses_noimages_mode_with_strict_source_image_instruction(self) -> None:
+    def test_literal_visual_call_uses_template_api(self) -> None:
         slides = [
             {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
             {"slide_number": 2, "content": "Literal text card", "fidelity": "literal-text"},
@@ -945,13 +961,17 @@ class TestGaryOutboundContract:
 
         with (
             patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
         ):
             mock_generate.side_effect = [
                 {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
                 {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
-                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
             ]
+            mock_template.return_value = {
+                "id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
             generate_deck_mixed_fidelity(
                 slides,
                 {
@@ -970,15 +990,16 @@ class TestGaryOutboundContract:
             )
 
         literal_text_params = mock_generate.call_args_list[1].args[0]
-        literal_visual_params = mock_generate.call_args_list[2].args[0]
-
         assert literal_text_params["themeId"] == "theme_abc"
         assert literal_text_params["image_options"]["source"] == "noImages"
 
-        assert literal_visual_params["themeId"] == "theme_abc"
-        assert literal_visual_params["image_options"] == {"source": "noImages"}
-        assert "Keep style uniform." in literal_visual_params["additional_instructions"]
-        assert "use only the provided image url" in literal_visual_params["additional_instructions"].lower()
+        # Template call passes gammaId, prompt, and params dict
+        tpl_args = mock_template.call_args
+        assert tpl_args.args[0] == "g_gior6s13mvpk8ms"  # template gammaId
+        assert "https://example.com/diagram.png" in tpl_args.args[1]
+        assert "image card" in tpl_args.args[1].lower()
+        assert "image_options" not in tpl_args.args[2]  # template endpoint rejects imageOptions.source
+        assert "roadmap crop" in tpl_args.args[1].lower()
 
     def test_literal_preserve_calls_do_not_prefix_doc_title_into_input_text(self) -> None:
         slides = [
@@ -997,13 +1018,17 @@ class TestGaryOutboundContract:
 
         with (
             patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
         ):
             mock_generate.side_effect = [
                 {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
                 {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
-                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
             ]
+            mock_template.return_value = {
+                "id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
             generate_deck_mixed_fidelity(
                 slides,
                 {
@@ -1016,12 +1041,12 @@ class TestGaryOutboundContract:
             )
 
         literal_text_params = mock_generate.call_args_list[1].args[0]
-        literal_visual_params = mock_generate.call_args_list[2].args[0]
-
         assert not literal_text_params["input_text"].startswith("C1-M1-PRES-ADHOC")
-        assert not literal_visual_params["input_text"].startswith("C1-M1-PRES-ADHOC")
         assert literal_text_params["input_text"].startswith("Literal text card")
-        assert literal_visual_params["input_text"].startswith("https://example.com/diagram.png")
+
+        # Literal-visual now uses template API — prompt contains the URL
+        tpl_prompt = mock_template.call_args.args[1]
+        assert "https://example.com/diagram.png" in tpl_prompt
 
     def test_creative_call_does_not_prefix_doc_title_into_input_text(self) -> None:
         slides = [
@@ -1069,11 +1094,15 @@ class TestGaryOutboundContract:
 
         with (
             patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
         ):
             mock_generate.side_effect = [
                 {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
                 {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
+            ]
+            mock_template.side_effect = [
                 {"id": "gen-visual-15", "gammaUrl": "https://gamma.app/docs/literal-visual-15"},
                 {"id": "gen-visual-16", "gammaUrl": "https://gamma.app/docs/literal-visual-16"},
             ]
@@ -1093,15 +1122,16 @@ class TestGaryOutboundContract:
                 run_id="C1-M1-PRES-ADHOC-20260330",
             )
 
-        assert mock_generate.call_count == 4
+        assert mock_generate.call_count == 2
+        assert mock_template.call_count == 2
         assert result["calls_made"] == 4
         assert [p["source_call"] for p in result["provenance"] if p["source_call"] == "literal-visual"] == ["literal-visual", "literal-visual"]
-        third_call = mock_generate.call_args_list[2].args[0]
-        fourth_call = mock_generate.call_args_list[3].args[0]
-        assert "bridge-a.png" in third_call["input_text"].lower()
-        assert "bridge-b.png" in fourth_call["input_text"].lower()
+        first_tpl = mock_template.call_args_list[0].args[1]
+        second_tpl = mock_template.call_args_list[1].args[1]
+        assert "bridge-a.png" in first_tpl.lower()
+        assert "bridge-b.png" in second_tpl.lower()
 
-    def test_literal_visual_input_uses_raw_image_url_not_markdown_image_syntax(self) -> None:
+    def test_literal_visual_prompt_uses_raw_image_url_not_markdown_image_syntax(self) -> None:
         slides = [
             {"slide_number": 1, "content": "Literal visual card", "fidelity": "literal-visual"},
         ]
@@ -1115,10 +1145,12 @@ class TestGaryOutboundContract:
         ]
 
         with (
-            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
         ):
-            mock_generate.return_value = {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"}
+            mock_template.return_value = {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"}
             generate_deck_mixed_fidelity(
                 slides,
                 {
@@ -1130,11 +1162,123 @@ class TestGaryOutboundContract:
                 run_id="C1-M1-PRES-ADHOC-20260330",
             )
 
-        literal_visual_params = mock_generate.call_args_list[0].args[0]
-        assert literal_visual_params["input_text"].startswith("https://example.com/roadmap.png")
-        assert "![diagram](https://example.com/roadmap.png)" not in literal_visual_params["input_text"]
+        tpl_prompt = mock_template.call_args.args[1]
+        assert "https://example.com/roadmap.png" in tpl_prompt
+        assert "![diagram](https://example.com/roadmap.png)" not in tpl_prompt
 
-    def test_literal_visual_input_includes_layout_guidance_for_injected_image(self) -> None:
+    def test_literal_visual_slide_fails_closed_without_diagram_card(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template"),
+            pytest.raises(ValueError, match="requires a diagram_cards entry"),
+        ):
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=[],
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+    def test_literal_visual_with_preintegration_routes_through_gamma_api(
+        self, tmp_path: Path,
+    ) -> None:
+        """When a preintegration PNG exists, it is published and then Gamma renders the hosted URL."""
+        from PIL import Image as _Image
+
+        preintegration_dir = tmp_path / "preint"
+        preintegration_dir.mkdir()
+        png_file = preintegration_dir / "card-03.png"
+        # Create a valid 100x56 PNG so Pillow can open it for post-processing.
+        _img = _Image.new("RGB", (100, 56), color=(30, 60, 120))
+        _img.save(png_file, format="PNG")
+
+        export_dir = tmp_path / "export"
+        export_dir.mkdir()
+
+        slides = [
+            {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
+            {"slide_number": 3, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 3,
+                "image_url": "https://example.com/diagram.png",
+                "preintegration_png_path": str(png_file),
+                "required": True,
+            }
+        ]
+
+        mock_publish_result = {
+            "repo_url": "https://github.com/test/test.github.io",
+            "target_subdir": "assets/gamma/test-module",
+            "preintegration_ready": True,
+            "copied_count": 1,
+            "pushed": True,
+            "url_base": "https://test.github.io/assets/gamma/test-module",
+            "substituted_cards": [3],
+            "skipped": [],
+            "url_map": {3: "https://test.github.io/assets/gamma/test-module/card-03.png"},
+        }
+
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(
+                gamma_operations,
+                "publish_preintegration_literal_visuals",
+                return_value=mock_publish_result,
+            ),
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
+        ):
+            mock_generate.return_value = {
+                "id": "gen-creative",
+                "gammaUrl": "https://gamma.app/docs/creative",
+            }
+            mock_template.return_value = {
+                "id": "gen-literal-visual",
+                "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "export_dir": str(export_dir),
+                    "export_as": "png",
+                    "site_repo_url": "https://github.com/test/test.github.io",
+                    **_valid_theme_resolution(),
+                },
+                "test-module",
+                diagram_cards=diagram_cards,
+                run_id="TEST-GAMMA-ROUTE",
+            )
+
+        # 2 calls: creative via generate_slide + literal-visual via template (no bypass).
+        assert mock_generate.call_count == 1
+        assert mock_template.call_count == 1
+        assert result["calls_made"] == 2
+
+        # Literal-visual template call should use the published hosted URL.
+        tpl_prompt = mock_template.call_args.args[1]
+        assert "https://test.github.io/assets/gamma/test-module/card-03.png" in tpl_prompt
+
+        # Provenance should NOT show bypass.
+        lv_provenance = [p for p in result["provenance"] if p["card_number"] == 3]
+        assert lv_provenance[0]["generation_id"] != "preintegration-bypass"
+        assert lv_provenance[0]["fidelity"] == "literal-visual"
+
+        # call_mode metadata should be per-card, not bypass.
+        assert result["parameter_decisions"]["image_options"]["literal_visual_call_mode"] == "per-card"
+
+    def test_literal_visual_template_prompt_includes_layout_guidance_for_injected_image(self) -> None:
         slides = [
             {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},
             {"slide_number": 2, "content": "Literal visual card", "fidelity": "literal-visual"},
@@ -1150,12 +1294,16 @@ class TestGaryOutboundContract:
 
         with (
             patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
         ):
-            mock_generate.side_effect = [
-                {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
-                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
-            ]
+            mock_generate.return_value = {
+                "id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative",
+            }
+            mock_template.return_value = {
+                "id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
             generate_deck_mixed_fidelity(
                 slides,
                 {
@@ -1167,9 +1315,52 @@ class TestGaryOutboundContract:
                 run_id="C1-M1-PRES-ADHOC-20260330",
             )
 
-        literal_visual_params = mock_generate.call_args_list[1].args[0]
-        assert "image-dominant" in literal_visual_params["additional_instructions"].lower()
-        assert "crop to highlight course 1 to course 2 bridge" in literal_visual_params["input_text"].lower()
+        tpl_prompt = mock_template.call_args.args[1]
+        assert "image card" in tpl_prompt.lower()
+        assert "crop to highlight course 1 to course 2 bridge" in tpl_prompt.lower()
+        assert "https://example.com/roadmap.png" in tpl_prompt
+
+    def test_literal_visual_template_prompt_ignores_slide_body_text_and_uses_only_image_url(self) -> None:
+        slides = [
+            {
+                "slide_number": 2,
+                "content": "This explanatory copy must not be sent to on-slide literal-visual generation.",
+                "fidelity": "literal-visual",
+            },
+        ]
+        diagram_cards = [
+            {
+                "card_number": 2,
+                "image_url": "https://example.com/only-image.png",
+                "placement_note": "Use full-bleed composition.",
+                "required": True,
+            }
+        ]
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
+        ):
+            mock_template.return_value = {
+                "id": "gen-literal-visual",
+                "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
+            generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    **_valid_theme_resolution(),
+                },
+                "C1-M1-PRES-ADHOC-20260330",
+                diagram_cards=diagram_cards,
+                run_id="C1-M1-PRES-ADHOC-20260330",
+            )
+
+        tpl_prompt = mock_template.call_args.args[1]
+        assert "https://example.com/only-image.png" in tpl_prompt
+        assert "This explanatory copy" not in tpl_prompt
 
     def test_mixed_fidelity_png_export_assigns_per_slide_paths_from_gamma_artifacts(self, tmp_path: Path) -> None:
         slides = [
@@ -1200,14 +1391,18 @@ class TestGaryOutboundContract:
 
         with (
             patch.object(gamma_operations, "generate_slide") as mock_generate,
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
             patch.object(gamma_operations, "download_export") as mock_download,
         ):
             mock_generate.side_effect = [
                 {"id": "gen-creative", "exportUrl": "https://gamma.app/export/creative"},
                 {"id": "gen-literal-text", "exportUrl": "https://gamma.app/export/literal-text"},
-                {"id": "gen-literal-visual", "exportUrl": "https://gamma.app/export/literal-visual"},
             ]
+            mock_template.return_value = {
+                "id": "gen-literal-visual", "exportUrl": "https://gamma.app/export/literal-visual",
+            }
             mock_download.side_effect = [creative_archive, literal_text_archive, literal_visual_png]
 
             result = generate_deck_mixed_fidelity(
@@ -1612,6 +1807,14 @@ class TestGoldenPathDispatch:
             "themeId": "theme_golden",
             **_valid_theme_resolution(),
         }
+        diagram_cards = [
+            {
+                "card_number": 3,
+                "image_url": "https://example.com/golden-path-literal-visual.png",
+                "placement_note": "Full-slide image composition.",
+                "required": True,
+            }
+        ]
 
         # Step 1: merge — must produce content-bearing rows aligned to fidelity metadata
         merged = merge_slide_content(fidelity_payload, content_payload)
@@ -1626,21 +1829,30 @@ class TestGoldenPathDispatch:
             for s in merged
         ), "no slide may carry placeholder text after merge"
 
-        # Step 2: dispatch — mocked at generate_slide boundary (3 calls: creative + literal text + literal visual)
-        with patch.object(gamma_operations, "generate_slide") as mock_gen:
+        # Step 2: dispatch — mocked at generate_slide + generate_from_template boundaries
+        with (
+            patch.object(gamma_operations, "generate_slide") as mock_gen,
+            patch.object(gamma_operations, "generate_from_template") as mock_tpl,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
+        ):
             mock_gen.side_effect = [
                 {"id": "gen-creative", "gammaUrl": "https://gamma.app/docs/creative"},
                 {"id": "gen-literal-text", "gammaUrl": "https://gamma.app/docs/literal-text"},
-                {"id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual"},
             ]
+            mock_tpl.return_value = {
+                "id": "gen-literal-visual", "gammaUrl": "https://gamma.app/docs/literal-visual",
+            }
             result = execute_generation(
                 params,
                 slides=merged,
                 module_lesson_part="GOLDEN-PATH-01",
+                diagram_cards=diagram_cards,
                 run_id="GOLDEN-PATH-01",
             )
 
-        assert mock_gen.call_count == 3, "mixed fidelity with literal-visual must produce 3 API calls"
+        assert mock_gen.call_count == 2, "mixed fidelity: 2 generate_slide calls (creative + literal-text)"
+        assert mock_tpl.call_count == 1, "mixed fidelity: 1 generate_from_template call (literal-visual)"
 
         # Step 3: validate output shape
         assert "gary_slide_output" in result
@@ -1652,3 +1864,190 @@ class TestGoldenPathDispatch:
 
         # Step 4: Gate 2 dispatch contract must pass (low-level validator)
         validate_dispatch_ready(result)
+
+
+class TestLiteralVisualRetryOnBlank:
+    """Tests for the retry-on-blank-fill quality gate in template dispatch."""
+
+    def _base_slides_and_cards(self) -> tuple[list[dict], list[dict]]:
+        slides = [
+            {"slide_number": 1, "content": "Literal visual card", "fidelity": "literal-visual"},
+        ]
+        diagram_cards = [
+            {
+                "card_number": 1,
+                "image_url": "https://example.com/diagram.png",
+                "placement_note": "Full-bleed composition.",
+                "required": True,
+            }
+        ]
+        return slides, diagram_cards
+
+    def test_retry_succeeds_on_second_attempt(self) -> None:
+        """First attempt returns blank, second passes fill validation."""
+        slides, diagram_cards = self._base_slides_and_cards()
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill") as mock_fill,
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "gammaUrl": "https://gamma.app/docs/lv",
+            }
+            mock_fill.side_effect = [
+                {"passed": False, "failures": ["all edges blank"]},
+                {"passed": True},
+            ]
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {"themeId": "theme_abc", **_valid_theme_resolution()},
+                "RETRY-TEST",
+                diagram_cards=diagram_cards,
+                run_id="RETRY-TEST",
+            )
+
+        assert mock_template.call_count == 2
+        assert result["calls_made"] == 2
+
+    def test_retries_exhaust_and_falls_back_to_composite(self, tmp_path: Path) -> None:
+        """All template attempts fail → composite fallback from preintegration PNG."""
+        from PIL import Image as _Image
+
+        preint_dir = tmp_path / "preint"
+        preint_dir.mkdir()
+        preint_png = preint_dir / "card-01.png"
+        _Image.new("RGB", (1376, 768), color=(30, 60, 120)).save(preint_png, format="PNG")
+
+        export_dir = tmp_path / "export"
+        export_dir.mkdir()
+        # Create a blank PNG that the template "returns"
+        blank_png = export_dir / "blank.png"
+        _Image.new("RGB", (2400, 1350), color=(255, 255, 255)).save(blank_png, format="PNG")
+
+        slides, diagram_cards = self._base_slides_and_cards()
+        diagram_cards[0]["preintegration_png_path"] = str(preint_png)
+
+        publish_return = {
+            "preintegration_ready": True,
+            "url_map": {1: "https://example.com/published/card-01.png"},
+        }
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": False, "failures": ["blank"]}),
+            patch.object(gamma_operations, "download_export", return_value=blank_png),
+            patch.object(gamma_operations, "publish_preintegration_literal_visuals", return_value=publish_return),
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "exportUrl": "https://gamma.app/export/blank",
+            }
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "exportAs": "png",
+                    "export_dir": str(export_dir),
+                    **_valid_theme_resolution(),
+                },
+                "FALLBACK-TEST",
+                diagram_cards=diagram_cards,
+                site_repo_url="https://github.com/test/repo",
+                run_id="FALLBACK-TEST",
+            )
+
+        assert mock_template.call_count == 3  # _MAX_TEMPLATE_RETRIES
+        lv_output = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
+        assert len(lv_output) == 1
+        # The composite fallback should have written a non-blank image.
+        composited_path = Path(lv_output[0]["file_path"])
+        assert composited_path.is_file()
+        with _Image.open(composited_path) as img:
+            assert img.size == (2400, 1350)
+
+    def test_retries_exhaust_no_fallback_logs_error(self) -> None:
+        """All attempts fail and no preintegration source — graceful degradation."""
+        slides, diagram_cards = self._base_slides_and_cards()
+        # No preintegration_png_path in diagram_cards
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": False, "failures": ["blank"]}),
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "gammaUrl": "https://gamma.app/docs/lv",
+            }
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {"themeId": "theme_abc", **_valid_theme_resolution()},
+                "NO-FALLBACK",
+                diagram_cards=diagram_cards,
+                run_id="NO-FALLBACK",
+            )
+
+        assert mock_template.call_count == 3
+        # Output still has the literal-visual slide (graceful degradation).
+        lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
+        assert len(lv) == 1
+
+    def test_no_retry_when_first_attempt_passes(self) -> None:
+        """Successful first render = exactly 1 API call."""
+        slides, diagram_cards = self._base_slides_and_cards()
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "gammaUrl": "https://gamma.app/docs/lv",
+            }
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {"themeId": "theme_abc", **_valid_theme_resolution()},
+                "NO-RETRY",
+                diagram_cards=diagram_cards,
+                run_id="NO-RETRY",
+            )
+
+        assert mock_template.call_count == 1
+        assert result["calls_made"] == 1
+
+    def test_prompt_starts_with_image_instruction_not_title(self) -> None:
+        """Title must appear at END of prompt, not beginning, to prevent Gamma misinterpretation."""
+        slides, diagram_cards = self._base_slides_and_cards()
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={"passed": True}),
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "gammaUrl": "https://gamma.app/docs/lv",
+            }
+            generate_deck_mixed_fidelity(
+                slides,
+                {"themeId": "theme_abc", **_valid_theme_resolution()},
+                "PROMPT-ORDER",
+                diagram_cards=diagram_cards,
+                run_id="PROMPT-ORDER",
+            )
+
+        tpl_prompt = mock_template.call_args.args[1]
+        # Prompt must start with the image replacement instruction, not the title.
+        assert tpl_prompt.startswith("Replace the image")
+        # Title must appear at the end.
+        assert "Title: PROMPT-ORDER Slide 01" in tpl_prompt
+        lines = tpl_prompt.strip().split("\n")
+        title_line = [l for l in lines if l.startswith("Title:")]
+        assert title_line, "Title line must be present"
+        # Title must be the last non-empty line.
+        non_empty_lines = [l for l in lines if l.strip()]
+        assert non_empty_lines[-1].startswith("Title:")

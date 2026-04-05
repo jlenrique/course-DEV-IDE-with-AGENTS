@@ -348,232 +348,375 @@ def test_cli_returns_exception_payload_on_malformed_json(tmp_path: Path) -> None
         assert any("validator_exception:" in msg for msg in data.get("errors", []))
 
 
-def test_fails_when_local_slide_png_missing_on_disk(tmp_path: Path) -> None:
+# ---------------------------------------------------------------------------
+# Content-bearing validation for literal-text slides
+# Root cause: gary-slide-content.json populated with Irene planning directives
+# instead of actual extracted source text for literal-text slides.
+# ---------------------------------------------------------------------------
+
+
+def _write_fidelity_slides(bundle_dir: Path, entries: list[dict]) -> None:
+    """Write a minimal gary-fidelity-slides.json to the bundle dir."""
+    (bundle_dir / "gary-fidelity-slides.json").write_text(
+        json.dumps({"slides": entries}), encoding="utf-8"
+    )
+
+
+def _write_slide_content(bundle_dir: Path, slides: list[dict]) -> str:
+    """Write gary-slide-content.json and return the relative filename."""
+    (bundle_dir / "gary-slide-content.json").write_text(
+        json.dumps({"slides": slides}), encoding="utf-8"
+    )
+    return "gary-slide-content.json"
+
+
+def test_fails_when_literal_text_content_is_planning_directive(tmp_path: Path) -> None:
+    """A literal-text slide whose content field contains a planning-directive
+    pattern must cause validate_gary_dispatch_ready to return status='fail'.
+    Anti-pattern detected: 'instructional content aligned to'."""
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
-    payload = _valid_payload()
+    payload = _valid_payload(bundle_dir)
+
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
+            {
+                "slide_number": 1,
+                "content": "Card 1: instructional content aligned to CLO2. Atmosphere + framing.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+            {
+                "slide_number": 2,
+                "content": "Card 2: instructional content aligned to CLO1. Retain terms.",
+                "source_ref": "extracted.md#anchor-2",
+            },
+        ],
+    )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "creative"},
+            {"slide_number": 2, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
 
     result = validate_gary_dispatch_ready(
-        payload,
-        payload_path=bundle_dir / "gary-dispatch-result.json",
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
     )
 
     assert result["status"] == "fail"
-    assert any("does not exist on disk" in msg for msg in result["errors"])
+    assert any("planning directive" in msg.lower() for msg in result["errors"])
 
 
-def test_fails_when_preintegration_cards_missing_publish_receipt(tmp_path: Path) -> None:
+def test_passes_when_literal_text_content_is_real_source_text(tmp_path: Path) -> None:
+    """A literal-text slide with substantive source-derived content must pass."""
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     payload = _valid_payload(bundle_dir)
 
-    (bundle_dir / "irene-pass1.md").write_text(
-        "\n".join(
-            [
-                "## literal-visual spec cards",
-                "",
-                "### LV-01",
-                "",
-                "- slide_number: 2",
-                "- source_asset: `metadata.json#media_references[2]`",
-                "- image_treatment: source-crop",
-                "- layout_constraint: full-width primary visual with no redrawn substitute",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    (bundle_dir / "gary-diagram-cards.json").write_text(
-        json.dumps(
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
             {
-                "run_id": "run-1",
-                "cards": [
-                    {
-                        "card_number": 2,
-                        "preintegration_png_path": "course-content/staging/rebranded-assets/slide-02.png",
-                        "source_asset": "`metadata.json#media_references[2]`",
-                        "derivation_type": "source-crop",
-                        "required": True,
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
+                "slide_number": 1,
+                "content": "The Modern Clinician's Dilemma: physicians face administrative burnout.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+            {
+                "slide_number": 2,
+                "content": (
+                    "By the end of this module, the learner will be able to:\n"
+                    "1. Define the innovation mindset and correlate core clinical competencies.\n"
+                    "2. Analyze macro-economic trends including administrative burnout.\n"
+                    "3. Differentiate between a superficial idea and a vetted opportunity."
+                ),
+                "source_ref": "extracted.md#anchor-2",
+            },
+        ],
     )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "creative"},
+            {"slide_number": 2, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
 
     result = validate_gary_dispatch_ready(
-        payload,
-        payload_path=bundle_dir / "gary-dispatch-result.json",
-    )
-
-    assert result["status"] == "fail"
-    assert any("literal_visual_publish must be present" in msg for msg in result["errors"])
-
-
-def test_passes_when_preintegration_cards_have_publish_receipt(tmp_path: Path) -> None:
-    bundle_dir = tmp_path / "bundle"
-    bundle_dir.mkdir()
-    payload = _valid_payload(bundle_dir)
-    payload["dispatch_metadata"] = {
-        "slides_content_json_path": "gary-slide-content.json",
-        "site_repo_url": "https://github.com/jlenrique/jlenrique.github.io",
-        "invocation_mode": "tracked",
-    }
-    payload["literal_visual_publish"] = {
-        "preintegration_ready": True,
-        "substituted_cards": [2],
-        "url_base": "https://example.github.io/assets/gamma/C1-M1",
-    }
-
-    (bundle_dir / "irene-pass1.md").write_text(
-        "\n".join(
-            [
-                "## literal-visual spec cards",
-                "",
-                "### LV-01",
-                "",
-                "- slide_number: 2",
-                "- source_asset: `metadata.json#media_references[2]`",
-                "- image_treatment: source-crop",
-                "- layout_constraint: full-width primary visual with no redrawn substitute",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    (bundle_dir / "gary-diagram-cards.json").write_text(
-        json.dumps(
-            {
-                "run_id": "run-1",
-                "cards": [
-                    {
-                        "card_number": 2,
-                        "preintegration_png_path": "course-content/staging/rebranded-assets/slide-02.png",
-                        "image_url": "https://cdn.example.com/hosted-02.png",
-                        "source_asset": "`metadata.json#media_references[2]`",
-                        "derivation_type": "source-crop",
-                        "required": True,
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    result = validate_gary_dispatch_ready(
-        payload,
-        payload_path=bundle_dir / "gary-dispatch-result.json",
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
     )
 
     assert result["status"] == "pass"
+    assert result["errors"] == []
 
 
-def test_fails_when_preintegration_cards_missing_site_repo_url(tmp_path: Path) -> None:
+def test_fails_when_multiple_literal_text_slides_have_directives(tmp_path: Path) -> None:
+    """All literal-text slides with planning directives should each produce an error."""
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     payload = _valid_payload(bundle_dir)
-    payload["dispatch_metadata"] = {
-        "slides_content_json_path": "gary-slide-content.json",
-        "invocation_mode": "tracked",
-    }
-    payload["literal_visual_publish"] = {
-        "preintegration_ready": True,
-        "substituted_cards": [2],
-        "url_base": "https://example.github.io/assets/gamma/C1-M1",
-    }
 
-    (bundle_dir / "irene-pass1.md").write_text(
-        "\n".join(
-            [
-                "## literal-visual spec cards",
-                "",
-                "### LV-01",
-                "",
-                "- slide_number: 2",
-                "- source_asset: `metadata.json#media_references[2]`",
-                "- image_treatment: source-crop",
-                "- layout_constraint: full-width primary visual with no redrawn substitute",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    (bundle_dir / "gary-diagram-cards.json").write_text(
-        json.dumps(
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
             {
-                "run_id": "run-1",
-                "cards": [
-                    {
-                        "card_number": 2,
-                        "preintegration_png_path": "course-content/staging/rebranded-assets/slide-02.png",
-                        "source_asset": "`metadata.json#media_references[2]`",
-                        "derivation_type": "source-crop",
-                        "required": True,
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
+                "slide_number": 1,
+                "content": "Slide 1: instructional content aligned to CLO1. Retain wording.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+            {
+                "slide_number": 2,
+                "content": "Slide 2: instructional content aligned to CLO3. Keep action verbs.",
+                "source_ref": "extracted.md#anchor-2",
+            },
+        ],
     )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "literal-text"},
+            {"slide_number": 2, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
 
     result = validate_gary_dispatch_ready(
-        payload,
-        payload_path=bundle_dir / "gary-dispatch-result.json",
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
     )
 
     assert result["status"] == "fail"
-    assert any("site_repo_url must be present" in msg for msg in result["errors"])
+    planning_directive_errors = [
+        msg for msg in result["errors"] if "planning directive" in msg.lower()
+    ]
+    assert len(planning_directive_errors) == 2, (
+        f"Expected 2 planning-directive errors (one per literal-text slide), "
+        f"got {len(planning_directive_errors)}: {planning_directive_errors}"
+    )
 
 
-def test_fails_when_preintegration_cards_used_in_adhoc_mode(tmp_path: Path) -> None:
+def test_creative_slides_with_directive_pattern_do_not_fail(tmp_path: Path) -> None:
+    """Creative slides are not subject to the planning-directive content check
+    (Gamma's textMode=generate treats the content as a topic prompt; the slip
+    is only fatal under textMode=preserve)."""
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     payload = _valid_payload(bundle_dir)
-    payload["dispatch_metadata"] = {
-        "slides_content_json_path": "gary-slide-content.json",
-        "site_repo_url": "https://github.com/jlenrique/jlenrique.github.io",
-        "invocation_mode": "ad-hoc",
-    }
-    payload["literal_visual_publish"] = {
-        "preintegration_ready": True,
-        "substituted_cards": [2],
-        "url_base": "https://example.github.io/assets/gamma/C1-M1",
-    }
 
-    (bundle_dir / "irene-pass1.md").write_text(
-        "\n".join(
-            [
-                "## literal-visual spec cards",
-                "",
-                "### LV-01",
-                "",
-                "- slide_number: 2",
-                "- source_asset: `metadata.json#media_references[2]`",
-                "- image_treatment: source-crop",
-                "- layout_constraint: full-width primary visual with no redrawn substitute",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    (bundle_dir / "gary-diagram-cards.json").write_text(
-        json.dumps(
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
             {
-                "run_id": "run-1",
-                "cards": [
-                    {
-                        "card_number": 2,
-                        "preintegration_png_path": "course-content/staging/rebranded-assets/slide-02.png",
-                        "source_asset": "`metadata.json#media_references[2]`",
-                        "derivation_type": "source-crop",
-                        "required": True,
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
+                "slide_number": 1,
+                "content": "Card 1: instructional content aligned to CLO2. Creative synthesis.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+            {
+                "slide_number": 2,
+                "content": "Card 2: instructional content aligned to CLO1. Creative synthesis.",
+                "source_ref": "extracted.md#anchor-2",
+            },
+        ],
     )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "creative"},
+            {"slide_number": 2, "fidelity": "creative"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
 
     result = validate_gary_dispatch_ready(
-        payload,
-        payload_path=bundle_dir / "gary-dispatch-result.json",
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
+    )
+
+    assert result["status"] == "pass"
+    assert not any("planning directive" in msg.lower() for msg in result["errors"])
+
+
+def test_skips_content_check_when_fidelity_slides_absent(tmp_path: Path) -> None:
+    """When gary-fidelity-slides.json is absent (e.g., older runs), the content
+    check is skipped gracefully — no false positives."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    payload = _valid_payload(bundle_dir)
+
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
+            {
+                "slide_number": 1,
+                "content": "Slide 1: instructional content aligned to CLO1.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+        ],
+    )
+    # Deliberately do NOT write gary-fidelity-slides.json
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
+
+    result = validate_gary_dispatch_ready(
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
+    )
+
+    assert result["status"] == "pass"
+    assert not any("planning directive" in msg.lower() for msg in result["errors"])
+
+
+def test_literal_text_check_reports_exact_offending_slide_numbers(tmp_path: Path) -> None:
+    """Only literal-text slides with directive-like content should be reported,
+    and the error should identify the exact slide numbers."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    payload = _valid_payload(bundle_dir)
+
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
+            {
+                "slide_number": 1,
+                "content": "Slide 1: instructional content aligned to CLO1.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+            {
+                "slide_number": 2,
+                "content": "Slide 2: Real source-derived instructional text for learners.",
+                "source_ref": "extracted.md#anchor-2",
+            },
+        ],
+    )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "literal-text"},
+            {"slide_number": 2, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
+
+    result = validate_gary_dispatch_ready(
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
     )
 
     assert result["status"] == "fail"
-    assert any("not allowed in ad-hoc mode" in msg for msg in result["errors"])
+    planning_errors = [
+        msg
+        for msg in result["errors"]
+        if "planning directive" in msg.lower()
+    ]
+    assert len(planning_errors) == 1
+    assert "slide 1" in planning_errors[0].lower()
+    assert "slide 2" not in planning_errors[0].lower()
+
+
+def test_literal_text_check_is_case_insensitive_for_directive_pattern(tmp_path: Path) -> None:
+    """Regression: directive pattern matching must remain case-insensitive."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    payload = _valid_payload(bundle_dir)
+
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
+            {
+                "slide_number": 1,
+                "content": "SLIDE 1: INSTRUCTIONAL CONTENT ALIGNED TO CLO3. KEEP TERMS.",
+                "source_ref": "extracted.md#anchor-1",
+            },
+        ],
+    )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
+
+    result = validate_gary_dispatch_ready(
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
+    )
+
+    assert result["status"] == "fail"
+    assert any("planning directive" in msg.lower() for msg in result["errors"])
+
+
+def test_fails_when_literal_visual_content_contains_non_url_text(tmp_path: Path) -> None:
+    """Literal-visual payload must be image-only (URL-only or empty content)."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    payload = _valid_payload(bundle_dir)
+
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
+            {
+                "slide_number": 1,
+                "content": "https://example.com/diagram.png\n\nThis explanatory text must move to narration.",
+                "source_ref": "extracted.md#anchor-visual-1",
+            },
+            {
+                "slide_number": 2,
+                "content": "Real source-derived text for literal-text slide.",
+                "source_ref": "extracted.md#anchor-text-2",
+            },
+        ],
+    )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "literal-visual"},
+            {"slide_number": 2, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
+
+    result = validate_gary_dispatch_ready(
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
+    )
+
+    assert result["status"] == "fail"
+    assert any(
+        "literal-visual" in msg.lower() and "image-only" in msg.lower()
+        for msg in result["errors"]
+    )
+
+
+def test_passes_when_literal_visual_content_is_url_only(tmp_path: Path) -> None:
+    """A literal-visual slide may carry only a URL (or empty content) in gary-slide-content."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    payload = _valid_payload(bundle_dir)
+
+    slides_content_path = _write_slide_content(
+        bundle_dir,
+        [
+            {
+                "slide_number": 1,
+                "content": "https://example.com/diagram.png",
+                "source_ref": "extracted.md#anchor-visual-1",
+            },
+            {
+                "slide_number": 2,
+                "content": "By the end of this module, learners will define the innovation mindset.",
+                "source_ref": "extracted.md#anchor-text-2",
+            },
+        ],
+    )
+    _write_fidelity_slides(
+        bundle_dir,
+        [
+            {"slide_number": 1, "fidelity": "literal-visual"},
+            {"slide_number": 2, "fidelity": "literal-text"},
+        ],
+    )
+    payload["dispatch_metadata"] = {"slides_content_json_path": slides_content_path}
+
+    result = validate_gary_dispatch_ready(
+        payload, payload_path=bundle_dir / "gary-dispatch-result.json"
+    )
+
+    assert result["status"] == "pass"
+    assert not any("literal-visual" in msg.lower() for msg in result["errors"])

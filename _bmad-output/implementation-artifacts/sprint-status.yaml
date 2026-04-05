@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-05  # Epic 12 complete (5 stories: dual-dispatch infrastructure, parallel fidelity review, selection storyboard, winner forwarding, Marcus integration). Prompt pack bumped to v4.1.
+last_updated: 2026-04-05  # Epic 13 done (3 stories: mandatory perception, visual reference injection, manifest enrichment). 84 new tests, 357 total passing.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -180,17 +180,17 @@ development_status:
   12-3-selection-storyboard: done
   12-4-winner-forwarding-provenance-archive: done
   12-5-marcus-double-dispatch-integration: done
-  epic-12-retrospective: optional
+  epic-12-retrospective: done
 
   # === EPIC 13: Visual-Aware Irene Pass 2 Scripting ===
   # Added 2026-04-05 (Party Mode planning session). Mandatory perception contract,
   # parameterized visual reference injection in narration, segment manifest enrichment.
   # Depends on: Epic 12 (soft), sensory bridges (Epic 2A, hard).
-  epic-13: backlog
-  13-1-mandatory-perception-contract: backlog
-  13-2-visual-reference-injection: backlog
-  13-3-segment-manifest-visual-references: backlog
-  epic-13-retrospective: optional
+  epic-13: done
+  13-1-mandatory-perception-contract: done
+  13-2-visual-reference-injection: done
+  13-3-segment-manifest-visual-references: done
+  epic-13-retrospective: done
 
   # === EPIC 14: Motion-Enhanced Presentation Workflow ===
   # Added 2026-04-05 (Party Mode planning session). Motion workflow variant with

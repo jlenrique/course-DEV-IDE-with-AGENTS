@@ -43,6 +43,8 @@ visual_narration:
   deictic_references: moderate
   description_depth: identify
   visual_silence_permitted: true   # allow 2-3 sec pauses for full-bleed images
+  visual_references_per_slide: 2   # Story 13.2: explicit visual element references in narration
+  visual_references_tolerance: 1   # ±1 from target is acceptable
 
 # ---------------------------------------------------------------------------
 # 4. terminology_treatment — when and how to gloss technical terms

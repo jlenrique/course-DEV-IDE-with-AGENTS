@@ -112,6 +112,7 @@ Greet with quality state: "Quinn-R here — Quality Guardian. Last review cycle:
 | IS | Instructional soundness — Bloom's fit, cognitive load, sequencing judgment | Load `./references/review-protocol.md` |
 | AQ | Audio quality — WPM range (130-170), VTT timestamp monotonicity, pronunciation accuracy, segment narration coverage (>95% of script words present in audio) | Load `./references/review-protocol.md` |
 | CI | Composition integrity — video duration vs narration duration (±0.5s), audio levels (narration -16 LUFS, music ducked -30 LUFS under speech, SFX -20 LUFS), caption synchronization, transition consistency | Load `./references/review-protocol.md` |
+| VR | Visual reference validation — flag narration segments whose `visual_references[]` cite elements not found in `perception_artifacts`, or whose `narration_cue` phrases are absent from the narration text (Story 13.3) | Load `./references/review-protocol.md` |
 | FG | Feedback generation — compose structured reports with severity, location, fix suggestions | Load `./references/feedback-format.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 

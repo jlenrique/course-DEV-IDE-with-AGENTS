@@ -39,6 +39,12 @@ segments:
     music: enum             # duck | swell | out | continue | null
     transition_in: enum     # fade | cross-dissolve | cut | none
     transition_out: enum    # fade | cross-dissolve | cut | none
+    # ── Visual references from Irene Pass 2 (Story 13.3) ──
+    visual_references:               # list of visual elements referenced in narration
+      - element: string              # what is referenced (e.g., "comparison timeline")
+        location_on_slide: string    # spatial description (e.g., "left panel")
+        narration_cue: string        # exact narration phrase that references this element
+        perception_source: string    # slide_id from perception_artifacts
     # ── Written back by ElevenLabs agent ──
     narration_duration: float | null    # seconds
     narration_file: string | null       # relative path, e.g., "course-content/staging/C1-M1-L3/audio/seg-01.mp3"

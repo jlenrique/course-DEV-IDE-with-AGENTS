@@ -34,6 +34,7 @@ G0 → G1 → G2 → [HIL Gate 1] → G3 → [HIL Gate 2] → G4 → [HIL Gate 3
 
 Operational anti-drift checkpoints layered on top of the gate chain:
 - **Prompt 6B checkpoint (pre-G3 dispatch side effects):** literal-visual operator packet and per-card readiness confirmation.
+- **Dispatch payload checkpoint (pre-G2 approval):** literal-visual content payload rows are URL-only image references (no on-slide support prose).
 - **Storyboard A checkpoint (post-G3 generation):** visual order/content approval before Gate 2 progression.
 - **Storyboard B checkpoint (post-G4 output):** slide+script alignment approval before downstream audio/script finalization.
 

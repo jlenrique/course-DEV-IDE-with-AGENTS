@@ -155,6 +155,11 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 22. `GammaClient.wait_for_generation()` polls until completion (3s intervals, up to 120 attempts)
 23. The generated presentation data is returned to the specialist
 
+Literal-visual dispatch rule:
+- In mixed-fidelity generation, literal-visual slides are treated as full-slide image-only payloads.
+- Dispatch input for literal-visual slides is URL-only image content; supporting prose belongs in Irene Pass 2 narration/script.
+- Missing literal-visual diagram-card image mappings are fail-closed errors.
+
 ### Phase 6: Fidelity and quality review
 
 24. The specialist performs **execution-only** self-assessment (e.g. Gary: layout integrity, parameter confidence, embellishment risk — see `skills/bmad-agent-gamma/references/quality-assessment.md` and `docs/lane-matrix.md`)

@@ -83,6 +83,7 @@ sidecars, redirect placeholders, and the contract validator.
 
 Required anti-drift checks in the walk report:
 - Verify Prompt 6B checkpoint exists and blocks Prompt 7 when required literal-visual cards are not operator-ready.
+- Verify literal-visual dispatch payload rule is enforced: image-only on-slide, URL-only content rows, and explanatory prose deferred to narration.
 - Verify Storyboard A checkpoint is required after Gary dispatch and before Gate 2 approval.
 - Verify Storyboard B checkpoint is required after Irene Pass 2 and before downstream audio/script finalization.
 

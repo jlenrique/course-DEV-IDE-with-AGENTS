@@ -154,6 +154,7 @@ Rules:
 - One row per slide_number in the planned deck.
 - content must be non-empty for every slide.
 - source_ref must be non-empty for every slide.
+- For literal-visual slides, `content` must be URL-only (HTTPS image URL or APP-staged URL); explanatory/support text on-slide is not allowed and must move to narration/script.
 - This artifact carries the generation text payload. `gary-fidelity-slides.json` carries mode/fidelity metadata and queue split.
 
 ## 6) gary-diagram-cards.json
@@ -191,6 +192,7 @@ Rules:
 - `source_ref` must point to the governing source text or structured extraction used to justify the card.
 - `derivation_type` must be explicit for auditability: `source-crop`, `rebranded-source`, `user-provided-exact`, or `generated-image`.
 - If Irene Pass 1 specifies `image_treatment: source-crop` or equivalent non-fabrication language, `derivation_type` must be source-derived and `image_url` must not point to Gamma `generated-images` output.
+- Literal-visual presentation policy is full-slide image-only. Any explanatory text belongs in Irene Pass 2 narration, not on the slide payload.
 
 ## 7) gary-theme-resolution.json
 

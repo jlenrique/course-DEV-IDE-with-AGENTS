@@ -39,10 +39,11 @@ profiles:
     stance: walk-through
     min_source_claims: 1
     description: >
-      Literal-visual slides contain SME-provided images, charts, or diagrams
-      that carry instructional weight. Narration walks the learner through
-      the visual while enriching with at least one source-backed insight
-      not directly legible on screen.
+      Literal-visual slides are full-slide image-only presentations using
+      SME-provided images, charts, or diagrams. Explanatory/supporting text
+      is relocated to narration. Narration walks the learner through the
+      visual while enriching with at least one source-backed insight not
+      directly legible on screen.
 
 # Per-segment override example (used in narration script stage directions):
 # override:

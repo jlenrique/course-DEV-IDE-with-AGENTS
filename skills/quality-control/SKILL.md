@@ -17,6 +17,7 @@ Scripts are invoked by Quinn-R during quality gate reviews or by Marcus for pre-
 |--------|------|---------|------------|
 | `./scripts/accessibility_checker.py` | Post | WCAG 2.1 AA scanning: reading level, heading hierarchy, alt text, caption sync | Quinn-R (CC capability) |
 | `./scripts/brand_validator.py` | Post | Style bible compliance: color codes, typography, voice markers | Quinn-R (BV capability) |
+| `./scripts/visual_fill_validator.py` | Post | Literal-visual full-slide fill: edge-band sampling confirms image occupies entire slide with no empty borders | Quinn-R / Marcus (post-dispatch) |
 | `./scripts/quality_logger.py` | Both | Log quality review results to SQLite `quality_gates` table | Quinn-R (after review) |
 
 **Future scripts (planned for Story 3.4 ElevenLabs):**

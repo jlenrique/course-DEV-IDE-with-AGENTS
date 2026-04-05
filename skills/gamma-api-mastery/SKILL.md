@@ -44,6 +44,7 @@ This is the **skill layer** in the three-layer architecture: Gary (agent — jud
 - If all slides are the same class or no fidelity data → dispatches to `generate_slide()` (single call)
 - `merge_parameters()` enforces the fidelity-control vocabulary for literal slides: `text_treatment` → `textMode`, `image_treatment` → `imageOptions.source`, free-text `additionalInstructions` stripped for literal slides
 - `diagram_cards` image URLs are validated via `validate_image_url()` before generation proceeds — unreachable URLs halt generation with an error
+- **Preintegration bypass**: When a literal-visual card has a local `preintegration_png_path` and `export_dir` is set, the source PNG is copied directly to the export directory — Gamma is skipped entirely for that slide. This guarantees 100% full-slide fill with zero rendering variance. The provenance record shows `generation_id: "preintegration-bypass"`. When no local PNG is available, the system falls back to Gamma API generation with a full-bleed guard instruction.
 
 Gary should always use `execute_generation()` for production runs. `generate_slide()` is the low-level single-call function used internally and for woodshed/debugging.
 

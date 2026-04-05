@@ -70,12 +70,13 @@ criteria:
     description: >
       When literal-visual cards originate from local preintegration assets,
       dispatch outputs must carry a substitution receipt showing those cards were
-      staged and replaced with hosted inputs before generation.
+      staged at hosted URLs and routed through Gamma API for full-bleed rendering.
     fidelity_class: [literal-visual]
     severity: high
     evaluation_type: deterministic
     check: >
       If gary-diagram-cards contains preintegration_png_path for card N,
-      then dispatch payload includes literal_visual_publish.preintegration_ready=true
-      and card N appears in literal_visual_publish.substituted_cards.
+      then dispatch payload includes literal_visual_publish.preintegration_ready=true,
+      card N appears in literal_visual_publish.substituted_cards, and
+      provenance[N].generation_id is a Gamma generation ID (not "preintegration-bypass").
     requires_perception: false

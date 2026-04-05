@@ -27,7 +27,7 @@ criteria:
 
   - id: "G2-03"
     name: "Fidelity classification accuracy"
-    description: "Fidelity tags are applied correctly: literal-text only for exact-match content (assessment items, statistics, accreditation terms); literal-visual only when SME image exists; creative is default — over-tagging literal is a violation"
+    description: "Fidelity tags are applied correctly: literal-text only for exact-match content (assessment items, statistics, accreditation terms); literal-visual only when SME image exists and the slide is planned as full-slide image-only; creative is default — over-tagging literal is a violation"
     fidelity_class: [creative, literal-text, literal-visual]
     severity: high
     evaluation_type: agentic
@@ -40,7 +40,7 @@ criteria:
     fidelity_class: [literal-text, literal-visual]
     severity: critical
     evaluation_type: deterministic
-    check: "literal-text slides specify textMode: preserve; literal-visual slides specify textMode: preserve + imageOptions.source: noImages or user-provided; creative slides may use any textMode"
+    check: "literal-text slides specify textMode: preserve; literal-visual slides specify textMode: preserve + imageOptions.source: noImages or user-provided with full-slide image-only intent (no supporting prose payload); creative slides may use any textMode"
     requires_perception: false
 
   - id: "G2-05"

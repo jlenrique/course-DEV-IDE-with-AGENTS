@@ -3,60 +3,70 @@
 > Scope note: this file tracks APP project development state only.
 > For production content operations, use docs/workflow/production-session-launcher.md.
 
-## Current State (as of 2026-04-05, end of phase-02/sunday-2026-04-05)
+## Current State (as of 2026-04-05, end of phase-03/sunday-afternoon-2026-04-05)
 
 - Active branch: **master** (session merged)
 - Working tree: clean
-- Latest completed work: Literal-visual anti-fade prompt, fail-fast retry (1 attempt + composite fallback), variance-based fill validation, provenance tracking
-- All BMAD epics: **done** (11 epics, 47 stories, all complete)
+- Latest completed work: Party Mode planning session — 3 new epics (12-14) with 15 stories formally planned, documented, and registered
+- All legacy epics: **done** (11 epics, 47 stories, all complete)
+- New epics in backlog: **Epic 12** (5 stories), **Epic 13** (3 stories), **Epic 14** (7 stories)
 - Template ID: `g_gior6s13mvpk8ms` (Image Card beta, image source: placeholder)
 
 ## Immediate Next Action
 
-1. **Run a production dispatch** with the new anti-fade prompt and fail-fast strategy to validate in a real production run. The prompt harness showed 3/3 success for background-classified images (card-09) and reliable composite fallback for accent-classified images (card-02).
-2. **Review composite output quality** — when composite fallback fires, verify the center-crop from `_composite_full_bleed()` is acceptable for the specific image. The composite is deterministic but may crop differently than the user intended.
-3. **Optimize source images** if needed — see `skills/gamma-api-mastery/references/literal-visual-image-optimization.md` for attributes that favor Gamma's background classification (dense, photographic, minimal whitespace).
+1. **Begin Epic 12 implementation** — Story 12.1: Dual-Dispatch Infrastructure. Add `double_dispatch` flag to `run-constants.yaml` and extend `execute_generation()` in `gamma_operations.py` to make two independent Gamma API calls per slide position when the flag is `true`.
+2. **Read Story 12.1 spec**: `_bmad-output/implementation-artifacts/12-1-dual-dispatch-infrastructure.md` for full acceptance criteria.
+3. **Sequencing reminder**: Epic 12 → Epic 13 → Epic 14. Do not start Epic 13 before Epic 12 is complete. Do not start Epic 14 before Epic 13 (specifically Story 13.2) is complete. Stories 14.4 and 14.5 can run in parallel.
 
 ## Branch Metadata
 
 ```bash
-# Session work is on master. For next session:
-git checkout -b phase-NN/description
+# Session work merged to master. For next session:
+git checkout -b phase-04/description
 ```
 
-## Key Changes This Session (2026-04-05)
+## Key Changes This Session (2026-04-05 afternoon)
 
-### gamma_operations.py
-- **Anti-fade prompt**: "Replace the placeholder image with this image at full opacity (not as background, not faded)."
-- **Fail-fast**: `_MAX_TEMPLATE_RETRIES = 1` (was 3) — single template attempt, then composite fallback
-- **Export settle**: `_TEMPLATE_EXPORT_SETTLE_SECONDS = 15` (was 10)
-- **Download fallback**: When no local preintegration PNG exists, downloads from hosted URL and composites
-- **Provenance**: `literal_visual_source` field on output records (template | composite-preintegration | composite-download)
+### Planning Artifacts
+- **epics.md**: Epics 12, 13, 14 appended with full story definitions and acceptance criteria
+- **15 story files created** in `_bmad-output/implementation-artifacts/`:
+  - 12-1 through 12-5 (Double-Dispatch Gamma Slide Selection)
+  - 13-1 through 13-3 (Visual-Aware Irene Pass 2 Scripting)
+  - 14-1 through 14-7 (Motion-Enhanced Presentation Workflow)
+- **sprint-status.yaml**: All 15 new stories registered as `backlog`
+- **bmm-workflow-status.yaml**: Updated counts (14 epics, 62 stories), new key decisions, next step
 
-### visual_fill_validator.py
-- **Variance detection**: `_content_stddev()` distinguishes blank (<5), faded (<25), real content (>=25)
-- **Dual-signal pass logic**: content variance AND (edge fill OR stddev > 40)
-- **content_stddev** field in return dict
-
-### New files
-- `skills/gamma-api-mastery/scripts/tests/test_literal_visual_prompt_harness.py` — live API test harness (`--run-live-e2e`)
-- `skills/gamma-api-mastery/references/literal-visual-image-optimization.md` — dev reference for PNG optimization
-- `skills/quality-control/scripts/tests/test_visual_fill_validator.py` — 18 unit tests
+### Party Mode Consensus Decisions
+- **Double-dispatch**: per-run flag (not per-slide), both variants fidelity-reviewed before selection, Irene gets only winners
+- **Visual-aware Irene**: perception mandatory (was optional), visual references default 2 per slide, LOW-confidence escalates to Marcus not user
+- **Motion workflow**: Gate 2M separate from Gate 2, motion is additive, Kira image-to-video preferred, budget auto-downgrade, animation guidance tool-agnostic
+- **Cross-epic**: Irene receives only selected winner slides (losers archived)
+- **Operational**: resolve questions via party mode team consensus rather than interrupting user
 
 ## Unresolved Issues
 
-- **Accent vs background classification**: Gamma's AI classifies images by visual content. Diagrammatic/infographic images get accent placement (cropped). This cannot be overridden via the API. The composite fallback handles it, but the Gamma "set" will be incomplete for those slides.
+- **Accent vs background classification**: Gamma's AI classifies images by visual content. Diagrammatic/infographic images get accent placement (cropped). Cannot be overridden via API. Composite fallback handles it.
 - **PowerShell `NativeCommandError`**: Python scripts logging to stderr cause PowerShell to report exit code 1. Not a real failure — use `$LASTEXITCODE`.
 - **Dispatch log encoding**: `Tee-Object` writes UTF-16 logs; `Get-Content -Encoding Unicode` is needed.
+- **No code changes this session**: All work was planning-only. No implementation code was written or modified. The literal-visual anti-fade + fail-fast from the prior session (phase-02) is the current production state.
 
 ## Hot-Start Paths
 
+### Epic 12 implementation targets
+- `skills/gamma-api-mastery/scripts/gamma_operations.py` — `execute_generation()` dual-dispatch extension
+- `state/config/run-constants.yaml` — `double_dispatch` parameter
+- `skills/gamma-api-mastery/scripts/generate_storyboard.py` — selection storyboard
+- `skills/quality-control/scripts/visual_fill_validator.py` — variant validation
+
+### Planning reference
+- `_bmad-output/planning-artifacts/epics.md` (Epics 12-14 at end of file)
+- `_bmad-output/implementation-artifacts/12-1-dual-dispatch-infrastructure.md` (first story spec)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (backlog state)
+
+### Existing infrastructure (unchanged)
 - `skills/gamma-api-mastery/scripts/gamma_operations.py` (lines ~1370-1530: literal-visual dispatch)
-- `skills/gamma-api-mastery/scripts/tests/test_gamma_operations.py` (TestLiteralVisualRetryOnBlank class)
 - `skills/quality-control/scripts/visual_fill_validator.py` (variance-based validator)
-- `skills/quality-control/scripts/tests/test_visual_fill_validator.py` (18 validator tests)
 - `skills/gamma-api-mastery/scripts/tests/test_literal_visual_prompt_harness.py` (live API prompt harness)
-- `skills/gamma-api-mastery/references/literal-visual-image-optimization.md` (PNG optimization guide)
 - Template ID: `g_gior6s13mvpk8ms` — Image Card beta, image source: placeholder
 - API reference: https://developers.gamma.app/llms-full.txt
 

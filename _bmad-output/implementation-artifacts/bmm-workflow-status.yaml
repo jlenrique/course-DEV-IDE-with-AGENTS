@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-02 (Epic SB done: SB.1 storyboard run-view closed; all epics complete)
+# Last Updated: 2026-04-05 (Epics 12-14 added: double-dispatch slide selection, visual-aware Irene, motion-enhanced workflow — 15 new stories)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "All epics complete. 47 stories across 11 epics (including Epic SB storyboard run-view)."
-    stories_count: 47
-    epics_count: 11
+    note: "11 legacy epics complete (47 stories). 3 new epics (12-14) added 2026-04-05 with 15 stories in backlog."
+    stories_count: 62
+    epics_count: 14
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "All epics done (11 epics, 47 stories). Epic SB storyboard run-view closed 2026-04-02."
+    note: "11 legacy epics done (47 stories). Epics 12-14 in backlog (15 stories). Total: 14 epics, 62 stories."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -96,4 +96,9 @@ key_decisions:
   - "EPIC SB CLOSED (2026-04-02): Story SB.1 storyboard run-view implemented across 5 commits. Storyboard evolved from Gary-dispatch-only to on-demand run view with Pass 2 narration merge, related-asset rows, --run-id traceability, and authorized slide snapshots. 14 storyboard tests + 31 validator tests green. Spec-driven implementation (spec-sb-1-storyboard-run-view-refresh.md). Party Mode consensus on --run-id addition and tracking record closeout."
   - "LITERAL-VISUAL ANTI-FADE + FAIL-FAST (2026-04-05): Anti-fade prompt replaces neutral image-card instruction for template dispatch; template retries reduced from 3 to 1 (fail-fast to composite fallback); export settle delay increased from 10s to 15s; download-based composite fallback when no local preintegration PNG; visual_fill_validator enhanced with content variance detection (content_stddev); provenance tracked via literal_visual_source field (template | composite-preintegration | composite-download). Root cause: Gamma classifies images as accent/background by visual content — not API-controllable. Template endpoint rejects imageOptions.source (HTTP 400). Party Mode consensus (Gary, Winston, Quinn, Amelia) at all gates."
 
-next_workflow_step: "All epics and stories complete. Project is in production operations mode. Optional: run retrospectives for any epic marked optional."
+  - "EPIC 12: DOUBLE-DISPATCH GAMMA SLIDE SELECTION (2026-04-05, Party Mode): Per-run flag enabling two independent Gamma dispatches per slide. Both variants fidelity-reviewed (Vera G2-G3 + Quinn-R) before user selection. Side-by-side selection storyboard with full-deck sequential preview. Winner forwarding to Irene (losers archived with provenance). 5 stories: dual-dispatch infrastructure, parallel fidelity review, selection storyboard, winner forwarding, Marcus run mode integration."
+  - "EPIC 13: VISUAL-AWARE IRENE PASS 2 (2026-04-05, Party Mode): Mandatory perception contract for Irene Pass 2 (was optional). Parameterized visual reference injection (default: 2 per slide, ±1 tolerance). Natural language references integrated into narration flow. Segment manifest gains visual_references[] for downstream QA. Vera G4 extended for narration-to-visual alignment. LOW-confidence perception escalates to Marcus, not user. 3 stories: mandatory perception, visual reference injection, manifest enrichment."
+  - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
+  - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
+
+next_workflow_step: "Begin Epic 12 implementation (double-dispatch Gamma slide selection). Start with Story 12.1: dual-dispatch infrastructure in gamma_operations.py."

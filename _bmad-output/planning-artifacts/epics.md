@@ -256,6 +256,11 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 8. **Epic 8: Tool Review & Optimization Intelligence** - Tool scanning agent, policy crystallization
 9. **Epic 9: Living Architecture Documentation System** - Self-improving documentation agent
 10. **Epic 10: Strategic Production Orchestration** - Enhanced orchestrator with predictive optimization
+11. **Epic 11: APP Trial Remediation & Run Contract Hardening** - Due-diligence findings, Gary outbound contract, Irene Pass 2 perception, theme-mapping handshake
+12. **Epic SB: Storyboard & Run Visualization** - On-demand storyboard run-view with Pass 2 narration merge, related-asset rows, run-id traceability
+13. **Epic 12: Double-Dispatch Gamma Slide Selection** - Per-run dual Gamma dispatch, parallel fidelity review, side-by-side selection storyboard, winner forwarding to Irene
+14. **Epic 13: Visual-Aware Irene Pass 2 Scripting** - Mandatory perception contract, parameterized visual reference injection in narration, segment manifest enrichment
+15. **Epic 14: Motion-Enhanced Presentation Workflow** - Motion workflow variant with Kira video + manual animation, motion decision point, motion perception, compositor motion support
 
 ---
 
@@ -2297,3 +2302,323 @@ So that each new production run is more efficient than the last.
 **And** predicted bottlenecks are identified with preemptive mitigation recommendations
 **And** resource allocation suggestions optimize tool usage and timing
 **And** the user can accept, modify, or override predictive recommendations through conversation
+
+---
+
+## Epic 12: Double-Dispatch Gamma Slide Selection
+
+**Goal**: When enabled via a per-run flag, produce two independent visual treatments per slide so the user can choose the strongest version for each position, raising presentation quality without re-running the full pipeline.
+
+**Depends on**: All existing epics complete. Extends `gamma_operations.py`, storyboard run-view (SB.1), Gary/Vera/Quinn-R contracts.
+
+**Party Mode consensus decisions (2026-04-05)**:
+- Double-dispatch is a **per-run flag** (not per-slide)
+- Both variants are fidelity-reviewed **before** user selection
+- Irene receives only the selected winner slides — losing variants archived with full provenance
+- Exactly one winner per slide position (no "keep both" option)
+- Full-deck sequential preview after individual selections for visual flow check
+
+### Story 12.1: Dual-Dispatch Infrastructure
+
+As a production operator,
+I want gamma_operations.py to support a double_dispatch mode that executes two independent Gamma generate calls per slide position,
+So that I get two meaningfully different visual treatments to choose from.
+
+**Acceptance Criteria:**
+
+**Given** `run-constants.yaml` contains `double_dispatch: true`
+**When** `execute_generation()` processes a slide
+**Then** two independent Gamma API calls are made per slide position (separate calls, not retries)
+**And** both exports are downloaded with variant labeling: `{slide_id}_variant_A.png`, `{slide_id}_variant_B.png`
+**And** `gary_slide_output` records gain `dispatch_variant: "A" | "B"` field
+**And** provenance (`literal_visual_source`) is tracked independently per variant
+**And** when `double_dispatch: false` (default), behavior is identical to current single-dispatch — zero regression
+**And** unit tests cover dual-dispatch path with mocked API responses
+
+### Story 12.2: Parallel Fidelity & Quality Review for Variant Pairs
+
+As a production operator,
+I want both slide variants to pass independently through Vera fidelity assessment and Quinn-R quality review before I see them,
+So that my selection is between two pre-qualified options.
+
+**Acceptance Criteria:**
+
+**Given** two variant PNGs exist for a slide position
+**When** fidelity and quality review runs
+**Then** Vera runs G2-G3 fidelity checks on each variant independently
+**And** Quinn-R scores each variant independently against the slide brief
+**And** quality scores are attached to each variant record: `{variant, vera_score, quinn_score, findings[]}`
+**And** variants that fail fidelity thresholds are flagged but still presented (user may override)
+**And** if both variants fail, the pair is flagged as "needs re-dispatch or manual intervention"
+**And** no new fidelity gates are introduced — existing G2-G3 logic is extended, not duplicated
+
+### Story 12.3: Selection Storyboard
+
+As a production operator,
+I want to see both variants side-by-side with quality scores and select the winner for each slide position,
+So that I can make informed visual choices for the final presentation.
+
+**Acceptance Criteria:**
+
+**Given** two fidelity-reviewed variants exist per slide position
+**When** the selection storyboard is presented
+**Then** paired variants (A/B) are displayed side-by-side per slide position at legible scale
+**And** quality scores (Vera + Quinn-R) are visible per variant
+**And** user selects exactly one winner per position (all positions must be selected before confirmation)
+**And** running tally shows selection progress ("Selected: 7/12")
+**And** after all selections, a full-deck sequential preview shows chosen slides in presentation order for visual flow check
+**And** user can revise selections during preview before final confirmation
+**And** selection metadata is persisted: `{slide_id, selected_variant, rejected_variant, selection_timestamp}`
+
+### Story 12.4: Winner Forwarding & Provenance Archive
+
+As a production operator,
+I want selected winners promoted into the canonical gary_slide_output and rejected variants archived,
+So that the downstream pipeline receives clean, confirmed slides with full audit trail.
+
+**Acceptance Criteria:**
+
+**Given** the user has confirmed all slide selections
+**When** the selection is finalized
+**Then** `gary_slide_output` contains only winner slides with `selected: true`
+**And** rejected variants are moved to `{run_dir}/archived_variants/` with full metadata
+**And** the context envelope for Irene Pass 2 contains only selected slides — no variant A/B distinction visible to Irene
+**And** `perception_artifacts` are generated only for winning slides (no wasted sensory bridge calls on rejected variants)
+**And** archive includes: variant PNGs, quality scores, selection metadata, timestamps
+**And** storyboard archive section shows selection history for audit trail
+
+### Story 12.5: Marcus Run Mode Integration for Double-Dispatch
+
+As a production operator,
+I want Marcus to recognize and orchestrate double-dispatch runs end to end,
+So that the dual-dispatch workflow is seamlessly integrated into the production pipeline.
+
+**Acceptance Criteria:**
+
+**Given** `double_dispatch: true` in run-constants.yaml
+**When** Marcus orchestrates the run
+**Then** Marcus adjusts the workflow: Gary dispatches 2x → parallel review → selection storyboard gate → then Irene Pass 2
+**And** run progress reporting accounts for dual-dispatch timing (estimated 2x generation time)
+**And** run cost estimate reflects 2x Gamma credits when double-dispatch is active
+**And** pre-flight check validates double-dispatch compatibility (sufficient API credits, template supports re-dispatch)
+**And** ad-hoc mode supports double-dispatch (same flag, same workflow)
+
+---
+
+## Epic 13: Visual-Aware Irene Pass 2 Scripting
+
+**Goal**: Irene's Pass 2 narration scripts explicitly reference specific visual elements perceived on each slide, transforming generic commentary into guided learning narration that speaks pointedly to what's on screen.
+
+**Depends on**: Epic 12 (soft — enhanced by double-dispatch winner slides, but functions with single-dispatch). Hard dependency on existing sensory bridges skill (Epic 2A).
+
+**Party Mode consensus decisions (2026-04-05)**:
+- Perception is **mandatory** for Irene Pass 2 (no longer optional)
+- LOW-confidence perception escalation goes to **Marcus** (not user)
+- Visual references are natural language integrated into narration flow — not bolted-on annotations
+- `visual_references_per_slide` parameter default: 2 (±1 tolerance)
+
+### Story 13.1: Mandatory Perception Contract for Irene Pass 2
+
+As a content architect,
+I want Irene's Pass 2 to require perception artifacts as first-class input,
+So that every narration script is grounded in confirmed visual understanding of the slides.
+
+**Acceptance Criteria:**
+
+**Given** Irene Pass 2 is invoked with a context envelope
+**When** activation begins
+**Then** Irene validates `perception_artifacts` presence in the context envelope
+**And** if absent, Irene invokes image sensory bridge on each slide PNG in `gary_slide_output` and generates `perception_artifacts` inline
+**And** perception confirmation is logged per slide: "I see Slide N shows [description]. Confidence: HIGH/MEDIUM/LOW"
+**And** LOW-confidence slides trigger automatic re-perception (one retry with different bridge parameters)
+**And** if still LOW after retry, Irene flags to Marcus for decision (proceed with caveated narration or escalate to user)
+**And** perception is confirmed before any narration writing begins
+
+### Story 13.2: Visual Reference Injection in Narration Scripts
+
+As a content architect,
+I want narration scripts to explicitly reference specific visual elements on each slide,
+So that learners are guided through the visuals rather than hearing generic commentary.
+
+**Acceptance Criteria:**
+
+**Given** confirmed `perception_artifacts` exist for all slides
+**When** Irene writes narration for a slide
+**Then** `run-constants.yaml` parameter `visual_references_per_slide: int` (default: 2) controls reference count
+**And** narration includes exactly `visual_references_per_slide` explicit references to perceived visual elements (±1 tolerance)
+**And** references are natural language integrated into narration flow ("As you can see in the comparison chart on the right..." not "Reference 1: comparison chart")
+**And** each reference is grounded in a specific element from `perception_artifacts` — traceable
+**And** references complement (not duplicate) slide content — narrate the insight, reference the visual
+**And** narration script template is updated with `visual_references[]` metadata per segment
+**And** unit tests validate reference count compliance and traceability to perception artifacts
+
+### Story 13.3: Segment Manifest Visual Reference Enrichment & Downstream QA
+
+As a quality reviewer,
+I want each segment in the manifest to carry structured visual references linking narration cues to perceived visual elements,
+So that downstream fidelity verification can confirm narration-to-visual alignment.
+
+**Acceptance Criteria:**
+
+**Given** Irene has produced narration with visual references
+**When** the segment manifest is generated
+**Then** each segment gains `visual_references: [{element, location_on_slide, narration_cue, perception_source}]`
+**And** `element` identifies what is referenced (e.g., "comparison timeline")
+**And** `location_on_slide` provides spatial description (e.g., "left panel")
+**And** `narration_cue` contains the exact narration phrase that references it
+**And** `perception_source` references the perception artifact entry
+**And** Vera G4 (narration vs slides) is extended to validate visual references correspond to perceived elements
+**And** Quinn-R can flag narration referencing visual elements not found in perception artifacts
+**And** Compositor assembly guide includes visual reference cues for human assemblers
+
+---
+
+## Epic 14: Motion-Enhanced Presentation Workflow
+
+**Goal**: Add motion — AI-generated video clips (Kira/Kling) and hand-crafted animations — to specific slides in a presentation, with narration that speaks to the motion content, creating richer educational experiences without breaking the existing static pipeline.
+
+**Depends on**: Epic 13 (hard — visual reference injection for motion content uses Epic 13 mechanism). Epic 12 (soft — compatible but independent).
+
+**Party Mode consensus decisions (2026-04-05)**:
+- Motion Decision Point is a **separate HIL gate (Gate 2M)**, not an extension of Gate 2
+- Gate 2M is skipped entirely when `motion_enabled: false`
+- Motion is **additive** — most slides stay static, specific slides get motion companions
+- Kira uses image-to-video (preferred) or text-to-video based on brief complexity
+- Budget guardrails: `motion_budget` with max_credits and model_preference, auto-downgrade on ceiling
+- Manual animation guidance is tool-agnostic by default (Vyond-specific only when user specifies)
+
+### Story 14.1: Motion Workflow Design & Contract Specification
+
+As a system architect,
+I want a formal workflow design document specifying the motion-enhanced pipeline variant,
+So that all agents, contracts, and gates are defined before implementation begins.
+
+**Acceptance Criteria:**
+
+**Given** the motion-enhanced pipeline variant needs formal specification
+**When** the design is complete
+**Then** a workflow design document exists in `_bmad-output/planning-artifacts/` specifying:
+  - Motion-enhanced pipeline stages (Gate 2 → Gate 2M → Kira/manual → Motion Gate → Irene Pass 2)
+  - Motion Decision Point (HIL Gate 2M) as a new stage between Gate 2 and Irene Pass 2
+  - HIL Motion Gate: user reviews Kira clips and imported animations before Irene
+  - Agent role matrix: Marcus orchestrates motion routing, Kira generates video, Vyond specialist generates animation guidance
+  - Segment manifest schema extensions (motion fields)
+  - Run-constants.yaml extensions: `motion_enabled: boolean`, `motion_budget: {max_credits, model_preference}`
+  - Workflow variant selection logic in Marcus
+**And** architecture doc is updated with motion pipeline stage diagram
+**And** Party Mode team consensus is recorded on the design
+
+### Story 14.2: Segment Manifest Motion Extensions
+
+As a system architect,
+I want the segment manifest schema extended with motion designation fields,
+So that every segment can declare its motion type and track motion asset lifecycle.
+
+**Acceptance Criteria:**
+
+**Given** the motion workflow design is approved
+**When** the manifest schema is updated
+**Then** new fields per segment: `motion_type: "static" | "video" | "animation"` (default: "static")
+**And** `motion_asset_path: string | null` — path to video MP4 or animation file
+**And** `motion_source: "kling" | "manual" | null` — provenance of motion asset
+**And** `motion_duration_seconds: float | null` — duration of motion asset
+**And** `motion_brief: string | null` — intent/description of the motion
+**And** `motion_status: "pending" | "generated" | "imported" | "approved" | null` — lifecycle tracking
+**And** backward compatible: existing manifests with all-static segments work unchanged
+**And** template updated: `skills/bmad-agent-content-creator/references/template-segment-manifest.md`
+**And** validation: `motion_type != "static"` requires `motion_asset_path` populated before Irene Pass 2
+
+### Story 14.3: Motion Decision Point & Designation UI
+
+As a production operator,
+I want to designate each approved slide as static, video, or animation after Gate 2,
+So that the pipeline knows which slides need motion assets before Irene scripts for them.
+
+**Acceptance Criteria:**
+
+**Given** Gary's slides are approved at HIL Gate 2 and `motion_enabled: true`
+**When** HIL Gate 2M is presented
+**Then** storyboard view shows all approved slides with motion designation controls
+**And** per-slide options: Static (default), Video (Kira), Animation (manual)
+**And** video designation allows optional motion brief (what should the video depict)
+**And** animation designation allows optional guidance notes
+**And** designation summary displayed: "12 slides: 8 static, 3 video (Kira), 1 animation (manual)"
+**And** cost estimate shown for Kira video designations (based on model/mode/duration defaults from `motion_budget`)
+**And** designations written to segment manifest `motion_type` fields
+**And** Marcus routes: static slides proceed directly, video slides to Kira, animation slides to guidance skill
+
+### Story 14.4: Kira Pipeline Integration
+
+As a production operator,
+I want Kira to receive designated slides and produce video clips within the motion-enhanced pipeline,
+So that AI-generated motion is available for narration scripting.
+
+**Acceptance Criteria:**
+
+**Given** slides are designated as `motion_type: "video"` at Gate 2M
+**When** Marcus routes them to Kira
+**Then** Kira receives context envelope containing: slide PNG, motion brief, narration intent (from Irene Pass 1), duration target, budget constraints
+**And** Kira uses image-to-video (preferred) or text-to-video based on brief complexity
+**And** model selection respects `motion_budget.model_preference` (std/pro)
+**And** each generated MP4 is downloaded immediately to `{run_dir}/motion/` as `{slide_id}_motion.mp4`
+**And** Kira returns structured results: `{slide_id, mp4_path, model_used, duration_seconds, credits_consumed, self_assessment}`
+**And** running cost tally updated after each generation
+**And** if budget ceiling hit, Marcus pauses and downgrades remaining clips to `std` (or flags if already `std`)
+**And** segment manifest updated: `motion_asset_path`, `motion_source: "kling"`, `motion_duration_seconds`, `motion_status: "generated"`
+
+### Story 14.5: Manual Animation Guidance Skill
+
+As a production operator,
+I want detailed step-by-step animation creation instructions for slides designated as manual animation,
+So that I can create animations in my tool of choice with clear direction from the app.
+
+**Acceptance Criteria:**
+
+**Given** slides are designated as `motion_type: "animation"` at Gate 2M
+**When** the animation guidance skill runs
+**Then** an Animation Guidance Document is produced per slide containing:
+  - Visual description of what the animation should depict (from motion brief + slide content)
+  - Suggested duration and pacing
+  - Key frames / state descriptions (start, middle, end)
+  - Alignment with narration intent from Irene Pass 1 lesson plan
+  - Tool-agnostic instructions (no tool-specific jargon unless user specifies tool)
+**And** Vyond specialist (`bmad-agent-vyond`) can optionally produce Vyond-specific instructions if requested
+**And** user imports completed animation file to `{run_dir}/motion/` as `{slide_id}_motion.{ext}`
+**And** import validation: file exists, is a supported video format, duration within expected range
+**And** segment manifest updated: `motion_asset_path`, `motion_source: "manual"`, `motion_duration_seconds`, `motion_status: "imported"`
+
+### Story 14.6: Motion Perception & Irene Pass 2 Integration
+
+As a content architect,
+I want Irene to perceive motion assets and write narration that speaks to both static slides and motion content,
+So that narration scripts are synchronized with all visual assets the learner will experience.
+
+**Acceptance Criteria:**
+
+**Given** motion assets (video clips + animations) are approved at HIL Motion Gate
+**When** Irene Pass 2 runs
+**Then** Irene receives both `gary_slide_output` (static slides) and motion assets in her context envelope
+**And** for motion-designated segments, Irene invokes video sensory bridge on the motion asset
+**And** perception logged: "Slide N has motion (video/animation): I see [description]. Confidence: HIGH/MEDIUM/LOW"
+**And** narration for motion segments references the motion content specifically (using visual reference injection from Epic 13)
+**And** `visual_references_per_slide` parameter applies to both static and motion segments
+**And** narration script includes timing cues for motion segments: "[as the animation plays]", "[during the transition]"
+**And** segment manifest correctly distinguishes static narration timing from motion narration timing
+
+### Story 14.7: End-to-End Motion Pipeline Orchestration & Compositor Update
+
+As a production operator,
+I want Marcus to orchestrate the complete motion-enhanced workflow and the compositor to include motion assets in assembly guides,
+So that a motion-enhanced lesson can be produced end-to-end through the APP.
+
+**Acceptance Criteria:**
+
+**Given** `motion_enabled: true` in run-constants.yaml
+**When** Marcus orchestrates the run
+**Then** the motion pipeline activates: Gate 2 → Gate 2M → Kira/manual → Motion Gate → Irene Pass 2
+**And** `motion_enabled: false` runs the existing static pipeline with zero behavioral change
+**And** Compositor assembly guide includes motion assets: "At Slide 5, play `slide_05_motion.mp4` (8s) on video track, timed to narration segment 5"
+**And** `sync-visuals` is extended to also copy motion assets into the assembly bundle
+**And** run reporting includes motion metrics: clips generated, animations imported, total motion duration, Kira credits consumed
+**And** pre-flight check extended: verify Kling API connectivity when `motion_enabled: true`
+**And** end-to-end integration test: a 3-slide mini-run with 1 static + 1 video (Kira) + 1 animation (manual) produces correct manifest, narration with motion references, and assembly guide

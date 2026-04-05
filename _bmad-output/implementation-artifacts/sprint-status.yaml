@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-03  # Project closeout: workflow template registry harmonized (canonical narrated-deck-video-export + narrated-lesson-with-video-or-animation; 10 tests); happy-path simulation v2 completed and saved to tests/.
+last_updated: 2026-04-05  # Epics 12-14 added (Party Mode planning): double-dispatch slide selection, visual-aware Irene, motion-enhanced workflow. 15 new stories across 3 epics.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -169,3 +169,39 @@ development_status:
   epic-sb: done
   sb-1-evolving-lesson-storyboard-run-view: done
   epic-sb-retrospective: optional
+
+  # === EPIC 12: Double-Dispatch Gamma Slide Selection ===
+  # Added 2026-04-05 (Party Mode planning session). Per-run dual Gamma dispatch,
+  # parallel fidelity review, side-by-side selection storyboard, winner forwarding.
+  # Depends on: all existing epics complete. Sequencing: 12 → 13 → 14.
+  epic-12: backlog
+  12-1-dual-dispatch-infrastructure: backlog
+  12-2-parallel-fidelity-quality-review: backlog
+  12-3-selection-storyboard: backlog
+  12-4-winner-forwarding-provenance-archive: backlog
+  12-5-marcus-double-dispatch-integration: backlog
+  epic-12-retrospective: optional
+
+  # === EPIC 13: Visual-Aware Irene Pass 2 Scripting ===
+  # Added 2026-04-05 (Party Mode planning session). Mandatory perception contract,
+  # parameterized visual reference injection in narration, segment manifest enrichment.
+  # Depends on: Epic 12 (soft), sensory bridges (Epic 2A, hard).
+  epic-13: backlog
+  13-1-mandatory-perception-contract: backlog
+  13-2-visual-reference-injection: backlog
+  13-3-segment-manifest-visual-references: backlog
+  epic-13-retrospective: optional
+
+  # === EPIC 14: Motion-Enhanced Presentation Workflow ===
+  # Added 2026-04-05 (Party Mode planning session). Motion workflow variant with
+  # Kira video + manual animation, motion decision point (Gate 2M), motion perception.
+  # Depends on: Epic 13 (hard — visual reference injection), Epic 12 (soft).
+  epic-14: backlog
+  14-1-motion-workflow-design: backlog
+  14-2-segment-manifest-motion-extensions: backlog
+  14-3-motion-decision-point: backlog
+  14-4-kira-pipeline-integration: backlog     # can parallel with 14-5
+  14-5-manual-animation-guidance: backlog      # can parallel with 14-4
+  14-6-motion-perception-irene-integration: backlog
+  14-7-motion-pipeline-orchestration: backlog
+  epic-14-retrospective: optional

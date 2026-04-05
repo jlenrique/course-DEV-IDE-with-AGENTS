@@ -1,9 +1,9 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation Closeout (PRD + Architecture COMPLETE, all 9 epics currently marked DONE)
-**Architecture Status:** 9 Epics (Rebaselined 2026-03-28: Epic 4A governance added, Epics 7+8+9 collapsed into Epic G, Epic 5 trimmed, Epic 6.2 merged into 3.6; **2026-03-29: Epic 4A Story 4A-6 added**), **91 FRs** (FR81–FR91 governance includes ad-hoc ledger boundary), Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
-**Implementation Status:** Epic 1 complete (11/11 stories, 117 tests). Epic 2 complete (6/6 stories, 55 tests). **Epic 2A COMPLETE** (9/9 stories: Vera fidelity assessor covering G0-G5, sensory bridges, perception protocol, source_ref resolver, drift tracking, maturity audit skill). **Epic 3 COMPLETE** (11/11 stories). **Epic 4A COMPLETE** (4A-1 through 4A-6). **Epic 4 COMPLETE** (4.1 through 4.5). **Epic 5 COMPLETE** (5.1 + 5.4). **Epic 6 COMPLETE** (1/1 story via 6.1). **Epic G COMPLETE** (G.1, G.2, G.3). **Epic 10 COMPLETE** (10.1). **Next focus:** curated branch closeout and optional release-hardening validation (full-suite/live profile).
+**Phase:** 4-Implementation (legacy epics complete, new feature epics in backlog)
+**Architecture Status:** 14 Epics (11 legacy DONE + 3 new in backlog: Epic 12 double-dispatch, Epic 13 visual-aware Irene, Epic 14 motion workflow), **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
+**Implementation Status:** Epics 1-11 + SB all COMPLETE (47 stories). **Epics 12-14 IN BACKLOG** (15 new stories, added 2026-04-05 via Party Mode planning): Epic 12 Double-Dispatch Gamma Slide Selection (5 stories), Epic 13 Visual-Aware Irene Pass 2 Scripting (3 stories), Epic 14 Motion-Enhanced Presentation Workflow (7 stories). **Next focus:** Epic 12 implementation (sequencing: 12 → 13 → 14).
 
 ## Purpose
 

@@ -1,79 +1,77 @@
-# Session Handoff — 2026-04-05 Literal-Visual Reliability Fix
+# Session Handoff — 2026-04-05 (afternoon) Epic Planning: Double-Dispatch, Visual-Aware Irene, Motion Workflow
 
 ## Session Mode
 
-- Execution mode: APP code changes + live API testing
-- Quality preset: production
-- Branch: `phase-02/sunday-2026-04-05`
-- BMad workflow: Party Mode consensus at each decision gate
+- Execution mode: Planning only (no code changes)
+- Quality preset: N/A (planning session)
+- Branch: `phase-03/sunday-afternoon-2026-04-05`
+- BMad workflow: Party Mode team planning + epic/story formalization
 
 ## Session Summary
 
-Investigated and fixed unreliable literal-visual slide generation when Gary dispatches to the Gamma template API (`/generations/from-template`). Used live API testing with prompt harness, Gamma developer docs (developers.gamma.app), and visual inspection to identify root causes. BMad Party Mode (Gary, Winston, Quinn, Amelia) guided all decisions.
-
-## Root Cause Findings
-
-1. **Gamma classifies images as accent or background by visual content** — diagrammatic/infographic images get "accent" placement (cropped/positioned), photographic/dense images get "background" (full-bleed). This classification is **not controllable via the API** (confirmed by developers.gamma.app: "Accent images are automatically placed by Gamma — they cannot be directly controlled via the API.").
-
-2. **Background-classified images are faded by default** — Gamma applies reduced opacity when placing images as backgrounds. An explicit anti-fade prompt ("at full opacity, not as background, not faded") overrides this.
-
-3. **Template endpoint rejects `imageOptions.source`** — HTTP 400 with "imageOptions.property source should not exist". Template `g_gior6s13mvpk8ms` uses image source: `placeholder`. The `source: noImages` parameter that works on the standard generate endpoint is invalid for templates.
-
-4. **Image size/dimensions do not determine classification** — tested resized card-02 (1376x768, same dims as card-09): still classified as accent. Classification is content-driven.
+Party Mode planning session to design three new APP feature epics with 15 stories total. The team (Winston/Architect, John/PM, Bob/SM, Caravaggio/Presentation, Mary/Analyst) collaboratively designed the architecture, sequencing, contracts, and acceptance criteria for all three epics. All internal design questions were resolved by party consensus without user interruption.
 
 ## Completed Outcomes
 
-1. **Anti-fade prompt**: "Replace the placeholder image with this image at full opacity (not as background, not faded). The image must be the primary visual element filling the entire card. No text overlay." Proven 3/3 reliable for background-classified images.
-2. **Fail-fast strategy**: Template retries reduced from 3 to 1 — single attempt, then immediate composite fallback.
-3. **Export settle delay**: Increased from 10s to 15s (matches all successful test conditions).
-4. **Download-based composite fallback**: When template fails and no local preintegration PNG exists, downloads from hosted URL and composites locally. Three provenance values: `template`, `composite-preintegration`, `composite-download`.
-5. **Variance-based fill validation**: `visual_fill_validator.py` enhanced with `_content_stddev()` — blank (stddev < 5), faded (< 25), real content (>= 25). Validated 17/17 correct against prompt harness results.
-6. **Provenance tracking**: New `literal_visual_source` field on `gary_slide_output` records.
-7. **Dev reference doc**: `literal-visual-image-optimization.md` — optimal PNG attributes for Gamma template success.
-8. **Prompt harness**: `test_literal_visual_prompt_harness.py` — live API test for prompt variants (`--run-live-e2e`).
-9. **Validator test suite**: `test_visual_fill_validator.py` — 18 unit tests covering edge-band, variance, and pass/fail logic.
+### Epic 12: Double-Dispatch Gamma Slide Selection (5 stories)
+Per-run flag enabling two independent Gamma dispatches per slide. Both variants fidelity-reviewed (Vera G2-G3 + Quinn-R) before the user sees them. Side-by-side selection storyboard with full-deck sequential preview for visual flow. Winner forwarding to Irene (losers archived with provenance).
 
-## Key Decisions
+### Epic 13: Visual-Aware Irene Pass 2 Scripting (3 stories)
+Mandatory perception contract (was optional). Parameterized visual reference injection — narration explicitly references perceived visual elements (default: 2 per slide). References integrated as natural language in narration flow. Segment manifest enriched with structured `visual_references[]` for downstream QA by Vera G4 and Quinn-R.
 
-| Decision | Rationale |
-|----------|-----------|
-| Anti-fade prompt wording | Live API testing: 3/3 success for card-09 with "full opacity, not as background, not faded" |
-| Fail-fast 1 retry instead of 3 | Gamma's accent/background classification is deterministic per image — retrying the same image with the same prompt gets the same result |
-| Composite fallback as primary safety net | `_composite_full_bleed()` is deterministic, zero-credit, zero-latency; guarantees full-bleed for accent-classified images |
-| Template `g_gior6s13mvpk8ms` retained | Template still works for background-classified images; composite catches the rest |
-| Variance-based validation over edge-only | Edge sampling produces false negatives on light-edged images (infographics); variance detection correctly identifies content presence |
+### Epic 14: Motion-Enhanced Presentation Workflow (7 stories)
+New pipeline variant adding motion (Kira video + manual animation) to slides. HIL Gate 2M (Motion Decision Point) is a separate gate between Gate 2 and Irene Pass 2. Motion is additive (most slides static). Kira uses image-to-video from approved slide PNGs. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement.
 
-## Lessons Learned
+## Key Decisions (Party Mode Consensus)
 
-1. **Gamma API docs can be misleading** — `imageOptions` is listed as optional for templates but `source` sub-field triggers HTTP 400. Always validate with live API calls.
-2. **Gamma's image classification is content-driven** — not size, dimensions, aspect ratio, or metadata. Dense/photographic images → background. Diagrammatic/whitespace-heavy → accent.
-3. **The Gamma UI has capabilities the API lacks** — "use as background" toggle in the UI produces perfect results but cannot be replicated via API parameters.
-4. **Test against real artifacts** — the prompt harness with GitHub Pages–hosted production images caught issues that mocked tests missed.
+1. **Double-dispatch is per-run, not per-slide** — eliminates per-slide configuration complexity.
+2. **Both variants fidelity-reviewed before user selection** — user picks between pre-qualified options.
+3. **Irene receives only winner slides** — losers archived, not forwarded. Keeps Irene's context clean.
+4. **Exactly one winner per slide position** — single canonical slide flows forward.
+5. **Perception mandatory for Irene Pass 2** — elevated from optional to required contract.
+6. **LOW-confidence perception escalates to Marcus, not user** — keeps pipeline flowing.
+7. **Visual references are natural language** — "As you can see in the comparison chart..." not "Reference 1: chart."
+8. **Gate 2M is separate from Gate 2** — different cognitive task (slide approval vs. motion designation).
+9. **Motion is additive** — static pipeline unchanged when `motion_enabled: false`.
+10. **Budget auto-downgrade** — Kira drops from pro to std when budget ceiling hit.
+11. **Animation guidance tool-agnostic** — Vyond-specific only when user specifies.
+12. **Questions resolved by party consensus** — user preference to not be interrupted for design decisions the team can resolve.
 
-## Validation Summary
+## Cross-Epic Dependency Map
 
-| Check | Result |
-|-------|--------|
-| pytest (root suite) | 238+ passed |
-| test_visual_fill_validator.py | 18 passed |
-| test_literal_visual_prompt_harness.py | 7 collected (live-api gated) |
-| Prompt harness live run | 6 variants tested, card-09 3/3 success |
-| GitHub Pages cleanup | card-02-resized.png deleted |
-| git status | Clean after commits 1-4 |
+```
+Epic 12 (standalone) → Epic 13 (soft dep on 12, hard dep on sensory bridges/2A) → Epic 14 (hard dep on 13.2)
+Stories 14.4 and 14.5 can parallel.
+```
+
+## Contract Extensions Designed
+
+- `run-constants.yaml`: `double_dispatch`, `visual_references_per_slide`, `motion_enabled`, `motion_budget`
+- `gary_slide_output`: `dispatch_variant`, `selected`
+- `segment_manifest`: `visual_references[]`, `motion_type`, `motion_asset_path`, `motion_source`, `motion_duration_seconds`, `motion_brief`, `motion_status`
+- New HIL gates: Gate 2M (Motion Decision Point), Motion Gate (motion asset review)
+
+## What Was Not Done
+
+- No code was written or modified — this was purely a planning session.
+- No tests were run (no code to test).
+- No production dispatches were run.
+- The literal-visual anti-fade + fail-fast from the prior session (phase-02) remains the current production code state.
 
 ## Artifact Update Checklist
 
-| Artifact | Updated? |
-|----------|----------|
-| `gamma_operations.py` | Yes — anti-fade prompt, 1 retry, 15s settle, download fallback, provenance |
-| `test_gamma_operations.py` | Yes — assertions, provenance, download fallback test |
-| `visual_fill_validator.py` | Yes — variance detection, content_stddev |
-| `test_visual_fill_validator.py` | Yes — NEW (18 tests) |
-| `test_literal_visual_prompt_harness.py` | Yes — NEW (live API harness) |
-| `literal-visual-image-optimization.md` | Yes — NEW (dev reference) |
-| `next-session-start-here.md` | Yes — rewritten |
-| `SESSION-HANDOFF.md` | Yes — this file |
-| `Gary SKILL.md` | Yes — provenance, download fallback |
-| `bmm-workflow-status.yaml` | Yes — key_decision entry |
-| `project-context.md` | Yes — variance detection bullet |
-| `.gitignore` | Yes — dispatch logs, prompt-harness-results |
+- [x] `_bmad-output/planning-artifacts/epics.md` — Epics 12-14 appended with full story details
+- [x] `_bmad-output/implementation-artifacts/12-*.md` — 5 Epic 12 story files
+- [x] `_bmad-output/implementation-artifacts/13-*.md` — 3 Epic 13 story files
+- [x] `_bmad-output/implementation-artifacts/14-*.md` — 7 Epic 14 story files
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 15 stories registered as backlog
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — Updated counts, decisions, next step
+- [x] `docs/project-context.md` — Phase and implementation status updated
+- [x] `next-session-start-here.md` — Forward-looking hot-start for Epic 12 implementation
+- [x] `SESSION-HANDOFF.md` — This file
+
+## Lessons Learned
+
+- Party Mode team planning is highly efficient for multi-epic scoping — the diverse agent perspectives (architecture, product, scrum, visual, analysis) catch gaps and resolve design tensions in a single session.
+- Recording consensus decisions in story files (not just epics.md) ensures implementation sessions have unambiguous design intent.
+- Per-run flags are simpler than per-slide flags for pipeline extensions — the complexity savings cascade through the entire stack.

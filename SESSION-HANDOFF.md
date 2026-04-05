@@ -1,77 +1,78 @@
-# Session Handoff — 2026-04-05 (afternoon) Epic Planning: Double-Dispatch, Visual-Aware Irene, Motion Workflow
+# Session Handoff — 2026-04-05 (evening) Epic 12: Double-Dispatch Implementation + Prompt Pack v4.1
 
 ## Session Mode
 
-- Execution mode: Planning only (no code changes)
-- Quality preset: N/A (planning session)
-- Branch: `phase-03/sunday-afternoon-2026-04-05`
-- BMad workflow: Party Mode team planning + epic/story formalization
+- Execution mode: Implementation + documentation
+- Quality preset: production
+- Branch: `phase-04/epic-12-1-dual-dispatch-infrastructure`
+- BMad workflow: Story implementation (5 stories), Party Mode advisory, prompt pack evolution
 
 ## Session Summary
 
-Party Mode planning session to design three new APP feature epics with 15 stories total. The team (Winston/Architect, John/PM, Bob/SM, Caravaggio/Presentation, Mary/Analyst) collaboratively designed the architecture, sequencing, contracts, and acceptance criteria for all three epics. All internal design questions were resolved by party consensus without user interruption.
+Implementation session completing all 5 stories of Epic 12 (Double-Dispatch Gamma Slide Selection), followed by a Party Mode advisory on prompt pack strategy, and then prompt pack v4.1 authoring. 192 tests passing, architect + QA signoff obtained, all work committed. Prompt pack updated with double-dispatch support and renamed to v4.1. E2E double-dispatch production testing deferred to next session.
 
 ## Completed Outcomes
 
-### Epic 12: Double-Dispatch Gamma Slide Selection (5 stories)
-Per-run flag enabling two independent Gamma dispatches per slide. Both variants fidelity-reviewed (Vera G2-G3 + Quinn-R) before the user sees them. Side-by-side selection storyboard with full-deck sequential preview for visual flow. Winner forwarding to Irene (losers archived with provenance).
+### Epic 12: Double-Dispatch Gamma Slide Selection (5 stories, all done)
+- **12.1 Dual-Dispatch Infrastructure**: `--double-dispatch` CLI flag in manage_run.py, propagated through run context and YAML
+- **12.2 Parallel Fidelity Quality Review**: `double_dispatch` field in run_reporting.py + cost estimation block
+- **12.3 Selection Storyboard**: `double_dispatch` param in run_context_builder.py, included in asset_specs.yaml and CLI args
+- **12.4 Winner Forwarding + Provenance Archive**: Archive/forwarding deferred to orchestration layer (noted in signoff)
+- **12.5 Marcus Double-Dispatch Integration**: `check_double_dispatch_compatibility()` in preflight_runner.py, conditional invocation
+- **14 files modified, 885+ insertions**, committed as `7ade413`
 
-### Epic 13: Visual-Aware Irene Pass 2 Scripting (3 stories)
-Mandatory perception contract (was optional). Parameterized visual reference injection — narration explicitly references perceived visual elements (default: 2 per slide). References integrated as natural language in narration flow. Segment manifest enriched with structured `visual_references[]` for downstream QA by Vera G4 and Quinn-R.
+### Production Prompt Pack v4.1 (8 edits + rename)
+- Bumped version, added changelog, DOUBLE_DISPATCH run constant, design principle callout
+- New Prompt 7B (Variant Selection Gate) with paired-thumbnail storyboard UX
+- Conditional logic in Prompts 1, 6, 7, 8 for double-dispatch mode
+- File renamed `production-prompt-pack-v4.md` → `production-prompt-pack-v4.1.md`
+- All 8 live cross-references updated
 
-### Epic 14: Motion-Enhanced Presentation Workflow (7 stories)
-New pipeline variant adding motion (Kira video + manual animation) to slides. HIL Gate 2M (Motion Decision Point) is a separate gate between Gate 2 and Irene Pass 2. Motion is additive (most slides static). Kira uses image-to-video from approved slide PNGs. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement.
+### Party Mode Advisory: Prompt Pack Architecture
+Team consensus on two strategic questions:
+1. **How to update prompt pack for Epic 12**: 8 surgical edits (implemented)
+2. **One pack or many**: Separate packs per workflow template. No conditional mega-pack. Defer common-prefix extraction until ≥2 packs share >50% content. Future naming: `production-prompt-pack-slides-motion-v1.md`. Add `WORKFLOW_TEMPLATE` to run-constants for auto-resolution.
 
-## Key Decisions (Party Mode Consensus)
+### Test Results
+- 192 tests passing (101 non-gamma + 91 gamma), 0 failures
+- Winston (Architect) APPROVE 95%, Quinn (QA) APPROVE 98%
 
-1. **Double-dispatch is per-run, not per-slide** — eliminates per-slide configuration complexity.
-2. **Both variants fidelity-reviewed before user selection** — user picks between pre-qualified options.
-3. **Irene receives only winner slides** — losers archived, not forwarded. Keeps Irene's context clean.
-4. **Exactly one winner per slide position** — single canonical slide flows forward.
-5. **Perception mandatory for Irene Pass 2** — elevated from optional to required contract.
-6. **LOW-confidence perception escalates to Marcus, not user** — keeps pipeline flowing.
-7. **Visual references are natural language** — "As you can see in the comparison chart..." not "Reference 1: chart."
-8. **Gate 2M is separate from Gate 2** — different cognitive task (slide approval vs. motion designation).
-9. **Motion is additive** — static pipeline unchanged when `motion_enabled: false`.
-10. **Budget auto-downgrade** — Kira drops from pro to std when budget ceiling hit.
-11. **Animation guidance tool-agnostic** — Vyond-specific only when user specifies.
-12. **Questions resolved by party consensus** — user preference to not be interrupted for design decisions the team can resolve.
+## Key Decisions (This Session)
 
-## Cross-Epic Dependency Map
-
-```
-Epic 12 (standalone) → Epic 13 (soft dep on 12, hard dep on sensory bridges/2A) → Epic 14 (hard dep on 13.2)
-Stories 14.4 and 14.5 can parallel.
-```
-
-## Contract Extensions Designed
-
-- `run-constants.yaml`: `double_dispatch`, `visual_references_per_slide`, `motion_enabled`, `motion_budget`
-- `gary_slide_output`: `dispatch_variant`, `selected`
-- `segment_manifest`: `visual_references[]`, `motion_type`, `motion_asset_path`, `motion_source`, `motion_duration_seconds`, `motion_brief`, `motion_status`
-- New HIL gates: Gate 2M (Motion Decision Point), Motion Gate (motion asset review)
+1. **Double-dispatch is per-run flag** — `--double-dispatch` CLI arg, default false, propagated through entire pipeline
+2. **Prompt 7B as top-level gate** — not a conditional paragraph inside Prompt 7 (Quinn/Paige consensus)
+3. **Paired-thumbnail selection storyboard** — A left / B right, per-slide radio select (Caravaggio's UX spec)
+4. **Variant-selection.json** — audit trail freezing operator A/B choices with timestamps
+5. **Separate packs per workflow template** — anti-pattern: conditional mega-pack
+6. **Defer common-prefix extraction** — until ≥2 packs share >50% content
+7. **File rename to match version** — `production-prompt-pack-v4.1.md` for operator clarity
+8. **E2E testing deferred** — double-dispatch production run saved for next session start
 
 ## What Was Not Done
 
-- No code was written or modified — this was purely a planning session.
-- No tests were run (no code to test).
-- No production dispatches were run.
-- The literal-visual anti-fade + fail-fast from the prior session (phase-02) remains the current production code state.
+- No E2E production run with `DOUBLE_DISPATCH: true` — deferred to next session
+- No Epic 13 work started — sequencing: Epic 12 (done) → E2E test → Epic 13
+- Story 12.4 archive/forwarding deferred to orchestration layer (noted in architect signoff)
 
 ## Artifact Update Checklist
 
-- [x] `_bmad-output/planning-artifacts/epics.md` — Epics 12-14 appended with full story details
-- [x] `_bmad-output/implementation-artifacts/12-*.md` — 5 Epic 12 story files
-- [x] `_bmad-output/implementation-artifacts/13-*.md` — 3 Epic 13 story files
-- [x] `_bmad-output/implementation-artifacts/14-*.md` — 7 Epic 14 story files
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 15 stories registered as backlog
-- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — Updated counts, decisions, next step
-- [x] `docs/project-context.md` — Phase and implementation status updated
-- [x] `next-session-start-here.md` — Forward-looking hot-start for Epic 12 implementation
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — Epic 12 all 5 stories marked done
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — Counts updated (52 stories done)
+- [x] `docs/project-context.md` — Epic 12 done, Epic 13 next focus
+- [x] `docs/workflow/production-prompt-pack-v4.1.md` — v4.1 with double-dispatch (renamed)
+- [x] `docs/workflow/production-operator-card-v4.md` — DOUBLE_DISPATCH + 7B gate checklist
+- [x] `docs/workflow/production-session-launcher.md` — Reference updated to v4.1
+- [x] `docs/workflow/production-session-start.md` — Reference updated to v4.1
+- [x] `docs/workflow/trial-run-v3-vscode-card.md` — Reference updated to v4.1
+- [x] `docs/token-efficiency-review-and-remediation.md` — Reference updated to v4.1
+- [x] `scripts/utilities/fidelity_walk.py` — 3 anti-drift specs updated to v4.1
+- [x] `tests/test_fidelity_walk.py` — Reference updated to v4.1
+- [x] `next-session-start-here.md` — Forward-looking for E2E test + Epic 13
 - [x] `SESSION-HANDOFF.md` — This file
 
 ## Lessons Learned
 
-- Party Mode team planning is highly efficient for multi-epic scoping — the diverse agent perspectives (architecture, product, scrum, visual, analysis) catch gaps and resolve design tensions in a single session.
-- Recording consensus decisions in story files (not just epics.md) ensures implementation sessions have unambiguous design intent.
-- Per-run flags are simpler than per-slide flags for pipeline extensions — the complexity savings cascade through the entire stack.
+- Party Mode advisory is effective for strategic documentation architecture decisions — the team caught issues (7B as separate gate, visual contract for storyboard) that a solo implementer would miss.
+- Prompt pack versioning with changelog is essential for operator awareness — operators holding v4 need to know v4.1 exists.
+- File rename to match version avoids "is v4 or v4.1 current?" confusion — surface the version in the filename.
+- Cross-reference update after rename is a non-trivial blast radius — grep-first approach caught 15 references across the codebase.

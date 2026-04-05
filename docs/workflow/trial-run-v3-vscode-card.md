@@ -12,7 +12,7 @@ This card was created during the ad-hoc trial era to provide a VS Code-safe sess
 ## Where to go instead
 
 - **Session launcher:** `docs/workflow/production-session-launcher.md`
-- **Prompt pack:** `docs/workflow/production-prompt-pack-v4.md`
+- **Prompt pack:** `docs/workflow/production-prompt-pack-v4.1.md`
 - **Operator card:** `docs/workflow/production-operator-card-v4.md`
 - **VS Code tasks:** `.vscode/tasks.json` (APP: Session Readiness + Preflight)
 

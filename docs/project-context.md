@@ -2,8 +2,8 @@
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
 **Phase:** 4-Implementation (legacy epics complete, new feature epics in backlog)
-**Architecture Status:** 14 Epics (11 legacy DONE + 3 new in backlog: Epic 12 double-dispatch, Epic 13 visual-aware Irene, Epic 14 motion workflow), **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
-**Implementation Status:** Epics 1-11 + SB all COMPLETE (47 stories). **Epics 12-14 IN BACKLOG** (15 new stories, added 2026-04-05 via Party Mode planning): Epic 12 Double-Dispatch Gamma Slide Selection (5 stories), Epic 13 Visual-Aware Irene Pass 2 Scripting (3 stories), Epic 14 Motion-Enhanced Presentation Workflow (7 stories). **Next focus:** Epic 12 implementation (sequencing: 12 → 13 → 14).
+**Architecture Status:** 14 Epics (12 DONE + 2 in backlog: Epic 13 visual-aware Irene, Epic 14 motion workflow), **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
+**Implementation Status:** Epics 1-12 + SB all COMPLETE (52 stories). **Epics 13-14 IN BACKLOG** (10 stories): Epic 13 Visual-Aware Irene Pass 2 Scripting (3 stories), Epic 14 Motion-Enhanced Presentation Workflow (7 stories). **Next focus:** Epic 13 implementation (sequencing: 13 → 14). Production prompt pack bumped to v4.1 with double-dispatch support.
 
 ## Purpose
 

@@ -174,17 +174,17 @@ CROSS_CUTTING_SPECS: tuple[CrossCuttingSpec, ...] = (
 ANTI_DRIFT_SPECS: tuple[AntiDriftSpec, ...] = (
     AntiDriftSpec(
         "Prompt 6B in prompt pack",
-        "docs/workflow/production-prompt-pack-v4.md",
+        "docs/workflow/production-prompt-pack-v4.1.md",
         "## 6B) Literal-Visual Operator Build + Confirmation",
     ),
     AntiDriftSpec(
         "Storyboard A in prompt pack",
-        "docs/workflow/production-prompt-pack-v4.md",
+        "docs/workflow/production-prompt-pack-v4.1.md",
         "Required HIL review (Storyboard A)",
     ),
     AntiDriftSpec(
         "Storyboard B in prompt pack",
-        "docs/workflow/production-prompt-pack-v4.md",
+        "docs/workflow/production-prompt-pack-v4.1.md",
         "Required HIL review (Storyboard B",
     ),
     AntiDriftSpec(

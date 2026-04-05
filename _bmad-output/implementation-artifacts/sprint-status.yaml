@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-05  # Epics 12-14 added (Party Mode planning): double-dispatch slide selection, visual-aware Irene, motion-enhanced workflow. 15 new stories across 3 epics.
+last_updated: 2026-04-05  # Epic 12 complete (5 stories: dual-dispatch infrastructure, parallel fidelity review, selection storyboard, winner forwarding, Marcus integration). Prompt pack bumped to v4.1.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -174,12 +174,12 @@ development_status:
   # Added 2026-04-05 (Party Mode planning session). Per-run dual Gamma dispatch,
   # parallel fidelity review, side-by-side selection storyboard, winner forwarding.
   # Depends on: all existing epics complete. Sequencing: 12 → 13 → 14.
-  epic-12: backlog
-  12-1-dual-dispatch-infrastructure: backlog
-  12-2-parallel-fidelity-quality-review: backlog
-  12-3-selection-storyboard: backlog
-  12-4-winner-forwarding-provenance-archive: backlog
-  12-5-marcus-double-dispatch-integration: backlog
+  epic-12: done
+  12-1-dual-dispatch-infrastructure: done
+  12-2-parallel-fidelity-quality-review: done
+  12-3-selection-storyboard: done
+  12-4-winner-forwarding-provenance-archive: done
+  12-5-marcus-double-dispatch-integration: done
   epic-12-retrospective: optional
 
   # === EPIC 13: Visual-Aware Irene Pass 2 Scripting ===

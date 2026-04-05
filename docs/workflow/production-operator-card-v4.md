@@ -3,7 +3,7 @@
 Use this card during tracked/production runs to Irene Pass 2.
 
 Primary prompt pack:
-- `docs/workflow/trial-run-prompts-to-irene-pass2-v4.md`
+- `docs/workflow/production-prompt-pack-v4.md`
 
 Contracts and validators:
 - `docs/workflow/trial-run-pass2-artifacts-contract.md`
@@ -100,9 +100,15 @@ Operator rule:
 
 ### 7. Prompt 7: Dispatch + Gate 2
 - Confirm outputs:
-  - `gary-dispatch-result.json`
+  - `gary-dispatch-result.json` (check `literal_visual_source` per literal-visual slide)
   - `gary-dispatch-run-log.json`
   - `gamma-export/...`
+- Literal-visual dispatch uses **single-attempt template + composite fallback**:
+  - `literal_visual_source: template` = Gamma rendered (best case)
+  - `literal_visual_source: composite-preintegration` = local PNG composited
+  - `literal_visual_source: composite-download` = URL downloaded and composited
+  - All three produce valid 2400×1350 slide PNGs
+- If composite fallback fired, verify the center-crop framing is acceptable for the specific image.
 - Run G3.
 - Run strict validator:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`

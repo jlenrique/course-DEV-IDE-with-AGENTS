@@ -137,8 +137,8 @@ Confirm quality controls are active:
 - Human-in-the-loop controls: `docs/workflow/human-in-the-loop.md`
 - Agent QA gate policy: `docs/workflow/agent-qa-release-gate.md`
 - Artifacts contract: `docs/workflow/trial-run-pass2-artifacts-contract.md` (v1.1+, includes operator-directives.md)
-- Current prompt pack: `docs/workflow/trial-run-prompts-to-irene-pass2-v4.md`
-- Operator card: `docs/workflow/trial-run-v3-operator-card.md`
+- Current prompt pack: `docs/workflow/production-prompt-pack-v4.md`
+- Operator card: `docs/workflow/production-operator-card-v4.md`
 
 Mandatory anti-drift confirmations for this session:
 - Prompt 6B literal-visual operator checkpoint is required before Prompt 7 dispatch.

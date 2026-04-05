@@ -418,8 +418,24 @@ Dispatch requirements:
 - use a content-bearing slide payload for dispatch input; metadata-only fidelity payloads are invalid for production dispatch
 - enforce literal-visual image-only payloads at dispatch input: literal-visual content entries are URL-only and must not include supporting prose
 
+### Literal-visual dispatch behavior
+
+Literal-visual slides use a **best-effort template → composite fallback** strategy:
+
+1. **Single template attempt** (`_MAX_TEMPLATE_RETRIES = 1`): The Gamma template API dispatches with an anti-fade prompt ("at full opacity, not as background, not faded"). Gamma's AI classifies images as "accent" (cropped) or "background" (full-bleed) based on visual content — this classification is not controllable via the API (see `developers.gamma.app`).
+
+2. **Fill validation**: `validate_visual_fill()` checks the exported PNG using edge-band sampling and content variance detection (`content_stddev`). Blank slides (stddev < 5) and faded slides (stddev < 25) are rejected.
+
+3. **Composite fallback**: On validation failure, `_composite_full_bleed()` produces a deterministic 2400×1350 center-cropped slide from the preintegration PNG or, when no local PNG exists, by downloading from the hosted URL. Output flows through the same pipeline as template-generated slides.
+
+4. **Provenance**: Each literal-visual output record includes `literal_visual_source` tracking how the slide was produced: `template` (Gamma rendered), `composite-preintegration` (local PNG composited), or `composite-download` (URL downloaded and composited).
+
+**API constraints** (validated 2026-04-05 against `developers.gamma.app`):
+- Template endpoint rejects `imageOptions.source` (HTTP 400). Template `g_gior6s13mvpk8ms` uses image source: `placeholder`.
+- Images optimized for background classification (dense, photographic, minimal whitespace) render most reliably. See `skills/gamma-api-mastery/references/literal-visual-image-optimization.md`.
+
 Required outputs under [BUNDLE_PATH]:
-- `gary-dispatch-result.json`
+- `gary-dispatch-result.json` (includes `literal_visual_source` per slide)
 - `gary-dispatch-run-log.json`
 - `gary-theme-resolution.json` (unchanged carry-forward)
 - `gamma-export/...`
@@ -439,6 +455,7 @@ Required write:
 Required HIL review (Storyboard A):
 - Generate storyboard from `[BUNDLE_PATH]/gary-dispatch-result.json`.
 - Present manifest-derived summary and obtain explicit Gate 2 approval.
+- For literal-visual slides, note the `literal_visual_source` provenance in the storyboard so the operator knows which slides came from Gamma vs composite.
 - Persist `[BUNDLE_PATH]/authorized-storyboard.json` (fail closed on overwrite).
 
 Then run explicit HIL Gate 2 (user approval on Gary slides).
@@ -448,6 +465,9 @@ Fallback (detailed):
   - classify failure bucket: path completeness, source_ref completeness, sequence integrity, contract payload shape
   - include one repair path per bucket
   - rerun validator and include before/after receipts
+- If literal-visual slides used composite fallback:
+  - verify composite output is acceptable (center-crop may differ from intended framing)
+  - operator may regenerate the source image with optimized attributes and re-dispatch
 
 Only after explicit Gate 2 approval may Marcus proceed to Prompt 8.
 
@@ -466,6 +486,7 @@ Proceed only if all are true:
 - envelope + run log + dispatch result consistent
 - theme-resolution artifact consistent with dispatch log
 - if `literal_visual_publish` is present, treat as provenance only; narration grounds on approved local slide PNGs in `gary_slide_output`
+- if `literal_visual_source` is present on any slide, note the provenance (`template`, `composite-preintegration`, or `composite-download`) — all three sources produce valid slide PNGs for narration grounding
 
 ### Delegation
 

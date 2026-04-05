@@ -127,7 +127,7 @@ def test_anti_drift_failure_is_reported(tmp_path: Path) -> None:
     _create_minimal_repo(tmp_path)
     _write(
         tmp_path,
-        "docs/workflow/trial-run-prompts-to-irene-pass2-v4.md",
+        "docs/workflow/production-prompt-pack-v4.md",
         "## 6B) Literal-Visual Operator Build + Confirmation\n"
         "Required HIL review (Storyboard A)\n",
     )

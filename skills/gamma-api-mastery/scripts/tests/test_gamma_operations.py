@@ -997,8 +997,9 @@ class TestGaryOutboundContract:
         tpl_args = mock_template.call_args
         assert tpl_args.args[0] == "g_gior6s13mvpk8ms"  # template gammaId
         assert "https://example.com/diagram.png" in tpl_args.args[1]
-        assert "image card" in tpl_args.args[1].lower()
-        assert "image_options" not in tpl_args.args[2]  # template endpoint rejects imageOptions.source
+        assert "full opacity" in tpl_args.args[1].lower()  # anti-fade language required
+        assert "not as background" in tpl_args.args[1].lower()  # anti-fade language required
+        assert "image_options" not in tpl_args.args[2]  # template endpoint rejects imageOptions.source (400 validated 2026-04-05)
         assert "roadmap crop" in tpl_args.args[1].lower()
 
     def test_literal_preserve_calls_do_not_prefix_doc_title_into_input_text(self) -> None:
@@ -1316,7 +1317,7 @@ class TestGaryOutboundContract:
             )
 
         tpl_prompt = mock_template.call_args.args[1]
-        assert "image card" in tpl_prompt.lower()
+        assert "full opacity" in tpl_prompt.lower()  # anti-fade language
         assert "crop to highlight course 1 to course 2 bridge" in tpl_prompt.lower()
         assert "https://example.com/roadmap.png" in tpl_prompt
 
@@ -1883,33 +1884,35 @@ class TestLiteralVisualRetryOnBlank:
         ]
         return slides, diagram_cards
 
-    def test_retry_succeeds_on_second_attempt(self) -> None:
-        """First attempt returns blank, second passes fill validation."""
+    def test_single_attempt_failure_triggers_composite_fallback(self) -> None:
+        """Single template attempt fails → immediate composite fallback (no retry)."""
         slides, diagram_cards = self._base_slides_and_cards()
 
         with (
             patch.object(gamma_operations, "generate_slide"),
             patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
-            patch.object(gamma_operations, "validate_visual_fill") as mock_fill,
+            patch.object(gamma_operations, "validate_visual_fill", return_value={
+                "passed": False, "failures": ["faded/degraded"],
+            }),
+            patch.object(gamma_operations.requests, "get") as mock_download,
         ):
             mock_template.return_value = {
                 "id": "gen-lv", "gammaUrl": "https://gamma.app/docs/lv",
             }
-            mock_fill.side_effect = [
-                {"passed": False, "failures": ["all edges blank"]},
-                {"passed": True},
-            ]
+            # Mock the URL download for composite fallback
+            mock_download.side_effect = Exception("download blocked in test")
             result = generate_deck_mixed_fidelity(
                 slides,
                 {"themeId": "theme_abc", **_valid_theme_resolution()},
-                "RETRY-TEST",
+                "SINGLE-ATTEMPT-TEST",
                 diagram_cards=diagram_cards,
-                run_id="RETRY-TEST",
+                run_id="SINGLE-ATTEMPT-TEST",
             )
 
-        assert mock_template.call_count == 2
-        assert result["calls_made"] == 2
+        # Only 1 template call — no retries
+        assert mock_template.call_count == 1
+        assert result["calls_made"] == 1
 
     def test_retries_exhaust_and_falls_back_to_composite(self, tmp_path: Path) -> None:
         """All template attempts fail → composite fallback from preintegration PNG."""
@@ -1959,7 +1962,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="FALLBACK-TEST",
             )
 
-        assert mock_template.call_count == 3  # _MAX_TEMPLATE_RETRIES
+        assert mock_template.call_count == 1  # single attempt, then composite fallback
         lv_output = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv_output) == 1
         # The composite fallback should have written a non-blank image.
@@ -1990,7 +1993,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="NO-FALLBACK",
             )
 
-        assert mock_template.call_count == 3
+        assert mock_template.call_count == 1  # single attempt, then graceful degradation
         # Output still has the literal-visual slide (graceful degradation).
         lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv) == 1
@@ -2042,7 +2045,7 @@ class TestLiteralVisualRetryOnBlank:
 
         tpl_prompt = mock_template.call_args.args[1]
         # Prompt must start with the image replacement instruction, not the title.
-        assert tpl_prompt.startswith("Replace the image")
+        assert tpl_prompt.startswith("Replace the placeholder image")
         # Title must appear at the end.
         assert "Title: PROMPT-ORDER Slide 01" in tpl_prompt
         lines = tpl_prompt.strip().split("\n")

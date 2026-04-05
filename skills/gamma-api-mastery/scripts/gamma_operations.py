@@ -1369,13 +1369,16 @@ def generate_deck_mixed_fidelity(
     # ── Literal-visual slides: Template API path ──────────────
     # Literal-visual slides use Gamma's Create from Template API
     # (`POST /generations/from-template`) with a single-page Image
-    # card template.  This preserves the Image card layout — the
-    # only reliable way to get full-bleed rendering, since Gamma's
-    # text-based Generate API has no cardType selector and its AI
-    # may place user images as accent thumbnails.
+    # card template.  Best-effort: Gamma's AI may classify the
+    # image as "accent" (cropped, positioned) rather than
+    # "background" (full-bleed) depending on image content —
+    # this cannot be controlled via the API (see
+    # developers.gamma.app).  On a single failure, fall back
+    # immediately to local compositing via _composite_full_bleed()
+    # which guarantees deterministic full-bleed output.
     _LITERAL_VISUAL_TEMPLATE_ID = "g_gior6s13mvpk8ms"
-    _MAX_TEMPLATE_RETRIES = 3
-    _TEMPLATE_EXPORT_SETTLE_SECONDS = 10
+    _MAX_TEMPLATE_RETRIES = 1
+    _TEMPLATE_EXPORT_SETTLE_SECONDS = 15
 
     if literal_visual_slides:
         for slide in literal_visual_slides:
@@ -1398,9 +1401,10 @@ def generate_deck_mixed_fidelity(
             placement_note = str(card_payload.get("placement_note", "")).strip()
             slide_title = f"{module_lesson_part} Slide {card_num:02d}"
             prompt_parts = [
-                "Replace the image in this card with the image at the "
-                "following URL. Keep the image card layout — the image "
-                "must fill the entire slide with no text overlay.",
+                "Replace the placeholder image with this image at full "
+                "opacity (not as background, not faded). The image must "
+                "be the primary visual element filling the entire card. "
+                "No text overlay.",
                 img_url,
             ]
             if placement_note:
@@ -1417,9 +1421,17 @@ def generate_deck_mixed_fidelity(
                     base_params.get("export_as") or base_params.get("exportAs")
                 )
 
-            # Retry loop: generate → export → validate fill → retry if blank.
+            # Best-effort template dispatch → single-failure composite fallback.
+            # Gamma's AI classifies images as "accent" or "background" based
+            # on content characteristics; this is not API-controllable.
+            # Images that Gamma treats as background render full-bleed;
+            # accent-classified images get cropped/positioned.  On failure,
+            # _composite_full_bleed() produces a deterministic full-bleed
+            # slide from the source PNG.
             literal_visual_file_path: str | None = None
             literal_visual_gen_id = ""
+            literal_visual_source = "template"  # tracks provenance
+
             for attempt in range(1, _MAX_TEMPLATE_RETRIES + 1):
                 gen_result = generate_from_template(
                     _LITERAL_VISUAL_TEMPLATE_ID,
@@ -1459,8 +1471,8 @@ def generate_deck_mixed_fidelity(
                     fill_result.get("failures", fill_result.get("error", "unknown")),
                 )
             else:
-                # All retries exhausted — fall back to local composite if
-                # a preintegration PNG is available.
+                # Template failed — fall back to local composite.
+                # Try preintegration PNG first, then download from URL.
                 preint_path_str = str(card_payload.get("preintegration_png_path", "")).strip()
                 preint_source = Path(preint_path_str) if preint_path_str else None
                 if preint_source and not preint_source.is_absolute():
@@ -1469,15 +1481,36 @@ def generate_deck_mixed_fidelity(
                 if preint_source and preint_source.is_file() and literal_visual_file_path:
                     target_path = Path(literal_visual_file_path)
                     _composite_full_bleed(preint_source, target_path)
-                    logger.warning(
-                        "literal-visual card %d: composite fallback from %s → %s",
+                    literal_visual_source = "composite-preintegration"
+                    logger.info(
+                        "literal-visual card %d: composite from preintegration %s → %s",
                         card_num, preint_source.name, target_path.name,
                     )
+                elif img_url and literal_visual_file_path:
+                    # No local PNG — download from URL and composite.
+                    target_path = Path(literal_visual_file_path)
+                    try:
+                        dl_resp = requests.get(img_url, timeout=60)
+                        dl_resp.raise_for_status()
+                        dl_tmp = target_path.with_suffix(".dl.png")
+                        dl_tmp.write_bytes(dl_resp.content)
+                        _composite_full_bleed(dl_tmp, target_path)
+                        dl_tmp.unlink(missing_ok=True)
+                        literal_visual_source = "composite-download"
+                        logger.info(
+                            "literal-visual card %d: composite from downloaded URL → %s",
+                            card_num, target_path.name,
+                        )
+                    except Exception as exc:
+                        logger.error(
+                            "literal-visual card %d: download composite failed: %s",
+                            card_num, exc,
+                        )
                 else:
                     logger.error(
-                        "literal-visual card %d still fails fill validation after %d attempts "
-                        "and no preintegration fallback available",
-                        card_num, _MAX_TEMPLATE_RETRIES,
+                        "literal-visual card %d: template fill validation failed "
+                        "and no fallback source available",
+                        card_num,
                     )
 
             literal_results.append({
@@ -1485,13 +1518,14 @@ def generate_deck_mixed_fidelity(
                 "file_path": literal_visual_file_path,
                 "card_number": card_num,
                 "visual_description": (
-                    f"[pending export — literal-visual slide {card_num}]"
+                    f"[literal-visual slide {card_num} — source: {literal_visual_source}]"
                 ),
                 "source_ref": slide.get(
                     "source_ref", f"slide-brief.md#Slide {card_num}"
                 ),
                 "generation_id": literal_visual_gen_id,
                 "fidelity": "literal-visual",
+                "literal_visual_source": literal_visual_source,
             })
 
     if not creative_slides and not literal_slides:

@@ -1,79 +1,79 @@
-# Session Handoff — 2026-04-05 Literal-Visual Fix + Production Run k
+# Session Handoff — 2026-04-05 Literal-Visual Reliability Fix
 
 ## Session Mode
 
-- Execution mode: tracked production run + APP code changes
+- Execution mode: APP code changes + live API testing
 - Quality preset: production
-- Active run: `C1-M1-PRES-20260405k` (run `k` — final successful dispatch)
-- Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260403`
-- Branch: `RUN/Friday-Night-2026-04-03`
+- Branch: `phase-02/sunday-2026-04-05`
+- BMad workflow: Party Mode consensus at each decision gate
 
 ## Session Summary
 
-Multi-session effort to fix literal-visual slides (cards 2 and 9) that must show full-bleed preintegration images filling the entire 2400×1350 slide. Gamma's template API renders correctly in the web UI but exports blank PNGs due to a race condition between generation completion and export rendering. Implemented a four-layer defense and validated with run `k`.
+Investigated and fixed unreliable literal-visual slide generation when Gary dispatches to the Gamma template API (`/generations/from-template`). Used live API testing with prompt harness, Gamma developer docs (developers.gamma.app), and visual inspection to identify root causes. BMad Party Mode (Gary, Winston, Quinn, Amelia) guided all decisions.
+
+## Root Cause Findings
+
+1. **Gamma classifies images as accent or background by visual content** — diagrammatic/infographic images get "accent" placement (cropped/positioned), photographic/dense images get "background" (full-bleed). This classification is **not controllable via the API** (confirmed by developers.gamma.app: "Accent images are automatically placed by Gamma — they cannot be directly controlled via the API.").
+
+2. **Background-classified images are faded by default** — Gamma applies reduced opacity when placing images as backgrounds. An explicit anti-fade prompt ("at full opacity, not as background, not faded") overrides this.
+
+3. **Template endpoint rejects `imageOptions.source`** — HTTP 400 with "imageOptions.property source should not exist". Template `g_gior6s13mvpk8ms` uses image source: `placeholder`. The `source: noImages` parameter that works on the standard generate endpoint is invalid for templates.
+
+4. **Image size/dimensions do not determine classification** — tested resized card-02 (1376x768, same dims as card-09): still classified as accent. Classification is content-driven.
 
 ## Completed Outcomes
 
-1. **Root cause identified**: Gamma reports generation `status=completed` before the export renderer finishes baking image-card content into the PNG. Evidence: user saw correct images in Gamma's web UI but exported PNGs were blank (12KB).
-2. **Prompt hygiene**: Restructured literal-visual prompts — image instruction first, title at end. Previous pattern had title at start, which poisoned Gamma's AI into generating creative content instead of displaying the image.
-3. **Retry loop with fill validation**: Added `_MAX_TEMPLATE_RETRIES = 3` with `validate_visual_fill()` quality gate after each download. Edge-band sampling (8px bands, 90% threshold) detects blank exports.
-4. **Composite fallback**: When all retries exhaust, `_composite_full_bleed()` reads the local preintegration PNG and composites it at 2400×1350 using Pillow LANCZOS. This is the safety net.
-5. **Export settle delay**: Added `_TEMPLATE_EXPORT_SETTLE_SECONDS = 10` — a `time.sleep(10)` between `generate_from_template()` completion and `download_export()`. **Not yet tested with a live dispatch** — added late in the session.
-6. **Run `k` dispatched**: All 10 slides produced. Cards 2 and 9 used composite fallback (3/3 template attempts failed for each). Output verified:
-   - Slide 02: 2400×1350, 4,429,955 bytes (composite from card-02.png)
-   - Slide 09: 2400×1350, 2,927,729 bytes (composite from card-09.png)
-   - All other slides: 161KB–1.1MB (Gamma-rendered creative/literal-text cards)
-7. **Test suite**: 89 tests passing (5 new tests in `TestLiteralVisualRetryOnBlank`)
+1. **Anti-fade prompt**: "Replace the placeholder image with this image at full opacity (not as background, not faded). The image must be the primary visual element filling the entire card. No text overlay." Proven 3/3 reliable for background-classified images.
+2. **Fail-fast strategy**: Template retries reduced from 3 to 1 — single attempt, then immediate composite fallback.
+3. **Export settle delay**: Increased from 10s to 15s (matches all successful test conditions).
+4. **Download-based composite fallback**: When template fails and no local preintegration PNG exists, downloads from hosted URL and composites locally. Three provenance values: `template`, `composite-preintegration`, `composite-download`.
+5. **Variance-based fill validation**: `visual_fill_validator.py` enhanced with `_content_stddev()` — blank (stddev < 5), faded (< 25), real content (>= 25). Validated 17/17 correct against prompt harness results.
+6. **Provenance tracking**: New `literal_visual_source` field on `gary_slide_output` records.
+7. **Dev reference doc**: `literal-visual-image-optimization.md` — optimal PNG attributes for Gamma template success.
+8. **Prompt harness**: `test_literal_visual_prompt_harness.py` — live API test for prompt variants (`--run-live-e2e`).
+9. **Validator test suite**: `test_visual_fill_validator.py` — 18 unit tests covering edge-band, variance, and pass/fail logic.
 
 ## Key Decisions
 
 | Decision | Rationale |
 |----------|-----------|
-| Composite fallback from local PNGs instead of retrying indefinitely | Gamma's export race condition is non-deterministic; infinite retry wastes API quota |
-| 10-second settle delay before download | Gives Gamma's export renderer time to bake without adding excessive latency |
-| `sys.path.insert` for visual_fill_validator import | `quality-control` directory has a hyphen — can't be a Python package |
-| Retry count of 3 | Balances API cost against giving Gamma multiple chances before falling back |
+| Anti-fade prompt wording | Live API testing: 3/3 success for card-09 with "full opacity, not as background, not faded" |
+| Fail-fast 1 retry instead of 3 | Gamma's accent/background classification is deterministic per image — retrying the same image with the same prompt gets the same result |
+| Composite fallback as primary safety net | `_composite_full_bleed()` is deterministic, zero-credit, zero-latency; guarantees full-bleed for accent-classified images |
+| Template `g_gior6s13mvpk8ms` retained | Template still works for background-classified images; composite catches the rest |
+| Variance-based validation over edge-only | Edge sampling produces false negatives on light-edged images (infographics); variance detection correctly identifies content presence |
 
 ## Lessons Learned
 
-1. **Gamma "Image card" is UI-only** — the API has no `cardType` parameter. Template API with a pre-configured image-card template is the only way to get full-bleed images.
-2. **Gamma export race condition** — `wait_for_generation()` returns when `status=="completed"` but the export image may not be rendered yet. A settle delay or polling the export size is needed.
-3. **Prompt instruction position matters** — placing the title first caused Gamma to generate creative content even for image-card templates. Image instruction must come first.
-4. **PowerShell `NativeCommandError`** — Python scripts logging to stderr cause PowerShell to report exit code 1 even when the script succeeds. Not a real failure — use `$LASTEXITCODE` to check actual exit.
-5. **`time.sleep(10)` in production code slows tests** — test suite now takes ~210s because the sleep runs in test paths too. Consider mocking `time.sleep` in the test setup.
+1. **Gamma API docs can be misleading** — `imageOptions` is listed as optional for templates but `source` sub-field triggers HTTP 400. Always validate with live API calls.
+2. **Gamma's image classification is content-driven** — not size, dimensions, aspect ratio, or metadata. Dense/photographic images → background. Diagrammatic/whitespace-heavy → accent.
+3. **The Gamma UI has capabilities the API lacks** — "use as background" toggle in the UI produces perfect results but cannot be replicated via API parameters.
+4. **Test against real artifacts** — the prompt harness with GitHub Pages–hosted production images caught issues that mocked tests missed.
 
 ## Validation Summary
 
 | Check | Result |
 |-------|--------|
-| pytest (89 tests) | ✅ All passed (210.51s) |
-| Run `k` dispatch | ✅ 10 slides produced, all valid sizes |
-| Composite fallback (cards 2, 9) | ✅ 2400×1350, multi-MB files (not blank) |
-| git status | 19 modified files, 1,126 insertions / 278 deletions |
+| pytest (root suite) | 238+ passed |
+| test_visual_fill_validator.py | 18 passed |
+| test_literal_visual_prompt_harness.py | 7 collected (live-api gated) |
+| Prompt harness live run | 6 variants tested, card-09 3/3 success |
+| GitHub Pages cleanup | card-02-resized.png deleted |
+| git status | Clean after commits 1-4 |
 
 ## Artifact Update Checklist
 
 | Artifact | Updated? |
 |----------|----------|
-| `gamma_operations.py` | ✅ Major changes (retry, fallback, settle delay) |
-| `test_gamma_operations.py` | ✅ +5 new tests, 10 existing updated |
-| `visual_fill_validator.py` | ✅ NEW (untracked) |
-| `next-session-start-here.md` | ✅ Rewritten for current state |
-| `SESSION-HANDOFF.md` | ✅ This file |
-| `sprint-status.yaml` | — No changes (all APP epics already done) |
-| `bmm-workflow-status.yaml` | — No changes |
-| `project-context.md` | — No changes |
-| `agent-environment.md` | — No changes |
-
-## Unresolved Issues
-
-1. **Export settle delay untested in dispatch**: The 10s `time.sleep` was added after run `k`. Next dispatch will be the first live test.
-2. **Template quality**: Current template `g_gior6s13mvpk8ms` may not be optimal. User plans to provide a better template next session.
-3. **Untracked files**: `visual_fill_validator.py`, dispatch logs, and utility scripts need to be staged and committed.
-4. **Test performance**: `time.sleep(10)` in production code makes tests slow (~210s). Should mock sleep in test setup.
-
-## Open Risk
-
-- Risk: The 10s settle delay may be insufficient if Gamma's export renderer takes longer on complex images. If next dispatch still produces blanks, the composite fallback will catch them, but the settle delay value may need tuning.
-- Owner: operator
-- Mitigation: Composite fallback guarantees valid output regardless of Gamma export timing.
+| `gamma_operations.py` | Yes — anti-fade prompt, 1 retry, 15s settle, download fallback, provenance |
+| `test_gamma_operations.py` | Yes — assertions, provenance, download fallback test |
+| `visual_fill_validator.py` | Yes — variance detection, content_stddev |
+| `test_visual_fill_validator.py` | Yes — NEW (18 tests) |
+| `test_literal_visual_prompt_harness.py` | Yes — NEW (live API harness) |
+| `literal-visual-image-optimization.md` | Yes — NEW (dev reference) |
+| `next-session-start-here.md` | Yes — rewritten |
+| `SESSION-HANDOFF.md` | Yes — this file |
+| `Gary SKILL.md` | Yes — provenance, download fallback |
+| `bmm-workflow-status.yaml` | Yes — key_decision entry |
+| `project-context.md` | Yes — variance detection bullet |
+| `.gitignore` | Yes — dispatch logs, prompt-harness-results |

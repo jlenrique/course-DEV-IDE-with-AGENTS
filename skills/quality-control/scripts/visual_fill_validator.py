@@ -24,6 +24,12 @@ except ImportError:  # pragma: no cover
 _FILL_THRESHOLD = 0.90
 # Luminance above which a pixel is considered "empty/white".
 _WHITE_LUMINANCE = 245
+# Minimum per-channel standard deviation to consider a slide "not blank".
+# Blank slides ~0, faded ~12, real content >25.  Validated against harness
+# results 2026-04-05 across 17 test PNGs.
+_MIN_CONTENT_STDDEV = 25.0
+# Faded images fall between blank and real content.
+_FADED_STDDEV_CEIL = 25.0
 
 
 def _edge_fill_ratio(img: "Image.Image", band_px: int = 8) -> dict[str, float]:
@@ -56,6 +62,17 @@ def _edge_fill_ratio(img: "Image.Image", band_px: int = 8) -> dict[str, float]:
     }
 
 
+def _content_stddev(img: "Image.Image") -> float:
+    """Average per-channel standard deviation — measures image content level.
+
+    Returns ~0 for blank/white slides, ~12 for faded, >25 for real content.
+    """
+    from PIL import ImageStat
+
+    stat = ImageStat.Stat(img.convert("RGB"))
+    return sum(stat.stddev) / 3
+
+
 def validate_visual_fill(
     png_path: str | Path,
     *,
@@ -63,6 +80,20 @@ def validate_visual_fill(
     band_px: int = 8,
 ) -> dict[str, Any]:
     """Check whether a PNG fills the full slide area.
+
+    Uses two complementary signals:
+
+    1. **Edge-band sampling** — detects blank borders (original check).
+    2. **Content variance** — detects blank or faded slides even when the
+       source image has light-colored edge content that fools the edge
+       check.  A slide with stddev > ``_MIN_CONTENT_STDDEV`` contains
+       real content; below ``_FADED_STDDEV_CEIL`` the image is faded
+       or blank.
+
+    A slide passes if it has sufficient content variance AND either passes
+    the edge-band check or has content variance well above the faded
+    threshold (indicating full-opacity content that happens to have
+    light-colored edges).
 
     Args:
         png_path: Path to the exported slide PNG.
@@ -90,7 +121,30 @@ def validate_visual_fill(
     img = Image.open(path)
     edges = _edge_fill_ratio(img, band_px=band_px)
     overall = round(min(edges.values()), 4)
-    passed = all(v >= threshold for v in edges.values())
+    edges_pass = all(v >= threshold for v in edges.values())
+
+    stddev = round(_content_stddev(img), 2)
+    has_content = stddev >= _MIN_CONTENT_STDDEV
+    is_faded = stddev < _FADED_STDDEV_CEIL
+
+    # Pass conditions:
+    # 1. Edges pass AND has real content (classic full-bleed)
+    # 2. Has strong content variance even if edges are light-colored
+    #    (handles images with inherently light edges, e.g. infographics)
+    passed = has_content and (edges_pass or stddev > 40.0)
+
+    failures = []
+    if not has_content:
+        if stddev < 5.0:
+            failures.append(f"blank slide (stddev {stddev:.1f} < {_MIN_CONTENT_STDDEV})")
+        else:
+            failures.append(f"faded/degraded (stddev {stddev:.1f} < {_MIN_CONTENT_STDDEV})")
+    if not edges_pass and not (stddev > 40.0):
+        failures.extend(
+            f"{edge} edge fill {ratio:.1%} < {threshold:.0%}"
+            for edge, ratio in edges.items()
+            if ratio < threshold
+        )
 
     return {
         "passed": passed,
@@ -98,12 +152,9 @@ def validate_visual_fill(
         "dimensions": {"width": img.size[0], "height": img.size[1]},
         "edge_fill_ratios": edges,
         "overall_fill": overall,
+        "content_stddev": stddev,
         "threshold": threshold,
-        "failures": [
-            f"{edge} edge fill {ratio:.1%} < {threshold:.0%}"
-            for edge, ratio in edges.items()
-            if ratio < threshold
-        ],
+        "failures": failures,
     }
 
 

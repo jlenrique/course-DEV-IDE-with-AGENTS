@@ -997,8 +997,9 @@ class TestGaryOutboundContract:
         tpl_args = mock_template.call_args
         assert tpl_args.args[0] == "g_gior6s13mvpk8ms"  # template gammaId
         assert "https://example.com/diagram.png" in tpl_args.args[1]
-        assert "image card" in tpl_args.args[1].lower()
-        assert "image_options" not in tpl_args.args[2]  # template endpoint rejects imageOptions.source
+        assert "full opacity" in tpl_args.args[1].lower()  # anti-fade language required
+        assert "not as background" in tpl_args.args[1].lower()  # anti-fade language required
+        assert "image_options" not in tpl_args.args[2]  # template endpoint rejects imageOptions.source (400 validated 2026-04-05)
         assert "roadmap crop" in tpl_args.args[1].lower()
 
     def test_literal_preserve_calls_do_not_prefix_doc_title_into_input_text(self) -> None:
@@ -1316,7 +1317,7 @@ class TestGaryOutboundContract:
             )
 
         tpl_prompt = mock_template.call_args.args[1]
-        assert "image card" in tpl_prompt.lower()
+        assert "full opacity" in tpl_prompt.lower()  # anti-fade language
         assert "crop to highlight course 1 to course 2 bridge" in tpl_prompt.lower()
         assert "https://example.com/roadmap.png" in tpl_prompt
 
@@ -1883,33 +1884,35 @@ class TestLiteralVisualRetryOnBlank:
         ]
         return slides, diagram_cards
 
-    def test_retry_succeeds_on_second_attempt(self) -> None:
-        """First attempt returns blank, second passes fill validation."""
+    def test_single_attempt_failure_triggers_composite_fallback(self) -> None:
+        """Single template attempt fails → immediate composite fallback (no retry)."""
         slides, diagram_cards = self._base_slides_and_cards()
 
         with (
             patch.object(gamma_operations, "generate_slide"),
             patch.object(gamma_operations, "generate_from_template") as mock_template,
             patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
-            patch.object(gamma_operations, "validate_visual_fill") as mock_fill,
+            patch.object(gamma_operations, "validate_visual_fill", return_value={
+                "passed": False, "failures": ["faded/degraded"],
+            }),
+            patch.object(gamma_operations.requests, "get") as mock_download,
         ):
             mock_template.return_value = {
                 "id": "gen-lv", "gammaUrl": "https://gamma.app/docs/lv",
             }
-            mock_fill.side_effect = [
-                {"passed": False, "failures": ["all edges blank"]},
-                {"passed": True},
-            ]
+            # Mock the URL download for composite fallback
+            mock_download.side_effect = Exception("download blocked in test")
             result = generate_deck_mixed_fidelity(
                 slides,
                 {"themeId": "theme_abc", **_valid_theme_resolution()},
-                "RETRY-TEST",
+                "SINGLE-ATTEMPT-TEST",
                 diagram_cards=diagram_cards,
-                run_id="RETRY-TEST",
+                run_id="SINGLE-ATTEMPT-TEST",
             )
 
-        assert mock_template.call_count == 2
-        assert result["calls_made"] == 2
+        # Only 1 template call — no retries
+        assert mock_template.call_count == 1
+        assert result["calls_made"] == 1
 
     def test_retries_exhaust_and_falls_back_to_composite(self, tmp_path: Path) -> None:
         """All template attempts fail → composite fallback from preintegration PNG."""
@@ -1959,7 +1962,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="FALLBACK-TEST",
             )
 
-        assert mock_template.call_count == 3  # _MAX_TEMPLATE_RETRIES
+        assert mock_template.call_count == 1  # single attempt, then composite fallback
         lv_output = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv_output) == 1
         # The composite fallback should have written a non-blank image.
@@ -1967,6 +1970,8 @@ class TestLiteralVisualRetryOnBlank:
         assert composited_path.is_file()
         with _Image.open(composited_path) as img:
             assert img.size == (2400, 1350)
+        # Provenance: composite from preintegration PNG
+        assert lv_output[0]["literal_visual_source"] == "composite-preintegration"
 
     def test_retries_exhaust_no_fallback_logs_error(self) -> None:
         """All attempts fail and no preintegration source — graceful degradation."""
@@ -1990,7 +1995,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="NO-FALLBACK",
             )
 
-        assert mock_template.call_count == 3
+        assert mock_template.call_count == 1  # single attempt, then graceful degradation
         # Output still has the literal-visual slide (graceful degradation).
         lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv) == 1
@@ -2018,6 +2023,9 @@ class TestLiteralVisualRetryOnBlank:
 
         assert mock_template.call_count == 1
         assert result["calls_made"] == 1
+        # Provenance: successful template render
+        lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
+        assert lv[0]["literal_visual_source"] == "template"
 
     def test_prompt_starts_with_image_instruction_not_title(self) -> None:
         """Title must appear at END of prompt, not beginning, to prevent Gamma misinterpretation."""
@@ -2042,7 +2050,7 @@ class TestLiteralVisualRetryOnBlank:
 
         tpl_prompt = mock_template.call_args.args[1]
         # Prompt must start with the image replacement instruction, not the title.
-        assert tpl_prompt.startswith("Replace the image")
+        assert tpl_prompt.startswith("Replace the placeholder image")
         # Title must appear at the end.
         assert "Title: PROMPT-ORDER Slide 01" in tpl_prompt
         lines = tpl_prompt.strip().split("\n")
@@ -2051,3 +2059,57 @@ class TestLiteralVisualRetryOnBlank:
         # Title must be the last non-empty line.
         non_empty_lines = [l for l in lines if l.strip()]
         assert non_empty_lines[-1].startswith("Title:")
+
+    def test_download_composite_fallback_when_no_local_png(self, tmp_path: Path) -> None:
+        """Template fails, no preintegration PNG — download from URL triggers composite."""
+        from PIL import Image as _Image
+        from unittest.mock import MagicMock
+        import io
+
+        export_dir = tmp_path / "export"
+        export_dir.mkdir()
+        # Create a blank PNG that the template "returns"
+        blank_png = export_dir / "blank.png"
+        _Image.new("RGB", (2400, 1350), (255, 255, 255)).save(blank_png, format="PNG")
+
+        slides, diagram_cards = self._base_slides_and_cards()
+        # No preintegration_png_path — only image_url
+
+        # Create a valid PNG for the mocked download
+        source_img = _Image.new("RGB", (1376, 768), (30, 60, 120))
+        buf = io.BytesIO()
+        source_img.save(buf, format="PNG")
+        mock_response = MagicMock()
+        mock_response.content = buf.getvalue()
+        mock_response.raise_for_status = MagicMock()
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={
+                "passed": False, "failures": ["faded/degraded"],
+            }),
+            patch.object(gamma_operations, "download_export", return_value=blank_png),
+            patch.object(gamma_operations.requests, "get", return_value=mock_response),
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "exportUrl": "https://gamma.app/export/lv",
+            }
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "exportAs": "png",
+                    "export_dir": str(export_dir),
+                    **_valid_theme_resolution(),
+                },
+                "DOWNLOAD-FALLBACK",
+                diagram_cards=diagram_cards,
+                run_id="DOWNLOAD-FALLBACK",
+            )
+
+        assert mock_template.call_count == 1
+        lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
+        assert len(lv) == 1
+        assert lv[0]["literal_visual_source"] == "composite-download"

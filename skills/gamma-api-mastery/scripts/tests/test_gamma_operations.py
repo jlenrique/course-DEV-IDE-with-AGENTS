@@ -1970,6 +1970,8 @@ class TestLiteralVisualRetryOnBlank:
         assert composited_path.is_file()
         with _Image.open(composited_path) as img:
             assert img.size == (2400, 1350)
+        # Provenance: composite from preintegration PNG
+        assert lv_output[0]["literal_visual_source"] == "composite-preintegration"
 
     def test_retries_exhaust_no_fallback_logs_error(self) -> None:
         """All attempts fail and no preintegration source — graceful degradation."""
@@ -2021,6 +2023,9 @@ class TestLiteralVisualRetryOnBlank:
 
         assert mock_template.call_count == 1
         assert result["calls_made"] == 1
+        # Provenance: successful template render
+        lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
+        assert lv[0]["literal_visual_source"] == "template"
 
     def test_prompt_starts_with_image_instruction_not_title(self) -> None:
         """Title must appear at END of prompt, not beginning, to prevent Gamma misinterpretation."""
@@ -2054,3 +2059,57 @@ class TestLiteralVisualRetryOnBlank:
         # Title must be the last non-empty line.
         non_empty_lines = [l for l in lines if l.strip()]
         assert non_empty_lines[-1].startswith("Title:")
+
+    def test_download_composite_fallback_when_no_local_png(self, tmp_path: Path) -> None:
+        """Template fails, no preintegration PNG — download from URL triggers composite."""
+        from PIL import Image as _Image
+        from unittest.mock import MagicMock
+        import io
+
+        export_dir = tmp_path / "export"
+        export_dir.mkdir()
+        # Create a blank PNG that the template "returns"
+        blank_png = export_dir / "blank.png"
+        _Image.new("RGB", (2400, 1350), (255, 255, 255)).save(blank_png, format="PNG")
+
+        slides, diagram_cards = self._base_slides_and_cards()
+        # No preintegration_png_path — only image_url
+
+        # Create a valid PNG for the mocked download
+        source_img = _Image.new("RGB", (1376, 768), (30, 60, 120))
+        buf = io.BytesIO()
+        source_img.save(buf, format="PNG")
+        mock_response = MagicMock()
+        mock_response.content = buf.getvalue()
+        mock_response.raise_for_status = MagicMock()
+
+        with (
+            patch.object(gamma_operations, "generate_slide"),
+            patch.object(gamma_operations, "generate_from_template") as mock_template,
+            patch.object(gamma_operations, "validate_image_url", return_value=(True, "OK")),
+            patch.object(gamma_operations, "validate_visual_fill", return_value={
+                "passed": False, "failures": ["faded/degraded"],
+            }),
+            patch.object(gamma_operations, "download_export", return_value=blank_png),
+            patch.object(gamma_operations.requests, "get", return_value=mock_response),
+        ):
+            mock_template.return_value = {
+                "id": "gen-lv", "exportUrl": "https://gamma.app/export/lv",
+            }
+            result = generate_deck_mixed_fidelity(
+                slides,
+                {
+                    "themeId": "theme_abc",
+                    "exportAs": "png",
+                    "export_dir": str(export_dir),
+                    **_valid_theme_resolution(),
+                },
+                "DOWNLOAD-FALLBACK",
+                diagram_cards=diagram_cards,
+                run_id="DOWNLOAD-FALLBACK",
+            )
+
+        assert mock_template.call_count == 1
+        lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
+        assert len(lv) == 1
+        assert lv[0]["literal_visual_source"] == "composite-download"

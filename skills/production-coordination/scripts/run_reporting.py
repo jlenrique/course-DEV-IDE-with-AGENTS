@@ -331,9 +331,12 @@ def generate_run_report(
             "quality_gate_failures": quality["fail_count"],
         }
 
+        is_double_dispatch = bool(context.get("double_dispatch", False))
+
         report = {
             "run_id": run_id,
             "run_mode": context.get("mode", "default"),
+            "double_dispatch": is_double_dispatch,
             "run_purpose": row["purpose"],
             "status": row["status"],
             "preset": row["preset"],
@@ -355,6 +358,12 @@ def generate_run_report(
             "orchestrator_summary": "Here's how the run went...",
             "generated_at": _now(),
         }
+
+        if is_double_dispatch:
+            report["cost_estimation"] = {
+                "gamma_call_multiplier": 2,
+                "note": "Double-dispatch mode: 2x Gamma API calls for A/B variant comparison.",
+            }
     finally:
         conn.close()
 

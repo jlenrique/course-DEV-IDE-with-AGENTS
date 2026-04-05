@@ -1675,6 +1675,106 @@ class TestThemeMappingHandshake:
         assert result["flags"]["theme_mapping_verified"] is True
 
 
+class TestDoubleDispatch:
+    def test_execute_generation_double_dispatch_builds_variant_pairs(self) -> None:
+        slides = [
+            {"slide_number": 1, "content": "Creative", "fidelity": "creative"},
+            {"slide_number": 2, "content": "Literal", "fidelity": "literal-text"},
+        ]
+
+        payload_a = {
+            "gary_slide_output": [
+                {
+                    "slide_id": "C1-M1-card-01",
+                    "file_path": "course-content/staging/slide_01.png",
+                    "card_number": 1,
+                    "source_ref": "src#1",
+                    "fidelity": "creative",
+                },
+                {
+                    "slide_id": "C1-M1-card-02",
+                    "file_path": "course-content/staging/slide_02.png",
+                    "card_number": 2,
+                    "source_ref": "src#2",
+                    "fidelity": "literal-text",
+                },
+            ],
+            "quality_assessment": {
+                "overall_score": 0.82,
+                "dimensions": {
+                    "layout_integrity": 0.85,
+                    "parameter_confidence": 0.80,
+                    "embellishment_risk_control": 0.81,
+                },
+                "embellishment_detected": False,
+                "embellishment_details": [],
+            },
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
+            "calls_made": 2,
+        }
+        payload_b = {
+            "gary_slide_output": [
+                {
+                    "slide_id": "C1-M1-card-01",
+                    "file_path": "course-content/staging/slide_01.png",
+                    "card_number": 1,
+                    "source_ref": "src#1",
+                    "fidelity": "creative",
+                },
+                {
+                    "slide_id": "C1-M1-card-02",
+                    "file_path": "course-content/staging/slide_02.png",
+                    "card_number": 2,
+                    "source_ref": "src#2",
+                    "fidelity": "literal-text",
+                },
+            ],
+            "quality_assessment": {
+                "overall_score": 0.76,
+                "dimensions": {
+                    "layout_integrity": 0.79,
+                    "parameter_confidence": 0.74,
+                    "embellishment_risk_control": 0.75,
+                },
+                "embellishment_detected": False,
+                "embellishment_details": [],
+            },
+            "parameter_decisions": {},
+            "recommendations": [],
+            "flags": {},
+            "theme_resolution": _valid_theme_resolution(),
+            "calls_made": 2,
+        }
+
+        with patch.object(gamma_operations, "generate_deck_mixed_fidelity") as mock_mixed:
+            mock_mixed.side_effect = [payload_a, payload_b]
+            result = execute_generation(
+                {
+                    "themeId": "theme_abc",
+                    "double_dispatch": True,
+                    **_valid_theme_resolution(),
+                },
+                slides=slides,
+                module_lesson_part="C1-M1",
+            )
+
+        assert mock_mixed.call_count == 2
+        assert result["generation_mode"] == "double-dispatch"
+        assert result["double_dispatch"]["enabled"] is True
+        assert result["double_dispatch"]["selection_progress"]["total"] == 2
+        assert result["calls_made"] == 4
+
+        output = result["gary_slide_output"]
+        assert len(output) == 4
+        assert {row["dispatch_variant"] for row in output} == {"A", "B"}
+        assert all(row["selected"] is False for row in output)
+        assert any("_variant_A" in str(row["file_path"]) for row in output)
+        assert any("_variant_B" in str(row["file_path"]) for row in output)
+
+
 class TestLiteralVisualPreintegrationPublish:
     """Focused tests for publish helper paths that require no network."""
 

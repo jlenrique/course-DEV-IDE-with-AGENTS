@@ -59,6 +59,8 @@ REQUIRED_THEME_RESOLUTION_FIELDS = {
     "user_confirmation",
 }
 
+_IMAGE_FILE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif", ".heic", ".heif"}
+
 
 def _require_gamma_api_key() -> None:
     """Fail fast when Gamma credentials are unavailable."""
@@ -739,6 +741,203 @@ def execute_generation(
         For single-call: completed generation data.
         For mixed-fidelity: dict with gary_slide_output, provenance, generation_mode, calls_made.
     """
+    if slides and bool(params.get("double_dispatch") or params.get("doubleDispatch")):
+        base_run_id = run_id or module_lesson_part or "DOUBLE-DISPATCH"
+        left_params = dict(params)
+        right_params = dict(params)
+        left_params.pop("double_dispatch", None)
+        left_params.pop("doubleDispatch", None)
+        right_params.pop("double_dispatch", None)
+        right_params.pop("doubleDispatch", None)
+
+        left = execute_generation(
+            left_params,
+            slides=slides,
+            module_lesson_part=module_lesson_part,
+            diagram_cards=diagram_cards,
+            client=client,
+            run_id=f"{base_run_id}:A",
+        )
+        right = execute_generation(
+            right_params,
+            slides=slides,
+            module_lesson_part=module_lesson_part,
+            diagram_cards=diagram_cards,
+            client=client,
+            run_id=f"{base_run_id}:B",
+        )
+
+        def _variantize_path(path_value: Any, variant: str) -> str:
+            raw = str(path_value or "").strip()
+            if not raw or _is_remote_http_ref(raw):
+                return raw
+            candidate = Path(raw)
+            if candidate.suffix.lower() not in _IMAGE_FILE_SUFFIXES:
+                return raw
+            variant_path = candidate.with_name(f"{candidate.stem}_variant_{variant}{candidate.suffix}")
+            if candidate.is_file() and variant_path != candidate:
+                try:
+                    shutil.copy2(candidate, variant_path)
+                    return str(variant_path)
+                except OSError:
+                    return str(variant_path)
+            return str(variant_path)
+
+        def _scores(payload: dict[str, Any]) -> tuple[float, float]:
+            qa = payload.get("quality_assessment", {}) if isinstance(payload, dict) else {}
+            dims = qa.get("dimensions", {}) if isinstance(qa, dict) else {}
+            overall = float(qa.get("overall_score", 0.0) or 0.0)
+            vera = float(dims.get("embellishment_risk_control", overall) or overall)
+            quinn = float(dims.get("layout_integrity", overall) or overall)
+            return round(vera, 2), round(quinn, 2)
+
+        def _with_variant(payload: dict[str, Any], variant: str) -> list[dict[str, Any]]:
+            vera_score, quinn_score = _scores(payload)
+            out: list[dict[str, Any]] = []
+            for row in payload.get("gary_slide_output", []):
+                if not isinstance(row, dict):
+                    continue
+                next_row = dict(row)
+                next_row["dispatch_variant"] = variant
+                next_row["selected"] = False
+                next_row["file_path"] = _variantize_path(next_row.get("file_path"), variant)
+                next_row["vera_score"] = vera_score
+                next_row["quinn_score"] = quinn_score
+                findings: list[str] = []
+                if vera_score < 0.7:
+                    findings.append("vera_below_threshold")
+                if quinn_score < 0.7:
+                    findings.append("quinn_below_threshold")
+                next_row["findings"] = findings
+                out.append(next_row)
+            return out
+
+        variant_a_rows = _with_variant(left, "A")
+        variant_b_rows = _with_variant(right, "B")
+
+        pair_index: dict[int, dict[str, Any]] = {}
+        for row in [*variant_a_rows, *variant_b_rows]:
+            card_number = int(row.get("card_number") or 0)
+            pair = pair_index.setdefault(
+                card_number,
+                {
+                    "card_number": card_number,
+                    "slide_id": row.get("slide_id", f"{module_lesson_part}-card-{card_number:02d}"),
+                    "variants": {},
+                },
+            )
+            variant_key = str(row.get("dispatch_variant", "")).upper()
+            pair["variants"][variant_key] = {
+                "variant": variant_key,
+                "slide_id": row.get("slide_id"),
+                "file_path": row.get("file_path"),
+                "vera_score": row.get("vera_score"),
+                "quinn_score": row.get("quinn_score"),
+                "findings": row.get("findings", []),
+            }
+
+        variant_pairs: list[dict[str, Any]] = []
+        for key in sorted(pair_index.keys()):
+            pair = pair_index[key]
+            a = pair["variants"].get("A")
+            b = pair["variants"].get("B")
+            both_failed = False
+            if a and b:
+                a_gate = min(float(a.get("vera_score", 0.0) or 0.0), float(a.get("quinn_score", 0.0) or 0.0))
+                b_gate = min(float(b.get("vera_score", 0.0) or 0.0), float(b.get("quinn_score", 0.0) or 0.0))
+                both_failed = a_gate < 0.7 and b_gate < 0.7
+            pair["needs_redispatch_or_manual"] = both_failed
+            variant_pairs.append(pair)
+
+        combined_rows = sorted(
+            [*variant_a_rows, *variant_b_rows],
+            key=lambda item: (int(item.get("card_number") or 0), str(item.get("dispatch_variant") or "")),
+        )
+
+        payload = {
+            "gary_slide_output": combined_rows,
+            "quality_assessment": {
+                "overall_score": round(
+                    (
+                        float(left.get("quality_assessment", {}).get("overall_score", 0.0) or 0.0)
+                        + float(right.get("quality_assessment", {}).get("overall_score", 0.0) or 0.0)
+                    ) / 2,
+                    2,
+                ),
+                "dimensions": {
+                    "layout_integrity": round(
+                        (
+                            float(left.get("quality_assessment", {}).get("dimensions", {}).get("layout_integrity", 0.0) or 0.0)
+                            + float(right.get("quality_assessment", {}).get("dimensions", {}).get("layout_integrity", 0.0) or 0.0)
+                        ) / 2,
+                        2,
+                    ),
+                    "parameter_confidence": round(
+                        (
+                            float(left.get("quality_assessment", {}).get("dimensions", {}).get("parameter_confidence", 0.0) or 0.0)
+                            + float(right.get("quality_assessment", {}).get("dimensions", {}).get("parameter_confidence", 0.0) or 0.0)
+                        ) / 2,
+                        2,
+                    ),
+                    "embellishment_risk_control": round(
+                        (
+                            float(left.get("quality_assessment", {}).get("dimensions", {}).get("embellishment_risk_control", 0.0) or 0.0)
+                            + float(right.get("quality_assessment", {}).get("dimensions", {}).get("embellishment_risk_control", 0.0) or 0.0)
+                        ) / 2,
+                        2,
+                    ),
+                },
+                "embellishment_detected": bool(
+                    left.get("quality_assessment", {}).get("embellishment_detected")
+                    or right.get("quality_assessment", {}).get("embellishment_detected")
+                ),
+                "embellishment_details": [
+                    *list(left.get("quality_assessment", {}).get("embellishment_details", [])),
+                    *list(right.get("quality_assessment", {}).get("embellishment_details", [])),
+                ],
+            },
+            "parameter_decisions": {
+                **(left.get("parameter_decisions", {}) if isinstance(left, dict) else {}),
+                "double_dispatch": True,
+            },
+            "recommendations": [
+                "Double-dispatch enabled: review A/B variants and confirm exactly one winner per slide.",
+            ],
+            "flags": {
+                **(left.get("flags", {}) if isinstance(left, dict) else {}),
+                "double_dispatch": True,
+                "needs_selection_gate": True,
+                "needs_redispatch_pairs": [
+                    pair["card_number"]
+                    for pair in variant_pairs
+                    if pair.get("needs_redispatch_or_manual")
+                ],
+            },
+            "theme_resolution": left.get("theme_resolution", {}),
+            "provenance": [
+                {
+                    "card_number": row.get("card_number"),
+                    "source_call": row.get("fidelity", "creative"),
+                    "generation_id": row.get("generation_id", ""),
+                    "fidelity": row.get("fidelity", "creative"),
+                    "dispatch_variant": row.get("dispatch_variant"),
+                }
+                for row in combined_rows
+            ],
+            "generation_mode": "double-dispatch",
+            "calls_made": int(left.get("calls_made", 0) or 0) + int(right.get("calls_made", 0) or 0),
+            "double_dispatch": {
+                "enabled": True,
+                "selection_progress": {
+                    "selected": 0,
+                    "total": len(variant_pairs),
+                },
+                "variant_pairs": variant_pairs,
+            },
+        }
+        validate_outbound_contract(payload)
+        return payload
+
     if slides:
         # Enforce theme-selection handshake for all slide-based dispatches.
         theme_resolution = resolve_theme_mapping_handshake(params)
@@ -1662,6 +1861,7 @@ def generate_deck_mixed_fidelity(
                 "visual_description": r.get("visual_description", ""),
                 "source_ref": r.get("source_ref", ""),
                 "fidelity": r.get("fidelity", "creative"),
+                "literal_visual_source": r.get("literal_visual_source"),
             }
             for r in unified
         ],

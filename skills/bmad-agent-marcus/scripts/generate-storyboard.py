@@ -212,6 +212,7 @@ def build_manifest(
         raise ValueError("gary_slide_output must be a list")
     storyboard_dir = storyboard_dir.resolve()
     slides_out: list[dict[str, Any]] = []
+    pair_map: dict[str, dict[str, Any]] = {}
 
     for idx, raw in enumerate(slides_in, start=1):
         if not isinstance(raw, dict):
@@ -224,6 +225,11 @@ def build_manifest(
         source_ref = str(raw.get("source_ref", "") or "").strip()
         file_path_raw = str(raw.get("file_path", "") or "").strip()
         display_title = str(raw.get("title") or raw.get("display_title") or slide_id).strip()
+        dispatch_variant = str(raw.get("dispatch_variant") or "").strip().upper() or None
+        selected = bool(raw.get("selected", False))
+        vera_score = raw.get("vera_score")
+        quinn_score = raw.get("quinn_score")
+        findings = raw.get("findings") if isinstance(raw.get("findings"), list) else []
 
         html_asset_ref = ""
         asset_status = "missing"
@@ -248,16 +254,38 @@ def build_manifest(
                 "row_kind": "slide",
                 "slide_id": slide_id,
                 "fidelity": fidelity,
+                "dispatch_variant": dispatch_variant,
+                "selected": selected,
                 "card_number": card_number,
                 "source_ref": source_ref,
                 "file_path": file_path_raw,
                 "display_title": display_title,
                 "asset_status": asset_status,
                 "html_asset_ref": html_asset_ref,
+                "vera_score": vera_score,
+                "quinn_score": quinn_score,
+                "findings": findings,
                 "narration_text": narration_text,
                 "narration_status": narration_status,
             }
         )
+
+        if dispatch_variant:
+            pair_key = str(card_number if card_number is not None else slide_id)
+            pair = pair_map.setdefault(
+                pair_key,
+                {
+                    "pair_key": pair_key,
+                    "slide_id": slide_id,
+                    "card_number": card_number,
+                    "selected_variant": None,
+                    "variants": {"A": None, "B": None},
+                },
+            )
+            if dispatch_variant in {"A", "B"}:
+                pair["variants"][dispatch_variant] = slides_out[-1]
+            if selected:
+                pair["selected_variant"] = dispatch_variant
 
     with_script_n = sum(
         1 for s in slides_out if isinstance(s, dict) and s.get("narration_status") == "present"
@@ -285,6 +313,27 @@ def build_manifest(
         "run_id": run_id,
         "rows": rows,
     }
+
+    if pair_map:
+        variant_pairs = [pair_map[k] for k in sorted(pair_map.keys(), key=lambda x: int(x) if x.isdigit() else x)]
+        selected_pairs = sum(1 for pair in variant_pairs if pair.get("selected_variant"))
+        out["double_dispatch"] = {
+            "enabled": True,
+            "selection_progress": {
+                "selected": selected_pairs,
+                "total": len(variant_pairs),
+            },
+            "variant_pairs": variant_pairs,
+        }
+
+        selected_preview: list[dict[str, Any]] = []
+        for pair in variant_pairs:
+            chosen = pair["selected_variant"]
+            if chosen in {"A", "B"}:
+                winner = pair["variants"].get(chosen)
+                if isinstance(winner, dict):
+                    selected_preview.append(winner)
+        out["selected_full_deck_preview"] = selected_preview
     if segment_manifest_path is not None:
         out["segment_manifest_source"] = segment_manifest_path.resolve().as_posix()
     return out
@@ -376,11 +425,16 @@ def render_index_html(manifest: dict[str, Any]) -> str:
         seq = html.escape(str(s.get("sequence", "")))
         sid = html.escape(str(s.get("slide_id", "")))
         fid = html.escape(str(s.get("fidelity", "")))
+        variant = html.escape(str(s.get("dispatch_variant") or ""))
         card = html.escape(str(s.get("card_number", "")))
         title = html.escape(str(s.get("display_title", "")))
         sref = html.escape(str(s.get("source_ref", "")))
         fpath = html.escape(str(s.get("file_path", "")))
         status = html.escape(str(s.get("asset_status", "")))
+        selected_badge = "<strong>yes</strong>" if bool(s.get("selected")) else ""
+        quality_text = html.escape(
+            f"Vera={s.get('vera_score', 'n/a')} | Quinn={s.get('quinn_score', 'n/a')}"
+        )
         ref = str(s.get("html_asset_ref", "") or "")
 
         if s.get("asset_status") == "present" and ref:
@@ -410,13 +464,80 @@ def render_index_html(manifest: dict[str, Any]) -> str:
 
         rows.append(
             "<tr>"
-            f"<td>{seq}</td><td>{sid}</td><td>{fid}</td><td>{card}</td>"
+            f"<td>{seq}</td><td>{sid}</td><td>{fid}</td><td>{variant}</td><td>{card}</td>"
             f"<td>{preview}</td><td>{title}</td><td>{sref}</td>"
-            f"<td>{fpath}</td><td>{status}</td><td>{script_cell}</td>"
+            f"<td>{fpath}</td><td>{status}</td><td>{quality_text}</td><td>{selected_badge}</td><td>{script_cell}</td>"
             "</tr>"
         )
 
-    body_rows = "\n".join(rows) if rows else "<tr><td colspan='10'>No slides</td></tr>"
+    body_rows = "\n".join(rows) if rows else "<tr><td colspan='13'>No slides</td></tr>"
+    pair_section_rows: list[str] = []
+    dd = manifest.get("double_dispatch") if isinstance(manifest.get("double_dispatch"), dict) else {}
+    for pair in dd.get("variant_pairs", []) if isinstance(dd, dict) else []:
+        if not isinstance(pair, dict):
+            continue
+        var_a = pair.get("variants", {}).get("A") if isinstance(pair.get("variants"), dict) else None
+        var_b = pair.get("variants", {}).get("B") if isinstance(pair.get("variants"), dict) else None
+        if not isinstance(var_a, dict) or not isinstance(var_b, dict):
+            continue
+
+        def _pair_preview(row: dict[str, Any]) -> str:
+            href = str(row.get("html_asset_ref") or "")
+            if href:
+                return (
+                    f'<img src="{html.escape(href, quote=True)}" '
+                    'alt="" style="max-width:260px;max-height:150px;object-fit:contain;" />'
+                )
+            return '<strong class="missing">MISSING</strong>'
+
+        pair_section_rows.append(
+            "<tr>"
+            f"<td>{html.escape(str(pair.get('card_number', '')))}</td>"
+            f"<td>{_pair_preview(var_a)}</td>"
+            f"<td>{_pair_preview(var_b)}</td>"
+            f"<td>Vera={html.escape(str(var_a.get('vera_score', 'n/a')))}<br/>Quinn={html.escape(str(var_a.get('quinn_score', 'n/a')))}</td>"
+            f"<td>Vera={html.escape(str(var_b.get('vera_score', 'n/a')))}<br/>Quinn={html.escape(str(var_b.get('quinn_score', 'n/a')))}</td>"
+            f"<td>{html.escape(str(pair.get('selected_variant') or 'pending'))}</td>"
+            "</tr>"
+        )
+
+    pair_section_html = ""
+    if pair_section_rows:
+        pair_section_html = (
+            "<h2>Variant Selection (A/B side-by-side)</h2>"
+            "<table><thead><tr>"
+            "<th>card</th><th>variant A</th><th>variant B</th><th>A scores</th><th>B scores</th><th>selected</th>"
+            "</tr></thead><tbody>"
+            + "\n".join(pair_section_rows)
+            + "</tbody></table>"
+        )
+
+    selected_preview_rows: list[str] = []
+    for item in manifest.get("selected_full_deck_preview", []) if isinstance(manifest.get("selected_full_deck_preview"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        href = str(item.get("html_asset_ref") or "")
+        preview = (
+            f'<img src="{html.escape(href, quote=True)}" alt="" style="max-width:320px;max-height:180px;object-fit:contain;" />'
+            if href
+            else '<strong class="missing">MISSING</strong>'
+        )
+        selected_preview_rows.append(
+            "<tr>"
+            f"<td>{html.escape(str(item.get('card_number', '')))}</td>"
+            f"<td>{html.escape(str(item.get('slide_id', '')))}</td>"
+            f"<td>{preview}</td>"
+            "</tr>"
+        )
+
+    selected_preview_html = ""
+    if selected_preview_rows:
+        selected_preview_html = (
+            "<h2>Full-Deck Preview (selected variants)</h2>"
+            "<table><thead><tr><th>card</th><th>slide_id</th><th>preview</th></tr></thead><tbody>"
+            + "\n".join(selected_preview_rows)
+            + "</tbody></table>"
+        )
     gen_at = html.escape(str(manifest.get("generated_at", "")))
     view = html.escape(str(manifest.get("storyboard_view") or "slides_only"))
     cap = f"Storyboard (view-only) — {view} — generated {gen_at}"
@@ -441,13 +562,15 @@ def render_index_html(manifest: dict[str, Any]) -> str:
   </style>
 </head>
 <body>
-  <table>
+    {pair_section_html}
+    {selected_preview_html}
+    <table>
     <caption>{cap}</caption>
     <thead>
       <tr>
-        <th>#</th><th>slide_id</th><th>fidelity</th><th>card</th>
+                <th>#</th><th>slide_id</th><th>fidelity</th><th>variant</th><th>card</th>
         <th>preview</th><th>title</th><th>source_ref</th><th>file_path</th>
-        <th>asset_status</th><th>narration (Pass 2)</th>
+                <th>asset_status</th><th>quality</th><th>selected</th><th>narration (Pass 2)</th>
       </tr>
     </thead>
     <tbody>

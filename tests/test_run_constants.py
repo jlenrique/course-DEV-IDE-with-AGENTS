@@ -24,6 +24,7 @@ def _write_valid_constants(bundle: Path, root: Path, *, bundle_rel: str | None =
         "theme_paramset_key": "preset-a",
         "execution_mode": "tracked/default",
         "quality_preset": "production",
+        "double_dispatch": False,
     }
     (bundle / "run-constants.yaml").write_text(
         yaml.safe_dump(data, sort_keys=False),
@@ -42,6 +43,7 @@ def test_load_run_constants_happy_path(tmp_path: Path) -> None:
     assert loaded.run_id == "T-UNIT-001"
     assert loaded.execution_mode == "tracked/default"
     assert loaded.optional_context_assets == ()
+    assert loaded.double_dispatch is False
 
 
 def test_bundle_path_must_match_directory(tmp_path: Path) -> None:
@@ -108,8 +110,26 @@ def test_parse_invalid_quality_preset() -> None:
         "theme_paramset_key": "p",
         "execution_mode": "tracked/default",
         "quality_preset": "nope",
+        "double_dispatch": False,
     }
     with pytest.raises(rc.RunConstantsError, match="quality_preset"):
+        rc.parse_run_constants(raw)
+
+
+def test_parse_invalid_double_dispatch_type() -> None:
+    raw = {
+        "run_id": "a",
+        "lesson_slug": "b",
+        "bundle_path": "c",
+        "primary_source_file": "d",
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        "double_dispatch": "yes",
+    }
+    with pytest.raises(rc.RunConstantsError, match="double_dispatch"):
         rc.parse_run_constants(raw)
 
 

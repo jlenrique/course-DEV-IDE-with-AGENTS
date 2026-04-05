@@ -40,6 +40,36 @@ def ordered_slide_ids(manifest: dict[str, Any]) -> list[str]:
     return out
 
 
+def _selection_pairs_from_manifest(manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    data = manifest.get("double_dispatch")
+    if not isinstance(data, dict):
+        return []
+    pairs = data.get("variant_pairs")
+    if not isinstance(pairs, list):
+        return []
+    return [p for p in pairs if isinstance(p, dict)]
+
+
+def _normalize_selections(path: Path) -> dict[str, str]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    out: dict[str, str] = {}
+    if isinstance(raw, dict):
+        for key, value in raw.items():
+            if str(value).strip().upper() in {"A", "B"}:
+                out[str(key)] = str(value).strip().upper()
+        return out
+    if isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            key = str(item.get("card_number") or item.get("slide_id") or "").strip()
+            selected = str(item.get("selected_variant") or "").strip().upper()
+            if key and selected in {"A", "B"}:
+                out[key] = selected
+        return out
+    raise ValueError("selection JSON must be an object or list of selection records")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Write authorized storyboard snapshot JSON")
     parser.add_argument(
@@ -60,6 +90,15 @@ def main() -> int:
         required=True,
         help="Destination JSON path (must not exist)",
     )
+    parser.add_argument(
+        "--selections",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSON with explicit winners for double-dispatch pairs. "
+            "Format: {\"<card_number|slide_id>\": \"A|B\"} or list of records."
+        ),
+    )
     args = parser.parse_args()
 
     try:
@@ -79,6 +118,39 @@ def main() -> int:
             print("error: manifest contains no slide_id entries", file=sys.stderr)
             return 2
 
+        selection_pairs = _selection_pairs_from_manifest(manifest)
+        selection_map: dict[str, str] = {}
+        if args.selections is not None:
+            if not args.selections.is_file():
+                print(f"error: selections file not found: {args.selections}", file=sys.stderr)
+                return 2
+            selection_map = _normalize_selections(args.selections)
+
+        selection_metadata: list[dict[str, Any]] = []
+        if selection_pairs:
+            for pair in selection_pairs:
+                key = str(pair.get("card_number") or pair.get("slide_id") or "").strip()
+                if not key:
+                    continue
+                selected_variant = selection_map.get(key) or str(pair.get("selected_variant") or "").strip().upper()
+                if selected_variant not in {"A", "B"}:
+                    print(
+                        "error: all double-dispatch positions require exactly one selected variant "
+                        f"(missing for key={key})",
+                        file=sys.stderr,
+                    )
+                    return 2
+                rejected_variant = "B" if selected_variant == "A" else "A"
+                selection_metadata.append(
+                    {
+                        "slide_id": pair.get("slide_id"),
+                        "card_number": pair.get("card_number"),
+                        "selected_variant": selected_variant,
+                        "rejected_variant": rejected_variant,
+                        "selection_timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+
         record = {
             "authorized_storyboard_version": 1,
             "run_id": args.run_id,
@@ -86,6 +158,8 @@ def main() -> int:
             "slide_ids": slide_ids,
             "source_manifest": args.manifest.resolve().as_posix(),
         }
+        if selection_metadata:
+            record["selection_metadata"] = selection_metadata
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(record, indent=2), encoding="utf-8")
         print(f"Wrote {args.output}")

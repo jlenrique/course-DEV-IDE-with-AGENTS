@@ -50,6 +50,7 @@ def build_run_context(
     content_type: str,
     preset: str,
     base_dir: str | Path | None = None,
+    double_dispatch: bool = False,
 ) -> dict[str, Path]:
     """Create canonical run-scoped context YAML files and return their paths."""
     base = run_context_dir(run_id, base_dir=base_dir)
@@ -73,6 +74,7 @@ def build_run_context(
     asset_yaml = {
         "run_id": run_id,
         "content_type": content_type,
+        "double_dispatch": double_dispatch,
         "created_at": _now(),
         "assets": [],
         "release_manifest": {
@@ -102,6 +104,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--lesson", default="")
     parser.add_argument("--content-type", default="unknown")
     parser.add_argument("--preset", default="draft")
+    parser.add_argument("--double-dispatch", action="store_true", default=False)
     parser.add_argument("--base-dir", default=None)
     args = parser.parse_args(argv)
 
@@ -112,6 +115,7 @@ def main(argv: list[str] | None = None) -> None:
         lesson=args.lesson,
         content_type=args.content_type,
         preset=args.preset,
+        double_dispatch=args.double_dispatch,
         base_dir=args.base_dir,
     )
 

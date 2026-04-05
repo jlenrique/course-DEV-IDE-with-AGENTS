@@ -316,10 +316,34 @@ def check_box_drive(env_vars: dict[str, str]) -> ToolResult:
         )
 
 
+# -- Double-Dispatch Compatibility Check --
+
+
+def check_double_dispatch_compatibility(env_vars: dict[str, str]) -> ToolResult:
+    """Validate that double-dispatch mode requirements are met.
+
+    Double-dispatch requires a valid GAMMA_API_KEY since Gamma is
+    the API that gets called 2x for A/B variant comparison.
+    """
+    gamma_key = env_vars.get("GAMMA_API_KEY") or os.environ.get("GAMMA_API_KEY", "")
+    if not gamma_key:
+        return ToolResult(
+            name="Double-Dispatch (Gamma)",
+            status=ToolStatus.FAILED,
+            detail="GAMMA_API_KEY required for double-dispatch mode but not set",
+            resolution="Add GAMMA_API_KEY to .env to enable double-dispatch A/B generation",
+        )
+    return ToolResult(
+        name="Double-Dispatch (Gamma)",
+        status=ToolStatus.API_READY,
+        detail="GAMMA_API_KEY present; double-dispatch capable",
+    )
+
+
 # -- Main Runner --
 
 
-def run_preflight(root: Path | None = None) -> PreflightReport:
+def run_preflight(root: Path | None = None, *, double_dispatch: bool = False) -> PreflightReport:
     """Execute the full pre-flight check sequence."""
     if root is None:
         root = project_root()
@@ -451,6 +475,11 @@ def run_preflight(root: Path | None = None) -> PreflightReport:
     # 7. Box Drive path accessibility check
     logger.info("Checking Box Drive path...")
     report.add(check_box_drive(env_vars))
+
+    # 8. Double-dispatch compatibility (only when flag is active)
+    if double_dispatch:
+        logger.info("Checking double-dispatch compatibility...")
+        report.add(check_double_dispatch_compatibility(env_vars))
 
     return report
 

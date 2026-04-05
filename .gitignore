@@ -39,6 +39,12 @@ state/runtime/run_baton.*.json
 # Generated run context (runtime artifacts; not source-of-truth docs)
 state/config/runs/
 
+# Gamma dispatch logs (runtime artifacts from production runs)
+gamma-dispatch-*.log
+
+# Live API test harness results (PNGs/JSON from prompt experiments)
+tests/prompt-harness-results/
+
 # Python
 .venv/
 __pycache__/

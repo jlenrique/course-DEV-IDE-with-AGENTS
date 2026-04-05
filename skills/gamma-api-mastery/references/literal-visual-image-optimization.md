@@ -72,13 +72,21 @@ The literal-visual dispatch in `gamma_operations.py` uses a
    prompt. If Gamma classifies the image as background and renders it
    full-bleed, the template export is used (preserves the Gamma "set").
 
-2. **Fill validation**: `validate_visual_fill()` checks the exported PNG.
-   If edges show < 90% fill, the template attempt is considered failed.
+2. **Fill validation**: `validate_visual_fill()` checks the exported PNG
+   using two complementary signals:
+   - **Edge-band sampling** (8px bands, 90% threshold) — detects blank borders
+   - **Content variance** (`content_stddev`) — detects blank or faded slides
+     even when edge content is light-colored. Thresholds: blank < 5,
+     faded < 25, real content >= 25, infographic override > 40.
 
 3. **Composite fallback**: `_composite_full_bleed()` scales and
    center-crops the source PNG to 2400x1350. Guaranteed full-bleed,
-   full opacity, deterministic. Output flows through the same pipeline
-   (sorting, provenance, Irene handoff) as template-generated slides.
+   full opacity, deterministic. When no local preintegration PNG is
+   available, the system downloads from the hosted URL first. Output
+   flows through the same pipeline (sorting, provenance, Irene handoff)
+   as template-generated slides. Provenance tracked via
+   `literal_visual_source` field: `template`, `composite-preintegration`,
+   or `composite-download`.
 
 ## Preparing Images for Best Results
 

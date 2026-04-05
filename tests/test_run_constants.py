@@ -25,6 +25,8 @@ def _write_valid_constants(bundle: Path, root: Path, *, bundle_rel: str | None =
         "execution_mode": "tracked/default",
         "quality_preset": "production",
         "double_dispatch": False,
+        "motion_enabled": False,
+        "motion_budget": {"max_credits": 24, "model_preference": "std"},
     }
     (bundle / "run-constants.yaml").write_text(
         yaml.safe_dump(data, sort_keys=False),
@@ -44,6 +46,10 @@ def test_load_run_constants_happy_path(tmp_path: Path) -> None:
     assert loaded.execution_mode == "tracked/default"
     assert loaded.optional_context_assets == ()
     assert loaded.double_dispatch is False
+    assert loaded.motion_enabled is False
+    assert loaded.motion_budget is not None
+    assert loaded.motion_budget.max_credits == 24
+    assert loaded.motion_budget.model_preference == "std"
 
 
 def test_bundle_path_must_match_directory(tmp_path: Path) -> None:
@@ -111,6 +117,7 @@ def test_parse_invalid_quality_preset() -> None:
         "execution_mode": "tracked/default",
         "quality_preset": "nope",
         "double_dispatch": False,
+        "motion_enabled": False,
     }
     with pytest.raises(rc.RunConstantsError, match="quality_preset"):
         rc.parse_run_constants(raw)
@@ -130,6 +137,86 @@ def test_parse_invalid_double_dispatch_type() -> None:
         "double_dispatch": "yes",
     }
     with pytest.raises(rc.RunConstantsError, match="double_dispatch"):
+        rc.parse_run_constants(raw)
+
+
+def test_parse_motion_budget_fields() -> None:
+    raw = {
+        "run_id": "a",
+        "lesson_slug": "b",
+        "bundle_path": "c",
+        "primary_source_file": "d",
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        "double_dispatch": False,
+        "motion_enabled": True,
+        "motion_budget": {
+            "max_credits": 18,
+            "model_preference": "pro",
+        },
+    }
+    parsed = rc.parse_run_constants(raw)
+    assert parsed.motion_enabled is True
+    assert parsed.motion_budget is not None
+    assert parsed.motion_budget.max_credits == 18
+    assert parsed.motion_budget.model_preference == "pro"
+
+
+def test_parse_invalid_motion_budget_model_preference() -> None:
+    raw = {
+        "run_id": "a",
+        "lesson_slug": "b",
+        "bundle_path": "c",
+        "primary_source_file": "d",
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        "motion_enabled": True,
+        "motion_budget": {
+            "max_credits": 18,
+            "model_preference": "ultra",
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="model_preference"):
+        rc.parse_run_constants(raw)
+
+
+def test_parse_invalid_motion_enabled_type() -> None:
+    raw = {
+        "run_id": "a",
+        "lesson_slug": "b",
+        "bundle_path": "c",
+        "primary_source_file": "d",
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        "motion_enabled": "yes",
+    }
+    with pytest.raises(rc.RunConstantsError, match="motion_enabled"):
+        rc.parse_run_constants(raw)
+
+
+def test_motion_enabled_requires_explicit_budget() -> None:
+    raw = {
+        "run_id": "a",
+        "lesson_slug": "b",
+        "bundle_path": "c",
+        "primary_source_file": "d",
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        "motion_enabled": True,
+    }
+    with pytest.raises(rc.RunConstantsError, match="motion_enabled requires an explicit motion_budget"):
         rc.parse_run_constants(raw)
 
 

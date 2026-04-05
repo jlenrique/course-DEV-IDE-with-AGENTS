@@ -421,3 +421,114 @@ def _find_missing_slides(
         if _find_matching_artifact(slide, artifacts) is None:
             missing.append(slide)
     return missing
+
+
+def build_motion_perception_confirmation(
+    segment: dict[str, Any],
+    perception_result: dict[str, Any],
+) -> dict[str, str]:
+    """Build a structured confirmation for a motion asset perception event."""
+    slide_label = (
+        segment.get("gary_card_number")
+        or segment.get("gary_slide_id")
+        or segment.get("id")
+        or "unknown"
+    )
+    motion_type = str(segment.get("motion_type") or "motion").strip()
+    confidence = perception_result.get("confidence", "LOW")
+    layout = perception_result.get("layout_description", "")
+    summary = layout or perception_result.get("slide_title") or "no details extracted"
+    return {
+        "artifact": str(perception_result.get("artifact_path", "")),
+        "modality": "video",
+        "confidence": confidence,
+        "summary": (
+            f"Slide {slide_label} has motion ({motion_type}): I see {summary}. "
+            f"Confidence: {confidence}."
+        ),
+        "gate": IRENE_PERCEPTION_GATE,
+        "action": "escalating" if confidence == "LOW" else "proceeding",
+    }
+
+
+def enforce_motion_perception_contract(
+    segments: list[dict[str, Any]],
+    *,
+    run_id: str | None = None,
+    repo_root: str | Path | None = None,
+    perceive_motion_fn: PerceiveFn | None = None,
+) -> dict[str, Any]:
+    """Fail closed unless approved motion assets exist and are perceived."""
+    if perceive_motion_fn is None:
+        from skills.sensory_bridges.scripts.bridge_utils import perceive
+
+        perceive_motion_fn = perceive
+
+    artifacts: list[dict[str, Any]] = []
+    confirmations: list[dict[str, str]] = []
+    errors: list[str] = []
+
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
+        if motion_type == "static":
+            continue
+
+        seg_id = segment.get("id", "")
+        motion_asset_path = str(segment.get("motion_asset_path") or "").strip()
+        motion_status = str(segment.get("motion_status") or "").strip().lower()
+        if motion_status != "approved":
+            errors.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' requires motion_status 'approved' before Irene Pass 2"
+            )
+            continue
+        if not motion_asset_path:
+            errors.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' requires motion_asset_path before Irene Pass 2"
+            )
+            continue
+        resolved_motion_path = Path(motion_asset_path)
+        if not resolved_motion_path.is_absolute():
+            base = Path(repo_root) if repo_root is not None else Path.cwd()
+            resolved_motion_path = (base / resolved_motion_path).resolve()
+        if not resolved_motion_path.is_file():
+            errors.append(
+                f"Segment {seg_id}: approved motion asset is not readable on disk: {motion_asset_path}"
+            )
+            continue
+
+        result = perceive_motion_fn(
+            artifact_path=str(resolved_motion_path),
+            modality="video",
+            gate=IRENE_PERCEPTION_GATE,
+            requesting_agent=REQUESTING_AGENT,
+            purpose=f"Pass 2 motion perception for segment {seg_id}",
+            run_id=run_id,
+        )
+        result["segment_id"] = seg_id
+        result["slide_id"] = segment.get("gary_slide_id")
+        result["card_number"] = segment.get("gary_card_number")
+        result["motion_type"] = motion_type
+        result["source_motion_path"] = str(resolved_motion_path)
+        artifacts.append(result)
+        confirmations.append(build_motion_perception_confirmation(segment, result))
+
+    if errors:
+        return {
+            "status": "error",
+            "motion_perception_artifacts": artifacts,
+            "confirmations": confirmations,
+            "escalation": {"needs_escalation": False, "low_confidence_slides": [], "escalation_payload": {}},
+            "errors": errors,
+        }
+
+    escalation = check_escalation_needed(artifacts)
+    status = "escalation_needed" if escalation["needs_escalation"] else "ready"
+    return {
+        "status": status,
+        "motion_perception_artifacts": artifacts,
+        "confirmations": confirmations,
+        "escalation": escalation,
+        "errors": [],
+    }

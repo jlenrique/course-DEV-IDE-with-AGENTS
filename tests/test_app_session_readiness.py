@@ -184,7 +184,7 @@ def test_run_readiness_includes_preflight_phase_when_requested(
     monkeypatch.setattr(
         readiness,
         "_run_preflight_phase",
-        lambda _root: readiness.CheckResult(
+        lambda _root, motion_enabled=False: readiness.CheckResult(
             name="preflight_tools",
             status="warn",
             detail="mock preflight warning",
@@ -225,7 +225,7 @@ def test_main_returns_exit_2_for_warn_in_strict_mode(
     monkeypatch.setattr(
         readiness,
         "run_readiness",
-        lambda root=None, with_preflight=False, bundle_dir=None: {
+        lambda root=None, with_preflight=False, motion_enabled=False, bundle_dir=None: {
             "timestamp": "2026-03-29T00:00:00+00:00",
             "root": "x",
             "overall_status": "warn",
@@ -235,3 +235,32 @@ def test_main_returns_exit_2_for_warn_in_strict_mode(
 
     rc = readiness.main(["--strict", "--json-only"])
     assert rc == 2
+
+
+def test_run_readiness_passes_motion_enabled_to_preflight(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _setup_minimal_runtime(tmp_path, create_db=True)
+
+    seen: dict[str, bool] = {}
+
+    def fake_preflight(_root: Path, *, motion_enabled: bool = False) -> readiness.CheckResult:
+        seen["motion_enabled"] = motion_enabled
+        return readiness.CheckResult(
+            name="preflight_tools",
+            status="pass",
+            detail="mock preflight ok",
+            resolution="",
+        )
+
+    monkeypatch.setattr(readiness, "_run_preflight_phase", fake_preflight)
+
+    report = readiness.run_readiness(
+        root=tmp_path,
+        with_preflight=True,
+        motion_enabled=True,
+    )
+
+    assert report["overall_status"] == "pass"
+    assert seen["motion_enabled"] is True

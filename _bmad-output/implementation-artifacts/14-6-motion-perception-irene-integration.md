@@ -1,9 +1,10 @@
 # Story 14.6: Motion Perception & Irene Pass 2 Integration
 
 **Epic:** 14 — Motion-Enhanced Presentation Workflow
-**Status:** backlog
+**Status:** done
 **Sprint key:** `14-6-motion-perception-irene-integration`
 **Added:** 2026-04-05
+**Validated:** 2026-04-05
 **Depends on:** Stories 14.4 and 14.5 (Kira integration + manual animation). Also depends on Epic 13 (visual reference injection).
 
 ## Summary

@@ -27,8 +27,10 @@ if str(ROOT) not in sys.path:
 
 from skills.bmad_agent_content_creator.scripts.perception_contract import (
     build_perception_confirmation,
+    build_motion_perception_confirmation,
     check_escalation_needed,
     enforce_perception_contract,
+    enforce_motion_perception_contract,
     generate_inline_perception,
     retry_low_confidence,
     validate_perception_presence,
@@ -637,3 +639,97 @@ class TestEnforcePerceptionContract:
 
         assert result["status"] == "error"
         assert any("s-2" in error for error in result["errors"])
+
+
+class TestMotionPerceptionContract:
+
+    def test_build_motion_perception_confirmation_mentions_motion_type(self):
+        segment = {
+            "id": "seg-02",
+            "gary_slide_id": "s-2",
+            "gary_card_number": 2,
+            "motion_type": "video",
+        }
+        perception = _make_perception(2, confidence="HIGH")
+        conf = build_motion_perception_confirmation(segment, perception)
+        assert conf["modality"] == "video"
+        assert "motion (video)" in conf["summary"]
+
+    def test_ready_for_mixed_static_and_motion_segments(self, tmp_path: Path):
+        motion_asset = tmp_path / "slide-02_motion.mp4"
+        motion_asset.write_bytes(b"video-bytes")
+        segments = [
+            {
+                "id": "seg-01",
+                "gary_slide_id": "s-1",
+                "gary_card_number": 1,
+                "motion_type": "static",
+            },
+            {
+                "id": "seg-02",
+                "gary_slide_id": "s-2",
+                "gary_card_number": 2,
+                "motion_type": "video",
+                "motion_asset_path": str(motion_asset),
+                "motion_status": "approved",
+            },
+            {
+                "id": "seg-03",
+                "gary_slide_id": "s-3",
+                "gary_card_number": 3,
+                "motion_type": "animation",
+                "motion_asset_path": str(motion_asset),
+                "motion_status": "approved",
+            },
+        ]
+
+        result = enforce_motion_perception_contract(
+            segments,
+            perceive_motion_fn=_mock_perceive_high,
+        )
+
+        assert result["status"] == "ready"
+        assert len(result["motion_perception_artifacts"]) == 2
+        assert len(result["confirmations"]) == 2
+
+    def test_fail_closed_when_motion_asset_missing(self):
+        segments = [
+            {
+                "id": "seg-02",
+                "gary_slide_id": "s-2",
+                "gary_card_number": 2,
+                "motion_type": "video",
+                "motion_asset_path": "",
+                "motion_status": "approved",
+            }
+        ]
+
+        result = enforce_motion_perception_contract(
+            segments,
+            perceive_motion_fn=_mock_perceive_high,
+        )
+
+        assert result["status"] == "error"
+        assert any("motion_asset_path" in error for error in result["errors"])
+
+    def test_fail_closed_when_motion_asset_not_approved(self, tmp_path: Path):
+        motion_asset = tmp_path / "slide-02_motion.mp4"
+        motion_asset.write_bytes(b"video-bytes")
+        segments = [
+            {
+                "id": "seg-02",
+                "gary_slide_id": "s-2",
+                "gary_card_number": 2,
+                "motion_type": "video",
+                "motion_asset_path": str(motion_asset),
+                "motion_status": "generated",
+            }
+        ]
+
+        result = enforce_motion_perception_contract(
+            segments,
+            perceive_motion_fn=_mock_perceive_high,
+        )
+
+        assert result["status"] == "error"
+        assert any("motion_status 'approved'" in error for error in result["errors"])

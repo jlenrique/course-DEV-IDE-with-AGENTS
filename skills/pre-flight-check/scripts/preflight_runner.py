@@ -9,6 +9,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -340,10 +341,33 @@ def check_double_dispatch_compatibility(env_vars: dict[str, str]) -> ToolResult:
     )
 
 
+def check_kling_compatibility(env_vars: dict[str, str]) -> ToolResult:
+    """Validate that Kling credentials are present for motion-enabled runs."""
+    access_key = env_vars.get("KLING_ACCESS_KEY") or os.environ.get("KLING_ACCESS_KEY", "")
+    secret_key = env_vars.get("KLING_SECRET_KEY") or os.environ.get("KLING_SECRET_KEY", "")
+    if not access_key or not secret_key:
+        return ToolResult(
+            name="Motion Pipeline (Kling)",
+            status=ToolStatus.FAILED,
+            detail="KLING_ACCESS_KEY and KLING_SECRET_KEY are required when motion_enabled is true",
+            resolution="Add KLING_ACCESS_KEY and KLING_SECRET_KEY to .env for motion-enabled runs",
+        )
+    return ToolResult(
+        name="Motion Pipeline (Kling)",
+        status=ToolStatus.API_READY,
+        detail="Kling credentials present; motion-enabled runs are API-capable",
+    )
+
+
 # -- Main Runner --
 
 
-def run_preflight(root: Path | None = None, *, double_dispatch: bool = False) -> PreflightReport:
+def run_preflight(
+    root: Path | None = None,
+    *,
+    double_dispatch: bool = False,
+    motion_enabled: bool = False,
+) -> PreflightReport:
     """Execute the full pre-flight check sequence."""
     if root is None:
         root = project_root()
@@ -481,12 +505,25 @@ def run_preflight(root: Path | None = None, *, double_dispatch: bool = False) ->
         logger.info("Checking double-dispatch compatibility...")
         report.add(check_double_dispatch_compatibility(env_vars))
 
+    # 9. Motion pipeline compatibility (only when flag is active)
+    if motion_enabled:
+        logger.info("Checking Kling compatibility for motion-enabled workflow...")
+        report.add(check_kling_compatibility(env_vars))
+
     return report
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
-    report = run_preflight()
+    parser = argparse.ArgumentParser(description="Run tool pre-flight checks.")
+    parser.add_argument("--double-dispatch", action="store_true")
+    parser.add_argument("--motion-enabled", action="store_true")
+    args = parser.parse_args(argv)
+
+    report = run_preflight(
+        double_dispatch=args.double_dispatch,
+        motion_enabled=args.motion_enabled,
+    )
     print(report.format_report())
     return 1 if report.has_failures else 0
 

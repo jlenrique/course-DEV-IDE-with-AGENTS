@@ -22,8 +22,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from skills.bmad_agent_content_creator.scripts.manifest_visual_enrichment import (
+    apply_motion_plan_to_segments,
     enrich_manifest,
     enrich_segment_with_visual_references,
+    validate_manifest_motion_fields,
     validate_manifest_visual_references,
 )
 
@@ -318,3 +320,112 @@ class TestValidateManifestVisualReferences:
 
         assert result["valid"] is False
         assert any("narration_cue" in error for error in result["errors"])
+
+
+class TestMotionManifestFields:
+
+    def test_apply_motion_plan_defaults_static_when_no_assignment(self):
+        segments = [_make_segment("seg-01", "s-1")]
+
+        result = apply_motion_plan_to_segments(segments, {"slides": []})
+
+        assert result[0]["motion_type"] == "static"
+        assert result[0]["motion_asset_path"] is None
+        assert result[0]["motion_source"] is None
+        assert result[0]["motion_status"] is None
+
+    def test_apply_motion_plan_fails_closed_when_motion_enabled_plan_is_empty(self):
+        segments = [_make_segment("seg-01", "s-1")]
+
+        with pytest.raises(ValueError, match="motion_enabled runs require motion_plan slide coverage"):
+            apply_motion_plan_to_segments(
+                segments,
+                {"motion_enabled": True, "slides": []},
+            )
+
+    def test_apply_motion_plan_fails_closed_when_motion_enabled_plan_is_partial(self):
+        segments = [
+            _make_segment("seg-01", "s-1"),
+            _make_segment("seg-02", "s-2"),
+        ]
+        motion_plan = {
+            "motion_enabled": True,
+            "slides": [
+                {
+                    "slide_id": "s-1",
+                    "motion_type": "video",
+                    "motion_asset_path": "course-content/staging/L1/motion/s-1_motion.mp4",
+                    "motion_source": "kling",
+                    "motion_duration_seconds": 6.5,
+                    "motion_brief": "Animate the bar chart growth",
+                    "motion_status": "approved",
+                }
+            ],
+        }
+
+        with pytest.raises(ValueError, match="motion_plan is missing Gate 2M assignments"):
+            apply_motion_plan_to_segments(segments, motion_plan)
+
+    def test_apply_motion_plan_hydrates_video_assignment(self):
+        segments = [_make_segment("seg-01", "s-1")]
+        motion_plan = {
+            "slides": [
+                {
+                    "slide_id": "s-1",
+                    "motion_type": "video",
+                    "motion_asset_path": "course-content/staging/L1/motion/s-1_motion.mp4",
+                    "motion_source": "kling",
+                    "motion_duration_seconds": 6.5,
+                    "motion_brief": "Animate the bar chart growth",
+                    "motion_status": "approved",
+                }
+            ]
+        }
+
+        result = apply_motion_plan_to_segments(segments, motion_plan)
+
+        assert result[0]["motion_type"] == "video"
+        assert result[0]["motion_asset_path"].endswith("s-1_motion.mp4")
+        assert result[0]["motion_source"] == "kling"
+        assert result[0]["motion_duration_seconds"] == 6.5
+        assert result[0]["motion_status"] == "approved"
+
+    def test_validate_manifest_motion_fields_accepts_static_segments(self):
+        segments = [_make_segment("seg-01", "s-1")]
+        result = validate_manifest_motion_fields(segments)
+        assert result["valid"] is True
+        assert result["errors"] == []
+
+    def test_validate_manifest_motion_fields_accepts_animation_segments(self):
+        segments = [_make_segment("seg-01", "s-1")]
+        segments[0].update(
+            {
+                "motion_type": "animation",
+                "motion_asset_path": "course-content/staging/L1/motion/s-1_motion.mov",
+                "motion_source": "manual",
+                "motion_duration_seconds": 8.0,
+                "motion_brief": "Pulse labels in sequence",
+                "motion_status": "approved",
+            }
+        )
+
+        result = validate_manifest_motion_fields(segments)
+
+        assert result["valid"] is True
+        assert result["errors"] == []
+
+    def test_validate_manifest_motion_fields_fails_closed_without_asset_path(self):
+        segments = [_make_segment("seg-01", "s-1")]
+        segments[0].update(
+            {
+                "motion_type": "video",
+                "motion_asset_path": None,
+                "motion_source": "kling",
+                "motion_status": "generated",
+            }
+        )
+
+        result = validate_manifest_motion_fields(segments)
+
+        assert result["valid"] is False
+        assert any("motion_asset_path" in error for error in result["errors"])

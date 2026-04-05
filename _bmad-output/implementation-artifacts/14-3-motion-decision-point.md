@@ -1,9 +1,10 @@
 # Story 14.3: Motion Decision Point & Designation UI
 
 **Epic:** 14 — Motion-Enhanced Presentation Workflow
-**Status:** backlog
+**Status:** done
 **Sprint key:** `14-3-motion-decision-point`
 **Added:** 2026-04-05
+**Validated:** 2026-04-05
 **Depends on:** Story 14.2 (segment manifest motion extensions)
 
 ## Summary

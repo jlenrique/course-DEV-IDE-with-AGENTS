@@ -24,10 +24,19 @@ from scripts.utilities.file_helpers import project_root as default_project_root
 RUN_CONSTANTS_BASENAME = "run-constants.yaml"
 
 ALLOWED_QUALITY_PRESETS = frozenset({"explore", "draft", "production", "regulated"})
+ALLOWED_MOTION_MODEL_PREFERENCES = frozenset({"std", "pro"})
 
 
 class RunConstantsError(ValueError):
     """Invalid or inconsistent run constants."""
+
+
+@dataclass(frozen=True)
+class MotionBudget:
+    """Budget guardrails for motion-enabled runs."""
+
+    max_credits: float
+    model_preference: str = "std"
 
 
 @dataclass(frozen=True)
@@ -44,6 +53,8 @@ class RunConstants:
     execution_mode: str
     quality_preset: str
     double_dispatch: bool = False
+    motion_enabled: bool = False
+    motion_budget: MotionBudget | None = None
     schema_version: int | None = None
     frozen_at_utc: str | None = None
     frozen_note: str | None = None
@@ -119,8 +130,12 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
     execution_mode = _normalize_execution_mode(_require_non_empty_str(data, "execution_mode"))
     quality = _require_non_empty_str(data, "quality_preset").lower()
     raw_double_dispatch = data.get("double_dispatch", False)
+    raw_motion_enabled = data.get("motion_enabled", False)
+    raw_motion_budget = data.get("motion_budget")
     if not isinstance(raw_double_dispatch, bool):
         raise RunConstantsError("double_dispatch must be a boolean when present")
+    if not isinstance(raw_motion_enabled, bool):
+        raise RunConstantsError("motion_enabled must be a boolean when present")
 
     if quality not in ALLOWED_QUALITY_PRESETS:
         raise RunConstantsError(
@@ -139,6 +154,33 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
     if frozen_note is not None and not isinstance(frozen_note, str):
         raise RunConstantsError("frozen_note must be a string when present")
 
+    motion_budget: MotionBudget | None = None
+    if raw_motion_budget is not None:
+        if not isinstance(raw_motion_budget, dict):
+            raise RunConstantsError("motion_budget must be an object when present")
+        max_credits = raw_motion_budget.get("max_credits")
+        if not isinstance(max_credits, (int, float)) or float(max_credits) <= 0:
+            raise RunConstantsError(
+                "motion_budget.max_credits must be a positive number when present"
+            )
+        model_preference = raw_motion_budget.get("model_preference", "std")
+        if not isinstance(model_preference, str):
+            raise RunConstantsError("motion_budget.model_preference must be a string when present")
+        normalized_preference = model_preference.strip().lower()
+        if normalized_preference not in ALLOWED_MOTION_MODEL_PREFERENCES:
+            raise RunConstantsError(
+                "motion_budget.model_preference must be one of "
+                f"{sorted(ALLOWED_MOTION_MODEL_PREFERENCES)}; got {model_preference!r}"
+            )
+        motion_budget = MotionBudget(
+            max_credits=float(max_credits),
+            model_preference=normalized_preference,
+        )
+    elif raw_motion_enabled:
+        raise RunConstantsError(
+            "motion_enabled requires an explicit motion_budget with max_credits and model_preference"
+        )
+
     return RunConstants(
         run_id=run_id,
         lesson_slug=lesson_slug,
@@ -150,6 +192,8 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         execution_mode=execution_mode,
         quality_preset=quality,
         double_dispatch=raw_double_dispatch,
+        motion_enabled=raw_motion_enabled,
+        motion_budget=motion_budget,
         schema_version=schema_version,
         frozen_at_utc=frozen_at.strip() if isinstance(frozen_at, str) else None,
         frozen_note=frozen_note.strip() if isinstance(frozen_note, str) else None,

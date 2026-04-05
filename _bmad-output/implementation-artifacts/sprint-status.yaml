@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-05  # Epic 13 done (3 stories: mandatory perception, visual reference injection, manifest enrichment). 84 new tests, 357 total passing.
+last_updated: 2026-04-05  # Epic 14 done (motion workflow, Gate 2M sidecar, Kling/manual branches, Irene motion perception, compositor/reporting/preflight integration).
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -196,12 +196,12 @@ development_status:
   # Added 2026-04-05 (Party Mode planning session). Motion workflow variant with
   # Kira video + manual animation, motion decision point (Gate 2M), motion perception.
   # Depends on: Epic 13 (hard — visual reference injection), Epic 12 (soft).
-  epic-14: backlog
-  14-1-motion-workflow-design: backlog
-  14-2-segment-manifest-motion-extensions: backlog
-  14-3-motion-decision-point: backlog
-  14-4-kira-pipeline-integration: backlog     # can parallel with 14-5
-  14-5-manual-animation-guidance: backlog      # can parallel with 14-4
-  14-6-motion-perception-irene-integration: backlog
-  14-7-motion-pipeline-orchestration: backlog
+  epic-14: done
+  14-1-motion-workflow-design: done
+  14-2-segment-manifest-motion-extensions: done
+  14-3-motion-decision-point: done
+  14-4-kira-pipeline-integration: done
+  14-5-manual-animation-guidance: done
+  14-6-motion-perception-irene-integration: done
+  14-7-motion-pipeline-orchestration: done
   epic-14-retrospective: optional

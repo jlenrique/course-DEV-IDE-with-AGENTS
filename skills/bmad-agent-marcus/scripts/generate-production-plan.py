@@ -68,6 +68,19 @@ def resolve_workflow(
     return template_id, workflow_templates[template_id]
 
 
+def select_workflow_variant(content_type: str, *, motion_enabled: bool = False) -> str:
+    """Resolve the narrated lesson workflow variant from the run flag.
+
+    The static narrated export remains the default. Motion is additive and
+    promoted explicitly when the run flag is on.
+    """
+    if content_type == "narrated-lesson-with-video-or-animation" and not motion_enabled:
+        return "narrated-deck-video-export"
+    if content_type == "narrated-deck-video-export" and motion_enabled:
+        return "narrated-lesson-with-video-or-animation"
+    return content_type
+
+
 def load_course_context(course_context_path: Path) -> dict | None:
     """Load course context YAML if available."""
     if not course_context_path.exists():
@@ -85,6 +98,7 @@ def generate_plan(
     lesson_id: str | None = None,
     course_context: dict | None = None,
     workflow_templates: dict[str, dict[str, Any]] | None = None,
+    motion_enabled: bool = False,
 ) -> str:
     """Generate a markdown production plan for the given content type and scope.
 
@@ -100,7 +114,10 @@ def generate_plan(
     """
     workflow_templates = workflow_templates or load_workflow_templates()
     workflow_lookup = build_workflow_lookup(workflow_templates)
-    template_id, workflow = resolve_workflow(content_type, workflow_templates, workflow_lookup)
+    effective_content_type = select_workflow_variant(content_type, motion_enabled=motion_enabled)
+    template_id, workflow = resolve_workflow(
+        effective_content_type, workflow_templates, workflow_lookup
+    )
     if not workflow or not template_id:
         available = ", ".join(sorted(workflow_lookup.keys()))
         return f"Unknown content type: {content_type}\n\nAvailable types: {available}"
@@ -195,6 +212,11 @@ def main() -> None:
         help="Output as JSON instead of markdown.",
     )
     parser.add_argument(
+        "--motion-enabled",
+        action="store_true",
+        help="Select the motion-enhanced narrated workflow variant when applicable.",
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Print diagnostic info to stderr.",
@@ -214,7 +236,12 @@ def main() -> None:
         print(f"Course context loaded: {course_context is not None}", file=sys.stderr)
 
     try:
-        template_id, workflow = resolve_workflow(args.content_type, workflow_templates, workflow_lookup)
+        effective_content_type = select_workflow_variant(
+            args.content_type, motion_enabled=args.motion_enabled
+        )
+        template_id, workflow = resolve_workflow(
+            effective_content_type, workflow_templates, workflow_lookup
+        )
         if not workflow or not template_id:
             msg = f"Unknown workflow template or alias: {args.content_type}"
             raise ValueError(msg)
@@ -223,6 +250,8 @@ def main() -> None:
             output = {
                 "content_type": template_id,
                 "requested_content_type": args.content_type,
+                "effective_content_type": effective_content_type,
+                "motion_enabled": args.motion_enabled,
                 "label": workflow["label"],
                 "aliases": workflow.get("aliases", []),
                 "module": args.module,
@@ -239,6 +268,7 @@ def main() -> None:
                 lesson_id=args.lesson,
                 course_context=course_context,
                 workflow_templates=workflow_templates,
+                motion_enabled=args.motion_enabled,
             )
             print(plan)
         sys.exit(0)

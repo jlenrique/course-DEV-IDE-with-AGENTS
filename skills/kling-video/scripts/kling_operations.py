@@ -24,7 +24,16 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from dotenv import load_dotenv
-from scripts.api_clients.kling_client import KlingClient
+from scripts.utilities.motion_budgeting import (
+    MODEL_CREDIT_ESTIMATES,
+    estimate_motion_credits,
+    normalize_motion_mode,
+)
+
+try:
+    from scripts.api_clients.kling_client import KlingClient
+except ModuleNotFoundError:  # pragma: no cover - optional dependency for mocked test paths
+    KlingClient = None  # type: ignore[assignment]
 
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -57,6 +66,36 @@ def _extract_duration(task_data: dict[str, Any]) -> str | None:
     return None
 
 
+def resolve_motion_mode(
+    *,
+    duration_seconds: float,
+    motion_budget: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Apply Epic 14 budget guardrails, including one-step pro -> std downgrade."""
+    budget = motion_budget or {}
+    preferred = normalize_motion_mode(str(budget.get("model_preference") or "std"))
+    max_credits = budget.get("max_credits")
+    estimated = estimate_motion_credits(duration_seconds, preferred)
+    downgraded_from: str | None = None
+
+    if isinstance(max_credits, (int, float)) and estimated > float(max_credits):
+        if preferred == "pro":
+            downgraded_from = "pro"
+            preferred = "std"
+            estimated = estimate_motion_credits(duration_seconds, preferred)
+        if estimated > float(max_credits):
+            raise RuntimeError(
+                "Motion clip exceeds budget ceiling even after downgrade "
+                f"(estimated={estimated}, max_credits={max_credits})"
+            )
+
+    return {
+        "mode": preferred,
+        "estimated_credits": estimated,
+        "downgraded_from": downgraded_from,
+    }
+
+
 def run_text_to_video(
     prompt: str,
     *,
@@ -76,6 +115,8 @@ def run_text_to_video(
     extracted video URL, and local download path.
     """
     if client is None:
+        if KlingClient is None:
+            raise RuntimeError("KlingClient dependencies are unavailable; install API client extras")
         client = KlingClient()
     if output_dir is None:
         output_dir = STAGING_DIR
@@ -139,6 +180,8 @@ def run_image_to_video(
 ) -> dict[str, Any]:
     """Execute a full image-to-video generation and download."""
     if client is None:
+        if KlingClient is None:
+            raise RuntimeError("KlingClient dependencies are unavailable; install API client extras")
         client = KlingClient()
     if output_dir is None:
         output_dir = STAGING_DIR
@@ -198,6 +241,8 @@ def run_lip_sync(
 ) -> dict[str, Any]:
     """Execute a full lip-sync run and download."""
     if client is None:
+        if KlingClient is None:
+            raise RuntimeError("KlingClient dependencies are unavailable; install API client extras")
         client = KlingClient()
     if output_dir is None:
         output_dir = STAGING_DIR
@@ -225,6 +270,76 @@ def run_lip_sync(
         "video_duration": _extract_duration(completed),
         "output_path": str(output_path),
         "task_data": completed,
+    }
+
+
+def generate_motion_clip(
+    slide_motion_request: dict[str, Any],
+    *,
+    motion_budget: dict[str, Any] | None = None,
+    output_dir: Path | str | None = None,
+    client: KlingClient | None = None,
+) -> dict[str, Any]:
+    """Generate a silent motion clip for one Gate 2M video-designated slide.
+
+    Prefers image-to-video when an image URL is supplied; otherwise falls back
+    to text-to-video from the motion brief.
+    """
+    slide_id = str(slide_motion_request.get("slide_id") or "").strip()
+    if not slide_id:
+        raise RuntimeError("slide_motion_request requires slide_id")
+
+    duration_seconds = float(slide_motion_request.get("motion_duration_seconds") or 5.0)
+    mode_result = resolve_motion_mode(
+        duration_seconds=duration_seconds,
+        motion_budget=motion_budget,
+    )
+
+    source_image_url = (
+        slide_motion_request.get("source_image_url")
+        or slide_motion_request.get("image_url")
+        or slide_motion_request.get("slide_image_url")
+    )
+    motion_brief = str(slide_motion_request.get("motion_brief") or "").strip()
+    narration_intent = str(slide_motion_request.get("narration_intent") or "").strip()
+    prompt = motion_brief
+    if narration_intent:
+        prompt = f"{motion_brief}. Narration intent: {narration_intent}".strip(". ")
+
+    if source_image_url:
+        result = run_image_to_video(
+            str(source_image_url),
+            prompt=prompt,
+            duration=str(int(round(duration_seconds))),
+            mode=mode_result["mode"],
+            output_dir=output_dir,
+            filename=f"{slide_id}_motion.mp4",
+            client=client,
+        )
+    else:
+        result = run_text_to_video(
+            prompt or f"Educational motion clip for {slide_id}",
+            duration=str(int(round(duration_seconds))),
+            mode=mode_result["mode"],
+            output_dir=output_dir,
+            filename=f"{slide_id}_motion.mp4",
+            client=client,
+        )
+
+    return {
+        "slide_id": slide_id,
+        "mp4_path": result["output_path"],
+        "model_used": mode_result["mode"],
+        "duration_seconds": float(result.get("video_duration") or duration_seconds),
+        "credits_consumed": mode_result["estimated_credits"],
+        "self_assessment": (
+            "image-to-video used from approved slide art"
+            if source_image_url
+            else "text-to-video fallback used because no source image URL was provided"
+        ),
+        "operation": result["operation"],
+        "downgraded_from": mode_result["downgraded_from"],
+        "task_id": result["task_id"],
     }
 
 

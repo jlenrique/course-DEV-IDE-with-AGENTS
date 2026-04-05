@@ -20,6 +20,10 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+MOTION_TYPES = {"static", "video", "animation"}
+MOTION_SOURCES = {"kling", "manual"}
+MOTION_STATUSES = {"pending", "generated", "imported", "approved"}
+
 
 def enrich_segment_with_visual_references(
     segment: dict[str, Any],
@@ -105,6 +109,128 @@ def enrich_manifest(
             segment["visual_references"] = []
 
     return segments
+
+
+def apply_motion_plan_to_segments(
+    segments: list[dict[str, Any]],
+    motion_plan: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Hydrate Epic 14 motion fields into manifest segments.
+
+    The Gate 2M source of truth is a run-scoped motion plan keyed by
+    ``slide_id``. Manifest segments are enriched later during Irene Pass 2,
+    when they finally exist as concrete YAML rows.
+    """
+    motion_enabled = bool(motion_plan.get("motion_enabled", False)) if isinstance(motion_plan, dict) else False
+    plan_rows = motion_plan.get("slides", []) if isinstance(motion_plan, dict) else []
+    by_slide_id: dict[str, dict[str, Any]] = {}
+    for row in plan_rows:
+        if not isinstance(row, dict):
+            continue
+        slide_id = str(row.get("slide_id") or "").strip()
+        if slide_id:
+            by_slide_id[slide_id] = row
+
+    if motion_enabled and not by_slide_id:
+        raise ValueError("motion_enabled runs require motion_plan slide coverage before manifest hydration")
+
+    missing_slide_ids: list[str] = []
+    if motion_enabled:
+        for segment in segments:
+            if not isinstance(segment, dict):
+                continue
+            slide_id = str(segment.get("gary_slide_id") or "").strip()
+            if not slide_id or slide_id not in by_slide_id:
+                missing_slide_ids.append(slide_id or "<missing>")
+        if missing_slide_ids:
+            raise ValueError(
+                "motion_plan is missing Gate 2M assignments for slide_ids: "
+                + ", ".join(sorted(set(missing_slide_ids)))
+            )
+
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        slide_id = str(segment.get("gary_slide_id") or "").strip()
+        assignment = by_slide_id.get(slide_id)
+
+        if assignment is None:
+            segment["motion_type"] = "static"
+            segment["motion_asset_path"] = None
+            segment["motion_source"] = None
+            segment["motion_duration_seconds"] = None
+            segment["motion_brief"] = None
+            segment["motion_status"] = None
+            continue
+
+        motion_type = str(assignment.get("motion_type") or "static").strip().lower() or "static"
+        segment["motion_type"] = motion_type
+        segment["motion_asset_path"] = assignment.get("motion_asset_path")
+        segment["motion_source"] = assignment.get("motion_source")
+        segment["motion_duration_seconds"] = assignment.get("motion_duration_seconds")
+        segment["motion_brief"] = assignment.get("motion_brief")
+        segment["motion_status"] = assignment.get("motion_status")
+
+    return segments
+
+
+def validate_manifest_motion_fields(
+    segments: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Validate Epic 14 motion fields with additive defaults.
+
+    Static segments remain backward compatible. Non-static segments fail closed
+    if they do not yet point to a concrete motion asset before Irene/compositor
+    consume the manifest.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        seg_id = segment.get("id", "")
+        motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
+        asset_path = segment.get("motion_asset_path")
+        motion_source = segment.get("motion_source")
+        motion_status = segment.get("motion_status")
+        duration = segment.get("motion_duration_seconds")
+
+        if motion_type not in MOTION_TYPES:
+            errors.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' must be one of {sorted(MOTION_TYPES)}"
+            )
+            continue
+
+        if motion_type == "static":
+            continue
+
+        if not isinstance(asset_path, str) or not asset_path.strip():
+            errors.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' requires motion_asset_path before Irene Pass 2"
+            )
+        if motion_source not in MOTION_SOURCES:
+            errors.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' requires motion_source in {sorted(MOTION_SOURCES)}"
+            )
+        if motion_status not in MOTION_STATUSES:
+            errors.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' requires motion_status in {sorted(MOTION_STATUSES)}"
+            )
+        if duration is not None and (not isinstance(duration, (int, float)) or float(duration) <= 0):
+            errors.append(
+                f"Segment {seg_id}: motion_duration_seconds must be a positive number when present"
+            )
+        if duration is None:
+            warnings.append(
+                f"Segment {seg_id}: motion_type '{motion_type}' has no motion_duration_seconds yet"
+            )
+
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+    }
 
 
 def validate_manifest_visual_references(

@@ -726,6 +726,25 @@ All converge into the same pipeline and Descript workflow:
 | 3 | After Irene P2, before ElevenLabs, before Kira can be queued | Script + manifest | Before audio/video generation |
 | 4 | After Descript export | Final composed video | After composition |
 
+### Motion-Enhanced Variant (Epic 14, Added 2026-04-05)
+
+When `motion_enabled: true`, the narrated video workflow inserts two motion-specific checkpoints before Irene Pass 2:
+
+```text
+Gate 2
+-> Gate 2M (motion designation)
+-> motion generation/import
+-> Motion Gate
+-> Irene Pass 2
+```
+
+Design constraints:
+- motion is additive; `motion_enabled: false` preserves the static pipeline
+- Gate 2M binds to the Epic 12 authorized winner deck, not unresolved A/B variants
+- pre-Irene motion decisions persist in a run-scoped `motion_plan.yaml` sidecar keyed by `slide_id`
+- the segment manifest is hydrated from that sidecar during Irene Pass 2
+- compositor and preflight branch on motion flags only when the run is motion-enabled
+
 ### Quinn-R Two-Pass Validation
 
 - **Pre-composition pass:** WPM (130-170), VTT monotonicity, segment coverage, video duration vs narration (±0.5s)

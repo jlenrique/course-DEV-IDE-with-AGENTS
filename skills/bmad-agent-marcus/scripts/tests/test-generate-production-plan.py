@@ -64,7 +64,12 @@ def test_all_content_types() -> None:
     """All canonical workflow templates produce valid output."""
     for content_type in CANONICAL_CONTENT_TYPES:
         data = run_plan_json(content_type)
-        assert data["content_type"] == content_type
+        expected_content_type = (
+            "narrated-deck-video-export"
+            if content_type == "narrated-lesson-with-video-or-animation"
+            else content_type
+        )
+        assert data["content_type"] == expected_content_type
         assert len(data["stages"]) > 0, f"No stages for {content_type}"
 
 
@@ -99,16 +104,17 @@ def test_narrated_deck_video_export_has_no_aliases() -> None:
 
 
 def test_canonical_video_or_animation_template() -> None:
-    """Canonical template 2 resolves directly and remains alias-free."""
-    data = run_plan_json("narrated-lesson-with-video-or-animation")
+    """Canonical template 2 resolves directly only when motion is explicitly enabled."""
+    data = run_plan_json("narrated-lesson-with-video-or-animation", "--motion-enabled")
     assert data["content_type"] == "narrated-lesson-with-video-or-animation"
     assert data["requested_content_type"] == "narrated-lesson-with-video-or-animation"
     assert data["aliases"] == []
+    assert data["effective_content_type"] == "narrated-lesson-with-video-or-animation"
 
 
 def test_narrated_lesson_with_video_or_animation_stage_order() -> None:
     """Template 2 preserves full motion-enabled happy-path dependency order."""
-    data = run_plan_json("narrated-lesson-with-video-or-animation")
+    data = run_plan_json("narrated-lesson-with-video-or-animation", "--motion-enabled")
     stages = [stage["stage"] for stage in data["stages"]]
     assert stages == [
         "source-wrangling",
@@ -123,18 +129,46 @@ def test_narrated_lesson_with_video_or_animation_stage_order() -> None:
         "fidelity-g3",
         "quality-g3",
         "gate-2",
+        "gate-2m",
+        "motion-generation",
+        "motion-gate",
         "narration-and-manifest",
         "fidelity-g4",
         "quality-g4",
         "gate-3",
         "audio-generation",
         "fidelity-g5",
-        "motion-generation",
         "pre-composition-validation",
         "composition-guide",
         "post-composition-validation",
         "gate-4",
     ]
+
+
+def test_motion_workflow_stages_have_expected_specialists() -> None:
+    """Epic 14 workflow uses explicit HIL gates around Marcus motion routing."""
+    data = run_plan_json("narrated-lesson-with-video-or-animation", "--motion-enabled")
+    stage_map = {stage["stage"]: stage["specialist"] for stage in data["stages"]}
+    assert stage_map["gate-2m"] == "human"
+    assert stage_map["motion-generation"] == "bmad-agent-marcus"
+    assert stage_map["motion-gate"] == "human"
+
+
+def test_direct_motion_template_without_flag_demotes_to_static_variant() -> None:
+    data = run_plan_json("narrated-lesson-with-video-or-animation")
+    assert data["requested_content_type"] == "narrated-lesson-with-video-or-animation"
+    assert data["motion_enabled"] is False
+    assert data["effective_content_type"] == "narrated-deck-video-export"
+    assert data["content_type"] == "narrated-deck-video-export"
+
+
+def test_motion_flag_promotes_static_narrated_export_to_motion_variant() -> None:
+    data = run_plan_json("narrated-deck-video-export", "--motion-enabled")
+    assert data["requested_content_type"] == "narrated-deck-video-export"
+    assert data["effective_content_type"] == "narrated-lesson-with-video-or-animation"
+    stages = [stage["stage"] for stage in data["stages"]]
+    assert "gate-2m" in stages
+    assert "motion-gate" in stages
 
 
 def test_help_flag_lists_new_workflows() -> None:

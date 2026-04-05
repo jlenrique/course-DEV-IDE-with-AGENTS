@@ -215,6 +215,9 @@ def _write_run_context_yaml(
     preset: str,
     base_dir: Path | None = None,
     double_dispatch: bool = False,
+    motion_enabled: bool = False,
+    motion_budget_max_credits: float | None = None,
+    motion_budget_model_preference: str = "std",
 ) -> dict[str, str]:
     """Create run-scoped context YAML entities under state/config/."""
     from run_context_builder import build_run_context
@@ -227,6 +230,9 @@ def _write_run_context_yaml(
         content_type=content_type,
         preset=preset,
         double_dispatch=double_dispatch,
+        motion_enabled=motion_enabled,
+        motion_budget_max_credits=motion_budget_max_credits,
+        motion_budget_model_preference=motion_budget_model_preference,
         base_dir=str(base_dir) if base_dir else None,
     )
     return {k: str(v) for k, v in paths.items()}
@@ -390,11 +396,23 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
         "mode": mode,
         "preset_policy": preset_policy,
         "double_dispatch": bool(getattr(args, "double_dispatch", False)),
+        "motion_enabled": bool(getattr(args, "motion_enabled", False)),
+        "motion_budget": {
+            "max_credits": getattr(args, "motion_budget_max_credits", None),
+            "model_preference": getattr(args, "motion_budget_model_preference", "std"),
+        },
         "stages": stages,
         "current_stage_index": 0,
         "revision_count": 0,
         "user_feedback": [],
     }
+    if context["motion_enabled"]:
+        max_credits = context["motion_budget"]["max_credits"]
+        if not isinstance(max_credits, (int, float)) or float(max_credits) <= 0:
+            return {
+                "error": "motion_enabled requires motion_budget_max_credits (--motion-budget-max-credits) with a positive value",
+                "code": "MOTION_BUDGET_REQUIRED",
+            }
 
     run_id = args.run_id
     if not run_id:
@@ -413,6 +431,9 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
             content_type=args.content_type or "unknown",
             preset=args.preset or "draft",
             double_dispatch=context["double_dispatch"],
+            motion_enabled=context["motion_enabled"],
+            motion_budget_max_credits=context["motion_budget"]["max_credits"],
+            motion_budget_model_preference=context["motion_budget"]["model_preference"],
         )
         context["context_scope"] = "canonical"
     else:
@@ -433,6 +454,9 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
             content_type=args.content_type or "unknown",
             preset=args.preset or "draft",
             double_dispatch=context["double_dispatch"],
+            motion_enabled=context["motion_enabled"],
+            motion_budget_max_credits=context["motion_budget"]["max_credits"],
+            motion_budget_model_preference=context["motion_budget"]["model_preference"],
             base_dir=transient_context_base,
         )
         context["context_scope"] = "transient"
@@ -1241,6 +1265,24 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Enable double-dispatch mode (2x Gamma generation for A/B comparison)",
+    )
+    p_create.add_argument(
+        "--motion-enabled",
+        action="store_true",
+        default=False,
+        help="Enable Epic 14 motion pipeline hooks for this run.",
+    )
+    p_create.add_argument(
+        "--motion-budget-max-credits",
+        type=float,
+        default=None,
+        help="Maximum Kling credits allowed for motion generation in this run.",
+    )
+    p_create.add_argument(
+        "--motion-budget-model-preference",
+        choices=["std", "pro"],
+        default="std",
+        help="Preferred Kling model tier for motion generation when motion is enabled.",
     )
     p_create.add_argument("--stages-json", help="JSON array of stage objects")
 

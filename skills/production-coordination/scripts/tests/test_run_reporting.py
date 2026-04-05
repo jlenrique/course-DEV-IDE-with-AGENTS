@@ -257,6 +257,69 @@ class TestDoubleDispatchReporting(unittest.TestCase):
         finally:
             db.path.unlink(missing_ok=True)
 
+
+class TestMotionReporting(unittest.TestCase):
+    def test_report_includes_motion_metrics_when_motion_enabled(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as td:
+            motion_plan = Path(td) / "motion_plan.yaml"
+            motion_plan.write_text(
+                """
+slides:
+  - slide_id: slide-01
+    motion_type: static
+  - slide_id: slide-02
+    motion_type: video
+    motion_status: approved
+    motion_duration_seconds: 5.0
+    estimated_credits: 8.0
+  - slide_id: slide-03
+    motion_type: animation
+    motion_status: imported
+    motion_duration_seconds: 7.0
+""".strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            context = {
+                "mode": "default",
+                "motion_enabled": True,
+                "context_paths": {"motion_plan": str(motion_plan)},
+                "stages": [
+                    {
+                        "stage": "motion-generation",
+                        "status": "approved",
+                        "stage_started_at": "2026-01-01T00:00:00",
+                        "stage_completed_at": "2026-01-01T00:10:00",
+                    },
+                ],
+            }
+
+            conn = sqlite3.connect(str(db.path))
+            conn.execute("DELETE FROM production_runs WHERE run_id = 'RUN-REP'")
+            conn.execute(
+                """
+                INSERT INTO production_runs
+                (run_id, purpose, status, preset, context_json, course_code, module_id, started_at, completed_at, created_at, updated_at)
+                VALUES ('RUN-REP', 'motion report test', 'completed', 'production', ?, 'C1', 'M1', '2026-01-01T00:00:00', '2026-01-01T00:25:00', '2026-01-01T00:00:00', '2026-01-01T00:25:00')
+                """,
+                (json.dumps(context),),
+            )
+            conn.commit()
+            conn.close()
+
+            report = run_reporting.generate_run_report(
+                run_id="RUN-REP",
+                db_path=db.path,
+                write_report=False,
+                capture_learning=False,
+            )
+
+            assert report["motion_enabled"] is True
+            assert report["motion_metrics"]["clips_generated"] == 1
+            assert report["motion_metrics"]["animations_imported"] == 1
+            assert report["motion_metrics"]["total_motion_duration_seconds"] == 12.0
+            assert report["motion_metrics"]["kling_credits_consumed"] == 8.0
+
     def test_report_includes_double_dispatch_false(self) -> None:
         context = {
             "mode": "default",
@@ -269,7 +332,22 @@ class TestDoubleDispatchReporting(unittest.TestCase):
                 },
             ],
         }
-        db = self._make_db_with_context(context)
+        db = TempDB()
+        conn = sqlite3.connect(str(db.path))
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            """
+            INSERT INTO production_runs
+            (run_id, purpose, status, preset, context_json, course_code, module_id,
+             started_at, completed_at, created_at, updated_at)
+            VALUES ('RUN-DD', 'dd test', 'completed', 'production', ?, 'C1', 'M1',
+                    '2026-01-01T00:00:00', '2026-01-01T00:25:00',
+                    '2026-01-01T00:00:00', '2026-01-01T00:25:00')
+            """,
+            (json.dumps(context),),
+        )
+        conn.commit()
+        conn.close()
         try:
             report = run_reporting.generate_run_report(
                 run_id="RUN-DD", db_path=db.path,

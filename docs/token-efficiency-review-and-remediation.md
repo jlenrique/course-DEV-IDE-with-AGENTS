@@ -287,7 +287,7 @@ Run this quarterly (or when onboarding a new model generation):
 - [ ] **Memory audit:** Prune stale entries. Are old project memories still accurate?
 - [ ] **System prompt audit:** Has the system prompt grown? Are there instructions from earlier model generations that smarter models no longer need?
 - [ ] **Session protocol audit:** Can startup file reads be reduced? Are large context files still needed in full, or can they be distilled?
-- [ ] **Anti-drift doc sync audit:** Ensure `production-prompt-pack-v4.md`, `trial-run-pass2-artifacts-contract.md`, `fidelity-gate-map.md`, and operator cards/checklists are aligned on Gate 6B and Storyboard A/B checkpoints.
+- [ ] **Anti-drift doc sync audit:** Ensure `production-prompt-pack-v4.1.md`, `trial-run-pass2-artifacts-contract.md`, `fidelity-gate-map.md`, and operator cards/checklists are aligned on Gate 6B and Storyboard A/B checkpoints.
 - [ ] **Model tiering review:** Are you using the right model tier for each task type?
 - [ ] **Caching review (API/production):** Is all stable context cached? Are you getting cache hits?
 

@@ -209,5 +209,77 @@ class TestRunReporting(unittest.TestCase):
         self.assertTrue(any("Observability summary failed" in r.getMessage() for r in cm.records))
 
 
+class TestDoubleDispatchReporting(unittest.TestCase):
+    """Story 12.5: double_dispatch flag appears in run reports."""
+
+    def _make_db_with_context(self, context: dict) -> "TempDB":
+        """Create a TempDB with a single run using custom context."""
+        db = TempDB()
+        conn = sqlite3.connect(str(db.path))
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            """
+            INSERT INTO production_runs
+            (run_id, purpose, status, preset, context_json, course_code, module_id,
+             started_at, completed_at, created_at, updated_at)
+            VALUES ('RUN-DD', 'dd test', 'completed', 'production', ?, 'C1', 'M1',
+                    '2026-01-01T00:00:00', '2026-01-01T00:25:00',
+                    '2026-01-01T00:00:00', '2026-01-01T00:25:00')
+            """,
+            (json.dumps(context),),
+        )
+        conn.commit()
+        conn.close()
+        return db
+
+    def test_report_includes_double_dispatch_true(self) -> None:
+        context = {
+            "mode": "default",
+            "double_dispatch": True,
+            "stages": [
+                {
+                    "stage": "slides",
+                    "status": "approved",
+                    "stage_started_at": "2026-01-01T00:00:00",
+                    "stage_completed_at": "2026-01-01T00:10:00",
+                },
+            ],
+        }
+        db = self._make_db_with_context(context)
+        try:
+            report = run_reporting.generate_run_report(
+                run_id="RUN-DD", db_path=db.path,
+                write_report=False, capture_learning=False,
+            )
+            self.assertTrue(report["double_dispatch"])
+            self.assertIn("cost_estimation", report)
+            self.assertEqual(report["cost_estimation"]["gamma_call_multiplier"], 2)
+        finally:
+            db.path.unlink(missing_ok=True)
+
+    def test_report_includes_double_dispatch_false(self) -> None:
+        context = {
+            "mode": "default",
+            "stages": [
+                {
+                    "stage": "slides",
+                    "status": "approved",
+                    "stage_started_at": "2026-01-01T00:00:00",
+                    "stage_completed_at": "2026-01-01T00:10:00",
+                },
+            ],
+        }
+        db = self._make_db_with_context(context)
+        try:
+            report = run_reporting.generate_run_report(
+                run_id="RUN-DD", db_path=db.path,
+                write_report=False, capture_learning=False,
+            )
+            self.assertFalse(report["double_dispatch"])
+            self.assertNotIn("cost_estimation", report)
+        finally:
+            db.path.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     unittest.main()

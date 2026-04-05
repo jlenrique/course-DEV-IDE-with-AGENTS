@@ -214,6 +214,7 @@ def _write_run_context_yaml(
     content_type: str,
     preset: str,
     base_dir: Path | None = None,
+    double_dispatch: bool = False,
 ) -> dict[str, str]:
     """Create run-scoped context YAML entities under state/config/."""
     from run_context_builder import build_run_context
@@ -225,6 +226,7 @@ def _write_run_context_yaml(
         lesson=lesson,
         content_type=content_type,
         preset=preset,
+        double_dispatch=double_dispatch,
         base_dir=str(base_dir) if base_dir else None,
     )
     return {k: str(v) for k, v in paths.items()}
@@ -387,6 +389,7 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
         "learning_objectives": [],
         "mode": mode,
         "preset_policy": preset_policy,
+        "double_dispatch": bool(getattr(args, "double_dispatch", False)),
         "stages": stages,
         "current_stage_index": 0,
         "revision_count": 0,
@@ -409,6 +412,7 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
             lesson=args.lesson or "",
             content_type=args.content_type or "unknown",
             preset=args.preset or "draft",
+            double_dispatch=context["double_dispatch"],
         )
         context["context_scope"] = "canonical"
     else:
@@ -428,6 +432,7 @@ def cmd_create(args: argparse.Namespace) -> dict[str, Any]:
             lesson=args.lesson or "",
             content_type=args.content_type or "unknown",
             preset=args.preset or "draft",
+            double_dispatch=context["double_dispatch"],
             base_dir=transient_context_base,
         )
         context["context_scope"] = "transient"
@@ -1230,6 +1235,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["tracked", "default", "ad-hoc"],
         default="default",
         help="Execution mode (tracked/default/ad-hoc)",
+    )
+    p_create.add_argument(
+        "--double-dispatch",
+        action="store_true",
+        default=False,
+        help="Enable double-dispatch mode (2x Gamma generation for A/B comparison)",
     )
     p_create.add_argument("--stages-json", help="JSON array of stage objects")
 

@@ -137,7 +137,7 @@ Confirm quality controls are active:
 - Human-in-the-loop controls: `docs/workflow/human-in-the-loop.md`
 - Agent QA gate policy: `docs/workflow/agent-qa-release-gate.md`
 - Artifacts contract: `docs/workflow/trial-run-pass2-artifacts-contract.md` (v1.1+, includes operator-directives.md)
-- Current prompt pack: `docs/workflow/production-prompt-pack-v4.md`
+- Current prompt pack: `docs/workflow/production-prompt-pack-v4.1.md`
 - Operator card: `docs/workflow/production-operator-card-v4.md`
 
 Mandatory anti-drift confirmations for this session:

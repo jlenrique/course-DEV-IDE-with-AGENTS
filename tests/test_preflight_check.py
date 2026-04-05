@@ -395,3 +395,48 @@ class TestReferenceDocumentation:
         ).read_text(encoding="utf-8")
         assert "Ref MCP" in content
         assert "Gamma" in content
+
+
+# ---------------------------------------------------------------------------
+# Story 12.5: Double-dispatch compatibility check
+# ---------------------------------------------------------------------------
+
+
+class TestDoubleDispatchCompatibility:
+    def test_check_passes_when_gamma_key_present(self):
+        from skills.pre_flight_check.scripts.preflight_runner import (
+            ToolStatus,
+            check_double_dispatch_compatibility,
+        )
+
+        result = check_double_dispatch_compatibility({"GAMMA_API_KEY": "test-key-123"})
+        assert result.status == ToolStatus.API_READY
+        assert "present" in result.detail.lower()
+
+    def test_check_fails_when_gamma_key_missing(self):
+        import os
+        from unittest.mock import patch
+
+        from skills.pre_flight_check.scripts.preflight_runner import (
+            ToolStatus,
+            check_double_dispatch_compatibility,
+        )
+
+        with patch.dict(os.environ, {}, clear=True):
+            result = check_double_dispatch_compatibility({})
+        assert result.status == ToolStatus.FAILED
+        assert "GAMMA_API_KEY" in result.detail
+
+    def test_preflight_skips_check_when_flag_inactive(self):
+        from skills.pre_flight_check.scripts.preflight_runner import run_preflight
+
+        report = run_preflight(ROOT, double_dispatch=False)
+        dd_results = [r for r in report.results if "Double-Dispatch" in r.name]
+        assert len(dd_results) == 0
+
+    def test_preflight_includes_check_when_flag_active(self):
+        from skills.pre_flight_check.scripts.preflight_runner import run_preflight
+
+        report = run_preflight(ROOT, double_dispatch=True)
+        dd_results = [r for r in report.results if "Double-Dispatch" in r.name]
+        assert len(dd_results) == 1

@@ -43,6 +43,7 @@ class RunConstants:
     theme_paramset_key: str
     execution_mode: str
     quality_preset: str
+    double_dispatch: bool = False
     schema_version: int | None = None
     frozen_at_utc: str | None = None
     frozen_note: str | None = None
@@ -117,6 +118,9 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
     theme_params = _require_non_empty_str(data, "theme_paramset_key")
     execution_mode = _normalize_execution_mode(_require_non_empty_str(data, "execution_mode"))
     quality = _require_non_empty_str(data, "quality_preset").lower()
+    raw_double_dispatch = data.get("double_dispatch", False)
+    if not isinstance(raw_double_dispatch, bool):
+        raise RunConstantsError("double_dispatch must be a boolean when present")
 
     if quality not in ALLOWED_QUALITY_PRESETS:
         raise RunConstantsError(
@@ -145,6 +149,7 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         theme_paramset_key=theme_params,
         execution_mode=execution_mode,
         quality_preset=quality,
+        double_dispatch=raw_double_dispatch,
         schema_version=schema_version,
         frozen_at_utc=frozen_at.strip() if isinstance(frozen_at, str) else None,
         frozen_note=frozen_note.strip() if isinstance(frozen_note, str) else None,

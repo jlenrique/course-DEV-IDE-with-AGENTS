@@ -567,3 +567,121 @@ def test_literal_visual_remote_url_preserved_in_storyboard(tmp_path: Path) -> No
     rendered = mod.render_index_html(manifest)
     assert "gamma.app/docs/some-deck" in rendered
     assert "jlenrique.github.io/assets/gamma" in rendered
+
+
+def test_double_dispatch_manifest_and_html_sections(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    (bundle / "slides").mkdir(parents=True)
+    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    (bundle / "slides" / "s2.png").write_bytes(b"x")
+
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+                "dispatch_variant": "A",
+                "vera_score": 0.84,
+                "quinn_score": 0.8,
+                "selected": True,
+            },
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s2.png",
+                "dispatch_variant": "B",
+                "vera_score": 0.79,
+                "quinn_score": 0.76,
+                "selected": False,
+            },
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+
+    assert manifest["double_dispatch"]["enabled"] is True
+    assert manifest["double_dispatch"]["selection_progress"]["selected"] == 1
+    assert manifest["double_dispatch"]["selection_progress"]["total"] == 1
+    assert len(manifest["selected_full_deck_preview"]) == 1
+
+    rendered = mod.render_index_html(manifest)
+    assert "Variant Selection (A/B side-by-side)" in rendered
+    assert "Full-Deck Preview (selected variants)" in rendered
+
+
+def test_write_authorized_with_selection_metadata(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    (bundle / "slides").mkdir(parents=True)
+    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+                "dispatch_variant": "A",
+                "selected": False,
+            },
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+                "dispatch_variant": "B",
+                "selected": False,
+            },
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+    mod.write_bundle(manifest, storyboard_dir)
+
+    selections_path = bundle / "selections.json"
+    selections_path.write_text(json.dumps({"1": "A"}), encoding="utf-8")
+
+    out = bundle / "authorized-storyboard.json"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_AUTHORIZE_SCRIPT),
+            "--manifest",
+            str(storyboard_dir / "storyboard.json"),
+            "--run-id",
+            "RUN-DD-001",
+            "--selections",
+            str(selections_path),
+            "--output",
+            str(out),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["selection_metadata"][0]["selected_variant"] == "A"
+    assert data["selection_metadata"][0]["rejected_variant"] == "B"

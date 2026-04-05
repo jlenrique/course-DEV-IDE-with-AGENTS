@@ -597,5 +597,73 @@ class TestFullLifecycle(unittest.TestCase):
             self.assertEqual(complete["baton_close"]["status"], "closed")
 
 
+class TestDoubleDispatchFlag(unittest.TestCase):
+    """Story 12.5: double_dispatch flag propagation through manage_run."""
+
+    def test_create_with_double_dispatch_flag(self) -> None:
+        with TempDB() as db:
+            run_id = f"DD-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+                "--double-dispatch",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertEqual(result["run_id"], run_id)
+            self.assertTrue(result["persisted"])
+
+            conn = sqlite3.connect(db.path)
+            row = conn.execute(
+                "SELECT context_json FROM production_runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            conn.close()
+            context = json.loads(row[0])
+            self.assertTrue(context["double_dispatch"])
+
+    def test_create_without_double_dispatch_defaults_false(self) -> None:
+        with TempDB() as db:
+            run_id = f"NO-DD-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+            ])
+            result = manage_run.cmd_create(args)
+            conn = sqlite3.connect(db.path)
+            row = conn.execute(
+                "SELECT context_json FROM production_runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            conn.close()
+            context = json.loads(row[0])
+            self.assertFalse(context["double_dispatch"])
+
+    def test_ad_hoc_double_dispatch(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            run_id = f"DD-ADHOC-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "--runtime-dir", rt,
+                "create",
+                "--run-id", run_id,
+                "--mode", "ad-hoc",
+                "--course", "C1",
+                "--module", "M1",
+                "--double-dispatch",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertFalse(result["persisted"])
+            self.assertEqual(result["mode"], "ad-hoc")
+
+            ad_hoc_path = Path(rt) / "ad-hoc-runs" / f"{run_id}.json"
+            self.assertTrue(ad_hoc_path.exists())
+            data = json.loads(ad_hoc_path.read_text(encoding="utf-8"))
+            self.assertTrue(data["context_json"]["double_dispatch"])
+
+
 if __name__ == "__main__":
     unittest.main()

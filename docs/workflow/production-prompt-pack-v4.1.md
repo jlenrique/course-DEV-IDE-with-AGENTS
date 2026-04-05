@@ -1,8 +1,12 @@
-# Production Prompt Pack v4: Marcus -> Irene Pass 2 Gate
+# Production Prompt Pack v4.1: Marcus -> Irene Pass 2 Gate
 
 Status:
 - Current default prompt pack for tracked/production runs to Irene Pass 2.
 - Supersedes v3 (trial/ad-hoc era). v3 retained for historical traceability.
+
+## Changelog
+
+- **v4.1** — Added `DOUBLE_DISPATCH` run constant + conditional dispatch/selection logic in Prompts 1, 6, 7 (new 7B), 8 (Epic 12).
 
 Purpose: run a reliable, auditable production run from source ingestion through Irene Pass 2 with deterministic stop rules at every stage.
 
@@ -12,6 +16,7 @@ Design principles:
 - Vera fidelity checks are internal; Marcus returns concise receipts.
 - Deterministic stop rules prevent weak outputs from drifting downstream.
 - Detailed fallback paths for every stage when first response misses the mark.
+- When `DOUBLE_DISPATCH` is true, an additional operator gate (Prompt 7B) appears between dispatch and narration for variant selection.
 
 Execution mode: tracked/default (SQLite state tracking, production_runs table, run baton governance).
 
@@ -34,6 +39,7 @@ After acceptance, persist the same fields as **`run-constants.yaml`** in the bun
 - THEME_PARAMSET_KEY: [mapped parameter-set key for selected theme]
 - EXECUTION_MODE: tracked/default
 - QUALITY_PRESET: [explore | draft | production | regulated]
+- DOUBLE_DISPATCH: [true | false, default false]
 
 ---
 
@@ -51,6 +57,7 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 Required commands:
 - `py -3.13 -m scripts.utilities.app_session_readiness --with-preflight --format json`
 - `py -3.13 -m scripts.utilities.venv_health_check`
+- If `DOUBLE_DISPATCH: true`: run `check_double_dispatch_compatibility()` from preflight runner. Block on fail.
 
 Required write:
 - `[BUNDLE_PATH]/preflight-results.json` with run_id, timestamp, and both command outputs.
@@ -339,6 +346,11 @@ Required machine artifacts under [BUNDLE_PATH]:
 - `gary-outbound-envelope.yaml`
 - `pre-dispatch-package-gary.md`
 
+Double-dispatch behavior:
+- When `DOUBLE_DISPATCH: true`, `gary-outbound-envelope.yaml` must carry `dispatch_count: 2`.
+- Artifact filenames for the second dispatch variant gain a `-B` suffix (e.g., `gary-dispatch-result-B.json`).
+- The primary dispatch artifacts retain their canonical names (no suffix).
+
 Contract rules:
 - Follow `docs/workflow/trial-run-pass2-artifacts-contract.md` exactly.
 - `g2-slide-brief.md` must be derived from `irene-pass1.md` and must not introduce new pedagogical content.
@@ -408,6 +420,12 @@ Marcus, dispatch Gary for RUN_ID [RUN_ID] only if all checks are true:
 - theme selection confirmed and mapped
 - resolved theme + parameter set carried in payload
 
+Double-dispatch behavior:
+- If `DOUBLE_DISPATCH: true`, Gary dispatches **twice** per slide (variant A and variant B) using different theme or parameter configurations as specified in the envelope.
+- Both dispatch cycles must complete and produce valid exports before proceeding.
+- Write variant-B outputs with `-B` suffix: `gary-dispatch-result-B.json`, `gary-dispatch-run-log-B.json`, `gamma-export-B/...`.
+- Run Vera G3 on **both** variant sets independently before proceeding to Prompt 7B.
+
 Dispatch requirements:
 - execute mixed-fidelity generation
 - before publish/dispatch side effects, return a short pre-dispatch report listing literal-visual cards, local PNG paths, and target `site_repo_url`, then require explicit operator confirmation to proceed
@@ -469,7 +487,50 @@ Fallback (detailed):
   - verify composite output is acceptable (center-crop may differ from intended framing)
   - operator may regenerate the source image with optimized attributes and re-dispatch
 
-Only after explicit Gate 2 approval may Marcus proceed to Prompt 8.
+Only after explicit Gate 2 approval may Marcus proceed to Prompt 7B (if double-dispatch) or Prompt 8 (if single dispatch).
+
+---
+
+## 7B) Variant Selection Gate (Double-Dispatch Only)
+
+> **This prompt is skipped when `DOUBLE_DISPATCH` is false.**
+
+Marcus, run variant selection for RUN_ID [RUN_ID].
+
+### Preconditions
+
+- Both variant A and variant B dispatch results exist and passed Vera G3.
+- Storyboard A (from Prompt 7) has been approved for the primary variant.
+- Variant B exports are complete with valid file_paths.
+
+### Selection storyboard
+
+Generate a **paired-thumbnail selection storyboard**:
+- For each slide, display variant A (left) and variant B (right) side by side.
+- Include slide number, fidelity class, and `literal_visual_source` provenance for each variant.
+- Provide a per-slide selection control (A or B) for the operator.
+
+The operator reviews both variants per slide and selects the stronger treatment.
+
+### Required write
+
+- `[BUNDLE_PATH]/variant-selection.json` containing:
+  - run_id
+  - timestamp
+  - per-slide entries: `{ slide_number, selected_variant: "A" | "B", reason (optional) }`
+  - operator confirmation flag
+
+### Gate rule
+
+- Prompt 8 is blocked until `variant-selection.json` is written and operator confirmation is recorded.
+- If operator requests re-dispatch for any slide, return to Prompt 7 for the specified slides only.
+
+### Fallback (detailed)
+
+- If variant B dispatch failed for some slides, present only variant A for those slides (auto-select A) and note the fallback in `variant-selection.json`.
+- If operator cannot decide, allow "defer" per slide — deferred slides block Prompt 8 until resolved.
+
+Return one compact receipt with: stage, status, artifacts_written, validator_results, gate_decision, next_action.
 
 ---
 
@@ -495,6 +556,11 @@ Inputs for this step:
 - Source bundle: `[BUNDLE_PATH]/extracted.md`
 - Operator directives: `[BUNDLE_PATH]/operator-directives.md`
 - Irene Pass 1: `[BUNDLE_PATH]/irene-pass1.md`
+- If `DOUBLE_DISPATCH: true`: variant selections from `[BUNDLE_PATH]/variant-selection.json`
+
+Double-dispatch input resolution:
+- When `DOUBLE_DISPATCH: true`, build a merged slide output by selecting per-slide from variant A (`gary-dispatch-result.json`) or variant B (`gary-dispatch-result-B.json`) according to `variant-selection.json`.
+- The merged set becomes `gary_slide_output` for Irene.
 
 Delegate Irene Pass 2 with `gary_slide_output`.
 Use `gary_slide_output` as source-of-truth for order and visual paths.

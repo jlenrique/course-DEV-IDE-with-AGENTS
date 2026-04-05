@@ -3,7 +3,7 @@
 Use this card during tracked/production runs to Irene Pass 2.
 
 Primary prompt pack:
-- `docs/workflow/production-prompt-pack-v4.md`
+- `docs/workflow/production-prompt-pack-v4.1.md`
 
 Contracts and validators:
 - `docs/workflow/trial-run-pass2-artifacts-contract.md`
@@ -31,6 +31,7 @@ Set values in the prompt pack Run Constants block:
 - THEME_PARAMSET_KEY
 - EXECUTION_MODE: tracked/default
 - QUALITY_PRESET
+- DOUBLE_DISPATCH: [true | false, default false]
 
 Operator rule:
 - Do not change run constants mid-run.
@@ -99,6 +100,7 @@ Operator rule:
 - Go/no-go: no go until all required literal-visual cards are operator-ready.
 
 ### 7. Prompt 7: Dispatch + Gate 2
+- If `DOUBLE_DISPATCH: true`, Gary dispatches twice (variant A + variant B).
 - Confirm outputs:
   - `gary-dispatch-result.json` (check `literal_visual_source` per literal-visual slide)
   - `gary-dispatch-run-log.json`
@@ -120,6 +122,13 @@ Operator rule:
   - `authorized-storyboard.json`
 - Go/no-go: no go if validator `status=fail` or G3 fail.
 - Then explicit Gate 2 approval.
+
+### 7B. Prompt 7B: Variant Selection (double-dispatch only)
+- **Skip if `DOUBLE_DISPATCH` is false.**
+- Confirm paired-thumbnail selection storyboard presented to operator.
+- Confirm per-slide A/B selection recorded in `variant-selection.json`.
+- Confirm operator confirmation flag is set.
+- Go/no-go: no go until all slides have a selected variant and operator confirms.
 
 ### 8. Prompt 8: Irene Pass 2 handoff
 - Confirm preconditions:

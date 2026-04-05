@@ -28,7 +28,7 @@ Run settings:
 - Quality preset: production
 
 Prompt pack and operator card:
-- Use `docs/workflow/production-prompt-pack-v4.md` as default prompt pack.
+- Use `docs/workflow/production-prompt-pack-v4.1.md` as default prompt pack.
 - Use `docs/workflow/production-operator-card-v4.md` as operator checklist.
 - The operator will provide run constants and operator directives after Shift Open completes.
 

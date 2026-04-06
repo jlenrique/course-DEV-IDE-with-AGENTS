@@ -137,7 +137,9 @@ Confirm quality controls are active:
 - Human-in-the-loop controls: `docs/workflow/human-in-the-loop.md`
 - Agent QA gate policy: `docs/workflow/agent-qa-release-gate.md`
 - Artifacts contract: `docs/workflow/trial-run-pass2-artifacts-contract.md` (v1.1+, includes operator-directives.md)
-- Current prompt pack: `docs/workflow/production-prompt-pack-v4.1.md`
+- Current prompt pack:
+  - `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion narrated runs
+  - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` when `MOTION_ENABLED: true`
 - Operator card: `docs/workflow/production-operator-card-v4.md`
 
 Mandatory anti-drift confirmations for this session:
@@ -194,7 +196,7 @@ At completion, output one and only one Shift Open Record using this structure:
 ## Active Settings
 - Execution mode: tracked | ad-hoc
 - Quality preset: explore | draft | production | regulated
-- Prompt pack: v4 | v3 (legacy)
+- Prompt pack: [workflow-specific v4 prompt pack path]
 - Operator card: v4
 
 ## Blocking Issues

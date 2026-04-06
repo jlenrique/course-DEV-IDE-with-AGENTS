@@ -4,6 +4,10 @@ A **Fidelity Walk** is a faithful simulation of the full happy-path production r
 
 Documented redirects are valid. If a placeholder path explicitly declares itself superseded and points to the active canonical path, record it as a redirect rather than a remediation item.
 
+Baseline scope note:
+- The scripted Fidelity Walk is anchored to the standard narrated workflow and anti-drifts against `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` plus the shared operator card.
+- Motion-enabled narrated runs use the sibling workflow doc `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`; review that path separately during motion-focused simulations or doc audits.
+
 ---
 
 ## When to Run
@@ -85,11 +89,18 @@ Required anti-drift checks in the walk report:
 - Verify Prompt 6B checkpoint exists and blocks Prompt 7 when required literal-visual cards are not operator-ready.
 - Verify literal-visual dispatch payload rule is enforced: image-only on-slide, URL-only content rows, and explanatory prose deferred to narration.
 - Verify Storyboard A checkpoint is required after Gary dispatch and before Gate 2 approval.
+- Verify Epic 12 winner authorization requires a canonical authorized deck before downstream progression when double-dispatch is enabled.
 - Verify Storyboard B checkpoint is required after Irene Pass 2 and before downstream audio/script finalization.
+- Verify the motion prompt pack preserves Gate 2M, Motion Gate, and winner-deck binding for motion-enabled runs.
 
 ---
 
 ## Output Location
+
+Prompt-pack note:
+- The scripted anti-drift checks use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` as the canonical standard narrated prompt pack path.
+- Motion-specific anti-drift checks also validate `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
+- Motion-enabled narrated runs are documented separately in `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
 
 By default the generator saves Fidelity Walk reports to `tests/` with the naming convention:
 

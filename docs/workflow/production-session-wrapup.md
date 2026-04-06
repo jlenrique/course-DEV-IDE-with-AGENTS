@@ -53,6 +53,8 @@ Required evidence artifacts:
 - Fidelity receipts (G0-G4, as applicable to stages completed)
 - `gary-dispatch-validation-result.json` (if Gary dispatch occurred)
 - `authorized-storyboard.json` (if Gate 2 storyboard approval occurred)
+- `variant-selection.json` (if `DOUBLE_DISPATCH` was enabled)
+- `motion-designations.json` and `motion_plan.yaml` (if `MOTION_ENABLED` was enabled)
 - Pass 2 handoff validator output (if Irene Pass 2 occurred)
 - post-Pass-2 storyboard evidence (if Storyboard B review occurred)
 - Stage receipts per prompt
@@ -88,6 +90,7 @@ Create handoff with:
 - execution mode + quality preset for each still-open run
 - operator directives summary (were directives provided? any special treatment still in effect for continuing runs?)
 - storyboard approvals summary (Gate 2 storyboard and post-Pass-2 storyboard, when applicable)
+- motion workflow summary (`MOTION_ENABLED`, Gate 2M status, Motion Gate status, if applicable)
 
 ## 6. Workspace Hygiene Gate
 

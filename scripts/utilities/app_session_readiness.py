@@ -314,7 +314,7 @@ def _check_import_sanity(root: Path) -> CheckResult:
     )
 
 
-def _run_preflight_phase(root: Path) -> CheckResult:
+def _run_preflight_phase(root: Path, *, motion_enabled: bool = False) -> CheckResult:
     preflight_module = None
 
     try:
@@ -353,7 +353,7 @@ def _run_preflight_phase(root: Path) -> CheckResult:
         tool_status = preflight_module.ToolStatus
         run_preflight = preflight_module.run_preflight
 
-        report = run_preflight(root)
+        report = run_preflight(root, motion_enabled=motion_enabled)
     except Exception as exc:
         return CheckResult(
             name="preflight_tools",
@@ -422,6 +422,7 @@ def run_readiness(
     root: Path | None = None,
     *,
     with_preflight: bool = False,
+    motion_enabled: bool = False,
     bundle_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Run APP runtime readiness checks and return a structured report."""
@@ -437,7 +438,7 @@ def run_readiness(
     ]
 
     if with_preflight:
-        checks.append(_run_preflight_phase(root))
+        checks.append(_run_preflight_phase(root, motion_enabled=motion_enabled))
 
     report = {
         "timestamp": _now_iso(),
@@ -461,6 +462,11 @@ def main(argv: list[str] | None = None) -> int:
         "--with-preflight",
         action="store_true",
         help="Compose runtime readiness with existing tool pre-flight checks.",
+    )
+    parser.add_argument(
+        "--motion-enabled",
+        action="store_true",
+        help="When composing preflight, include motion-pipeline readiness checks.",
     )
     parser.add_argument(
         "--bundle-dir",
@@ -491,6 +497,7 @@ def main(argv: list[str] | None = None) -> int:
     report = run_readiness(
         root=args.root,
         with_preflight=args.with_preflight,
+        motion_enabled=args.motion_enabled,
         bundle_dir=args.bundle_dir,
     )
 

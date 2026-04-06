@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-05 (Epic 12 complete: dual-dispatch infrastructure, 5 stories done, prompt pack v4.1, 192 tests passing)
+# Last Updated: 2026-04-05 (Epics 12-14 complete; prompt-pack family split into standard v4.1 and motion v4.2 workflow docs)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,7 +23,7 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "12 legacy epics complete (52 stories including Epic 12). 2 new epics (13-14) in backlog with 10 stories."
+    note: "All 14 epics complete. Epics 12-14 extend the narrated workflow with double-dispatch, visual-aware Irene Pass 2, and motion controls."
     stories_count: 62
     epics_count: 14
   ux_design:
@@ -32,7 +32,7 @@ workflow_artifacts:
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "12 legacy epics done (52 stories). Epics 13-14 in backlog (10 stories). Total: 14 epics, 62 stories."
+    note: "All 14 epics done. Total: 14 epics, 62 stories."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -101,4 +101,4 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Begin Epic 12 implementation (double-dispatch Gamma slide selection). Start with Story 12.1: dual-dispatch infrastructure in gamma_operations.py."
+next_workflow_step: "Run documentation reconciliation, release prep, or the next approved post-implementation workflow from a clean Epic 14 baseline."

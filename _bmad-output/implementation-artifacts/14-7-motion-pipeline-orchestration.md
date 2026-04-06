@@ -1,9 +1,10 @@
 # Story 14.7: End-to-End Motion Pipeline Orchestration & Compositor Update
 
 **Epic:** 14 — Motion-Enhanced Presentation Workflow
-**Status:** backlog
+**Status:** done
 **Sprint key:** `14-7-motion-pipeline-orchestration`
 **Added:** 2026-04-05
+**Validated:** 2026-04-05
 **Depends on:** Story 14.6 (motion perception & Irene integration)
 
 ## Summary

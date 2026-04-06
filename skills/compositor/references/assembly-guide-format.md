@@ -24,6 +24,7 @@ The generated guide should contain these sections in order:
    - what to place on V1/A1/A2/A3
    - trim/hold guidance
    - intent-preservation note
+   - visual reference cues (Story 13.3): for each `visual_references[]` entry, note the `narration_cue` phrase and `location_on_slide` so the human editor can verify the visual element is visible when that narration phrase plays
 
 5. **Final Check**
    - confirm cues before export

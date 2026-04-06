@@ -683,5 +683,8 @@ def test_write_authorized_with_selection_metadata(tmp_path: Path) -> None:
     )
     assert proc.returncode == 0, proc.stderr
     data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["slide_ids"] == ["m1-c1"]
+    assert len(data["authorized_slides"]) == 1
+    assert data["authorized_slides"][0]["dispatch_variant"] == "A"
     assert data["selection_metadata"][0]["selected_variant"] == "A"
     assert data["selection_metadata"][0]["rejected_variant"] == "B"

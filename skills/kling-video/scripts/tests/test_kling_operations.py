@@ -116,3 +116,80 @@ class TestRunLipSync:
         assert result["output_path"] == str(downloaded)
         client.lip_sync.assert_called_once()
         client.wait_for_completion.assert_called_once_with("task-789", task_type="lip-sync")
+
+
+class TestMotionBudgeting:
+    def test_resolve_motion_mode_downgrades_from_pro_when_budget_hit(self) -> None:
+        result = MODULE.resolve_motion_mode(
+            duration_seconds=5.0,
+            motion_budget={"max_credits": 5, "model_preference": "pro"},
+        )
+
+        assert result["mode"] == "std"
+        assert result["downgraded_from"] == "pro"
+        assert result["estimated_credits"] == 4.0
+
+    def test_resolve_motion_mode_raises_when_even_std_exceeds_budget(self) -> None:
+        try:
+            MODULE.resolve_motion_mode(
+                duration_seconds=10.0,
+                motion_budget={"max_credits": 3, "model_preference": "std"},
+            )
+        except RuntimeError as exc:
+            assert "budget ceiling" in str(exc)
+        else:  # pragma: no cover
+            raise AssertionError("Expected budget ceiling failure")
+
+
+class TestGenerateMotionClip:
+    def test_prefers_image_to_video_when_source_image_exists(self, tmp_path: Path) -> None:
+        client = Mock()
+        client.image_to_video.return_value = {"data": {"task_id": "task-456"}}
+        client.wait_for_completion.return_value = {
+            "data": {"task_result": {"videos": [{"url": "https://cdn.example.com/test2.mp4", "duration": "5.0"}]}}
+        }
+        client.download_video.return_value = tmp_path / "slide-02_motion.mp4"
+
+        result = MODULE.generate_motion_clip(
+            {
+                "slide_id": "slide-02",
+                "source_image_url": "https://example.com/slide.png",
+                "motion_brief": "Animate the chart growth",
+                "narration_intent": "Explain the trend clearly",
+                "motion_duration_seconds": 5.0,
+            },
+            motion_budget={"max_credits": 24, "model_preference": "pro"},
+            output_dir=tmp_path,
+            client=client,
+        )
+
+        assert result["slide_id"] == "slide-02"
+        assert result["operation"] == "image2video"
+        assert result["model_used"] == "pro"
+        assert result["credits_consumed"] == 8.0
+        client.image_to_video.assert_called_once()
+        client.text_to_video.assert_not_called()
+
+    def test_falls_back_to_text_to_video_without_image_url(self, tmp_path: Path) -> None:
+        client = Mock()
+        client.text_to_video.return_value = {"data": {"task_id": "task-123"}}
+        client.wait_for_completion.return_value = {
+            "data": {"task_result": {"videos": [{"url": "https://cdn.example.com/test.mp4", "duration": "6.0"}]}}
+        }
+        client.download_video.return_value = tmp_path / "slide-03_motion.mp4"
+
+        result = MODULE.generate_motion_clip(
+            {
+                "slide_id": "slide-03",
+                "motion_brief": "Show the process unfolding step by step",
+                "motion_duration_seconds": 6.0,
+            },
+            motion_budget={"max_credits": 12, "model_preference": "std"},
+            output_dir=tmp_path,
+            client=client,
+        )
+
+        assert result["operation"] == "text2video"
+        assert result["model_used"] == "std"
+        assert result["self_assessment"].startswith("text-to-video fallback")
+        client.text_to_video.assert_called_once()

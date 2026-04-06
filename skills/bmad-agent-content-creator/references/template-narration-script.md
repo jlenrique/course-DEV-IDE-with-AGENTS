@@ -31,11 +31,25 @@ For each slide/segment — segment IDs must match `[SEGMENT: seg-XX]` markers ex
 - Emphasis: {key phrases to stress, marked with *asterisks*}
 - Behavioral Intent: {credible | moving | alarming | urgent | reflective | attention-reset | provocative}
 
+**Visual References** (Story 13.2 — from `visual_reference_injector`):
+```yaml
+visual_references:
+  - element: "{description from perception_artifacts.visual_elements}"
+    element_type: "{type — chart, table, diagram, image, text, etc.}"
+    location_on_slide: "{position — left panel, center, top-right, etc.}"
+    narration_cue: "{exact phrase in narration that references this element}"
+    perception_source: "{slide_id from perception_artifacts}"
+```
+
 **Narration:**
 {The actual narration text, written by Paige or Sophia, reviewed for pedagogical alignment.
 Complement the visual — narrate the insight, not the structure. If Gary's slide shows a
 three-column comparison, narrate "Notice how the revenue gap widens in each decade" not
-"This slide shows three columns."}
+"This slide shows three columns."
+Weave `visual_references_per_slide` (default 2, ±1 tolerance) explicit visual references
+into the narration flow. Each reference must name a specific visual element from
+perception_artifacts and include spatial context (deictic: "on the right", "in the center").
+References guide the learner's eye — they do not annotate.}
 
 **Transition to next segment:**
 {How this segment connects to the next — pedagogical bridge}

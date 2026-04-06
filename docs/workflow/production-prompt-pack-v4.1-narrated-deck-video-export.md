@@ -1,12 +1,21 @@
-# Production Prompt Pack v4.1: Marcus -> Irene Pass 2 Gate
+# Production Prompt Pack v4.1: Narrated Deck Video Export
 
 Status:
-- Current default prompt pack for tracked/production runs to Irene Pass 2.
+- Standard tracked/default prompt pack for the non-motion narrated workflow (`narrated-deck-video-export`).
+- Sibling to the motion-enabled prompt pack, not superseded by it.
 - Supersedes v3 (trial/ad-hoc era). v3 retained for historical traceability.
 
 ## Changelog
 
 - **v4.1** — Added `DOUBLE_DISPATCH` run constant + conditional dispatch/selection logic in Prompts 1, 6, 7 (new 7B), 8 (Epic 12).
+
+## Workflow Scope
+
+Use this prompt pack when:
+- the requested workflow is `narrated-deck-video-export`
+- `motion_enabled` is false
+
+Do not use this prompt pack when motion is enabled. For that case, use the motion-specific cousin prompt pack for `narrated-lesson-with-video-or-animation`.
 
 Purpose: run a reliable, auditable production run from source ingestion through Irene Pass 2 with deterministic stop rules at every stage.
 
@@ -17,6 +26,7 @@ Design principles:
 - Deterministic stop rules prevent weak outputs from drifting downstream.
 - Detailed fallback paths for every stage when first response misses the mark.
 - When `DOUBLE_DISPATCH` is true, an additional operator gate (Prompt 7B) appears between dispatch and narration for variant selection.
+- `DOUBLE_DISPATCH` remains an inline branch inside this workflow, not a separate workflow family.
 
 Execution mode: tracked/default (SQLite state tracking, production_runs table, run baton governance).
 

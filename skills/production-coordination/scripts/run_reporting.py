@@ -18,6 +18,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 LOGGER = logging.getLogger(__name__)
 
 try:
@@ -258,6 +260,67 @@ def _recommendations(
     return recs
 
 
+def _summarize_motion_plan(context: dict[str, Any]) -> dict[str, Any] | None:
+    if not bool(context.get("motion_enabled", False)):
+        return None
+
+    context_paths = context.get("context_paths", {})
+    motion_plan_path = None
+    if isinstance(context_paths, dict):
+        motion_plan_path = context_paths.get("motion_plan")
+    if not motion_plan_path:
+        return {
+            "motion_enabled": True,
+            "clips_generated": 0,
+            "animations_imported": 0,
+            "total_motion_duration_seconds": 0.0,
+            "kling_credits_consumed": 0.0,
+            "error": "motion_plan unavailable",
+        }
+
+    path = Path(str(motion_plan_path))
+    if not path.is_file():
+        return {
+            "motion_enabled": True,
+            "clips_generated": 0,
+            "animations_imported": 0,
+            "total_motion_duration_seconds": 0.0,
+            "kling_credits_consumed": 0.0,
+            "error": f"motion_plan not found: {path}",
+        }
+
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    slides = data.get("slides", []) if isinstance(data, dict) else []
+    clips_generated = 0
+    animations_imported = 0
+    total_duration = 0.0
+    kling_credits_consumed = 0.0
+    for row in slides:
+        if not isinstance(row, dict):
+            continue
+        motion_type = str(row.get("motion_type") or "static").strip().lower()
+        duration = row.get("motion_duration_seconds")
+        if isinstance(duration, (int, float)):
+            total_duration += float(duration)
+        if motion_type == "video":
+            if row.get("motion_status") in {"generated", "approved"}:
+                clips_generated += 1
+            credits = row.get("credits_consumed", row.get("estimated_credits"))
+            if isinstance(credits, (int, float)):
+                kling_credits_consumed += float(credits)
+        elif motion_type == "animation" and row.get("motion_status") in {"imported", "approved"}:
+            animations_imported += 1
+
+    return {
+        "motion_enabled": True,
+        "clips_generated": clips_generated,
+        "animations_imported": animations_imported,
+        "total_motion_duration_seconds": round(total_duration, 2),
+        "kling_credits_consumed": round(kling_credits_consumed, 2),
+        "motion_plan_path": str(path),
+    }
+
+
 def _capture_learning_insights(report: dict[str, Any], run_mode: str) -> dict[str, Any]:
     guard = enforce_ad_hoc_boundary("durable_memory_patterns", run_mode)
     if not guard["allowed"]:
@@ -337,6 +400,7 @@ def generate_run_report(
             "run_id": run_id,
             "run_mode": context.get("mode", "default"),
             "double_dispatch": is_double_dispatch,
+            "motion_enabled": bool(context.get("motion_enabled", False)),
             "run_purpose": row["purpose"],
             "status": row["status"],
             "preset": row["preset"],
@@ -364,6 +428,9 @@ def generate_run_report(
                 "gamma_call_multiplier": 2,
                 "note": "Double-dispatch mode: 2x Gamma API calls for A/B variant comparison.",
             }
+        motion_metrics = _summarize_motion_plan(context)
+        if motion_metrics is not None:
+            report["motion_metrics"] = motion_metrics
     finally:
         conn.close()
 

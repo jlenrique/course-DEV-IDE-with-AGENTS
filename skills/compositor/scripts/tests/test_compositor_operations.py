@@ -84,6 +84,22 @@ segments:
         assert "Descript Assembly Guide" in content
         assert "course-content/staging/C1-M1-L1/audio/seg-01.mp3" in content
 
+    def test_generate_assembly_guide_contains_motion_instruction(self) -> None:
+        manifest = sample_manifest()
+        manifest["segments"][0].update(
+            {
+                "motion_type": "video",
+                "motion_asset_path": "course-content/staging/C1-M1-L1/motion/seg-01_motion.mp4",
+                "motion_duration_seconds": 5.0,
+            }
+        )
+        guide = MODULE.generate_assembly_guide(
+            manifest,
+            "course-content/staging/C1-M1-L1/manifest.yaml",
+        )
+        assert "seg-01_motion.mp4" in guide
+        assert "video track" in guide
+
 
 class TestValidation:
     def test_validate_manifest_raises_for_missing_fields(self) -> None:
@@ -92,6 +108,16 @@ class TestValidation:
             MODULE.validate_manifest(manifest)
         except ValueError as exc:
             assert "missing required fields" in str(exc)
+        else:  # pragma: no cover
+            raise AssertionError("Expected validation failure")
+
+    def test_validate_manifest_requires_motion_asset_for_non_static_segments(self) -> None:
+        manifest = sample_manifest()
+        manifest["segments"][0]["motion_type"] = "video"
+        try:
+            MODULE.validate_manifest(manifest)
+        except ValueError as exc:
+            assert "motion_asset_path" in str(exc)
         else:  # pragma: no cover
             raise AssertionError("Expected validation failure")
 
@@ -155,3 +181,42 @@ segments:
         )
         MODULE.sync_approved_visuals_to_assembly_bundle(manifest_path, repo_root=repo)
         assert (vis / "a.png").read_bytes() == b"x"
+
+    def test_sync_copies_motion_assets_and_updates_manifest(self, tmp_path: Path) -> None:
+        repo = tmp_path
+        (repo / ".git").mkdir()
+        remote_visual = repo / "gary-export" / "png"
+        remote_visual.mkdir(parents=True)
+        (remote_visual / "1_Slide.png").write_bytes(b"png-bytes")
+        remote_motion = repo / "motion-src"
+        remote_motion.mkdir()
+        (remote_motion / "slide-01_motion.mp4").write_bytes(b"mp4-bytes")
+
+        bundle = repo / "assembly-bundle"
+        bundle.mkdir()
+        manifest_path = bundle / "manifest.yaml"
+        manifest_path.write_text(
+            """
+lesson_id: L1
+title: Test
+segments:
+  - id: seg-01
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-01.mp3
+    visual_file: gary-export/png/1_Slide.png
+    motion_type: video
+    motion_asset_path: motion-src/slide-01_motion.mp4
+    motion_duration_seconds: 5.0
+""".strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        summary = MODULE.sync_approved_visuals_to_assembly_bundle(manifest_path, repo_root=repo)
+        assert summary["motion_copies"]
+        copied = bundle / "motion" / "slide-01_motion.mp4"
+        assert copied.is_file()
+        assert copied.read_bytes() == b"mp4-bytes"
+
+        updated = MODULE.load_manifest(manifest_path)
+        assert updated["segments"][0]["motion_asset_path"] == "assembly-bundle/motion/slide-01_motion.mp4"

@@ -210,11 +210,21 @@ Visual_Standards:
   Background: "Clean, professional clinical or office environment"
   Lighting: "Natural or professional lighting setup"
   Framing: "Professional presentation framing"
+  Motion_Default: "Static holds remain the default visual treatment unless Gate 2M explicitly designates a slide for motion"
+  Motion_Use: "Use motion selectively for pedagogy or emphasis; avoid decorative motion that distracts from medical reasoning"
   
 Audio_Standards:
   Quality: "Studio sound enhancement via Descript"
   Pace: "Natural physician speaking pace, edited for efficiency"
   Captions: "Professional accuracy, synchronized timing"
+```
+
+### Motion Workflow Guidance (Kling + Manual Animation)
+```yaml
+Gate_2M_Policy: "Motion decisions happen only after the authorized winner deck exists"
+Silent_Video_Rule: "Kling clips are always silent; intentional audio remains owned by ElevenLabs and downstream composition"
+Narration_Motion_Alignment: "Motion should reinforce the narrated teaching point, not compete with it"
+Animation_Approval: "Manual animation imports require the same visual fidelity and accessibility standards as generated slides"
 ```
 
 ### ElevenLabs Voice Generation

@@ -1,9 +1,10 @@
 # Story 14.1: Motion Workflow Design & Contract Specification
 
 **Epic:** 14 — Motion-Enhanced Presentation Workflow
-**Status:** backlog
+**Status:** done
 **Sprint key:** `14-1-motion-workflow-design`
 **Added:** 2026-04-05
+**Validated:** 2026-04-05
 **Depends on:** Epic 13 (hard — visual reference injection mechanism). Extends architecture doc and agent contracts.
 
 ## Summary

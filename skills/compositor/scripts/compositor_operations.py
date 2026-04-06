@@ -38,6 +38,7 @@ def sync_approved_visuals_to_assembly_bundle(
     manifest_path: str | Path,
     *,
     visuals_subdir: str = "visuals",
+    motion_subdir: str = "motion",
     repo_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Copy segment ``visual_file`` assets next to the manifest and rewrite paths.
@@ -58,6 +59,7 @@ def sync_approved_visuals_to_assembly_bundle(
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     copies: list[dict[str, str]] = []
+    motion_copies: list[dict[str, str]] = []
     for segment in segments:
         rel_visual = segment.get("visual_file")
         if not rel_visual:
@@ -74,6 +76,29 @@ def sync_approved_visuals_to_assembly_bundle(
         if rel_visual != new_rel:
             copies.append({"segment": segment["id"], "from": rel_visual, "to": new_rel})
 
+        motion_path = segment.get("motion_asset_path")
+        motion_type = str(segment.get("motion_type") or "static").strip().lower()
+        if motion_type != "static" or motion_path:
+            if not motion_path:
+                raise ValueError(
+                    f"Segment {segment.get('id', '<unknown>')} missing motion_asset_path."
+                )
+            src_motion = (root / str(motion_path)).resolve()
+            if not src_motion.is_file():
+                raise FileNotFoundError(
+                    f"Motion asset not found for {segment.get('id')}: {src_motion}"
+                )
+            motion_dir = (manifest_path.parent / motion_subdir).resolve()
+            motion_dir.mkdir(parents=True, exist_ok=True)
+            dest_motion = motion_dir / src_motion.name
+            if dest_motion.resolve() != src_motion.resolve():
+                shutil.copy2(src_motion, dest_motion)
+            new_motion_rel = (dest_motion.relative_to(root)).as_posix()
+            if motion_path != new_motion_rel:
+                motion_copies.append(
+                    {"segment": segment["id"], "from": str(motion_path), "to": new_motion_rel}
+                )
+
     text = manifest_path.read_text(encoding="utf-8")
     for item in copies:
         old, new = item["from"], item["to"]
@@ -84,13 +109,26 @@ def sync_approved_visuals_to_assembly_bundle(
                 f"{old!r} appears {occurrences} times in {manifest_path} (expected 1)."
             )
         text = text.replace(old, new)
+    for item in motion_copies:
+        old, new = item["from"], item["to"]
+        occurrences = text.count(old)
+        if occurrences != 1:
+            raise ValueError(
+                "Refusing manifest edit: path "
+                f"{old!r} appears {occurrences} times in {manifest_path} (expected 1)."
+            )
+        text = text.replace(old, new)
     if copies:
+        manifest_path.write_text(text, encoding="utf-8")
+    elif motion_copies:
         manifest_path.write_text(text, encoding="utf-8")
 
     return {
         "manifest_path": str(manifest_path),
         "visuals_dir": str(dest_dir),
         "copies": copies,
+        "motion_dir": str((manifest_path.parent / motion_subdir).resolve()),
+        "motion_copies": motion_copies,
     }
 
 
@@ -147,6 +185,16 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
             raise ValueError(
                 f"Segment {segment.get('id', '<unknown>')} missing required fields: {', '.join(missing)}"
             )
+        motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
+        if motion_type != "static":
+            if not segment.get("motion_asset_path"):
+                raise ValueError(
+                    f"Segment {segment.get('id', '<unknown>')} missing required fields: motion_asset_path"
+                )
+            if not segment.get("motion_duration_seconds"):
+                raise ValueError(
+                    f"Segment {segment.get('id', '<unknown>')} missing required fields: motion_duration_seconds"
+                )
 
 
 def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
@@ -174,6 +222,9 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
                 "sfx_file": segment.get("sfx_file"),
                 "music": segment.get("music"),
                 "visual_mode": segment.get("visual_mode"),
+                "motion_type": segment.get("motion_type", "static"),
+                "motion_asset_path": segment.get("motion_asset_path"),
+                "motion_duration_seconds": segment.get("motion_duration_seconds"),
             }
         )
         current_start += narration_duration
@@ -206,6 +257,8 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
     for row in rows:
         lines.append(f"| Narration | A1 | `{row['id']}` | `{row['narration_file']}` |")
         lines.append(f"| Visual | V1 | `{row['id']}` | `{row['visual_file']}` |")
+        if row.get("motion_type") != "static" and row.get("motion_asset_path"):
+            lines.append(f"| Motion | V1 | `{row['id']}` | `{row['motion_asset_path']}` |")
         if row.get("sfx_file"):
             lines.append(f"| SFX | A3 | `{row['id']}` | `{row['sfx_file']}` |")
     lines.extend(
@@ -231,7 +284,6 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
             [
                 f"### {row['id']}",
                 f"- Start at `{format_timestamp(row['start'])}`",
-                f"- Place `{row['visual_file']}` on `V1`",
                 f"- Place `{row['narration_file']}` on `A1`",
                 f"- Set segment duration to `{row['narration_duration']:.2f}s`",
                 f"- Transition in/out: `{row['transition_in']}` / `{row['transition_out']}`",
@@ -239,6 +291,15 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
                 f"- Intent note: {behavioral_note(row.get('behavioral_intent'))}",
             ]
         )
+        if row.get("motion_type") != "static" and row.get("motion_asset_path"):
+            lines.append(
+                f"- Play `{row['motion_asset_path']}` on the video track for `{float(row['motion_duration_seconds']):.2f}s`, aligned to narration segment `{row['id']}`."
+            )
+            lines.append(
+                f"- Keep `{row['visual_file']}` available as the approved still reference/poster frame if needed."
+            )
+        else:
+            lines.append(f"- Place `{row['visual_file']}` on `V1`")
         if row["visual_mode"] == "static-hold":
             lines.append("- Hold the still visual for the full narration duration.")
         elif row["visual_duration"] != row["narration_duration"]:

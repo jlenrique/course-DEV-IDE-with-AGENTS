@@ -1,9 +1,10 @@
 # Story 14.4: Kira Pipeline Integration
 
 **Epic:** 14 — Motion-Enhanced Presentation Workflow
-**Status:** backlog
+**Status:** done
 **Sprint key:** `14-4-kira-pipeline-integration`
 **Added:** 2026-04-05
+**Validated:** 2026-04-05
 **Depends on:** Story 14.3 (motion decision point). Can parallel with Story 14.5.
 
 ## Summary

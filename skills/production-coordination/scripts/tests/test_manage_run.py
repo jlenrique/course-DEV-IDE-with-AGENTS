@@ -665,5 +665,98 @@ class TestDoubleDispatchFlag(unittest.TestCase):
             self.assertTrue(data["context_json"]["double_dispatch"])
 
 
+class TestMotionFlags(unittest.TestCase):
+    """Epic 14: motion run flags and context sidecar propagation."""
+
+    def test_create_with_motion_flags_persists_context_and_sidecar(self) -> None:
+        with TempDB() as db:
+            run_id = f"MOTION-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+                "--motion-enabled",
+                "--motion-budget-max-credits", "24",
+                "--motion-budget-model-preference", "pro",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertTrue(result["persisted"])
+
+            conn = sqlite3.connect(db.path)
+            row = conn.execute(
+                "SELECT context_json FROM production_runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            conn.close()
+            context = json.loads(row[0])
+            self.assertTrue(context["motion_enabled"])
+            self.assertEqual(context["motion_budget"]["max_credits"], 24.0)
+            self.assertEqual(context["motion_budget"]["model_preference"], "pro")
+
+            motion_plan = Path(result["context_paths"]["motion_plan"])
+            self.assertTrue(motion_plan.exists())
+            plan_data = json.loads(json.dumps(__import__("yaml").safe_load(motion_plan.read_text(encoding="utf-8"))))
+            self.assertTrue(plan_data["motion_enabled"])
+            self.assertEqual(plan_data["motion_budget"]["max_credits"], 24.0)
+
+    def test_motion_defaults_remain_off(self) -> None:
+        with TempDB() as db:
+            run_id = f"STATIC-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertTrue(result["persisted"])
+
+            conn = sqlite3.connect(db.path)
+            row = conn.execute(
+                "SELECT context_json FROM production_runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            conn.close()
+            context = json.loads(row[0])
+            self.assertFalse(context["motion_enabled"])
+            self.assertEqual(context["motion_budget"]["model_preference"], "std")
+
+    def test_ad_hoc_motion_run_uses_transient_motion_plan(self) -> None:
+        with TempDB() as db, tempfile.TemporaryDirectory() as rt:
+            run_id = f"MOTION-ADHOC-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "--runtime-dir", rt,
+                "create",
+                "--run-id", run_id,
+                "--mode", "ad-hoc",
+                "--course", "C1",
+                "--module", "M1",
+                "--motion-enabled",
+                "--motion-budget-max-credits", "12",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertFalse(result["persisted"])
+            motion_plan = Path(result["context_paths"]["motion_plan"])
+            self.assertTrue(str(motion_plan).startswith(rt))
+            self.assertTrue(motion_plan.exists())
+
+    def test_motion_enabled_requires_explicit_budget(self) -> None:
+        with TempDB() as db:
+            run_id = f"MOTION-NOBUDGET-{uuid.uuid4().hex[:10]}"
+            args = manage_run.build_parser().parse_args([
+                "--db", db.path,
+                "create",
+                "--run-id", run_id,
+                "--course", "C1",
+                "--module", "M1",
+                "--motion-enabled",
+            ])
+            result = manage_run.cmd_create(args)
+            self.assertEqual(result["code"], "MOTION_BUDGET_REQUIRED")
+            self.assertIn("motion_budget_max_credits", result["error"])
+
+
 if __name__ == "__main__":
     unittest.main()

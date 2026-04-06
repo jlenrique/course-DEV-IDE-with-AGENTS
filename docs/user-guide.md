@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; harmonized workflow template registry live; happy-path fully validated)
+**Last Updated:** 2026-04-05 | **Project Phase:** Complete (Epics 1-14 done; standard and motion workflow templates live)
 
 ---
 
@@ -88,9 +88,35 @@ Your Intent → Marcus Plans → Specialists Create → Fidelity + Quality Revie
 6. **Your review** — Marcus presents the work at a checkpoint gate. You approve, request changes, or redirect
 7. **Staging** — Drafts land in `course-content/staging/` for your edit and signoff
 8. **Promotion** — You (or Marcus at your direction) move approved content to `course-content/courses/`
-9. **Publishing** — Content is deployed to Canvas, CourseArc, or other platforms (some platform specialists are still on the roadmap; see [Tools in the Ecosystem](#tools-in-the-ecosystem))
+9. **Publishing** — Content is deployed to Canvas, CourseArc, or other platforms using the supported specialist or manual path for that platform (see [Tools in the Ecosystem](#tools-in-the-ecosystem))
 
 Gate order and automated assessment flow are summarized in [`docs/fidelity-gate-map.md`](fidelity-gate-map.md). Which role may judge what (orchestration, pedagogy, tool execution, fidelity) is summarized in [`docs/lane-matrix.md`](lane-matrix.md).
+
+### Workflow Templates
+
+Marcus now routes narrated production through two explicit workflow templates:
+
+- `narrated-deck-video-export`
+  - Standard narrated deck workflow
+  - Uses [production-prompt-pack-v4.1-narrated-deck-video-export.md](workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md)
+- `narrated-lesson-with-video-or-animation`
+  - Motion-enabled narrated workflow
+  - Uses [production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md](workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md)
+
+`DOUBLE_DISPATCH` is an optional branch inside either workflow. It does not create a third workflow family.
+
+### Narrated Workflow Templates
+
+Marcus selects between two narrated workflow templates:
+
+- `narrated-deck-video-export` for standard narrated slide production with static approved slide PNGs through Irene Pass 2
+- `narrated-lesson-with-video-or-animation` for motion-enabled narrated production with Gate 2M, motion generation/import, and Motion Gate before Irene Pass 2
+
+Prompt-pack family:
+- standard/non-motion runs use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- motion-enabled runs use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+
+`DOUBLE_DISPATCH` is an optional Gary-stage branch inside either workflow. Gary produces A/B variants, you select winners, and Marcus collapses the canonical deck before narration or motion proceeds.
 
 ### Production run authority (baton)
 
@@ -211,18 +237,29 @@ Before promoting content from staging:
 
 ### Narrated slide assembly (Descript)
 
+Current workflow family:
+- Standard narrated runs use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`.
+- Motion-enabled narrated runs use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
+- `DOUBLE_DISPATCH` is optional in either workflow and always collapses back to a single authorized winner deck in `authorized-storyboard.json`.
+- For the motion-enabled + double-dispatch happy path, use `tests/happy-path-simulation-motion-double-dispatch-20260405.md`.
+
 For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Happy-path walkthrough: user + Marcus + “X-ray” (planner / checklist)
 
-This section is **one coherent story**: a **narrated slide presentation exported as video** with **HTTPS-hosted custom images** on selected slides (literal cards), **creative** Gamma for the rest, **ElevenLabs** audio, then **compositor → Descript**. In the workflow template registry this path is `narrated-deck-video-export` (canonical, no aliases). The motion-enabled variant is `narrated-lesson-with-video-or-animation`. Use this walkthrough as (1) a **narrative walkthrough**, (2) a **trial-run planner**, and (3) a **step checklist**—same steps, three roles.
+This section is **one coherent story for the standard narrated deck workflow**: a **narrated slide presentation exported as video** with **HTTPS-hosted custom images** on selected slides (literal cards), **creative** Gamma for the rest, **ElevenLabs** audio, then **compositor → Descript**. In the workflow template registry this path is `narrated-deck-video-export` (canonical, no aliases), and it maps to `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`. The motion-enabled sibling path is `narrated-lesson-with-video-or-animation`, which maps to `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` and inserts Gate 2M, motion generation/import, and Motion Gate before Irene Pass 2. Use this walkthrough as (1) a **narrative walkthrough**, (2) a **trial-run planner**, and (3) a **step checklist**—same steps, three roles.
+
+If you enable motion for a narrated run:
+- Gate 2M happens after the authorized winner deck exists
+- motion generation/import and Motion Gate happen before Irene Pass 2
+- `DOUBLE_DISPATCH`, if enabled, still happens earlier as a Gary-only branch before winner authorization
 
 **Is this clear and doable?** Yes: it matches how the repo is designed (Irene two-pass, mixed-fidelity Gamma + `diagram_cards`, manifest SSOT, compositor bundle). **What to watch anyway:**
 
 - **Chat vs state:** Marcus should persist mode via `manage_mode.py` / `mode_state.json`, not only say “we’re in ad-hoc” in chat.
 - **New Cursor thread:** Paste **run id** + lesson slug + paths so context isn’t lost.
 - **Two Gamma jobs** (creative + literal): ensure exports are **mapped to `card_number`** and `gary_slide_output[].file_path` is real before Pass 2.
-- **Costs:** Gamma / ElevenLabs / Kling spend ramps **after Gate 3**—that gate protects budget.
+- **Costs:** In the standard workflow, meaningful spend ramps after Gate 3 when ElevenLabs and downstream assembly begin. In the motion-enabled workflow, motion spend is introduced earlier via Gate 2M and Motion Gate controls.
 - **All-literal decks** with only `diagram_cards`: confirm `execute_generation` path with devs (mixed creative+literal is the well-wired happy path here).
 - **URLs:** Custom images must pass **`validate_image_url`** (HTTPS, image content-type)—see Marcus **Imagine handoff** in `skills/bmad-agent-marcus/references/conversation-mgmt.md`.
 
@@ -240,7 +277,7 @@ This section is **one coherent story**: a **narrated slide presentation exported
 | Phase | Blueprint you own | Open / edit these (typical names) | You are checking |
 |-------|-------------------|-------------------------------------|------------------|
 | **Irene Pass 1** (before Gary) | Lesson plan + **slide brief** | `lesson-plan.md`, `slide-brief.md` under lesson staging | LOs, sequence, **which slides are `creative` vs `literal-text` / `literal-visual`**, where custom URLs will land, voice of content |
-| **Irene Pass 2** (after Gate 2, before heavy audio/video spend) | **Paired** narration script + **segment manifest** | `narration-script.md`, `segment-manifest.yaml` | Spoken copy matches **approved slide PNGs** (including embedded custom art), segment IDs line up, `visual_mode` / `music` / `sfx` intent, Kling segments if any |
+| **Irene Pass 2** (after Gate 2, before heavy audio/composition spend) | **Paired** narration script + **segment manifest** | `narration-script.md`, `segment-manifest.yaml` | Spoken copy matches **approved slide PNGs** (including embedded custom art), segment IDs line up, and downstream audio/composition intent is coherent. In the motion-enabled workflow, motion fields are hydrated from `motion_plan.yaml` before this phase. |
 
 Always edit **script + manifest together** so segment IDs and copy do not drift.
 The Gate 4 fidelity contract treats them as a pair too, so any Pass 2 template change must keep both contract references aligned before the run proceeds.
@@ -263,7 +300,7 @@ course-content/staging/
         ├── DESCRIPT-ASSEMBLY-GUIDE.md
         ├── audio/
         ├── captions/
-        ├── video/                                  # optional Kling MP4s
+        ├── video/                                  # optional motion assets for motion-enabled runs only
         └── visuals/                                # after compositor sync-visuals: slide stills localized here
 ```
 
@@ -281,7 +318,7 @@ The **model prompts** for each step (what to type to Marcus) are in the next sub
 
 | # | You ↔ Marcus (summary) | X-ray — APP behind the scenes | Review ✓ (planner tick) | Paths / artifacts (default mode) |
 |---|-------------------------|----------------------------------|-------------------------|-----------------------------------|
-| 0 | Open the run: mode, run id, pre-flight | `read-mode-state.py`, `manage_mode.py` → `mode_state.json`; pre-flight skill checks MCP/API | ☐ Mode is default (or ad-hoc if you intend trial scratch) ☐ Tools green for Gamma, EL, Kling | `state/runtime/mode_state.json` |
+| 0 | Open the run: mode, run id, pre-flight | `read-mode-state.py`, `manage_mode.py` → `mode_state.json`; pre-flight skill checks MCP/API | ☐ Mode is default (or ad-hoc if you intend trial scratch) ☐ Tools green for Gamma and EL; include Kling only if this is the motion-enabled workflow | `state/runtime/mode_state.json` |
 | 1 | Answer fidelity questions (literal slides, exact text) | Marcus fills `fidelity_guidance` for Irene; tracked mode may stage local preintegration PNGs later, ad-hoc still requires pre-hosted URLs | ☐ You listed slides needing **literal** treatment ☐ For tracked mode: local source PNGs identified; for ad-hoc: HTTPS URLs ready before Gary | Optional PNG drop: `course-content/staging/rebranded-assets/` |
 | 2 (opt.) | Optional source pull | Source wrangler → Notion client | ☐ Bundle usable for Irene | `source-bundles/APP-RUN-C1M3L2-HTN-20260330/extracted.md` |
 | 3 | Kick off Irene Pass 1; review outputs | Irene Pass 1: `bmad-agent-content-creator` | **☐ PHASE 1 REVIEW:** `lesson-plan.md` + `slide-brief.md` — LOs, order, **fidelity per slide** | `…/C1-M3-L2-ambulatory-bp/lesson-plan.md`, `slide-brief.md` |
@@ -291,10 +328,10 @@ The **model prompts** for each step (what to type to Marcus) are in the next sub
 | 6 | **HIL Gate 2** — approve deck | PDF for human review per Gary SKILL; PNG for pipeline | ☐ Visuals on-brand ☐ Literal slides match supplied art ☐ Order matches lesson | Slide PNGs under `gamma-export/` (representative) |
 | 7 | Irene Pass 2 after Gate 2 | Irene sees **`gary_slide_output`** and narrates from approved local slide PNGs; any `literal_visual_publish` receipt is provenance only | **☐ PHASE 2 REVIEW:** `narration-script.md` + `segment-manifest.yaml` — copy matches **approved** slides | Same lesson folder |
 | 7B | Storyboard review with script context | Marcus regenerates storyboard using `gary-dispatch-result.json` + `segment-manifest.yaml` before audio finalization | ☐ Storyboard row order and script alignment approved explicitly | `storyboard/storyboard.json`, `storyboard/index.html`, `authorized-storyboard.json` |
-| 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before EL + Kling spend | ☐ Gate 3 sign-off | — |
+| 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before ElevenLabs and downstream assembly spend | ☐ Gate 3 sign-off | — |
 | 9 | Confirm fidelity + quality runs (or ask Marcus to run them) | `bmad-agent-fidelity-assessor`, `bmad-agent-quality-reviewer`, optional `quality-control` scripts, sensory bridges | ☐ No critical blockers (or you accept override) | Reports per governance; ad-hoc: transient observability |
 | 10 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
-| 11 | Delegate Kling for video segments (if any) | `kling_operations.py`; durations follow narration | ☐ MP4 paths on manifest | `assembly-bundle/video/` |
+| 11 | Motion-enabled extension only | Use the motion-specific workflow template and prompt pack instead of inserting Kling into the standard path here | ☐ Motion handled via Gate 2M → Motion Gate before Irene Pass 2 | `motion_plan.yaml`, motion asset paths |
 | 12 | Quinn-R pre-composition (or ask Marcus to invoke) | `review_pass: pre-composition` | ☐ Pre-composition OK | — |
 | 13 | Run compositor bundle | `compositor_operations.py` | ☐ `visuals/` populated ☐ Guide readable | `assembly-bundle/` |
 | 14 | Descript assembly (you) | Manual; follow `DESCRIPT-ASSEMBLY-GUIDE.md` | ☐ Final export matches intent | User-chosen export location |
@@ -309,7 +346,7 @@ Replace bracketed bits with your lesson; keep **run id** and **paths** consisten
 Marcus, I’m starting a production run. Use default mode and the draft preset unless I say otherwise.
 Run id: APP-RUN-C1M3L2-HTN-20260330. Lesson folder slug: C1-M3-L2-ambulatory-bp.
 Topic: ambulatory BP patterns in resistant hypertension for advanced learners.
-Please persist mode with manage_mode if needed, confirm mode_state.json, run pre-flight for Gamma, ElevenLabs, and Kling, and report status.
+Please persist mode with manage_mode if needed, confirm mode_state.json, run pre-flight for Gamma and ElevenLabs, and include Kling only if this run is using the motion-enabled workflow template. Then report status.
 Also run `py -3.13 -m scripts.utilities.venv_health_check`; if `overall_status` is `fail`, stop and report `one_step_repair` before any delegation.
 ```
 
@@ -363,13 +400,13 @@ Gate 2: I’ve reviewed the PDF and PNGs. APPROVED — slides match style bible;
 **Step 7 — Irene Pass 2**
 
 ```
-Marcus, delegate Irene Pass 2 using the approved gary_slide_output. If Gary returned literal_visual_publish, pass it as provenance only; Irene should still ground narration on the approved slide PNGs in gary_slide_output. Write narration-script.md and segment-manifest.yaml in course-content/staging/C1-M3-L2-ambulatory-bp/, paired by segment id. Include [any Kling video segments / music-SFX intent] per manifest template.
+Marcus, delegate Irene Pass 2 using the approved gary_slide_output. If Gary returned literal_visual_publish, pass it as provenance only; Irene should still ground narration on the approved slide PNGs in gary_slide_output. Write narration-script.md and segment-manifest.yaml in course-content/staging/C1-M3-L2-ambulatory-bp/, paired by segment id. Include downstream audio and composition intent per the manifest template. If this is a motion-enabled run, follow the separate motion workflow template and hydrate motion fields from motion_plan.yaml before Pass 2.
 ```
 
 **Step 8 — HIL Gate 3 (script + manifest)**
 
 ```
-Gate 3: I’ve reviewed narration-script.md and segment-manifest.yaml together. APPROVED — proceed to Vera, Quinn-R, then ElevenLabs and Kling per the locked manifest.
+Gate 3: I’ve reviewed narration-script.md and segment-manifest.yaml together. APPROVED — proceed to Vera, Quinn-R, then ElevenLabs and downstream assembly per the locked manifest.
 ```
 *Or:* `Gate 3: REVISION — [segment ids and edits]. Update both files before audio generation.`
 
@@ -391,13 +428,13 @@ Marcus, run the pipeline fidelity and quality checks on the current artifacts pe
 Marcus, delegate the Voice Director to run manifest-driven narration (and any specified SFX/music) from elevenlabs-audio, writing outputs under course-content/staging/C1-M3-L2-ambulatory-bp/assembly-bundle/ and updating segment-manifest.yaml with narration_duration, narration_file, and narration_vtt paths.
 ```
 
-**Step 11 — Kling (if manifest has video segments)**
+**Step 11 — Motion-enabled extension only**
 
 ```
-Marcus, delegate Kira for every segment with visual_mode video per the manifest, using narration_duration for timing. Save silent MP4s under assembly-bundle/video/ and write back visual_file and visual_duration on the manifest.
+For motion-enabled runs, do not insert Kling here into the standard path. Use the motion-specific prompt pack and execute Gate 2M → motion generation/import → Motion Gate before Irene Pass 2. The standard narrated deck workflow skips this step.
 ```
 
-*If no video segments:* skip or say `No Kling segments in this run — skip step 11.`
+If this is the standard narrated deck workflow: skip this step.
 
 **Step 12 — Quinn-R pre-composition**
 
@@ -512,7 +549,7 @@ If revision, update script and manifest together before audio/video generation.
 **Prompt 13 — Fidelity + quality before spend**
 
 ```
-Marcus, run Vera then Quinn-R on current artifacts and summarize blockers before ElevenLabs/Kling spend.
+Marcus, run Vera then Quinn-R on current artifacts and summarize blockers before ElevenLabs and downstream assembly spend.
 ```
 
 **Prompt 14 — ElevenLabs execution**
@@ -521,10 +558,10 @@ Marcus, run Vera then Quinn-R on current artifacts and summarize blockers before
 Marcus, run manifest-driven ElevenLabs generation and update segment-manifest.yaml with narration_duration, narration_file, and narration_vtt.
 ```
 
-**Prompt 15 — Kling execution (if any video segments)**
+**Prompt 15 — Motion-enabled workflow branch**
 
 ```
-Marcus, for all segments marked visual_mode video, run Kling with timing tied to narration_duration and write visual_file + visual_duration back to manifest.
+If this lesson requires motion, switch to the motion-enabled workflow template and use the dedicated motion prompt pack. Do not branch from the standard narrated deck workflow here.
 If no video segments exist, explicitly confirm skip.
 ```
 
@@ -548,7 +585,7 @@ CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output
 ```
 
 **Trial-run checklist (copy — same steps as # column)**  
-☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Kling (if any) ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
+☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Motion branch only if using the motion workflow template ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
 
 **Trial-run running log (in progress)**
 
@@ -565,6 +602,11 @@ CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output
 
 ## Tools in the Ecosystem
 
+Current support note:
+- Treat the table below as capability-oriented, not a backlog snapshot.
+- Canvas, Qualtrics, and Canva all have usable repo paths today, but the exact specialist/script/manual route still depends on your institution and credentials.
+- Ask Marcus which path is currently approved for your run before you begin platform deployment or assessment work.
+
 You don't need to know how these tools work — Marcus and the specialist agents handle them. But here's what's available:
 
 | What | Tool | How It's Used |
@@ -572,17 +614,17 @@ You don't need to know how these tools work — Marcus and the specialist agents
 | **Slides/Presentations** | Gamma | AI-generated professional slides (specialist **Gary**) |
 | **Voiceover/Audio** | ElevenLabs | Natural-sounding narration synthesis (Voice Director specialist) |
 | **Video** | Kling | Text/image-to-video and related flows (specialist **Kira**) |
-| **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes (API + MCP in repo; **Canvas specialist agent** story is **deferred** on the current roadmap — workflows may use scripts or manual steps until that ships) |
-| **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation (**Qualtrics specialist** story **deferred**) |
+| **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes (API + MCP in repo; use Marcus to route through the current Canvas path for your institution) |
+| **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation (availability depends on the active specialist/manual path in your environment) |
 | **Course Dev Notes** | Notion | Pull reference materials into production context (source wrangler + API) |
 | **Source Files** | Box Drive | Access locally synced cloud files |
-| **Design/Graphics** | Canva | Design-guidance pattern; full programmatic specialist **deferred** (API limits) |
+| **Design/Graphics** | Canva | Design-guidance and Canva-specific workflow support; some programmatic paths still depend on current API/MCP constraints |
 | **Composition** | Descript (manual) | Final assembly of narrated decks; compositor skill produces assembly guides and syncs stills |
 | **Hosting** | Panopto | Video hosting (API client in repo; credential-dependent) |
 
 Some tools (Vyond, CourseArc, Articulate) require manual operation — Marcus provides detailed specs and you execute in the tool's own interface.
 
-**Roadmap note:** Epic 3 still includes Canvas, Qualtrics, and Canva specialist agents, but those stories are **deferred** while governance (**Epic 4A**) and other foundations proceed. Ask Marcus what path is supported today for your institution.
+**Support note:** Tool support varies by current specialist coverage, API credentials, and MCP constraints. Ask Marcus which path is active today for your institution before starting a production run.
 
 ---
 

@@ -29,7 +29,7 @@ def load_manifest(path: Path) -> dict[str, Any]:
 
 
 def ordered_slide_ids(manifest: dict[str, Any]) -> list[str]:
-    slides = manifest.get("slides", [])
+    slides = _ordered_authorized_slides(manifest)
     out: list[str] = []
     for item in slides:
         if not isinstance(item, dict):
@@ -48,6 +48,62 @@ def _selection_pairs_from_manifest(manifest: dict[str, Any]) -> list[dict[str, A
     if not isinstance(pairs, list):
         return []
     return [p for p in pairs if isinstance(p, dict)]
+
+
+def _ordered_authorized_slides(
+    manifest: dict[str, Any],
+    selection_map: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Return canonical deck order, collapsing double-dispatch pairs to winners."""
+    slides = manifest.get("slides", [])
+    if not isinstance(slides, list):
+        return []
+
+    selection_map = selection_map or {}
+    pairs = _selection_pairs_from_manifest(manifest)
+    if not pairs:
+        return [item for item in slides if isinstance(item, dict)]
+
+    selected_by_key: dict[str, str] = {}
+    rows_by_pair_variant: dict[tuple[str, str], dict[str, Any]] = {}
+    for pair in pairs:
+        key = str(pair.get("card_number") or pair.get("slide_id") or "").strip()
+        if not key:
+            continue
+        selected_variant = selection_map.get(key) or str(pair.get("selected_variant") or "").strip().upper()
+        if selected_variant in {"A", "B"}:
+            selected_by_key[key] = selected_variant
+        variants = pair.get("variants")
+        if isinstance(variants, dict):
+            for variant in ("A", "B"):
+                row = variants.get(variant)
+                if isinstance(row, dict):
+                    rows_by_pair_variant[(key, variant)] = row
+
+    ordered: list[dict[str, Any]] = []
+    emitted_pair_keys: set[str] = set()
+    for item in slides:
+        if not isinstance(item, dict):
+            continue
+        variant = str(item.get("dispatch_variant") or "").strip().upper()
+        if variant in {"A", "B"}:
+            pair_key = str(item.get("card_number") or item.get("slide_id") or "").strip()
+            if not pair_key or pair_key in emitted_pair_keys:
+                continue
+            selected_variant = selected_by_key.get(pair_key)
+            if selected_variant not in {"A", "B"}:
+                continue
+            winner = rows_by_pair_variant.get((pair_key, selected_variant))
+            if winner is None:
+                winner = item if variant == selected_variant else None
+            if isinstance(winner, dict):
+                ordered.append(winner)
+                emitted_pair_keys.add(pair_key)
+            continue
+
+        ordered.append(item)
+
+    return ordered
 
 
 def _normalize_selections(path: Path) -> dict[str, str]:
@@ -113,11 +169,6 @@ def main() -> int:
             return 1
 
         manifest = load_manifest(args.manifest)
-        slide_ids = ordered_slide_ids(manifest)
-        if not slide_ids:
-            print("error: manifest contains no slide_id entries", file=sys.stderr)
-            return 2
-
         selection_pairs = _selection_pairs_from_manifest(manifest)
         selection_map: dict[str, str] = {}
         if args.selections is not None:
@@ -125,6 +176,16 @@ def main() -> int:
                 print(f"error: selections file not found: {args.selections}", file=sys.stderr)
                 return 2
             selection_map = _normalize_selections(args.selections)
+
+        authorized_slides = _ordered_authorized_slides(manifest, selection_map)
+        slide_ids = [
+            str(item.get("slide_id")).strip()
+            for item in authorized_slides
+            if isinstance(item, dict) and isinstance(item.get("slide_id"), str) and str(item.get("slide_id")).strip()
+        ]
+        if not slide_ids:
+            print("error: manifest contains no authorized slide_id entries", file=sys.stderr)
+            return 2
 
         selection_metadata: list[dict[str, Any]] = []
         if selection_pairs:
@@ -156,6 +217,17 @@ def main() -> int:
             "run_id": args.run_id,
             "authorized_at_utc": datetime.now(timezone.utc).isoformat(),
             "slide_ids": slide_ids,
+            "authorized_slides": [
+                {
+                    "slide_id": item.get("slide_id"),
+                    "card_number": item.get("card_number"),
+                    "dispatch_variant": item.get("dispatch_variant"),
+                    "file_path": item.get("file_path"),
+                    "source_ref": item.get("source_ref"),
+                }
+                for item in authorized_slides
+                if isinstance(item, dict)
+            ],
             "source_manifest": args.manifest.resolve().as_posix(),
         }
         if selection_metadata:

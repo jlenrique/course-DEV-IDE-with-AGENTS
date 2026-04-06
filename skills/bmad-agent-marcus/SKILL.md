@@ -143,6 +143,14 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
    - If `--output` already exists, the script **exits with error** and does not overwrite.
 
+6. **Motion-enabled runs only:** After `authorized-storyboard.json` exists and `motion_enabled: true`, Marcus treats the authorized winner deck as the source of truth for **Gate 2M**.
+
+   - Build the run-scoped motion plan from the authorized deck, not from raw Gary output and not from a future segment manifest.
+   - Persist Gate 2M decisions in `context_paths.motion_plan` (`motion_plan.yaml`) keyed by `slide_id`.
+   - Reject any Gate 2M payload that references unknown slide IDs; do not silently drop stale designation keys.
+   - `motion_enabled` is the authoritative Epic 14 activation switch. The workflow variant and effective content type are derived from that flag during production-plan generation; they do not independently authorize motion work.
+   - If the production plan started from `narrated-deck-video-export`, use `generate-production-plan.py --motion-enabled` to promote the workflow to the motion variant (`gate-2 -> gate-2m -> motion-generation -> motion-gate -> Irene Pass 2`).
+
 Optional: `--strict` on `generate` exits non-zero when any slide has a **missing** local asset (storyboard files are still written).
 
 **Roadmap:** Follow-on expansion and governance wiring continue in `_bmad-output/implementation-artifacts/sb-1-evolving-lesson-storyboard-run-view.md` (Story **SB.1**, Epic **SB**).
@@ -167,14 +175,14 @@ Optional: `--strict` on `generate` exits non-zero when any slide has a **missing
 | Content Domain | Target Agent | Status | Style Bible Context Passed |
 |----------------|-------------|--------|---------------------------|
 | Instructional design, Pass 1 (lesson plan + slide brief) | `content-creator` (Irene) | active | Learning objectives, Bloom's level, content type, module/lesson, user constraints |
-| Instructional design, Pass 2 (narration script + segment manifest) | `content-creator` (Irene) | active | Same + approved `gary_slide_output` (PNG paths + visual descriptions); Irene generates/refreshed `perception_artifacts` inline from those PNGs |
+| Instructional design, Pass 2 (narration script + segment manifest) | `content-creator` (Irene) | active | Same + approved `gary_slide_output` (PNG paths + visual descriptions); for motion-enabled runs also pass `motion_enabled` and `context_paths.motion_plan` so Irene hydrates manifest motion fields and returns motion perception confirmations |
 | Slide/presentation generation | `gamma-specialist` (Gary) | active | Color palette, typography, visual hierarchy; Gary presents theme/template options before generating and may stage tracked-mode literal-visual source assets into managed Git-host storage before dispatch |
-| Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, segment manifest; Kira always produces silent video |
+| Educational video generation, B-roll, concept animation, transitions | `kling-specialist` (Kira) | active | Visual tone, color palette, source assets, Gate 2M motion-plan rows, and segment manifest; Kira always produces silent video |
 | Voice synthesis, narration, SFX, music | `elevenlabs-specialist` | active | Voice/tone standards, segment manifest |
 | Animation storyboard and build guidance (manual-tool) | `vyond-specialist` | active (Story 5.1) | Character style, scene rhythm, instructional emphasis, accessibility constraints |
 | Bespoke scientific/medical image prompting (manual-tool) | `midjourney-specialist` | active (Story 5.1) | Visual tone, realism constraints, style references, prohibited artifacts |
 | Storyline/Rise interaction authoring guidance (manual-tool) | `articulate-specialist` | active (Story 5.1) | Interaction rubric, branching criteria, remediation rules, SCORM standards |
-| Descript composition assembly guide | `compositor` | active | Completed segment manifest path |
+| Descript composition assembly guide | `compositor` | active | Completed segment manifest path with still and motion asset references |
 | Fidelity verification — G0 (source bundle completeness) | `fidelity-assessor` (Vera) | active | Gate, bundle dir, source material paths, fidelity contracts path, run mode. See `./references/conversation-mgmt.md` for envelope spec. |
 | Fidelity verification — G1 (lesson plan vs. source bundle) | `fidelity-assessor` (Vera) | active | Gate, lesson plan path, bundle dir. Vera runs BEFORE Quinn-R — fidelity is a precondition for quality. |
 | Fidelity verification — G2 (slide brief vs. lesson plan) | `fidelity-assessor` (Vera) | active | Gate, slide brief path, lesson plan path. |

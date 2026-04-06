@@ -39,6 +39,12 @@ segments:
     music: enum             # duck | swell | out | continue | null
     transition_in: enum     # fade | cross-dissolve | cut | none
     transition_out: enum    # fade | cross-dissolve | cut | none
+    # ── Visual references from Irene Pass 2 (Story 13.3) ──
+    visual_references:               # list of visual elements referenced in narration
+      - element: string              # what is referenced (e.g., "comparison timeline")
+        location_on_slide: string    # spatial description (e.g., "left panel")
+        narration_cue: string        # exact narration phrase that references this element
+        perception_source: string    # slide_id from perception_artifacts
     # ── Written back by ElevenLabs agent ──
     narration_duration: float | null    # seconds
     narration_file: string | null       # relative path, e.g., "course-content/staging/C1-M1-L3/audio/seg-01.mp3"
@@ -56,6 +62,27 @@ segments:
 ---
 
 ## Field Reference
+
+### Epic 14 Motion Addendum
+
+Add these fields to each segment when the run uses the motion-enhanced pipeline:
+
+```yaml
+motion_type: static | video | animation
+motion_asset_path: string | null
+motion_source: kling | manual | null
+motion_duration_seconds: float | null
+motion_brief: string | null
+motion_status: pending | generated | imported | approved | null
+```
+
+Default behavior remains additive and backward compatible:
+- `motion_type: static`
+- `motion_asset_path: null`
+- `motion_source: null`
+- `motion_duration_seconds: null`
+- `motion_brief: null`
+- `motion_status: null`
 
 ### `visual_mode` Values
 
@@ -83,6 +110,24 @@ segments:
 | `out` | Music fades out for the segment |
 | `continue` | Continue previous music behavior unchanged |
 | `null` | No music for this segment |
+
+### `motion_type` Values
+
+| Value | Meaning | Motion asset expectation |
+|-------|---------|--------------------------|
+| `static` | Existing still-only pipeline | `motion_asset_path: null` |
+| `video` | Kling/Kira-generated clip | approved video file required before Irene Pass 2 |
+| `animation` | Manually produced animation clip | approved video file required before Irene Pass 2 |
+
+### `motion_status` Values
+
+| Value | Meaning |
+|-------|---------|
+| `pending` | Gate 2M designated, asset not ready yet |
+| `generated` | Kling generated a candidate clip |
+| `imported` | User imported a manual animation file |
+| `approved` | Motion Gate approved the asset for Irene Pass 2 |
+| `null` | Static segment, no motion lifecycle |
 
 ---
 
@@ -239,6 +284,9 @@ segments:
 - `transition_in`/`transition_out` per segment — editing instructions
 - `music` cues — ducking/swelling instructions
 
+Motion-aware compositor note:
+- When `motion_type != static`, compositor should use `motion_asset_path` and `motion_duration_seconds` as the assembly source for that segment instead of treating the segment as a still-only hold.
+
 **Quinn-R reads (pre-composition validation):**
 - `narration_duration` — validates WPM (130-170), checks monotonicity in VTT
 - `visual_duration` vs `narration_duration` — validates ±0.5s tolerance
@@ -255,6 +303,8 @@ segments:
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment
 - For `static-hold` segments referencing Gary PNGs: populate `visual_file` with the Gary-provided path from `gary_slide_output` immediately — don't leave it null
+- Default every segment to `motion_type: static` unless Gate 2M explicitly designates otherwise
+- For `motion_type != static`, leave `motion_asset_path` null until the motion asset is generated/imported and approved
 - Never replace `visual_file` with Git-host source URLs from `literal_visual_publish`; that receipt is provenance only, while composition uses approved local slide exports
 - Leave ElevenLabs and Kira write-back fields (`narration_duration`, `narration_file`, etc.) as `null` — those agents populate them
 - Save to `course-content/staging/{lesson_id}/manifest.yaml`

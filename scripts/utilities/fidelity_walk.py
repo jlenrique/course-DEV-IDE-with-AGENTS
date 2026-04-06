@@ -174,18 +174,33 @@ CROSS_CUTTING_SPECS: tuple[CrossCuttingSpec, ...] = (
 ANTI_DRIFT_SPECS: tuple[AntiDriftSpec, ...] = (
     AntiDriftSpec(
         "Prompt 6B in prompt pack",
-        "docs/workflow/production-prompt-pack-v4.1.md",
+        "docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md",
         "## 6B) Literal-Visual Operator Build + Confirmation",
     ),
     AntiDriftSpec(
         "Storyboard A in prompt pack",
-        "docs/workflow/production-prompt-pack-v4.1.md",
+        "docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md",
         "Required HIL review (Storyboard A)",
     ),
     AntiDriftSpec(
         "Storyboard B in prompt pack",
-        "docs/workflow/production-prompt-pack-v4.1.md",
+        "docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md",
         "Required HIL review (Storyboard B",
+    ),
+    AntiDriftSpec(
+        "Gate 2M in motion prompt pack",
+        "docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md",
+        "## 7D) Gate 2M Motion Designation",
+    ),
+    AntiDriftSpec(
+        "Motion Gate in motion prompt pack",
+        "docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md",
+        "## 7F) Motion Gate",
+    ),
+    AntiDriftSpec(
+        "Winner authorization in motion prompt pack",
+        "docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md",
+        "Motion planning and Irene Pass 2 must consume the authorized winner deck",
     ),
     AntiDriftSpec(
         "Gate 6B in operator card",

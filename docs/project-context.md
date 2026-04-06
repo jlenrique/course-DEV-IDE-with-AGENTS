@@ -1,9 +1,11 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (legacy epics complete, new feature epics in backlog)
-**Architecture Status:** 14 Epics (12 DONE + 2 in backlog: Epic 13 visual-aware Irene, Epic 14 motion workflow), **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
-**Implementation Status:** Epics 1-12 + SB all COMPLETE (52 stories). **Epics 13-14 IN BACKLOG** (10 stories): Epic 13 Visual-Aware Irene Pass 2 Scripting (3 stories), Epic 14 Motion-Enhanced Presentation Workflow (7 stories). **Next focus:** Epic 13 implementation (sequencing: 13 → 14). Production prompt pack bumped to v4.1 with double-dispatch support.
+**Phase:** 4-Implementation (all planned epics complete)
+**Architecture Status:** 14 Epics complete, **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
+**2026-04-05 Update:** Epics 13 and 14 are now complete, tested, and internally reviewed. Production prompt packs now split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs. `DOUBLE_DISPATCH` remains an inline branch in either pack.
+**Current Implementation Status:** Use the dated update above as the source of truth for epic completion and prompt-pack naming; the detailed historical implementation notes below remain as project chronology.
+**Implementation Status:** Epics 1-14 + SB all COMPLETE. Epic 13 visual-aware Irene Pass 2 and Epic 14 motion workflow are implemented, tested, and internally reviewed. Production prompt packs now split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs.
 
 ## Purpose
 

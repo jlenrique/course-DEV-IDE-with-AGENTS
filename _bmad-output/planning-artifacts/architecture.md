@@ -20,6 +20,14 @@ date: 'March 25, 2026'
 
 _This document builds collaboratively through step-by-step discovery. Sections are appended as we work through each architectural decision together._
 
+## Current-State Addendum (2026-04-05)
+
+- Epics 13 and 14 are now implemented and validated in runtime, not backlog-only design.
+- Narrated workflow documentation now uses a prompt-pack family:
+  - `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs
+  - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs
+- `DOUBLE_DISPATCH` remains a bounded Gary-stage branch inside either narrated workflow rather than a separate workflow family.
+
 ## Project Context Analysis
 
 ### Requirements Overview
@@ -641,6 +649,8 @@ _Decisions from Party Mode session: `_bmad-output/brainstorming/party-mode-compo
 
 ### Pipeline Dependency Graph
 
+Standard narrated workflow (`motion_enabled: false`):
+
 ```
 Marcus -> Irene Pass 1: Lesson Plan + Slide Brief
     │
@@ -655,9 +665,7 @@ Marcus -> Irene Pass 2: Narration Script + Segment Manifest
     ▼  [HIL Gate 3 via Marcus: Review script & manifest]
     │
 Marcus -> ElevenLabs Agent: narration MP3 + VTT + SFX + music
-    │        │  (writes durations and voice-specific outputs back to manifest)
-    │        ▼
-Marcus -> Kira: silent video clips (only after ElevenLabs writes durations)
+    │  (writes durations and voice-specific outputs back to manifest)
     │
     ▼  [Marcus -> Quinn-R: pre-composition validation]
     │
@@ -672,13 +680,23 @@ Marcus -> Compositor Skill: generates Descript Assembly Guide
 Done: asset ready for Canvas deployment
 ```
 
+Motion-enabled sibling workflow (`motion_enabled: true`) inserts:
+
+```text
+Gate 2
+-> Gate 2M (motion designation)
+-> motion generation/import
+-> Motion Gate
+-> Irene Pass 2
+```
+
 ### Segment Manifest — Data Backbone
 
 The **segment manifest** (YAML) is the single source of truth for a lesson's multimedia production. Produced by Irene in Pass 2, consumed and written back to by all downstream agents, with Marcus always brokering the handoff between stages.
 
 - **Irene writes:** `narration_text`, `voice_id`, `visual_cue`, `visual_mode`, `visual_source`, `sfx`, `music`, `transition_in/out`; populates `visual_file` for Gary's slides immediately
 - **ElevenLabs writes back:** `narration_duration`, `narration_file`, `narration_vtt`, `sfx_file`
-- **Kira writes back:** `visual_file`, `visual_duration` (for kira-sourced segments)
+- **Motion workflow writes back before Pass 2:** approved motion asset paths, motion source, and motion status via `motion_plan.yaml` hydration
 - **Compositor reads:** complete manifest → generates Descript Assembly Guide
 
 Path: `course-content/staging/{lesson_id}/manifest.yaml`
@@ -700,7 +718,7 @@ Human opens Descript, follows the guide, tweaks, exports final MP4 + VTT.
 
 - **Kling always produces silent video** — `sound-off`; Kling's native audio is atmospheric and uncontrollable
 - **ElevenLabs owns all intentional audio** — narration, SFX, music; no exceptions
-- **Narration-paced video** — audio drives timing; Kira generates clips to match narration durations
+- **Narration and motion alignment** — motion-enabled runs approve motion assets before Irene Pass 2; downstream composition aligns those approved assets with narration using manifest and motion-plan fields
 - **Narration WPM target:** 130-170 words per minute
 
 ### Seven Instructional Use Cases
@@ -709,7 +727,7 @@ All converge into the same pipeline and Descript workflow:
 
 | # | Use Case | Audio Profile | Visual Profile |
 |---|----------|--------------|----------------|
-| 1 | Narrated slide deck | Narration-paced | Static PNGs + optional Kira animation |
+| 1 | Narrated slide deck | Narration-paced | Static PNGs by default; optional motion-enabled sibling workflow |
 | 2 | Dialogue / debate | Multi-voice dialogue | Conversation B-roll, angle cuts |
 | 3 | Step-by-step walkthrough | Narration with pause beats | Sequential step visuals |
 | 4 | Case study narrative | Continuous narration + music | Varied visual sequence |
@@ -723,8 +741,32 @@ All converge into the same pipeline and Descript workflow:
 |------|--------|---------|------------------------|
 | 1 | After Irene P1, before Gary | Lesson plan, objectives | Before any asset generation |
 | 2 | After Gary, before Irene P2 | Slides (visual quality, brand) | Before narration written |
-| 3 | After Irene P2, before ElevenLabs, before Kira can be queued | Script + manifest | Before audio/video generation |
+| 3 | After Irene P2, before downstream audio generation | Script + manifest | Before audio/composition generation |
 | 4 | After Descript export | Final composed video | After composition |
+
+### Motion-Enhanced Variant (Epic 14, Added 2026-04-05)
+
+Operational documentation pairing:
+- Non-motion narrated runs use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- Motion-enabled narrated runs use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- `DOUBLE_DISPATCH` remains a bounded branch inside either workflow and must collapse to `authorized-storyboard.json` before Pass 2 or motion planning
+
+When `motion_enabled: true`, the narrated video workflow inserts two motion-specific checkpoints before Irene Pass 2:
+
+```text
+Gate 2
+-> Gate 2M (motion designation)
+-> motion generation/import
+-> Motion Gate
+-> Irene Pass 2
+```
+
+Design constraints:
+- motion is additive; `motion_enabled: false` preserves the static pipeline
+- Gate 2M binds to the Epic 12 authorized winner deck, not unresolved A/B variants
+- pre-Irene motion decisions persist in a run-scoped `motion_plan.yaml` sidecar keyed by `slide_id`
+- the segment manifest is hydrated from that sidecar during Irene Pass 2
+- compositor and preflight branch on motion flags only when the run is motion-enabled
 
 ### Quinn-R Two-Pass Validation
 
@@ -737,7 +779,7 @@ All converge into the same pipeline and Descript workflow:
 
 _Addresses FR81–FR91 (including ad-hoc ledger boundary, FR91). Establishes the authority model that constrains how agents interact within production runs and prevents judgment boundary violations._
 
-_This section is target-state architecture for Epic 4A. Until Epic 4A stories are started and the referenced artifacts are created, these controls are design intent, not a claim that the full governance layer is already live in runtime._
+_This section originated as Epic 4A target-state architecture. The referenced governance artifacts are now implemented; keep this section aligned with the live contracts in `docs/lane-matrix.md`, `docs/fidelity-gate-map.md`, and the production session protocols._
 
 ### Run Baton
 
@@ -777,7 +819,7 @@ A single authoritative contract defining which agent owns which judgment dimensi
 | **Content accuracy (medical)** | Quinn-R (flag only) | Potential accuracy concerns flagged, never adjudicated | Any agent (adjudication is human-only) |
 | **Platform deployment** | Platform specialists | Canvas/CourseArc formatting, LTI compliance, grading setup | Marcus, Irene |
 
-**Enforcement (future-state, Epic 4A):** `docs/lane-matrix.md` will be created as the central artifact in Story 4A-2 and then briefly restated in each specialist's SKILL.md. Until Epic 4A implements that document and its companion governance updates, treat this matrix as architecture guidance rather than an already-enforced runtime control surface.
+**Enforcement (current state):** `docs/lane-matrix.md` is the central artifact for judgment ownership, and the active specialist/orchestrator skills are expected to restate their lane boundaries consistently. Treat mismatches between this section and the live lane matrix as documentation drift that must be remediated.
 
 ### Envelope Governance Extensions
 

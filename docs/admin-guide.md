@@ -1,11 +1,13 @@
 # Admin Guide — System Configuration and Operations
 
 **Audience:** System administrators and the project owner responsible for environment setup, tool connectivity, and operational health.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry harmonization pass completed 2026-04-03)
+**Last Updated:** 2026-04-05 | **Project Phase:** Complete (all 14 epics done; prompt-pack family split by workflow template; Epic 13/14 controls live)
 
 ---
 
 ## Table of Contents
+
+> 2026-04-05 status: Epics 13 and 14 are complete. Production prompt packs now split by workflow template, with the v4.1 pack for non-motion narrated runs and the v4.2 pack for motion-enabled narrated runs. `DOUBLE_DISPATCH` remains an inline branch in either workflow.
 
 1. [Environment Setup](#environment-setup)
 2. [API Keys and Credentials](#api-keys-and-credentials)
@@ -379,7 +381,7 @@ Defined in `hooks/hooks.json`:
 | `sessionStart` | `hooks/scripts/session-start.mjs` | **Placeholder** — reads hook stdin, returns JSON status; does not run pre-flight yet |
 | `sessionEnd` | `hooks/scripts/session-end.mjs` | **Placeholder** — same pattern; run reporting not wired |
 
-Full hook-driven pre-flight and session-end reporting remain on the **Epic 4 / 4A** roadmap. Until then, rely on conversational pre-flight (`skills/pre-flight-check/`) and manual operational checks.
+Hook-driven placeholders remain intentionally lightweight in the current implementation. Use conversational pre-flight (`skills/pre-flight-check/`) and the APP readiness utilities as the operational path of record.
 
 ---
 
@@ -481,14 +483,23 @@ Git-versioned in `state/config/`. If corrupted, restore from git history: `git c
 
 ### Trial run: narrated deck happy path (operator checklist)
 
+Workflow-family additions:
+- Use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion narrated runs.
+- Use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` when `MOTION_ENABLED: true`.
+- If `DOUBLE_DISPATCH: true`, require `variant-selection.json` and `authorized-storyboard.json` before Irene Pass 2.
+- If `MOTION_ENABLED: true`, require Gate 2M, `motion-designations.json`, `motion_plan.yaml`, and Motion Gate closure before Irene Pass 2.
+
 Before the instructional lead follows the **Happy-path walkthrough** in [`docs/user-guide.md`](user-guide.md) (section *Happy-path walkthrough: user + Marcus + “X-ray”*) with their own content, confirm:
 
 1. **`.env`** — `GAMMA_API_KEY`, `ELEVENLABS_API_KEY`, and Kling keys as needed; no secrets committed.
 2. **Pre-flight** — `node scripts/heartbeat_check.mjs` (or Marcus-driven pre-flight) green for the tools in scope.
 3. **Mode** — `skills/production-coordination/scripts/manage_mode.py` reflects **default** vs **ad-hoc**; ad-hoc routes under `course-content/staging/ad-hoc/` per `docs/ad-hoc-contract.md`.
-4. **Literal-visual policy** — literal-visual slides are full-slide image-only. Dispatch payload content for literal-visual slides must be URL-only image references; supporting prose belongs in Irene Pass 2 narration/script.
-5. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
-6. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+4. **Prompt pack family** — standard narrated runs use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`; motion-enabled narrated runs use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
+5. **Double-dispatch** — if enabled, plan for `variant-selection.json` plus winner-only `authorized-storyboard.json` before downstream narration or motion work.
+6. **Motion workflow** — if `MOTION_ENABLED` is true, require explicit motion budget inputs, Gate 2M coverage, `motion_plan.yaml`, and Motion Gate closure before Irene Pass 2.
+7. **Literal-visual policy** — literal-visual slides are full-slide image-only. Dispatch payload content for literal-visual slides must be URL-only image references; supporting prose belongs in Irene Pass 2 narration/script.
+8. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
+9. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Adding a New Tool Integration
 

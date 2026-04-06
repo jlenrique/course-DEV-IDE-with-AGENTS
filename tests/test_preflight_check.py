@@ -440,3 +440,45 @@ class TestDoubleDispatchCompatibility:
         report = run_preflight(ROOT, double_dispatch=True)
         dd_results = [r for r in report.results if "Double-Dispatch" in r.name]
         assert len(dd_results) == 1
+
+
+class TestMotionPipelineCompatibility:
+    def test_check_passes_when_kling_keys_present(self):
+        from skills.pre_flight_check.scripts.preflight_runner import (
+            ToolStatus,
+            check_kling_compatibility,
+        )
+
+        result = check_kling_compatibility(
+            {"KLING_ACCESS_KEY": "ak-test", "KLING_SECRET_KEY": "sk-test"}
+        )
+        assert result.status == ToolStatus.API_READY
+        assert "motion-enabled" in result.detail.lower()
+
+    def test_check_fails_when_kling_keys_missing(self):
+        import os
+        from unittest.mock import patch
+
+        from skills.pre_flight_check.scripts.preflight_runner import (
+            ToolStatus,
+            check_kling_compatibility,
+        )
+
+        with patch.dict(os.environ, {}, clear=True):
+            result = check_kling_compatibility({})
+        assert result.status == ToolStatus.FAILED
+        assert "KLING_ACCESS_KEY" in result.detail
+
+    def test_preflight_skips_motion_check_when_motion_disabled(self):
+        from skills.pre_flight_check.scripts.preflight_runner import run_preflight
+
+        report = run_preflight(ROOT, motion_enabled=False)
+        motion_results = [r for r in report.results if "Motion Pipeline" in r.name]
+        assert len(motion_results) == 0
+
+    def test_preflight_includes_motion_check_when_motion_enabled(self):
+        from skills.pre_flight_check.scripts.preflight_runner import run_preflight
+
+        report = run_preflight(ROOT, motion_enabled=True)
+        motion_results = [r for r in report.results if "Motion Pipeline" in r.name]
+        assert len(motion_results) == 1

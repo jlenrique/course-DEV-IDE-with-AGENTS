@@ -498,14 +498,33 @@ def enforce_motion_perception_contract(
             )
             continue
 
-        result = perceive_motion_fn(
-            artifact_path=str(resolved_motion_path),
-            modality="video",
-            gate=IRENE_PERCEPTION_GATE,
-            requesting_agent=REQUESTING_AGENT,
-            purpose=f"Pass 2 motion perception for segment {seg_id}",
-            run_id=run_id,
-        )
+        try:
+            result = perceive_motion_fn(
+                artifact_path=str(resolved_motion_path),
+                modality="video",
+                gate=IRENE_PERCEPTION_GATE,
+                requesting_agent=REQUESTING_AGENT,
+                purpose=f"Pass 2 motion perception for segment {seg_id}",
+                run_id=run_id,
+            )
+        except Exception as exc:
+            logger.error("Motion perception failed for segment %s: %s", seg_id or "<unknown>", exc)
+            result = {
+                "confidence": "LOW",
+                "confidence_rationale": f"Bridge error: {type(exc).__name__}: {exc}",
+                "modality": "video",
+                "artifact_path": str(resolved_motion_path),
+                "schema_version": "1.0",
+                "perception_timestamp": "",
+                "extracted_text": "",
+                "layout_description": "",
+                "visual_elements": [],
+                "slide_title": "",
+                "text_blocks": [],
+            }
+            errors.append(
+                f"Segment {seg_id}: motion perception failed: {type(exc).__name__}: {exc}"
+            )
         result["segment_id"] = seg_id
         result["slide_id"] = segment.get("gary_slide_id")
         result["card_number"] = segment.get("gary_card_number")

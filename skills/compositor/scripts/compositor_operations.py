@@ -208,10 +208,18 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
             if segment.get("visual_duration") is not None
             else narration_duration
         )
+        motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
+        motion_duration = (
+            float(segment["motion_duration_seconds"])
+            if motion_type != "static" and segment.get("motion_duration_seconds") is not None
+            else None
+        )
+        segment_duration = max(narration_duration, motion_duration or 0.0)
         rows.append(
             {
                 "id": segment["id"],
                 "start": current_start,
+                "segment_duration": segment_duration,
                 "narration_duration": narration_duration,
                 "visual_duration": visual_duration,
                 "transition_in": segment.get("transition_in", "none"),
@@ -222,12 +230,12 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
                 "sfx_file": segment.get("sfx_file"),
                 "music": segment.get("music"),
                 "visual_mode": segment.get("visual_mode"),
-                "motion_type": segment.get("motion_type", "static"),
+                "motion_type": motion_type,
                 "motion_asset_path": segment.get("motion_asset_path"),
-                "motion_duration_seconds": segment.get("motion_duration_seconds"),
+                "motion_duration_seconds": motion_duration,
             }
         )
-        current_start += narration_duration
+        current_start += segment_duration
     return rows
 
 
@@ -285,7 +293,7 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
                 f"### {row['id']}",
                 f"- Start at `{format_timestamp(row['start'])}`",
                 f"- Place `{row['narration_file']}` on `A1`",
-                f"- Set segment duration to `{row['narration_duration']:.2f}s`",
+                f"- Set segment duration to `{row['segment_duration']:.2f}s`",
                 f"- Transition in/out: `{row['transition_in']}` / `{row['transition_out']}`",
                 f"- Behavioral intent: `{row.get('behavioral_intent') or 'none'}`",
                 f"- Intent note: {behavioral_note(row.get('behavioral_intent'))}",

@@ -149,6 +149,23 @@ def test_apply_motion_designations_rejects_unknown_slide_ids() -> None:
         )
 
 
+def test_apply_motion_designations_rejects_total_budget_overrun() -> None:
+    plan = build_motion_plan_from_authorized_storyboard(
+        _authorized_storyboard(),
+        motion_enabled=True,
+        motion_budget={"max_credits": 12, "model_preference": "std"},
+    )
+
+    with pytest.raises(MotionPlanError, match="exceeds motion_budget.max_credits"):
+        apply_motion_designations(
+            plan,
+            {
+                "slide-01": {"motion_type": "video", "motion_duration_seconds": 10.0},
+                "slide-02": {"motion_type": "video", "motion_duration_seconds": 10.0},
+            },
+        )
+
+
 def test_motion_plan_cli_build_and_apply_runtime_entrypoint() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)

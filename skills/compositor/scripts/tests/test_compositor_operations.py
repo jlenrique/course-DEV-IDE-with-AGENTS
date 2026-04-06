@@ -42,6 +42,37 @@ class TestTimelineRows:
         assert rows[0]["start"] == 0.0
         assert rows[0]["behavioral_intent"] == "credible"
 
+    def test_build_timeline_rows_uses_longer_motion_window(self) -> None:
+        manifest = sample_manifest()
+        manifest["segments"][0].update(
+            {
+                "motion_type": "video",
+                "motion_asset_path": "course-content/staging/C1-M1-L1/motion/seg-01_motion.mp4",
+                "motion_duration_seconds": 5.0,
+            }
+        )
+        manifest["segments"].append(
+            {
+                "id": "seg-02",
+                "narration_duration": 2.0,
+                "narration_file": "course-content/staging/C1-M1-L1/audio/seg-02.mp3",
+                "narration_vtt": "course-content/staging/C1-M1-L1/captions/seg-02.vtt",
+                "visual_file": "course-content/staging/C1-M1-L1/visuals/seg-02.jpg",
+                "visual_duration": 2.0,
+                "transition_in": "fade",
+                "transition_out": "cross-dissolve",
+                "behavioral_intent": "credible",
+                "music": "duck",
+                "sfx_file": None,
+                "visual_mode": "static-hold",
+            }
+        )
+
+        rows = MODULE.build_timeline_rows(manifest)
+
+        assert rows[0]["segment_duration"] == 5.0
+        assert rows[1]["start"] == 5.0
+
 
 class TestGuideGeneration:
     def test_generate_assembly_guide_contains_behavioral_intent(self) -> None:
@@ -99,6 +130,7 @@ segments:
         )
         assert "seg-01_motion.mp4" in guide
         assert "video track" in guide
+        assert "Set segment duration to `5.00s`" in guide
 
 
 class TestValidation:

@@ -185,6 +185,12 @@ def apply_motion_designations(
         "estimated_credits": round(estimated_credits, 2),
         "credits_consumed": float(plan.get("summary", {}).get("credits_consumed", 0.0) or 0.0),
     }
+    max_credits = budget.get("max_credits")
+    if isinstance(max_credits, (int, float)) and estimated_credits > float(max_credits):
+        raise MotionPlanError(
+            "Gate 2M designation payload exceeds motion_budget.max_credits "
+            f"(estimated={round(estimated_credits, 2)}, max_credits={float(max_credits)})"
+        )
     return plan
 
 

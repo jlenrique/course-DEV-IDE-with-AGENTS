@@ -122,6 +122,22 @@ If the project maintains reuse, pattern, or service tracking files, review and u
 
 *Skip if none of these files exist or no new patterns/services emerged.*
 
+### 9c. Update structural-walk definitions if control structure changed
+
+If the session changed any of the following, update the structural-walk configuration before shutdown:
+- canonical workflow or control docs
+- gate names or checkpoint sequencing
+- required artifact contracts
+- expected bundle assets or validation targets
+- workflow families covered by the walk manifests
+
+Touch the smallest required set:
+- `state/config/structural-walk/standard.yaml`
+- `state/config/structural-walk/motion.yaml`
+- `docs/structural-walk.md`
+
+Do not update the walks for routine content or code changes that do not alter what the walks are expected to validate.
+
 ### 10. Clean up stale files
 
 Remove or archive any stale session tracking files, orphaned artifacts, or deprecated references that are no longer canonical. This prevents context pollution in future sessions.

@@ -1,0 +1,177 @@
+{
+  "generated_at": "2026-04-06T03:44:50.159651+00:00",
+  "prompt_pack": "docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md",
+  "bundle_path": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260403",
+  "context": {
+    "run_id": "C1-M1-PRES-20260403",
+    "lesson_slug": "apc-c1m1-tejal",
+    "bundle_dir": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260403",
+    "bundle_path": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260403",
+    "primary_source_file": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC C1-M1 Tejal 2026-03-29.pdf",
+    "optional_context_assets": [
+      "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC Content Roadmap.jpg"
+    ],
+    "theme_selection": "hil-2026-apc-nejal-A",
+    "theme_paramset_key": "hil-2026-apc-nejal-A",
+    "execution_mode": "tracked/default",
+    "quality_preset": "production",
+    "double_dispatch": false,
+    "field_sources": {
+      "run_id": "run-constants.yaml",
+      "lesson_slug": "run-constants.yaml",
+      "bundle_path": "run-constants.yaml",
+      "primary_source_file": "run-constants.yaml",
+      "optional_context_assets": "run-constants.yaml",
+      "theme_selection": "run-constants.yaml",
+      "theme_paramset_key": "run-constants.yaml",
+      "execution_mode": "run-constants.yaml",
+      "quality_preset": "run-constants.yaml",
+      "double_dispatch": "run-constants.yaml"
+    }
+  },
+  "step_reports": [
+    {
+      "step": "1",
+      "heading": "1) Activation + Preflight Contract Gate",
+      "status": "PASS",
+      "summary": "Preflight evidence present and passing.",
+      "evidence": [
+        "preflight-results.json present",
+        "preflight gate overall_status=pass"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "2",
+      "heading": "2) Source Authority Map Before Ingestion",
+      "status": "INFERRED",
+      "summary": "Prompt 2 is only indirectly evidenced by downstream ingestion artifacts.",
+      "evidence": [
+        "ingestion-evidence.md present",
+        "metadata.json present"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "2A",
+      "heading": "2A) Operator Directives (Custom Source Instructions)",
+      "status": "PASS",
+      "summary": "Operator directives artifact found.",
+      "evidence": [
+        "operator-directives.md present",
+        "poll_status=submitted"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "3",
+      "heading": "3) Ingestion Execution + Evidence Log",
+      "status": "PASS",
+      "summary": "Ingestion artifacts are present.",
+      "evidence": [
+        "extracted.md",
+        "metadata.json",
+        "ingestion-evidence.md"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "4",
+      "heading": "4) Ingestion Quality Gate + Irene Packet",
+      "status": "PASS",
+      "summary": "Irene packet and Prompt 4 gate receipt are present.",
+      "evidence": [
+        "irene-packet.md present",
+        "ingestion-quality-gate-receipt.md present",
+        "gate_decision=proceed"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "5",
+      "heading": "5) Irene Pass 1 Structure + Gate 1 Fidelity",
+      "status": "PASS",
+      "summary": "Prompt 5 artifacts and fidelity receipt are present.",
+      "evidence": [
+        "irene-pass1.md present",
+        "irene-pass1-fidelity-receipt.md present",
+        "receipt status=pass"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "6",
+      "heading": "6) Gate 1 Approved -> Pre-Dispatch Package Build (No Send)",
+      "status": "PASS",
+      "summary": "Prompt 6 machine artifacts are present.",
+      "evidence": [
+        "g2-slide-brief.md",
+        "gary-slide-content.json",
+        "gary-fidelity-slides.json",
+        "gary-diagram-cards.json",
+        "gary-theme-resolution.json",
+        "gary-outbound-envelope.yaml",
+        "pre-dispatch-package-gary.md"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "6B",
+      "heading": "6B) Literal-Visual Operator Build + Confirmation (Mandatory Before Dispatch)",
+      "status": "PASS",
+      "summary": "Prompt 6B operator checkpoint is evidenced.",
+      "evidence": [
+        "literal-visual-operator-packet.md present",
+        "literal-visual-operator-receipt.md present",
+        "gate_decision=unblocked"
+      ],
+      "gaps": []
+    },
+    {
+      "step": "7",
+      "heading": "7) Dispatch + Export + Sort Verification (Single Operation)",
+      "status": "PARTIAL",
+      "summary": "Dispatch outputs exist, but Gate 2 approval evidence is incomplete.",
+      "evidence": [
+        "gary-dispatch-result.json present",
+        "gary-dispatch-run-log.json present",
+        "gary-dispatch-validation-result.json present",
+        "gamma-export/ present",
+        "storyboard/storyboard.json present",
+        "dispatch validation status=pass"
+      ],
+      "gaps": [
+        "authorized-storyboard.json missing (Gate 2 approval not directly evidenced)"
+      ]
+    },
+    {
+      "step": "7B",
+      "heading": "7B) Variant Selection Gate (Double-Dispatch Only)",
+      "status": "SKIPPED",
+      "summary": "Prompt 7B is skipped because DOUBLE_DISPATCH is false.",
+      "evidence": [],
+      "gaps": []
+    },
+    {
+      "step": "8",
+      "heading": "8) Irene Pass 2 \u2014 Dual-Channel Narration with Inline Perception",
+      "status": "MISSING",
+      "summary": "Prompt 8 outputs are not fully evidenced in this bundle.",
+      "evidence": [],
+      "gaps": [
+        "narration-script.md missing",
+        "segment-manifest.yaml missing",
+        "perception-artifacts.json missing"
+      ]
+    }
+  ],
+  "consistency_findings": [
+    "preflight-results.json run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403",
+    "operator-directives.md run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403",
+    "ingestion-quality-gate-receipt.md run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403",
+    "irene-pass1-fidelity-receipt.md run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403",
+    "literal-visual-operator-receipt.md run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403",
+    "gary-dispatch-validation-result.json run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403",
+    "gary-dispatch-result.json run_id=C1-M1-PRES-20260404 does not match canonical run_id=C1-M1-PRES-20260403"
+  ]
+}

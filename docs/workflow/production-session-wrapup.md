@@ -107,6 +107,14 @@ Pass criteria:
 - No unintended temporary worktrees left registered.
 - Structural walk report saved under `reports/structural-walk/` using the canonical scripted generator (not ad hoc text generation).
 
+If the shift changed production control structure, update the structural-walk definitions before close:
+
+- `state/config/structural-walk/standard.yaml`
+- `state/config/structural-walk/motion.yaml`
+- `docs/structural-walk.md`
+
+This is required only when the shift changed canonical control docs, gate sequencing, artifact contracts, or expected workflow assets. Do not churn the walk manifests for routine run execution.
+
 If stale metadata appears, run:
 
 - `git worktree prune --verbose`

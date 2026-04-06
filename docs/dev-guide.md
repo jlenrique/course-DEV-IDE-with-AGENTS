@@ -1,11 +1,13 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-04-03 | **Project Phase:** Complete (all 11 epics done; workflow template registry harmonization pass completed 2026-04-03)
+**Last Updated:** 2026-04-05 | **Project Phase:** Complete (all 14 epics done; prompt-pack family split by workflow template; Epic 13/14 runtime controls live)
 
 ---
 
 ## Table of Contents
+
+> 2026-04-05 status: Epics 13 and 14 are complete. The live narrated workflow family is now split between `production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled runs. `DOUBLE_DISPATCH` remains an inline branch inside either workflow template.
 
 1. [Architecture Overview](#architecture-overview)
 2. [Three-Layer Architecture](#three-layer-architecture)
@@ -99,6 +101,11 @@ Agent (.md)  ──reads──>  Skill (SKILL.md + references/)  ──invokes�
 
 For a **step-by-step trial** aligned with instructor copy-paste prompts, staging layout, and HIL gates, see the **Happy-path walkthrough** section in [`docs/user-guide.md`](user-guide.md) (same pipeline as below, with paths and checklist).
 
+Workflow-template rule:
+- `narrated-deck-video-export` is the standard narrated template and aligns with `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- `narrated-lesson-with-video-or-animation` is the motion-enabled narrated template and aligns with `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- `DOUBLE_DISPATCH` remains a bounded Gary-stage branch in either workflow; it does not create a third prompt-pack family
+
 Here's what happens step-by-step when a user says: **"Marcus, create a presentation on drug interactions for Module 2, Lesson 3."**
 
 ### Phase 1: Intent Parsing (Marcus)
@@ -128,6 +135,9 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 13. Marcus builds a **production plan** from the registry-backed workflow templates in `skills/bmad-agent-marcus/references/workflow-templates.yaml`: what needs to be created, which specialist handles it, and what quality gates apply
     - Canonical narrated template for slide-to-video export: `narrated-deck-video-export` (alias-free)
     - Canonical narrated template with custom video/animation generation: `narrated-lesson-with-video-or-animation`
+    - Operator prompt packs map to these templates:
+      - `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+      - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
 14. Marcus presents the plan to the user for confirmation
 
 ### Phase 4: Specialist Delegation (Marcus → Gary, Gamma Specialist)
@@ -194,7 +204,7 @@ Literal-visual dispatch rule:
 34. User reviews content in staging
 35. User tells Marcus to promote: *"Looks good, promote to courses"*
 36. Content moves from `course-content/staging/` to `course-content/courses/`
-37. Platform publishing follows (Canvas API, CourseArc/LTI, etc. — **Canvas specialist** and related stories may still be deferred; use existing clients or manual steps as documented in planning artifacts)
+37. Platform publishing follows (Canvas API, CourseArc/LTI, etc.) using the active specialist or manual path supported for that platform in the current repo state.
 
 ---
 
@@ -389,7 +399,9 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 | `bmad-agent-kling` | `skills/bmad-agent-kling/` | Kira |
 | `bmad-agent-quality-reviewer` | `skills/bmad-agent-quality-reviewer/` | Quinn-R |
 
-**Planned / roadmap:** run reporting and deeper workflow state (Epic 4, after Epic 4A governance); Canvas deployment skill when Story 3.6 ships.
+Current state notes:
+- run reporting, workflow state, and governance artifacts are live in the completed Epic 4 / 4A / G implementation set
+- platform deployment still depends on the specific specialist or manual path available for that tool in the repo
 
 ### Compositor assembly bundle CLI
 
@@ -779,16 +791,16 @@ These are the authoritative sources — this guide references them rather than d
 |----------|----------|---------------|
 | **Architecture** | `_bmad-output/planning-artifacts/architecture.md` | Full architectural decisions; governance + APP sections |
 | **PRD** | `_bmad-output/planning-artifacts/prd.md` | **91 FRs** (incl. FR81–FR91 governance), success criteria, journeys |
-| **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | **9 epics, 41 stories** (rebaselined 2026-03-28; +4A-6 2026-03-29); Epic 4A (6 stories) before Epic 4 |
+| **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | Current epic and story catalog, including Epic 13 visual-aware Irene and Epic 14 motion workflow |
 | **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6, Vera vs Quinn-R ordering, role matrix |
 | **Lane matrix** | `docs/lane-matrix.md` | Cross-agent judgment ownership |
 | **Fidelity architecture (GOLD)** | `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` | APP / three-layer / hourglass / sensory horizon |
 | **Directory Responsibilities** | `docs/directory-responsibilities.md` | Configuration hierarchy, resolution rules, anti-patterns |
 | **Tool Access Matrix** | `resources/tool-inventory/tool-access-matrix.md` | 17 tools classified by access tier |
 | **Style Bible** | `resources/style-bible/master-style-bible.md` | Brand identity, content standards, tool prompts |
-| **Session Protocol (Start)** | `bmad-session-protocol-session-START.md` | Cold start + hot start sequence |
-| **Session Protocol (Wrap-up)** | `bmad-session-protocol-session-WRAPUP.md` | End-of-session shutdown and handoff |
-| **Session Protocol (Reference)** | `bmad-session-protocol-session-MISC.md` | BMAD workflow reference notes |
+| **Session Protocol (Start)** | `docs/workflow/production-session-start.md` | Production shift startup gates and readiness checks |
+| **Session Protocol (Wrap-up)** | `docs/workflow/production-session-wrapup.md` | End-of-session shutdown, evidence, and handoff |
+| **Session Protocol (Launcher)** | `docs/workflow/production-session-launcher.md` | Marcus activation prompt for production operations sessions |
 | **Project Context** | `docs/project-context.md` | Current state, key decisions, repository contract |
 | **User Guide (happy path)** | `docs/user-guide.md` (Happy-path walkthrough) | Trial planner: Marcus model prompts, X-ray table, staging tree, Gates 1–3, compositor handoff |
 | **HIL Workflow** | `docs/workflow/human-in-the-loop.md` | Staging → review → promotion → publish |

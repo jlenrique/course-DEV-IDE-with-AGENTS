@@ -1,9 +1,10 @@
 # Production Run Operator Card (v4)
 
-Use this card during tracked/production runs to Irene Pass 2.
+Use this card during tracked/production runs through Irene Pass 2.
 
-Primary prompt pack:
-- `docs/workflow/production-prompt-pack-v4.1.md`
+Prompt pack selection:
+- `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion narrated runs
+- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` when `MOTION_ENABLED: true`
 
 Contracts and validators:
 - `docs/workflow/trial-run-pass2-artifacts-contract.md`
@@ -32,11 +33,16 @@ Set values in the prompt pack Run Constants block:
 - EXECUTION_MODE: tracked/default
 - QUALITY_PRESET
 - DOUBLE_DISPATCH: [true | false, default false]
+- MOTION_ENABLED: [true | false, default false]
+- MOTION_BUDGET_MAX_CREDITS: [required when `MOTION_ENABLED: true`]
+- MOTION_BUDGET_MODEL_PREFERENCE: [std | pro, required when `MOTION_ENABLED: true`]
 
 Operator rule:
 - Do not change run constants mid-run.
 - Execution mode must be tracked/default for production runs.
 - Persist accepted constants as **`run-constants.yaml`** in the bundle root (contract §1B); use `app_session_readiness --bundle-dir ...` during shift open if you want an automated alignment check.
+- `DOUBLE_DISPATCH` stays inside the selected prompt pack; it does not select a separate workflow template.
+- `MOTION_ENABLED` selects the motion prompt pack and adds Gate 2M plus Motion Gate obligations before Irene Pass 2.
 
 ---
 
@@ -46,7 +52,10 @@ Operator rule:
 - Run:
   - `py -3.13 -m scripts.utilities.app_session_readiness --with-preflight --format json`
   - `py -3.13 -m scripts.utilities.venv_health_check`
-- Require both `overall_status = pass`.
+- If `MOTION_ENABLED: true`, require motion-capable readiness path:
+  - `py -3.13 -m scripts.utilities.app_session_readiness --with-preflight --motion-enabled --json-only`
+  - `py -3.13 skills/pre-flight-check/scripts/preflight_runner.py --motion-enabled`
+- Require all invoked checks to return `overall_status = pass`.
 - Write `preflight-results.json`.
 - Go/no-go: no go on any warn/fail.
 
@@ -109,7 +118,7 @@ Operator rule:
   - `literal_visual_source: template` = Gamma rendered (best case)
   - `literal_visual_source: composite-preintegration` = local PNG composited
   - `literal_visual_source: composite-download` = URL downloaded and composited
-  - All three produce valid 2400×1350 slide PNGs
+  - All three produce valid 2400x1350 slide PNGs
 - If composite fallback fired, verify the center-crop framing is acceptable for the specific image.
 - Run G3.
 - Run strict validator:
@@ -119,7 +128,6 @@ Operator rule:
 - Confirm Storyboard A artifacts and approval:
   - `storyboard/storyboard.json`
   - `storyboard/index.html`
-  - `authorized-storyboard.json`
 - Go/no-go: no go if validator `status=fail` or G3 fail.
 - Then explicit Gate 2 approval.
 
@@ -130,9 +138,33 @@ Operator rule:
 - Confirm operator confirmation flag is set.
 - Go/no-go: no go until all slides have a selected variant and operator confirms.
 
+### 7C. Prompt 7C: Winner Authorization
+- Confirm `authorized-storyboard.json` is written after Gate 2 approval.
+- If `DOUBLE_DISPATCH: true`, confirm the authorized deck collapses to the selected winner deck only.
+- Go/no-go: no go until the canonical winner deck exists.
+
+### 7D. Prompt 7D: Gate 2M Motion Designation
+- **Skip if `MOTION_ENABLED` is false.**
+- Confirm every authorized slide has exactly one designation: `static`, `video`, or `animation`.
+- Confirm `motion-designations.json` and `motion_plan.yaml` exist.
+- Go/no-go: no go until Gate 2M covers every authorized slide.
+
+### 7E. Prompt 7E: Motion Generation / Import
+- **Skip if `MOTION_ENABLED` is false.**
+- Confirm `video` slides route to Kling and `animation` slides route to manual animation import.
+- Confirm non-static rows acquire concrete asset paths and no intended row remains unresolved.
+- Confirm over-budget clips either downgrade once (`pro -> std`) or pause the run for operator action.
+- Go/no-go: no go on silent partial continuation.
+
+### 7F. Prompt 7F: Motion Gate
+- **Skip if `MOTION_ENABLED` is false.**
+- Confirm every non-static row in `motion_plan.yaml` is approved, or explicitly reset to static before Irene Pass 2.
+- Go/no-go: no go until Motion Gate is cleanly closed.
+
 ### 8. Prompt 8: Irene Pass 2 handoff
 - Confirm preconditions:
   - order 1..N, file_path present, source_ref present, perception_artifacts aligned, artifacts consistent
+  - if `MOTION_ENABLED: true`, `motion_plan.yaml` fully covers the authorized deck
 - Delegate Irene Pass 2.
 - Validate handoff envelope:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
@@ -162,6 +194,8 @@ Collect and keep:
 - `gary-dispatch-validation-result.json`
 - `literal-visual-operator-packet.md` (if literal-visual slides exist)
 - `authorized-storyboard.json`
+- `variant-selection.json` (if `DOUBLE_DISPATCH: true`)
+- `motion-designations.json` and `motion_plan.yaml` (if `MOTION_ENABLED: true`)
 - Pass 2 handoff validator output
 - final stage receipts per prompt
 
@@ -172,6 +206,8 @@ Collect and keep:
 Run is considered successful up to Pass 2 when:
 - Gate 1 approved
 - Gate 2 approved
+- If `DOUBLE_DISPATCH: true`, winner selection is recorded and authorized
+- If `MOTION_ENABLED: true`, Gate 2M and Motion Gate both passed
 - Gary dispatch validator passes
 - Pass 2 handoff validator passes
 - G4 has no critical findings

@@ -35,6 +35,9 @@ For tracked/default production prompt-pack runs, enforce these checkpoints in or
 2. Prompt 6B literal-visual operator packet and readiness confirmation before any Gary dispatch side effects.
 3. Storyboard A review after Gary dispatch output, before Gate 2 approval.
 4. Gate 2 approval before Irene Pass 2 delegation.
-5. Storyboard B review after Irene Pass 2 script/manifest output, before downstream audio/script finalization.
+5. If `DOUBLE_DISPATCH` is enabled, record `variant-selection.json` and collapse the winner deck before downstream progression.
+6. If `MOTION_ENABLED` is enabled, run Gate 2M on the authorized winner deck and persist `motion_plan.yaml`.
+7. If `MOTION_ENABLED` is enabled, close Motion Gate after motion generation/import and before Irene Pass 2.
+8. Storyboard B review after Irene Pass 2 script/manifest output, before downstream audio/script finalization.
 
 These checkpoints are deterministic safeguards against fidelity drift between slide intent, generated visuals, and final narration/audio outputs.

@@ -53,12 +53,26 @@ For each literal-visual card in gary-diagram-cards.json:
 - [ ] Read summary and get explicit Gate 2 approval in chat.
 - [ ] Write <bundle-dir>/authorized-storyboard.json (fail closed on overwrite).
 
+## E2) Double-Dispatch Winner Selection (Conditional)
+
+- [ ] If `DOUBLE_DISPATCH` is enabled, confirm both variant sets passed validation before selection.
+- [ ] Present paired A/B review and record per-slide picks in <bundle-dir>/variant-selection.json.
+- [ ] Confirm the authorized storyboard collapses to the winner-only deck before any downstream motion or narration work.
+
+## E3) Motion Workflow (Conditional)
+
+- [ ] If `MOTION_ENABLED` is enabled, run Gate 2M on the authorized winner deck only.
+- [ ] Write <bundle-dir>/motion-designations.json and <bundle-dir>/motion_plan.yaml.
+- [ ] Confirm every authorized slide has Gate 2M coverage.
+- [ ] Complete motion generation/import and close Motion Gate before Irene Pass 2.
+
 ## F) Irene Pass 2 and Grounding
 
 - [ ] Delegate Irene Pass 2 using approved gary_slide_output.
 - [ ] Confirm narration grounding is based on approved local slide PNGs in gary_slide_output.
 - [ ] Treat literal_visual_publish as provenance/audit context only.
 - [ ] Ensure perception_artifacts are present (provided or regenerated inline) and aligned to slide IDs.
+- [ ] If `MOTION_ENABLED` is enabled, confirm `motion_plan.yaml` fully covers the authorized deck and approved non-static assets are perception-confirmed before final handoff.
 
 ## F2) Storyboard Review B (Post-Irene, Pre-Audio)
 

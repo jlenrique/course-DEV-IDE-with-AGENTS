@@ -36,7 +36,15 @@ Operational anti-drift checkpoints layered on top of the gate chain:
 - **Prompt 6B checkpoint (pre-G3 dispatch side effects):** literal-visual operator packet and per-card readiness confirmation.
 - **Dispatch payload checkpoint (pre-G2 approval):** literal-visual content payload rows are URL-only image references (no on-slide support prose).
 - **Storyboard A checkpoint (post-G3 generation):** visual order/content approval before Gate 2 progression.
+- **Epic 12 winner checkpoint (post-G2 when enabled):** `variant-selection.json` plus `authorized-storyboard.json` collapse A/B variants to a canonical winner deck before any downstream narration or motion work.
+- **Epic 14 motion checkpoints (motion-enabled only):** Gate 2M and Motion Gate sit between Gate 2 and G4; both are skipped when `motion_enabled: false`.
 - **Storyboard B checkpoint (post-G4 output):** slide+script alignment approval before downstream audio/script finalization.
+
+Motion-enabled operational overlay:
+
+```
+G3 -> [HIL Gate 2] -> Gate 2M -> motion generation/import -> Motion Gate -> G4 -> [HIL Gate 3]
+```
 
 At each HIL gate, the human reviewer has already seen:
 - The Fidelity Assessor's Fidelity Trace Report (Omissions/Inventions/Alterations)
@@ -79,6 +87,7 @@ For each assessment dimension, exactly one agent owns the judgment. No dimension
 | **Audio quality** | Quinn-R | Voice clarity, background noise, production polish |
 | **Composition integrity** | Quinn-R | Final assembly quality, transitions, sync |
 | **Tool parameter quality** | Producing Agent (self-assessment) | Execution-only self-check: layout integrity, parameter confidence, and embellishment risk control. Excludes pedagogy, quality standards, and source-faithfulness lanes. |
+| **Motion designation and gate closure** | Marcus + human checkpoint | Gate 2M presentation, motion-plan completeness, Motion Gate closure on approved/reset assets | Kira, Irene, Quinn-R |
 
 **Key boundary:** The Fidelity Assessor asks "is this *right* relative to the source?" Quinn-R asks "is this *good* against standards and learner-effect intent?" The producing agent asks "did I execute the tool *well* within my lane?"
 

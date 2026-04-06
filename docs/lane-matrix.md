@@ -10,11 +10,13 @@ Rules:
 | Judgment Dimension | Owner | Scope | NOT Owned By |
 |---|---|---|---|
 | Orchestration and human interaction | Marcus | Run planning, delegation routing, checkpoint choreography, exception handling, user-facing decision flow | Specialist agents |
-| Instructional design and pedagogy | Irene | Learning objective strategy, Bloom's alignment, sequencing, delegation intent, behavioral intent specification | Gary, Kira, Voice Director, Vera, Quinn-R |
+| Winner authorization and motion-control governance | Marcus | Double-dispatch winner collapse, `authorized-storyboard.json`, Gate 2M coverage, Motion Gate closure, prompt-pack selection by workflow template | Gary, Kira, Irene, Quinn-R |
+| Instructional design and pedagogy | Irene | Learning objective strategy, Bloom's alignment, sequencing, delegation intent, behavioral intent specification | Gary, Kira (Kling specialist), Voice Director, Vera, Quinn-R |
 | Tool execution quality (slides) | Gary | Layout integrity, parameter confidence, embellishment control, output usability against delegated brief | Irene, Vera, Quinn-R |
-| Tool execution quality (video) | Kira | Operation selection, model/mode choices, prompt quality, output usability against delegated brief | Irene, Vera, Quinn-R |
+| Tool execution quality (video) | Kira (Kling specialist) | Operation selection, model/mode choices, prompt quality, output usability against delegated brief | Irene, Vera, Quinn-R |
 | Tool execution quality (audio) | Voice Director | Voice/mode settings, pronunciation handling, timing completeness, manifest write-back integrity | Irene, Vera, Quinn-R |
 | Tool execution quality (composition planning) | Compositor | Deterministic manifest interpretation, assembly guide completeness and clarity for human execution | Irene, Vera, Quinn-R |
+| Motion designation and gate governance | Marcus | Gate 2M presentation, winner-deck binding, motion plan completeness, Motion Gate closure choreography | Kira, Irene, Quinn-R |
 | Perception (shared infrastructure) | Sensory Bridges | Canonical multimodal perception payloads, confidence-scored interpretation handoff, caching for validator reuse | Individual specialists inventing separate perception stacks |
 | Source-to-output fidelity | Vera | Omission/Invention/Alteration findings, source-ref traceability, cumulative drift signals, fidelity contract adherence | Quinn-R, Irene, producing specialists |
 | Quality standards | Quinn-R | Brand consistency, accessibility, instructional soundness, learner-effect intent fidelity, audio/composition quality | Vera, producing specialists |

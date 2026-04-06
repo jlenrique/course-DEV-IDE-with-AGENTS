@@ -12,7 +12,9 @@ This card was created during the ad-hoc trial era to provide a VS Code-safe sess
 ## Where to go instead
 
 - **Session launcher:** `docs/workflow/production-session-launcher.md`
-- **Prompt pack:** `docs/workflow/production-prompt-pack-v4.1.md`
+- **Prompt packs:**
+  - `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion narrated runs
+  - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` when `MOTION_ENABLED: true`
 - **Operator card:** `docs/workflow/production-operator-card-v4.md`
 - **VS Code tasks:** `.vscode/tasks.json` (APP: Session Readiness + Preflight)
 

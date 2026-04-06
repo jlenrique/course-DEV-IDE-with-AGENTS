@@ -13,6 +13,9 @@ Scope:
 - literal-visual-operator-packet.md
 - gary-theme-resolution.json
 - gary-outbound-envelope.yaml
+- authorized-storyboard.json
+- variant-selection.json (double-dispatch runs only)
+- motion-designations.json and motion_plan.yaml (motion-enabled runs only)
 
 Core invariant:
 - Each slide has exactly one mode: creative, literal-text, or literal-visual.
@@ -222,6 +225,60 @@ Required fields:
 
 Carry-forward integrity rule:
 - `theme_resolution` and `fidelity_per_slide` values in `gary-outbound-envelope.yaml` must be carried forward unchanged from `gary-theme-resolution.json` and `gary-fidelity-slides.json`.
+
+## 8A) authorized-storyboard.json
+
+Purpose: canonical approved storyboard payload for all downstream work after Gate 2.
+
+Rules:
+- Must represent the authoritative approved deck for the run.
+- If double-dispatch was enabled, this artifact must contain only the selected winner deck, never unresolved A/B variants.
+- Downstream motion planning and Irene Pass 2 consume this artifact, not the raw storyboard review payload.
+
+## 8B) variant-selection.json
+
+Purpose: per-slide winner selection record for double-dispatch runs.
+
+Required fields:
+- run_id
+- timestamp
+- selections (per-slide selected variant)
+- operator confirmation flag
+
+Rules:
+- Required only when `DOUBLE_DISPATCH` is enabled.
+- Every slide in the reviewed deck must have exactly one selected variant before authorization can collapse the deck.
+
+## 8C) motion-designations.json
+
+Purpose: operator's Gate 2M choices captured before motion plan application.
+
+Required fields per slide:
+- slide_id
+- motion_type (`static` | `video` | `animation`)
+- optional motion_brief
+- optional guidance_notes
+
+Rules:
+- Required only when `MOTION_ENABLED` is true.
+- Must cover every slide in the authorized winner deck.
+- Unknown slide IDs or omitted authorized slides are blocking contract failures.
+
+## 8D) motion_plan.yaml
+
+Purpose: run-scoped motion sidecar that binds Gate 2M choices to the authorized winner deck and later records approved/imported assets.
+
+Required fields:
+- run_id
+- motion_enabled
+- motion budget fields
+- per-slide rows keyed to authorized slide IDs
+
+Rules:
+- Required only when `MOTION_ENABLED` is true.
+- Must be derived from `authorized-storyboard.json`, not unresolved storyboard review payloads.
+- Static runs skip this artifact entirely.
+- Irene Pass 2 hydrates manifest motion fields from this sidecar and fails closed on incomplete coverage for non-static rows.
 
 ## 9) Vera Gate Contracts (Authority Source)
 

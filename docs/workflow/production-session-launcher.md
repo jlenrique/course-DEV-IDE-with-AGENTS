@@ -28,7 +28,8 @@ Run settings:
 - Quality preset: production
 
 Prompt pack and operator card:
-- Use `docs/workflow/production-prompt-pack-v4.1.md` as default prompt pack.
+- Use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion narrated runs.
+- If run constants or planner output indicate `MOTION_ENABLED: true`, use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` instead.
 - Use `docs/workflow/production-operator-card-v4.md` as operator checklist.
 - The operator will provide run constants and operator directives after Shift Open completes.
 

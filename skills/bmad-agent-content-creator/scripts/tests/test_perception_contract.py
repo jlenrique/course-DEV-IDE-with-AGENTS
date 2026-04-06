@@ -733,3 +733,31 @@ class TestMotionPerceptionContract:
 
         assert result["status"] == "error"
         assert any("motion_status 'approved'" in error for error in result["errors"])
+
+    def test_motion_bridge_failure_returns_structured_error(self, tmp_path: Path):
+        motion_asset = tmp_path / "slide-02_motion.mp4"
+        motion_asset.write_bytes(b"video-bytes")
+        segments = [
+            {
+                "id": "seg-02",
+                "gary_slide_id": "s-2",
+                "gary_card_number": 2,
+                "motion_type": "video",
+                "motion_asset_path": str(motion_asset),
+                "motion_status": "approved",
+            }
+        ]
+
+        def failing_perceive(**kwargs):
+            raise RuntimeError("video bridge offline")
+
+        result = enforce_motion_perception_contract(
+            segments,
+            perceive_motion_fn=failing_perceive,
+        )
+
+        assert result["status"] == "error"
+        assert len(result["motion_perception_artifacts"]) == 1
+        assert result["motion_perception_artifacts"][0]["confidence"] == "LOW"
+        assert len(result["confirmations"]) == 1
+        assert any("video bridge offline" in error for error in result["errors"])

@@ -59,18 +59,16 @@ Consensus points used to assess closure:
 
 - The current implementation provides code-level Gate 2M helpers and routing contracts, not a new dedicated UI surface.
 - Manual animation guidance is intentionally tool-agnostic by default; Vyond-specific specialization remains optional rather than mandatory.
-- Adversarial review is complete; remaining open items are scope-wording decisions, not confirmed implementation defects.
+- Adversarial review is complete. Remaining items were scope-wording clarifications rather than confirmed implementation defects, and those clarifications are now accepted below.
 
 ## Adversarial Review Follow-up
 
-Adversarial review identified one code-level remediation and two scope decisions:
+Adversarial review identified one code-level remediation and two scope-clarification decisions:
 
 - Completed remediation: motion credit estimation is now shared between Gate 2M planning and Kling execution through `scripts/utilities/motion_budgeting.py`, removing duplicate policy logic.
-- Decision needed - Story 14.3 MVP scope:
-  Proposed wording if CLI/YAML MVP is accepted:
+- Accepted scope wording - Story 14.3 MVP scope:
   "Gate 2M is implemented as a run-scoped control-plane artifact (`motion_plan.yaml`) plus helper/CLI workflows that let Marcus capture per-slide static/video/animation decisions, summarize cost, and route downstream motion work. A dedicated APP UI remains optional follow-on work."
-- Decision needed - Story 14.4 / 14.7 budget-orchestration behavior:
-  Proposed wording if current fail-closed behavior is accepted:
+- Accepted scope wording - Story 14.4 / 14.7 budget-orchestration behavior:
   "Motion generation applies budget controls per clip. Marcus may downgrade a requested `pro` clip to `std` once; if the clip still exceeds budget after downgrade, the run pauses for operator action rather than continuing partial automatic generation."
 
-These two wording updates should be accepted explicitly before Epic 14 is committed as closed scope.
+These wording clarifications are accepted as the canonical Epic 14 MVP scope description.

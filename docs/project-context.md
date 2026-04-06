@@ -209,5 +209,6 @@ See `_bmad-output/brainstorming/party-mode-composition-architecture.md` for full
 - `resources/exemplars/_shared/comparison-rubric-template.md` - **Rubric for scoring exemplar reproductions**
 - `resources/exemplars/gamma/_catalog.yaml` - **Gamma exemplar registry**
 - `docs/agent-environment.md` - Agent/MCP guidance  
+- `docs/operations-context.md` - Compact operations-only context for production sessions
 - `docs/workflow/human-in-the-loop.md` - HIL procedure
 - `.cursor/rules/course-content-agents.mdc` - Cursor agent rules

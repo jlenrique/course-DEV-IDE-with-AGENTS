@@ -122,6 +122,13 @@ Stop and wait for approval.
 
 ## 2A) Operator Directives (Mandatory)
 
+Poll timing policy (hard requirement):
+- Start a poll timer when Prompt 2A is issued.
+- Enforce a hard 3-minute reply hold from poll start before any submission can be accepted.
+- Auto-close the poll exactly 15 minutes after poll start if a complete submission is not received.
+- Submissions before the 3-minute mark are invalid and must be re-polled.
+- If the poll auto-closes, keep ingestion blocked and require a new Prompt 2A poll.
+
 Marcus, capture operator directives for RUN_ID [RUN_ID].
 
 Record exactly:

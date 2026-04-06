@@ -286,8 +286,8 @@ Run this quarterly (or when onboarding a new model generation):
 - [ ] **CLAUDE.md audit:** How many lines? Can historical sections be archived to a reference file?
 - [ ] **Memory audit:** Prune stale entries. Are old project memories still accurate?
 - [ ] **System prompt audit:** Has the system prompt grown? Are there instructions from earlier model generations that smarter models no longer need?
-- [ ] **Session protocol audit:** Can startup file reads be reduced? Are large context files still needed in full, or can they be distilled?
-- [ ] **Anti-drift doc sync audit:** Ensure `production-prompt-pack-v4.1-narrated-deck-video-export.md`, `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`, `trial-run-pass2-artifacts-contract.md`, `fidelity-gate-map.md`, and operator cards/checklists are aligned on Gate 6B, Storyboard A/B checkpoints, and motion-specific gates when enabled.
+- [x] **Session protocol audit:** Verified 2026-04-05. Added `docs/operations-context.md` as a compact operations-only context file for production sessions, reducing dependence on the full implementation-history narrative during shift open.
+- [x] **Anti-drift doc sync audit:** Verified 2026-04-05. `production-prompt-pack-v4.1-narrated-deck-video-export.md`, `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`, `trial-run-pass2-artifacts-contract.md`, `fidelity-gate-map.md`, and operator cards/checklists are aligned on Gate 6B, Storyboard A/B checkpoints, and motion-specific gates when enabled.
 - [ ] **Model tiering review:** Are you using the right model tier for each task type?
 - [ ] **Caching review (API/production):** Is all stable context cached? Are you getting cache hits?
 

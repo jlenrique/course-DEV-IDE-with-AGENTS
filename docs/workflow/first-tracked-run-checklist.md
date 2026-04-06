@@ -33,8 +33,9 @@ For each literal-visual card in gary-diagram-cards.json:
 ## C2) Gate 6B Operator Packet (Mandatory)
 
 - [ ] Produce literal-visual operator packet at <bundle-dir>/literal-visual-operator-packet.md.
-- [ ] Confirm packet includes, per literal-visual slide: source context, Irene constraints, acceptance checks, and expected preintegration_png_path.
-- [ ] Confirm operator completed Gamma manual build for each required literal-visual and downloaded PNG locally.
+- [ ] Confirm packet includes, per literal-visual slide: source context, Irene constraints, acceptance checks, and the expected dispatch-ready source (`image_url` or `preintegration_png_path`).
+- [ ] If a slide uses `preintegration_png_path`, confirm operator completed the required Gamma/manual build and downloaded the local PNG.
+- [ ] If a slide uses hosted `image_url`, confirm the URL is the approved dispatch source and no local PNG build is required for that card.
 - [ ] Block Prompt 7 until all required literal-visual cards are operator-ready.
 
 ## D) Gary Dispatch and Validation
@@ -55,7 +56,9 @@ For each literal-visual card in gary-diagram-cards.json:
 
 ## E2) Double-Dispatch Winner Selection (Conditional)
 
-- [ ] If `DOUBLE_DISPATCH` is enabled, confirm both variant sets passed validation before selection.
+- [ ] If `DOUBLE_DISPATCH` is enabled, confirm selection inputs match the documented dispatch outcome:
+  - [ ] both variant sets passed validation, or
+  - [ ] one side failed and the surviving side is explicitly auto-selected per slide with fallback recorded in `variant-selection.json`.
 - [ ] Present paired A/B review and record per-slide picks in <bundle-dir>/variant-selection.json.
 - [ ] Confirm the authorized storyboard collapses to the winner-only deck before any downstream motion or narration work.
 

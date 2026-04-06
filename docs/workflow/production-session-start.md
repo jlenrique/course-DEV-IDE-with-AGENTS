@@ -96,7 +96,11 @@ Alternate (JSON log output):
 .venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
 ```
 
-When a tracked bundle already has **`run-constants.yaml`**, add `--bundle-dir <path-to-bundle>` so readiness also validates frozen run constants (`bundle_run_constants` check).
+Tracked/default run rule:
+- If the shift is opening a specific tracked bundle, pass `--bundle-dir <path-to-bundle>` to readiness/preflight so the `bundle_run_constants` check validates the frozen bundle constants, not just workspace defaults.
+- Treat a missing `--bundle-dir` on a tracked-bundle shift as an incomplete startup gate.
+
+For fatigue-friendly operations sessions, pair this startup protocol with `docs/operations-context.md` instead of re-reading the full implementation history in `docs/project-context.md`.
 
 VS Code shortcut: `Tasks: Run Task` -> `APP: Session Readiness + Preflight`
 
@@ -155,6 +159,7 @@ For this shift, define:
 Reminder for tracked runs:
 - The v4 prompt pack requires **Operator Directives** (Prompt 2A) before ingestion. The operator should prepare source-processing instructions (focus, exclusion, special treatment) before starting the first run of the shift.
 - For first tracked runs, review `docs/workflow/first-tracked-run-checklist.md` for additional guidance.
+- For the condensed operator flow, use `docs/workflow/first-tracked-run-quickstart.md`.
 
 ## 7. Decision and Escalation Routing
 

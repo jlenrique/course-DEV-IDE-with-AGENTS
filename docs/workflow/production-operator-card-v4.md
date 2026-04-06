@@ -42,7 +42,11 @@ Operator rule:
 - Execution mode must be tracked/default for production runs.
 - Persist accepted constants as **`run-constants.yaml`** in the bundle root (contract §1B); use `app_session_readiness --bundle-dir ...` during shift open if you want an automated alignment check.
 - `DOUBLE_DISPATCH` stays inside the selected prompt pack; it does not select a separate workflow template.
+- For tracked-bundle shifts, treat the `--bundle-dir` readiness check as required, not optional.
 - `MOTION_ENABLED` selects the motion prompt pack and adds Gate 2M plus Motion Gate obligations before Irene Pass 2.
+
+Fast path:
+- For the condensed operator flow, use `docs/workflow/first-tracked-run-quickstart.md`.
 
 ---
 

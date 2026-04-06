@@ -1,0 +1,70 @@
+# Operations Context
+
+Purpose: compact high-signal context for production operations sessions. Use this instead of the full implementation-history narrative in `docs/project-context.md` when the goal is to open, run, or close a production shift safely.
+
+## Current State
+
+- Project implementation is complete through Epics 1-14 plus SB.
+- Active narrated workflow family has two templates:
+  - `narrated-deck-video-export` for standard narrated runs
+  - `narrated-lesson-with-video-or-animation` for motion-enabled narrated runs
+- `DOUBLE_DISPATCH` is an optional Gary-stage branch inside either workflow, not a third workflow family.
+- `structural_walk` is the canonical structural readiness check.
+
+## Canonical Control Docs
+
+- Startup: `docs/workflow/production-session-start.md`
+- Operator flow: `docs/workflow/production-operator-card-v4.md`
+- First tracked run quick path: `docs/workflow/first-tracked-run-quickstart.md`
+- Full tracked checklist: `docs/workflow/first-tracked-run-checklist.md`
+- Standard prompt pack: `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- Motion prompt pack: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- Artifact contract: `docs/workflow/trial-run-pass2-artifacts-contract.md`
+- Gate ownership: `docs/fidelity-gate-map.md`
+- Judgment boundaries: `docs/lane-matrix.md`
+
+## Run Invariants
+
+- Marcus is the user-facing orchestrator for production runs.
+- Production runs use `tracked/default`, not `ad-hoc`.
+- Prompt 2A operator directives are mandatory before ingestion.
+- Prompt 6B blocks Prompt 7 until literal-visual operator readiness is explicit.
+- Storyboard A is required after Gary dispatch and before Gate 2 approval.
+- If `DOUBLE_DISPATCH` is enabled, the workflow must collapse to a winner deck before Irene Pass 2 or motion planning.
+- If `MOTION_ENABLED` is enabled, Gate 2M and Motion Gate must both close before Irene Pass 2.
+- Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
+
+## Canonical Commands
+
+- Structural walk, standard:
+  - `python -m scripts.utilities.structural_walk --workflow standard`
+- Structural walk, motion:
+  - `python -m scripts.utilities.structural_walk --workflow motion`
+- Session readiness + preflight:
+  - `.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight`
+- Tracked bundle readiness:
+  - `.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --bundle-dir <path-to-bundle>`
+
+## What To Confirm At Shift Open
+
+- correct workspace and branch
+- correct execution mode and quality preset
+- readiness/preflight pass
+- correct prompt pack for the selected workflow
+- `run-constants.yaml` frozen in the active tracked bundle
+- clear owner and next action for any active or blocked runs
+
+## Stop Conditions
+
+- any critical readiness/preflight failure
+- missing or mismatched tracked bundle constants
+- unclear workflow selection
+- unresolved literal-visual readiness
+- unresolved winner selection
+- incomplete Gate 2M or Motion Gate on motion runs
+- missing Storyboard B approval before audio/script finalization
+
+## Notes
+
+- `docs/project-context.md` remains the full project-history/context document.
+- This file is for operations-only sessions where startup speed and low cognitive load matter more than implementation history.

@@ -70,8 +70,9 @@ Purpose:
 ## Validation Loop
 
 - search for retired prompt-pack names and stale workflow claims
-- rerun `python -m pytest tests/test_fidelity_walk.py -q`
-- rerun `python -m scripts.utilities.fidelity_walk`
+- rerun `python -m pytest tests/test_structural_walk.py -q`
+- rerun `python -m scripts.utilities.structural_walk --workflow standard`
+- rerun `python -m scripts.utilities.structural_walk --workflow motion --dry-run`
 - inspect generated report for active anti-drift evidence paths
 
 ## Current Review Result
@@ -83,5 +84,18 @@ This review cycle updated the active documentation surface for:
 - motion Gate 2M / Motion Gate ordering
 - motion-aware operator, checklist, and contract language
 - governance and architecture summaries
+
+Validation was reconciled to the canonical structural-walk toolchain and current test suite:
+- `tests/test_structural_walk.py`
+- `scripts.utilities.structural_walk --workflow standard`
+- `scripts.utilities.structural_walk --workflow motion --dry-run`
+
+Active anti-drift source-of-truth docs were reviewed as an aligned set:
+- `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- `docs/workflow/trial-run-pass2-artifacts-contract.md`
+- `docs/fidelity-gate-map.md`
+- `docs/workflow/production-operator-card-v4.md`
+- `docs/workflow/first-tracked-run-checklist.md`
 
 Remaining historical artifacts are treated as chronology unless elevated back into active guidance.

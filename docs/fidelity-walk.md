@@ -1,122 +1,44 @@
 # Fidelity Walk
 
-A **Fidelity Walk** is a faithful simulation of the full happy-path production run, orchestrated by Marcus. It steps through every gate (G0 → G6) and confirms that every script, skill, resource, and fidelity contract invoked along the way is present, internally consistent, and correctly wired to its declared inputs and outputs. The walk does not produce real media artifacts — it produces a sequenced validation report that either confirms readiness or surfaces remediation needs before a live run.
+`Fidelity Walk` is now a legacy name for the canonical
+[Structural Walk](structural-walk.md).
 
-Documented redirects are valid. If a placeholder path explicitly declares itself superseded and points to the active canonical path, record it as a redirect rather than a remediation item.
+Use this page only as a compatibility note if older docs, prompts, or
+operator habits still reference `python -m scripts.utilities.fidelity_walk`.
 
-Baseline scope note:
-- The scripted Fidelity Walk is anchored to the standard narrated workflow and anti-drifts against `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` plus the shared operator card.
-- Motion-enabled narrated runs use the sibling workflow doc `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`; review that path separately during motion-focused simulations or doc audits.
+## Canonical Procedure
 
----
+Use:
 
-## When to Run
+```powershell
+python -m scripts.utilities.structural_walk --workflow standard
+python -m scripts.utilities.structural_walk --workflow motion
+```
 
-- Before the first live production run of a new course unit
-- After any significant change to skills, scripts, fidelity contracts, or agent wiring
-- As a release-gate check when closing a branch (post-sprint, pre-merge)
-- Whenever a HIL checkpoint flags a structural concern worth tracing upstream
+The canonical documentation lives in [docs/structural-walk.md](structural-walk.md).
 
----
+## Legacy Alias
 
-## Invoking the Fidelity Walk
-
-Canonical invocation is the scripted generator:
+This compatibility command still works:
 
 ```powershell
 python -m scripts.utilities.fidelity_walk
 ```
 
-Optional explicit output path:
+Behavior:
 
-```powershell
-python -m scripts.utilities.fidelity_walk --output tests/fidelity-walk-YYYYMMDD-HHMMSS.md
-```
+- routes to the canonical structural walk
+- defaults to the `standard` workflow
+- writes reports under `reports/structural-walk/standard/`
+- prints the canonical command so operators can migrate cleanly
 
-Operator rule:
-- Do not hand-compose or ad hoc generate Fidelity Walk reports.
-- Treat the scripted output as the source of truth for canonical gate asset names and anti-drift checks.
-- Exit code `0` means `READY`; exit code `1` means remediation is required.
+## Why The Rename Happened
 
-If Marcus is driving the session conversationally, use a prompt that delegates to the scripted generator rather than freehand report writing:
+The old name implied a full happy-path simulation. The implemented tool is
+better described as a workflow-specific structural sanity check:
 
-```
-Run a Fidelity Walk.
-
-Invoke `python -m scripts.utilities.fidelity_walk` from the repo root.
-Return the generated report path, overall verdict, critical finding count,
-and any remediation items. Do not substitute guessed gate asset names.
-```
-
----
-
-## Report Structure (expected output)
-
-Marcus should produce one section per gate following this pattern:
-
-```markdown
-## Gate Gn — <Artifact Name>
-
-**Producing Agent:** <agent>  
-**Source of Truth:** <input>  
-**Fidelity Contract:** <path to g{n}-*.yaml>
-
-### Invoked Assets
-| Type     | Path                          | Status        |
-|----------|-------------------------------|---------------|
-| Skill    | skills/bmad-agent-{x}/        | ✅ Present     |
-| Script   | scripts/{x}.py                | ✅ Present     |
-| Contract | state/config/fidelity-contracts/g{n}-*.yaml | ✅ Valid |
-
-### Findings
-- _None_ / <list gaps, mismatches, or remediation items>
-```
-
-Final section must be:
-
-```markdown
-## Summary Verdict
-
-**Overall status:** READY | NEEDS REMEDIATION  
-**Critical findings:** <count>  
-**Remediation items:** <bulleted list or "None">
-```
-
-The scripted report also includes a cross-cutting checks section for orchestration,
-sidecars, redirect placeholders, and the contract validator.
-
-Required anti-drift checks in the walk report:
-- Verify Prompt 6B checkpoint exists and blocks Prompt 7 when required literal-visual cards are not operator-ready.
-- Verify literal-visual dispatch payload rule is enforced: image-only on-slide, URL-only content rows, and explanatory prose deferred to narration.
-- Verify Storyboard A checkpoint is required after Gary dispatch and before Gate 2 approval.
-- Verify Epic 12 winner authorization requires a canonical authorized deck before downstream progression when double-dispatch is enabled.
-- Verify Storyboard B checkpoint is required after Irene Pass 2 and before downstream audio/script finalization.
-- Verify the motion prompt pack preserves Gate 2M, Motion Gate, and winner-deck binding for motion-enabled runs.
-
----
-
-## Output Location
-
-Prompt-pack note:
-- The scripted anti-drift checks use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` as the canonical standard narrated prompt pack path.
-- Motion-specific anti-drift checks also validate `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
-- Motion-enabled narrated runs are documented separately in `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
-
-By default the generator saves Fidelity Walk reports to `tests/` with the naming convention:
-
-```
-fidelity-walk-YYYYMMDD-HHMMSS.md
-```
-
-This follows the precedent set by prior simulation artifacts in `tests/`:
-- `simulated-run-happy-path-20260402-224500.md`
-- `Happy Path Simulation Display Screens 2026-04-03.md`
-
----
-
-## Related Documents
-
-- [docs/fidelity-gate-map.md](fidelity-gate-map.md) — authoritative gate definitions, role matrix, and assessment ordering
-- [docs/lane-matrix.md](lane-matrix.md) — cross-agent ownership and lane responsibilities
-- [state/config/fidelity-contracts/](../state/config/fidelity-contracts/) — L1 fidelity contracts per gate
-- [docs/project-context.md](project-context.md) — system architecture and operational model
+- gate asset integrity
+- contract and config parsing
+- executable import sanity
+- workflow-document integrity markers
+- optional command probes

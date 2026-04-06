@@ -98,13 +98,14 @@ Run:
 
 - `git status --short`
 - `git worktree list`
-- `python -m scripts.utilities.fidelity_walk`
+- `python -m scripts.utilities.structural_walk --workflow standard`
+- if the run used motion: `python -m scripts.utilities.structural_walk --workflow motion`
 
 Pass criteria:
 
 - No accidental local code edits in production session context.
 - No unintended temporary worktrees left registered.
-- Fidelity walk report saved under `tests/` using the canonical scripted generator (not ad hoc text generation).
+- Structural walk report saved under `reports/structural-walk/` using the canonical scripted generator (not ad hoc text generation).
 
 If stale metadata appears, run:
 

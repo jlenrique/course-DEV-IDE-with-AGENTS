@@ -1,0 +1,106 @@
+workflow: standard
+title: Standard narrated workflow
+walk_type: Structural walk (standard narrated workflow, deterministic default)
+cross_cutting:
+  - component: Marcus orchestrator
+    path: skills/bmad-agent-marcus/SKILL.md
+  - component: Marcus production-plan generator
+    path: skills/bmad-agent-marcus/scripts/generate-production-plan.py
+  - component: Marcus workflow template registry
+    path: skills/bmad-agent-marcus/references/workflow-templates.yaml
+    check_mode: yaml
+  - component: Production coordination
+    path: skills/production-coordination/scripts/manage_baton.py
+  - component: Fidelity assessor
+    path: skills/bmad-agent-fidelity-assessor/SKILL.md
+  - component: Quality reviewer
+    path: skills/bmad-agent-quality-reviewer/SKILL.md
+  - component: Quality reviewer sidecar
+    path: _bmad/memory/quality-reviewer-sidecar
+  - component: Marcus sidecar
+    path: _bmad/memory/bmad-agent-marcus-sidecar
+  - component: Redirect placeholder
+    path: _bmad/memory/master-orchestrator-sidecar/index.md
+    redirect_contains: "Active sidecar: `_bmad/memory/bmad-agent-marcus-sidecar/`"
+  - component: Contract validator
+    path: scripts/validate_fidelity_contracts.py
+anti_drift:
+  - name: Literal-visual payload rules in artifacts contract
+    path: docs/workflow/trial-run-pass2-artifacts-contract.md
+    needles:
+      - "For literal-visual slides, `content` must be URL-only"
+      - "Literal-visual presentation policy is full-slide image-only."
+  - name: Literal-visual operator packet contract
+    path: docs/workflow/trial-run-pass2-artifacts-contract.md
+    needles:
+      - "## 10) literal-visual-operator-packet.md"
+      - "literal-visual-operator-packet.md (required when any literal-visual slide exists)"
+    ordered: true
+  - name: Operator card 6B checkpoint
+    path: docs/workflow/production-operator-card-v4.md
+    needles:
+      - "### 6B. Prompt 6B"
+      - "Confirm `literal-visual-operator-packet.md` exists and is complete for every literal-visual slide."
+    ordered: true
+  - name: Standard prompt-pack operator checkpoint
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needles:
+      - "## 6B) Literal-Visual Operator Build + Confirmation (Mandatory Before Dispatch)"
+      - "[BUNDLE_PATH]/literal-visual-operator-packet.md"
+    ordered: true
+  - name: Standard prompt-pack literal-visual dispatch policy
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needles:
+      - "literal-visual content entries are URL-only"
+      - "must not include supporting prose"
+  - name: Standard storyboard checkpoints
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needles:
+      - "Required HIL review (Storyboard A):"
+      - "Required HIL review (Storyboard B, before audio/script finalization):"
+    ordered: true
+sequence_doc_parity:
+  - stage: storyboard
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needle: "Required HIL review (Storyboard A):"
+  - stage: storyboard
+    path: docs/workflow/production-operator-card-v4.md
+    needle: "Confirm Storyboard A artifacts and approval:"
+  - stage: narration-and-manifest
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needle: "Required HIL review (Storyboard B, before audio/script finalization):"
+  - stage: narration-and-manifest
+    path: docs/workflow/production-operator-card-v4.md
+    needle: "Regenerate Storyboard B (slide + script context) and get explicit approval before downstream audio/script finalization."
+dry_run:
+  steps:
+    - key: manifest-resolution
+      label: Manifest resolution and shape check
+      scope: standard
+      input: state/config/structural-walk/standard.yaml
+      kind: manifest
+    - key: sequence-preview
+      label: Marcus workflow sequence preview
+      scope: standard
+      input: skills/bmad-agent-marcus/references/workflow-templates.yaml:narrated-deck-video-export
+      kind: sequence
+    - key: sequence-doc-parity
+      label: Marcus sequence-to-document parity
+      scope: standard
+      input: state/config/structural-walk/standard.yaml:sequence_doc_parity
+      kind: sequence_docs
+    - key: contract-validation
+      label: Local fidelity contract validation
+      scope: standard
+      input: state/config/fidelity-contracts/g0-source-bundle.yaml .. g6-composition.yaml
+      kind: contracts
+    - key: asset-sanity
+      label: Local planner and document sanity
+      scope: standard
+      input: gate assets + cross-cutting checks
+      kind: aggregate
+    - key: document-parity
+      label: Workflow document parity preview
+      scope: standard
+      input: prompt pack + operator card + artifacts contract markers
+      kind: documents

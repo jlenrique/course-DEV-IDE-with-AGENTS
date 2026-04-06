@@ -9,7 +9,7 @@ Simulation scope:
 - no live API calls; this is a control-flow and artifact simulation grounded in current scripts, tests, and fidelity contracts
 
 Canonical readiness anchor:
-- `tests/fidelity-walk-20260405-222432.md` returned `READY` with `Critical findings: 0`
+- `reports/structural-walk/standard/history/fidelity-walk-20260405-222432.md` returned `READY` with `Critical findings: 0`
 
 Prompt-pack output paired to this simulation:
 - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`

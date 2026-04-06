@@ -2,10 +2,10 @@
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
 **Phase:** 4-Implementation (all planned epics complete)
-**Architecture Status:** 14 Epics complete, **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
-**2026-04-05 Update:** Epics 13 and 14 are now complete, tested, and internally reviewed. Production prompt packs now split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs. `DOUBLE_DISPATCH` remains an inline branch in either pack.
-**Current Implementation Status:** Use the dated update above as the source of truth for epic completion and prompt-pack naming; the detailed historical implementation notes below remain as project chronology.
-**Implementation Status:** Epics 1-14 + SB all COMPLETE. Epic 13 visual-aware Irene Pass 2 and Epic 14 motion workflow are implemented, tested, and internally reviewed. Production prompt packs now split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs.
+**Architecture Status:** 14 Epics complete + 4 future epics scoped, **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
+**2026-04-06 Update:** Four future epics (15-18) scoped with 24 story stubs. Execution order: 17 (Research & Reference), 18 (Additional Assets & Workflows), 15 (Learning & Compound Intelligence), 16 (Bounded Autonomy). Epics 15-16 gated on tracked trial run evidence. Epic 17 requires Consensus + Scite.ai API integrations. Epic 18 is discovery-first. Story 15.7 adds autoresearch-inspired agent judgment calibration harness. Total: 18 epics, 86 stories.
+**Current Implementation Status:** Epics 1-14 + SB all COMPLETE. Epics 15-18 backlog with story stubs. Use the dated update above as source of truth.
+**Implementation Status:** Epics 1-14 + SB all COMPLETE. Production prompt packs split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs.
 
 ## Purpose
 

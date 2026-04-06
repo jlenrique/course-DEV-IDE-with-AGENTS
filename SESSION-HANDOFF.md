@@ -1,109 +1,86 @@
-# Session Handoff - 2026-04-06
+# Session Handoff - 2026-04-06 (Epic Planning Session)
 
 ## Session Mode
 
-- Execution mode: implementation, documentation, and closeout
+- Execution mode: epic planning and story stub creation
 - Quality preset: production
 - Branch at closeout target: `master`
-- BMad workflow: session wrap-up / pre-trial hardening
+- BMad workflow: solutioning → backlog population
 
 ## Session Summary
 
-This session closed the remaining pre-trial documentation gaps, fixed the two review findings in the structural-walk rollout, revalidated both canonical structural walks, and added a first-pass Marcus prompt harness for the standard v4.1 pack. The session ended with closeout docs updated for the post-push repo state and `master` ready to be synchronized with `origin/master`.
+This session scoped four future epics (15-18) with 24 story stubs, fixed stale tracking artifacts (sprint-status.yaml Epics 13-14), and established the execution order for the next phase of APP development. The session also explored Karpathy's autoresearch tool and identified a targeted application for agent judgment calibration, resulting in Story 15.7.
 
 ## Completed Outcomes
 
-### Structural walk implementation and review follow-up
+### Epic planning and story stub creation
 
-- Fixed the legacy compatibility wrapper so `scripts.utilities.fidelity_walk` re-exports the legacy helper API instead of only `main`.
-- Fixed the dry-run aggregate-step logic so unrelated contract failures no longer block the aggregate planner/document sanity step.
-- Added regression coverage in `tests/test_structural_walk.py`.
-- Verified targeted structural-walk tests earlier in the session: `33 passed`.
+- **Epic 15: Learning & Compound Intelligence** (7 stories) — learning event schema, tracked-run retrospectives, upstream-from-downstream feedback routing, synergy scorecards, pattern condensation, workflow-family learning, agent judgment calibration harness (autoresearch-inspired)
+- **Epic 16: Bounded Autonomy Expansion** (5 stories) — autonomy evidence framework, shared governance enforcement utilities, expanded handoff validators, contract linting, Marcus autonomous routing
+- **Epic 17: Research & Reference Services** (5 stories) — Consensus + Scite.ai API clients with triangulation, related-resources lists, inline citation injection, hypothesis/pro-con research, shared research skill
+- **Epic 18: Additional Assets & Workflow Families** (7 stories) — discovery-first stories for cases/scenarios, quizzes, discussions, handouts, podcasts, instructional diagrams; reusable workflow-family implementation framework
 
-### Documentation and workflow hardening
+### Tracking artifact reconciliation
 
-- Accepted the remaining Epic 14 MVP wording decisions in implementation artifacts.
-- Hardened production control docs around:
-  - tracked-bundle readiness requirements
-  - literal-visual operator handling
-  - double-dispatch winner fallback wording
-  - motion prompt-pack poll timing parity
-- Added:
-  - `docs/operations-context.md`
-  - `docs/workflow/first-tracked-run-quickstart.md`
-- Updated wrap-up protocols so structural-walk manifest maintenance is explicitly part of shutdown only when control structure changes.
-- Rewrote `next-session-start-here.md` so it reflects the real post-Epic-14 state instead of the older Epic 12 handoff.
+- Fixed sprint-status.yaml: Epics 13-14 corrected from stale `in-progress`/`backlog` to `done`
+- Updated bmm-workflow-status.yaml: 18 epics, 86 stories
+- Updated project-context.md with epic planning status
+- Updated epics.md Epic List index
 
-### Structural validation runs
+### Codebase research (4 parallel agents)
 
-- Ran `python -m scripts.utilities.structural_walk --workflow standard`
-  - result: `READY`
-- Ran `python -m scripts.utilities.structural_walk --workflow standard --dry-run`
-  - result: `READY`
-- Ran `python -m scripts.utilities.structural_walk --workflow motion`
-  - result: `READY`
-- Saved the generated reports under `reports/structural-walk/`.
+- Agent 1: API client patterns (BaseAPIClient, 10 clients), skill structure (27 skills), run constants, pre-flight check, source wrangler
+- Agent 2: Validators and governance (structural walk, fidelity contracts, lane matrix, baton lifecycle, envelope governance, sidecars)
+- Agent 3: Workflow patterns (standard/motion manifests, content templates, 12 specialist agents, story file format)
+- Agent 4: Learning infrastructure (SQLite schema with 8 mostly-empty tables, observability hooks, sparse sidecars, no learning event capture yet)
 
-### Marcus prompt harness + Quinn watcher
+### Autoresearch evaluation
 
-- Added `scripts/utilities/marcus_prompt_harness.py`.
-- Added focused tests in `tests/test_marcus_prompt_harness.py`.
-- Harness behavior:
-  - infers run constants from a real tracked bundle when available
-  - generates a simulated operator-to-Marcus transcript for the standard v4.1 prompt pack
-  - generates a Quinn-style watcher report on prompt-step evidence
-- Verified with `pytest tests/test_marcus_prompt_harness.py -q`
-  - result: `4 passed`
-- Ran the harness against `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260403`.
-- Output landed in `reports/prompt-harness/standard-v4.1/`.
+- Evaluated Karpathy's autoresearch as a potential tool for Epics 15-16
+- Conclusion: not directly applicable at system level (ML training loop vs. multi-agent production workflow), but strong fit at individual agent judgment calibration scope
+- Created Story 15.7: Agent Judgment Calibration Harness — adapts hypothesis→modify→evaluate→persist methodology to agent criteria refinement against labeled ground truth
 
 ## Key Decisions
 
-1. Shutdown and wrap-up docs should include structural-walk maintenance guidance, but only conditionally when workflow control structure actually changes.
-2. `next-session-start-here.md` must describe the expected post-closeout repo state, not the transient pre-push state.
-3. The first Marcus prompt harness should be evidence-driven and transcript-driven, not pretend to be a runtime executor.
-4. Real bundle values should be inferred first for the harness; plausible placeholders are acceptable only when the repo has no canonical evidence.
-5. Generated structural-walk and prompt-harness reports should be kept as session artifacts.
+1. **Epic execution order**: 17 → 18 → 15 → 16. Research & Reference first (independent, needs API credentials). Additional Assets second (discovery-first, independent). Learning third (gated on trial runs). Autonomy last (depends on learning data).
+2. **Epics 15-16 gated on evidence**: at least one tracked trial run for Epic 15, 3-5 for Epic 16. No design theory without operational data.
+3. **Epic 18 is discovery-first**: implementation stories added only after discovery documents are reviewed and approved.
+4. **Story 15.7 autoresearch adaptation**: agent judgment calibration, not system-level automation. Labeled corpus from tracked-run gate decisions.
+5. **Sprint-status.yaml reconciliation**: Epics 13-14 were stale — corrected to `done` to match git history and bmm-workflow-status.
 
 ## What Was Not Done
 
-- No tracked trial run was executed.
-- The prompt harness does not yet prove live Marcus runtime behavior; it proves prompt-pack conformance and artifact-audit behavior.
-- No execution harness was built yet for actually driving prompt-pack commands end-to-end.
+- No tracked trial run was executed (deferred to next session as primary objective).
+- No new API credentials provisioned (Consensus, Scite.ai needed for Epic 17).
+- No workflow or control-structure changes — structural walk manifests remain current.
+- No code implementation — this was a planning-only session.
 
 ## Validation Summary
 
-- `pytest tests/test_structural_walk.py -q`
-  - `33 passed` earlier in the session
-- `pytest tests/test_marcus_prompt_harness.py -q`
-  - `4 passed`
-- `python -m scripts.utilities.structural_walk --workflow standard`
-  - `READY`
-- `python -m scripts.utilities.structural_walk --workflow standard --dry-run`
-  - `READY`
-- `python -m scripts.utilities.structural_walk --workflow motion`
-  - `READY`
+- `git diff --check`: clean (CRLF warnings only, expected on Windows)
+- 24 story stub files created, all following established format
+- 4 research agents validated story stubs against actual codebase patterns — no wheel reinvention confirmed
+- Sprint-status, bmm-workflow-status, project-context, epics.md all consistent at 18 epics / 86 stories
 
 ## Lessons Learned
 
-- Structural readiness and behavioral/runtime proof are different things; the repo now has better coverage for the former than the latter.
-- A watcher that reports `PASS`, `INFERRED`, `PARTIAL`, and `MISSING` is more useful than a harness that flatters the state of a bundle.
-- The tracked bundle used for harness seeding is realistic enough to be useful, but not clean enough to be mistaken for a perfect gold run.
-- The shutdown protocol needed an explicit reminder that walk manifests do not self-update when control docs drift.
+- Running 4 parallel research agents before writing story stubs prevented reinventing existing infrastructure and produced better-grounded stubs.
+- The autoresearch pattern maps well to individual agent judgment calibration but not to whole-system orchestration — scope matters for methodology transfer.
+- Stale tracking artifacts (sprint-status showing Epic 13 in-progress when it was done) should be caught at session start, not carried forward.
+- Story stubs that explicitly list "Existing Infrastructure To Build On" are more useful than stubs that only describe what's new.
 
 ## Artifact Update Checklist
 
-- [x] `bmad-session-protocol-session-WRAPUP.md`
-- [x] `docs/workflow/production-session-wrapup.md`
-- [x] `next-session-start-here.md`
-- [x] `SESSION-HANDOFF.md`
-- [x] `scripts/utilities/marcus_prompt_harness.py`
-- [x] `tests/test_marcus_prompt_harness.py`
-- [x] `reports/structural-walk/standard/structural-walk-standard-20260406-032347.md`
-- [x] `reports/structural-walk/standard/structural-walk-standard-dry-run-20260406-032612.md`
-- [x] `reports/structural-walk/motion/structural-walk-motion-20260406-032702.md`
-- [x] `reports/prompt-harness/standard-v4.1/run-20260406-034450/`
-- [x] `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md`
+- [x] `_bmad-output/planning-artifacts/epics.md` — Epics 15-18 + Story 15.7 added
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — Epics 13-14 fixed, 15-18 added
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — counts updated, new epic entry
+- [x] `_bmad-output/implementation-artifacts/15-*.md` — 7 story stubs
+- [x] `_bmad-output/implementation-artifacts/16-*.md` — 5 story stubs
+- [x] `_bmad-output/implementation-artifacts/17-*.md` — 5 story stubs
+- [x] `_bmad-output/implementation-artifacts/18-*.md` — 7 story stubs
+- [x] `docs/project-context.md` — epic planning status update
+- [x] `next-session-start-here.md` — trial run as immediate next action
+- [x] `SESSION-HANDOFF.md` — this file
 
 ## Next Session
 
@@ -111,5 +88,6 @@ This session closed the remaining pre-trial documentation gaps, fixed the two re
 - Create `ops/first-tracked-trial-run`
 - Pick the first concrete tracked bundle
 - Run readiness with `--bundle-dir`
-- Use the standard or motion structural walk as the gate
-- Begin the first tracked trial run when ready
+- Use the standard structural walk as the gate
+- Begin the first tracked trial run
+- After trial-run learning stabilizes, begin Epic 17 (Research & Reference) implementation

@@ -261,6 +261,10 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 13. **Epic 12: Double-Dispatch Gamma Slide Selection** - Per-run dual Gamma dispatch, parallel fidelity review, side-by-side selection storyboard, winner forwarding to Irene
 14. **Epic 13: Visual-Aware Irene Pass 2 Scripting** - Mandatory perception contract, parameterized visual reference injection in narration, segment manifest enrichment
 15. **Epic 14: Motion-Enhanced Presentation Workflow** - Motion workflow variant with Kira video + manual animation, motion decision point, motion perception, compositor motion support
+16. **Epic 15: Learning & Compound Intelligence** - Learning event capture, tracked-run retrospectives, upstream-from-downstream feedback routing, synergy scorecards, pattern condensation, workflow-family learning
+17. **Epic 16: Bounded Autonomy Expansion** - Autonomy evidence framework, shared governance enforcement utilities, expanded handoff validators, contract linting, Marcus autonomous routing for routine decisions
+18. **Epic 17: Research & Reference Services** - Consensus + Scite.ai triangulation, related-resources list generation, inline citation injection, hypothesis/pro-con research for learning experiences, shared research skill
+19. **Epic 18: Additional Assets & Workflow Families** - Discovery-first requirements for cases/scenarios, quizzes, discussions, handouts, podcasts, diagrams; reusable workflow-family implementation framework
 
 ---
 
@@ -2622,3 +2626,570 @@ So that a motion-enhanced lesson can be produced end-to-end through the APP.
 **And** run reporting includes motion metrics: clips generated, animations imported, total motion duration, Kira credits consumed
 **And** pre-flight check extended: verify Kling API connectivity when `motion_enabled: true`
 **And** end-to-end integration test: a 3-slide mini-run with 1 static + 1 video (Kira) + 1 animation (manual) produces correct manifest, narration with motion references, and assembly guide
+
+---
+
+## Epic 15: Learning & Compound Intelligence (Added 2026-04-06)
+
+**Goal**: Convert the APP from a well-governed multi-agent pipeline into a compound-learning production system where tracked runs, gate decisions, human corrections, and cross-agent outcomes accumulate into reusable organizational intelligence — so each serious production run makes the platform measurably smarter.
+
+**Depends on**: At least one tracked trial run completed (hard — learning schema needs real operational evidence to validate). Epic 2A sensory bridges and Vera fidelity infrastructure (existing, satisfied). Epic 4A governance and observability hooks (existing, satisfied).
+
+**Seed document**: `_bmad-output/implementation-artifacts/app-three-layer-optimization-plans-2026-04-06.md`, Plan 3 (primary), plus `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md` Priority 0 and Priority 3.
+
+**Design guardrails**:
+- Only capture learning that changes future decisions
+- Distinguish clearly between: deterministic policy candidate, specialist calibration note, workflow-family heuristic, one-off exception
+- Do not let memory become a dumping ground — periodic condensation is mandatory
+- Preserve specialist intelligence; do not flatten judgment into brittle automation
+
+### Story 15.1: Learning Event Schema & Capture Infrastructure
+
+As a system architect,
+I want a canonical learning-event format that captures every meaningful production event (gate approval, revision, waiver, circuit break, quality failure, fidelity failure, first-pass approval, manual override),
+So that the system stops losing its most valuable feedback.
+
+**Acceptance Criteria:**
+
+**Given** a tracked production run reaches any gate decision
+**When** a human or agent decision is recorded
+**Then** a structured learning event is persisted containing: `run_id`, `gate`, `artifact_type`, `producing_specialist`, `reviewing_specialist` (if applicable), `human_decision`, `root_cause_classification`, `accepted_remediation`, `learning_targets[]`
+**And** the learning-event schema is defined in `state/config/learning-event-schema.yaml`
+**And** events are appended to a per-run learning ledger at `{run_dir}/learning-events.yaml`
+**And** capture hooks integrate with the existing gate coordinator and quality gate infrastructure
+**And** ad-hoc runs capture events to their ad-hoc ledger (existing FR91 boundary respected)
+**And** schema is extensible for future event types without breaking existing consumers
+**And** unit tests validate schema compliance and append behavior
+
+### Story 15.2: Tracked-Run Retrospective Artifact
+
+As a production operator,
+I want an automated post-run retrospective generated after each tracked/default production run,
+So that the system produces structured learning from every serious run.
+
+**Acceptance Criteria:**
+
+**Given** a tracked production run completes (all gates closed or run explicitly ended)
+**When** Marcus initiates the retrospective step
+**Then** a structured retrospective artifact is generated containing:
+  - what worked unusually well (first-pass approvals, clean handoffs)
+  - what failed (revisions, waivers, circuit breaks)
+  - where each failure originated (upstream specialist) vs where detected (downstream gate)
+  - what correction fixed each issue
+  - which agents should learn what (per-specialist learning recommendations)
+  - whether each finding should become deterministic policy, specialist guidance, or one-off note
+**And** retrospective is saved to `{run_dir}/retrospective.md`
+**And** learning events from Story 15.1 are the primary input
+**And** retrospective template exists at `state/config/retrospective-template.md`
+**And** Marcus references the retrospective in the run's final report
+
+### Story 15.3: Upstream-From-Downstream Feedback Routing
+
+As a system architect,
+I want every downstream failure mapped to the earliest upstream point that could have prevented it,
+So that the system learns causally, not only descriptively.
+
+**Acceptance Criteria:**
+
+**Given** a learning event records a failure at any gate
+**When** the feedback routing logic runs (during retrospective generation)
+**Then** the system applies a causal attribution taxonomy:
+  - Quinn-R flags weak learner-effect → feeds back to Irene
+  - Vera flags source drift in slides → feeds back to Irene brief + Gary execution pattern
+  - composition issue from manifest ambiguity → feeds back to Irene and compositor
+  - repeated human revisions at Gate 2 → feeds back to Gary and Marcus planning
+**And** the routing taxonomy is defined in `state/config/feedback-routing-rules.yaml`
+**And** routed feedback is appended to the target specialist's sidecar `patterns.md` in structured format
+**And** sidecar writes respect existing `access-boundaries.md` constraints
+**And** attribution is evidence-based (linked to specific learning events), not guessed
+**And** new routing rules can be added without code changes (YAML-driven)
+
+### Story 15.4: Synergy Scorecard
+
+As a production operator,
+I want measurable health indicators for handoff quality across the core pipeline,
+So that "synergy" becomes an operationally visible property, not just a design aspiration.
+
+**Acceptance Criteria:**
+
+**Given** one or more tracked runs have completed with learning events captured
+**When** the synergy scorecard is generated
+**Then** it scores each core handoff on:
+  - handoff completeness rate
+  - downstream usability rate (did the receiver need to request corrections?)
+  - first-pass acceptance of upstream artifacts
+  - correction locality (good: caught near source; bad: caught 2-3 stages later)
+  - repeated cross-agent friction signatures
+**And** handoffs scored: Marcus→Irene, Irene→Gary, Gary→Irene Pass 2, Irene→Vera, Vera→Quinn-R, Quinn-R→Marcus/Human, manifest→compositor
+**And** scorecard is saved to `reports/synergy/scorecard-{date}.md`
+**And** scorecard can be run on-demand or as part of retrospective
+**And** trend comparison is supported when multiple scorecards exist
+**And** Marcus can reference the scorecard when planning subsequent runs
+
+### Story 15.5: Multi-Agent Pattern Condensation
+
+As a system architect,
+I want a periodic condensation process that distills accumulated sidecar patterns into high-signal summaries,
+So that agent memory stays useful without becoming bloated or contradictory.
+
+**Acceptance Criteria:**
+
+**Given** specialist sidecars have accumulated patterns from multiple tracked runs
+**When** the condensation process runs
+**Then** it produces per-specialist summaries:
+  - top recurring success patterns
+  - top recurring failure patterns
+  - patterns that should be promoted to deterministic policy
+  - patterns that should remain specialist calibration
+  - patterns that should be archived as one-off
+**And** condensation output is written to `{sidecar}/condensation-{date}.md`
+**And** the process identifies and flags contradictory local lessons across agents
+**And** duplicated learnings across multiple agents are deduplicated
+**And** condensation does not delete original chronology entries (append-only archive)
+**And** a policy-promotion review section highlights candidates for deterministic hardening
+
+### Story 15.6: Workflow-Family Learning Ledger
+
+As a production operator,
+I want learning tracked not only per-agent but per-workflow family (narrated deck, motion-enabled lesson, assessment generation, etc.),
+So that the platform gets smarter at the level the user actually experiences.
+
+**Acceptance Criteria:**
+
+**Given** tracked runs are tagged with their workflow family
+**When** the workflow-family learning ledger is generated or updated
+**Then** it tracks per workflow family:
+  - frequent failure modes
+  - expensive stages (time, credits, revision cycles)
+  - best escalation points
+  - best preset/mode combinations
+  - common human preferences and overrides
+**And** ledger is saved to `state/config/workflow-family-learning/{family-name}.yaml`
+**And** Marcus can consult workflow-family heuristics when planning a new run
+**And** the ledger grows from real run data (not pre-populated with guesses)
+**And** new workflow families are automatically created when a run uses an unrecognized family tag
+
+### Story 15.7: Agent Judgment Calibration Harness (autoresearch-inspired)
+
+As a system architect,
+I want an automated calibration harness that iteratively refines individual agent judgment criteria against human-labeled ground truth,
+So that specialist agents (Quinn-R, Vera, Gary, Irene) get measurably better at their specific judgment tasks through structured experimentation rather than ad-hoc prompt tuning.
+
+**Design inspiration**: Karpathy's [autoresearch](https://github.com/karpathy/autoresearch) methodology — hypothesis → modify → run → evaluate → persist improvements — adapted from ML training loops to agent prompt/criteria calibration against labeled exemplar corpora.
+
+**Acceptance Criteria:**
+
+**Given** a labeled corpus exists for a specialist agent's judgment task (e.g., 20 slides labeled good/bad/marginal by a human reviewer)
+**When** the calibration harness runs
+**Then** it loads the agent's current evaluation criteria (from SKILL.md references, fidelity contracts, or quality rubrics)
+**And** runs the agent's judgment against the full corpus, scoring agreement with human labels
+**And** proposes a criteria modification (add a check, adjust severity, refine wording, reweight dimensions)
+**And** re-runs and compares agreement rate
+**And** if improved, persists the refinement to the agent's sidecar `patterns.md` with evidence (corpus size, before/after agreement rate, specific changes)
+**And** if not improved, reverts and tries an alternative direction
+**And** iterates up to a configurable max cycles (default: 10) or until convergence (agreement rate delta < threshold)
+**And** produces a calibration report: `{agent, corpus_size, initial_agreement, final_agreement, refinements_accepted, refinements_rejected, cycles_run}`
+**And** the harness extends the existing woodshed skill pattern rather than replacing it
+**And** labeled corpus data derives from tracked-run learning events (Story 15.1) and human gate decisions
+**And** unit tests cover the calibration loop, scoring, persistence, and revert logic
+
+**Target agents and judgment tasks:**
+- Quinn-R: slide quality discrimination (good vs. bad vs. marginal)
+- Vera: fidelity assessment accuracy (omission/invention/alteration detection)
+- Gary: parameter-to-outcome mapping (which Gamma parameters produce human-preferred results)
+- Irene: pedagogical structure quality (which patterns get first-pass approval)
+
+---
+
+## Epic 16: Bounded Autonomy Expansion (Added 2026-04-06)
+
+**Goal**: Expand the scope of what Marcus and specialist agents can do independently — reducing operator friction for routine decisions and low-risk operations — without weakening governance, gate authority, specialist lanes, or human checkpoint control where they matter.
+
+**Depends on**: Epic 15 (hard — autonomy decisions must be informed by learning data, not design theory alone). At least 3-5 tracked runs completed (recommended — enough evidence to distinguish routine from risky decisions).
+
+**Seed documents**: `_bmad-output/implementation-artifacts/app-three-layer-optimization-plans-2026-04-06.md` Plans 1 and 2, plus `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md` Priorities 1, 2, and 4.
+
+**Design guardrails**:
+- Autonomy is earned, not assumed — expansion is gated by evidence from tracked runs
+- Preserve specialist intelligence; do not replace pedagogy, visual reasoning, or evaluator judgment with cheap automation
+- Human checkpoint authority is never reduced — only the friction of low-risk routine decisions is reduced
+- Every autonomy expansion must have a rollback mechanism (deterministic fallback to operator-confirmed mode)
+
+### Story 16.1: Autonomy Evidence Baseline & Decision Framework
+
+As a system architect,
+I want a structured framework for identifying which decisions can safely be automated based on tracked-run evidence,
+So that autonomy expansion is data-driven, not speculative.
+
+**Acceptance Criteria:**
+
+**Given** learning events and retrospectives exist from tracked runs
+**When** the autonomy evidence baseline is generated
+**Then** it classifies each recurring decision point as:
+  - `always-confirm`: high-risk or high-cost, must remain human-gated
+  - `confirm-unless-routine`: low-risk when pattern matches prior approvals, can be auto-approved with notification
+  - `auto-with-audit`: consistently approved without revision, can be fully automated with audit trail
+**And** the classification is documented in `state/config/autonomy-framework.yaml`
+**And** each classification cites specific run evidence (run IDs, approval rates, revision counts)
+**And** Marcus can read the framework to adjust his checkpoint behavior
+**And** the framework is reviewed and updated after each condensation cycle (Story 15.5)
+**And** any decision can be manually reclassified by the operator at any time
+
+### Story 16.2: Shared Governance Enforcement Utilities
+
+As a developer,
+I want reusable code-level middleware that validates governance constraints (allowed_outputs, decision_scope, authority_chain) across all specialists,
+So that governance validation is consistent, machine-checkable, and no longer duplicated in agent prose.
+
+**Acceptance Criteria:**
+
+**Given** multiple specialists enforce governance boundaries in their instructions
+**When** the shared governance module is implemented
+**Then** a `scripts/utilities/governance_validator.py` module provides:
+  - `validate_allowed_outputs(agent, outputs)` — checks output against agent's `governance.allowed_outputs`
+  - `validate_decision_scope(agent, dimensions)` — checks owned vs. not-owned dimensions
+  - `validate_authority_chain(envelope)` — confirms baton, route_to, and delegation fields
+  - `validate_required_envelope_fields(agent, envelope)` — per-specialist required field check
+**And** shared module is used by Marcus dispatch helpers, Gary, Irene, Vera, Quinn-R
+**And** scope violations produce consistent, machine-readable `scope_violation` outputs
+**And** existing agent SKILL.md governance prose can reference the shared validators instead of re-implementing
+**And** unit tests cover each validation function with pass/fail cases per specialist
+**And** the module does not replace specialist judgment — only enforces invariant boundaries
+
+### Story 16.3: Expanded Handoff Validators for Late-Stage Transitions
+
+As a production operator,
+I want deterministic gatekeeper scripts for all high-cost pipeline transitions (not just Gary/Irene),
+So that expensive downstream failures are caught before they happen.
+
+**Acceptance Criteria:**
+
+**Given** the core pipeline has validator coverage strongest around Gary and Irene
+**When** validators are expanded
+**Then** new validators cover:
+  - Irene Pass 1 output bundle integrity (lesson plan + slide brief completeness)
+  - Quinn-R pre-composition input completeness (all segments reviewed, all assets present)
+  - ElevenLabs write-back completeness and path integrity (audio files exist, timestamps valid, VTT monotonic)
+  - compositor manifest readiness (all write-back fields populated, all assets downloadable)
+  - final composition bundle completeness (assembly guide + all referenced assets present)
+**And** each validator is a standalone Python function in `scripts/utilities/`
+**And** validators integrate with the existing gate coordinator
+**And** validators are fail-closed: missing or invalid inputs block the transition
+**And** validators produce structured reports (not just pass/fail) listing specific missing or invalid fields
+**And** unit tests cover each validator with realistic pass and fail scenarios
+
+### Story 16.4: Contract Linting & Drift Protection
+
+As a system architect,
+I want a repeatable contract-validation routine that detects structural drift in YAML contracts, schemas, and templates,
+So that contracts remain operational assets, not only architectural documents.
+
+**Acceptance Criteria:**
+
+**Given** fidelity contracts, schemas, and templates are core invariants
+**When** the contract lint command runs
+**Then** it validates:
+  - fidelity contract YAML structure against canonical schema
+  - schema field consistency across related contracts
+  - template references in contracts resolve to existing files
+  - perception modality references match sensory bridge capabilities
+  - gate names and ownership match lane-matrix definitions
+**And** lint command is callable via `python -m scripts.utilities.contract_lint`
+**And** lint runs on contract edits, in pre-merge checks, and during APP maturity audits
+**And** output is structured: `{file, issue_type, severity, description, suggested_fix}`
+**And** zero-finding runs produce a clean bill of health report
+**And** the linter is extensible (new rule types can be added via YAML configuration)
+
+### Story 16.5: Marcus Autonomous Routing for Routine Decisions
+
+As a production operator,
+I want Marcus to handle routine, low-risk decisions autonomously (with notification) based on the autonomy framework,
+So that I spend my attention on decisions that actually need human judgment.
+
+**Acceptance Criteria:**
+
+**Given** the autonomy framework (Story 16.1) classifies certain decisions as `confirm-unless-routine` or `auto-with-audit`
+**When** Marcus encounters a classified decision during a production run
+**Then** for `confirm-unless-routine`: Marcus proceeds automatically if the current context matches a prior-approved pattern, and notifies the operator with a brief summary ("Auto-approved Gate 1 — matches pattern from runs X, Y, Z")
+**And** for `auto-with-audit`: Marcus proceeds automatically and logs the decision to the audit trail without interrupting the operator
+**And** for `always-confirm`: Marcus pauses and requests explicit operator confirmation (unchanged behavior)
+**And** operator can override any auto-decision within the run by saying "stop auto-approving [gate/decision]"
+**And** a per-run autonomy log tracks all auto-approved decisions with pattern citations
+**And** if an auto-approved decision leads to a downstream failure, the retrospective (Story 15.2) flags it for reclassification
+**And** autonomy behavior is disabled entirely when `run_preset: regulated`
+
+---
+
+## Epic 17: Research & Reference Services (Added 2026-04-06)
+
+**Goal**: Provide agent-consumable research and citation services that enrich course content with academically credible, triangulated references — from supplemental "Related Resources" lists through inline citation injection to hypothesis-driven learning experience research.
+
+**Depends on**: Epic 3 source wrangler and tech-spec-wrangler (existing, satisfied). Consensus API and Scite.ai API access (new integration requirement). Existing agent infrastructure (Marcus, Irene, source wrangler as consumers).
+
+**Design principles**:
+- Triangulation is core: findings from Consensus and Scite.ai are cross-validated, not taken at face value from a single source
+- Output modes are composable: related-resources, inline citation, and hypothesis research can be used independently or combined
+- Services are agent-consumable: any agent (source wrangler, Irene, Marcus) can invoke research services, not just a single consumer
+- Academic credibility is paramount: citation quality, recency, and relevance are explicitly scored
+
+### Story 17.1: Research Service Foundation & API Integration
+
+As a developer,
+I want API clients for Consensus and Scite.ai with triangulation logic,
+So that the APP can programmatically retrieve and cross-validate academic research findings.
+
+**Acceptance Criteria:**
+
+**Given** Consensus and Scite.ai API credentials are configured in `.env`
+**When** the research service is initialized
+**Then** `scripts/api_clients/consensus_client.py` provides: search by query, filter by recency/field/type, retrieve paper metadata and key findings
+**And** `scripts/api_clients/scite_client.py` provides: search by query or DOI, retrieve citation context (supporting/contrasting/mentioning), smart citation counts
+**And** a `scripts/utilities/research_triangulator.py` module cross-validates findings:
+  - papers found in both sources score higher
+  - contradictory citation contexts are flagged
+  - recency, citation count, and journal quality contribute to a composite reliability score
+**And** triangulated results are returned in a canonical format: `{query, findings[], reliability_scores, contradictions[], metadata}`
+**And** pre-flight check is extended to verify Consensus and Scite.ai API connectivity
+**And** unit tests cover each client with mocked responses and triangulation logic with synthetic data
+**And** live integration tests (behind `--run-live` flag) validate real API connectivity
+
+### Story 17.2: Related Resources List Generation
+
+As a production operator,
+I want the research service to generate a "Related Resources" list from a presentation script or lesson notes,
+So that learners get credible supplemental references for further study.
+
+**Acceptance Criteria:**
+
+**Given** a completed narration script or lesson notes (Irene Pass 2 output)
+**When** the related-resources generator runs
+**Then** key themes and claims are extracted from the source text
+**And** each theme/claim is researched via the triangulation service (Story 17.1)
+**And** results are filtered and ranked by: relevance to the source claim, reliability score, recency, accessibility (open-access preferred)
+**And** output is a structured "Related Resources" document containing:
+  - resource title, authors, publication year, DOI/URL
+  - one-sentence relevance summary per resource
+  - reliability indicator (triangulated / single-source)
+  - grouped by theme or section of the source material
+**And** configurable output count: default 5-10 resources, adjustable per run
+**And** output formats: Markdown (standalone document), slide-ready format (for last-slide embed), YAML (for downstream agent consumption)
+**And** the generator can be invoked by Marcus, Irene, or source wrangler via a shared function interface
+
+### Story 17.3: Inline Citation Injection Mode
+
+As a production operator,
+I want the research service to enrich a script or notes with inline citations to supporting research,
+So that content gains academic depth and credibility without requiring manual research.
+
+**Acceptance Criteria:**
+
+**Given** a narration script or lesson notes and `citation_mode: inline` is specified
+**When** the citation injector runs
+**Then** claims, statistics, and assertions in the source text are identified
+**And** each identified claim is researched via the triangulation service
+**And** matching citations are inserted naturally into the text flow (e.g., "(Smith et al., 2024)" or "Research from [University] confirms...")
+**And** a bibliography/references section is appended with full citation details
+**And** citation density is configurable: `light` (key claims only), `moderate` (most substantive claims), `thorough` (all supportable assertions)
+**And** the injector preserves the original voice and flow of the text — citations augment, not disrupt
+**And** claims where no credible research is found are left unchanged (no fabricated citations)
+**And** output includes a citation map: `{claim_text, citation, reliability_score, source_api}`
+**And** Irene can invoke this mode during Pass 2 narration scripting when requested
+
+### Story 17.4: Hypothesis & Learning Experience Research Mode
+
+As an instructional designer (Irene),
+I want the research service to find pro/con research for claims or themes in course content,
+So that I can design learning experiences like debates, critical analysis exercises, and evidence-evaluation activities.
+
+**Acceptance Criteria:**
+
+**Given** a theme, claim, or hypothesis extracted from lesson content and `research_mode: hypothesis` is specified
+**When** the hypothesis research service runs
+**Then** Scite.ai citation contexts are used to identify: supporting evidence, contrasting evidence, and mentioning-only references
+**And** Consensus findings are categorized by stance: supports, challenges, nuances
+**And** output is a structured hypothesis research package:
+  - claim/hypothesis statement
+  - supporting evidence summary with citations
+  - contrasting evidence summary with citations
+  - nuances and qualifications
+  - suggested learning activities (e.g., "Have students compare Smith 2023 and Jones 2024 for opposing conclusions")
+  - evidence strength assessment per side
+**And** the package can be consumed by Irene for designing discussion prompts, debate scaffolds, or critical thinking exercises
+**And** Marcus can request hypothesis research as part of run planning when the lesson content involves controversial or multi-perspective topics
+**And** output includes an academic integrity note flagging any findings with low reliability or limited triangulation
+
+### Story 17.5: Research Service Agent Integration & Skill Packaging
+
+As a system architect,
+I want the research services packaged as a shared skill consumable by any agent in the APP,
+So that research capabilities are reusable across workflows and agents.
+
+**Acceptance Criteria:**
+
+**Given** Stories 17.1-17.4 provide the research service functions
+**When** the skill is packaged
+**Then** a `skills/research-services/` skill directory is created with SKILL.md, references, and scripts
+**And** the skill exposes three modes: `related-resources`, `inline-citation`, `hypothesis`
+**And** Marcus can delegate research tasks to the skill as part of production planning
+**And** Irene can invoke research during Pass 1 (lesson planning) or Pass 2 (narration scripting)
+**And** source wrangler can invoke research when enriching source bundles
+**And** the skill respects run-constants: `research_enabled: boolean`, `research_mode: related | citation | hypothesis | all`, `research_depth: light | moderate | thorough`
+**And** research results are cached per-run to avoid redundant API calls for the same queries
+**And** run reporting includes research metrics: queries made, citations found, triangulation rate, API credits consumed
+**And** the skill's governance block defines its lane: research retrieval and formatting only, no pedagogical or visual judgment
+
+---
+
+## Epic 18: Additional Assets & Workflow Families (Added 2026-04-06)
+
+**Goal**: Expand the APP's production capabilities beyond narrated slide decks to cover the full range of instructional content types — cases/scenarios, quizzes, discussions, review activities, handouts, podcasts, instructional diagrams, and more — with new workflow families or pipeline variants and tool integrations as needed.
+
+**Depends on**: Core pipeline stability (Epics 1-14 complete, satisfied). At least one successful tracked trial run of the narrated-deck workflow (recommended — proves the pipeline model before extending it). Epic 15 learning infrastructure (soft — new workflows should capture learning from day one).
+
+**Design principles**:
+- Discovery-first: each new content type starts with a dedicated requirements elicitation story before implementation
+- Workflow families, not one-offs: each content type gets a named workflow family that the learning ledger (Story 15.6) can track
+- Reuse the pipeline model: where possible, new content types reuse existing agents (Irene for pedagogy, Quinn-R for quality) with new specialist skills, not new agents
+- Human-in-the-loop by default: new content types inherit the HIL gate pattern; gate count and placement are determined per content type during discovery
+
+### Story 18.1: Content Type Discovery & Requirements Elicitation — Cases & Scenarios
+
+As a product owner,
+I want detailed requirements for case study and scenario-based learning content production,
+So that the APP can produce pedagogically sound cases with the right workflow, agents, and tools.
+
+**Acceptance Criteria:**
+
+**Given** cases/scenarios are identified as a target content type
+**When** the discovery process completes
+**Then** a requirements document exists in `_bmad-output/planning-artifacts/` covering:
+  - content structure (narrative arc, decision points, branching vs. linear, debriefing)
+  - source material requirements (real-world data, anonymization needs, domain expertise)
+  - agent roles (Irene for pedagogy, new specialist for scenario logic, Quinn-R for quality)
+  - tool requirements (Gamma for visuals? Botpress for interactive branching? New tools?)
+  - output formats (document, slide-embedded, LMS-native, interactive web)
+  - HIL gates (how many, where placed, what the human reviews)
+  - workflow family definition: named stages, handoff contracts, acceptance criteria
+**And** the discovery document is reviewed by the operator before implementation stories are created
+**And** implementation stories for cases/scenarios are added to this epic after approval
+
+### Story 18.2: Content Type Discovery & Requirements Elicitation — Quizzes & Assessments
+
+As a product owner,
+I want detailed requirements for quiz and assessment content production,
+So that the APP can produce valid, aligned assessments integrated with the existing Qualtrics and Canvas tooling.
+
+**Acceptance Criteria:**
+
+**Given** quizzes/assessments are identified as a target content type
+**When** the discovery process completes
+**Then** a requirements document exists covering:
+  - assessment types (formative, summative, diagnostic, self-check, peer review prompt)
+  - item types (multiple choice, short answer, matching, essay prompt, scenario-based)
+  - alignment requirements (Bloom's taxonomy mapping, learning objective traceability)
+  - agent roles (Irene for alignment, Qualtrics specialist for survey-type items, Canvas specialist for LMS-native quizzes)
+  - quality review requirements (distractor analysis, difficulty calibration, bias review)
+  - output formats (Qualtrics survey, Canvas quiz, standalone document, question bank)
+  - workflow family definition
+**And** the discovery document is reviewed before implementation stories are created
+
+### Story 18.3: Content Type Discovery & Requirements Elicitation — Discussions & Review Activities
+
+As a product owner,
+I want detailed requirements for discussion prompt and review activity production,
+So that the APP can produce engaging, pedagogically grounded collaborative learning experiences.
+
+**Acceptance Criteria:**
+
+**Given** discussions and review activities are identified as target content types
+**When** the discovery process completes
+**Then** a requirements document exists covering:
+  - discussion types (open-ended, structured debate, case discussion, peer review, reflection)
+  - review activity types (peer critique, self-assessment rubric, portfolio review prompt)
+  - scaffolding requirements (discussion rubrics, response templates, moderation guidance)
+  - agent roles (Irene for pedagogy, Canvas specialist for LMS discussion setup)
+  - research integration (Epic 17 hypothesis mode for debate scaffolds)
+  - output formats (Canvas discussion topic, standalone prompt document, rubric)
+  - workflow family definition
+**And** the discovery document is reviewed before implementation stories are created
+
+### Story 18.4: Content Type Discovery & Requirements Elicitation — Handouts & Reference Materials
+
+As a product owner,
+I want detailed requirements for handout and reference material production,
+So that the APP can produce supplemental learning materials that complement presentations and lessons.
+
+**Acceptance Criteria:**
+
+**Given** handouts and reference materials are identified as target content types
+**When** the discovery process completes
+**Then** a requirements document exists covering:
+  - handout types (study guide, cheat sheet, quick reference, glossary, procedure guide, worksheet)
+  - design requirements (visual design standards, accessibility, print-readiness)
+  - agent roles (Irene for content, Canva specialist for visual design guidance, research services for citations)
+  - tool requirements (Canva for design, Gamma for visual elements, PDF generation)
+  - relationship to primary content (companion to specific lesson, standalone reference)
+  - output formats (PDF, Markdown, Canva design template, print-optimized)
+  - workflow family definition
+**And** the discovery document is reviewed before implementation stories are created
+
+### Story 18.5: Content Type Discovery & Requirements Elicitation — Podcasts & Audio Content
+
+As a product owner,
+I want detailed requirements for podcast and audio-first content production,
+So that the APP can produce audio learning experiences beyond slide narration.
+
+**Acceptance Criteria:**
+
+**Given** podcasts and audio content are identified as target content types
+**When** the discovery process completes
+**Then** a requirements document exists covering:
+  - audio content types (lecture podcast, interview/dialogue, case discussion audio, audio summary/recap)
+  - script structure (monologue, dialogue with multiple voices, interview format)
+  - agent roles (Irene for script, ElevenLabs specialist for multi-voice production, Quinn-R for quality)
+  - tool requirements (ElevenLabs dialogue API, Wondercraft for enhanced podcast features, Descript for editing)
+  - production requirements (intro/outro, music beds, chapter markers, transcript generation)
+  - output formats (MP3, enhanced podcast with chapters, transcript + VTT, RSS-ready)
+  - workflow family definition
+**And** the discovery document is reviewed before implementation stories are created
+
+### Story 18.6: Content Type Discovery & Requirements Elicitation — Instructional Diagrams & Infographics
+
+As a product owner,
+I want detailed requirements for instructional diagram and infographic production,
+So that the APP can produce visual learning aids that explain processes, relationships, and data.
+
+**Acceptance Criteria:**
+
+**Given** instructional diagrams and infographics are identified as target content types
+**When** the discovery process completes
+**Then** a requirements document exists covering:
+  - visual types (process flow, concept map, comparison chart, timeline, data visualization, anatomical/technical diagram)
+  - design requirements (brand alignment, accessibility, resolution for print and screen)
+  - agent roles (Irene for content, Canva specialist for design guidance, Midjourney specialist for bespoke visuals)
+  - tool requirements (Canva, Midjourney, Gamma for simple diagrams, manual tools for complex)
+  - accuracy requirements (data visualization validation, domain expert review)
+  - output formats (PNG, SVG, PDF, embeddable in slides/handouts)
+  - workflow family definition
+**And** the discovery document is reviewed before implementation stories are created
+
+### Story 18.7: Workflow Family Implementation Framework
+
+As a system architect,
+I want a reusable framework for implementing new workflow families based on discovery documents,
+So that each approved content type can be stood up efficiently without reinventing pipeline infrastructure.
+
+**Acceptance Criteria:**
+
+**Given** one or more discovery documents (Stories 18.1-18.6) are approved
+**When** the implementation framework is created
+**Then** a workflow-family template exists providing:
+  - pipeline stage template (stage name, agent, input contract, output contract, HIL gate placement)
+  - run-constants.yaml extension pattern for new workflow families
+  - structural-walk manifest extension pattern for new workflow families
+  - learning ledger initialization for new workflow families (integrates with Story 15.6)
+  - pre-flight check extension pattern for new tool dependencies
+  - prompt-pack template for operator guidance
+**And** the framework is documented in `docs/workflow/workflow-family-implementation-guide.md`
+**And** the framework is validated by implementing the first approved content type end-to-end
+**And** subsequent content types can be stood up by following the framework without architectural changes

@@ -319,7 +319,7 @@ Storyboard inputs:
 
 Required behavior:
 - Generate `storyboard/storyboard.json` and `storyboard/index.html`
-- Present the slide review summary
+- Present the slide review summary and the reviewer-friendly HTML storyboard surface (ordered thumbnails, script/script-notes panels, orientation/provenance metadata, related-assets section)
 - Obtain explicit Gate 2 approval on the selected winner deck
 
 Required write:

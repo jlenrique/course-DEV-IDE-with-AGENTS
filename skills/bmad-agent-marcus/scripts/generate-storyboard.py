@@ -31,6 +31,8 @@ from urllib.parse import urlparse
 
 logger = logging.getLogger("generate_storyboard")
 
+_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
+
 
 def _log_run_suffix(run_id: str | None) -> str:
     """Optional APP run correlation for log messages."""
@@ -123,6 +125,79 @@ def load_narration_by_slide_id(path: Path) -> dict[str, str]:
         chunks.setdefault(sid, []).append(str(nt).strip())
 
     return {k: "\n\n---\n\n".join(v) for k, v in chunks.items()}
+
+
+def _inspect_local_image_metadata(path: Path) -> dict[str, Any]:
+    """Inspect local image metadata for storyboard review."""
+    meta: dict[str, Any] = {
+        "orientation": "unknown",
+        "dimensions": None,
+        "aspect_ratio": None,
+    }
+    from PIL import Image
+
+    try:
+        with Image.open(path) as img:
+            width, height = img.size
+    except Exception:  # pragma: no cover - defensive
+        return meta
+
+    if width > 0 and height > 0:
+        meta["dimensions"] = {"width": width, "height": height}
+        meta["aspect_ratio"] = f"{width}:{height}"
+        if width > height:
+            meta["orientation"] = "landscape"
+        elif height > width:
+            meta["orientation"] = "portrait"
+        else:
+            meta["orientation"] = "square"
+    return meta
+
+
+def _build_slide_row_id(slide_id: str, dispatch_variant: str | None, sequence: int) -> str:
+    safe_slide_id = "".join(ch if ch.isalnum() else "-" for ch in slide_id).strip("-").lower()
+    if not safe_slide_id:
+        safe_slide_id = f"slide-{sequence}"
+    if dispatch_variant:
+        return f"slide-{safe_slide_id}-{dispatch_variant.lower()}"
+    return f"slide-{safe_slide_id}"
+
+
+def _resolve_preview_metadata(
+    *,
+    file_path_raw: str,
+    html_asset_ref: str,
+    asset_status: str,
+    asset_base: Path,
+) -> dict[str, Any]:
+    preview_kind = "missing"
+    preview_href = html_asset_ref
+    orientation = "unknown"
+    dimensions = None
+    aspect_ratio = None
+
+    suffix = Path(file_path_raw).suffix.lower()
+    if asset_status == "missing":
+        preview_kind = "missing"
+    elif asset_status == "remote":
+        preview_kind = "image" if suffix in _IMAGE_SUFFIXES else "link"
+    elif suffix in _IMAGE_SUFFIXES:
+        preview_kind = "image"
+        local_path = (asset_base / file_path_raw).resolve()
+        meta = _inspect_local_image_metadata(local_path)
+        orientation = str(meta.get("orientation") or "unknown")
+        dimensions = meta.get("dimensions")
+        aspect_ratio = meta.get("aspect_ratio")
+    else:
+        preview_kind = "other"
+
+    return {
+        "preview_kind": preview_kind,
+        "preview_href": preview_href,
+        "orientation": orientation,
+        "dimensions": dimensions,
+        "aspect_ratio": aspect_ratio,
+    }
 
 
 def load_related_assets(
@@ -230,6 +305,8 @@ def build_manifest(
         vera_score = raw.get("vera_score")
         quinn_score = raw.get("quinn_score")
         findings = raw.get("findings") if isinstance(raw.get("findings"), list) else []
+        visual_description = str(raw.get("visual_description") or "").strip()
+        literal_visual_source = str(raw.get("literal_visual_source") or "").strip() or None
 
         html_asset_ref = ""
         asset_status = "missing"
@@ -247,10 +324,36 @@ def build_manifest(
             if matched is not None and str(matched).strip():
                 narration_text = str(matched).strip()
                 narration_status = "present"
+            else:
+                narration_status = "no_match" if segment_manifest_path is not None else "pending"
+
+        preview_meta = _resolve_preview_metadata(
+            file_path_raw=file_path_raw,
+            html_asset_ref=html_asset_ref,
+            asset_status=asset_status,
+            asset_base=asset_base.resolve(),
+        )
+        script_notes_parts: list[str] = []
+        if visual_description:
+            script_notes_parts.append(visual_description)
+        if findings:
+            script_notes_parts.append("Findings:\n- " + "\n- ".join(str(f) for f in findings))
+        script_notes = "\n\n".join(part for part in script_notes_parts if part.strip())
+
+        issue_flags: list[str] = []
+        if asset_status == "missing":
+            issue_flags.append("missing_asset")
+        if narration_status == "no_match":
+            issue_flags.append("no_match")
+        if findings:
+            issue_flags.append("has_findings")
+
+        row_id = _build_slide_row_id(slide_id, dispatch_variant, idx)
 
         slides_out.append(
             {
                 "sequence": idx,
+                "row_id": row_id,
                 "row_kind": "slide",
                 "slide_id": slide_id,
                 "fidelity": fidelity,
@@ -262,11 +365,20 @@ def build_manifest(
                 "display_title": display_title,
                 "asset_status": asset_status,
                 "html_asset_ref": html_asset_ref,
+                "preview_kind": preview_meta["preview_kind"],
+                "preview_href": preview_meta["preview_href"],
+                "orientation": preview_meta["orientation"],
+                "dimensions": preview_meta["dimensions"],
+                "aspect_ratio": preview_meta["aspect_ratio"],
                 "vera_score": vera_score,
                 "quinn_score": quinn_score,
                 "findings": findings,
+                "visual_description": visual_description,
+                "literal_visual_source": literal_visual_source,
                 "narration_text": narration_text,
                 "narration_status": narration_status,
+                "script_notes": script_notes,
+                "issue_flags": issue_flags,
             }
         )
 
@@ -291,6 +403,7 @@ def build_manifest(
         1 for s in slides_out if isinstance(s, dict) and s.get("narration_status") == "present"
     )
     view = "slides_with_script" if with_script_n else "slides_only"
+    checkpoint_label = "Storyboard B" if view == "slides_with_script" else "Storyboard A"
     related_assets = related_assets or []
     rows: list[dict[str, Any]] = [*slides_out]
     normalized_related_assets: list[dict[str, Any]] = []
@@ -298,9 +411,20 @@ def build_manifest(
         for idx, item in enumerate(related_assets, start=1):
             row = dict(item)
             row["sequence"] = len(slides_out) + idx
+            row["row_id"] = f"related-{idx}"
             row.setdefault("row_kind", "related_asset")
             normalized_related_assets.append(row)
             rows.append(row)
+
+    missing_assets = sum(1 for s in slides_out if s.get("asset_status") == "missing")
+    remote_assets = sum(1 for s in slides_out if s.get("asset_status") == "remote")
+    pending_narration = sum(
+        1 for s in slides_out if s.get("narration_status") in {"pending", "no_match"}
+    )
+    with_findings = sum(1 for s in slides_out if s.get("findings"))
+    fidelity_counts = dict(Counter(str(s.get("fidelity", "unknown")) for s in slides_out))
+    first_slide_id = slides_out[0]["slide_id"] if slides_out else None
+    last_slide_id = slides_out[-1]["slide_id"] if slides_out else None
 
     out: dict[str, Any] = {
         "storyboard_version": 3,
@@ -308,10 +432,24 @@ def build_manifest(
         "source_payload": payload_path.resolve().as_posix(),
         "asset_base": asset_base.resolve().as_posix(),
         "storyboard_view": view,
+        "checkpoint_label": checkpoint_label,
         "slides": slides_out,
         "related_assets": normalized_related_assets,
         "run_id": run_id,
         "rows": rows,
+        "review_meta": {
+            "total_slides": len(slides_out),
+            "missing_assets": missing_assets,
+            "remote_assets": remote_assets,
+            "slides_with_narration": with_script_n,
+            "pending_narration": pending_narration,
+            "related_asset_count": len(normalized_related_assets),
+            "double_dispatch_enabled": bool(pair_map),
+            "slides_with_findings": with_findings,
+            "fidelity_counts": fidelity_counts,
+            "first_slide_id": first_slide_id,
+            "last_slide_id": last_slide_id,
+        },
     }
 
     if pair_map:
@@ -353,9 +491,11 @@ def format_summary(manifest: dict[str, Any]) -> str:
         for s in slides
         if isinstance(s, dict)
     ]
+    review_meta = manifest.get("review_meta") if isinstance(manifest.get("review_meta"), dict) else {}
     counts = Counter(fids)
+    checkpoint_label = str(manifest.get("checkpoint_label") or "Storyboard")
     lines = [
-        f"Storyboard summary: {len(slides)} slide(s).",
+        f"{checkpoint_label} summary: {len(slides)} slide(s).",
         f"First slide_id: {ids[0]!r}; last slide_id: {ids[-1]!r}.",
         "Fidelity counts: "
         + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())),
@@ -383,11 +523,22 @@ def format_summary(manifest: dict[str, Any]) -> str:
     related = manifest.get("related_assets")
     if isinstance(related, list) and related:
         lines.append(f"Related assets: {len(related)} row(s) appended after slides.")
+    generated_at = str(manifest.get("generated_at") or "").strip()
+    if generated_at:
+        lines.append(f"Generated at: {generated_at}")
+    if review_meta:
+        lines.append(
+            "Review status: "
+            f"missing_assets={review_meta.get('missing_assets', 0)}, "
+            f"pending_narration={review_meta.get('pending_narration', 0)}, "
+            f"slides_with_findings={review_meta.get('slides_with_findings', 0)}"
+        )
     return "\n".join(lines)
 
 
 def render_index_html(manifest: dict[str, Any]) -> str:
     """Single-page table; view-only (no forms)."""
+    return render_index_html_v2(manifest)
     rows_in = manifest.get("rows")
     if not isinstance(rows_in, list):
         rows_in = manifest.get("slides")
@@ -582,6 +733,481 @@ def render_index_html(manifest: dict[str, Any]) -> str:
 """
 
 
+def render_index_html_v2(manifest: dict[str, Any]) -> str:
+    """Reviewer-friendly storyboard surface with static progressive enhancement."""
+    slides = manifest.get("slides") if isinstance(manifest.get("slides"), list) else []
+    related_assets = manifest.get("related_assets") if isinstance(manifest.get("related_assets"), list) else []
+    review_meta = manifest.get("review_meta") if isinstance(manifest.get("review_meta"), dict) else {}
+    dd = manifest.get("double_dispatch") if isinstance(manifest.get("double_dispatch"), dict) else {}
+    actionable_issue_count = sum(
+        1
+        for slide in slides
+        if isinstance(slide, dict)
+        and isinstance(slide.get("issue_flags"), list)
+        and len(slide.get("issue_flags")) > 0
+    )
+    issue_controls_disabled = actionable_issue_count == 0
+    issue_checkbox_attrs = ' disabled aria-disabled="true"' if issue_controls_disabled else ""
+    issue_button_attrs = ' disabled aria-disabled="true"' if issue_controls_disabled else ""
+    issue_button_label = "No issues" if issue_controls_disabled else "Next issue"
+    issue_label_class = "toolbar-label disabled" if issue_controls_disabled else "toolbar-label"
+
+    def _preview_markup(item: dict[str, Any], *, size: str = "card") -> str:
+        href = str(item.get("preview_href") or item.get("html_asset_ref") or "")
+        preview_kind = str(item.get("preview_kind") or "missing")
+        row_id = html.escape(str(item.get("row_id") or "preview"), quote=True)
+        title = html.escape(str(item.get("display_title") or item.get("label") or item.get("slide_id") or "Preview"))
+        img_class = "slide-thumbnail" if size == "card" else "variant-thumbnail"
+        if preview_kind == "image" and href:
+            escaped_href = html.escape(href, quote=True)
+            return (
+                f'<a class="preview-link" data-role="preview-link" data-row-id="{row_id}" '
+                f'data-preview-src="{escaped_href}" href="{escaped_href}" target="_blank" rel="noopener noreferrer">'
+                f'<img class="{img_class}" src="{escaped_href}" alt="{title} preview" loading="lazy" />'
+                '<span class="expand-cue" aria-hidden="true">[+]</span>'
+                "</a>"
+            )
+        if preview_kind in {"link", "other"} and href:
+            escaped_href = html.escape(href, quote=True)
+            return (
+                f'<a class="preview-link preview-link-text" data-role="preview-link" data-row-id="{row_id}" '
+                f'href="{escaped_href}" target="_blank" rel="noopener noreferrer">Open asset</a>'
+            )
+        return '<div class="preview-missing">Preview unavailable</div>'
+
+    pair_section_rows: list[str] = []
+    for pair in dd.get("variant_pairs", []) if isinstance(dd, dict) else []:
+        if not isinstance(pair, dict):
+            continue
+        var_a = pair.get("variants", {}).get("A") if isinstance(pair.get("variants"), dict) else None
+        var_b = pair.get("variants", {}).get("B") if isinstance(pair.get("variants"), dict) else None
+        if not isinstance(var_a, dict) or not isinstance(var_b, dict):
+            continue
+        pair_section_rows.append(
+            "<tr>"
+            f"<td>{html.escape(str(pair.get('card_number', '')))}</td>"
+            f"<td>{_preview_markup(var_a, size='variant')}</td>"
+            f"<td>{_preview_markup(var_b, size='variant')}</td>"
+            f"<td>Vera={html.escape(str(var_a.get('vera_score', 'n/a')))}<br/>Quinn={html.escape(str(var_a.get('quinn_score', 'n/a')))}</td>"
+            f"<td>Vera={html.escape(str(var_b.get('vera_score', 'n/a')))}<br/>Quinn={html.escape(str(var_b.get('quinn_score', 'n/a')))}</td>"
+            f"<td>{html.escape(str(pair.get('selected_variant') or 'pending'))}</td>"
+            "</tr>"
+        )
+    pair_section_html = ""
+    if pair_section_rows:
+        pair_section_html = (
+            '<section class="variant-section">'
+            "<h2>Variant Selection</h2>"
+            '<table class="variant-table"><thead><tr>'
+            "<th>card</th><th>variant A</th><th>variant B</th><th>A scores</th><th>B scores</th><th>selected</th>"
+            "</tr></thead><tbody>"
+            + "\n".join(pair_section_rows)
+            + "</tbody></table></section>"
+        )
+
+    selected_preview_rows: list[str] = []
+    for item in manifest.get("selected_full_deck_preview", []) if isinstance(manifest.get("selected_full_deck_preview"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        selected_preview_rows.append(
+            '<div class="selected-card">'
+            f'<div class="selected-card-meta">Card {html.escape(str(item.get("card_number", "")))} | {html.escape(str(item.get("slide_id", "")))}</div>'
+            f'{_preview_markup(item, size="variant")}'
+            "</div>"
+        )
+    selected_preview_html = ""
+    if selected_preview_rows:
+        selected_preview_html = (
+            '<section class="selected-preview-section">'
+            "<h2>Authorized Deck Preview</h2>"
+            '<div class="selected-preview-grid">'
+            + "\n".join(selected_preview_rows)
+            + "</div></section>"
+        )
+
+    slide_cards: list[str] = []
+    for slide in slides:
+        if not isinstance(slide, dict):
+            continue
+        issue_flags = slide.get("issue_flags") if isinstance(slide.get("issue_flags"), list) else []
+        findings = slide.get("findings") if isinstance(slide.get("findings"), list) else []
+        findings_markup = (
+            '<ul class="finding-list">'
+            + "".join(f"<li>{html.escape(str(finding))}</li>" for finding in findings)
+            + "</ul>"
+        ) if findings else '<p class="empty-state">No findings attached.</p>'
+
+        narration_status = str(slide.get("narration_status") or "pending")
+        narration_label = {
+            "present": "Attached",
+            "no_match": "No match",
+            "pending": "Pending (pre-Pass 2)",
+        }.get(narration_status, narration_status)
+        narration_text = str(slide.get("narration_text") or "").strip()
+        script_markup = (
+            f'<pre class="script-text">{html.escape(narration_text)}</pre>'
+            if narration_text
+            else f'<div class="script-state">{html.escape(narration_label)}</div>'
+        )
+        script_notes = str(slide.get("script_notes") or "").strip()
+        script_notes_markup = (
+            f'<pre class="script-notes">{html.escape(script_notes)}</pre>'
+            if script_notes
+            else '<div class="script-state">No script notes attached.</div>'
+        )
+
+        fidelity = html.escape(str(slide.get("fidelity") or "unknown"))
+        variant = html.escape(str(slide.get("dispatch_variant") or ""))
+        orientation = html.escape(str(slide.get("orientation") or "unknown"))
+        row_id = html.escape(str(slide.get("row_id") or slide.get("slide_id") or ""), quote=True)
+        slide_id = html.escape(str(slide.get("slide_id") or ""))
+        title = html.escape(str(slide.get("display_title") or slide.get("slide_id") or ""))
+        sequence = html.escape(str(slide.get("sequence") or ""))
+        card_number = html.escape(str(slide.get("card_number") or ""))
+        source_ref = html.escape(str(slide.get("source_ref") or ""))
+        file_path = html.escape(str(slide.get("file_path") or ""))
+        asset_status = html.escape(str(slide.get("asset_status") or "unknown"))
+        literal_visual_source = html.escape(str(slide.get("literal_visual_source") or "n/a"))
+        dimensions = slide.get("dimensions") if isinstance(slide.get("dimensions"), dict) else {}
+        dimensions_text = ""
+        if dimensions:
+            dimensions_text = f"{dimensions.get('width', '?')}×{dimensions.get('height', '?')}"
+        dimensions_markup = html.escape(dimensions_text or "unknown")
+        selected_markup = '<span class="badge badge-selected">selected</span>' if bool(slide.get("selected")) else ""
+        issue_badges = "".join(f'<span class="badge badge-issue">{html.escape(str(flag))}</span>' for flag in issue_flags)
+        variant_badge = f'<span class="badge">variant {variant}</span>' if variant else ""
+        quality_text = html.escape(f"Vera {slide.get('vera_score', 'n/a')} | Quinn {slide.get('quinn_score', 'n/a')}")
+        issue_attr = html.escape(" ".join(str(flag) for flag in issue_flags), quote=True)
+
+        slide_cards.append(
+            f'<article class="slide-card" id="{row_id}" data-role="slide-card" data-slide-id="{slide_id}" '
+            f'data-fidelity="{fidelity}" data-orientation="{orientation}" data-issues="{issue_attr}">'
+            '<header class="slide-card-header">'
+            '<div class="slide-card-title-group">'
+            f'<div class="sequence-pill">#{sequence}</div>'
+            '<div>'
+            f'<h2 class="slide-card-title">{title}</h2>'
+            f'<div class="slide-card-subtitle">{slide_id}</div>'
+            '</div></div>'
+            '<div class="badge-row">'
+            f'<span class="badge badge-fidelity">{fidelity}</span>'
+            f'{variant_badge}'
+            f'<span class="badge">card {card_number or "n/a"}</span>'
+            f'<span class="badge">orientation {orientation}</span>'
+            f'{selected_markup}{issue_badges}'
+            '</div></header>'
+            '<div class="slide-card-body">'
+            '<section class="slide-preview-panel">'
+            '<div class="panel-label">Slide preview</div>'
+            f'{_preview_markup(slide)}'
+            f'<div class="preview-caption">Asset status: <strong>{asset_status}</strong> | Dimensions: <strong>{dimensions_markup}</strong></div>'
+            '</section>'
+            '<section class="slide-script-panel">'
+            '<div class="panel-grid">'
+            '<div class="panel">'
+            '<h3>Script</h3>'
+            f'<div class="script-status">Status: {html.escape(narration_label)}</div>'
+            f'{script_markup}'
+            '</div>'
+            '<div class="panel">'
+            '<h3>Script notes</h3>'
+            f'{script_notes_markup}'
+            '</div>'
+            '</div>'
+            '<details class="evidence-panel"><summary>Evidence & provenance</summary>'
+            '<dl class="evidence-list">'
+            f'<div><dt>Source ref</dt><dd>{source_ref or "n/a"}</dd></div>'
+            f'<div><dt>File path</dt><dd>{file_path or "n/a"}</dd></div>'
+            f'<div><dt>Created</dt><dd>{html.escape(str(manifest.get("generated_at") or ""))}</dd></div>'
+            f'<div><dt>Literal-visual source</dt><dd>{literal_visual_source}</dd></div>'
+            f'<div><dt>Quality</dt><dd>{quality_text}</dd></div>'
+            '</dl>'
+            '<div class="findings-block">'
+            '<h4>Findings</h4>'
+            f'{findings_markup}'
+            '</div>'
+            '</details></section></div></article>'
+        )
+
+    related_markup = ""
+    if related_assets:
+        related_rows: list[str] = []
+        for asset in related_assets:
+            if not isinstance(asset, dict):
+                continue
+            related_rows.append(
+                '<article class="related-card" data-role="related-asset">'
+                f'<div class="related-meta">#{html.escape(str(asset.get("sequence") or ""))} | {html.escape(str(asset.get("asset_type") or "other"))}</div>'
+                f'<h3>{html.escape(str(asset.get("label") or ""))}</h3>'
+                f'<div class="related-stage">{html.escape(str(asset.get("stage") or "N/A"))}</div>'
+                f'<div class="related-link">{_preview_markup(asset)}</div>'
+                f'<div class="related-source">{html.escape(str(asset.get("source_ref") or "n/a"))}</div>'
+                '</article>'
+            )
+        related_markup = (
+            '<section class="related-assets-section">'
+            '<h2>Related assets</h2>'
+            '<div class="related-assets-grid">'
+            + "\n".join(related_rows)
+            + "</div></section>"
+        )
+
+    generated_at = html.escape(str(manifest.get("generated_at") or ""))
+    view = html.escape(str(manifest.get("storyboard_view") or "slides_only"))
+    checkpoint_label = html.escape(str(manifest.get("checkpoint_label") or "Storyboard"))
+    run_id = html.escape(str(manifest.get("run_id") or "unbound"))
+    meta_badges = [
+        f'<span class="meta-pill">Run {run_id}</span>',
+        f'<span class="meta-pill">{checkpoint_label}</span>',
+        f'<span class="meta-pill">View {view}</span>',
+        f'<span class="meta-pill">Slides {review_meta.get("total_slides", len(slides))}</span>',
+        f'<span class="meta-pill">Narrated {review_meta.get("slides_with_narration", 0)}</span>',
+        f'<span class="meta-pill">Missing assets {review_meta.get("missing_assets", 0)}</span>',
+    ]
+    if review_meta.get("double_dispatch_enabled"):
+        meta_badges.append('<span class="meta-pill">Double dispatch</span>')
+    fidelity_counts = review_meta.get("fidelity_counts") if isinstance(review_meta.get("fidelity_counts"), dict) else {}
+    fidelity_markup = " | ".join(f"{html.escape(str(key))}: {html.escape(str(value))}" for key, value in sorted(fidelity_counts.items())) or "No fidelity counts"
+    first_slide = html.escape(str(review_meta.get("first_slide_id") or "n/a"))
+    last_slide = html.escape(str(review_meta.get("last_slide_id") or "n/a"))
+    slides_markup = "\n".join(slide_cards) if slide_cards else '<div class="empty-state">No slides</div>'
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{checkpoint_label} review</title>
+  <style>
+    :root {{
+      color-scheme: light;
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #111827;
+      --muted: #5b6472;
+      --line: #d8dee8;
+      --accent: #143b5d;
+      --accent-soft: #dce8f4;
+      --warning: #8a5300;
+      --warning-soft: #fff3d6;
+      --danger: #9b1c1c;
+      --success-soft: #dff6e8;
+      --shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }}
+    a {{ color: var(--accent); }}
+    .page {{ max-width: 1440px; margin: 0 auto; padding: 24px; }}
+    .summary-banner {{ background: linear-gradient(135deg, #0f2740, #1b4e73); color: #fff; border-radius: 20px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 18px; }}
+    .summary-banner h1 {{ margin: 0 0 8px 0; font-size: 1.9rem; }}
+    .summary-banner p {{ margin: 0 0 14px 0; color: rgba(255,255,255,0.82); }}
+    .meta-pill-row, .badge-row {{ display: flex; flex-wrap: wrap; gap: 10px; }}
+    .meta-pill, .badge {{ display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 12px; font-size: 0.86rem; font-weight: 600; }}
+    .meta-pill {{ background: rgba(255,255,255,0.14); color: #fff; }}
+    .summary-grid {{ display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; margin-top: 18px; }}
+    .summary-panel {{ background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 16px; }}
+    .summary-panel h2 {{ margin: 0 0 10px 0; font-size: 1rem; }}
+    .summary-panel p {{ margin: 0; color: rgba(255,255,255,0.88); }}
+    .summary-panel dl {{ margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; }}
+    .summary-panel dt {{ color: rgba(255,255,255,0.7); font-weight: 600; }}
+    .toolbar {{ display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; box-shadow: var(--shadow); }}
+    .toolbar input[type="search"] {{ min-width: 260px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font: inherit; }}
+    .toolbar label {{ display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; color: var(--muted); }}
+    .toolbar button {{ padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; font: inherit; }}
+    .toolbar button.active {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+    .toolbar .disabled, .toolbar button:disabled, .toolbar input:disabled {{ opacity: 0.5; cursor: not-allowed; }}
+    .slides-section {{ display: grid; gap: 18px; }}
+    .slide-card, .related-card, .variant-section, .selected-preview-section, .related-assets-section {{ background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }}
+    .slide-card {{ overflow: hidden; }}
+    .slide-card[hidden] {{ display: none !important; }}
+    .slide-card-header {{ display: flex; justify-content: space-between; gap: 16px; padding: 18px 20px 12px; border-bottom: 1px solid var(--line); align-items: flex-start; }}
+    .slide-card-title-group {{ display: flex; gap: 14px; align-items: flex-start; }}
+    .sequence-pill {{ min-width: 50px; height: 50px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); border-radius: 14px; font-weight: 800; font-size: 1rem; }}
+    .slide-card-title {{ margin: 0; font-size: 1.12rem; }}
+    .slide-card-subtitle {{ color: var(--muted); margin-top: 4px; font-size: 0.92rem; }}
+    .badge {{ background: #eef2f7; color: #27313f; }}
+    .badge-fidelity {{ background: var(--accent-soft); color: var(--accent); }}
+    .badge-selected {{ background: var(--success-soft); color: #14532d; }}
+    .badge-issue {{ background: var(--warning-soft); color: var(--warning); }}
+    .slide-card-body {{ display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr); gap: 18px; padding: 18px 20px 20px; }}
+    .panel-grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 14px; }}
+    .panel, .summary-panel, .related-card {{ min-width: 0; }}
+    .panel {{ background: #fafbfd; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }}
+    .panel-label, .panel h3, .evidence-panel summary, .variant-section h2, .selected-preview-section h2, .related-assets-section h2 {{ font-size: 0.98rem; font-weight: 700; margin: 0 0 10px 0; }}
+    .slide-thumbnail, .variant-thumbnail {{ width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #fff; box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08); }}
+    .slide-thumbnail {{ max-height: 280px; object-fit: contain; background: #f8fafc; }}
+    .variant-thumbnail {{ max-width: 260px; max-height: 150px; object-fit: contain; }}
+    .preview-link {{ display: block; text-decoration: none; position: relative; }}
+    .preview-link-text {{ display: inline-flex; align-items: center; justify-content: center; min-height: 120px; width: 100%; border: 1px dashed var(--line); border-radius: 14px; background: #fafafa; color: var(--accent); font-weight: 600; }}
+    .expand-cue {{ position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.78); color: #fff; border-radius: 999px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22); }}
+    .preview-caption, .script-status, .related-stage, .related-source {{ color: var(--muted); font-size: 0.9rem; margin-top: 8px; }}
+    .script-text, .script-notes {{ white-space: pre-wrap; margin: 0; font: inherit; line-height: 1.55; }}
+    .script-state, .empty-state {{ color: var(--muted); font-style: italic; }}
+    .evidence-panel {{ border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }}
+    .evidence-panel summary {{ cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }}
+    .evidence-panel summary::after {{ content: "[+]"; color: var(--muted); font-size: 0.85rem; font-weight: 700; }}
+    .evidence-panel[open] summary::after {{ content: "[-]"; }}
+    .evidence-list {{ margin: 12px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }}
+    .evidence-list dt {{ color: var(--muted); font-size: 0.85rem; font-weight: 700; }}
+    .evidence-list dd {{ margin: 4px 0 0; font-size: 0.92rem; overflow-wrap: anywhere; }}
+    .findings-block {{ margin-top: 14px; }}
+    .finding-list {{ margin: 8px 0 0 18px; padding: 0; }}
+    .variant-section, .selected-preview-section, .related-assets-section {{ padding: 18px 20px; margin-bottom: 18px; }}
+    .variant-table {{ width: 100%; border-collapse: collapse; margin-top: 12px; }}
+    .variant-table th, .variant-table td {{ border-top: 1px solid var(--line); padding: 10px; text-align: left; vertical-align: top; }}
+    .selected-preview-grid, .related-assets-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }}
+    .selected-card, .related-card {{ padding: 14px; }}
+    .selected-card-meta, .related-meta {{ color: var(--muted); font-size: 0.86rem; margin-bottom: 8px; }}
+    .preview-missing {{ display: grid; place-items: center; min-height: 140px; border-radius: 14px; border: 1px dashed var(--line); background: #fafafa; color: var(--danger); font-weight: 700; }}
+    dialog.preview-dialog {{ width: min(96vw, 1400px); border: none; border-radius: 18px; padding: 0; box-shadow: 0 24px 50px rgba(17, 24, 39, 0.35); }}
+    dialog::backdrop {{ background: rgba(17, 24, 39, 0.72); }}
+    .dialog-body {{ background: #0f172a; color: #fff; padding: 16px; }}
+    .dialog-toolbar {{ display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }}
+    .dialog-toolbar button {{ background: rgba(255,255,255,0.12); color: #fff; border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; }}
+    .dialog-preview {{ width: 100%; max-height: 82vh; object-fit: contain; background: #020617; border-radius: 14px; }}
+    .sr-only {{ position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }}
+    @media (max-width: 980px) {{
+      .summary-grid, .slide-card-body, .panel-grid {{ grid-template-columns: 1fr; }}
+      .slide-card-header {{ flex-direction: column; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="summary-banner">
+      <h1>{checkpoint_label} Review</h1>
+      <p>Static storyboard review surface for human approval. The JSON manifest remains the source of truth; this page is a reviewer-friendly projection.</p>
+      <div class="meta-pill-row">{''.join(meta_badges)}</div>
+      <div class="summary-grid">
+        <div class="summary-panel">
+          <h2>Run summary</h2>
+          <p>Generated at {generated_at}. Fidelity mix: {fidelity_markup}.</p>
+        </div>
+        <div class="summary-panel">
+          <h2>Orientation data</h2>
+          <dl>
+            <div><dt>First slide</dt><dd>{first_slide}</dd></div>
+            <div><dt>Last slide</dt><dd>{last_slide}</dd></div>
+            <div><dt>Pending narration</dt><dd>{html.escape(str(review_meta.get("pending_narration", 0)))}</dd></div>
+            <div><dt>Slides with findings</dt><dd>{html.escape(str(review_meta.get("slides_with_findings", 0)))}</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    {pair_section_html}
+    {selected_preview_html}
+
+    <section class="toolbar" aria-label="Storyboard controls">
+      <label>
+        <span class="sr-only">Search slides</span>
+        <input id="search-box" type="search" placeholder="Search slide id, title, source ref" data-role="search" />
+      </label>
+      <button type="button" class="active" data-role="filter" data-filter="all">All</button>
+      <button type="button" data-role="filter" data-filter="creative">Creative</button>
+      <button type="button" data-role="filter" data-filter="literal-text">Literal-text</button>
+      <button type="button" data-role="filter" data-filter="literal-visual">Literal-visual</button>
+      <label class="{issue_label_class}"><input type="checkbox" id="issues-only" data-role="issues-only"{issue_checkbox_attrs} /> Show issues only</label>
+      <button type="button" data-role="jump-next-issue"{issue_button_attrs}>{issue_button_label}</button>
+    </section>
+
+    <section class="slides-section" aria-label="Storyboard slides">
+      {slides_markup}
+    </section>
+
+    {related_markup}
+  </div>
+
+  <dialog class="preview-dialog" id="preview-dialog">
+    <div class="dialog-body">
+      <div class="dialog-toolbar">
+        <strong id="dialog-title">Preview</strong>
+        <div>
+          <a id="dialog-open" href="#" target="_blank" rel="noopener noreferrer">Open in new tab</a>
+          <button type="button" id="dialog-close">Close</button>
+        </div>
+      </div>
+      <img id="dialog-image" class="dialog-preview" alt="" />
+    </div>
+  </dialog>
+
+  <script>
+    (() => {{
+      const cards = Array.from(document.querySelectorAll('[data-role="slide-card"]'));
+      const filters = Array.from(document.querySelectorAll('[data-role="filter"]'));
+      const searchBox = document.querySelector('[data-role="search"]');
+      const issuesOnly = document.querySelector('[data-role="issues-only"]');
+      const nextIssueBtn = document.querySelector('[data-role="jump-next-issue"]');
+      const dialog = document.getElementById('preview-dialog');
+      const dialogImage = document.getElementById('dialog-image');
+      const dialogTitle = document.getElementById('dialog-title');
+      const dialogOpen = document.getElementById('dialog-open');
+      const dialogClose = document.getElementById('dialog-close');
+      const actionableIssueCards = cards.filter(card => Boolean((card.getAttribute('data-issues') || '').trim()));
+      let activeFilter = 'all';
+
+      function applyFilters() {{
+        const query = (searchBox?.value || '').toLowerCase().trim();
+        const issues = Boolean(issuesOnly?.checked);
+        for (const card of cards) {{
+          const haystack = card.textContent.toLowerCase();
+          const fidelity = card.getAttribute('data-fidelity') || '';
+          const cardIssues = (card.getAttribute('data-issues') || '').trim();
+          const matchesFilter = activeFilter === 'all' || fidelity === activeFilter;
+          const matchesQuery = !query || haystack.includes(query);
+          const matchesIssues = !issues || Boolean(cardIssues);
+          card.hidden = !(matchesFilter && matchesQuery && matchesIssues);
+        }}
+      }}
+
+      for (const button of filters) {{
+        button.addEventListener('click', () => {{
+          activeFilter = button.getAttribute('data-filter') || 'all';
+          for (const peer of filters) peer.classList.toggle('active', peer === button);
+          applyFilters();
+        }});
+      }}
+      searchBox?.addEventListener('input', applyFilters);
+      if (issuesOnly && actionableIssueCards.length === 0) {{
+        issuesOnly.checked = false;
+      }}
+      issuesOnly?.addEventListener('change', applyFilters);
+      nextIssueBtn?.addEventListener('click', () => {{
+        if (actionableIssueCards.length === 0) return;
+        const next = cards.find(card => !card.hidden && (card.getAttribute('data-issues') || '').trim());
+        if (next) next.scrollIntoView({{behavior: 'smooth', block: 'center'}});
+      }});
+
+      for (const link of document.querySelectorAll('[data-role="preview-link"]')) {{
+        link.addEventListener('click', (event) => {{
+          const href = link.getAttribute('data-preview-src');
+          if (!href || !dialog || typeof dialog.showModal !== 'function') return;
+          event.preventDefault();
+          dialogImage.src = href;
+          dialogImage.alt = link.getAttribute('data-row-id') || 'Preview';
+          dialogTitle.textContent = link.closest('[data-role="slide-card"]')?.getAttribute('data-slide-id') || 'Preview';
+          dialogOpen.href = href;
+          dialog.showModal();
+        }});
+      }}
+      dialogClose?.addEventListener('click', () => dialog?.close());
+      dialog?.addEventListener('click', (event) => {{
+        const rect = dialog.getBoundingClientRect();
+        const inBounds = rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
+          rect.left <= event.clientX && event.clientX <= rect.left + rect.width;
+        if (!inBounds) dialog.close();
+      }});
+
+      if (window.location.hash) {{
+        const target = document.getElementById(window.location.hash.slice(1));
+        if (target) target.scrollIntoView();
+      }}
+      applyFilters();
+    }})();
+  </script>
+</body>
+</html>
+"""
 def write_bundle(
     manifest: dict[str, Any],
     storyboard_dir: Path,
@@ -590,7 +1216,7 @@ def write_bundle(
     json_path = storyboard_dir / "storyboard.json"
     html_path = storyboard_dir / "index.html"
     json_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    html_path.write_text(render_index_html(manifest), encoding="utf-8")
+    html_path.write_text(render_index_html_v2(manifest), encoding="utf-8")
 
 
 def cmd_generate(args: argparse.Namespace) -> int:

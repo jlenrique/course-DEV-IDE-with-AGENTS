@@ -17,6 +17,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 import yaml
 
@@ -36,6 +37,31 @@ from gamma_operations import (  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def load_run_constants(bundle: Path) -> dict:
+    """Load bundle-scoped constants when present."""
+    path = bundle / "run-constants.yaml"
+    if not path.exists():
+        return {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return data if isinstance(data, dict) else {}
+
+
+def resolve_module_lesson_part(bundle: Path, envelope: dict, run_constants: dict) -> str:
+    """Derive the dispatch/export naming segment from bundle metadata."""
+    planned_base = envelope.get("dispatch_metadata", {}).get("planned_asset_url_base", "")
+    if isinstance(planned_base, str) and planned_base.strip():
+        parsed = urlparse(planned_base)
+        tail = parsed.path.rstrip("/").split("/")[-1].strip()
+        if tail:
+            return tail
+
+    bundle_path = run_constants.get("bundle_path")
+    if isinstance(bundle_path, str) and bundle_path.strip():
+        return Path(bundle_path).name
+
+    return bundle.name
 
 
 def build_slides(bundle: Path) -> list[dict]:
@@ -88,6 +114,7 @@ def assemble_outbound_contract(
     tr: dict,
     slides: list[dict],
     run_id: str,
+    lesson_slug: str,
     bundle: Path,
     generated_at: str,
 ) -> dict:
@@ -98,6 +125,7 @@ def assemble_outbound_contract(
 
     # Build per-slide quality info
     fid_map = {s["slide_number"]: s["fidelity"] for s in slides}
+    literal_visual_cards = [slide_number for slide_number, fidelity in sorted(fid_map.items()) if fidelity == "literal-visual"]
 
     quality_assessment = {
         "layout_integrity": 0.85,
@@ -119,9 +147,14 @@ def assemble_outbound_contract(
     }
 
     recommendations = [
-        "Review literal-visual slides 2 and 9 for image placement fidelity against preintegration PNGs.",
         "Confirm creative slide atmospheric visuals do not introduce claims not in source narration.",
     ]
+    if literal_visual_cards:
+        joined_cards = " and ".join(str(card) for card in literal_visual_cards)
+        recommendations.insert(
+            0,
+            f"Review literal-visual slides {joined_cards} for image placement fidelity against preintegration PNGs.",
+        )
 
     flags = {
         "embellishment_risk": "low",
@@ -134,7 +167,7 @@ def assemble_outbound_contract(
 
     payload = {
         "run_id": run_id,
-        "lesson_slug": "apc-c1m1-tejal",
+        "lesson_slug": lesson_slug,
         "generated_at_utc": generated_at,
         "generation_mode": gen_result.get("generation_mode", "mixed_fidelity"),
         "gary_slide_output": slide_output_sorted,
@@ -180,9 +213,13 @@ def main() -> int:
         logger.info("  %s: %s", fid, nums)
 
     base_params, tr, envelope = build_base_params(bundle)
+    run_constants = load_run_constants(bundle)
+    module_lesson_part = resolve_module_lesson_part(bundle, envelope, run_constants)
+    lesson_slug = str(run_constants.get("lesson_slug", "")).strip() or "unknown-lesson"
     logger.info("Theme: %s (themeId: %s)", tr.get("resolved_theme_key"), base_params.get("themeId"))
     logger.info("export_as: %s | export_dir: %s", base_params["export_as"], base_params["export_dir"])
     logger.info("site_repo_url: %s", base_params["site_repo_url"])
+    logger.info("module_lesson_part: %s", module_lesson_part)
 
     diagram_cards_data = json.loads((bundle / "gary-diagram-cards.json").read_text(encoding="utf-8"))
     diagram_cards = diagram_cards_data.get("cards", [])
@@ -202,7 +239,7 @@ def main() -> int:
     gen_result = generate_deck_mixed_fidelity(
         slides,
         base_params,
-        "apc-c1m1-tejal-20260403",
+        module_lesson_part,
         diagram_cards=diagram_cards,
         site_repo_url=base_params["site_repo_url"],
         mode="tracked",
@@ -223,6 +260,7 @@ def main() -> int:
         tr=tr,
         slides=slides,
         run_id=run_id,
+        lesson_slug=lesson_slug,
         bundle=bundle,
         generated_at=generated_at,
     )

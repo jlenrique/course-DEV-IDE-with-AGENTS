@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from PIL import Image
+
 _SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 _GENERATE_SCRIPT = _SCRIPTS_DIR / "generate-storyboard.py"
 _AUTHORIZE_SCRIPT = _SCRIPTS_DIR / "write-authorized-storyboard.py"
@@ -49,12 +51,38 @@ def _sample_payload() -> dict:
     }
 
 
+def _all_present_payload() -> dict:
+    return {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            },
+            {
+                "slide_id": "m1-c2",
+                "fidelity": "literal-text",
+                "card_number": 2,
+                "source_ref": "src-b",
+                "file_path": "slides/s2.png",
+            },
+        ]
+    }
+
+
+def _write_test_png(path: Path, *, size: tuple[int, int] = (12, 6)) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", size, color=(10, 90, 160)).save(path, format="PNG")
+
+
 def test_build_manifest_order_and_asset_status(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    _write_test_png(slides / "s1.png", size=(12, 6))
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     storyboard_dir = bundle / "storyboard"
@@ -75,7 +103,25 @@ def test_build_manifest_order_and_asset_status(tmp_path: Path) -> None:
     assert manifest["storyboard_view"] == "slides_only"
     assert manifest["related_assets"] == []
     assert len(manifest["rows"]) == 3
+    assert manifest["checkpoint_label"] == "Storyboard A"
+    assert manifest["review_meta"]["total_slides"] == 3
+    assert manifest["review_meta"]["missing_assets"] == 1
+    assert manifest["review_meta"]["remote_assets"] == 1
+    assert manifest["review_meta"]["first_slide_id"] == "m1-c1"
+    assert manifest["review_meta"]["last_slide_id"] == "m1-c3"
+    assert manifest["slides"][0]["orientation"] == "landscape"
+    assert manifest["slides"][0]["dimensions"] == {"width": 12, "height": 6}
+    assert manifest["slides"][0]["aspect_ratio"] == "12:6"
+    by_id = {s["slide_id"]: s for s in manifest["slides"]}
+    assert by_id["m1-c1"]["issue_flags"] == []
+    assert by_id["m1-c2"]["issue_flags"] == ["missing_asset"]
+    assert by_id["m1-c3"]["issue_flags"] == []
     for s in manifest["slides"]:
+        assert s["row_id"].startswith("slide-")
+        assert s["preview_kind"] in {"image", "missing", "link", "other"}
+        assert "orientation" in s
+        assert "script_notes" in s
+        assert "issue_flags" in s
         assert s["narration_status"] == "pending"
         assert s["narration_text"] == ""
 
@@ -109,7 +155,7 @@ def test_html_contains_missing_marker(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     (bundle / "slides").mkdir(parents=True)
-    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    _write_test_png(bundle / "slides" / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     storyboard_dir = bundle / "storyboard"
@@ -120,10 +166,70 @@ def test_html_contains_missing_marker(tmp_path: Path) -> None:
         asset_base=bundle,
     )
     html = mod.render_index_html(manifest)
-    assert "MISSING" in html
+    assert "Storyboard A Review" in html
+    assert 'data-role="slide-card"' in html
+    assert 'data-role="preview-link"' in html
+    assert 'data-role="search"' in html
+    assert 'data-role="issues-only"' in html
+    assert "Preview unavailable" in html
     assert "m1-c1" in html
     assert "Pending (pre-Pass 2)" in html
-    assert "narration (pass 2)" in html.lower()
+    assert "Script notes" in html
+    assert "Orientation data" in html
+    assert 'class="expand-cue"' in html
+    assert 'summary::after { content: "[+]";' in html
+    assert '[open] summary::after { content: "[-]";' in html
+    assert 'data-role="jump-next-issue">Next issue<' in html
+    assert 'data-role="issues-only"' in html
+
+
+def test_html_disables_issue_controls_when_no_actionable_issues(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_all_present_payload()), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        _all_present_payload(),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+
+    assert all(slide["issue_flags"] == [] for slide in manifest["slides"])
+    html = mod.render_index_html(manifest)
+    assert 'data-role="jump-next-issue" disabled aria-disabled="true">No issues<' in html
+    assert 'data-role="issues-only" disabled aria-disabled="true"' in html
+
+
+def test_html_enables_issue_controls_when_actionable_issue_exists(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        _sample_payload(),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+
+    by_id = {slide["slide_id"]: slide for slide in manifest["slides"]}
+    assert by_id["m1-c2"]["issue_flags"] == ["missing_asset"]
+    html = mod.render_index_html(manifest)
+    assert 'data-role="jump-next-issue">Next issue<' in html
+    assert 'data-role="jump-next-issue" disabled' not in html
+    assert 'data-role="issues-only" disabled' not in html
+    assert 'data-slide-id="m1-c2"' in html
+    assert 'data-issues="missing_asset"' in html
 
 
 def test_segment_manifest_attaches_narration(tmp_path: Path) -> None:
@@ -131,7 +237,7 @@ def test_segment_manifest_attaches_narration(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"x")
+    _write_test_png(slides / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     manifest_yaml = bundle / "manifest.yaml"
@@ -167,13 +273,15 @@ segments:
     by_id = {s["slide_id"]: s for s in manifest["slides"]}
     assert by_id["m1-c1"]["narration_status"] == "present"
     assert "First slide" in by_id["m1-c1"]["narration_text"]
-    assert by_id["m1-c2"]["narration_status"] == "pending"
+    assert by_id["m1-c2"]["narration_status"] == "no_match"
     assert by_id["m1-c2"]["narration_text"] == ""
+    assert by_id["m1-c2"]["issue_flags"] == ["missing_asset", "no_match"]
     assert by_id["m1-c3"]["narration_status"] == "present"
 
     html = mod.render_index_html(manifest)
     assert "First slide voiceover line." in html
     assert "Third slide only." in html
+    assert "No match" in html
     summary = mod.format_summary(manifest)
     assert "Narration: 2/3 slide(s) have script text attached." in summary
 
@@ -232,7 +340,7 @@ def test_manifest_and_html_include_related_assets(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"x")
+    _write_test_png(slides / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     storyboard_dir = bundle / "storyboard"
@@ -262,8 +370,9 @@ def test_manifest_and_html_include_related_assets(tmp_path: Path) -> None:
     assert manifest["related_assets"][0]["sequence"] == 4
 
     html = mod.render_index_html(manifest)
-    assert "(related)" in html
+    assert "Related assets" in html
     assert "Lesson teaser" in html
+    assert 'data-role="related-asset"' in html
     summary = mod.format_summary(manifest)
     assert "Related assets: 1 row(s) appended after slides." in summary
 
@@ -272,7 +381,7 @@ def test_cli_generate_strict_fails_on_missing(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"x")
+    _write_test_png(slides / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     proc = subprocess.run(
@@ -298,7 +407,7 @@ def test_write_authorized_refuses_overwrite(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     (bundle / "slides").mkdir(parents=True)
-    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    _write_test_png(bundle / "slides" / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     storyboard_dir = bundle / "storyboard"
@@ -356,7 +465,7 @@ def test_cli_generate_with_segment_manifest(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"x")
+    _write_test_png(slides / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     manifest_yaml = bundle / "manifest.yaml"
@@ -393,7 +502,7 @@ def test_cli_generate_with_related_assets(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"x")
+    _write_test_png(slides / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
 
@@ -440,7 +549,7 @@ def test_cli_summarize_subcommand(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     (bundle / "slides").mkdir(parents=True)
-    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    _write_test_png(bundle / "slides" / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     storyboard_dir = bundle / "storyboard"
@@ -467,7 +576,7 @@ def test_cli_generate_accepts_run_id(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
     slides.mkdir(parents=True)
-    (slides / "s1.png").write_bytes(b"x")
+    _write_test_png(slides / "s1.png")
     payload_path = bundle / "dispatch.json"
     payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
     proc = subprocess.run(
@@ -503,7 +612,7 @@ def test_literal_visual_remote_url_preserved_in_storyboard(tmp_path: Path) -> No
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     (bundle / "slides").mkdir(parents=True)
-    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    _write_test_png(bundle / "slides" / "s1.png")
 
     payload = {
         "gary_slide_output": [
@@ -573,8 +682,8 @@ def test_double_dispatch_manifest_and_html_sections(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     (bundle / "slides").mkdir(parents=True)
-    (bundle / "slides" / "s1.png").write_bytes(b"x")
-    (bundle / "slides" / "s2.png").write_bytes(b"x")
+    _write_test_png(bundle / "slides" / "s1.png")
+    _write_test_png(bundle / "slides" / "s2.png")
 
     payload = {
         "gary_slide_output": [
@@ -618,15 +727,15 @@ def test_double_dispatch_manifest_and_html_sections(tmp_path: Path) -> None:
     assert len(manifest["selected_full_deck_preview"]) == 1
 
     rendered = mod.render_index_html(manifest)
-    assert "Variant Selection (A/B side-by-side)" in rendered
-    assert "Full-Deck Preview (selected variants)" in rendered
+    assert "Variant Selection" in rendered
+    assert "Authorized Deck Preview" in rendered
 
 
 def test_write_authorized_with_selection_metadata(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
     (bundle / "slides").mkdir(parents=True)
-    (bundle / "slides" / "s1.png").write_bytes(b"x")
+    _write_test_png(bundle / "slides" / "s1.png")
     payload = {
         "gary_slide_output": [
             {
@@ -688,3 +797,73 @@ def test_write_authorized_with_selection_metadata(tmp_path: Path) -> None:
     assert data["authorized_slides"][0]["dispatch_variant"] == "A"
     assert data["selection_metadata"][0]["selected_variant"] == "A"
     assert data["selection_metadata"][0]["rejected_variant"] == "B"
+
+
+def test_html_escapes_reviewer_visible_fields(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "title": '<script>alert("x")</script>',
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": 'src-<b>bold</b>',
+                "file_path": "slides/s1.png",
+                "visual_description": 'notes with <tag> & "quotes"',
+                "findings": ["alpha <beta>"],
+            }
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+    )
+
+    html = mod.render_index_html(manifest)
+    assert "<script>alert(" not in html
+    assert "&lt;script&gt;alert" in html
+    assert "src-&lt;b&gt;bold&lt;/b&gt;" in html
+    assert "notes with &lt;tag&gt; &amp; &quot;quotes&quot;" in html
+    assert "alpha &lt;beta&gt;" in html
+
+
+def test_cli_generate_outputs_reviewer_friendly_storyboard_markup(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_sample_payload()), encoding="utf-8")
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_GENERATE_SCRIPT),
+            "generate",
+            "--payload",
+            str(payload_path),
+            "--out-dir",
+            str(bundle),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
+    assert "Static storyboard review surface for human approval." in html
+    assert 'data-role="slide-card"' in html
+    assert 'data-role="jump-next-issue"' in html
+    assert '<dialog class="preview-dialog"' in html
+    assert 'class="expand-cue"' in html

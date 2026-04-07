@@ -68,3 +68,4 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 
 - `docs/project-context.md` remains the full project-history/context document.
 - This file is for operations-only sessions where startup speed and low cognitive load matter more than implementation history.
+- For the first official tracked trial run, start from a fresh tracked bundle at source extraction / ingestion rather than resuming a previously prepared staging bundle unless you explicitly re-designate that older bundle as the canonical run.

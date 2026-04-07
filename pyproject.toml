@@ -14,6 +14,7 @@ dependencies = [
     "aiohttp>=3.9,<4",
     "pyyaml>=6.0,<7",
     "pypdf>=5.0,<6",
+    "pillow>=11.0,<12",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,7 @@ testpaths = [
     "tests",
     "skills/source-wrangler/scripts/tests",
     "skills/compositor/scripts/tests",
+    "skills/bmad-agent-marcus/scripts/tests",
 ]
 pythonpath = ["."]
 asyncio_mode = "auto"

@@ -118,7 +118,7 @@ Fast path:
   - `gary-dispatch-result.json` (check `literal_visual_source` per literal-visual slide)
   - `gary-dispatch-run-log.json`
   - `gamma-export/...`
-- Literal-visual dispatch uses **single-attempt template + composite fallback**:
+- Literal-visual dispatch uses **initial template attempt + one retry + composite fallback**:
   - `literal_visual_source: template` = Gamma rendered (best case)
   - `literal_visual_source: composite-preintegration` = local PNG composited
   - `literal_visual_source: composite-download` = URL downloaded and composited
@@ -132,6 +132,8 @@ Fast path:
 - Confirm Storyboard A artifacts and approval:
   - `storyboard/storyboard.json`
   - `storyboard/index.html`
+  - review page shows ordered slide thumbnails, script/script-notes panels, and provenance/orientation metadata
+  - use the HTML review page for human review; treat JSON as the machine manifest
 - Go/no-go: no go if validator `status=fail` or G3 fail.
 - Then explicit Gate 2 approval.
 
@@ -145,6 +147,7 @@ Fast path:
 ### 7C. Prompt 7C: Winner Authorization
 - Confirm `authorized-storyboard.json` is written after Gate 2 approval.
 - If `DOUBLE_DISPATCH: true`, confirm the authorized deck collapses to the selected winner deck only.
+- Confirm downstream motion planning / Irene Pass 2 reference `authorized-storyboard.json`, not the review HTML.
 - Go/no-go: no go until the canonical winner deck exists.
 
 ### 7D. Prompt 7D: Gate 2M Motion Designation

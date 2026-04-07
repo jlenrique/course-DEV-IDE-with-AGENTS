@@ -235,6 +235,12 @@ Rules:
 - If double-dispatch was enabled, this artifact must contain only the selected winner deck, never unresolved A/B variants.
 - Downstream motion planning and Irene Pass 2 consume this artifact, not the raw storyboard review payload.
 
+Storyboard review surface notes:
+- `storyboard/storyboard.json` remains the canonical machine-readable manifest.
+- `storyboard/index.html` is a static reviewer projection of that manifest, not a separate source of truth.
+- The HTML review surface should present slide thumbnails, script status/text, script notes, orientation/provenance metadata, and related assets in a form usable for human Gate 2 review.
+- Review HTML must stay view-only; approval is captured conversationally and then persisted through `authorized-storyboard.json`.
+
 ## 8B) variant-selection.json
 
 Purpose: per-slide winner selection record for double-dispatch runs.

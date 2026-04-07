@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "14 epics complete. 4 new epics (15-18) added 2026-04-06 as backlog: learning, autonomy, research & reference, additional assets & workflows."
-    stories_count: 86
-    epics_count: 18
+    note: "All 14 epics complete. Epics 12-14 extend the narrated workflow with double-dispatch, visual-aware Irene Pass 2, and motion controls."
+    stories_count: 62
+    epics_count: 14
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "14 epics done. 4 new epics (15-18) backlog. Total: 18 epics, 86 stories."
+    note: "All 14 epics done. Total: 14 epics, 62 stories."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -101,6 +101,4 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-  - "EPICS 15-18 ADDED (2026-04-06): Four future epics scoped — Epic 15 (Learning & Compound Intelligence, 6 stories), Epic 16 (Bounded Autonomy Expansion, 5 stories), Epic 17 (Research & Reference Services via Consensus + Scite.ai, 5 stories), Epic 18 (Additional Assets & Workflow Families, 7 discovery-first stories). All backlog. Epics 15-16 gated on tracked trial run evidence. Epic 17 requires new API integrations. Epic 18 is discovery-first — implementation stories added after requirements approval."
-
-next_workflow_step: "Begin tracked trial runs from the clean Epic 14 baseline; keep structural walk, session readiness, and the first-tracked-run checklist as the operating gate. Epics 15-18 are backlog and gated on trial-run evidence."
+next_workflow_step: "Begin tracked trial runs from the clean Epic 14 baseline; keep structural walk, session readiness, and the first-tracked-run checklist as the operating gate."

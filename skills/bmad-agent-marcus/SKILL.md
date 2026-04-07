@@ -111,12 +111,12 @@ Greet the user by name with current settings, last session context summary, and 
 
 **Ownership:** Storyboard **creation** (generate HTML/JSON, manifest-derived recap, conversational approval, persist `authorized-storyboard.json`) is **a Marcus skill only**. It is not a separate specialist skill and not owned by Gary or Irene: Gary supplies the dispatch payload, including any additive `literal_visual_publish` receipt when tracked-mode preintegration staging occurred; Irene consumes outputs **after** authorization when the runbook says so. Marcus runs this capability end-to-end for the operator.
 
-**Two MVP views (same command, different inputs):**
+**Two review views (same command, different inputs):**
 
-- **Before Irene (Pass 2):** Gary dispatch only. HTML table includes a **narration** column with *Pending (pre-Pass 2)* for every row — slides-only review.
-- **After Irene:** Same generator, add Irene’s **segment manifest YAML** (`segments[].gary_slide_id` + `narration_text` per `skills/bmad-agent-content-creator/references/template-segment-manifest.md`). Rows with matched script show **slide preview + narration text** in one row (notes-style). Unmatched slides stay *Pending*.
+- **Before Irene (Pass 2):** Gary dispatch only. HTML renders a reviewer-friendly storyboard surface with ordered slide cards, thumbnails, search/filter controls, script status, script notes, and provenance/orientation metadata. Narration stays *Pending (pre-Pass 2)* for every row.
+- **After Irene:** Same generator, add Irene’s **segment manifest YAML** (`segments[].gary_slide_id` + `narration_text` per `skills/bmad-agent-content-creator/references/template-segment-manifest.md`). The same review surface shows **slide preview + narration text** inline. Unmatched slides show *No match* rather than silently appearing pending.
 
-After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate** the **view-only** storyboard so the operator can see **all slides at once** (creative, literal-text, literal-visual) in run order; after Pass 2, regenerate with `--segment-manifest` to include script. Remote hosted assets remain remote in the storyboard manifest; local slide PNGs remain the review source of truth for Gate 2.
+After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate** the **view-only** storyboard so the operator can review **all slides at once** (creative, literal-text, literal-visual) in run order; after Pass 2, regenerate with `--segment-manifest` to include script. Remote hosted assets remain remote in the storyboard manifest; local slide PNGs remain the review source of truth for Gate 2.
 
 1. **Generate** (from repo root, paths adjusted to the run bundle):
 
@@ -129,7 +129,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
    - **`--related-assets`:** optional JSON/YAML for non-slide run artifacts (video/audio/interactive/source links) appended after slide rows.
    - **`--run-id`:** optional APP run identifier for Channel C log correlation.
 
-2. **Review:** Open `storyboard/index.html` in a browser. No approval controls in the page (v1).
+2. **Review:** Open `storyboard/index.html` in a browser. The page is static and self-contained: summary banner, ordered slide cards, click-to-expand thumbnails, script/script-notes panels, issue filtering, and a separate related-assets section. No approval controls live in the page.
 
 3. **Summarize (manifest-only):** Marcus reads aloud the same recap the tool would print:
 

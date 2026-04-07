@@ -35,10 +35,10 @@ G0 → G1 → G2 → [HIL Gate 1] → G3 → [HIL Gate 2] → G4 → [HIL Gate 3
 Operational anti-drift checkpoints layered on top of the gate chain:
 - **Prompt 6B checkpoint (pre-G3 dispatch side effects):** literal-visual operator packet and per-card readiness confirmation.
 - **Dispatch payload checkpoint (pre-G2 approval):** literal-visual content payload rows are URL-only image references (no on-slide support prose).
-- **Storyboard A checkpoint (post-G3 generation):** visual order/content approval before Gate 2 progression.
+- **Storyboard A checkpoint (post-G3 generation):** visual order/content approval before Gate 2 progression. Review against the static HTML storyboard surface, with thumbnails, script status/notes, and provenance/orientation metadata visible per slide.
 - **Epic 12 winner checkpoint (post-G2 when enabled):** `variant-selection.json` plus `authorized-storyboard.json` collapse A/B variants to a canonical winner deck before any downstream narration or motion work.
 - **Epic 14 motion checkpoints (motion-enabled only):** Gate 2M and Motion Gate sit between Gate 2 and G4; both are skipped when `motion_enabled: false`.
-- **Storyboard B checkpoint (post-G4 output):** slide+script alignment approval before downstream audio/script finalization.
+- **Storyboard B checkpoint (post-G4 output):** slide+script alignment approval before downstream audio/script finalization using the same HTML review surface, now hydrated with actual narration text.
 
 Motion-enabled operational overlay:
 

@@ -448,9 +448,9 @@ Dispatch requirements:
 
 ### Literal-visual dispatch behavior
 
-Literal-visual slides use a **best-effort template → composite fallback** strategy:
+Literal-visual slides use a **best-effort template → retry → composite fallback** strategy:
 
-1. **Single template attempt** (`_MAX_TEMPLATE_RETRIES = 1`): The Gamma template API dispatches with an anti-fade prompt ("at full opacity, not as background, not faded"). Gamma's AI classifies images as "accent" (cropped) or "background" (full-bleed) based on visual content — this classification is not controllable via the API (see `developers.gamma.app`).
+1. **Initial template attempt plus one retry** (`_MAX_TEMPLATE_RETRIES = 2`): The Gamma template API dispatches with an anti-fade prompt ("at full opacity, not as background, not faded"). Gamma's AI classifies images as "accent" (cropped) or "background" (full-bleed) based on visual content — this classification is not controllable via the API (see `developers.gamma.app`).
 
 2. **Fill validation**: `validate_visual_fill()` checks the exported PNG using edge-band sampling and content variance detection (`content_stddev`). Blank slides (stddev < 5) and faded slides (stddev < 25) are rejected.
 
@@ -482,7 +482,8 @@ Required write:
 
 Required HIL review (Storyboard A):
 - Generate storyboard from `[BUNDLE_PATH]/gary-dispatch-result.json`.
-- Present manifest-derived summary and obtain explicit Gate 2 approval.
+- Present manifest-derived summary and the reviewer-friendly HTML storyboard surface (`storyboard/index.html`) with thumbnails, script-status panel, script notes, and provenance/orientation metadata.
+- Obtain explicit Gate 2 approval.
 - For literal-visual slides, note the `literal_visual_source` provenance in the storyboard so the operator knows which slides came from Gamma vs composite.
 - Persist `[BUNDLE_PATH]/authorized-storyboard.json` (fail closed on overwrite).
 

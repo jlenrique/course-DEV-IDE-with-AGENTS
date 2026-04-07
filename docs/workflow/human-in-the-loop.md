@@ -41,3 +41,8 @@ For tracked/default production prompt-pack runs, enforce these checkpoints in or
 8. Storyboard B review after Irene Pass 2 script/manifest output, before downstream audio/script finalization.
 
 These checkpoints are deterministic safeguards against fidelity drift between slide intent, generated visuals, and final narration/audio outputs.
+
+Storyboard review expectations:
+- Use `storyboard/index.html` as the human review surface and `storyboard/storyboard.json` as the canonical machine manifest.
+- Storyboard A should present slide thumbnails, sequence/orientation metadata, script status, script notes, and findings/provenance in one ordered review surface.
+- Storyboard B should reuse the same layout but hydrate actual narration text where segment-manifest matches exist; unmatched slides should be visually marked as `No match`.

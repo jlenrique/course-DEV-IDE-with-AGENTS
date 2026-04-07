@@ -1984,8 +1984,8 @@ class TestLiteralVisualRetryOnBlank:
         ]
         return slides, diagram_cards
 
-    def test_single_attempt_failure_triggers_composite_fallback(self) -> None:
-        """Single template attempt fails → immediate composite fallback (no retry)."""
+    def test_first_failure_triggers_retry_before_fallback(self) -> None:
+        """One failed template render gets one retry before composite fallback."""
         slides, diagram_cards = self._base_slides_and_cards()
 
         with (
@@ -2010,9 +2010,8 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="SINGLE-ATTEMPT-TEST",
             )
 
-        # Only 1 template call — no retries
-        assert mock_template.call_count == 1
-        assert result["calls_made"] == 1
+        assert mock_template.call_count == 2
+        assert result["calls_made"] == 2
 
     def test_retries_exhaust_and_falls_back_to_composite(self, tmp_path: Path) -> None:
         """All template attempts fail → composite fallback from preintegration PNG."""
@@ -2062,7 +2061,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="FALLBACK-TEST",
             )
 
-        assert mock_template.call_count == 1  # single attempt, then composite fallback
+        assert mock_template.call_count == 2
         lv_output = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv_output) == 1
         # The composite fallback should have written a non-blank image.
@@ -2095,7 +2094,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="NO-FALLBACK",
             )
 
-        assert mock_template.call_count == 1  # single attempt, then graceful degradation
+        assert mock_template.call_count == 2
         # Output still has the literal-visual slide (graceful degradation).
         lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv) == 1
@@ -2209,7 +2208,7 @@ class TestLiteralVisualRetryOnBlank:
                 run_id="DOWNLOAD-FALLBACK",
             )
 
-        assert mock_template.call_count == 1
+        assert mock_template.call_count == 2
         lv = [s for s in result["gary_slide_output"] if s["fidelity"] == "literal-visual"]
         assert len(lv) == 1
         assert lv[0]["literal_visual_source"] == "composite-download"

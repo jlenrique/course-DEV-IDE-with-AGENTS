@@ -1572,11 +1572,11 @@ def generate_deck_mixed_fidelity(
     # image as "accent" (cropped, positioned) rather than
     # "background" (full-bleed) depending on image content —
     # this cannot be controlled via the API (see
-    # developers.gamma.app).  On a single failure, fall back
-    # immediately to local compositing via _composite_full_bleed()
-    # which guarantees deterministic full-bleed output.
+    # developers.gamma.app).  We allow one retry before falling
+    # back to local compositing via _composite_full_bleed(), which
+    # guarantees deterministic full-bleed output.
     _LITERAL_VISUAL_TEMPLATE_ID = "g_gior6s13mvpk8ms"
-    _MAX_TEMPLATE_RETRIES = 1
+    _MAX_TEMPLATE_RETRIES = 2
     _TEMPLATE_EXPORT_SETTLE_SECONDS = 15
 
     if literal_visual_slides:
@@ -1620,11 +1620,11 @@ def generate_deck_mixed_fidelity(
                     base_params.get("export_as") or base_params.get("exportAs")
                 )
 
-            # Best-effort template dispatch → single-failure composite fallback.
+            # Best-effort template dispatch → one retry → composite fallback.
             # Gamma's AI classifies images as "accent" or "background" based
             # on content characteristics; this is not API-controllable.
             # Images that Gamma treats as background render full-bleed;
-            # accent-classified images get cropped/positioned.  On failure,
+            # accent-classified images get cropped/positioned. After one retry,
             # _composite_full_bleed() produces a deterministic full-bleed
             # slide from the source PNG.
             literal_visual_file_path: str | None = None

@@ -10,9 +10,11 @@ keywords = ["edtech", "course-production", "multi-agent", "content-creation"]
 dependencies = [
     "requests>=2.31,<3",
     "python-dotenv>=1.0,<2",
+    "PyJWT>=2.8,<3",
     "pydantic>=2.7,<3",
     "aiohttp>=3.9,<4",
     "pyyaml>=6.0,<7",
+    "imageio-ffmpeg>=0.5,<1",
     "pypdf>=5.0,<6",
     "pillow>=11.0,<12",
 ]
@@ -38,6 +40,7 @@ testpaths = [
     "skills/source-wrangler/scripts/tests",
     "skills/compositor/scripts/tests",
     "skills/bmad-agent-marcus/scripts/tests",
+    "skills/kling-video/scripts/tests",
 ]
 pythonpath = ["."]
 asyncio_mode = "auto"

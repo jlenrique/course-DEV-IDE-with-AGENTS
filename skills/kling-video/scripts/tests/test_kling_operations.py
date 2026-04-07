@@ -169,6 +169,7 @@ class TestGenerateMotionClip:
         assert result["credits_consumed"] == 8.0
         client.image_to_video.assert_called_once()
         client.text_to_video.assert_not_called()
+        assert "sound" not in client.image_to_video.call_args.kwargs
 
     def test_falls_back_to_text_to_video_without_image_url(self, tmp_path: Path) -> None:
         client = Mock()
@@ -193,3 +194,4 @@ class TestGenerateMotionClip:
         assert result["model_used"] == "std"
         assert result["self_assessment"].startswith("text-to-video fallback")
         client.text_to_video.assert_called_once()
+        assert "sound" not in client.text_to_video.call_args.kwargs

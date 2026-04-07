@@ -344,6 +344,15 @@ Gate rule:
 
 Marcus, after `authorized-storyboard.json` exists and `MOTION_ENABLED: true`, present Gate 2M.
 
+Required Marcus behavior before operator designation:
+- Generate a per-slide recommendation for every authorized slide.
+- Every recommendation must include:
+  - recommended motion type
+  - rationale
+  - source anchor
+  - confidence label
+- Present the recommendation set as the starting point for operator review; the operator may override or add detail.
+
 Required operator task:
 - For each authorized slide, choose exactly one:
   - `static`
@@ -351,6 +360,7 @@ Required operator task:
   - `animation`
 - Add optional `motion_brief` for video slides
 - Add optional `guidance_notes` for animation slides
+- If you override Marcus's recommendation on any slide, add `override_reason`
 
 Required writes:
 - `[BUNDLE_PATH]/motion-designations.json`
@@ -362,6 +372,7 @@ Required commands:
 python skills/production-coordination/scripts/motion_plan.py build `
   --authorized-storyboard [BUNDLE_PATH]/authorized-storyboard.json `
   --output [BUNDLE_PATH]/motion_plan.yaml `
+  --designations-output [BUNDLE_PATH]/motion-designations.json `
   --motion-enabled `
   --motion-budget-max-credits [MOTION_BUDGET_MAX_CREDITS] `
   --motion-budget-model-preference [MOTION_BUDGET_MODEL_PREFERENCE]
@@ -383,6 +394,7 @@ python skills/production-coordination/scripts/motion_plan.py route `
 
 Gate rules:
 - Every authorized slide must have Gate 2M coverage.
+- Recommendations must be presented for every authorized slide before operator selection.
 - Unknown slide IDs or incomplete coverage block progression.
 
 ---
@@ -401,10 +413,25 @@ Required outcomes:
 - animation rows acquire imported approved files plus duration
 - `motion_plan.yaml` is updated with concrete asset paths and statuses
 
+Recommended authoritative command for `video` rows:
+
+```powershell
+python skills/production-coordination/scripts/run_motion_generation.py `
+  --motion-plan [BUNDLE_PATH]/motion_plan.yaml `
+  --slide-id [AUTHORIZED_SLIDE_ID]
+```
+
+Expected receipts per generated slide:
+- run-scoped `.progress.json` receipt with `task_id` for resume/reconciliation
+- run-scoped terminal `.json` receipt with provider status, local asset path, credits, and validation details
+- production silence encoded as `requested_audio_mode: silent` with Kling native-audio field omitted from the API request
+
 Fail-closed rules:
 - One `pro -> std` downgrade is allowed per over-budget clip.
 - If a clip still exceeds budget after downgrade, pause for operator action.
 - No silent partial continuation.
+- If a `.progress.json` receipt already exists for the same slide, resume polling that `task_id` instead of submitting a duplicate job.
+- Patch `motion_plan.yaml` only after the downloaded MP4 passes local validation.
 
 Stop before Irene Pass 2 until all non-static rows intended for this run have concrete assets or explicit operator resolution.
 

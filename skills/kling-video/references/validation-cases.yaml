@@ -1,0 +1,467 @@
+version: 1
+last_reviewed: 2026-04-07
+cases:
+  - case_id: T1-text2video-std-silent
+    description: Baseline silent text-to-video probe on Kling 2.6 standard.
+    api_surface: current_repo_client
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Busy hospital corridor in a modern medical center, soft camera drift,
+      clinicians moving through frame, cool clean healthcare palette, credible
+      professional atmosphere, no text overlays.
+    tags:
+      - text2video
+      - silent
+      - baseline
+  - case_id: T2-text2video-pro-native-audio
+    description: Native-audio probe on Kling 2.6 pro to learn actual provider behavior.
+    api_surface: current_repo_client
+    operation: text2video
+    model_name: kling-v2-6
+    mode: pro
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: native
+    prompt: >
+      Busy hospital corridor with soft ambient footsteps, gentle monitor beeps,
+      and a restrained cinematic push-in on a fatigued physician reviewing a
+      dense electronic chart, credible real-world healthcare tone.
+    tags:
+      - text2video
+      - native-audio
+      - exploratory
+  - case_id: I1-image2video-std-silent
+    description: Approved-slide image-to-video probe on Kling 2.6 standard.
+    api_surface: current_repo_client
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Add subtle depth motion and a restrained push-in while preserving the
+      approved slide composition and text relationships. No new elements.
+    image_url: null
+    image_url_hint: Public URL to the approved slide PNG.
+    tags:
+      - image2video
+      - silent
+      - approved-slide
+  - case_id: I2-image2video-pro-silent
+    description: Approved-slide image-to-video probe on Kling 2.6 pro for comparison.
+    api_surface: current_repo_client
+    operation: image2video
+    model_name: kling-v2-6
+    mode: pro
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Add subtle layered motion and gentle cinematic depth while preserving the
+      approved slide composition, hierarchy, and all text relationships.
+    image_url: null
+    image_url_hint: Public URL to the approved slide PNG.
+    tags:
+      - image2video
+      - pro
+      - approved-slide
+  - case_id: V3-text2video-3-0-probe
+    description: Capability probe for Kling 3.0 on the current repo client.
+    api_surface: current_repo_client
+    operation: text2video
+    model_name: kling-v3-0
+    mode: std
+    duration: "10"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Multi-angle cinematic office scene inspired by a detail-rich professional
+      workplace montage, with clean camera changes and restrained realism.
+    tags:
+      - 3.0
+      - capability-probe
+      - expected-blocked
+  - case_id: V3-public-surface-probe
+    description: Exploratory probe template for the newer Kling Singapore API surface. Current docs indicate the same AK/SK token auth model, but the exact 3.0 model id still needs account-level verification.
+    api_surface: newer_public_surface
+    lane: validation-only
+    production_safe: false
+    promotion_status: non-promoting
+    operation: text2video
+    model_name: kling-v3
+    mode: pro
+    duration: "10"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Multi-angle cinematic professional montage with richer scene variation and
+      restrained realism, intended as a public-surface 3.0 capability probe.
+    tags:
+      - 3.0
+      - singapore-surface
+      - capability-probe
+      - model-id-may-vary
+  - case_id: V3-public-surface-native-audio-probe
+    description: Exploratory 3.0 Singapore-surface probe that intentionally asks Kling for native ambience/SFX if the account and surface support it.
+    api_surface: newer_public_surface
+    lane: validation-only
+    production_safe: false
+    promotion_status: non-promoting
+    audio_policy: exploratory-native-audio
+    operation: text2video
+    model_name: kling-v3
+    mode: pro
+    duration: "10"
+    aspect_ratio: "16:9"
+    requested_audio_mode: native-sfx
+    prompt: >
+      Multi-angle professional montage in a modern workplace with restrained
+      realism, soft movement, and plausible native ambience such as footsteps,
+      room tone, and subtle environmental detail if supported.
+    tags:
+      - 3.0
+      - singapore-surface
+      - native-audio
+      - sfx
+      - capability-probe
+      - model-id-may-vary
+  - case_id: V3-public-surface-image2video-native-audio-probe
+    description: Exploratory 3.0 Singapore-surface image-to-video probe with native ambience/SFX enabled. Intended for approved stills or selected Gamma visuals once a public image URL is supplied.
+    api_surface: newer_public_surface
+    lane: validation-only
+    production_safe: false
+    promotion_status: non-promoting
+    audio_policy: exploratory-native-audio
+    operation: image2video
+    model_name: kling-v3
+    mode: pro
+    duration: "10"
+    aspect_ratio: "16:9"
+    requested_audio_mode: native-sfx
+    prompt: >
+      Bring this still image to life with richer scene motion while preserving
+      the main composition, and include subtle native ambience or contextual
+      environmental sound if supported.
+    image_url: null
+    image_url_hint: Public URL to the selected still image.
+    tags:
+      - 3.0
+      - singapore-surface
+      - image2video
+      - native-audio
+      - sfx
+      - capability-probe
+      - model-id-may-vary
+  - case_id: G01-roadmap-pathway-std-silent
+    description: Static-to-life probe for the Roadmap / Pathway Forward Gamma visual.
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "3:4"
+    requested_audio_mode: silent
+    prompt: >
+      Bring this roadmap illustration to life with restrained forward movement,
+      subtle layered depth, and guided emphasis along the pathway toward the
+      future vision. Preserve all text, icons, and milestone relationships.
+    image_url: null
+    image_url_hint: Public URL to the selected Gamma visual.
+    local_source_path: resources/Gamma-visuals/3ZC7NcG8Zx-weVZu.png
+    visual_label: Roadmap / Pathway Forward
+    suite: gamma-static-to-life
+    tags:
+      - image2video
+      - silent
+      - gamma-static-to-life
+      - instructional
+  - case_id: G02-hospital-crossroads-std-silent
+    description: Static-to-life probe for the Clinician at the Hospital Crossroads Gamma visual.
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "3:4"
+    requested_audio_mode: silent
+    prompt: >
+      Add subtle camera drift and gentle emphasis to the directional signs and
+      clinician stance, preserving the hospital crossroads composition and all
+      sign relationships without redesigning the scene.
+    image_url: null
+    image_url_hint: Public URL to the selected Gamma visual.
+    local_source_path: resources/Gamma-visuals/FWoSQ8zvy6Ebxnuk.png
+    visual_label: Clinician at the Hospital Crossroads
+    suite: gamma-static-to-life
+    tags:
+      - image2video
+      - silent
+      - gamma-static-to-life
+      - instructional
+  - case_id: G03-system-breakout-std-silent
+    description: Static-to-life probe for the Constrained System vs Innovator Breakout Gamma visual.
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "3:4"
+    requested_audio_mode: silent
+    prompt: >
+      Animate this split illustration with restrained contrast emphasis:
+      slightly static on the constrained side and more energetic depth and path
+      motion on the innovator side, while preserving the split composition and
+      message clarity.
+    image_url: null
+    image_url_hint: Public URL to the selected Gamma visual.
+    local_source_path: resources/Gamma-visuals/i-06FJd5m8U-QTlM.png
+    visual_label: Constrained System vs Innovator Breakout
+    suite: gamma-static-to-life
+    tags:
+      - image2video
+      - silent
+      - gamma-static-to-life
+      - instructional
+  - case_id: G04-paperwork-vs-digital-fork-std-silent
+    description: Static-to-life probe for the Physician at the Fork Gamma visual.
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "3:4"
+    requested_audio_mode: silent
+    prompt: >
+      Bring this decision-point illustration to life with subtle forward drift,
+      restrained emphasis on the split between paperwork and digital
+      innovation, and gentle motion in the dashboard elements while preserving
+      the physician as the focal anchor.
+    image_url: null
+    image_url_hint: Public URL to the selected Gamma visual.
+    local_source_path: resources/Gamma-visuals/Znhdq4eYdG1UpByd.png
+    visual_label: "Physician at the Fork: Paperwork vs Digital Innovation"
+    suite: gamma-static-to-life
+    tags:
+      - image2video
+      - silent
+      - gamma-static-to-life
+      - instructional
+  - case_id: K03-luxury-product-macro-std-silent
+    description: Product-style macro probe for editorial luxury motion.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "9:16"
+    requested_audio_mode: silent
+    prompt: >
+      Editorial luxury product macro shot of a premium smartphone resting among
+      soft peach roses and eucalyptus on a cream surface, glossy black screen,
+      warm copper rim light, shallow depth of field, slow elegant push-in,
+      subtle reflection shimmer, refined commercial aesthetic, no text.
+    suite: phase-1-fourpack
+    tags:
+      - text2video
+      - silent
+      - product-macro
+      - phase-1-fourpack
+  - case_id: K05-slide-preserving-motion-card-std-silent
+    description: Bring an approved Gary creative slide to life without redesigning it.
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Add restrained layered depth and a gentle cinematic push-in while
+      preserving the approved slide composition, typography, and all text
+      relationships. No new elements, no layout changes.
+    image_url: null
+    image_url_hint: Public URL to the approved slide PNG for card 5.
+    local_source_path: course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/gamma-export/apc-c1m1-tejal-20260406-motion_slide_05.png
+    visual_label: Approved Gary slide 05
+    suite: phase-1-fourpack
+    tags:
+      - image2video
+      - silent
+      - approved-slide
+      - phase-1-fourpack
+  - case_id: K06-infographic-roadmap-reveal-std-silent
+    description: Minimal diagram/reveal probe from a structured Gamma visual.
+    operation: image2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "3:4"
+    requested_audio_mode: silent
+    prompt: >
+      Animate this structured collaboration graphic with subtle depth, gentle
+      relationship emphasis, and a calm reveal rhythm while preserving all text,
+      node placement, and conceptual clarity. No redesign.
+    image_url: null
+    image_url_hint: Public URL to the selected structured Gamma visual.
+    local_source_path: resources/Gamma-visuals/YqaKB3cY5W4sPgYY.png
+    visual_label: Collaboration Circle
+    suite: phase-1-fourpack
+    tags:
+      - image2video
+      - silent
+      - infographic
+      - phase-1-fourpack
+  - case_id: K01-beauty-glam-closeup-std-silent
+    description: Beauty portrait probe for close-up face, lighting, and hair stability.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Cinematic beauty close-up of a woman in a soft ivory faux-fur hood,
+      luminous skin, delicate eyelashes, gentle hair movement, warm diffused
+      studio lighting, shallow depth of field, calm micro-expression, slow
+      camera drift, elegant editorial glamour, no text.
+    suite: phase-1-fourpack
+    tags:
+      - text2video
+      - silent
+      - portrait
+      - phase-1-fourpack
+  - case_id: K02-clean-fashion-portrait-std-silent
+    description: Editorial fashion portrait control clip for subtle human realism.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Editorial fashion portrait of a poised man in a deep burgundy tailored
+      jacket standing in a refined colonnade interior, subtle breathing and eye
+      focus shift, soft camera drift, clean lighting, polished modern portrait
+      realism, no text.
+    suite: phase-2-fourpack
+    tags:
+      - text2video
+      - silent
+      - portrait
+      - phase-2-fourpack
+  - case_id: K07-clinical-hallway-atmosphere-std-silent
+    description: Restrained healthcare atmosphere probe with credible clinical realism.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Modern hospital hallway at shift change, restrained camera drift forward,
+      soft natural movement of clinicians in the distance, clean medical
+      lighting, credible professional atmosphere, calm realistic healthcare
+      tone, no text overlays.
+    suite: phase-2-fourpack
+    tags:
+      - text2video
+      - silent
+      - healthcare
+      - atmosphere
+      - phase-2-fourpack
+  - case_id: K08-neon-cityscape-std-silent
+    description: Environment and lighting probe for stylized urban atmosphere.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Rainy neon city intersection at night, glowing signs reflected on wet
+      pavement, slow elevated camera drift, gentle traffic motion and ambient
+      light shimmer, cinematic urban atmosphere, no text.
+    suite: phase-2-fourpack
+    tags:
+      - text2video
+      - silent
+      - environment
+      - phase-2-fourpack
+  - case_id: K09-stylized-3d-mascot-idle-std-silent
+    description: Stylized character probe for clean readable mascot motion.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "9:16"
+    requested_audio_mode: silent
+    prompt: >
+      Stylized 3D bunny mascot standing on a softly lit stage, subtle idle
+      movement, gentle breathing, tiny head turn, expressive eyes, colorful
+      concert-style backlights, clean playful character rendering, no text.
+    suite: phase-2-fourpack
+    tags:
+      - text2video
+      - silent
+      - stylized-character
+      - phase-2-fourpack
+  - case_id: K04-macro-surreal-detail-std-silent
+    description: Close-up surreal macro probe for texture, focus, and micro-motion.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "9:16"
+    requested_audio_mode: silent
+    prompt: >
+      Surreal macro close-up of an eye framed by pastel lashes and delicate
+      metallic machine details, shallow depth of field, tiny focus breathing,
+      subtle lighting shimmer, high texture detail, dreamlike editorial macro
+      aesthetic, no text.
+    suite: remaining-slate
+    tags:
+      - text2video
+      - silent
+      - macro
+      - surreal
+      - remaining-slate
+  - case_id: K10-anthropomorphic-animal-comedy-std-silent
+    description: Expressive stylized realism probe for anthropomorphic animal character work.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "9:16"
+    requested_audio_mode: silent
+    prompt: >
+      Anthropomorphic cow in cozy red loungewear holding a smartphone and coffee
+      mug in a softly lit bedroom, subtle body sway, small eye and head
+      movement, gentle comedic realism, clean stylized detail, no text.
+    suite: remaining-slate
+    tags:
+      - text2video
+      - silent
+      - stylized-realism
+      - character
+      - remaining-slate
+  - case_id: E01-whimsical-handpainted-healthcare-std-silent
+    description: Whimsical hand-painted healthcare animation probe with warm, gentle fantasy energy.
+    operation: text2video
+    model_name: kling-v2-6
+    mode: std
+    duration: "5"
+    aspect_ratio: "16:9"
+    requested_audio_mode: silent
+    prompt: >
+      Whimsical hand-painted animated healthcare scene in a warm storybook
+      style: a kind young clinician walking through a softly lit clinic hallway
+      with floating paper charts transforming into glowing digital icons, gentle
+      breeze through curtains, watercolor textures, expressive but calm
+      character motion, hopeful healing atmosphere, no text.
+    suite: style-probe
+    tags:
+      - text2video
+      - silent
+      - whimsical-animation
+      - healthcare
+      - style-probe

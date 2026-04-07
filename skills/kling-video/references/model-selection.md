@@ -50,13 +50,19 @@ Recommended defaults:
 - `mode: std` first
 - escalate only when the educational gain is clear
 
+Current repo note:
+- public docs and the Kling app UI advertise `3.0`
+- the old JWT repo client is **not 3.0-ready**
+- a separate Singapore-surface validation client now exists for `api-singapore.klingai.com`
+- do not route production through `3.0` until that Singapore-surface lane has live receipts for your account and the exact provider-exposed model id is confirmed
+
 ## Clip-Type Defaults
 
 | Clip Type | Default Model | Default Mode | Default Duration | Escalate When |
 |----------|---------------|--------------|------------------|---------------|
-| Hospital / clinic B-roll | `kling-v1-6` | `std` | `"5"` | only if atmosphere quality is central to the lesson |
+| Hospital / clinic B-roll | `kling-v1-6` or `kling-v2-6` | `std` | `"5"` | use `v2.6` if realism or polish matters |
 | Concept visualization | `kling-v2-6` | `std` | `"5"` | `pro` if motion subtlety materially improves comprehension |
-| Slide-to-video transition | `kling-v2-6` | `std` | `"5"` | only if the motion looks visibly weak |
+| Slide-to-video transition / approved-slide motion | `kling-v2-6` | `std` | `"5"` | only if the motion looks visibly weak |
 | Talking-head / lip-sync | depends on asset path | n/a | `"5"` or `"10"` | extend only when the narration requires it |
 | Section-bridge transition | `kling-v1-6` | `std` | `"5"` | almost never |
 | Hero / flagship clip | `kling-v2-6` | `pro` | `"10"` | only for highly visible key moments |
@@ -70,7 +76,27 @@ Recommended defaults:
 
 ## Cost Awareness
 
-Known live-tested observation from this repo:
-- `kling-v1-6`, `std`, `5s` produced a usable MP4 and consumed approximately **2 credits**
+Known live-tested observations from this repo:
+- `kling-v2-6`, `std`, `5s`, `image2video` from a public Git-hosted slide PNG produced a usable MP4
+- a prior short `kling-v2-6` text/video run reported roughly **2.5 credits** provider-side
 
-This is the baseline validation configuration. Use it first unless a different clip type clearly requires something better.
+Current best baseline:
+- start with `kling-v2-6`, `std`, `5s`
+- prefer `image2video` when you already have an approved still
+
+New stronger guidance from live validation on `2026-04-07`:
+- approved-static `image2video` is not only a baseline, it is now the leading instructional pattern validated in this repo
+- the strongest current instructional use case is bringing approved Gamma/Gary visuals to life with restrained motion
+- the current clean style-expansion set that also works on the repo-safe lane is:
+  - product macro
+  - beauty portrait close-up
+  - slide-preserving motion
+  - structured infographic / roadmap reveal
+
+Important refinement from operator review:
+- photoreal glamour / fashion portrait work is especially strong
+- graphical Gamma stills such as the collaboration-circle / structured reveal style are especially strong
+- simple slow-zoom motion on text-heavy slides is not a good default and should usually be avoided
+
+Additional 3.0 reference:
+- Kling quickstart: https://kling.ai/quickstart

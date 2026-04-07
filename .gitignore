@@ -7,6 +7,15 @@
 
 # Optional local-only drops (large media, exports)
 secrets/
+
+# Repo-root storyboard snapshots and zips (generate-storyboard, trial exports)
+exports/
+
+# Generated reports (structural walk, prompt harness, etc.)
+reports/
+
+# Repo-root resources (local drops and exemplar runs; use git add -f to force-track if needed)
+resources/
 course-content/**/private/
 
 # Staging workspace — local / mutable; not versioned
@@ -62,9 +71,6 @@ uv.lock
 
 # Generated quality scan outputs (timestamped run artifacts)
 skills/reports/**/quality-scan/**
-
-# Generated exemplar reproductions (run logs, comparisons, outputs)
-resources/exemplars/**/reproductions/**
 
 # OS / editor
 .DS_Store

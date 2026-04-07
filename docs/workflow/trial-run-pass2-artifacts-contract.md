@@ -240,6 +240,8 @@ Storyboard review surface notes:
 - `storyboard/index.html` is a static reviewer projection of that manifest, not a separate source of truth.
 - The HTML review surface should present slide thumbnails, script status/text, script notes, orientation/provenance metadata, and related assets in a form usable for human Gate 2 review.
 - Review HTML must stay view-only; approval is captured conversationally and then persisted through `authorized-storyboard.json`.
+- Optional sharing/export should derive a sanitized snapshot from `storyboard/storyboard.json`, writing a self-contained reviewer package under repo-root `exports/storyboard-<RUN_ID>/` plus `exports/storyboard-<RUN_ID>.zip`.
+- Published storyboard shares should mirror that same snapshot tree under the managed Pages namespace `assets/storyboards/<RUN_ID>/`; publish must be idempotent when contents match and fail closed on differing existing contents.
 
 ## 8B) variant-selection.json
 
@@ -261,12 +263,20 @@ Purpose: operator's Gate 2M choices captured before motion plan application.
 
 Required fields per slide:
 - slide_id
-- motion_type (`static` | `video` | `animation`)
+- motion_type (`static` | `video` | `animation`) selected explicitly by the operator
 - optional motion_brief
 - optional guidance_notes
+- required `override_reason` when operator choice differs from recommendation
+- recommended_motion_type
+- recommendation_rationale
+- recommendation_source_anchor
+- recommendation_confidence
 
 Rules:
 - Required only when `MOTION_ENABLED` is true.
+- Gate 2M must present a recommendation for every authorized slide before the operator chooses.
+- Every recommendation must include a source anchor.
+- Any low-confidence recommendation must be labeled.
 - Must cover every slide in the authorized winner deck.
 - Unknown slide IDs or omitted authorized slides are blocking contract failures.
 
@@ -283,6 +293,9 @@ Required fields:
 Rules:
 - Required only when `MOTION_ENABLED` is true.
 - Must be derived from `authorized-storyboard.json`, not unresolved storyboard review payloads.
+- Must persist per-slide recommendation metadata before operator designation is applied.
+- Recommendations are advisory only; operator overrides become authoritative once applied.
+- `apply` must fail closed on unknown slide IDs or incomplete slide coverage.
 - Static runs skip this artifact entirely.
 - Irene Pass 2 hydrates manifest motion fields from this sidecar and fails closed on incomplete coverage for non-static rows.
 

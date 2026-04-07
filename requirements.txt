@@ -12,6 +12,7 @@ pyjwt>=2.8,<3
 python-dotenv>=1.0,<2
 pydantic>=2.7,<3
 pyyaml>=6.0,<7
+imageio-ffmpeg>=0.5,<1
 
 # Source wrangler (PDF text extraction)
 pypdf>=5.0,<6

@@ -152,8 +152,12 @@ Fast path:
 
 ### 7D. Prompt 7D: Gate 2M Motion Designation
 - **Skip if `MOTION_ENABLED` is false.**
+- Confirm Marcus presents a recommendation set for every authorized slide before operator selection.
+- Confirm every recommendation includes recommended motion type, rationale, source anchor, and confidence.
 - Confirm every authorized slide has exactly one designation: `static`, `video`, or `animation`.
+- Confirm any operator override of Marcus's recommendation includes `override_reason`.
 - Confirm `motion-designations.json` and `motion_plan.yaml` exist.
+- Confirm operator overrides remain possible and recommendations are not silently auto-applied.
 - Go/no-go: no go until Gate 2M covers every authorized slide.
 
 ### 7E. Prompt 7E: Motion Generation / Import

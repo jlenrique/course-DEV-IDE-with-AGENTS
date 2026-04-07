@@ -131,23 +131,44 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 2. **Review:** Open `storyboard/index.html` in a browser. The page is static and self-contained: summary banner, ordered slide cards, click-to-expand thumbnails, script/script-notes panels, issue filtering, and a separate related-assets section. No approval controls live in the page.
 
-3. **Summarize (manifest-only):** Marcus reads aloud the same recap the tool would print:
+3. **Share/export (self-contained snapshot):** When the operator wants to share the storyboard outside the repo, export a sanitized snapshot from the canonical manifest:
+
+   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py export --manifest <bundle-dir>/storyboard/storyboard.json`
+
+   - Writes a self-contained folder under repo-root `exports/storyboard-<RUN_ID>/` plus a deterministic zip at `exports/storyboard-<RUN_ID>.zip`.
+   - The exported `index.html` lives at the snapshot root for simple browser-open and Pages hosting.
+   - Exported files are allowlist-only: `index.html`, `storyboard.json`, and the referenced local review assets needed by the HTML.
+   - Local absolute paths are rewritten to snapshot-relative refs before export so the shared package does not leak workstation paths.
+
+4. **Publish (GitHub Pages snapshot):** For tracked/default runs with `GITHUB_PAGES_TOKEN` and a discoverable `site_repo_url`, publish the exact same snapshot tree to the managed public repo:
+
+   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py publish --manifest <bundle-dir>/storyboard/storyboard.json`
+
+   - Default destination subtree: `assets/storyboards/<RUN_ID>/`
+   - The zip and the published site tree are intentionally the same snapshot shape.
+   - Publish is idempotent when the destination already matches the snapshot, and fail-closed when the destination exists with different contents.
+   - This is a review-share surface only; it does not replace the canonical in-bundle storyboard manifest or `authorized-storyboard.json`.
+
+5. **Summarize (manifest-only):** Marcus reads aloud the same recap the tool would print:
 
    `python skills/bmad-agent-marcus/scripts/generate-storyboard.py summarize --manifest <bundle-dir>/storyboard/storyboard.json`
 
-4. **Confirm in chat:** Operator explicitly approves after the recap (count, first/last `slide_id`, fidelity counts). In tracked/default runs, do this only after `validate-gary-dispatch-ready.py` returns clean for the dispatch payload.
+6. **Confirm in chat:** Operator explicitly approves after the recap (count, first/last `slide_id`, fidelity counts). In tracked/default runs, do this only after `validate-gary-dispatch-ready.py` returns clean for the dispatch payload.
 
-5. **Authorize (fail closed on overwrite):**
+7. **Authorize (fail closed on overwrite):**
 
    `python skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py --manifest <bundle-dir>/storyboard/storyboard.json --run-id <RUN_ID> --output <bundle-dir>/authorized-storyboard.json`
 
    - If `--output` already exists, the script **exits with error** and does not overwrite.
 
-6. **Motion-enabled runs only:** After `authorized-storyboard.json` exists and `motion_enabled: true`, Marcus treats the authorized winner deck as the source of truth for **Gate 2M**.
+8. **Motion-enabled runs only:** After `authorized-storyboard.json` exists and `motion_enabled: true`, Marcus treats the authorized winner deck as the source of truth for **Gate 2M**.
 
    - Build the run-scoped motion plan from the authorized deck, not from raw Gary output and not from a future segment manifest.
+   - Always present a recommendation set before operator designation. Every slide needs a recommended motion type, rationale, source anchor, and confidence label.
+   - Recommendations are a starting point only; the operator can override any slide or add more detail.
+   - If the operator overrides Marcus's recommendation, require a short `override_reason` so the recommendation and final decision remain auditable.
    - Persist Gate 2M decisions in `context_paths.motion_plan` (`motion_plan.yaml`) keyed by `slide_id`.
-   - Reject any Gate 2M payload that references unknown slide IDs; do not silently drop stale designation keys.
+   - Reject any Gate 2M payload that references unknown slide IDs or omits authorized slides; do not silently drop stale or incomplete designation keys.
    - `motion_enabled` is the authoritative Epic 14 activation switch. The workflow variant and effective content type are derived from that flag during production-plan generation; they do not independently authorize motion work.
    - If the production plan started from `narrated-deck-video-export`, use `generate-production-plan.py --motion-enabled` to promote the workflow to the motion variant (`gate-2 -> gate-2m -> motion-generation -> motion-gate -> Irene Pass 2`).
 

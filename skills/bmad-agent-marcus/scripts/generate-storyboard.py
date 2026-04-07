@@ -22,16 +22,31 @@ import html
 import json
 import logging
 import os
+import shutil
 import sys
+import tempfile
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+import zipfile
 
 logger = logging.getLogger("generate_storyboard")
 
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_EXPORTS_DIR = PROJECT_ROOT / "exports"
+DEFAULT_PUBLISH_SUBDIR = "assets/storyboards"
+_ZIP_ENTRY_TIMESTAMP = (2026, 1, 1, 0, 0, 0)
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency during isolated script use
+    load_dotenv = None  # type: ignore[assignment]
+
+if load_dotenv is not None:
+    load_dotenv(PROJECT_ROOT / ".env")
 
 
 def _log_run_suffix(run_id: str | None) -> str:
@@ -59,6 +74,225 @@ def load_payload(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError("Payload top level must be an object")
     return data
+
+
+def _sanitize_segment(value: str) -> str:
+    """Normalize a filesystem/path segment while preventing traversal."""
+    normalized = str(value).replace("\\", "/").strip().strip("/")
+    if not normalized:
+        raise ValueError("value must be a non-empty path segment")
+    parts = [part for part in normalized.split("/") if part]
+    if any(part in {".", ".."} for part in parts):
+        raise ValueError("path segments must not contain traversal entries")
+    return "/".join(parts)
+
+
+def _slugify_filename(value: str) -> str:
+    text = "".join(ch if ch.isalnum() or ch in {"-", "_", "."} else "-" for ch in str(value))
+    text = "-".join(part for part in text.split("-") if part)
+    return text or "storyboard-export"
+
+
+def _local_ref_to_source_path(
+    raw_ref: str,
+    *,
+    field_name: str,
+    storyboard_dir: Path,
+    asset_base: Path,
+) -> Path | None:
+    raw_ref = str(raw_ref or "").strip()
+    if not raw_ref or _is_remote_ref(raw_ref):
+        return None
+    if field_name in {"html_asset_ref", "preview_href"}:
+        candidate = (storyboard_dir / raw_ref).resolve()
+    else:
+        ref_path = Path(raw_ref)
+        candidate = ref_path.resolve() if ref_path.is_absolute() else (asset_base / ref_path).resolve()
+    return candidate if candidate.is_file() else None
+
+
+def _sanitize_local_display_ref(raw_ref: str, *, asset_base: Path) -> str:
+    raw_ref = str(raw_ref or "").strip()
+    if not raw_ref or _is_remote_ref(raw_ref):
+        return raw_ref
+    ref_path = Path(raw_ref)
+    try:
+        resolved = ref_path.resolve() if ref_path.is_absolute() else (asset_base / ref_path).resolve()
+        return resolved.relative_to(asset_base.resolve()).as_posix()
+    except Exception:
+        return ref_path.name or raw_ref.replace("\\", "/")
+
+
+def _rewrite_manifest_for_share(
+    manifest: dict[str, Any],
+    *,
+    storyboard_dir: Path,
+) -> tuple[dict[str, Any], dict[str, Path]]:
+    """Return a share-safe manifest copy plus referenced local asset inventory."""
+    asset_base = Path(str(manifest.get("asset_base") or storyboard_dir.parent)).resolve()
+    manifest_copy = json.loads(json.dumps(manifest))
+    copied_assets: dict[str, Path] = {}
+
+    def _rewrite_node(node: Any) -> None:
+        if isinstance(node, dict):
+            for field_name in ("file_path", "html_asset_ref", "preview_href", "link"):
+                if field_name not in node:
+                    continue
+                raw_value = node.get(field_name)
+                if not isinstance(raw_value, str):
+                    continue
+                source_path = _local_ref_to_source_path(
+                    raw_value,
+                    field_name=field_name,
+                    storyboard_dir=storyboard_dir,
+                    asset_base=asset_base,
+                )
+                if source_path is not None:
+                    try:
+                        rel_path = source_path.relative_to(asset_base).as_posix()
+                    except ValueError:
+                        rel_path = source_path.name
+                    copied_assets[rel_path] = source_path
+                    node[field_name] = rel_path
+                else:
+                    node[field_name] = _sanitize_local_display_ref(raw_value, asset_base=asset_base)
+            for value in node.values():
+                _rewrite_node(value)
+        elif isinstance(node, list):
+            for item in node:
+                _rewrite_node(item)
+
+    _rewrite_node(manifest_copy)
+    source_payload = manifest_copy.get("source_payload")
+    if isinstance(source_payload, str):
+        manifest_copy["source_payload"] = _sanitize_local_display_ref(source_payload, asset_base=asset_base)
+    manifest_copy["asset_base"] = "."
+    return manifest_copy, copied_assets
+
+
+def _write_deterministic_zip(source_dir: Path, zip_path: Path) -> None:
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    entries = sorted(path for path in source_dir.rglob("*") if path.is_file())
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_STORED) as zf:
+        for path in entries:
+            rel = path.relative_to(source_dir).as_posix()
+            info = zipfile.ZipInfo(rel)
+            info.date_time = _ZIP_ENTRY_TIMESTAMP
+            info.compress_type = zipfile.ZIP_STORED
+            info.external_attr = 0o644 << 16
+            zf.writestr(info, path.read_bytes())
+
+
+def export_storyboard_snapshot(
+    manifest_path: Path,
+    *,
+    export_root: Path,
+    export_name: str | None = None,
+) -> dict[str, Any]:
+    """Build a self-contained review snapshot and deterministic zip."""
+    manifest_path = manifest_path.resolve()
+    storyboard_dir = manifest_path.parent.resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    run_id = str(manifest.get("run_id") or "").strip()
+    snapshot_name = export_name or f"storyboard-{run_id or storyboard_dir.parent.name}"
+    snapshot_name = _slugify_filename(snapshot_name)
+    snapshot_dir = (export_root / snapshot_name).resolve()
+    zip_path = (export_root / f"{snapshot_name}.zip").resolve()
+
+    if snapshot_dir.exists():
+        shutil.rmtree(snapshot_dir)
+    if zip_path.exists():
+        zip_path.unlink()
+
+    share_manifest, copied_assets = _rewrite_manifest_for_share(
+        manifest,
+        storyboard_dir=storyboard_dir,
+    )
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    for rel_path, source_path in sorted(copied_assets.items()):
+        destination = (snapshot_dir / Path(rel_path)).resolve()
+        if snapshot_dir not in destination.parents and destination != snapshot_dir:
+            raise ValueError(f"snapshot asset path escaped snapshot root: {rel_path}")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination)
+
+    (snapshot_dir / "storyboard.json").write_text(
+        json.dumps(share_manifest, indent=2),
+        encoding="utf-8",
+    )
+    (snapshot_dir / "index.html").write_text(
+        render_index_html_v2(share_manifest),
+        encoding="utf-8",
+    )
+    _write_deterministic_zip(snapshot_dir, zip_path)
+
+    return {
+        "run_id": run_id or None,
+        "snapshot_name": snapshot_name,
+        "snapshot_dir": snapshot_dir,
+        "zip_path": zip_path,
+        "asset_inventory": sorted(copied_assets.keys()),
+    }
+
+
+def publish_snapshot_tree(
+    snapshot_dir: Path,
+    *,
+    repo_root: Path,
+    target_subdir: str,
+) -> dict[str, Any]:
+    """Copy a snapshot into a checked-out Pages repo without touching other paths."""
+    safe_subdir = _sanitize_segment(target_subdir)
+    if safe_subdir == "":
+        raise ValueError("target_subdir must not be empty")
+    target_dir = (repo_root / Path(safe_subdir)).resolve()
+    repo_root = repo_root.resolve()
+    if repo_root not in target_dir.parents:
+        raise ValueError("target_subdir escaped the repository root")
+
+    def _fingerprint_tree(root: Path) -> dict[str, bytes]:
+        if not root.exists():
+            return {}
+        return {
+            path.relative_to(root).as_posix(): path.read_bytes()
+            for path in sorted(root.rglob("*"))
+            if path.is_file()
+        }
+
+    source_fingerprint = _fingerprint_tree(snapshot_dir)
+    target_fingerprint = _fingerprint_tree(target_dir)
+    changed = source_fingerprint != target_fingerprint
+    if not changed:
+        return {
+            "changed": False,
+            "published_dir": target_dir,
+            "target_subdir": safe_subdir,
+            "file_count": len(source_fingerprint),
+        }
+
+    if target_dir.exists():
+        raise ValueError(
+            f"publish target already exists with different contents: {safe_subdir}"
+        )
+    shutil.copytree(snapshot_dir, target_dir)
+    return {
+        "changed": True,
+        "published_dir": target_dir,
+        "target_subdir": safe_subdir,
+        "file_count": len(source_fingerprint),
+    }
+
+
+def _discover_site_repo_url(manifest: dict[str, Any]) -> str:
+    source_payload = manifest.get("source_payload")
+    if not isinstance(source_payload, str) or not source_payload.strip():
+        return ""
+    payload_path = Path(source_payload)
+    if not payload_path.exists():
+        return ""
+    payload = load_payload(payload_path)
+    dispatch_meta = payload.get("dispatch_metadata") if isinstance(payload.get("dispatch_metadata"), dict) else {}
+    return str(dispatch_meta.get("site_repo_url") or payload.get("site_repo_url") or "").strip()
 
 
 def _is_remote_ref(ref: str) -> bool:
@@ -1276,6 +1510,112 @@ def cmd_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_export(args: argparse.Namespace) -> int:
+    result = export_storyboard_snapshot(
+        args.manifest,
+        export_root=args.export_root.resolve(),
+        export_name=args.export_name,
+    )
+    print(json.dumps(
+        {
+            "status": "exported",
+            "snapshot_dir": str(result["snapshot_dir"]),
+            "zip_path": str(result["zip_path"]),
+            "asset_count": len(result["asset_inventory"]),
+        },
+        indent=2,
+    ))
+    return 0
+
+
+def cmd_publish(args: argparse.Namespace) -> int:
+    manifest_path: Path = args.manifest.resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    export_result = export_storyboard_snapshot(
+        manifest_path,
+        export_root=args.export_root.resolve(),
+        export_name=args.export_name,
+    )
+    run_id = str(manifest.get("run_id") or export_result["snapshot_name"]).strip()
+    safe_leaf = _sanitize_segment(_slugify_filename(run_id))
+    site_repo_url = str(args.site_repo_url or _discover_site_repo_url(manifest)).strip()
+    if not site_repo_url:
+        raise ValueError("site_repo_url is required for publish (pass --site-repo-url or keep it discoverable in source_payload)")
+
+    if not os.environ.get(args.token_env_var, "").strip():
+        raise RuntimeError(
+            f"Storyboard publish requires {args.token_env_var} in the environment"
+        )
+
+    gamma_scripts = PROJECT_ROOT / "skills" / "gamma-api-mastery" / "scripts"
+    if str(gamma_scripts) not in sys.path:
+        sys.path.insert(0, str(gamma_scripts))
+    from gamma_operations import _git_auth_env, _github_pages_base_url, _run_git_command  # noqa: PLC0415
+
+    target_subdir = f"{_sanitize_segment(args.publish_subdir)}/{safe_leaf}"
+    pages_url_base = _github_pages_base_url(site_repo_url)
+    git_env = _git_auth_env(os.environ[args.token_env_var].strip())
+    temp_repo = Path(tempfile.mkdtemp(prefix=f"storyboard-publish-{safe_leaf}-"))
+
+    publish_result: dict[str, Any] = {
+        "changed": False,
+        "file_count": 0,
+    }
+    try:
+        _run_git_command(
+            ["git", "clone", "--depth", "1", "--branch", args.site_branch, site_repo_url, str(temp_repo)],
+            display_args=["git", "clone", "--depth", "1", "--branch", args.site_branch, site_repo_url, "<tempdir>"],
+            env=git_env,
+        )
+        _run_git_command(["git", "config", "user.name", "app-marcus-bot"], cwd=temp_repo)
+        _run_git_command(
+            ["git", "config", "user.email", "app-marcus-bot@users.noreply.github.com"],
+            cwd=temp_repo,
+        )
+        publish_result = publish_snapshot_tree(
+            export_result["snapshot_dir"],
+            repo_root=temp_repo,
+            target_subdir=target_subdir,
+        )
+        if publish_result["changed"]:
+            _run_git_command(["git", "add", target_subdir], cwd=temp_repo, env=git_env)
+            status = _run_git_command(["git", "status", "--short", target_subdir], cwd=temp_repo, env=git_env)
+            if status.strip():
+                commit_message = f"Publish storyboard snapshot for {run_id}"
+                _run_git_command(
+                    ["git", "commit", "-m", commit_message],
+                    cwd=temp_repo,
+                    env=git_env,
+                )
+                _run_git_command(
+                    ["git", "push", site_repo_url, f"HEAD:{args.site_branch}"],
+                    cwd=temp_repo,
+                    env=git_env,
+                    display_args=["git", "push", site_repo_url, f"HEAD:{args.site_branch}"],
+                )
+        publish_url = f"{pages_url_base.rstrip('/')}/{target_subdir}/index.html"
+    finally:
+        if temp_repo.exists():
+            shutil.rmtree(temp_repo, ignore_errors=True)
+
+    receipt = {
+        "status": "published",
+        "run_id": run_id,
+        "snapshot_dir": str(export_result["snapshot_dir"]),
+        "zip_path": str(export_result["zip_path"]),
+        "publish_url": publish_url,
+        "target_subdir": target_subdir,
+        "site_repo_url": site_repo_url,
+        "changed": publish_result["changed"],
+        "file_count": publish_result["file_count"],
+    }
+    receipt_path = args.export_root.resolve() / f"{export_result['snapshot_name']}-publish-receipt.json"
+    receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+    receipt["receipt_path"] = str(receipt_path)
+    print(json.dumps(receipt, indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Gary dispatch → static storyboard bundle")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1333,6 +1673,62 @@ def main() -> int:
     summ = sub.add_parser("summarize", help="Print summary from existing storyboard.json")
     summ.add_argument("--manifest", type=Path, required=True)
     summ.set_defaults(func=cmd_summarize)
+
+    exp = sub.add_parser("export", help="Build self-contained share snapshot + zip")
+    exp.add_argument("--manifest", type=Path, required=True)
+    exp.add_argument(
+        "--export-root",
+        type=Path,
+        default=DEFAULT_EXPORTS_DIR,
+        help="Repo-root exports directory for the self-contained snapshot and zip",
+    )
+    exp.add_argument(
+        "--export-name",
+        type=str,
+        default=None,
+        help="Optional folder/zip stem override (default: storyboard-<RUN_ID>)",
+    )
+    exp.set_defaults(func=cmd_export)
+
+    pub = sub.add_parser("publish", help="Export and publish storyboard snapshot to GitHub Pages")
+    pub.add_argument("--manifest", type=Path, required=True)
+    pub.add_argument(
+        "--export-root",
+        type=Path,
+        default=DEFAULT_EXPORTS_DIR,
+        help="Repo-root exports directory for the self-contained snapshot and zip",
+    )
+    pub.add_argument(
+        "--export-name",
+        type=str,
+        default=None,
+        help="Optional folder/zip stem override (default: storyboard-<RUN_ID>)",
+    )
+    pub.add_argument(
+        "--site-repo-url",
+        type=str,
+        default=None,
+        help="Optional explicit Pages repository URL; otherwise discovered from source_payload when available",
+    )
+    pub.add_argument(
+        "--publish-subdir",
+        type=str,
+        default=DEFAULT_PUBLISH_SUBDIR,
+        help="Base subtree inside the Pages repo (default: assets/storyboards)",
+    )
+    pub.add_argument(
+        "--site-branch",
+        type=str,
+        default="main",
+        help="Pages repository branch to update",
+    )
+    pub.add_argument(
+        "--token-env-var",
+        type=str,
+        default="GITHUB_PAGES_TOKEN",
+        help="Environment variable containing the fine-grained GitHub Pages token",
+    )
+    pub.set_defaults(func=cmd_publish)
 
     args = parser.parse_args()
     try:

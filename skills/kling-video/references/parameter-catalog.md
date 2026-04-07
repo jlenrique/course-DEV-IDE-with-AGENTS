@@ -2,6 +2,14 @@
 
 Live-tested parameter and endpoint reference for the Kling API implementation used in this repo.
 
+## Gate 7E Operational Note
+
+- Use `skills/production-coordination/scripts/run_motion_generation.py` for production motion rows.
+- The production entrypoint delegates to the Kling backend, which submits or resumes an existing `task_id`, polls to terminal state, downloads the MP4, validates the local file, patches `motion_plan.yaml`, and writes run-scoped receipts.
+- The runner defaults to silent generation by omitting Kling's native-audio field entirely for instructional content.
+- If a `.progress.json` receipt already contains a live `task_id`, the runner resumes polling instead of submitting a duplicate job.
+- If the slide already has a valid terminal local asset in `motion_plan.yaml`, the runner returns a no-op receipt and does not resubmit.
+
 ## Live-Tested Reality
 
 These details are not theoretical. They were confirmed against the working API in this project:
@@ -15,6 +23,8 @@ These details are not theoretical. They were confirmed against the working API i
 - Status field is `task_status`
 - Success value is `succeed`
 - Video URL is nested under `data.task_result.videos[0].url`
+- public Git-hosted PNGs work as `image2video` sources on the current client
+- silent generation for instructional work must omit Kling's native-audio field entirely
 
 ## Auth
 
@@ -90,7 +100,11 @@ Known usable values from repo research and live testing:
 - `kling-v2-1-master`
 - `kling-v2-5`
 - `kling-v2-6`
-- `kling-v3-0`
+
+Research note:
+- public docs and the Kling app UI advertise `kling-v3-0`
+- the current repo client returned provider error `model_name value 'kling-v3-0' is invalid`
+- treat `3.0` as researched but **not yet supported by this repo client**
 
 ### `mode`
 
@@ -107,6 +121,11 @@ Typical values:
 - `"5"`
 - `"10"`
 - `"15"` where supported
+
+For non-native delivery shapes such as an 8-second final clip or a deliberate
+slow-motion ending, generate the nearest supported source clip first and then
+derive the delivery version in post. This repo's standard post-process path is
+`skills/kling-video/scripts/clip_postprocess.py`.
 
 ### `aspect_ratio`
 
@@ -151,9 +170,32 @@ Look for:
 
 Always download immediately after success. Do not rely on the CDN URL remaining stable.
 
+## Audio Semantics
+
+### Silent production
+
+For instructional production:
+- keep Kling video silent
+- omit the native-audio field from the request body
+- let ElevenLabs own narration and deliberate sound design
+
+Do **not** assume `sound=False` is equivalent to silence. The provider rejected that request shape in this repo's hardening pass.
+
+### Native-audio exploration
+
+Use native audio only in the validation lane. If you probe it:
+- set `requested_audio_mode: native`
+- send `sound=True`
+- keep the result out of production motion state until it is deliberately approved
+
+Current repo finding:
+- a live `kling-v2-6` `pro` native-audio probe returned provider code `1201` with message `Failed to resolve the request body`
+- treat native audio as blocked on the current repo client surface until proven otherwise
+
 ## Repo-Specific Guidance
 
-- Default validation runs should prefer `kling-v1-6`, `std`, `"5"`
+- Default validation runs should prefer `kling-v2-6`, `std`, `"5"`
 - Keep test and sample clips short
 - Prefer Gary PNG reuse for image-to-video
 - Prefer ElevenLabs audio reuse for lip-sync
+- Use `skills/kling-video/scripts/kling_validation_runner.py` for exploratory cases and `run_motion_generation.py` for Gate 7E production rows

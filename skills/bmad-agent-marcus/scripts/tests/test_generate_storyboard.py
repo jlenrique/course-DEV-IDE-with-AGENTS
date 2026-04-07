@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 from PIL import Image
@@ -867,3 +869,138 @@ def test_cli_generate_outputs_reviewer_friendly_storyboard_markup(tmp_path: Path
     assert 'data-role="jump-next-issue"' in html
     assert '<dialog class="preview-dialog"' in html
     assert 'class="expand-cue"' in html
+
+
+def test_export_snapshot_creates_deterministic_zip_with_sanitized_paths(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    local_png = slides / "s1.png"
+    _write_test_png(local_png)
+
+    payload = _sample_payload()
+    payload["gary_slide_output"][0]["file_path"] = str(local_png.resolve())
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        run_id="RUN-EXPORT-1",
+    )
+    mod.write_bundle(manifest, storyboard_dir)
+
+    export_root = tmp_path / "exports"
+    first = mod.export_storyboard_snapshot(storyboard_dir / "storyboard.json", export_root=export_root)
+    first_zip_bytes = Path(first["zip_path"]).read_bytes()
+    second = mod.export_storyboard_snapshot(storyboard_dir / "storyboard.json", export_root=export_root)
+    second_zip_bytes = Path(second["zip_path"]).read_bytes()
+
+    assert first_zip_bytes == second_zip_bytes
+    with zipfile.ZipFile(second["zip_path"], "r") as zf:
+        names = zf.namelist()
+    assert names == ["index.html", "slides/s1.png", "storyboard.json"]
+    assert all(":" not in name and "\\" not in name and not name.startswith("/") for name in names)
+
+    exported_manifest = json.loads((Path(second["snapshot_dir"]) / "storyboard.json").read_text(encoding="utf-8"))
+    assert exported_manifest["asset_base"] == "."
+    assert exported_manifest["source_payload"] == "dispatch.json"
+    assert exported_manifest["slides"][0]["file_path"] == "slides/s1.png"
+    assert exported_manifest["slides"][0]["preview_href"] == "slides/s1.png"
+    assert exported_manifest["slides"][1]["file_path"] == "slides/missing.png"
+    assert "C:\\" not in json.dumps(exported_manifest)
+
+
+def test_exported_snapshot_html_local_links_resolve(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_all_present_payload()), encoding="utf-8")
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        _all_present_payload(),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        run_id="RUN-EXPORT-2",
+    )
+    mod.write_bundle(manifest, storyboard_dir)
+
+    export_result = mod.export_storyboard_snapshot(storyboard_dir / "storyboard.json", export_root=tmp_path / "exports")
+    snapshot_dir = Path(export_result["snapshot_dir"])
+    html = (snapshot_dir / "index.html").read_text(encoding="utf-8")
+
+    refs = set(re.findall(r'(?:src|href|data-preview-src)="([^"]+)"', html))
+    local_refs = {
+        ref for ref in refs
+        if ref
+        and not ref.startswith(("http://", "https://", "#", "mailto:"))
+    }
+    assert local_refs
+    for ref in local_refs:
+        assert (snapshot_dir / Path(ref)).is_file(), ref
+    assert "C:\\" not in html
+    assert "file://" not in html
+    assert "..\\" not in html
+    assert "../" not in html
+
+
+def test_publish_snapshot_tree_is_non_destructive_and_idempotent(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    snapshot_dir = tmp_path / "snapshot"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+    (snapshot_dir / "storyboard.json").write_text("{}", encoding="utf-8")
+    (snapshot_dir / "gamma-export").mkdir()
+    (snapshot_dir / "gamma-export" / "slide.png").write_bytes(b"png")
+
+    repo_root = tmp_path / "pages-repo"
+    (repo_root / "README.md").parent.mkdir(parents=True, exist_ok=True)
+    (repo_root / "README.md").write_text("keep me", encoding="utf-8")
+
+    first = mod.publish_snapshot_tree(
+        snapshot_dir,
+        repo_root=repo_root,
+        target_subdir="assets/storyboards/RUN-EXPORT-3",
+    )
+    assert first["changed"] is True
+    assert (repo_root / "README.md").read_text(encoding="utf-8") == "keep me"
+    assert (repo_root / "assets" / "storyboards" / "RUN-EXPORT-3" / "index.html").is_file()
+
+    second = mod.publish_snapshot_tree(
+        snapshot_dir,
+        repo_root=repo_root,
+        target_subdir="assets/storyboards/RUN-EXPORT-3",
+    )
+    assert second["changed"] is False
+    assert (repo_root / "README.md").read_text(encoding="utf-8") == "keep me"
+
+
+def test_publish_snapshot_tree_rejects_different_existing_target(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    snapshot_dir = tmp_path / "snapshot"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "index.html").write_text("<html>new</html>", encoding="utf-8")
+    (snapshot_dir / "storyboard.json").write_text("{}", encoding="utf-8")
+
+    repo_root = tmp_path / "pages-repo"
+    target_dir = repo_root / "assets" / "storyboards" / "RUN-EXPORT-4"
+    target_dir.mkdir(parents=True)
+    (target_dir / "index.html").write_text("<html>old</html>", encoding="utf-8")
+
+    try:
+        mod.publish_snapshot_tree(
+            snapshot_dir,
+            repo_root=repo_root,
+            target_subdir="assets/storyboards/RUN-EXPORT-4",
+        )
+    except ValueError as exc:
+        assert "already exists with different contents" in str(exc)
+    else:
+        raise AssertionError("expected publish_snapshot_tree to reject differing existing target")

@@ -123,15 +123,16 @@ def run_text_to_video(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    submitted = client.text_to_video(
-        prompt,
-        model_name=model_name,
-        duration=duration,
-        aspect_ratio=aspect_ratio,
-        mode=mode,
-        negative_prompt=negative_prompt,
-        sound=sound,
-    )
+    request_kwargs: dict[str, Any] = {
+        "model_name": model_name,
+        "duration": duration,
+        "aspect_ratio": aspect_ratio,
+        "mode": mode,
+        "negative_prompt": negative_prompt,
+    }
+    if sound is not None:
+        request_kwargs["sound"] = sound
+    submitted = client.text_to_video(prompt, **request_kwargs)
     task_id = submitted.get("data", {}).get("task_id") or submitted.get("task_id")
     if not task_id:
         raise RuntimeError(f"No task_id in response: {submitted}")
@@ -188,17 +189,18 @@ def run_image_to_video(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    submitted = client.image_to_video(
-        image_url,
-        prompt=prompt,
-        model_name=model_name,
-        duration=duration,
-        aspect_ratio=aspect_ratio,
-        mode=mode,
-        end_image_url=end_image_url,
-        negative_prompt=negative_prompt,
-        sound=sound,
-    )
+    request_kwargs = {
+        "prompt": prompt,
+        "model_name": model_name,
+        "duration": duration,
+        "aspect_ratio": aspect_ratio,
+        "mode": mode,
+        "end_image_url": end_image_url,
+        "negative_prompt": negative_prompt,
+    }
+    if sound is not None:
+        request_kwargs["sound"] = sound
+    submitted = client.image_to_video(image_url, **request_kwargs)
     task_id = submitted.get("data", {}).get("task_id") or submitted.get("task_id")
     if not task_id:
         raise RuntimeError(f"No task_id in response: {submitted}")

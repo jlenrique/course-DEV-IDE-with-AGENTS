@@ -1,0 +1,116 @@
+version: 1
+last_reviewed: 2026-04-07
+api_surface:
+  current_repo_client:
+    base_url: https://api.klingai.com
+    auth: jwt_from_access_key_and_secret_key
+    status: active
+  newer_public_surface:
+    base_url: https://api-singapore.klingai.com
+    auth: jwt_from_access_key_and_secret_key
+    status: integrated_validation_only
+models:
+  kling-v1-6:
+    repo_client_status: native
+    best_for:
+      - cheap exploratory motion probes
+      - lightweight b-roll
+    operations:
+      text2video:
+        support: native
+      image2video:
+        support: assumed
+      lip-sync:
+        support: unknown
+      extend:
+        support: unknown
+    duration_seconds:
+      text2video:
+        supported:
+          - 5
+      image2video:
+        supported:
+          - 5
+    audio:
+      silent_mode:
+        request_behavior: omit_sound_field
+        support: native
+      native_audio:
+        request_behavior: sound_true
+        support: unverified
+    notes:
+      - use only for cheap validation or low-stakes motion
+  kling-v2-6:
+    repo_client_status: native
+    best_for:
+      - approved-slide image-to-video
+      - production motion clips
+      - exploratory native-audio probes
+    operations:
+      text2video:
+        support: native
+      image2video:
+        support: native
+      lip-sync:
+        support: native_client_method
+      extend:
+        support: native_client_method
+    duration_seconds:
+      text2video:
+        supported:
+          - 5
+          - 10
+      image2video:
+        supported:
+          - 5
+          - 10
+    audio:
+      silent_mode:
+        request_behavior: omit_sound_field
+        support: native
+      native_audio:
+        request_behavior: sound_true
+        support: blocked_on_current_repo_client
+        notes:
+          - public pricing/docs advertise audio-on billing
+          - repo validated silence-by-omission
+          - live probe on 2026-04-07 returned provider code 1201 failed to resolve the request body
+    notes:
+      - current best default for production-safe motion work
+      - image-to-video from public Git-hosted PNGs is live-tested
+  kling-v3:
+    repo_client_status: blocked
+    best_for:
+      - multi-shot image-to-video
+      - richer angle/detail storytelling
+      - longer clips when the newer API surface is wired
+    operations:
+      text2video:
+        support: blocked_in_current_repo_client
+      image2video:
+        support: likely_on_newer_api_surface_only
+    duration_seconds:
+      text2video:
+        supported:
+          - 3
+          - 5
+          - 10
+          - 15
+      image2video:
+        supported:
+          - 5
+          - 10
+          - 15
+    audio:
+      silent_mode:
+        request_behavior: unknown_on_current_repo_client
+        support: blocked
+      native_audio:
+        request_behavior: unknown_on_current_repo_client
+        support: blocked
+    notes:
+      - Kling public docs and app UI advertise Video 3.0
+      - live repo attempt on the old default endpoint returned provider error that model_name kling-v3-0 is invalid
+      - Singapore-surface live probe accepted model_name kling-v3 for silent text2video
+      - Singapore-surface native-audio probe still returned provider code 1201 failed to resolve the request body
+      - requires separate enablement against the newer Singapore API surface before production use

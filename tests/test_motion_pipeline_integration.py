@@ -84,16 +84,21 @@ def test_mixed_motion_mini_run_and_static_control(tmp_path: Path) -> None:
     motion_plan = apply_motion_designations(
         motion_plan,
         {
+            "slide-01": {
+                "motion_type": "static",
+            },
             "slide-02": {
                 "motion_type": "video",
                 "motion_brief": "Animate the chart trend upward",
                 "motion_duration_seconds": 5.0,
+                "override_reason": "Integration test explicitly exercises the Kling video branch.",
             },
             "slide-03": {
                 "motion_type": "animation",
                 "motion_brief": "Pulse the labels in sequence",
                 "guidance_notes": "Hold the final state for readability",
                 "motion_duration_seconds": 7.0,
+                "override_reason": "Integration test explicitly exercises the manual animation branch.",
             },
         },
     )
@@ -253,6 +258,10 @@ def test_mixed_motion_mini_run_and_static_control(tmp_path: Path) -> None:
     )
     static_control = apply_motion_designations(
         static_control,
-        {"slide-02": {"motion_type": "video", "motion_duration_seconds": 5.0}},
+        {
+            "slide-01": {"motion_type": "static"},
+            "slide-02": {"motion_type": "video", "motion_duration_seconds": 5.0},
+            "slide-03": {"motion_type": "static"},
+        },
     )
     assert all(row["motion_type"] == "static" for row in static_control["slides"])

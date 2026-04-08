@@ -40,15 +40,15 @@ def _write_complete_bundle_outputs(
     empty_narration_segment: str | None = None,
     empty_visual_cue_segment: str | None = None,
     cue_not_in_text_segment: str | None = None,
+    narration_text_overrides: dict[str, str] | None = None,
+    cue_overrides: dict[str, str] | None = None,
+    script_behavioral_intent_overrides: dict[str, str] | None = None,
+    manifest_behavioral_intent_overrides: dict[str, str] | None = None,
+    standalone_perception_artifacts: list[dict[str, object]] | None = None,
     wrong_motion_asset: bool = False,
     include_motion_confirmation: bool = True,
     motion_visual_file_uses_motion_asset: bool = False,
 ) -> dict[str, object]:
-    (bundle_dir / "narration-script.md").write_text(
-        "# Narration Script\n\nBundle-level validated output.\n",
-        encoding="utf-8",
-    )
-
     approved_motion_asset = bundle_dir / "motion-approved.mp4"
     approved_motion_asset.write_bytes(b"mp4")
     wrong_motion_path = bundle_dir / "motion-wrong.mp4"
@@ -68,8 +68,13 @@ def _write_complete_bundle_outputs(
         seg_id = f"seg-{index:02d}"
         cue = f"notice cue {index}"
         narration_text = f"{cue} and explain the insight on slide {index}."
+        if cue_overrides and seg_id in cue_overrides:
+            cue = cue_overrides[seg_id]
+            narration_text = f"{cue} and explain the insight on slide {index}."
         if seg_id == empty_narration_segment:
             narration_text = ""
+        if narration_text_overrides and seg_id in narration_text_overrides:
+            narration_text = narration_text_overrides[seg_id]
         if seg_id == cue_not_in_text_segment:
             narration_text = f"Different narration for slide {index}."
         if seg_id == empty_visual_cue_segment:
@@ -80,6 +85,7 @@ def _write_complete_bundle_outputs(
             "gary_slide_id": slide_id,
             "gary_card_number": index,
             "narration_text": narration_text,
+            "behavioral_intent": "credible",
             "visual_file": str(gary_by_slide_id.get(slide_id, {}).get("file_path") or ""),
             "visual_references": [
                 {
@@ -115,6 +121,30 @@ def _write_complete_bundle_outputs(
 
         segments.append(segment)
 
+    script_lines = ["# Narration Script", ""]
+    for segment in segments:
+        script_behavioral_intent = str(segment["behavioral_intent"])
+        if script_behavioral_intent_overrides and segment["id"] in script_behavioral_intent_overrides:
+            script_behavioral_intent = script_behavioral_intent_overrides[str(segment["id"])]
+        if manifest_behavioral_intent_overrides and segment["id"] in manifest_behavioral_intent_overrides:
+            segment["behavioral_intent"] = manifest_behavioral_intent_overrides[str(segment["id"])]
+        script_lines.extend(
+            [
+                f"[SEGMENT: {segment['id']}]",
+                "",
+                "**Stage Directions:**",
+                f"- Behavioral Intent: {script_behavioral_intent}",
+                "",
+                "**Narration:**",
+                str(segment["narration_text"]),
+                "",
+            ]
+        )
+    (bundle_dir / "narration-script.md").write_text(
+        "\n".join(script_lines).rstrip() + "\n",
+        encoding="utf-8",
+    )
+
     (bundle_dir / "segment-manifest.yaml").write_text(
         yaml.safe_dump({"segments": segments}, sort_keys=False),
         encoding="utf-8",
@@ -134,6 +164,12 @@ def _write_complete_bundle_outputs(
     }
     (bundle_dir / "authorized-storyboard.json").write_text(
         json.dumps(authorized_storyboard),
+        encoding="utf-8",
+    )
+    (bundle_dir / "perception-artifacts.json").write_text(
+        json.dumps(
+            standalone_perception_artifacts if standalone_perception_artifacts is not None else perception_artifacts
+        ),
         encoding="utf-8",
     )
 
@@ -558,6 +594,158 @@ def test_bundle_validation_fails_when_visual_narration_cue_missing(tmp_path: Pat
 
     assert result["status"] == "fail"
     assert result["pass2_outputs"]["segments_missing_visual_narration_cue"] == ["seg-02"]
+
+
+def test_bundle_validation_fails_when_meta_slide_language_is_forbidden(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    card_1 = bundle_dir / "card-01.png"
+    card_2 = bundle_dir / "card-02.png"
+    card_1.write_bytes(b"png")
+    card_2.write_bytes(b"png")
+
+    payload = {
+        "gary_slide_output": [
+            {"slide_id": "s-1", "card_number": 1, "file_path": str(card_1), "source_ref": "slide-1"},
+            {"slide_id": "s-2", "card_number": 2, "file_path": str(card_2), "source_ref": "slide-2"},
+        ],
+        "perception_artifacts": [
+            {
+                "slide_id": "s-1",
+                "source_image_path": str(card_1),
+                "visual_elements": [{"description": "Element 1"}],
+            },
+            {
+                "slide_id": "s-2",
+                "source_image_path": str(card_2),
+                "visual_elements": [{"description": "Element 2"}],
+            },
+        ],
+    }
+    payload.update(
+        _write_complete_bundle_outputs(
+            bundle_dir,
+            slide_ids=["s-1", "s-2"],
+            gary_slide_output=payload["gary_slide_output"],  # type: ignore[arg-type]
+            perception_artifacts=payload["perception_artifacts"],  # type: ignore[arg-type]
+            cue_overrides={"seg-02": "notice how the panel on the right frames the takeaway"},
+            narration_text_overrides={
+                "seg-02": "notice how the panel on the right frames the takeaway for clinicians."
+            },
+        )
+    )
+
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+
+    assert result["status"] == "fail"
+    assert result["pass2_outputs"]["segments_with_forbidden_meta_slide_language"] == ["seg-02"]
+
+
+def test_bundle_validation_fails_when_standalone_perception_artifacts_drift_from_envelope(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    card_1 = bundle_dir / "card-01.png"
+    card_2 = bundle_dir / "card-02.png"
+    card_1.write_bytes(b"png")
+    card_2.write_bytes(b"png")
+
+    envelope_perception = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(card_1),
+            "visual_elements": [{"description": "Element 1"}],
+        },
+        {
+            "slide_id": "s-2",
+            "source_image_path": str(card_2),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+    ]
+    standalone_perception = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(card_1),
+            "visual_elements": [{"description": "Different Element"}],
+        },
+        {
+            "slide_id": "s-2",
+            "source_image_path": str(card_2),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+    ]
+    payload = {
+        "gary_slide_output": [
+            {"slide_id": "s-1", "card_number": 1, "file_path": str(card_1), "source_ref": "slide-1"},
+            {"slide_id": "s-2", "card_number": 2, "file_path": str(card_2), "source_ref": "slide-2"},
+        ],
+        "perception_artifacts": envelope_perception,
+    }
+    payload.update(
+        _write_complete_bundle_outputs(
+            bundle_dir,
+            slide_ids=["s-1", "s-2"],
+            gary_slide_output=payload["gary_slide_output"],  # type: ignore[arg-type]
+            perception_artifacts=envelope_perception,  # type: ignore[arg-type]
+            standalone_perception_artifacts=standalone_perception,
+        )
+    )
+
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+
+    assert result["status"] == "fail"
+    assert result["pass2_outputs"]["perception_artifact_mismatches"] == ["s-1"]
+
+
+def test_bundle_validation_fails_when_behavioral_intent_drifts_between_script_and_manifest(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    card_1 = bundle_dir / "card-01.png"
+    card_2 = bundle_dir / "card-02.png"
+    card_1.write_bytes(b"png")
+    card_2.write_bytes(b"png")
+
+    payload = {
+        "gary_slide_output": [
+            {"slide_id": "s-1", "card_number": 1, "file_path": str(card_1), "source_ref": "slide-1"},
+            {"slide_id": "s-2", "card_number": 2, "file_path": str(card_2), "source_ref": "slide-2"},
+        ],
+        "perception_artifacts": [
+            {
+                "slide_id": "s-1",
+                "source_image_path": str(card_1),
+                "visual_elements": [{"description": "Element 1"}],
+            },
+            {
+                "slide_id": "s-2",
+                "source_image_path": str(card_2),
+                "visual_elements": [{"description": "Element 2"}],
+            },
+        ],
+    }
+    payload.update(
+        _write_complete_bundle_outputs(
+            bundle_dir,
+            slide_ids=["s-1", "s-2"],
+            gary_slide_output=payload["gary_slide_output"],  # type: ignore[arg-type]
+            perception_artifacts=payload["perception_artifacts"],  # type: ignore[arg-type]
+            script_behavioral_intent_overrides={"seg-02": "reflective"},
+            manifest_behavioral_intent_overrides={"seg-02": "credible"},
+        )
+    )
+
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+
+    assert result["status"] == "fail"
+    assert result["pass2_outputs"]["segments_with_behavioral_intent_mismatch"] == ["seg-02"]
 
 
 def test_bundle_validation_fails_when_motion_segment_not_bound_to_approved_asset(tmp_path: Path) -> None:

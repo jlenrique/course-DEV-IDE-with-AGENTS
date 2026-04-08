@@ -38,8 +38,9 @@ except ImportError:  # pragma: no cover - optional for yaml input
 REQUIRED_PASS2_FIELDS = ("gary_slide_output", "perception_artifacts")
 NARRATION_SCRIPT_FILENAME = "narration-script.md"
 SEGMENT_MANIFEST_FILENAME = "segment-manifest.yaml"
-
+PERCEPTION_ARTIFACTS_FILENAME = "perception-artifacts.json"
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+NARRATION_PARAMS_PATH = PROJECT_ROOT / "state" / "config" / "narration-script-parameters.yaml"
 
 
 def _is_remote_http_ref(value: str) -> bool:
@@ -78,7 +79,7 @@ def _normalize_path_string(path_value: str, *, bundle_dir: Path | None) -> str:
 
 
 def _load_payload(path: Path) -> dict[str, Any]:
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")
     suffix = path.suffix.lower()
 
     if suffix in {".yml", ".yaml"}:
@@ -127,7 +128,7 @@ def _resolve_bundle_output_path(
 
 
 def _load_json_object(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(data, dict):
         raise ValueError(f"{path.name} must contain a JSON object at the top level")
     return data
@@ -140,6 +141,108 @@ def _load_yaml_object(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path.name} must contain a YAML mapping at the top level")
     return data
+
+
+def _load_json_array(path: Path) -> list[Any]:
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(data, list):
+        raise ValueError(f"{path.name} must contain a JSON array at the top level")
+    return data
+
+
+def _load_meta_slide_language_guardrails() -> dict[str, Any]:
+    """Load narration anti-meta guardrails from narration-script-parameters.yaml."""
+    if yaml is None or not NARRATION_PARAMS_PATH.is_file():
+        return {"policy": "allowed", "forbidden_phrases": []}
+
+    try:
+        data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {"policy": "allowed", "forbidden_phrases": []}
+
+    visual = data.get("visual_narration", {})
+    if not isinstance(visual, dict):
+        return {"policy": "allowed", "forbidden_phrases": []}
+
+    policy = str(visual.get("meta_slide_language") or "allowed").strip().lower()
+    phrases_raw = visual.get("forbidden_meta_phrases", [])
+    if not isinstance(phrases_raw, list):
+        phrases_raw = []
+
+    forbidden_phrases = [
+        str(item).strip().lower()
+        for item in phrases_raw
+        if isinstance(item, str) and str(item).strip()
+    ]
+    return {"policy": policy, "forbidden_phrases": forbidden_phrases}
+
+
+def _find_forbidden_meta_segments_in_script(
+    narration_path: Path,
+    *,
+    forbidden_phrases: list[str],
+) -> list[str]:
+    """Return segment IDs in narration-script.md containing forbidden phrases."""
+    if not forbidden_phrases:
+        return []
+
+    text = narration_path.read_text(encoding="utf-8")
+    flagged: list[str] = []
+    current_segment: str | None = None
+    current_lines: list[str] = []
+
+    def flush_segment() -> None:
+        if current_segment is None:
+            return
+        lowered = "\n".join(current_lines).lower()
+        if any(phrase in lowered for phrase in forbidden_phrases):
+            flagged.append(current_segment)
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if line.startswith("[SEGMENT:") and line.endswith("]"):
+            flush_segment()
+            current_segment = line[len("[SEGMENT:") : -1].strip()
+            current_lines = []
+            continue
+        if current_segment is not None:
+            current_lines.append(raw_line)
+
+    flush_segment()
+    return sorted(set(flagged))
+
+
+def _extract_behavioral_intents_from_script(narration_path: Path) -> dict[str, str]:
+    """Parse `[SEGMENT: ...]` blocks and extract stage-direction behavioral intents."""
+    intents: dict[str, str] = {}
+    current_segment: str | None = None
+
+    for raw_line in narration_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if line.startswith("[SEGMENT:") and line.endswith("]"):
+            current_segment = line[len("[SEGMENT:") : -1].strip()
+            continue
+        if current_segment is None:
+            continue
+        if line.lower().startswith("- behavioral intent:"):
+            intent = line.split(":", 1)[1].strip()
+            if intent:
+                intents[current_segment] = intent
+    return intents
+
+
+def _artifact_identity_key(artifact: dict[str, Any]) -> str:
+    slide_id = str(artifact.get("slide_id") or "").strip()
+    if slide_id:
+        return slide_id
+    artifact_path = str(artifact.get("artifact_path") or "").strip()
+    if artifact_path:
+        return artifact_path
+    return json.dumps(artifact, sort_keys=True)
+
+
+def _normalize_artifact_for_compare(artifact: dict[str, Any]) -> str:
+    return json.dumps(artifact, sort_keys=True)
 
 
 def _load_authorized_slide_ids(
@@ -223,17 +326,24 @@ def _validate_bundle_pass2_outputs(
     details: dict[str, Any] = {
         "narration_script_path": None,
         "segment_manifest_path": None,
+        "perception_artifacts_path": None,
         "authorized_slide_count": 0,
         "manifest_segment_count": 0,
         "narration_script_missing": False,
         "narration_script_empty": False,
         "segment_manifest_missing": False,
         "segment_manifest_invalid": False,
+        "perception_artifacts_missing": False,
+        "perception_artifacts_invalid": False,
         "missing_manifest_for_slide_ids": [],
         "unknown_manifest_slide_ids": [],
         "segments_missing_narration_text": [],
         "segments_missing_visual_narration_cue": [],
         "segments_with_untraceable_visual_cues": [],
+        "segments_with_forbidden_meta_slide_language": [],
+        "script_segments_with_forbidden_meta_slide_language": [],
+        "segments_with_behavioral_intent_mismatch": [],
+        "perception_artifact_mismatches": [],
         "motion_segments_missing_perception_confirmation": [],
         "motion_segments_with_unapproved_asset_binding": [],
     }
@@ -242,6 +352,7 @@ def _validate_bundle_pass2_outputs(
         return {"errors": [], "details": details}
 
     errors: list[str] = []
+    meta_guardrails = _load_meta_slide_language_guardrails()
 
     narration_path = _resolve_bundle_output_path(
         payload,
@@ -253,11 +364,18 @@ def _validate_bundle_pass2_outputs(
         bundle_dir=bundle_dir,
         filename=SEGMENT_MANIFEST_FILENAME,
     )
+    perception_path = _resolve_bundle_output_path(
+        payload,
+        bundle_dir=bundle_dir,
+        filename=PERCEPTION_ARTIFACTS_FILENAME,
+    )
 
     if narration_path is not None:
         details["narration_script_path"] = str(narration_path)
     if manifest_path is not None:
         details["segment_manifest_path"] = str(manifest_path)
+    if perception_path is not None:
+        details["perception_artifacts_path"] = str(perception_path)
 
     if narration_path is None or not narration_path.is_file():
         details["narration_script_missing"] = True
@@ -267,6 +385,33 @@ def _validate_bundle_pass2_outputs(
         if not narration_text:
             details["narration_script_empty"] = True
             errors.append(f"{NARRATION_SCRIPT_FILENAME} exists but is empty")
+        elif meta_guardrails["policy"] == "forbidden":
+            details["script_segments_with_forbidden_meta_slide_language"] = (
+                _find_forbidden_meta_segments_in_script(
+                    narration_path,
+                    forbidden_phrases=meta_guardrails["forbidden_phrases"],
+                )
+            )
+    script_behavioral_intents = (
+        _extract_behavioral_intents_from_script(narration_path)
+        if narration_path is not None and narration_path.is_file()
+        else {}
+    )
+
+    if perception_path is None or not perception_path.is_file():
+        details["perception_artifacts_missing"] = True
+        errors.append(f"Missing required Pass 2 artifact: {PERCEPTION_ARTIFACTS_FILENAME}")
+        standalone_perception_artifacts: list[dict[str, Any]] = []
+    else:
+        try:
+            standalone_raw = _load_json_array(perception_path)
+            standalone_perception_artifacts = [
+                item for item in standalone_raw if isinstance(item, dict)
+            ]
+        except Exception as exc:
+            details["perception_artifacts_invalid"] = True
+            errors.append(f"{PERCEPTION_ARTIFACTS_FILENAME} is invalid: {type(exc).__name__}: {exc}")
+            standalone_perception_artifacts = []
 
     if manifest_path is None or not manifest_path.is_file():
         details["segment_manifest_missing"] = True
@@ -334,7 +479,8 @@ def _validate_bundle_pass2_outputs(
     motion_segments_missing_perception_confirmation: list[str] = []
     motion_segments_with_unapproved_asset_binding: list[str] = []
     motion_segments_with_noncanonical_visual_file: list[str] = []
-
+    segments_with_forbidden_meta_slide_language: list[str] = []
+    segments_with_behavioral_intent_mismatch: list[str] = []
     for segment in segments:
         if not isinstance(segment, dict):
             continue
@@ -347,6 +493,14 @@ def _validate_bundle_pass2_outputs(
         narration_text = str(segment.get("narration_text") or "").strip()
         if not narration_text:
             segments_missing_narration_text.append(seg_id)
+        elif meta_guardrails["policy"] == "forbidden":
+            lowered = narration_text.lower()
+            if any(phrase in lowered for phrase in meta_guardrails["forbidden_phrases"]):
+                segments_with_forbidden_meta_slide_language.append(seg_id)
+        script_intent = str(script_behavioral_intents.get(seg_id) or "").strip()
+        manifest_intent = str(segment.get("behavioral_intent") or "").strip()
+        if script_intent and manifest_intent and script_intent != manifest_intent:
+            segments_with_behavioral_intent_mismatch.append(seg_id)
 
         refs = segment.get("visual_references", [])
         valid_visual_cue_found = False
@@ -427,6 +581,12 @@ def _validate_bundle_pass2_outputs(
     details["segments_missing_narration_text"] = sorted(set(segments_missing_narration_text))
     details["segments_missing_visual_narration_cue"] = sorted(set(segments_missing_visual_narration_cue))
     details["segments_with_untraceable_visual_cues"] = sorted(set(segments_with_untraceable_visual_cues))
+    details["segments_with_forbidden_meta_slide_language"] = sorted(
+        set(segments_with_forbidden_meta_slide_language)
+    )
+    details["segments_with_behavioral_intent_mismatch"] = sorted(
+        set(segments_with_behavioral_intent_mismatch)
+    )
     details["motion_segments_missing_perception_confirmation"] = sorted(
         set(motion_segments_missing_perception_confirmation)
     )
@@ -436,6 +596,22 @@ def _validate_bundle_pass2_outputs(
     details["motion_segments_with_noncanonical_visual_file"] = sorted(
         set(motion_segments_with_noncanonical_visual_file)
     )
+    envelope_artifacts_by_key = {
+        _artifact_identity_key(item): _normalize_artifact_for_compare(item)
+        for item in perception_artifacts
+        if isinstance(item, dict)
+    }
+    standalone_artifacts_by_key = {
+        _artifact_identity_key(item): _normalize_artifact_for_compare(item)
+        for item in standalone_perception_artifacts
+        if isinstance(item, dict)
+    }
+    mismatch_keys = sorted(
+        key
+        for key in set(envelope_artifacts_by_key) | set(standalone_artifacts_by_key)
+        if envelope_artifacts_by_key.get(key) != standalone_artifacts_by_key.get(key)
+    )
+    details["perception_artifact_mismatches"] = mismatch_keys
 
     if missing_manifest_for_slide_ids:
         errors.append(
@@ -456,6 +632,26 @@ def _validate_bundle_pass2_outputs(
         errors.append(
             "segment-manifest.yaml has segment(s) without a non-empty visual narration_cue tied to perception and present in narration_text: "
             + ", ".join(sorted(set(segments_missing_visual_narration_cue)))
+        )
+    if segments_with_forbidden_meta_slide_language:
+        errors.append(
+            "segment-manifest.yaml has segment(s) using forbidden meta slide-language while audience-directed narration is required: "
+            + ", ".join(sorted(set(segments_with_forbidden_meta_slide_language)))
+        )
+    if details["script_segments_with_forbidden_meta_slide_language"]:
+        errors.append(
+            "narration-script.md has segment(s) using forbidden meta slide-language while audience-directed narration is required: "
+            + ", ".join(details["script_segments_with_forbidden_meta_slide_language"])
+        )
+    if details["segments_with_behavioral_intent_mismatch"]:
+        errors.append(
+            "narration-script.md and segment-manifest.yaml disagree on behavioral_intent for segment(s): "
+            + ", ".join(details["segments_with_behavioral_intent_mismatch"])
+        )
+    if mismatch_keys:
+        errors.append(
+            "perception-artifacts.json must match the envelope perception_artifacts for artifact key(s): "
+            + ", ".join(mismatch_keys)
         )
     if motion_segments and not isinstance(payload.get("motion_perception_artifacts"), list):
         errors.append(

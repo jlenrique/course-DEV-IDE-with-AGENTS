@@ -93,3 +93,22 @@ criteria:
       For each slide_id, perception_artifacts.source_image_path equals
       gary_slide_output.file_path and the target is a local .png path.
     requires_perception: false
+
+  - id: "G4-09"
+    name: "Audience-directed visual grounding"
+    description: >
+      Narration must stay visually grounded while remaining audience-directed,
+      avoiding slide-tour or production-meta phrasing when the configuration
+      forbids it.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      Narration guides learner attention using visual cues traceable to
+      perception_artifacts, but does not rely on forbidden meta slide-language
+      defined in narration-script-parameters.yaml.
+    requires_perception: true
+    perception_modality: image
+    config_refs:
+      - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"

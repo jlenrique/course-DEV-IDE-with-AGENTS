@@ -307,7 +307,7 @@ Gate contracts live in: `state/config/fidelity-contracts/`
 - G1: `g1-lesson-plan.yaml`
 - G2: `g2-slide-brief.yaml`
 - G3: `g3-generated-slides.yaml`
-- G4: `g4-narration-script.yaml` (8 criteria, incl. G4-07 source depth utilization and G4-08 perception lineage binding)
+- G4: `g4-narration-script.yaml` (9 criteria, incl. G4-07 source depth utilization, G4-08 perception lineage binding, and G4-09 audience-directed visual grounding)
 
 Shared schema: `state/config/fidelity-contracts/_schema.yaml`
 
@@ -317,10 +317,10 @@ The G4 narration contract depends on two peer config files that govern Irene's
 narration strategy. G4-07 evaluation explicitly references both:
 
 - `state/config/narration-grounding-profiles.yaml` — per-fidelity channel balance
-  (creative: source-primary; literal-text: slide-primary; literal-visual: balanced)
+  (creative: source-primary; literal-text: slide-primary; literal-visual: guided interpretation)
 - `state/config/narration-script-parameters.yaml` — script-wide style knobs
   (density, slide_echo, visual_narration, terminology, bridging, engagement,
-  source_depth, pronunciation)
+  source_depth, pronunciation, meta slide-language policy)
 
 These files are consumed by Irene Pass 2 during generation and by Vera during
 G4 evaluation. Changes to profile defaults may cause G4-07 failures — check
@@ -366,6 +366,7 @@ After Irene Pass 2:
   - every authorized slide in `authorized-storyboard.json` has at least one corresponding segment row in `segment-manifest.yaml`
   - every segment row has non-empty `narration_text`
   - every segment row has at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and appears in that segment's narration text
+  - every segment row remains audience-directed when `narration-script-parameters.yaml` forbids meta slide language; visual grounding must still be demonstrable through the traceable cues above
   - every non-static motion segment remains bound to the approved `motion_plan.yaml` asset and has matching motion perception confirmation for that asset
   - `narration-script.md` and `segment-manifest.yaml` both exist at bundle root before downstream audio/script work begins
 

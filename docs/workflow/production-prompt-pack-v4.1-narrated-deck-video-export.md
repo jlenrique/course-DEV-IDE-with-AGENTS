@@ -595,12 +595,13 @@ The balance between channels is governed by the slide's fidelity class, configur
 Per-fidelity defaults:
 - **creative** (`stance: explain-behind`): Source is primary. Narration teaches the content behind the atmospheric visual. Min 1 substantive source claim per segment.
 - **literal-text** (`stance: read-along`): Slide is primary. Narration paraphrases visible text in conversational language. Source confirms accuracy.
-- **literal-visual** (`stance: walk-through`): Slide is primary and image-only on-screen. Narration carries the explanatory/support text while walking through the visual, with at least 1 source-backed insight.
+- **literal-visual** (`stance: guided-interpretation`): Slide is primary and image-only on-screen. Narration carries the explanatory/support text while guiding the learner toward what matters in the visual, with at least 1 source-backed insight.
 
 Script-level parameters (from narration-script-parameters.yaml):
 - `narration_density` — target WPM and words-per-slide bounds
 - `slide_echo` — verbatim | paraphrase | inspired (per-fidelity overridable)
 - `visual_narration` — deictic references, description depth, visual silence policy
+- `visual_narration.meta_slide_language` — allowed | discouraged | forbidden for production-meta slide-tour phrasing
 - `terminology_treatment` — inline glossing strategy and domain filter
 - `pedagogical_bridging` — transition style between segments
 - `engagement_stance` — narrator posture, direct address, rhetorical questions
@@ -641,6 +642,7 @@ If validator `status: fail`:
 Run internal Vera G4 after Pass 2.
 - G4-01 through G4-06: existing deterministic + agentic checks.
 - **G4-07 (Source depth utilization):** For creative slides, verify narration incorporates at least one substantive claim from source_ref anchors beyond what is visible on the slide PNG. Uses perception_artifacts as visual baseline.
+- **G4-09 (Audience-directed visual grounding):** Visual cues remain traceable to perception, but narration must not drift into forbidden slide-tour language when the config forbids it.
 - If G4 critical: stop and remediate.
 - If G4 non-critical (including G4-07 high-severity): report and continue with explicit acknowledgment.
 - If G4-07 fails, check `narration-grounding-profiles.yaml` alignment before re-delegating Irene — the failure may be a config issue, not a writing issue.

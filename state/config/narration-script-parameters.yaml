@@ -40,10 +40,27 @@ slide_echo:
 # deictic_references: none | minimal | moderate | frequent
 # description_depth:  identify | summarize | detailed
 visual_narration:
-  deictic_references: moderate
-  description_depth: identify
+  deictic_references: minimal
+  description_depth: summarize
+  reference_function: audience_guidance  # cues should guide learner attention, not annotate slide furniture
+  orientation_cue_policy: brief_only    # spatial orientation is allowed only when it resolves ambiguity
   visual_silence_permitted: true   # allow 2-3 sec pauses for full-bleed images
   visual_references_per_slide: 2   # Story 13.2: explicit visual element references in narration
+  meta_slide_language: forbidden   # reject production-meta / slide-tour phrasing in audience-facing narration
+  forbidden_meta_phrases:
+    - approved slide
+    - slide title
+    - this slide shows
+    - the slide shows
+    - the slide presents
+    - centered below the title
+    - panel on the left
+    - panel on the right
+    - box on the left
+    - box on the right
+    - banner at the bottom
+    - across the slide
+    - numbered objective rows
   visual_references_tolerance: 1   # ±1 from target is acceptable
 
 # ---------------------------------------------------------------------------

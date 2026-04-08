@@ -51,6 +51,7 @@ This file is the authoritative brand, voice, and accessibility reference for APP
 - Prefer concrete verbs and specific claims over abstract filler
 - Preserve source-faithful meaning when working in literal-text or literal-visual modes
 - Narration should complement visuals, not merely restate visible text
+- Audience-facing narration should guide the learner toward what matters in the visual, not narrate slide furniture or production metadata
 - For motion-first segments, orient briefly to the slide if needed, then narrate the visible action/change in the approved clip
 
 ## Accessibility

@@ -44,6 +44,8 @@ def g4_contract() -> dict:
 # ---- Narration Grounding Profiles Tests ----
 
 class TestNarrationGroundingProfiles:
+    VALID_STANCES = {"explain-behind", "read-along", "guided-interpretation"}
+
     def test_schema_version_present(self, profiles: dict) -> None:
         assert "schema_version" in profiles
 
@@ -66,6 +68,11 @@ class TestNarrationGroundingProfiles:
     def test_min_source_claims_is_non_negative_int(self, profiles: dict, fidelity_class: str) -> None:
         val = profiles["profiles"][fidelity_class]["min_source_claims"]
         assert isinstance(val, int) and val >= 0
+
+    @pytest.mark.parametrize("fidelity_class", sorted(FIDELITY_CLASSES))
+    def test_profile_stance_is_valid(self, profiles: dict, fidelity_class: str) -> None:
+        stance = profiles["profiles"][fidelity_class]["stance"]
+        assert stance in self.VALID_STANCES
 
     def test_creative_profile_demands_source_primary(self, profiles: dict) -> None:
         creative = profiles["profiles"]["creative"]
@@ -129,6 +136,23 @@ class TestNarrationScriptParameters:
     def test_visual_narration_depth_valid(self, params: dict) -> None:
         valid = {"identify", "summarize", "detailed"}
         assert params["visual_narration"]["description_depth"] in valid
+
+    def test_visual_narration_reference_function_valid(self, params: dict) -> None:
+        valid = {"annotation", "audience_guidance"}
+        assert params["visual_narration"]["reference_function"] in valid
+
+    def test_visual_narration_orientation_policy_valid(self, params: dict) -> None:
+        valid = {"brief_only", "allowed", "none"}
+        assert params["visual_narration"]["orientation_cue_policy"] in valid
+
+    def test_visual_narration_meta_language_policy_valid(self, params: dict) -> None:
+        valid = {"allowed", "discouraged", "forbidden"}
+        assert params["visual_narration"]["meta_slide_language"] in valid
+
+    def test_visual_narration_forbidden_phrases_is_list(self, params: dict) -> None:
+        phrases = params["visual_narration"]["forbidden_meta_phrases"]
+        assert isinstance(phrases, list)
+        assert phrases, "forbidden_meta_phrases should not be empty when policy is configured"
 
     # -- terminology_treatment --
 
@@ -202,6 +226,20 @@ class TestCrossFileConsistency:
         g4_07 = next((c for c in criteria if c["id"] == "G4-07"), None)
         assert g4_07 is not None
         assert g4_07["requires_perception"] is True
+
+    def test_g4_09_references_config_files(self, g4_contract: dict) -> None:
+        criteria = g4_contract["criteria"]
+        g4_09 = next((c for c in criteria if c["id"] == "G4-09"), None)
+        assert g4_09 is not None, "G4-09 criterion not found in contract"
+        refs = g4_09.get("config_refs", [])
+        assert any("narration-grounding-profiles" in r for r in refs)
+        assert any("narration-script-parameters" in r for r in refs)
+
+    def test_g4_09_requires_perception(self, g4_contract: dict) -> None:
+        criteria = g4_contract["criteria"]
+        g4_09 = next((c for c in criteria if c["id"] == "G4-09"), None)
+        assert g4_09 is not None
+        assert g4_09["requires_perception"] is True
 
     def test_g4_07_only_applies_to_creative(self, g4_contract: dict) -> None:
         criteria = g4_contract["criteria"]

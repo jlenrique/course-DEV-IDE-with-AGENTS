@@ -492,6 +492,7 @@ Validator expectations at this stage:
 - every authorized slide must have at least one segment in `segment-manifest.yaml`
 - every manifest segment must have non-empty `narration_text`
 - every manifest segment must contain at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and present in the segment narration text
+- every manifest segment must remain audience-directed when `narration-script-parameters.yaml` forbids meta slide language; grounded cues stay required, but slide-tour phrasing does not pass
 - every non-static motion segment must remain bound to the approved `motion_plan.yaml` asset and have matching motion perception confirmation before handoff passes
 
 Motion-specific rules:

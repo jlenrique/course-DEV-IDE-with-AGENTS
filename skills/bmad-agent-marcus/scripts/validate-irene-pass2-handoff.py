@@ -1,15 +1,22 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""Validate Irene Pass 2 completeness — post-Pass-2 check.
+"""Validate Irene Pass 2 completeness - post-Pass-2 check.
 
-Story 11.3 gate (updated for inline perception):
+Story 11.3 gate (extended for stricter Pass 2 semantics):
 - Require both gary_slide_output and perception_artifacts.
 - Fail closed with explicit missing-field diagnostics.
 - Preserve Gary card ordering as the source of truth for downstream narration.
+- When bundle-root Pass 2 outputs are present, also validate:
+  - every authorized slide has at least one manifest segment
+  - every manifest segment has non-empty narration_text
+  - every manifest segment has at least one non-empty visual narration cue
+    traceable to perception and present in narration_text
+  - every non-static motion segment is tied to the approved motion asset and
+    has matching motion perception confirmation
 
 Timing: Run AFTER Irene Pass 2 completes, not before delegation.
-Perception artifacts are generated inline by Irene during Pass 2
+Perception artifacts are generated inline during Pass 2
 (the LLM reads each slide PNG and emits a perception artifact as a
 side-effect of writing narration). This validator confirms completeness.
 """
@@ -29,6 +36,8 @@ except ImportError:  # pragma: no cover - optional for yaml input
 
 
 REQUIRED_PASS2_FIELDS = ("gary_slide_output", "perception_artifacts")
+NARRATION_SCRIPT_FILENAME = "narration-script.md"
+SEGMENT_MANIFEST_FILENAME = "segment-manifest.yaml"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -55,6 +64,19 @@ def _resolve_existing_local_path(path_value: str, *, bundle_dir: Path | None) ->
     return None
 
 
+def _resolve_local_path(path_value: str, *, bundle_dir: Path | None) -> Path:
+    candidate = Path(path_value)
+    if candidate.is_absolute():
+        return candidate.resolve(strict=False)
+    if bundle_dir is not None:
+        return (bundle_dir / candidate).resolve(strict=False)
+    return (PROJECT_ROOT / candidate).resolve(strict=False)
+
+
+def _normalize_path_string(path_value: str, *, bundle_dir: Path | None) -> str:
+    return str(_resolve_local_path(path_value, bundle_dir=bundle_dir))
+
+
 def _load_payload(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     suffix = path.suffix.lower()
@@ -69,6 +91,393 @@ def _load_payload(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError("Pass 2 envelope payload must be an object at the top level")
     return data
+
+
+def _bundle_dir_from_inputs(
+    payload: dict[str, Any],
+    *,
+    envelope_path: Path | None,
+) -> Path | None:
+    if envelope_path is not None:
+        return envelope_path.parent
+    bundle_path = payload.get("bundle_path")
+    if isinstance(bundle_path, str) and bundle_path.strip():
+        return _resolve_local_path(bundle_path.strip(), bundle_dir=None)
+    return None
+
+
+def _resolve_bundle_output_path(
+    payload: dict[str, Any],
+    *,
+    bundle_dir: Path | None,
+    filename: str,
+) -> Path | None:
+    expected_outputs = payload.get("expected_outputs", [])
+    if isinstance(expected_outputs, list):
+        for entry in expected_outputs:
+            if not isinstance(entry, str):
+                continue
+            candidate = Path(entry)
+            if candidate.name.lower() == filename.lower():
+                return _resolve_local_path(entry, bundle_dir=bundle_dir)
+
+    if bundle_dir is None:
+        return None
+    return bundle_dir / filename
+
+
+def _load_json_object(path: Path) -> dict[str, Any]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path.name} must contain a JSON object at the top level")
+    return data
+
+
+def _load_yaml_object(path: Path) -> dict[str, Any]:
+    if yaml is None:
+        raise RuntimeError("PyYAML is required for segment-manifest validation")
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path.name} must contain a YAML mapping at the top level")
+    return data
+
+
+def _load_authorized_slide_ids(
+    payload: dict[str, Any],
+    *,
+    bundle_dir: Path | None,
+    gary_slide_ids: list[str],
+) -> list[str]:
+    authorized_path_value = payload.get("authorized_storyboard_path")
+    if isinstance(authorized_path_value, str) and authorized_path_value.strip():
+        authorized_path = _resolve_existing_local_path(authorized_path_value, bundle_dir=bundle_dir)
+        if authorized_path is not None:
+            data = _load_json_object(authorized_path)
+            slide_ids = data.get("slide_ids", [])
+            if isinstance(slide_ids, list):
+                normalized = [str(item).strip() for item in slide_ids if str(item).strip()]
+                if normalized:
+                    return normalized
+    return gary_slide_ids
+
+
+def _load_motion_plan_assignments(
+    payload: dict[str, Any],
+    *,
+    bundle_dir: Path | None,
+) -> dict[str, dict[str, Any]]:
+    motion_path_value = payload.get("motion_plan_path")
+    if not isinstance(motion_path_value, str) or not motion_path_value.strip():
+        return {}
+
+    motion_plan_path = _resolve_existing_local_path(motion_path_value, bundle_dir=bundle_dir)
+    if motion_plan_path is None:
+        return {}
+
+    motion_plan = _load_yaml_object(motion_plan_path)
+    slides = motion_plan.get("slides", [])
+    if not isinstance(slides, list):
+        return {}
+
+    by_slide_id: dict[str, dict[str, Any]] = {}
+    for row in slides:
+        if not isinstance(row, dict):
+            continue
+        slide_id = str(row.get("slide_id") or "").strip()
+        if slide_id:
+            by_slide_id[slide_id] = row
+    return by_slide_id
+
+
+def _build_perception_element_lookup(
+    perception_artifacts: list[dict[str, Any]],
+) -> dict[str, set[str]]:
+    lookup: dict[str, set[str]] = {}
+    for artifact in perception_artifacts:
+        if not isinstance(artifact, dict):
+            continue
+        slide_id = str(artifact.get("slide_id") or "").strip()
+        if not slide_id:
+            continue
+        elements = artifact.get("visual_elements", [])
+        descriptions: set[str] = set()
+        if isinstance(elements, list):
+            for element in elements:
+                if not isinstance(element, dict):
+                    continue
+                description = str(element.get("description") or "").strip()
+                if description:
+                    descriptions.add(description)
+        lookup[slide_id] = descriptions
+    return lookup
+
+
+def _validate_bundle_pass2_outputs(
+    payload: dict[str, Any],
+    *,
+    bundle_dir: Path | None,
+    gary_slide_ids: list[str],
+    gary_slide_path_by_id: dict[str, str],
+    perception_artifacts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    details: dict[str, Any] = {
+        "narration_script_path": None,
+        "segment_manifest_path": None,
+        "authorized_slide_count": 0,
+        "manifest_segment_count": 0,
+        "narration_script_missing": False,
+        "narration_script_empty": False,
+        "segment_manifest_missing": False,
+        "segment_manifest_invalid": False,
+        "missing_manifest_for_slide_ids": [],
+        "unknown_manifest_slide_ids": [],
+        "segments_missing_narration_text": [],
+        "segments_missing_visual_narration_cue": [],
+        "segments_with_untraceable_visual_cues": [],
+        "motion_segments_missing_perception_confirmation": [],
+        "motion_segments_with_unapproved_asset_binding": [],
+    }
+
+    if bundle_dir is None:
+        return {"errors": [], "details": details}
+
+    errors: list[str] = []
+
+    narration_path = _resolve_bundle_output_path(
+        payload,
+        bundle_dir=bundle_dir,
+        filename=NARRATION_SCRIPT_FILENAME,
+    )
+    manifest_path = _resolve_bundle_output_path(
+        payload,
+        bundle_dir=bundle_dir,
+        filename=SEGMENT_MANIFEST_FILENAME,
+    )
+
+    if narration_path is not None:
+        details["narration_script_path"] = str(narration_path)
+    if manifest_path is not None:
+        details["segment_manifest_path"] = str(manifest_path)
+
+    if narration_path is None or not narration_path.is_file():
+        details["narration_script_missing"] = True
+        errors.append(f"Missing required Pass 2 artifact: {NARRATION_SCRIPT_FILENAME}")
+    else:
+        narration_text = narration_path.read_text(encoding="utf-8").strip()
+        if not narration_text:
+            details["narration_script_empty"] = True
+            errors.append(f"{NARRATION_SCRIPT_FILENAME} exists but is empty")
+
+    if manifest_path is None or not manifest_path.is_file():
+        details["segment_manifest_missing"] = True
+        errors.append(f"Missing required Pass 2 artifact: {SEGMENT_MANIFEST_FILENAME}")
+        return {"errors": errors, "details": details}
+
+    try:
+        manifest = _load_yaml_object(manifest_path)
+    except Exception as exc:
+        details["segment_manifest_invalid"] = True
+        errors.append(f"{SEGMENT_MANIFEST_FILENAME} is invalid: {type(exc).__name__}: {exc}")
+        return {"errors": errors, "details": details}
+
+    segments = manifest.get("segments", [])
+    if not isinstance(segments, list):
+        details["segment_manifest_invalid"] = True
+        errors.append(f"{SEGMENT_MANIFEST_FILENAME} segments must be a list")
+        return {"errors": errors, "details": details}
+
+    details["manifest_segment_count"] = len(segments)
+
+    authorized_slide_ids = _load_authorized_slide_ids(
+        payload,
+        bundle_dir=bundle_dir,
+        gary_slide_ids=gary_slide_ids,
+    )
+    details["authorized_slide_count"] = len(authorized_slide_ids)
+
+    manifest_slide_ids: list[str] = []
+    manifest_slide_id_set: set[str] = set()
+    motion_segments: list[dict[str, Any]] = []
+    perception_elements_by_slide = _build_perception_element_lookup(perception_artifacts)
+    perception_slide_ids = {
+        str(item.get("slide_id") or "").strip()
+        for item in perception_artifacts
+        if isinstance(item, dict)
+    }
+    motion_plan_by_slide_id = _load_motion_plan_assignments(payload, bundle_dir=bundle_dir)
+    motion_perception_artifacts = payload.get("motion_perception_artifacts", [])
+    if motion_perception_artifacts is not None and not isinstance(motion_perception_artifacts, list):
+        motion_perception_artifacts = []
+
+    motion_confirmations: dict[str, set[str]] = {}
+    if isinstance(motion_perception_artifacts, list):
+        for artifact in motion_perception_artifacts:
+            if not isinstance(artifact, dict):
+                continue
+            slide_id = str(artifact.get("slide_id") or "").strip()
+            if not slide_id:
+                continue
+            source_motion_path = str(
+                artifact.get("source_motion_path")
+                or artifact.get("artifact_path")
+                or ""
+            ).strip()
+            if not source_motion_path:
+                continue
+            motion_confirmations.setdefault(slide_id, set()).add(
+                _normalize_path_string(source_motion_path, bundle_dir=bundle_dir)
+            )
+
+    segments_missing_narration_text: list[str] = []
+    segments_missing_visual_narration_cue: list[str] = []
+    segments_with_untraceable_visual_cues: list[str] = []
+    motion_segments_missing_perception_confirmation: list[str] = []
+    motion_segments_with_unapproved_asset_binding: list[str] = []
+    motion_segments_with_noncanonical_visual_file: list[str] = []
+
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        seg_id = str(segment.get("id") or "<missing-id>").strip() or "<missing-id>"
+        slide_id = str(segment.get("gary_slide_id") or segment.get("slide_id") or "").strip()
+        if slide_id:
+            manifest_slide_ids.append(slide_id)
+            manifest_slide_id_set.add(slide_id)
+
+        narration_text = str(segment.get("narration_text") or "").strip()
+        if not narration_text:
+            segments_missing_narration_text.append(seg_id)
+
+        refs = segment.get("visual_references", [])
+        valid_visual_cue_found = False
+        if isinstance(refs, list):
+            for ref in refs:
+                if not isinstance(ref, dict):
+                    continue
+                cue = str(ref.get("narration_cue") or "").strip()
+                source = str(ref.get("perception_source") or "").strip()
+                element = str(ref.get("element") or "").strip()
+                if not cue:
+                    continue
+                if cue not in narration_text:
+                    continue
+                if not source or source not in perception_slide_ids:
+                    continue
+                available_elements = perception_elements_by_slide.get(source, set())
+                if available_elements and element and element not in available_elements:
+                    continue
+                valid_visual_cue_found = True
+                break
+        if not isinstance(refs, list) or not refs or not valid_visual_cue_found:
+            segments_missing_visual_narration_cue.append(seg_id)
+        elif slide_id:
+            # Only classify as traceable once a cue exists and the slide identity is known.
+            trace_sources = {
+                str(ref.get("perception_source") or "").strip()
+                for ref in refs
+                if isinstance(ref, dict) and str(ref.get("narration_cue") or "").strip()
+            }
+            if not trace_sources:
+                segments_with_untraceable_visual_cues.append(seg_id)
+
+        motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
+        if motion_type != "static":
+            motion_segments.append(segment)
+            approved_assignment = motion_plan_by_slide_id.get(slide_id, {})
+            approved_asset = str(approved_assignment.get("motion_asset_path") or "").strip()
+            segment_asset = str(segment.get("motion_asset_path") or "").strip()
+            segment_status = str(segment.get("motion_status") or "").strip().lower()
+            approved_status = str(approved_assignment.get("motion_status") or "").strip().lower()
+            segment_visual_file = str(segment.get("visual_file") or "").strip()
+            approved_slide_png = str(gary_slide_path_by_id.get(slide_id) or "").strip()
+
+            canonical_visual_ok = bool(
+                approved_slide_png
+                and segment_visual_file
+                and _normalize_path_string(segment_visual_file, bundle_dir=bundle_dir)
+                == _normalize_path_string(approved_slide_png, bundle_dir=bundle_dir)
+            )
+            if not canonical_visual_ok:
+                motion_segments_with_noncanonical_visual_file.append(seg_id)
+
+            approved_ok = bool(
+                approved_asset
+                and segment_asset
+                and segment_status == "approved"
+                and approved_status == "approved"
+                and _normalize_path_string(segment_asset, bundle_dir=bundle_dir)
+                == _normalize_path_string(approved_asset, bundle_dir=bundle_dir)
+            )
+            if not approved_ok:
+                motion_segments_with_unapproved_asset_binding.append(seg_id)
+                continue
+
+            confirmed_paths = motion_confirmations.get(slide_id, set())
+            expected_path = _normalize_path_string(approved_asset, bundle_dir=bundle_dir)
+            if expected_path not in confirmed_paths:
+                motion_segments_missing_perception_confirmation.append(seg_id)
+
+    missing_manifest_for_slide_ids = [
+        slide_id for slide_id in authorized_slide_ids if slide_id not in manifest_slide_id_set
+    ]
+    unknown_manifest_slide_ids = sorted(manifest_slide_id_set - set(authorized_slide_ids))
+
+    details["missing_manifest_for_slide_ids"] = missing_manifest_for_slide_ids
+    details["unknown_manifest_slide_ids"] = unknown_manifest_slide_ids
+    details["segments_missing_narration_text"] = sorted(set(segments_missing_narration_text))
+    details["segments_missing_visual_narration_cue"] = sorted(set(segments_missing_visual_narration_cue))
+    details["segments_with_untraceable_visual_cues"] = sorted(set(segments_with_untraceable_visual_cues))
+    details["motion_segments_missing_perception_confirmation"] = sorted(
+        set(motion_segments_missing_perception_confirmation)
+    )
+    details["motion_segments_with_unapproved_asset_binding"] = sorted(
+        set(motion_segments_with_unapproved_asset_binding)
+    )
+    details["motion_segments_with_noncanonical_visual_file"] = sorted(
+        set(motion_segments_with_noncanonical_visual_file)
+    )
+
+    if missing_manifest_for_slide_ids:
+        errors.append(
+            "segment-manifest.yaml missing at least one segment for slide_id(s): "
+            + ", ".join(missing_manifest_for_slide_ids)
+        )
+    if unknown_manifest_slide_ids:
+        errors.append(
+            "segment-manifest.yaml references unknown slide_id(s): "
+            + ", ".join(unknown_manifest_slide_ids)
+        )
+    if segments_missing_narration_text:
+        errors.append(
+            "segment-manifest.yaml has segment(s) with empty narration_text: "
+            + ", ".join(sorted(set(segments_missing_narration_text)))
+        )
+    if segments_missing_visual_narration_cue:
+        errors.append(
+            "segment-manifest.yaml has segment(s) without a non-empty visual narration_cue tied to perception and present in narration_text: "
+            + ", ".join(sorted(set(segments_missing_visual_narration_cue)))
+        )
+    if motion_segments and not isinstance(payload.get("motion_perception_artifacts"), list):
+        errors.append(
+            "motion-enabled Pass 2 requires motion_perception_artifacts aligned to non-static segments"
+        )
+    if motion_segments_with_unapproved_asset_binding:
+        errors.append(
+            "motion segment(s) are not bound to the approved motion asset from motion_plan.yaml: "
+            + ", ".join(sorted(set(motion_segments_with_unapproved_asset_binding)))
+        )
+    if motion_segments_with_noncanonical_visual_file:
+        errors.append(
+            "motion segment(s) must keep visual_file bound to the approved Gary/Gamma still instead of the motion clip: "
+            + ", ".join(sorted(set(motion_segments_with_noncanonical_visual_file)))
+        )
+    if motion_segments_missing_perception_confirmation:
+        errors.append(
+            "motion segment(s) are missing motion perception confirmation for the approved asset: "
+            + ", ".join(sorted(set(motion_segments_missing_perception_confirmation)))
+        )
+
+    return {"errors": errors, "details": details}
 
 
 def validate_irene_pass2_handoff(
@@ -113,7 +522,7 @@ def validate_irene_pass2_handoff(
     remote_file_path_for: list[str] = []
     missing_local_png_for: list[str] = []
     gary_slide_path_by_id: dict[str, str] = {}
-    bundle_dir = envelope_path.parent if envelope_path is not None else None
+    bundle_dir = _bundle_dir_from_inputs(payload, envelope_path=envelope_path)
     for item in gary:
         if not isinstance(item, dict):
             continue
@@ -169,18 +578,18 @@ def validate_irene_pass2_handoff(
             + ", ".join(missing_source_ref_for)
         )
 
-    gary_slide_ids = {
-        str(item.get("slide_id"))
+    gary_slide_ids = [
+        str(item.get("slide_id")).strip()
         for item in gary
         if isinstance(item, dict) and item.get("slide_id")
-    }
+    ]
     perception_slide_ids = {
         str(item.get("slide_id"))
         for item in perception
         if isinstance(item, dict) and item.get("slide_id")
     }
 
-    missing_perception_for = sorted(gary_slide_ids - perception_slide_ids)
+    missing_perception_for = sorted(set(gary_slide_ids) - perception_slide_ids)
     if missing_perception_for:
         errors.append(
             "perception_artifacts missing slide_id(s): " + ", ".join(missing_perception_for)
@@ -214,10 +623,21 @@ def validate_irene_pass2_handoff(
             + ", ".join(sorted(set(mismatched_source_image_path_for)))
         )
 
+    bundle_checks = _validate_bundle_pass2_outputs(
+        payload,
+        bundle_dir=bundle_dir,
+        gary_slide_ids=gary_slide_ids,
+        gary_slide_path_by_id=gary_slide_path_by_id,
+        perception_artifacts=[item for item in perception if isinstance(item, dict)],
+    )
+    errors.extend(bundle_checks["errors"])
+
     remediation_hint = (
         "Perception artifacts are emitted inline during Pass 2. "
         "If missing, re-run Irene on the affected slides to regenerate perception side-effects. "
-        "Narration grounding must use local post-integration downloaded PNGs from gary_slide_output"
+        "Narration grounding must use local post-integration downloaded PNGs from gary_slide_output. "
+        "Pass 2 must also produce a complete segment-manifest.yaml with non-empty narration_text "
+        "and traceable visual narration cues for every authorized slide."
     )
     if expected_artifact_hint:
         remediation_hint += f" (expected location hint: {expected_artifact_hint})"
@@ -245,6 +665,7 @@ def validate_irene_pass2_handoff(
             "remote_file_path_for": remote_file_path_for,
             "missing_local_png_for": missing_local_png_for,
         },
+        "pass2_outputs": bundle_checks["details"],
         "remediation_hint": remediation_hint,
     }
 

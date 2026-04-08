@@ -35,6 +35,7 @@ import zipfile
 logger = logging.getLogger("generate_storyboard")
 
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
+_VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".m4v"}
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_EXPORTS_DIR = PROJECT_ROOT / "exports"
 DEFAULT_PUBLISH_SUBDIR = "assets/storyboards"
@@ -103,7 +104,7 @@ def _local_ref_to_source_path(
     raw_ref = str(raw_ref or "").strip()
     if not raw_ref or _is_remote_ref(raw_ref):
         return None
-    if field_name in {"html_asset_ref", "preview_href"}:
+    if field_name in {"html_asset_ref", "preview_href", "motion_preview_href", "motion_poster_href"}:
         candidate = (storyboard_dir / raw_ref).resolve()
     else:
         ref_path = Path(raw_ref)
@@ -135,7 +136,14 @@ def _rewrite_manifest_for_share(
 
     def _rewrite_node(node: Any) -> None:
         if isinstance(node, dict):
-            for field_name in ("file_path", "html_asset_ref", "preview_href", "link"):
+            for field_name in (
+                "file_path",
+                "html_asset_ref",
+                "preview_href",
+                "motion_preview_href",
+                "motion_poster_href",
+                "link",
+            ):
                 if field_name not in node:
                     continue
                 raw_value = node.get(field_name)
@@ -329,10 +337,25 @@ def _resolve_asset_ref(
     return raw_ref, "missing"
 
 
-def load_narration_by_slide_id(path: Path) -> dict[str, str]:
-    """Load segment manifest YAML; map gary_slide_id/slide_id → narration_text.
+def _coalesce_attachment_value(values: list[Any]) -> Any:
+    """Collapse repeated attachment field values into a single reviewer-facing value."""
+    cleaned = [value for value in values if value not in (None, "", [])]
+    if not cleaned:
+        return None
+    unique: list[Any] = []
+    for value in cleaned:
+        if value not in unique:
+            unique.append(value)
+    if len(unique) == 1:
+        return unique[0]
+    return " | ".join(str(value) for value in unique)
 
-    Multiple segments per slide_id are joined with a horizontal rule separator.
+
+def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
+    """Load segment manifest YAML; map gary_slide_id/slide_id to review attachments.
+
+    Multiple segments per slide_id are preserved as an explicit review state
+    rather than being collapsed silently.
     """
     if yaml is None:
         raise RuntimeError("PyYAML is required for --segment-manifest (YAML) files")
@@ -345,7 +368,7 @@ def load_narration_by_slide_id(path: Path) -> dict[str, str]:
     if not isinstance(segments, list):
         raise ValueError("segments must be a list")
 
-    chunks: dict[str, list[str]] = {}
+    chunks: dict[str, list[dict[str, Any]]] = {}
     for seg in segments:
         if not isinstance(seg, dict):
             continue
@@ -356,9 +379,65 @@ def load_narration_by_slide_id(path: Path) -> dict[str, str]:
         nt = seg.get("narration_text")
         if nt is None or not str(nt).strip():
             continue
-        chunks.setdefault(sid, []).append(str(nt).strip())
+        chunks.setdefault(sid, []).append(
+            {
+                "segment_id": str(seg.get("id") or "").strip() or None,
+                "narration_ref": str(seg.get("narration_ref") or "").strip() or None,
+                "narration_text": str(nt).strip(),
+                "motion_type": str(seg.get("motion_type") or "").strip() or None,
+                "motion_asset_path": str(seg.get("motion_asset_path") or "").strip() or None,
+                "motion_status": str(seg.get("motion_status") or "").strip() or None,
+                "motion_source": str(seg.get("motion_source") or "").strip() or None,
+                "motion_duration_seconds": seg.get("motion_duration_seconds"),
+                "visual_mode": str(seg.get("visual_mode") or "").strip() or None,
+                "visual_file": str(seg.get("visual_file") or "").strip() or None,
+                "visual_references": seg.get("visual_references")
+                if isinstance(seg.get("visual_references"), list)
+                else [],
+            }
+        )
 
-    return {k: "\n\n---\n\n".join(v) for k, v in chunks.items()}
+    out: dict[str, dict[str, Any]] = {}
+    for sid, entries in chunks.items():
+        joined_narration = "\n\n---\n\n".join(
+            str(entry.get("narration_text") or "").strip()
+            for entry in entries
+            if str(entry.get("narration_text") or "").strip()
+        )
+        visual_references: list[dict[str, Any]] = []
+        for entry in entries:
+            refs = entry.get("visual_references")
+            if isinstance(refs, list):
+                visual_references.extend(ref for ref in refs if isinstance(ref, dict))
+
+        out[sid] = {
+            "match_count": len(entries),
+            "narration_text": joined_narration,
+            "segment_ids": [
+                str(entry.get("segment_id")).strip()
+                for entry in entries
+                if str(entry.get("segment_id") or "").strip()
+            ],
+            "narration_refs": [
+                str(entry.get("narration_ref")).strip()
+                for entry in entries
+                if str(entry.get("narration_ref") or "").strip()
+            ],
+            "motion_type": _coalesce_attachment_value([entry.get("motion_type") for entry in entries]),
+            "motion_asset_path": _coalesce_attachment_value(
+                [entry.get("motion_asset_path") for entry in entries]
+            ),
+            "motion_status": _coalesce_attachment_value([entry.get("motion_status") for entry in entries]),
+            "motion_source": _coalesce_attachment_value([entry.get("motion_source") for entry in entries]),
+            "motion_duration_seconds": _coalesce_attachment_value(
+                [entry.get("motion_duration_seconds") for entry in entries]
+            ),
+            "visual_mode": _coalesce_attachment_value([entry.get("visual_mode") for entry in entries]),
+            "visual_file": _coalesce_attachment_value([entry.get("visual_file") for entry in entries]),
+            "visual_references": visual_references,
+        }
+
+    return out
 
 
 def _inspect_local_image_metadata(path: Path) -> dict[str, Any]:
@@ -431,6 +510,51 @@ def _resolve_preview_metadata(
         "orientation": orientation,
         "dimensions": dimensions,
         "aspect_ratio": aspect_ratio,
+    }
+
+
+def _resolve_motion_preview_metadata(
+    *,
+    motion_ref_raw: str,
+    poster_ref: str,
+    storyboard_dir: Path,
+    asset_base: Path,
+) -> dict[str, Any]:
+    """Resolve motion preview metadata for Storyboard B review."""
+    motion_preview_href = ""
+    motion_preview_status = "missing"
+    motion_preview_kind = "missing"
+    motion_poster_href = poster_ref
+
+    raw = str(motion_ref_raw or "").strip()
+    if not raw:
+        return {
+            "motion_preview_href": motion_preview_href,
+            "motion_preview_status": motion_preview_status,
+            "motion_preview_kind": motion_preview_kind,
+            "motion_poster_href": motion_poster_href,
+        }
+
+    motion_preview_href, motion_preview_status = _resolve_asset_ref(
+        raw,
+        storyboard_dir=storyboard_dir,
+        asset_base=asset_base,
+    )
+    suffix = Path(raw).suffix.lower()
+    if motion_preview_status == "missing":
+        motion_preview_kind = "missing"
+    elif suffix in _VIDEO_SUFFIXES:
+        motion_preview_kind = "video"
+    elif suffix in _IMAGE_SUFFIXES:
+        motion_preview_kind = "image"
+    else:
+        motion_preview_kind = "link" if motion_preview_status == "remote" else "other"
+
+    return {
+        "motion_preview_href": motion_preview_href,
+        "motion_preview_status": motion_preview_status,
+        "motion_preview_kind": motion_preview_kind,
+        "motion_poster_href": motion_poster_href,
     }
 
 
@@ -510,7 +634,7 @@ def build_manifest(
     payload_path: Path,
     storyboard_dir: Path,
     asset_base: Path,
-    narration_by_slide_id: dict[str, str] | None = None,
+    narration_by_slide_id: dict[str, dict[str, Any]] | None = None,
     segment_manifest_path: Path | None = None,
     related_assets: list[dict[str, Any]] | None = None,
     run_id: str | None = None,
@@ -553,11 +677,50 @@ def build_manifest(
 
         narration_text = ""
         narration_status = "pending"
+        segment_match_count = 0
+        matched_segment_ids: list[str] = []
+        matched_narration_refs: list[str] = []
+        matched_visual_references: list[dict[str, Any]] = []
+        motion_type = None
+        motion_asset_path = None
+        motion_status = None
+        motion_source = None
+        motion_duration_seconds = None
+        visual_mode = None
+        visual_file = None
         if narration_by_slide_id:
             matched = narration_by_slide_id.get(slide_id)
-            if matched is not None and str(matched).strip():
-                narration_text = str(matched).strip()
-                narration_status = "present"
+            if isinstance(matched, dict):
+                narration_text = str(matched.get("narration_text") or "").strip()
+                segment_match_count = int(matched.get("match_count") or 0)
+                matched_segment_ids = [
+                    str(item).strip()
+                    for item in matched.get("segment_ids", [])
+                    if str(item).strip()
+                ]
+                matched_narration_refs = [
+                    str(item).strip()
+                    for item in matched.get("narration_refs", [])
+                    if str(item).strip()
+                ]
+                matched_visual_references = [
+                    item
+                    for item in matched.get("visual_references", [])
+                    if isinstance(item, dict)
+                ]
+                motion_type = matched.get("motion_type")
+                motion_asset_path = matched.get("motion_asset_path")
+                motion_status = matched.get("motion_status")
+                motion_source = matched.get("motion_source")
+                motion_duration_seconds = matched.get("motion_duration_seconds")
+                visual_mode = matched.get("visual_mode")
+                visual_file = matched.get("visual_file")
+                if segment_match_count > 1:
+                    narration_status = "multi_match"
+                elif narration_text:
+                    narration_status = "present"
+                else:
+                    narration_status = "no_match" if segment_manifest_path is not None else "pending"
             else:
                 narration_status = "no_match" if segment_manifest_path is not None else "pending"
 
@@ -565,6 +728,12 @@ def build_manifest(
             file_path_raw=file_path_raw,
             html_asset_ref=html_asset_ref,
             asset_status=asset_status,
+            asset_base=asset_base.resolve(),
+        )
+        motion_preview_meta = _resolve_motion_preview_metadata(
+            motion_ref_raw=str(motion_asset_path or visual_file or ""),
+            poster_ref=str(preview_meta["preview_href"] or ""),
+            storyboard_dir=storyboard_dir,
             asset_base=asset_base.resolve(),
         )
         script_notes_parts: list[str] = []
@@ -577,6 +746,8 @@ def build_manifest(
         issue_flags: list[str] = []
         if asset_status == "missing":
             issue_flags.append("missing_asset")
+        if narration_status == "multi_match":
+            issue_flags.append("multi_match")
         if narration_status == "no_match":
             issue_flags.append("no_match")
         if findings:
@@ -601,6 +772,10 @@ def build_manifest(
                 "html_asset_ref": html_asset_ref,
                 "preview_kind": preview_meta["preview_kind"],
                 "preview_href": preview_meta["preview_href"],
+                "motion_preview_kind": motion_preview_meta["motion_preview_kind"],
+                "motion_preview_href": motion_preview_meta["motion_preview_href"],
+                "motion_preview_status": motion_preview_meta["motion_preview_status"],
+                "motion_poster_href": motion_preview_meta["motion_poster_href"],
                 "orientation": preview_meta["orientation"],
                 "dimensions": preview_meta["dimensions"],
                 "aspect_ratio": preview_meta["aspect_ratio"],
@@ -611,6 +786,18 @@ def build_manifest(
                 "literal_visual_source": literal_visual_source,
                 "narration_text": narration_text,
                 "narration_status": narration_status,
+                "segment_match_count": segment_match_count,
+                "matched_segment_ids": matched_segment_ids,
+                "matched_narration_refs": matched_narration_refs,
+                "matched_visual_references": matched_visual_references,
+                "matched_visual_reference_count": len(matched_visual_references),
+                "motion_type": motion_type,
+                "motion_asset_path": motion_asset_path,
+                "motion_status": motion_status,
+                "motion_source": motion_source,
+                "motion_duration_seconds": motion_duration_seconds,
+                "visual_mode": visual_mode,
+                "visual_file": visual_file,
                 "script_notes": script_notes,
                 "issue_flags": issue_flags,
             }
@@ -634,7 +821,9 @@ def build_manifest(
                 pair["selected_variant"] = dispatch_variant
 
     with_script_n = sum(
-        1 for s in slides_out if isinstance(s, dict) and s.get("narration_status") == "present"
+        1
+        for s in slides_out
+        if isinstance(s, dict) and s.get("narration_status") in {"present", "multi_match"}
     )
     view = "slides_with_script" if with_script_n else "slides_only"
     checkpoint_label = "Storyboard B" if view == "slides_with_script" else "Storyboard A"
@@ -653,7 +842,10 @@ def build_manifest(
     missing_assets = sum(1 for s in slides_out if s.get("asset_status") == "missing")
     remote_assets = sum(1 for s in slides_out if s.get("asset_status") == "remote")
     pending_narration = sum(
-        1 for s in slides_out if s.get("narration_status") in {"pending", "no_match"}
+        1 for s in slides_out if s.get("narration_status") in {"pending", "no_match", "multi_match"}
+    )
+    multi_match_narration = sum(
+        1 for s in slides_out if s.get("narration_status") == "multi_match"
     )
     with_findings = sum(1 for s in slides_out if s.get("findings"))
     fidelity_counts = dict(Counter(str(s.get("fidelity", "unknown")) for s in slides_out))
@@ -677,6 +869,7 @@ def build_manifest(
             "remote_assets": remote_assets,
             "slides_with_narration": with_script_n,
             "pending_narration": pending_narration,
+            "multi_match_narration": multi_match_narration,
             "related_asset_count": len(normalized_related_assets),
             "double_dispatch_enabled": bool(pair_map),
             "slides_with_findings": with_findings,
@@ -746,7 +939,12 @@ def format_summary(manifest: dict[str, Any]) -> str:
     narrated = sum(
         1
         for s in slides
-        if isinstance(s, dict) and s.get("narration_status") == "present"
+        if isinstance(s, dict) and s.get("narration_status") in {"present", "multi_match"}
+    )
+    multi_match_n = sum(
+        1
+        for s in slides
+        if isinstance(s, dict) and s.get("narration_status") == "multi_match"
     )
     if view == "slides_with_script" or narrated:
         lines.append(
@@ -754,6 +952,10 @@ def format_summary(manifest: dict[str, Any]) -> str:
         )
     elif manifest.get("segment_manifest_source"):
         lines.append("Narration: segment manifest provided but no slide matched narration_text.")
+    if multi_match_n:
+        lines.append(
+            f"Narration review: {multi_match_n} slide(s) have multiple segment matches and need operator resolution."
+        )
     related = manifest.get("related_assets")
     if isinstance(related, list) and related:
         lines.append(f"Related assets: {len(related)} row(s) appended after slides.")
@@ -765,6 +967,7 @@ def format_summary(manifest: dict[str, Any]) -> str:
             "Review status: "
             f"missing_assets={review_meta.get('missing_assets', 0)}, "
             f"pending_narration={review_meta.get('pending_narration', 0)}, "
+            f"multi_match_narration={review_meta.get('multi_match_narration', 0)}, "
             f"slides_with_findings={review_meta.get('slides_with_findings', 0)}"
         )
     return "\n".join(lines)
@@ -1009,6 +1212,34 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             )
         return '<div class="preview-missing">Preview unavailable</div>'
 
+    def _motion_preview_markup(item: dict[str, Any]) -> str:
+        href = str(item.get("motion_preview_href") or "")
+        kind = str(item.get("motion_preview_kind") or "missing")
+        poster = str(item.get("motion_poster_href") or item.get("preview_href") or "")
+        if kind == "video" and href:
+            escaped_href = html.escape(href, quote=True)
+            poster_attr = (
+                f' poster="{html.escape(poster, quote=True)}"'
+                if poster and not _is_remote_ref(poster)
+                else ""
+            )
+            return (
+                '<div class="motion-preview-wrap">'
+                f'<video class="motion-preview" controls preload="metadata"{poster_attr}>'
+                f'<source src="{escaped_href}">'
+                "Your browser cannot play this motion preview."
+                "</video>"
+                f'<a class="motion-link" href="{escaped_href}" target="_blank" rel="noopener noreferrer">Open motion asset</a>'
+                "</div>"
+            )
+        if kind in {"image", "link", "other"} and href:
+            escaped_href = html.escape(href, quote=True)
+            return (
+                f'<a class="preview-link preview-link-text" href="{escaped_href}" '
+                'target="_blank" rel="noopener noreferrer">Open motion asset</a>'
+            )
+        return '<div class="script-state">No motion preview available.</div>'
+
     pair_section_rows: list[str] = []
     for pair in dd.get("variant_pairs", []) if isinstance(dd, dict) else []:
         if not isinstance(pair, dict):
@@ -1074,12 +1305,20 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         narration_status = str(slide.get("narration_status") or "pending")
         narration_label = {
             "present": "Attached",
+            "multi_match": "Multi-match",
             "no_match": "No match",
             "pending": "Pending (pre-Pass 2)",
         }.get(narration_status, narration_status)
         narration_text = str(slide.get("narration_text") or "").strip()
+        segment_match_count = int(slide.get("segment_match_count") or 0)
+        segment_summary_markup = ""
+        if narration_status == "multi_match" and segment_match_count > 1:
+            segment_summary_markup = (
+                f'<div class="script-warning">Multiple segment-manifest matches attached '
+                f'({segment_match_count}). Resolve before approval.</div>'
+            )
         script_markup = (
-            f'<pre class="script-text">{html.escape(narration_text)}</pre>'
+            f'{segment_summary_markup}<pre class="script-text">{html.escape(narration_text)}</pre>'
             if narration_text
             else f'<div class="script-state">{html.escape(narration_label)}</div>'
         )
@@ -1102,6 +1341,29 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         file_path = html.escape(str(slide.get("file_path") or ""))
         asset_status = html.escape(str(slide.get("asset_status") or "unknown"))
         literal_visual_source = html.escape(str(slide.get("literal_visual_source") or "n/a"))
+        motion_type = html.escape(str(slide.get("motion_type") or "static"))
+        motion_status = html.escape(str(slide.get("motion_status") or "n/a"))
+        motion_source = html.escape(str(slide.get("motion_source") or "n/a"))
+        motion_asset_path = html.escape(str(slide.get("motion_asset_path") or "n/a"))
+        motion_duration_raw = slide.get("motion_duration_seconds")
+        motion_duration = html.escape(
+            str(motion_duration_raw if motion_duration_raw not in (None, "") else "n/a")
+        )
+        visual_mode = html.escape(str(slide.get("visual_mode") or "n/a"))
+        visual_file = html.escape(str(slide.get("visual_file") or "n/a"))
+        matched_segment_ids = [
+            str(item).strip()
+            for item in slide.get("matched_segment_ids", [])
+            if str(item).strip()
+        ]
+        matched_narration_refs = [
+            str(item).strip()
+            for item in slide.get("matched_narration_refs", [])
+            if str(item).strip()
+        ]
+        matched_segment_ids_markup = html.escape(", ".join(matched_segment_ids) or "n/a")
+        matched_narration_refs_markup = html.escape(", ".join(matched_narration_refs) or "n/a")
+        visual_reference_count = html.escape(str(slide.get("matched_visual_reference_count") or 0))
         dimensions = slide.get("dimensions") if isinstance(slide.get("dimensions"), dict) else {}
         dimensions_text = ""
         if dimensions:
@@ -1110,8 +1372,21 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         selected_markup = '<span class="badge badge-selected">selected</span>' if bool(slide.get("selected")) else ""
         issue_badges = "".join(f'<span class="badge badge-issue">{html.escape(str(flag))}</span>' for flag in issue_flags)
         variant_badge = f'<span class="badge">variant {variant}</span>' if variant else ""
+        motion_badge = f'<span class="badge badge-motion">motion {motion_type}</span>' if motion_type != "static" else ""
         quality_text = html.escape(f"Vera {slide.get('vera_score', 'n/a')} | Quinn {slide.get('quinn_score', 'n/a')}")
         issue_attr = html.escape(" ".join(str(flag) for flag in issue_flags), quote=True)
+        motion_summary = f"Motion: {motion_type} | {motion_status}"
+        if motion_duration != "n/a":
+            motion_summary += f" | {motion_duration}s"
+        motion_panel_markup = ""
+        if motion_type != "static":
+            motion_panel_markup = (
+                '<section class="motion-preview-panel">'
+                '<div class="panel-label">Motion preview</div>'
+                f'{_motion_preview_markup(slide)}'
+                f'<div class="preview-caption">Motion asset status: <strong>{html.escape(str(slide.get("motion_preview_status") or "missing"))}</strong></div>'
+                '</section>'
+            )
 
         slide_cards.append(
             f'<article class="slide-card" id="{row_id}" data-role="slide-card" data-slide-id="{slide_id}" '
@@ -1126,16 +1401,19 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             '<div class="badge-row">'
             f'<span class="badge badge-fidelity">{fidelity}</span>'
             f'{variant_badge}'
+            f'{motion_badge}'
             f'<span class="badge">card {card_number or "n/a"}</span>'
             f'<span class="badge">orientation {orientation}</span>'
             f'{selected_markup}{issue_badges}'
             '</div></header>'
             '<div class="slide-card-body">'
             '<section class="slide-preview-panel">'
-            '<div class="panel-label">Slide preview</div>'
+            '<div class="panel-label">Approved slide</div>'
             f'{_preview_markup(slide)}'
             f'<div class="preview-caption">Asset status: <strong>{asset_status}</strong> | Dimensions: <strong>{dimensions_markup}</strong></div>'
+            f'<div class="preview-caption">Motion review: <strong>{html.escape(motion_summary)}</strong></div>'
             '</section>'
+            f'{motion_panel_markup}'
             '<section class="slide-script-panel">'
             '<div class="panel-grid">'
             '<div class="panel">'
@@ -1154,6 +1432,16 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<div><dt>File path</dt><dd>{file_path or "n/a"}</dd></div>'
             f'<div><dt>Created</dt><dd>{html.escape(str(manifest.get("generated_at") or ""))}</dd></div>'
             f'<div><dt>Literal-visual source</dt><dd>{literal_visual_source}</dd></div>'
+            f'<div><dt>Matched segments</dt><dd>{matched_segment_ids_markup}</dd></div>'
+            f'<div><dt>Narration refs</dt><dd>{matched_narration_refs_markup}</dd></div>'
+            f'<div><dt>Visual refs</dt><dd>{visual_reference_count}</dd></div>'
+            f'<div><dt>Visual mode</dt><dd>{visual_mode}</dd></div>'
+            f'<div><dt>Visual file</dt><dd>{visual_file}</dd></div>'
+            f'<div><dt>Motion type</dt><dd>{motion_type}</dd></div>'
+            f'<div><dt>Motion status</dt><dd>{motion_status}</dd></div>'
+            f'<div><dt>Motion source</dt><dd>{motion_source}</dd></div>'
+            f'<div><dt>Motion duration</dt><dd>{motion_duration}</dd></div>'
+            f'<div><dt>Motion asset</dt><dd>{motion_asset_path}</dd></div>'
             f'<div><dt>Quality</dt><dd>{quality_text}</dd></div>'
             '</dl>'
             '<div class="findings-block">'
@@ -1261,6 +1549,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .slide-card-subtitle {{ color: var(--muted); margin-top: 4px; font-size: 0.92rem; }}
     .badge {{ background: #eef2f7; color: #27313f; }}
     .badge-fidelity {{ background: var(--accent-soft); color: var(--accent); }}
+    .badge-motion {{ background: rgba(14, 116, 144, 0.14); color: #155e75; }}
     .badge-selected {{ background: var(--success-soft); color: #14532d; }}
     .badge-issue {{ background: var(--warning-soft); color: var(--warning); }}
     .slide-card-body {{ display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr); gap: 18px; padding: 18px 20px 20px; }}
@@ -1271,11 +1560,16 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .slide-thumbnail, .variant-thumbnail {{ width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #fff; box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08); }}
     .slide-thumbnail {{ max-height: 280px; object-fit: contain; background: #f8fafc; }}
     .variant-thumbnail {{ max-width: 260px; max-height: 150px; object-fit: contain; }}
+    .motion-preview-panel {{ margin-top: 14px; }}
+    .motion-preview-wrap {{ display: grid; gap: 8px; }}
+    .motion-preview {{ width: 100%; max-height: 280px; border-radius: 14px; border: 1px solid var(--line); background: #020617; box-shadow: 0 6px 18px rgba(17, 24, 39, 0.12); }}
+    .motion-link {{ font-size: 0.9rem; color: var(--accent); text-decoration: none; font-weight: 600; }}
     .preview-link {{ display: block; text-decoration: none; position: relative; }}
     .preview-link-text {{ display: inline-flex; align-items: center; justify-content: center; min-height: 120px; width: 100%; border: 1px dashed var(--line); border-radius: 14px; background: #fafafa; color: var(--accent); font-weight: 600; }}
     .expand-cue {{ position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.78); color: #fff; border-radius: 999px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22); }}
     .preview-caption, .script-status, .related-stage, .related-source {{ color: var(--muted); font-size: 0.9rem; margin-top: 8px; }}
     .script-text, .script-notes {{ white-space: pre-wrap; margin: 0; font: inherit; line-height: 1.55; }}
+    .script-warning {{ margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: 0.92rem; font-weight: 600; }}
     .script-state, .empty-state {{ color: var(--muted); font-style: italic; }}
     .evidence-panel {{ border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }}
     .evidence-panel summary {{ cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }}

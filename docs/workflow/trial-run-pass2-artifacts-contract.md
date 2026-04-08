@@ -361,4 +361,12 @@ Before Gary dispatch:
   - gary-outbound-envelope.yaml
 - all files must satisfy the field rules in this contract.
 
+After Irene Pass 2:
+- `validate-irene-pass2-handoff.py` must fail closed unless:
+  - every authorized slide in `authorized-storyboard.json` has at least one corresponding segment row in `segment-manifest.yaml`
+  - every segment row has non-empty `narration_text`
+  - every segment row has at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and appears in that segment's narration text
+  - every non-static motion segment remains bound to the approved `motion_plan.yaml` asset and has matching motion perception confirmation for that asset
+  - `narration-script.md` and `segment-manifest.yaml` both exist at bundle root before downstream audio/script work begins
+
 Contract version: 1.0

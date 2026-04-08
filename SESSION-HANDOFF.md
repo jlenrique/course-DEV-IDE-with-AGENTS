@@ -1,137 +1,136 @@
-# Session Handoff - 2026-04-06
+# Session Handoff - 2026-04-08
 
 ## Session Mode
 
-- Execution mode: implementation, documentation, and closeout
+- Execution mode: tracked production trial remediation, workflow hardening, and closeout
 - Quality preset: production
 - Branch at closeout target: `master`
-- BMad workflow: session wrap-up / pre-trial hardening
+- BMad workflow: active tracked motion run paused cleanly before downstream audio
 
 ## Session Summary
 
-This session closed the remaining pre-trial documentation gaps, fixed the two review findings in the structural-walk rollout, revalidated both canonical structural walks, and added a first-pass Marcus prompt harness for the standard v4.1 pack. The session ended with closeout docs updated for the post-push repo state and `master` ready to be synchronized with `origin/master`.
+This session resumed the real tracked motion run, repaired the Irene Pass 2 and Storyboard B handoff path, hardened the motion-over-slide contract, published the updated Storyboard B review surface, reconciled APP runtime tracking to the canonical `C1-M1-PRES-20260406` run, and closed the shift with the run explicitly blocked for HIL review before audio.
 
 ## Completed Outcomes
 
-### Structural walk implementation and review follow-up
+### Sensory bridge and motion perception hardening
 
-- Fixed the legacy compatibility wrapper so `scripts.utilities.fidelity_walk` re-exports the legacy helper API instead of only `main`.
-- Fixed the dry-run aggregate-step logic so unrelated contract failures no longer block the aggregate planner/document sanity step.
-- Added regression coverage in `tests/test_structural_walk.py`.
-- Verified targeted structural-walk tests earlier in the session: `33 passed`.
+- Fixed `skills/sensory-bridges/scripts/video_to_agent.py` so ffmpeg resolves from the `.venv` imageio bundle when it is not on `PATH`.
+- Added fallback frame sampling for continuous-shot motion clips where scene detection alone is too weak.
+- Verified the approved slide-1 slow-tail clip with high-confidence motion perception and preserved that asset as the fixed motion source of truth.
+- Added/updated regression coverage in:
+  - `skills/sensory-bridges/scripts/tests/test_video_to_agent.py`
+  - `skills/sensory-bridges/scripts/tests/test_bridge_utils.py`
 
-### Documentation and workflow hardening
+### Pass 2 and manifest contract hardening
 
-- Accepted the remaining Epic 14 MVP wording decisions in implementation artifacts.
-- Hardened production control docs around:
-  - tracked-bundle readiness requirements
-  - literal-visual operator handling
-  - double-dispatch winner fallback wording
-  - motion prompt-pack poll timing parity
-- Added:
-  - `docs/operations-context.md`
-  - `docs/workflow/first-tracked-run-quickstart.md`
-- Updated wrap-up protocols so structural-walk manifest maintenance is explicitly part of shutdown only when control structure changes.
-- Rewrote `next-session-start-here.md` so it reflects the real post-Epic-14 state instead of the older Epic 12 handoff.
+- Tightened `validate-irene-pass2-handoff.py` so Pass 2 now fails unless every authorized slide has manifest coverage, non-empty narration text, traceable visual cues, and motion confirmation for non-static segments.
+- Updated the motion workflow prompt pack and related docs to make Prompt 8 fail closed for reruns and motion-first narration.
+- Re-ran the active motion bundle to fresh canonical Pass 2 outputs at:
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/narration-script.md`
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/segment-manifest.yaml`
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/perception-artifacts.json`
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/pass2-envelope.json`
 
-### Structural validation runs
+### Storyboard B design/build/testing
 
-- Ran `python -m scripts.utilities.structural_walk --workflow standard`
-  - result: `READY`
-- Ran `python -m scripts.utilities.structural_walk --workflow standard --dry-run`
-  - result: `READY`
-- Ran `python -m scripts.utilities.structural_walk --workflow motion`
-  - result: `READY`
-- Saved the generated reports under `reports/structural-walk/`.
+- Hardened Storyboard B generation so motion segments expose both the approved still and the approved playback clip.
+- Added explicit motion preview/player support, motion metadata, and match-state details in `generate-storyboard.py`.
+- Established the downstream contract that `visual_file` remains the approved still while `motion_asset_path` carries the approved MP4.
+- Re-rendered the canonical Storyboard B files on disk:
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/storyboard.json`
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/index.html`
+- Published the latest review snapshot to:
+  - `https://jlenrique.github.io/assets/storyboards/storyboard-b-rerender-20260408-0433/C1-M1-PRES-20260406/index.html`
 
-### Marcus prompt harness + Quinn watcher
+### Runtime reconciliation and shift close
 
-- Added `scripts/utilities/marcus_prompt_harness.py`.
-- Added focused tests in `tests/test_marcus_prompt_harness.py`.
-- Harness behavior:
-  - infers run constants from a real tracked bundle when available
-  - generates a simulated operator-to-Marcus transcript for the standard v4.1 prompt pack
-  - generates a Quinn-style watcher report on prompt-step evidence
-- Verified with `pytest tests/test_marcus_prompt_harness.py -q`
-  - result: `4 passed`
-- Ran the harness against `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260403`.
-- Output landed in `reports/prompt-harness/standard-v4.1/`.
+- Registered `C1-M1-PRES-20260406` in `state/runtime/coordination.db` as the canonical tracked run.
+- Marked that run `blocked` with current stage `storyboard-b-hil-review`.
+- Added quality-gate and coordination records for the blocked close.
+- Wrote an inactive baton close marker for `C1-M1-PRES-20260406` under `state/runtime/run_baton.C1-M1-PRES-20260406.json`.
+- Cleared the stale run-scoped perception cache that still held pre-rerun low-confidence slide entries.
+- Cancelled the superseded stale tracked row `C1-M1-PRES-20260404` so the ledger now has one canonical blocked trial rather than two competing tracked runs.
+- Created run-scoped context files under `state/config/runs/C1-M1-PRES-20260406/`.
 
 ## Key Decisions
 
-1. Shutdown and wrap-up docs should include structural-walk maintenance guidance, but only conditionally when workflow control structure actually changes.
-2. `next-session-start-here.md` must describe the expected post-closeout repo state, not the transient pre-push state.
-3. The first Marcus prompt harness should be evidence-driven and transcript-driven, not pretend to be a runtime executor.
-4. Real bundle values should be inferred first for the harness; plausible placeholders are acceptable only when the repo has no canonical evidence.
-5. Generated structural-walk and prompt-harness reports should be kept as session artifacts.
-6. The first official tracked trial run must be a **fresh-start run** beginning from source extraction / ingestion, not a resume of an already-partially-prepared tracked bundle.
-7. The first official trial should use the **standard narrated slides + video workflow** (`production-prompt-pack-v4.1-narrated-deck-video-export.md`), not the motion workflow.
+1. The canonical tracked run for this trial is `C1-M1-PRES-20260406`, not `C1-M1-PRES-20260404`.
+2. Storyboard B is the correct stop point for tonight; downstream audio must not begin until HIL explicitly approves or requests changes.
+3. For motion segments, the slide still image remains the canonical slide reference while the MP4 remains the approved playback asset; they must stay separate in contracts and downstream handling.
+4. Motion-first narration is the correct design rule when a video clip replaces the static visual during playback: use the slide briefly for orientation if needed, then narrate the visible action in the approved clip.
+5. A stale runtime perception cache is worse than no cache at all for this run; closeout should clear incorrect cache state rather than let it silently leak into the next session.
 
 ## What Was Not Done
 
-- No tracked trial run was executed.
-- No fresh-start official tracked bundle was created yet for the first trial run.
-- The prompt harness does not yet prove live Marcus runtime behavior; it proves prompt-pack conformance and artifact-audit behavior.
-- No execution harness was built yet for actually driving prompt-pack commands end-to-end.
-- No BMAD epic has been opened yet for autonomy or for learning, even though both are now recognized as likely transformational future tracks once the specialist agents themselves are more deeply cultivated.
+- No HIL disposition was captured yet for Storyboard B.
+- No ElevenLabs generation was started for `C1-M1-PRES-20260406`.
+- No downstream composition or final export work was started.
+- No Canvas or platform deployment work was started for this run.
 
-## Future Epic Notes
+## Open Risks And Blockers
 
-- The newly documented near-future strategic tracks are:
-  - `learning`: use `_bmad-output/implementation-artifacts/app-three-layer-optimization-plans-2026-04-06.md`, especially Plan 3, as the seed for a BMAD epic focused on learning-event capture, retrospectives, cross-agent feedback routing, and synergy scorecards.
-  - `autonomy`: use the same three-layer plan plus `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md` to define a complementary epic focused on where Marcus and specialists should be allowed to act more independently without bypassing gates, governance, or specialist intelligence.
-- Strong recommendation for sequencing:
-  1. run the first tracked trial(s)
-  2. harvest real correction and approval data
-  3. open the `learning` epic
-  4. open the `autonomy` epic after the learning design clarifies what the system should become more independent about
-- Architectural caution for both epics: do not flatten specialist judgment into brittle automation. The target is stronger bounded intelligence, not shortcut orchestration.
+- **Blocked item:** `C1-M1-PRES-20260406`
+  - reason: awaiting explicit HIL review of Storyboard B
+  - owner: human operator
+  - next action: review the published Storyboard B, then decide approve vs remediate
+  - expected review time: next session
+- If HIL requests changes, the next session must decide whether they are Storyboard-only changes or require regenerating Irene Pass 2 artifacts.
 
 ## Validation Summary
 
-- `pytest tests/test_structural_walk.py -q`
-  - `33 passed` earlier in the session
-- `pytest tests/test_marcus_prompt_harness.py -q`
-  - `4 passed`
-- `python -m scripts.utilities.structural_walk --workflow standard`
-  - `READY`
-- `python -m scripts.utilities.structural_walk --workflow standard --dry-run`
-  - `READY`
-- `python -m scripts.utilities.structural_walk --workflow motion`
-  - `READY`
+- `python -m pytest skills/sensory-bridges/scripts/tests/test_video_to_agent.py -q`
+  - `6 passed`
+- `python -m pytest skills/sensory-bridges/scripts/tests/test_bridge_utils.py -q`
+  - `13 passed`
+- `python -m pytest skills/bmad-agent-marcus/scripts/tests/test-validate-irene-pass2-handoff.py -q`
+  - `17 passed`
+- `python -m pytest skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py -q`
+  - `27 passed`
+- `python -m pytest skills/compositor/scripts/tests/test_compositor_operations.py -q`
+  - `11 passed`
+- `python -m pytest skills/production-coordination/scripts/tests/test_run_reporting.py -q`
+  - passed after timezone-normalization fix
+- `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/pass2-envelope.json`
+  - passed
 
 ## Lessons Learned
 
-- Structural readiness and behavioral/runtime proof are different things; the repo now has better coverage for the former than the latter.
-- A watcher that reports `PASS`, `INFERRED`, `PARTIAL`, and `MISSING` is more useful than a harness that flatters the state of a bundle.
-- The tracked bundle used for harness seeding is realistic enough to be useful, but not clean enough to be mistaken for a perfect gold run.
-- The shutdown protocol needed an explicit reminder that walk manifests do not self-update when control docs drift.
+- Motion review is clearer when Storyboard B shows both the approved still and the actual playback asset; hiding the video behind a file path is not sufficient for HIL.
+- A motion-aware script should not be judged only by structural completeness. The review surface must let the operator verify that narration and visible motion genuinely align.
+- Runtime ledgers drift unless the real active bundle is reconciled back into APP state before shift close.
+- Reporting paths need timezone normalization because the repo already contains mixed historical timestamp formats.
 
 ## Artifact Update Checklist
 
-- [x] `bmad-session-protocol-session-WRAPUP.md`
-- [x] `docs/workflow/production-session-wrapup.md`
 - [x] `next-session-start-here.md`
 - [x] `SESSION-HANDOFF.md`
-- [x] `scripts/utilities/marcus_prompt_harness.py`
-- [x] `tests/test_marcus_prompt_harness.py`
-- [x] `reports/structural-walk/standard/structural-walk-standard-20260406-032347.md`
-- [x] `reports/structural-walk/standard/structural-walk-standard-dry-run-20260406-032612.md`
-- [x] `reports/structural-walk/motion/structural-walk-motion-20260406-032702.md`
-- [x] `reports/prompt-harness/standard-v4.1/run-20260406-034450/`
-- [x] `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md`
+- [x] `docs/project-context.md`
+- [x] `docs/workflow/human-in-the-loop.md`
+- [x] `docs/workflow/production-operator-card-v4.md`
+- [x] `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- [x] `docs/workflow/trial-run-pass2-artifacts-contract.md`
+- [x] `skills/bmad-agent-content-creator/references/template-segment-manifest.md`
+- [x] `skills/bmad-agent-marcus/SKILL.md`
+- [x] `skills/bmad-agent-marcus/references/conversation-mgmt.md`
+- [x] `skills/bmad-agent-marcus/scripts/generate-storyboard.py`
+- [x] `skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py`
+- [x] `skills/compositor/references/manifest-interpretation.md`
+- [x] `skills/compositor/scripts/compositor_operations.py`
+- [x] `skills/sensory-bridges/scripts/video_to_agent.py`
+- [x] `skills/production-coordination/scripts/run_reporting.py`
+- [x] `state/config/runs/C1-M1-PRES-20260406/`
+- [x] `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/`
+- [x] `exports/storyboard-C1-M1-PRES-20260406-storyboard-b-rerender-20260408-0433-publish-receipt.json`
 
 ## Next Session
 
 - Start from `master`
-- Create `ops/first-tracked-trial-run`
-- Pick the first concrete lesson/source-doc set
-- Create a **new** tracked bundle and start from extraction / ingestion
-- Use the standard narrated slides + video workflow
-- Run readiness with `--bundle-dir`
-- Use the standard structural walk as the gate
-- Begin the first tracked trial run from the fresh bundle when ready
-- After trial-run learning stabilizes, consider opening:
-  - a BMAD epic on autonomy
-  - a BMAD epic on learning
-  with the explicit constraint that specialist-agent intelligence must be strengthened, not bypassed
+- Checkout `ops/c1m1-trial-storyboard-b-hil`
+- Open the published Storyboard B and capture explicit HIL disposition
+- If approved:
+  - reopen `C1-M1-PRES-20260406`
+  - proceed to downstream audio for the existing Pass 2 artifacts
+- If changes are requested:
+  - determine whether Storyboard-only edits are sufficient or whether Irene Pass 2 must be rerun
+- Do not start a new tracked bundle until `C1-M1-PRES-20260406` is resolved

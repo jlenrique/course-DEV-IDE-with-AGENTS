@@ -259,8 +259,9 @@ segments:
     )
     storyboard_dir = bundle / "storyboard"
     narration_map = mod.load_narration_by_slide_id(manifest_yaml)
-    assert narration_map["m1-c1"] == "First slide voiceover line."
-    assert narration_map["m1-c3"] == "Third slide only."
+    assert narration_map["m1-c1"]["narration_text"] == "First slide voiceover line."
+    assert narration_map["m1-c1"]["match_count"] == 1
+    assert narration_map["m1-c3"]["narration_text"] == "Third slide only."
 
     manifest = mod.build_manifest(
         _sample_payload(),
@@ -279,6 +280,7 @@ segments:
     assert by_id["m1-c2"]["narration_text"] == ""
     assert by_id["m1-c2"]["issue_flags"] == ["missing_asset", "no_match"]
     assert by_id["m1-c3"]["narration_status"] == "present"
+    assert by_id["m1-c1"]["segment_match_count"] == 1
 
     html = mod.render_index_html(manifest)
     assert "First slide voiceover line." in html
@@ -286,6 +288,135 @@ segments:
     assert "No match" in html
     summary = mod.format_summary(manifest)
     assert "Narration: 2/3 slide(s) have script text attached." in summary
+
+
+def test_segment_manifest_multi_match_surfaces_review_state(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_all_present_payload()), encoding="utf-8")
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        """
+segments:
+  - id: seg-01
+    gary_slide_id: m1-c1
+    narration_ref: narration-script.md#seg-01
+    narration_text: "First segment for slide one."
+  - id: seg-01b
+    gary_slide_id: m1-c1
+    narration_ref: narration-script.md#seg-01b
+    narration_text: "Second segment also matched slide one."
+""",
+        encoding="utf-8",
+    )
+    storyboard_dir = bundle / "storyboard"
+
+    narration_map = mod.load_narration_by_slide_id(manifest_yaml)
+    assert narration_map["m1-c1"]["match_count"] == 2
+    assert narration_map["m1-c1"]["segment_ids"] == ["seg-01", "seg-01b"]
+
+    manifest = mod.build_manifest(
+        _all_present_payload(),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        narration_by_slide_id=narration_map,
+        segment_manifest_path=manifest_yaml,
+    )
+    by_id = {s["slide_id"]: s for s in manifest["slides"]}
+    assert by_id["m1-c1"]["narration_status"] == "multi_match"
+    assert by_id["m1-c1"]["segment_match_count"] == 2
+    assert by_id["m1-c1"]["issue_flags"] == ["multi_match"]
+    assert by_id["m1-c1"]["matched_narration_refs"] == [
+        "narration-script.md#seg-01",
+        "narration-script.md#seg-01b",
+    ]
+    assert manifest["review_meta"]["multi_match_narration"] == 1
+
+    html = mod.render_index_html(manifest)
+    assert "Multi-match" in html
+    assert "Multiple segment-manifest matches attached (2)." in html
+    assert "First segment for slide one." in html
+    assert "Second segment also matched slide one." in html
+    summary = mod.format_summary(manifest)
+    assert "Narration review: 1 slide(s) have multiple segment matches" in summary
+
+
+def test_segment_manifest_motion_metadata_is_visible_in_storyboard_b(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    motion = bundle / "motion"
+    slides.mkdir(parents=True)
+    motion.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    (motion / "clip.mp4").write_bytes(b"mp4")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(
+        json.dumps(
+            {
+                "gary_slide_output": [
+                    {
+                        "slide_id": "m1-c1",
+                        "fidelity": "creative",
+                        "card_number": 1,
+                        "source_ref": "src-a",
+                        "file_path": "slides/s1.png",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        f"""
+segments:
+  - id: seg-01
+    gary_slide_id: m1-c1
+    narration_ref: narration-script.md#seg-01
+    narration_text: "Motion-aware line."
+    visual_mode: video
+    visual_file: {(slides / 's1.png').as_posix()}
+    motion_type: video
+    motion_asset_path: {((motion / 'clip.mp4').as_posix())}
+    motion_status: approved
+    motion_source: kling
+    motion_duration_seconds: 5.041
+    visual_references:
+      - element: three callouts
+        narration_cue: "Motion-aware line."
+""",
+        encoding="utf-8",
+    )
+    storyboard_dir = bundle / "storyboard"
+
+    manifest = mod.build_manifest(
+        json.loads(payload_path.read_text(encoding="utf-8")),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+    )
+    slide = manifest["slides"][0]
+    assert slide["motion_type"] == "video"
+    assert slide["motion_status"] == "approved"
+    assert slide["motion_asset_path"] == (motion / "clip.mp4").as_posix()
+    assert slide["visual_mode"] == "video"
+    assert slide["matched_visual_reference_count"] == 1
+    assert slide["motion_preview_kind"] == "video"
+
+    html = mod.render_index_html(manifest)
+    assert "motion video" in html
+    assert "Motion review: <strong>Motion: video | approved | 5.041s</strong>" in html
+    assert '<video class="motion-preview" controls preload="metadata"' in html
+    assert "<dt>Motion asset</dt><dd>" in html
+    assert "<dt>Motion source</dt><dd>kling</dd>" in html
 
 
 def test_load_related_assets_parses_and_validates(tmp_path: Path) -> None:
@@ -912,6 +1043,74 @@ def test_export_snapshot_creates_deterministic_zip_with_sanitized_paths(tmp_path
     assert exported_manifest["slides"][0]["preview_href"] == "slides/s1.png"
     assert exported_manifest["slides"][1]["file_path"] == "slides/missing.png"
     assert "C:\\" not in json.dumps(exported_manifest)
+
+
+def test_export_snapshot_includes_motion_preview_assets(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    motion = bundle / "motion"
+    slides.mkdir(parents=True)
+    motion.mkdir(parents=True)
+    local_png = slides / "s1.png"
+    local_mp4 = motion / "s1.mp4"
+    _write_test_png(local_png)
+    local_mp4.write_bytes(b"mp4")
+
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": str(local_png.resolve()),
+            }
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        f"""
+segments:
+  - id: seg-01
+    gary_slide_id: m1-c1
+    narration_ref: narration-script.md#seg-01
+    narration_text: "Motion-aware line."
+    visual_mode: video
+    visual_file: {local_png.as_posix()}
+    motion_type: video
+    motion_asset_path: {local_mp4.as_posix()}
+    motion_status: approved
+    motion_source: kling
+    motion_duration_seconds: 5.041
+""",
+        encoding="utf-8",
+    )
+    storyboard_dir = bundle / "storyboard"
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+        run_id="RUN-EXPORT-MOTION",
+    )
+    mod.write_bundle(manifest, storyboard_dir)
+
+    export_root = tmp_path / "exports"
+    result = mod.export_storyboard_snapshot(storyboard_dir / "storyboard.json", export_root=export_root)
+    with zipfile.ZipFile(result["zip_path"], "r") as zf:
+        names = zf.namelist()
+    assert "motion/s1.mp4" in names
+
+    exported_manifest = json.loads((Path(result["snapshot_dir"]) / "storyboard.json").read_text(encoding="utf-8"))
+    slide = exported_manifest["slides"][0]
+    assert slide["motion_preview_href"] == "motion/s1.mp4"
+    html = (Path(result["snapshot_dir"]) / "index.html").read_text(encoding="utf-8")
+    assert 'src="motion/s1.mp4"' in html
 
 
 def test_exported_snapshot_html_local_links_resolve(tmp_path: Path) -> None:

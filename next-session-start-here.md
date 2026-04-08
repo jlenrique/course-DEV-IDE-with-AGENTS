@@ -1,94 +1,83 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> For production operations, pair this with `docs/operations-context.md` and the workflow docs it points to.
+> For production operations, pair it with `docs/operations-context.md` and the workflow docs it points to.
 
-## Current State (as of 2026-04-06, post-closeout target)
+## Current State (as of 2026-04-08, post-closeout target)
 
-- Active branch: `master`
+- Active branch after closeout: `master`
 - Expected git state after closeout: clean working tree, `master` pushed and aligned with `origin/master`
-- Implementation status: Epics 1-14 plus SB are complete.
-- Active narrated workflow family has two prompt-pack docs:
-  - `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
-  - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
-- `DOUBLE_DISPATCH` is an inline branch inside either workflow, not a third workflow.
-- Structural walks are canonical and both workflows were re-run in this session:
-  - standard walk: `READY`
-  - standard dry-run: `READY`
-  - motion walk: `READY`
-- A new standard-v4.1 Marcus prompt harness now exists for transcript generation plus Quinn watcher auditing.
-- Repo-declared next phase remains: begin tracked trial runs from the clean Epic 14 baseline.
-- The first official tracked trial run should be a **fresh-start run**, not a resume of any previously staged bundle.
-- Workflow selection for that first official trial is the **standard narrated slides + video workflow**:
-  - `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- Active tracked run to resume: `C1-M1-PRES-20260406`
+- Canonical bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion`
+- Run status in APP tracking: `blocked`
+- Stop point: Storyboard B is complete and published for HIL review; downstream audio, ElevenLabs generation, and assembly have not started
+- Workflow family in use: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- Gate summary:
+  - Gate 2: approved
+  - Gate 2M: approved
+  - Motion Gate: approved
+  - Irene Pass 2 validator: passed
+  - Vera G4: passed
+  - Storyboard B: ready for explicit HIL disposition
+- Motion summary:
+  - `MOTION_ENABLED: true`
+  - only slide 1 is non-static
+  - approved downstream motion asset is fixed and should remain the source of truth
+- Superseded run note: `C1-M1-PRES-20260404` was cancelled during closeout so the ledger now points to a single canonical tracked run
 
 ## Immediate Next Action
 
-1. Create the next working branch for operations and trial-run prep:
+1. Checkout the next working branch and resume the blocked tracked run:
    - `git checkout master`
-   - `git checkout -b ops/first-tracked-trial-run`
-2. Choose the first concrete lesson/source-doc set for the first official trial run.
-3. Create a **new tracked bundle** and begin from source extraction / ingestion, not from an already-partially-prepared bundle.
-4. Use the standard narrated slides + video workflow (`production-prompt-pack-v4.1-narrated-deck-video-export.md`).
-5. Freeze `run-constants.yaml` for the new bundle, run readiness with `--bundle-dir`, then run the standard structural walk.
-6. Use the new prompt harness only as a conformance aid if desired; do not treat an older staged bundle as the official first trial.
+   - `git pull --ff-only origin master`
+   - `git checkout ops/c1m1-trial-storyboard-b-hil`
+2. Review Storyboard B and record an explicit HIL decision:
+   - approve as-is and proceed
+   - request storyboard/script remediation before audio
+3. If approved, reopen `C1-M1-PRES-20260406` from its blocked state and proceed to the downstream audio stage; do not rerun Irene Pass 2 unless HIL feedback actually requires it.
+4. Preserve the approved slide-1 motion asset binding exactly as-is throughout downstream work.
 
 ## Branch Metadata
 
 ```bash
 git checkout master
-git checkout -b ops/first-tracked-trial-run
+git pull --ff-only origin master
+git checkout ops/c1m1-trial-storyboard-b-hil
 ```
 
 ## Hot-Start Paths
 
 - `docs/operations-context.md`
-- `docs/workflow/first-tracked-run-quickstart.md`
-- `docs/workflow/first-tracked-run-checklist.md`
 - `docs/workflow/production-session-start.md`
 - `docs/workflow/production-session-wrapup.md`
-- `docs/workflow/production-operator-card-v4.md`
-- `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
+- `docs/workflow/human-in-the-loop.md`
 - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
-- `docs/structural-walk.md`
-- `state/config/structural-walk/standard.yaml`
-- `state/config/structural-walk/motion.yaml`
-- `scripts/utilities/marcus_prompt_harness.py`
-- `reports/prompt-harness/standard-v4.1/`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/run-constants.yaml`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/pass2-envelope.json`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/narration-script.md`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/segment-manifest.yaml`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/motion_plan.yaml`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/storyboard.json`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/index.html`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/vera-g4-fidelity-trace-report.yaml`
+- `exports/storyboard-C1-M1-PRES-20260406-storyboard-b-rerender-20260408-0433-publish-receipt.json`
+- Approved slide-1 motion asset:
+  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/motion/apc-c1m1-tejal-20260406-motion-card-01_motion_8s_slowtail.mp4`
+- Live Storyboard B review URL:
+  - `https://jlenrique.github.io/assets/storyboards/storyboard-b-rerender-20260408-0433/C1-M1-PRES-20260406/index.html`
 
 ## Open Items To Carry Forward
 
-- The first tracked trial run has not happened yet.
-- A concrete lesson/source-doc set still needs to be selected for that run.
-- The first official trial must start from fresh extraction and ingestion in a new tracked bundle.
-- Existing staged tracked bundles may be consulted as reference material only; they are not the official first trial unless explicitly re-designated.
-- `state/config/course_context.yaml` still contains placeholder module entries, so trial-run prep should rely on a specific chosen bundle rather than the unfinished global course map.
-- The new prompt harness is useful for prompt-pack conformance and artifact auditing, but it is not yet a runtime executor of Marcus code paths. If you want runtime proof later, build an execution harness rather than an evidence harness.
-- Strategic follow-up after trial runs: create a new BMAD epic on platform autonomy and a related BMAD epic on platform learning. Both are viewed as potentially transformational, but only if specialist-agent intelligence is deliberately cultivated rather than papered over with brittle automation.
-- If the next session changes workflow gates, required artifacts, or canonical control docs, update the structural-walk manifests and `docs/structural-walk.md` before closeout.
-
-## Future Epic Seeds
-
-- `learning` epic seed:
-  - primary source: `_bmad-output/implementation-artifacts/app-three-layer-optimization-plans-2026-04-06.md`
-  - focus first on Plan 3: learning-event schema, tracked-run retrospectives, upstream-from-downstream feedback routing, synergy scorecards, and workflow-family learning
-- `autonomy` epic seed:
-  - use the same plan doc together with `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md`
-  - focus on bounded autonomy: where Marcus and specialists can act more independently without weakening governance, gates, handoff contracts, or human checkpoint authority
-- Sequencing note:
-  - do not open either epic in a vacuum
-  - first use one or more tracked trial runs to generate real correction, waiver, approval, and failure data
-  - then define the epics from observed workflow behavior, not only design theory
-- Design guardrail for both epics:
-  - preserve specialist intelligence
-  - harden deterministic boundaries
-  - avoid replacing pedagogy, visual reasoning, or evaluator judgment with cheap automation
+- Storyboard B still needs explicit HIL disposition before any audio generation or assembly.
+- If HIL requests changes, decide whether the fix is Storyboard-only or requires Irene Pass 2 regeneration.
+- Downstream audio stage has not started; no ElevenLabs artifacts should be assumed to exist for this run.
+- `run_reporting.py` was repaired for mixed naive/offset-aware timestamps during closeout; if the next session relies on reporting, use the updated script and keep timestamps offset-aware where possible.
+- `state/config/runs/C1-M1-PRES-20260406/` now exists as the run-scoped context directory for the canonical tracked run.
 
 ## Known Gotchas
 
-- Use `docs/operations-context.md` for low-cognitive-load startup instead of re-reading the full implementation history.
-- For tracked bundle shifts, readiness with `--bundle-dir` is required, not optional.
-- For the first official trial run, do not resume an already-partially-prepared tracked bundle; start from extraction of the chosen source docs.
-- If `DOUBLE_DISPATCH` is enabled, the run must collapse to a winner deck before Irene Pass 2 or motion planning.
-- If `MOTION_ENABLED` is enabled, Gate 2M and Motion Gate must both close before Irene Pass 2.
-- PowerShell may surface stderr as `NativeCommandError`; check `$LASTEXITCODE` before assuming the command failed.
+- For motion segments, `visual_file` remains the approved still slide and `motion_asset_path` carries the approved playback MP4; do not collapse them into one field.
+- For motion-first narration, the script may use the slide once for orientation, but should primarily speak to the visible action in the approved clip.
+- Storyboard B now intentionally shows both the approved still and a paused motion preview for slide 1; that is the intended review model, not a temporary workaround.
+- The run-scoped perception cache for `C1-M1-PRES-20260406` was cleared during closeout because it held stale low-confidence slide entries from before the repaired Pass 2.
+- PowerShell may surface stderr as `NativeCommandError`; check `$LASTEXITCODE` before assuming a command failed.

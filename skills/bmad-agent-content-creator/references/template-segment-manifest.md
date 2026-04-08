@@ -51,7 +51,7 @@ segments:
     narration_vtt: string | null        # relative path, e.g., "course-content/staging/C1-M1-L3/captions/seg-01.vtt"
     sfx_file: string | null             # relative path to SFX clip or null
     # ── Written back by Gary or Kira ──
-    visual_file: string | null          # relative path to PNG or MP4
+    visual_file: string | null          # relative path to approved still PNG (poster/reference frame)
     visual_duration: float | null       # seconds (for video segments; null for static-hold)
 
   # Duration precedence rule:
@@ -275,7 +275,7 @@ Default behavior remains additive and backward compatible:
 - `visual_source: kira` segments only
 - `visual_mode` — video type (animation of Gary PNG vs original B-roll)
 - `narration_duration` (after ElevenLabs writes it) — clip duration target
-- Writes back: `visual_file`, `visual_duration`
+- Writes back: motion asset fields; do not replace the approved still in `visual_file`
 
 **Compositor reads:**
 - Complete manifest (all fields populated) — generates Descript Assembly Guide
@@ -286,6 +286,7 @@ Default behavior remains additive and backward compatible:
 
 Motion-aware compositor note:
 - When `motion_type != static`, compositor should use `motion_asset_path` and `motion_duration_seconds` as the assembly source for that segment instead of treating the segment as a still-only hold.
+- Keep `visual_file` bound to the approved still PNG for review/poster-frame/reference use even when `motion_type != static`.
 
 **Quinn-R reads (pre-composition validation):**
 - `narration_duration` — validates WPM (130-170), checks monotonicity in VTT
@@ -305,6 +306,7 @@ Motion-aware compositor note:
 - For `static-hold` segments referencing Gary PNGs: populate `visual_file` with the Gary-provided path from `gary_slide_output` immediately — don't leave it null
 - Default every segment to `motion_type: static` unless Gate 2M explicitly designates otherwise
 - For `motion_type != static`, leave `motion_asset_path` null until the motion asset is generated/imported and approved
+- For `motion_type != static`, keep `visual_file` on the approved still PNG; the motion clip belongs in `motion_asset_path`, not `visual_file`
 - Never replace `visual_file` with Git-host source URLs from `literal_visual_publish`; that receipt is provenance only, while composition uses approved local slide exports
 - Leave ElevenLabs and Kira write-back fields (`narration_duration`, `narration_file`, etc.) as `null` — those agents populate them
 - Save to `course-content/staging/{lesson_id}/manifest.yaml`

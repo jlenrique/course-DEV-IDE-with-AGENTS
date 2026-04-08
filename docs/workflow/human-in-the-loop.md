@@ -46,3 +46,6 @@ Storyboard review expectations:
 - Use `storyboard/index.html` as the human review surface and `storyboard/storyboard.json` as the canonical machine manifest.
 - Storyboard A should present slide thumbnails, sequence/orientation metadata, script status, script notes, and findings/provenance in one ordered review surface.
 - Storyboard B should reuse the same layout but hydrate actual narration text where segment-manifest matches exist; unmatched slides should be visually marked as `No match`.
+- If multiple segment-manifest rows attach to one slide, Storyboard B should mark that slide as `Multi-match` and surface the matched segment IDs/refs so the operator can resolve the ambiguity before approval.
+- For motion-enabled slides, Storyboard B should keep the approved still visible as the canonical slide reference and also surface a paused motion preview/player plus motion review metadata from the matched segment/plan context, including motion status and approved asset path.
+- For motion-first segments, review the narration against the motion clip as the active playback visual; slide language may orient once, but the main explanatory line should follow the visible action in the approved clip.

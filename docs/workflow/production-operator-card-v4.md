@@ -179,6 +179,11 @@ Fast path:
 - Delegate Irene Pass 2.
 - Validate handoff envelope:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
+  - confirm the validator passes the stricter Pass 2 semantics:
+    - every authorized slide has at least one manifest segment
+    - every segment has non-empty `narration_text`
+    - every segment has at least one non-empty visual `narration_cue` traceable to perception and present in narration
+    - every non-static motion segment is still bound to the approved motion asset and has matching motion perception confirmation
 - Run G4.
 - Go/no-go: no go downstream if G4 critical findings.
 - Regenerate Storyboard B (slide + script context) and get explicit approval before downstream audio/script finalization.

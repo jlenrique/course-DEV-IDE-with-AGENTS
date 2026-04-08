@@ -14,7 +14,7 @@ import importlib.util
 import json
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +64,10 @@ def _parse_ts(value: str | None) -> datetime | None:
         candidates.append(value.replace("Z", "+00:00"))
     for item in candidates:
         try:
-            return datetime.fromisoformat(item)
+            parsed = datetime.fromisoformat(item)
+            if parsed.tzinfo is None:
+                return parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
         except ValueError:
             continue
     return None

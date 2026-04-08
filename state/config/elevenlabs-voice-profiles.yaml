@@ -1,0 +1,125 @@
+default_profile: clinical-instructional
+
+content_type_profiles:
+  motion-enabled narrated lesson: clinical-instructional
+  narrated-lesson-with-video-or-animation: clinical-instructional
+  narrated-deck-video-export: clinical-instructional
+  case discussion: clinical-conversational
+  dialogue: multi-voice-dialogue
+
+profiles:
+  clinical-instructional:
+    preferred_tokens:
+      - clear
+      - calm
+      - warm
+      - authoritative
+      - credible
+      - educational
+      - narration
+    avoided_tokens:
+      - cartoon
+      - character
+      - comedy
+      - hype
+      - dramatic
+      - parody
+    preferred_use_cases:
+      - narration
+      - educational
+      - conversational
+    preferred_accents:
+      - american
+      - neutral
+    preferred_ages:
+      - young_adult
+      - middle_aged
+    preferred_genders: []
+    preferred_languages:
+      - en
+    preferred_locales:
+      - en-US
+
+  clinical-conversational:
+    preferred_tokens:
+      - conversational
+      - calm
+      - warm
+      - clear
+      - credible
+    avoided_tokens:
+      - cartoon
+      - character
+      - comedy
+      - parody
+    preferred_use_cases:
+      - conversational
+      - narration
+    preferred_accents:
+      - american
+      - neutral
+    preferred_ages:
+      - young_adult
+      - middle_aged
+    preferred_genders: []
+    preferred_languages:
+      - en
+    preferred_locales:
+      - en-US
+
+  multi-voice-dialogue:
+    preferred_tokens:
+      - clear
+      - natural
+      - conversational
+    avoided_tokens:
+      - cartoon
+      - parody
+    preferred_use_cases:
+      - conversational
+      - narration
+    preferred_accents:
+      - american
+      - neutral
+    preferred_ages:
+      - young_adult
+      - middle_aged
+    preferred_genders: []
+    preferred_languages:
+      - en
+    preferred_locales:
+      - en-US
+
+description_keyword_overrides:
+  authoritative:
+    preferred_tokens:
+      - authoritative
+      - credible
+      - professional
+  warm:
+    preferred_tokens:
+      - warm
+      - friendly
+  measured:
+    preferred_tokens:
+      - measured
+      - calm
+      - deliberate
+  conversational:
+    preferred_tokens:
+      - conversational
+      - natural
+  energetic:
+    preferred_tokens:
+      - energetic
+    avoided_tokens:
+      - calm
+  british:
+    preferred_accents:
+      - british
+  female:
+    preferred_genders:
+      - female
+  male:
+    preferred_genders:
+      - male

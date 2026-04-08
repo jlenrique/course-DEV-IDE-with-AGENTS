@@ -44,13 +44,13 @@ Marcus recognizes these content types, each mapping to different specialist agen
 
 | Content Type | Primary Specialist | Secondary Specialists | Typical Workflow |
 |---|---|---|---|
-| Narrated lesson with video or animation (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Workflow template id: `narrated-lesson-with-video-or-animation`. Marcus -> Irene P1 -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Kira -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
+| Narrated lesson with video or animation (full pipeline) | `content-creator` (Irene) | `gamma-specialist` (Gary), `elevenlabs-specialist`, `kling-specialist` (Kira), `compositor`, `quality-reviewer` | Workflow template id: `narrated-lesson-with-video-or-animation`. Marcus -> Irene P1 -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> Voice preview HIL -> ElevenLabs -> Marcus -> Kira -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
 | Lecture slides only | `gamma-specialist` (Gary) | `content-creator` (slide brief), `quality-reviewer` | Marcus -> Irene slide brief -> Marcus/[Gate 1] -> Gary -> Marcus/[Gate 2] -> approve |
-| Narrated slide presentation (video export, no custom animation) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Workflow template id: `narrated-deck-video-export` (canonical; no aliases). Marcus -> Irene P1 -> Marcus -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> ElevenLabs -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
+| Narrated slide presentation (video export, no custom animation) | `content-creator` (Irene), `elevenlabs-specialist` | `gamma-specialist`, `compositor`, `quality-reviewer` | Workflow template id: `narrated-deck-video-export` (canonical; no aliases). Marcus -> Irene P1 -> Marcus -> Gary -> Marcus/[Gate 2] -> Irene P2 -> Marcus/[Gate 3] -> Voice preview HIL -> ElevenLabs -> Marcus -> Quinn-R pre-comp -> Compositor -> Descript -> Quinn-R post-comp -> Marcus/[Gate 4] |
 | Case study | `content-creator` | `quality-reviewer` | Draft → review → approve |
 | Assessment / quiz | `content-creator` | `qualtrics-specialist`, `canvas-specialist`, `quality-reviewer` | Draft → objective alignment check → Qualtrics/Canvas routing → review → publish |
 | Discussion prompt | `content-creator` | `canvas-specialist` | Draft → review → LMS publish |
-| Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Marcus -> script intake -> ElevenLabs -> Marcus/review -> approve |
+| Voiceover narration | `elevenlabs-specialist` | `content-creator` (script), `quality-reviewer` | Marcus -> script intake -> Voice preview HIL -> ElevenLabs -> Marcus/review -> approve |
 | Video clip (B-roll / concept) | `kling-specialist` (Kira) | `content-creator` (brief), `quality-reviewer` | Brief → generation → download → review |
 | Animated explainer | `vyond-specialist` | `content-creator`, `quality-reviewer` | Brief -> storyboard -> scene build guidance -> review -> approve |
 | Bespoke medical illustration | `midjourney-specialist` | `content-creator`, `quality-reviewer` | Prompt package -> user generation loop -> review -> approve |
@@ -353,6 +353,11 @@ Marcus -> Vera: G4 fidelity check (narration script vs. lesson plan + actual sli
 Marcus -> Quinn-R: G4 quality review
     │
     ▼  [HIL Gate 3 via Marcus: Review script & manifest]
+    │
+Marcus -> Voice Director: preview-only catalog voice selection round
+    │  (returns existing ElevenLabs sample links for current/default voice + alternatives,
+    │   or three description-led recommendations; no synthesis spend here)
+    ▼  [HIL Voice Selection via Marcus]
     │
 Marcus -> ElevenLabs Agent: narration MP3 + VTT + SFX + music
     │  (reads manifest for narration_text, sfx, music cues, voice selection)

@@ -20,18 +20,20 @@ Voice Director (agent - judgment) -> elevenlabs-audio (skill - tool expertise) -
 | `./references/optimization-patterns.md` | Default parameter patterns for narration, continuity, and pacing |
 | `./references/pronunciation-management.md` | Pronunciation dictionary workflow and PLS guidance |
 | `./references/sound-design-patterns.md` | SFX/music usage patterns and conservative production rules |
+| `../../state/config/elevenlabs-voice-profiles.yaml` | Governed voice-preview profiles and description-keyword tuning |
 | `./scripts/elevenlabs_operations.py` | Agent-level wrapper around `ElevenLabsClient`, including manifest-driven batch narration |
 
 ## Script Index
 
 | Script | Purpose | Invoked By |
 |--------|---------|------------|
-| `elevenlabs_operations.py` | Load style-guide defaults, generate narration + VTT, process segment manifests, build/upload pronunciation dictionaries, generate dialogue/SFX/music, and return structured results | Voice Director (`VR`, `PM`, `AQ`, `SD`) |
+| `elevenlabs_operations.py` | Load style-guide defaults, preview catalog voice options, generate narration + VTT, process segment manifests, build/upload pronunciation dictionaries, generate dialogue/SFX/music, and return structured results | Voice Director (`VR`, `PM`, `AQ`, `SD`) |
 
 ## Supported Operations
 
 | Operation | Client Method | When |
 |-----------|---------------|------|
+| Voice catalog preview recommendations | `list_voices()` / `get_voice()` | Pre-audio HIL voice selection with catalog sample links |
 | Narration with timestamps | `text_to_speech_with_timestamps()` | Primary instructional narration path |
 | Manifest-driven narration | `generate_manifest_narration()` | Standard Marcus -> ElevenLabs production path |
 | Pronunciation dictionaries | `create_pronunciation_dictionary_from_file()` / `list_pronunciation_dictionaries()` | Medical terminology support |
@@ -42,6 +44,7 @@ Voice Director (agent - judgment) -> elevenlabs-audio (skill - tool expertise) -
 ## Operating Rules
 
 - Always prefer style-guide defaults from `state/config/style_guide.yaml` before inventing per-request settings.
+- Use preview-only catalog sample links to support HIL voice choice before any ElevenLabs synthesis spend.
 - Narration is the primary path. Dialogue, SFX, and music are secondary and should never obscure instructional clarity.
 - For narrated lesson production, return both audio and timestamp-derived VTT output.
 - Use pronunciation dictionaries for repeated medical terminology rather than one-off prompt hacks.

@@ -243,7 +243,7 @@ Current workflow family:
 - `DOUBLE_DISPATCH` is optional in either workflow and always collapses back to a single authorized winner deck in `authorized-storyboard.json`.
 - For the motion-enabled + double-dispatch happy path, use `tests/happy-path-simulation-motion-double-dispatch-20260405.md`.
 
-For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Before ElevenLabs synthesis begins, Marcus can also run a preview-only voice-selection checkpoint that gives you catalog sample links for the carry-forward/default voice plus alternatives, or three description-led recommendations if you describe the ideal narrator. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Happy-path walkthrough: user + Marcus + “X-ray” (planner / checklist)
 
@@ -259,7 +259,7 @@ If you enable motion for a narrated run:
 - **Chat vs state:** Marcus should persist mode via `manage_mode.py` / `mode_state.json`, not only say “we’re in ad-hoc” in chat.
 - **New Cursor thread:** Paste **run id** + lesson slug + paths so context isn’t lost.
 - **Two Gamma jobs** (creative + literal): ensure exports are **mapped to `card_number`** and `gary_slide_output[].file_path` is real before Pass 2.
-- **Costs:** In the standard workflow, meaningful spend ramps after Gate 3 when ElevenLabs and downstream assembly begin. In the motion-enabled workflow, motion spend is introduced earlier via Gate 2M and Motion Gate controls.
+- **Costs:** In the standard workflow, meaningful spend ramps after Gate 3 once the voice-preview checkpoint is closed and ElevenLabs/downstream assembly begin. In the motion-enabled workflow, motion spend is introduced earlier via Gate 2M and Motion Gate controls.
 - **All-literal decks** with only `diagram_cards`: confirm `execute_generation` path with devs (mixed creative+literal is the well-wired happy path here).
 - **URLs:** Custom images must pass **`validate_image_url`** (HTTPS, image content-type)—see Marcus **Imagine handoff** in `skills/bmad-agent-marcus/references/conversation-mgmt.md`.
 
@@ -330,7 +330,8 @@ The **model prompts** for each step (what to type to Marcus) are in the next sub
 | 7B | Storyboard review with script context | Marcus regenerates storyboard using `gary-dispatch-result.json` + `segment-manifest.yaml` before audio finalization | ☐ Storyboard row order and script alignment approved explicitly | `storyboard/storyboard.json`, `storyboard/index.html`, `authorized-storyboard.json` |
 | 8 | **HIL Gate 3** — approve script / audio plan | Locks manifest before ElevenLabs and downstream assembly spend | ☐ Gate 3 sign-off | — |
 | 9 | Confirm fidelity + quality runs (or ask Marcus to run them) | `bmad-agent-fidelity-assessor`, `bmad-agent-quality-reviewer`, optional `quality-control` scripts, sensory bridges | ☐ No critical blockers (or you accept override) | Reports per governance; ad-hoc: transient observability |
-| 10 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
+| 10 | HIL voice preview before audio spend | `elevenlabs_operations.py` → catalog preview recommendations | ☐ `voice-selection.json` approved | `voice-preview-options.json`, `voice-selection.json` |
+| 11 | Delegate ElevenLabs from approved manifest | `elevenlabs_operations.py` → manifest write-back (`narration_duration`, paths) | ☐ Audio paths populated on manifest | `assembly-bundle/audio/`, `captions/` |
 | 11 | Motion-enabled extension only | Use the motion-specific workflow template and prompt pack instead of inserting Kling into the standard path here | ☐ Motion handled via Gate 2M → Motion Gate before Irene Pass 2 | `motion_plan.yaml`, motion asset paths |
 | 12 | Quinn-R pre-composition (or ask Marcus to invoke) | `review_pass: pre-composition` | ☐ Pre-composition OK | — |
 | 13 | Run compositor bundle | `compositor_operations.py` | ☐ `visuals/` populated ☐ Guide readable | `assembly-bundle/` |
@@ -420,6 +421,12 @@ Marcus, regenerate storyboard using gary-dispatch-result.json plus segment-manif
 
 ```
 Marcus, run the pipeline fidelity and quality checks on the current artifacts per fidelity-gate-map (Vera then Quinn-R as applicable). Summarize blockers before we spend on ElevenLabs.
+```
+
+**Step 9A — Voice preview before ElevenLabs**
+
+```
+Marcus, before ElevenLabs synthesis, have the Voice Director return catalog preview links for the previously used lesson voice (or the default voice for a new presentation) plus two APP-selected alternatives. If I instead describe the ideal voice, return three description-led recommendations. After I approve one, write voice-selection.json and use that selection for synthesis.
 ```
 
 **Step 10 — ElevenLabs**
@@ -555,7 +562,7 @@ Marcus, run Vera then Quinn-R on current artifacts and summarize blockers before
 **Prompt 14 — ElevenLabs execution**
 
 ```
-Marcus, run manifest-driven ElevenLabs generation and update segment-manifest.yaml with narration_duration, narration_file, and narration_vtt.
+Marcus, before synthesis, run the preview-only voice-selection checkpoint and write voice-selection.json. After approval, run manifest-driven ElevenLabs generation and update segment-manifest.yaml with narration_duration, narration_file, and narration_vtt.
 ```
 
 **Prompt 15 — Motion-enabled workflow branch**
@@ -585,7 +592,7 @@ CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output
 ```
 
 **Trial-run checklist (copy — same steps as # column)**  
-☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 10 ElevenLabs ☐ 11 Motion branch only if using the motion workflow template ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
+☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 9A Voice preview ☐ 10 ElevenLabs ☐ 11 Motion branch only if using the motion workflow template ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
 
 **Trial-run running log (in progress)**
 

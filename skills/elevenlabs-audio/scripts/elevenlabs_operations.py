@@ -13,8 +13,11 @@ and structured result formatting for Marcus-mediated workflows.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
+import re
 import sys
 from typing import Any
 import xml.sax.saxutils as xml_utils
@@ -31,7 +34,63 @@ from scripts.api_clients.elevenlabs_client import ElevenLabsClient
 load_dotenv(PROJECT_ROOT / ".env")
 
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
+VOICE_PROFILES_PATH = (
+    PROJECT_ROOT / "state" / "config" / "elevenlabs-voice-profiles.yaml"
+)
 STAGING_DIR = PROJECT_ROOT / "course-content" / "staging"
+VOICE_PREVIEW_MODES = {
+    "continuity_preview",
+    "default_plus_alternatives",
+    "description_driven_search",
+}
+VOICE_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "as",
+    "at",
+    "by",
+    "for",
+    "from",
+    "in",
+    "into",
+    "of",
+    "on",
+    "or",
+    "the",
+    "to",
+    "with",
+}
+VOICE_PENALTY_TERMS = {
+    "anime",
+    "cartoon",
+    "character",
+    "child",
+    "comedy",
+    "extreme",
+    "fantasy",
+    "game",
+    "gaming",
+    "parody",
+    "silly",
+}
+VOICE_CLARITY_HINTS = {
+    "articulate",
+    "authoritative",
+    "calm",
+    "clear",
+    "clinical",
+    "conversational",
+    "credible",
+    "deliberate",
+    "educational",
+    "measured",
+    "natural",
+    "narration",
+    "narrator",
+    "professional",
+    "warm",
+}
 
 
 def load_style_guide_elevenlabs() -> dict[str, Any]:
@@ -40,6 +99,13 @@ def load_style_guide_elevenlabs() -> dict[str, Any]:
         return {}
     data = yaml.safe_load(STYLE_GUIDE_PATH.read_text(encoding="utf-8")) or {}
     return data.get("tool_parameters", {}).get("elevenlabs", {})
+
+
+def load_voice_preview_profiles() -> dict[str, Any]:
+    """Load governed voice preview profiles and keyword overrides."""
+    if not VOICE_PROFILES_PATH.exists():
+        return {}
+    return yaml.safe_load(VOICE_PROFILES_PATH.read_text(encoding="utf-8")) or {}
 
 
 def merge_parameters(
@@ -53,6 +119,624 @@ def merge_parameters(
             if value is not None and value != "":
                 merged[key] = value
     return merged
+
+
+def _merge_unique_terms(*groups: list[str] | tuple[str, ...] | set[str] | None) -> list[str]:
+    """Merge string terms while preserving first-seen order."""
+    merged: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        if not group:
+            continue
+        for item in group:
+            normalized = str(item or "").strip().lower()
+            if not normalized or normalized in seen:
+                continue
+            merged.append(normalized)
+            seen.add(normalized)
+    return merged
+
+
+def _resolve_voice_preview_profile(
+    *,
+    style_defaults: dict[str, Any],
+    presentation_attributes: dict[str, Any] | None,
+    ideal_voice_description: str | None,
+) -> tuple[str, dict[str, Any]]:
+    """Resolve the active profile and apply description keyword overrides."""
+    profiles_data = load_voice_preview_profiles()
+    profiles = profiles_data.get("profiles", {})
+    if not isinstance(profiles, dict) or not profiles:
+        return "inline-fallback", {}
+
+    content_type = str(
+        (presentation_attributes or {}).get("content_type") or ""
+    ).strip()
+    selected_name = (
+        str(style_defaults.get("voice_selection_profile") or "").strip()
+        or str(
+            (profiles_data.get("content_type_profiles") or {}).get(content_type) or ""
+        ).strip()
+        or str(profiles_data.get("default_profile") or "").strip()
+    )
+    if selected_name not in profiles:
+        selected_name = str(profiles_data.get("default_profile") or "").strip()
+    if selected_name not in profiles:
+        selected_name = next(iter(profiles.keys()))
+
+    resolved = {
+        key: list(value) if isinstance(value, list) else value
+        for key, value in dict(profiles.get(selected_name) or {}).items()
+    }
+
+    description = str(ideal_voice_description or "").strip().lower()
+    overrides = profiles_data.get("description_keyword_overrides") or {}
+    for keyword, patch in overrides.items():
+        if not isinstance(patch, dict):
+            continue
+        if not re.search(rf"\b{re.escape(str(keyword).lower())}\b", description):
+            continue
+        for key, value in patch.items():
+            if isinstance(value, list):
+                resolved[key] = _merge_unique_terms(resolved.get(key), value)
+            elif value is not None:
+                resolved[key] = value
+
+    return selected_name, resolved
+
+
+def _sha256_file(path: str | Path) -> str:
+    """Return a stable SHA-256 hex digest for a file."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _load_json_file(path: str | Path) -> dict[str, Any]:
+    """Read a JSON file from disk."""
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _flatten_voice_context(value: Any) -> list[str]:
+    """Flatten nested voice-selection context into human-readable snippets."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        cleaned = value.strip()
+        return [cleaned] if cleaned else []
+    if isinstance(value, dict):
+        parts: list[str] = []
+        for key, nested in value.items():
+            for item in _flatten_voice_context(nested):
+                parts.append(f"{key} {item}")
+        return parts
+    if isinstance(value, (list, tuple, set)):
+        parts: list[str] = []
+        for nested in value:
+            parts.extend(_flatten_voice_context(nested))
+        return parts
+    return [str(value)]
+
+
+def _tokenize_voice_terms(*chunks: str) -> list[str]:
+    """Tokenize voice-search text into normalized terms."""
+    tokens: list[str] = []
+    for chunk in chunks:
+        for token in re.findall(r"[a-z0-9]+", chunk.lower()):
+            if len(token) < 3 or token in VOICE_STOPWORDS:
+                continue
+            tokens.append(token)
+    # Preserve first-seen order to keep rationales stable.
+    return list(dict.fromkeys(tokens))
+
+
+def _voice_preview_url(
+    voice: dict[str, Any],
+    *,
+    preferred_language: str | None = None,
+    preferred_locale: str | None = None,
+) -> str:
+    """Return the best catalog preview/sample URL when available."""
+    verified_languages = (
+        voice.get("verified_languages")
+        if isinstance(voice.get("verified_languages"), list)
+        else []
+    )
+    if preferred_locale:
+        for entry in verified_languages:
+            if (
+                str(entry.get("locale") or "").strip().lower()
+                == preferred_locale.strip().lower()
+                and str(entry.get("preview_url") or "").strip()
+            ):
+                return str(entry["preview_url"]).strip()
+    if preferred_language:
+        for entry in verified_languages:
+            if (
+                str(entry.get("language") or "").strip().lower()
+                == preferred_language.strip().lower()
+                and str(entry.get("preview_url") or "").strip()
+            ):
+                return str(entry["preview_url"]).strip()
+    for key in ("preview_url", "sample_url"):
+        value = str(voice.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _voice_labels_blob(labels: Any) -> str:
+    """Flatten ElevenLabs voice labels for scoring and display."""
+    if isinstance(labels, dict):
+        return " ".join(str(value) for value in labels.values() if value)
+    if isinstance(labels, list):
+        return " ".join(str(value) for value in labels if value)
+    if labels:
+        return str(labels)
+    return ""
+
+
+def _voice_search_blob(voice: dict[str, Any]) -> str:
+    """Combine voice metadata fields into a single scoring/search string."""
+    fields = [
+        str(voice.get("name") or ""),
+        str(voice.get("description") or ""),
+        str(voice.get("category") or ""),
+        _voice_labels_blob(voice.get("labels")),
+    ]
+    return " ".join(field for field in fields if field).strip().lower()
+
+
+def _build_voice_candidate(
+    voice: dict[str, Any],
+    *,
+    desired_terms: list[str],
+    context_terms: list[str],
+    clarity_hints: set[str],
+    penalty_terms: set[str],
+    preferred_language: str | None,
+    preferred_locale: str | None,
+    source: str,
+    source_label: str,
+) -> dict[str, Any] | None:
+    """Normalize a raw ElevenLabs voice into a scored preview candidate."""
+    preview_url = _voice_preview_url(
+        voice,
+        preferred_language=preferred_language,
+        preferred_locale=preferred_locale,
+    )
+    if not preview_url:
+        return None
+
+    voice_id = str(voice.get("voice_id") or "").strip()
+    if not voice_id:
+        return None
+
+    blob = _voice_search_blob(voice)
+    category = str(voice.get("category") or "").strip()
+    labels = voice.get("labels") if isinstance(voice.get("labels"), dict) else {}
+    matched_desired = [term for term in desired_terms if term in blob]
+    matched_context = [term for term in context_terms if term in blob and term not in matched_desired]
+    penalties = [term for term in penalty_terms if term in blob]
+    clarity_hits = [term for term in clarity_hints if term in blob]
+
+    score = 30
+    if category.lower() in {"premade", "professional", "generated"}:
+        score += 6
+    score += len(matched_desired) * 8
+    score += len(matched_context) * 4
+    score += len(clarity_hits) * 3
+    score -= len(penalties) * 7
+
+    rationale_bits: list[str] = []
+    if source_label:
+        rationale_bits.append(source_label)
+    if matched_desired:
+        rationale_bits.append(
+            "matches requested voice cues: " + ", ".join(matched_desired[:4])
+        )
+    elif matched_context:
+        rationale_bits.append(
+            "aligns with presentation context: " + ", ".join(matched_context[:4])
+        )
+    if clarity_hits:
+        rationale_bits.append(
+            "supports intelligible narration: " + ", ".join(clarity_hits[:3])
+        )
+    if not rationale_bits:
+        rationale_bits.append(
+            "kept as a conservative narration candidate with catalog preview availability"
+        )
+
+    return {
+        "voice_id": voice_id,
+        "name": str(voice.get("name") or voice_id),
+        "preview_url": preview_url,
+        "category": category or None,
+        "description": str(voice.get("description") or "").strip() or None,
+        "labels": labels,
+        "source": source,
+        "score": score,
+        "matched_terms": matched_desired or matched_context,
+        "rationale": "; ".join(rationale_bits),
+    }
+
+
+def _rank_voice_candidates(
+    voices: list[dict[str, Any]],
+    *,
+    desired_terms: list[str],
+    context_terms: list[str],
+    clarity_hints: set[str],
+    penalty_terms: set[str],
+    preferred_language: str | None,
+    preferred_locale: str | None,
+    limit: int,
+    exclude_voice_ids: set[str] | None = None,
+    source: str,
+    source_label: str,
+) -> list[dict[str, Any]]:
+    """Rank catalog voices for preview by metadata fit and preview availability."""
+    exclude_voice_ids = exclude_voice_ids or set()
+    candidates: list[dict[str, Any]] = []
+    for voice in voices:
+        voice_id = str(voice.get("voice_id") or "").strip()
+        if not voice_id or voice_id in exclude_voice_ids:
+            continue
+        candidate = _build_voice_candidate(
+            voice,
+            desired_terms=desired_terms,
+            context_terms=context_terms,
+            clarity_hints=clarity_hints,
+            penalty_terms=penalty_terms,
+            preferred_language=preferred_language,
+            preferred_locale=preferred_locale,
+            source=source,
+            source_label=source_label,
+        )
+        if candidate is not None:
+            candidates.append(candidate)
+    candidates.sort(key=lambda item: (-item["score"], item["name"].lower(), item["voice_id"]))
+    return candidates[:limit]
+
+
+def preview_voice_options(
+    *,
+    mode: str = "default_plus_alternatives",
+    presentation_attributes: dict[str, Any] | None = None,
+    previous_voice_id: str | None = None,
+    previous_voice_receipt_path: str | Path | None = None,
+    ideal_voice_description: str | None = None,
+    style_defaults: dict[str, Any] | None = None,
+    locked_manifest_path: str | Path | None = None,
+    locked_script_path: str | Path | None = None,
+    output_path: str | Path | None = None,
+    client: ElevenLabsClient | None = None,
+) -> dict[str, Any]:
+    """Build HIL-ready ElevenLabs catalog voice previews without generating audio."""
+    if mode not in VOICE_PREVIEW_MODES:
+        raise ValueError(
+            f"Unsupported voice preview mode: {mode}. Expected one of {sorted(VOICE_PREVIEW_MODES)}."
+        )
+    if client is None:
+        client = ElevenLabsClient()
+    style_defaults = style_defaults or load_style_guide_elevenlabs()
+    voices = client.list_voices()
+    voice_map = {
+        str(voice.get("voice_id") or "").strip(): voice
+        for voice in voices
+        if str(voice.get("voice_id") or "").strip()
+    }
+    profile_name, profile = _resolve_voice_preview_profile(
+        style_defaults=style_defaults,
+        presentation_attributes=presentation_attributes,
+        ideal_voice_description=ideal_voice_description,
+    )
+    preview_candidate_count = max(3, int(style_defaults.get("preview_candidate_count") or 3))
+    preferred_language = str(
+        profile.get("preferred_languages", [style_defaults.get("preferred_language", "en")])[0]
+        if profile.get("preferred_languages")
+        else style_defaults.get("preferred_language", "en")
+    ).strip()
+    preferred_locale = str(
+        profile.get("preferred_locales", ["en-US"])[0]
+        if profile.get("preferred_locales")
+        else "en-US"
+    ).strip()
+    preferred_terms = _merge_unique_terms(
+        [
+            "professional",
+            "clear",
+            "calm",
+            "warm",
+            "credible",
+            "educational",
+        ],
+        profile.get("preferred_tokens"),
+    )
+    penalty_terms = set(
+        _merge_unique_terms(list(VOICE_PENALTY_TERMS), profile.get("avoided_tokens"))
+    )
+    clarity_hints = set(
+        _merge_unique_terms(list(VOICE_CLARITY_HINTS), profile.get("preferred_tokens"))
+    )
+    profile_context_terms = _merge_unique_terms(
+        profile.get("preferred_use_cases"),
+        profile.get("preferred_accents"),
+        profile.get("preferred_ages"),
+        profile.get("preferred_genders"),
+    )
+
+    default_voice_id = str(style_defaults.get("default_voice_id") or "").strip() or None
+    resolved_previous_voice_id = str(previous_voice_id or "").strip() or None
+    prior_voice_source = {
+        "type": "none",
+        "voice_id": None,
+        "voice_name": None,
+        "fallback_reason": None,
+    }
+    if previous_voice_receipt_path:
+        receipt_path = Path(previous_voice_receipt_path)
+        if receipt_path.exists():
+            previous_receipt = _load_json_file(receipt_path)
+            resolved_previous_voice_id = (
+                str(previous_receipt.get("selected_voice_id") or "").strip()
+                or str(
+                    (previous_receipt.get("presentation_voice_source") or {}).get("voice_id")
+                    or ""
+                ).strip()
+                or None
+            )
+            if resolved_previous_voice_id:
+                prior_voice_source.update(
+                    {
+                        "type": "previous_receipt",
+                        "voice_id": resolved_previous_voice_id,
+                        "source_path": str(receipt_path),
+                    }
+                )
+        else:
+            prior_voice_source["fallback_reason"] = "previous voice receipt path not found"
+    context_chunks = _flatten_voice_context(presentation_attributes or {})
+    context_terms = _tokenize_voice_terms(*context_chunks)
+    baseline_terms = preferred_terms
+    enriched_context_terms = _merge_unique_terms(context_terms, profile_context_terms)
+
+    if mode == "description_driven_search":
+        if not ideal_voice_description:
+            raise ValueError(
+                "ideal_voice_description is required for description_driven_search mode."
+            )
+        desired_terms = _tokenize_voice_terms(ideal_voice_description, *context_chunks)
+        if not desired_terms:
+            desired_terms = baseline_terms
+        recommendations = _rank_voice_candidates(
+            voices,
+            desired_terms=desired_terms,
+            context_terms=enriched_context_terms or baseline_terms,
+            clarity_hints=clarity_hints,
+            penalty_terms=penalty_terms,
+            preferred_language=preferred_language,
+            preferred_locale=preferred_locale,
+            limit=preview_candidate_count,
+            source="description_recommendation",
+            source_label="recommended from operator voice description",
+        )
+        if len(recommendations) < preview_candidate_count:
+            raise ValueError(
+                f"Need {preview_candidate_count} previewable catalog voices for description-driven recommendations."
+            )
+        result = {
+            "status": "selection_required",
+            "selection_mode": "description_recommendation",
+            "mode": mode,
+            "profile_name": profile_name,
+            "default_voice_id": default_voice_id,
+            "previous_voice_id": resolved_previous_voice_id,
+            "ideal_voice_description": ideal_voice_description,
+            "presentation_context": context_chunks,
+            "candidate_voices": recommendations,
+            "catalog_voice_count": len(voices),
+            "selected_voice_id": None,
+            "selected_voice_name": None,
+            "selected_from_rank": None,
+            "operator_notes": None,
+            "override_reason": None,
+            "presentation_voice_source": prior_voice_source,
+        }
+        if locked_manifest_path:
+            result["locked_manifest_path"] = str(Path(locked_manifest_path))
+            result["locked_manifest_hash"] = _sha256_file(locked_manifest_path)
+        if locked_script_path:
+            result["locked_script_path"] = str(Path(locked_script_path))
+            result["locked_script_hash"] = _sha256_file(locked_script_path)
+        if output_path:
+            write_json_output(result, output_path)
+            result["output_path"] = str(Path(output_path))
+        return result
+
+    anchor_source = ""
+    anchor_source_label = ""
+    anchor_voice_id = None
+    if mode == "continuity_preview":
+        anchor_voice_id = resolved_previous_voice_id
+        if resolved_previous_voice_id:
+            anchor_source = "previous_presentation_voice"
+            anchor_source_label = "carry-forward voice from this presentation"
+        elif default_voice_id:
+            anchor_voice_id = default_voice_id
+            anchor_source = "style_guide_default"
+            anchor_source_label = "fallback default voice because no prior receipt resolved"
+            prior_voice_source["fallback_reason"] = (
+                prior_voice_source.get("fallback_reason")
+                or "no trusted previous presentation voice resolved"
+            )
+    elif default_voice_id:
+        anchor_voice_id = default_voice_id
+        anchor_source = "style_guide_default"
+        anchor_source_label = "style-guide default voice for a new presentation"
+
+    if mode == "continuity_preview" and resolved_previous_voice_id:
+        anchor_source = "previous_presentation_voice"
+        anchor_source_label = "carry-forward voice from this presentation"
+
+    candidate_voices: list[dict[str, Any]] = []
+    if anchor_voice_id and anchor_voice_id in voice_map:
+        anchor_candidate = _build_voice_candidate(
+            voice_map[anchor_voice_id],
+            desired_terms=baseline_terms,
+            context_terms=enriched_context_terms,
+            clarity_hints=clarity_hints,
+            penalty_terms=penalty_terms,
+            preferred_language=preferred_language,
+            preferred_locale=preferred_locale,
+            source=anchor_source,
+            source_label=anchor_source_label,
+        )
+        if anchor_candidate is not None:
+            candidate_voices.append(anchor_candidate)
+            prior_voice_source.update(
+                {
+                    "type": anchor_source,
+                    "voice_id": anchor_candidate["voice_id"],
+                    "voice_name": anchor_candidate["name"],
+                }
+            )
+        elif anchor_source == "previous_presentation_voice":
+            prior_voice_source["fallback_reason"] = (
+                prior_voice_source.get("fallback_reason")
+                or "prior voice lacks a current preview URL"
+            )
+    elif anchor_voice_id and anchor_source == "previous_presentation_voice":
+        prior_voice_source["fallback_reason"] = (
+            prior_voice_source.get("fallback_reason")
+            or "previous presentation voice not available in the current catalog"
+        )
+
+    alternative_terms = enriched_context_terms or baseline_terms
+    exclude = {candidate["voice_id"] for candidate in candidate_voices}
+    alternatives = _rank_voice_candidates(
+        voices,
+        desired_terms=baseline_terms,
+        context_terms=alternative_terms,
+        clarity_hints=clarity_hints,
+        penalty_terms=penalty_terms,
+        preferred_language=preferred_language,
+        preferred_locale=preferred_locale,
+        limit=max(0, preview_candidate_count - len(candidate_voices)),
+        exclude_voice_ids=exclude,
+        source="presentation_attribute_alternative",
+        source_label="APP-selected alternative based on presentation attributes",
+    )
+    candidate_voices.extend(alternatives)
+
+    if len(candidate_voices) < preview_candidate_count:
+        filler = _rank_voice_candidates(
+            voices,
+            desired_terms=baseline_terms,
+            context_terms=baseline_terms,
+            clarity_hints=clarity_hints,
+            penalty_terms=penalty_terms,
+            preferred_language=preferred_language,
+            preferred_locale=preferred_locale,
+            limit=preview_candidate_count - len(candidate_voices),
+            exclude_voice_ids={candidate["voice_id"] for candidate in candidate_voices},
+            source="fallback_alternative",
+            source_label="fallback narration candidate with catalog preview",
+        )
+        candidate_voices.extend(filler)
+
+    candidate_voices = candidate_voices[:preview_candidate_count]
+    if len(candidate_voices) < preview_candidate_count:
+        raise ValueError(
+            f"Need {preview_candidate_count} previewable catalog voices for governed voice preview."
+        )
+
+    for index, candidate in enumerate(candidate_voices, start=1):
+        candidate["rank"] = index
+        candidate["selection_basis"] = (
+            "primary continuity/default preview" if index == 1 else "APP-selected alternative"
+        )
+
+    result = {
+        "status": "selection_required",
+        "selection_mode": "default_and_alternatives",
+        "mode": mode,
+        "profile_name": profile_name,
+        "default_voice_id": default_voice_id,
+        "previous_voice_id": resolved_previous_voice_id,
+        "presentation_context": context_chunks,
+        "candidate_voices": candidate_voices,
+        "catalog_voice_count": len(voices),
+        "selected_voice_id": None,
+        "selected_voice_name": None,
+        "selected_from_rank": None,
+        "operator_notes": None,
+        "override_reason": None,
+        "presentation_voice_source": prior_voice_source,
+    }
+    if locked_manifest_path:
+        result["locked_manifest_path"] = str(Path(locked_manifest_path))
+        result["locked_manifest_hash"] = _sha256_file(locked_manifest_path)
+    if locked_script_path:
+        result["locked_script_path"] = str(Path(locked_script_path))
+        result["locked_script_hash"] = _sha256_file(locked_script_path)
+    if output_path:
+        write_json_output(result, output_path)
+        result["output_path"] = str(Path(output_path))
+    return result
+
+
+def finalize_voice_selection(
+    preview_receipt_path: str | Path,
+    *,
+    selected_voice_id: str,
+    output_path: str | Path | None = None,
+    operator_notes: str | None = None,
+    override_reason: str | None = None,
+) -> dict[str, Any]:
+    """Persist the operator's selected voice from a preview receipt."""
+    receipt = _load_json_file(preview_receipt_path)
+    candidates = (
+        receipt.get("candidate_voices")
+        if isinstance(receipt.get("candidate_voices"), list)
+        else []
+    )
+    selected_candidate = next(
+        (candidate for candidate in candidates if candidate.get("voice_id") == selected_voice_id),
+        None,
+    )
+    if selected_candidate is None:
+        raise ValueError("Selected voice_id is not present in the preview candidate set.")
+
+    selected_rank = int(selected_candidate.get("rank") or 0)
+    if selected_rank != 1 and not str(override_reason or "").strip():
+        raise ValueError(
+            "override_reason is required when selecting a non-primary preview candidate."
+        )
+
+    decision = dict(receipt)
+    decision.update(
+        {
+            "status": "approved",
+            "selected_voice_id": selected_candidate.get("voice_id"),
+            "selected_voice_name": selected_candidate.get("name"),
+            "selected_from": selected_candidate.get("source"),
+            "selected_from_rank": selected_rank,
+            "preview_url": selected_candidate.get("preview_url"),
+            "selection_rationale": selected_candidate.get("rationale"),
+            "operator_notes": operator_notes,
+            "override_reason": override_reason,
+            "voice_preview_receipt_path": str(Path(preview_receipt_path)),
+            "approved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+    target_path = Path(output_path) if output_path else Path(preview_receipt_path)
+    write_json_output(decision, target_path)
+    decision["output_path"] = str(target_path)
+    return decision
 
 
 def build_pronunciation_pls(
@@ -388,6 +1072,14 @@ def generate_music(
     return {"status": "success", "music_path": str(output_path)}
 
 
+def write_json_output(payload: dict[str, Any], output_path: str | Path) -> Path:
+    """Persist structured JSON output for Marcus-managed receipts."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return output_path
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build a CLI for agent-driven execution and smoke checks."""
     parser = argparse.ArgumentParser(
@@ -421,6 +1113,33 @@ def build_parser() -> argparse.ArgumentParser:
     manifest.add_argument("--output-dir")
     manifest.add_argument("--default-voice-id")
 
+    voice_preview = subparsers.add_parser(
+        "voice-preview",
+        help="Return HIL-ready ElevenLabs catalog preview options without synthesis",
+    )
+    voice_preview.add_argument(
+        "--mode",
+        choices=sorted(VOICE_PREVIEW_MODES),
+        default="default_plus_alternatives",
+    )
+    voice_preview.add_argument("--presentation-attributes-json")
+    voice_preview.add_argument("--previous-voice-id")
+    voice_preview.add_argument("--previous-voice-receipt")
+    voice_preview.add_argument("--ideal-voice-description")
+    voice_preview.add_argument("--locked-manifest")
+    voice_preview.add_argument("--locked-script")
+    voice_preview.add_argument("--output-path")
+
+    voice_select = subparsers.add_parser(
+        "voice-select",
+        help="Persist the operator's selected voice from preview candidates",
+    )
+    voice_select.add_argument("--preview-receipt", required=True)
+    voice_select.add_argument("--selected-voice-id", required=True)
+    voice_select.add_argument("--output-path")
+    voice_select.add_argument("--operator-notes")
+    voice_select.add_argument("--override-reason")
+
     return parser
 
 
@@ -448,6 +1167,30 @@ def main(argv: list[str] | None = None) -> int:
                 args.manifest_path,
                 output_dir=args.output_dir,
                 default_voice_id=args.default_voice_id,
+            )
+        elif args.command == "voice-preview":
+            attributes = (
+                json.loads(args.presentation_attributes_json)
+                if args.presentation_attributes_json
+                else None
+            )
+            result = preview_voice_options(
+                mode=args.mode,
+                presentation_attributes=attributes,
+                previous_voice_id=args.previous_voice_id,
+                previous_voice_receipt_path=args.previous_voice_receipt,
+                ideal_voice_description=args.ideal_voice_description,
+                locked_manifest_path=args.locked_manifest,
+                locked_script_path=args.locked_script,
+                output_path=args.output_path,
+            )
+        elif args.command == "voice-select":
+            result = finalize_voice_selection(
+                args.preview_receipt,
+                selected_voice_id=args.selected_voice_id,
+                output_path=args.output_path,
+                operator_notes=args.operator_notes,
+                override_reason=args.override_reason,
             )
         else:
             result = generate_sound_effect(

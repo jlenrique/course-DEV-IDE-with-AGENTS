@@ -26,6 +26,9 @@ tool_parameters:
 
   elevenlabs:
     default_voice_id: ""
+    default_voice_name: ""
+    voice_selection_profile: "clinical-instructional"  # see state/config/elevenlabs-voice-profiles.yaml
+    preview_candidate_count: 3
     stability: 0.5
     similarity_boost: 0.75
     style: 0.0

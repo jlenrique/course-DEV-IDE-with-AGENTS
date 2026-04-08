@@ -653,6 +653,7 @@ Required HIL review (Storyboard B, before audio/script finalization):
   - Segment manifest: `[BUNDLE_PATH]/segment-manifest.yaml`
 - Present manifest-derived summary for slide+script alignment review.
 - Require explicit operator approval before downstream audio/script finalization (for example ElevenLabs generation).
+- Before any downstream ElevenLabs synthesis, insert the same catalog-preview voice-selection checkpoint used by the motion-enabled workflow: anchor on the previously approved lesson voice when available or the style-guide default otherwise, provide two APP-selected alternatives, and block synthesis until the operator has a recorded lesson-level voice decision tied to the locked script/manifest hashes.
 
 Fallback (detailed):
 - If handoff validator fails:

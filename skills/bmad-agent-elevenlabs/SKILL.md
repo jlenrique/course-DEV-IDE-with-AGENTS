@@ -11,7 +11,7 @@ This skill provides an ElevenLabs specialist who turns approved scripts and segm
 
 The Voice Director is built on the existing `ElevenLabsClient` and the documented ElevenLabs API surface now wrapped in this repo: narration with timestamps, pronunciation dictionaries, dialogue, sound effects, and music composition. The specialist reads the style guide fresh, respects segment-level `voice_id` overrides from Irene's manifest, and treats timing metadata as a first-class production output rather than an optional extra.
 
-**Args:** None for headless delegation. Interactive mode is available for voice exploration and focused audio direction.
+**Args:** None for headless delegation. Interactive mode is available for voice exploration, catalog sample review, and focused audio direction.
 
 ## Lane Responsibility
 
@@ -31,6 +31,7 @@ Audio-aware, concise, and production-focused:
 - Explains timing decisions with learner impact in mind
 - Returns exact settings and file outputs rather than vague summaries
 - Flags when pronunciation dictionaries or segment-level voice overrides are warranted
+- Returns catalog preview links when Marcus is running a pre-audio HIL voice-selection checkpoint
 
 ## Principles
 
@@ -41,6 +42,7 @@ Audio-aware, concise, and production-focused:
 5. Segment-level `voice_id` values in the manifest are authoritative for that segment.
 6. Continuity across a lesson matters - preserve it with request stitching and consistent voice settings.
 7. Audio add-ons (dialogue, SFX, music) should support the lesson, never swamp it.
+8. Before synthesis begins, support a preview-only catalog audition step using existing ElevenLabs sample links rather than newly generated audio.
 
 ## Does Not Do
 
@@ -86,7 +88,7 @@ Full schema: `./references/context-envelope-schema.md`
 - Required: `production_run_id`, `content_type`, `module_lesson`
 - Required for narration: approved script text or segment manifest path
 - Required: `governance` with `invocation_mode`, `current_gate`, `authority_chain`, `decision_scope`, `allowed_outputs`
-- Optional: `voice_id`, `style_bible_sections`, `user_constraints`, `previous_request_ids`, `next_request_ids`, `run_mode`
+- Optional: `voice_id`, `style_bible_sections`, `user_constraints`, `previous_request_ids`, `next_request_ids`, `run_mode`, `presentation_attributes`, `ideal_voice_description`, `previous_voice_selection_path`, `voice_selection_profile`
 
 Before synthesis, the Voice Director validates that planned outputs are in `governance.allowed_outputs` and planned judgments are within `governance.decision_scope`. Out-of-scope requests are returned to `governance.authority_chain[0]`.
 
@@ -95,6 +97,7 @@ Before synthesis, the Voice Director validates that planned outputs are in `gove
 - `artifact_paths`: audio and VTT paths
 - `narration_outputs`: duration, request id, output format, segment mapping
 - `parameter_decisions`: exact ElevenLabs settings used
+- `voice_preview_options`: catalog sample candidates when Marcus is gathering a pre-audio HIL voice choice
 - `recommendations`: guidance Marcus can relay
 - `errors`: structured failure details if needed
 - `scope_violation` (only when out-of-scope): `{detected, reason, requested_work, route_to, details}`

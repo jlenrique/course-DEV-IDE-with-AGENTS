@@ -510,6 +510,287 @@ Required HIL review:
 
 ---
 
+## 9) Gate 3 Decision - Lock the Approved Pass 2 Package
+
+This prompt begins only after Storyboard B is explicitly approved.
+
+```
+Gate 3 decision: [APPROVED or REVISION].
+
+If APPROVED:
+- lock `[BUNDLE_PATH]/narration-script.md`
+- lock `[BUNDLE_PATH]/segment-manifest.yaml`
+- lock `[BUNDLE_PATH]/pass2-envelope.json`
+- lock the final Motion Gate-approved `[BUNDLE_PATH]/motion_plan.yaml`
+- record that downstream audio/composition work must use the approved Storyboard B package as-is
+
+If REVISION:
+- list only the affected segment ids / slide ids and required edits
+- patch only the named artifacts
+- rerun Prompt 8 validation and regenerate Storyboard B before any downstream spend
+```
+
+Required governance at this stage:
+- treat `authorized-storyboard.json` plus the approved local winner-slide PNGs as the only slide identity source of truth
+- do not use `storyboard/index.html`, unresolved review payloads, or stale Pass 2 artifacts as execution inputs
+- preserve the exact Motion Gate-approved `motion_asset_path` for every non-static segment
+- do not re-open Gate 2M, motion generation, or Motion Gate from downstream prompts unless the operator explicitly redirects the run
+
+Motion-specific lock rule:
+- Gate 3 approval must lock not only the script and manifest, but also the approved `motion_plan.yaml` bindings for every non-static segment
+
+---
+
+## 10) Fidelity + Quality Before Additional Spend
+
+Marcus, run the downstream readiness checks on the Gate 3-approved package before ElevenLabs and compositor spend.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json`
+- locked `[BUNDLE_PATH]/motion_plan.yaml`
+- Storyboard B approval record
+
+Required Marcus behavior:
+- present the most recent Prompt 8 Vera G4 receipt if the artifacts are unchanged
+- if any Pass 2 artifact changed after Prompt 8, rerun Vera G4 on the changed package before continuing
+- run Quinn-R on the approved Pass 2 package before ElevenLabs spend
+- in motion runs, include motion-cue alignment and approved-asset-path drift checks against `motion_plan.yaml`
+
+Required checks:
+- no G4 critical findings remain open
+- Quinn-R sees no blocker that would make audio generation wasteful
+- every non-static segment still preserves:
+  - `visual_file` as the approved still/poster-frame reference
+  - `motion_asset_path` as the approved playback asset
+  - motion-first narration intent for `visual_mode: video`
+
+Go/no-go:
+- no go if motion bindings drifted from `motion_plan.yaml`
+- no go if any non-static segment would require regenerated copy or regenerated motion to remain coherent
+
+---
+
+## 11) ElevenLabs Voice Selection HIL - Catalog Preview Before Spend
+
+Marcus, before actual ElevenLabs narration generation, run the Voice Director in preview-only mode on the locked Gate 3 package.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json`
+- voice continuity state for this presentation when available
+- style-guide ElevenLabs defaults for new-presentation fallback
+- governed recommendation profile from `state/config/elevenlabs-voice-profiles.yaml`
+- presentation attributes that matter for voice fit: audience, tone, content type, pacing expectations
+
+Required Marcus behavior:
+- delegate a preview-only request to the Voice Director; do not generate any new audio in this prompt
+- provide the operator with exactly one of these review paths:
+  - `continuity_preview` or `default_plus_alternatives`:
+    - previously used voice for this presentation, if one exists
+    - otherwise the style-guide default voice for a new presentation
+    - plus two APP-selected alternatives based on presentation attributes
+  - `description_driven_search`:
+    - if the operator provides a narrative description of the ideal voice, return three recommended catalog voices instead
+- present catalog sample links only; these must be existing ElevenLabs preview/sample URLs, not newly generated clips
+- bind the preview receipt to the locked Gate 3 package by recording the script/manifest hashes in the preview artifact
+
+Suggested command surface:
+
+```powershell
+python skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-preview `
+  --mode [continuity_preview|default_plus_alternatives|description_driven_search] `
+  --locked-manifest [BUNDLE_PATH]/segment-manifest.yaml `
+  --locked-script [BUNDLE_PATH]/narration-script.md `
+  --presentation-attributes-json "{...}" `
+  [--previous-voice-receipt [BUNDLE_PATH]/voice-selection.json] `
+  [--ideal-voice-description "..."] `
+  --output-path [BUNDLE_PATH]/voice-preview-options.json
+```
+
+Required writes:
+- `[BUNDLE_PATH]/voice-preview-options.json`
+- `[BUNDLE_PATH]/voice-selection-review.md`
+- after operator approval: `[BUNDLE_PATH]/voice-selection.json`
+
+Suggested decision command surface:
+
+```powershell
+python skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-select `
+  [BUNDLE_PATH]/voice-preview-options.json `
+  --selected-voice-id [VOICE_ID] `
+  --output-path [BUNDLE_PATH]/voice-selection.json `
+  [--operator-notes "..."] `
+  [--override-reason "..."]
+```
+
+Required fields in `voice-selection.json`:
+- `selected_voice_id`
+- `selection_mode`
+- `selected_from`
+- `preview_url`
+- `selection_rationale`
+- `selected_from_rank`
+- `locked_manifest_hash`
+- `locked_script_hash`
+- `override_reason` when the operator selects a non-primary candidate
+
+Governance rules:
+- keep the Gate 3-approved root `narration-script.md` and `segment-manifest.yaml` locked
+- record lesson-level voice choice separately in `voice-selection.json`; do not treat voice selection as a Storyboard B rewrite
+- preserve any explicit segment-level `voice_id` overrides already present in the locked manifest
+
+Go/no-go:
+- no go to ElevenLabs synthesis until the operator has approved a lesson-level default voice or explicitly accepted an existing prior selection
+- no go if any presented candidate lacks a working catalog preview/sample URL
+- no go if the preview receipt hashes no longer match the locked script/manifest at synthesis time
+
+---
+
+## 12) ElevenLabs - Locked Manifest Audio Generation
+
+Marcus, delegate the Voice Director to run manifest-driven narration from the locked Gate 3 package.
+
+Inputs:
+- downstream mutable manifest path: `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- source of truth to copy from: locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/narration-script.md`
+- approved `[BUNDLE_PATH]/voice-selection.json`
+- style-guide defaults and any approved pronunciation dictionaries
+
+Required Marcus behavior before delegation:
+- create or refresh `[BUNDLE_PATH]/assembly-bundle/`
+- designate `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml` as the downstream mutable manifest for audio/composition
+- if needed, copy the locked root manifest into the assembly bundle before ElevenLabs so the same manifest path is mutated downstream
+- keep segment order and segment ids frozen
+- verify `voice-selection.json.locked_manifest_hash` and `voice-selection.json.locked_script_hash` still match the locked Gate 3 package before synthesis begins
+- pass the approved lesson-level `selected_voice_id` from `voice-selection.json` as the default synthesis voice without mutating the locked root manifest
+
+Required outputs:
+- `[BUNDLE_PATH]/assembly-bundle/audio/`
+- `[BUNDLE_PATH]/assembly-bundle/captions/`
+- updated `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml` with:
+  - `narration_duration`
+  - `narration_file`
+  - `narration_vtt`
+  - `sfx_file` where applicable
+
+Motion-specific rules:
+- this workflow is already in the motion-enabled branch; do not trigger new motion routing or regeneration here
+- preserve all approved motion bindings already present in the manifest
+- do not overwrite `visual_file`, `motion_asset_path`, `motion_type`, `motion_duration_seconds`, or `motion_status`
+- for segments where `motion_type != static`, treat the clip as silent-by-omission; ElevenLabs owns narration and intentional audio
+
+Voice rules:
+- use the locked manifest only; do not regenerate copy ad hoc during ElevenLabs execution
+- preserve segment order continuity across requests
+- prefer pronunciation dictionaries over one-off wording hacks for medical terminology
+
+Go/no-go:
+- no go if the Voice Director would need to rewrite narration text instead of synthesizing the approved text
+
+---
+
+## 13) Quinn-R Pre-Composition - Audio, Caption, and Motion Alignment
+
+Marcus, run Quinn-R pre-composition review after ElevenLabs completes and before compositor packaging.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- generated audio and VTT assets
+- approved still PNG references
+- approved motion clips for every non-static segment
+
+Required Quinn-R checks:
+- narration WPM is within the expected range
+- VTT timestamps are monotonic
+- segment coverage is complete
+- when `motion_type != static`, `motion_duration_seconds` is coherent against `narration_duration`
+- video/animation duration vs narration duration stays within accepted tolerance, or explicit edit guidance is produced
+- required audio/SFX/music files referenced by the manifest exist
+
+Motion-specific rules:
+- treat `narration_duration` as the authoritative timing signal for downstream composition
+- do not silently retime, overwrite, or replace approved motion clips inside this prompt
+- if a non-static segment has material duration mismatch or unreadable `motion_asset_path`, stop and report the exact segment ids
+- remediation target must be explicit:
+  - ElevenLabs if the issue is narration pacing or audio coverage
+  - motion/editing decision if the issue is clip fit against approved narration
+
+Go/no-go:
+- no go to compositor until Quinn-R pre-composition passes or the operator explicitly accepts the reported non-blocking notes
+
+---
+
+## 14) Compositor - Motion-Aware Assembly Bundle + Descript Guide
+
+Marcus, build the final assembly bundle for Descript from the pre-composition-approved manifest.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- generated audio/captions
+- approved still PNG references
+- approved motion assets for non-static segments
+
+Required Marcus/compositor behavior:
+- run compositor `sync-visuals` on `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- localize approved stills into `[BUNDLE_PATH]/assembly-bundle/visuals/`
+- localize approved motion assets into `[BUNDLE_PATH]/assembly-bundle/motion/`
+- regenerate `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- confirm the guide points at the localized bundle paths, not the original Gary/motion source trees
+
+Required assembly-bundle contents:
+- `segment-manifest.yaml`
+- `DESCRIPT-ASSEMBLY-GUIDE.md`
+- `audio/`
+- `captions/`
+- `visuals/`
+- `motion/` when any segment is non-static
+
+Motion-specific rules:
+- keep `visual_file` bound to the approved still/poster-frame reference
+- keep `motion_asset_path` bound to the approved playback asset
+- do not collapse still and motion references into one field
+- the assembly guide must include per-segment placement/sync instructions for motion segments, using the approved clip on the visual track and the still as the reference/poster asset
+
+Packaging rule:
+- use the actual compositor output layout for handoff: `visuals/` plus `motion/`
+
+---
+
+## 15) Operator Handoff - Descript Package Ready
+
+Marcus, present the final handoff package for the human operator who will assemble/edit in Descript.
+
+Required handoff receipt:
+- run id
+- assembly bundle path
+- manifest path
+- Descript guide path
+- audio status
+- captions status
+- visuals status
+- motion status
+- open notes, if any
+
+Required operator-facing instructions:
+- open `DESCRIPT-ASSEMBLY-GUIDE.md`
+- import assets from `audio/`, `captions/`, `visuals/`, and `motion/` when present
+- follow manifest/guide segment order exactly
+- treat the approved motion clip as the playback visual for non-static segments and the approved still as the poster/reference asset
+- do not improvise new narration copy or new motion assets during Descript assembly
+
+Completion condition:
+- this prompt pack's required path is complete once the assembly bundle and guide are ready for Descript handoff
+
+Optional post-handoff operations:
+- append the run update to the trial log
+- execute `docs/workflow/production-session-wrapup.md` if the operator wants to close the shift
+
+---
+
 ## Mandatory Receipts Per Stage
 
 Require Marcus to emit a compact receipt for every prompt:

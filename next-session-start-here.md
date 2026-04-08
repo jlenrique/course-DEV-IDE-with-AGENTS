@@ -3,46 +3,51 @@
 > Scope note: this file is the hot-start for the next repo session.
 > For production operations, pair it with `docs/operations-context.md` and the workflow docs it points to.
 
-## Current State (as of 2026-04-08, post-closeout target)
+## Current State (as of 2026-04-08, post-closeout)
 
 - Active branch after closeout: `master`
 - Expected git state after closeout: clean working tree, `master` pushed and aligned with `origin/master`
-- Active tracked run to resume: `C1-M1-PRES-20260406`
+- Last completed tracked run: `C1-M1-PRES-20260406` — **COMPLETED** (all 15 prompts executed, assembly bundle packaged)
 - Canonical bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion`
-- Run status in APP tracking: `blocked`
-- Stop point: Storyboard B is complete and published for HIL review; downstream audio, ElevenLabs generation, and assembly have not started
-- Workflow family in use: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
-- Gate summary:
+- Run status in APP tracking: `completed`
+- Workflow family used: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- Gate summary (all passed):
   - Gate 2: approved
   - Gate 2M: approved
   - Motion Gate: approved
   - Irene Pass 2 validator: passed
   - Vera G4: passed
-  - Storyboard B: ready for explicit HIL disposition
+  - Storyboard B: HIL approved
+  - Quinn-R Pre-Composition: PASS
+  - Audio generation: 10/10 segments synthesized
+  - Compositor: assembly bundle packaged
+  - Operator handoff: complete
 - Motion summary:
   - `MOTION_ENABLED: true`
-  - only slide 1 is non-static
-  - approved downstream motion asset is fixed and should remain the source of truth
-- Superseded run note: `C1-M1-PRES-20260404` was cancelled during closeout so the ledger now points to a single canonical tracked run
+  - Only slide 1 is non-static
+  - Approved downstream motion asset is in assembly-bundle/motion/
+- Voice: Marc B. Laurent (voice_id=o0t0Wz5oSDuuCV6p7rba)
 
 ## Immediate Next Action
 
-1. Checkout the next working branch and resume the blocked tracked run:
-   - `git checkout master`
-   - `git pull --ff-only origin master`
-   - `git checkout ops/c1m1-trial-storyboard-b-hil`
-2. Review Storyboard B and record an explicit HIL decision:
-   - approve as-is and proceed
-   - request storyboard/script remediation before audio
-3. If approved, reopen `C1-M1-PRES-20260406` from its blocked state and proceed to the downstream audio stage; do not rerun Irene Pass 2 unless HIL feedback actually requires it.
-4. Preserve the approved slide-1 motion asset binding exactly as-is throughout downstream work.
+1. Checkout the next working branch:
+   ```bash
+   git checkout master
+   git pull --ff-only origin master
+   git checkout -b ops/next-session
+   ```
+2. Decide what to work on next:
+   - **Option A:** Begin a new production run (new lesson or re-run with different content).
+   - **Option B:** Perform Descript composition using the assembly bundle (human operator task — see assembly guide at `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`).
+   - **Option C:** Address backlog items from `_bmad-output/implementation-artifacts/sprint-status.yaml` (Epics 15-18 are in backlog).
+3. The `C1-M1-PRES-20260406` assembly bundle is ready for human Descript composition at any time.
 
 ## Branch Metadata
 
 ```bash
 git checkout master
 git pull --ff-only origin master
-git checkout ops/c1m1-trial-storyboard-b-hil
+git checkout -b ops/next-session
 ```
 
 ## Hot-Start Paths
@@ -52,32 +57,18 @@ git checkout ops/c1m1-trial-storyboard-b-hil
 - `docs/workflow/production-session-wrapup.md`
 - `docs/workflow/human-in-the-loop.md`
 - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/run-constants.yaml`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/pass2-envelope.json`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/narration-script.md`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/segment-manifest.yaml`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/motion_plan.yaml`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/storyboard.json`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/index.html`
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/vera-g4-fidelity-trace-report.yaml`
-- `exports/storyboard-C1-M1-PRES-20260406-storyboard-b-rerender-20260408-0433-publish-receipt.json`
-- Approved slide-1 motion asset:
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/motion/apc-c1m1-tejal-20260406-motion-card-01_motion_8s_slowtail.mp4`
-- Live Storyboard B review URL:
-  - `https://jlenrique.github.io/assets/storyboards/storyboard-b-rerender-20260408-0433/C1-M1-PRES-20260406/index.html`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/assembly-bundle/segment-manifest.yaml`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (Epics 15-18 backlog)
 
 ## Open Items To Carry Forward
 
-- Storyboard B still needs explicit HIL disposition before any audio generation or assembly.
-- If HIL requests changes, decide whether the fix is Storyboard-only or requires Irene Pass 2 regeneration.
-- Downstream audio stage has not started; no ElevenLabs artifacts should be assumed to exist for this run.
-- `run_reporting.py` was repaired for mixed naive/offset-aware timestamps during closeout; if the next session relies on reporting, use the updated script and keep timestamps offset-aware where possible.
-- `state/config/runs/C1-M1-PRES-20260406/` now exists as the run-scoped context directory for the canonical tracked run.
+- Assembly bundle for C1-M1-PRES-20260406 is ready but has not yet been composed in Descript.
+- Epics 15-18 remain in backlog in sprint-status.yaml.
+- `run_reporting.py` was repaired for mixed naive/offset-aware timestamps in the prior session; use the updated script.
 
 ## Known Gotchas
 
 - For motion segments, `visual_file` remains the approved still slide and `motion_asset_path` carries the approved playback MP4; do not collapse them into one field.
-- For motion-first narration, the script may use the slide once for orientation, but should primarily speak to the visible action in the approved clip.
-- Storyboard B now intentionally shows both the approved still and a paused motion preview for slide 1; that is the intended review model, not a temporary workaround.
-- The run-scoped perception cache for `C1-M1-PRES-20260406` was cleared during closeout because it held stale low-confidence slide entries from before the repaired Pass 2.
 - PowerShell may surface stderr as `NativeCommandError`; check `$LASTEXITCODE` before assuming a command failed.
+- The `--voice-selection` flag on `elevenlabs_operations.py` requires a matching `voice-selection.json` in the bundle with hash verification.

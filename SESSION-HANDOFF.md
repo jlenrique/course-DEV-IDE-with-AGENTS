@@ -1,136 +1,96 @@
-# Session Handoff - 2026-04-08
+# Session Handoff - 2026-04-08 (Session 2: Production Run Completion)
 
 ## Session Mode
 
-- Execution mode: tracked production trial remediation, workflow hardening, and closeout
+- Execution mode: tracked production run to completion (Prompts 10-15)
 - Quality preset: production
 - Branch at closeout target: `master`
-- BMad workflow: active tracked motion run paused cleanly before downstream audio
+- BMad workflow: full prompt pack v4.2 execution path completed for C1-M1-PRES-20260406
 
 ## Session Summary
 
-This session resumed the real tracked motion run, repaired the Irene Pass 2 and Storyboard B handoff path, hardened the motion-over-slide contract, published the updated Storyboard B review surface, reconciled APP runtime tracking to the canonical `C1-M1-PRES-20260406` run, and closed the shift with the run explicitly blocked for HIL review before audio.
+This session completed the entire remaining prompt pack v4.2 execution path for the first tracked motion-enabled production run `C1-M1-PRES-20260406`. Starting from the HIL-approved Storyboard B, the session executed Prompts 10 (Fidelity + Quality), 11 (Voice Selection HIL — Marc B. Laurent selected), 12 (ElevenLabs Locked Manifest Audio Generation — 10 segments synthesized), Party Mode review on 11-12, then Prompts 13 (Quinn-R Pre-Composition — PASS), 14 (Compositor — motion-aware sync-visuals + guide), and 15 (Operator Handoff — assembly bundle packaged and ready). The run is now **completed** with a fully packaged Descript assembly bundle.
 
 ## Completed Outcomes
 
-### Sensory bridge and motion perception hardening
+### Full prompt pack v4.2 execution (Prompts 10-15)
 
-- Fixed `skills/sensory-bridges/scripts/video_to_agent.py` so ffmpeg resolves from the `.venv` imageio bundle when it is not on `PATH`.
-- Added fallback frame sampling for continuous-shot motion clips where scene detection alone is too weak.
-- Verified the approved slide-1 slow-tail clip with high-confidence motion perception and preserved that asset as the fixed motion source of truth.
-- Added/updated regression coverage in:
-  - `skills/sensory-bridges/scripts/tests/test_video_to_agent.py`
-  - `skills/sensory-bridges/scripts/tests/test_bridge_utils.py`
+- **Prompt 10 (Fidelity + Quality):** Vera G4 + Quinn-R quality checks passed — GO to voice selection.
+- **Prompt 11 (Voice Selection HIL):** Voice preview generated, Marc B. Laurent selected (voice_id=o0t0Wz5oSDuuCV6p7rba, score 92/100), recorded in `voice-selection.json`.
+- **Prompt 12 (ElevenLabs Locked Manifest Audio Generation):** All 10 segments synthesized successfully from locked segment-manifest.yaml. Audio files (MP3) + caption files (VTT) written to assembly-bundle.
+- **Party Mode review (Prompts 11-12):** Implemented `--voice-selection` CLI flag for ElevenLabs operations, progress callback, 4 new tests (23/23 pass), updated docs.
+- **Prompt 13 (Quinn-R Pre-Composition):** PASS with 1 warn (seg-02 WPM 201, 1 over ceiling) and 1 note (seg-01 motion 5.0s vs narration 28.0s — by-design B-roll overlay). GO to compositor.
+- **Prompt 14 (Compositor):** Motion-aware sync-visuals localized 10 stills + 1 MP4 into assembly-bundle. Guide generated with video track placement instructions. All 6 required assembly-bundle items present.
+- **Prompt 15 (Operator Handoff):** Handoff receipt emitted. Assembly bundle fully packaged at `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/assembly-bundle/`.
 
-### Pass 2 and manifest contract hardening
+### ElevenLabs CLI enhancements
 
-- Tightened `validate-irene-pass2-handoff.py` so Pass 2 now fails unless every authorized slide has manifest coverage, non-empty narration text, traceable visual cues, and motion confirmation for non-static segments.
-- Updated the motion workflow prompt pack and related docs to make Prompt 8 fail closed for reruns and motion-first narration.
-- Re-ran the active motion bundle to fresh canonical Pass 2 outputs at:
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/narration-script.md`
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/segment-manifest.yaml`
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/perception-artifacts.json`
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/pass2-envelope.json`
+- Added `--voice-selection` CLI flag for hash-verified voice selection before audio generation.
+- Added progress callback support to `elevenlabs_operations.py`.
+- 4 new tests added (23/23 total pass).
+- Updated production-prompt-pack-v4.2 §12 suggested command surface, user-guide Step 11 row, dev-guide ElevenLabs CLI section, SKILL.md manifest narration row.
 
-### Storyboard B design/build/testing
+### Structural walk remediation
 
-- Hardened Storyboard B generation so motion segments expose both the approved still and the approved playback clip.
-- Added explicit motion preview/player support, motion metadata, and match-state details in `generate-storyboard.py`.
-- Established the downstream contract that `visual_file` remains the approved still while `motion_asset_path` carries the approved MP4.
-- Re-rendered the canonical Storyboard B files on disk:
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/storyboard.json`
-  - `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/index.html`
-- Published the latest review snapshot to:
-  - `https://jlenrique.github.io/assets/storyboards/storyboard-b-rerender-20260408-0433/C1-M1-PRES-20260406/index.html`
+- Fixed motion prompt-pack v4.2 missing needle text ("Regenerate Storyboard B with script context before downstream audio finalization.") so the structural walk `motion` workflow passes cleanly.
 
-### Runtime reconciliation and shift close
+### Runtime state reconciliation
 
-- Registered `C1-M1-PRES-20260406` in `state/runtime/coordination.db` as the canonical tracked run.
-- Marked that run `blocked` with current stage `storyboard-b-hil-review`.
-- Added quality-gate and coordination records for the blocked close.
-- Wrote an inactive baton close marker for `C1-M1-PRES-20260406` under `state/runtime/run_baton.C1-M1-PRES-20260406.json`.
-- Cleared the stale run-scoped perception cache that still held pre-rerun low-confidence slide entries.
-- Cancelled the superseded stale tracked row `C1-M1-PRES-20260404` so the ledger now has one canonical blocked trial rather than two competing tracked runs.
-- Created run-scoped context files under `state/config/runs/C1-M1-PRES-20260406/`.
+- Updated `C1-M1-PRES-20260406` from `blocked` to `completed` in `state/runtime/coordination.db`.
 
 ## Key Decisions
 
-1. The canonical tracked run for this trial is `C1-M1-PRES-20260406`, not `C1-M1-PRES-20260404`.
-2. Storyboard B is the correct stop point for tonight; downstream audio must not begin until HIL explicitly approves or requests changes.
-3. For motion segments, the slide still image remains the canonical slide reference while the MP4 remains the approved playback asset; they must stay separate in contracts and downstream handling.
-4. Motion-first narration is the correct design rule when a video clip replaces the static visual during playback: use the slide briefly for orientation if needed, then narrate the visible action in the approved clip.
-5. A stale runtime perception cache is worse than no cache at all for this run; closeout should clear incorrect cache state rather than let it silently leak into the next session.
+1. Marc B. Laurent selected as the production voice for C1-M1-PRES-20260406 (voice_id=o0t0Wz5oSDuuCV6p7rba, score 92/100).
+2. Quinn-R seg-02 WPM 201 (1 over ceiling) accepted as non-blocking — natural ElevenLabs pacing at 24.5s.
+3. Quinn-R seg-01 motion mismatch (5.0s motion vs 28.0s narration) confirmed as by-design B-roll overlay, not a retiming issue.
+4. Full assembly bundle packaged for Descript operator handoff — no further automated steps needed for this run.
+5. Run `C1-M1-PRES-20260406` is the first completed motion-enabled production run through prompt pack v4.2.
 
 ## What Was Not Done
 
-- No HIL disposition was captured yet for Storyboard B.
-- No ElevenLabs generation was started for `C1-M1-PRES-20260406`.
-- No downstream composition or final export work was started.
+- No Descript composition was performed (that is the human operator's task using the assembly bundle).
 - No Canvas or platform deployment work was started for this run.
+- No new epics or stories were created.
+- Structural walk definitions were not changed (only the prompt-pack text was fixed to satisfy an existing walk needle).
 
 ## Open Risks And Blockers
 
-- **Blocked item:** `C1-M1-PRES-20260406`
-  - reason: awaiting explicit HIL review of Storyboard B
-  - owner: human operator
-  - next action: review the published Storyboard B, then decide approve vs remediate
-  - expected review time: next session
-- If HIL requests changes, the next session must decide whether they are Storyboard-only changes or require regenerating Irene Pass 2 artifacts.
+- None. The run is completed. The assembly bundle is ready for human operator composition in Descript.
 
 ## Validation Summary
 
-- `python -m pytest skills/sensory-bridges/scripts/tests/test_video_to_agent.py -q`
-  - `6 passed`
-- `python -m pytest skills/sensory-bridges/scripts/tests/test_bridge_utils.py -q`
-  - `13 passed`
-- `python -m pytest skills/bmad-agent-marcus/scripts/tests/test-validate-irene-pass2-handoff.py -q`
-  - `17 passed`
-- `python -m pytest skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py -q`
-  - `27 passed`
-- `python -m pytest skills/compositor/scripts/tests/test_compositor_operations.py -q`
-  - `11 passed`
-- `python -m pytest skills/production-coordination/scripts/tests/test_run_reporting.py -q`
-  - passed after timezone-normalization fix
-- `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/pass2-envelope.json`
-  - passed
+- `python -m pytest skills/elevenlabs-audio/scripts/tests/test_elevenlabs_operations.py -q` — 23 passed
+- `python -m pytest skills/compositor/scripts/tests/test_compositor_operations.py -q` — 11 passed (assumed from prior session; not rerun this session)
+- Structural walk motion: READY (0 critical findings) after prompt-pack text fix
+- Structural walk standard: READY (0 critical findings)
+- Quinn-R pre-composition validation: PASS (1 warn, 1 note — both non-blocking)
+- Assembly bundle completeness: 6/6 required items present (audio, captions, visuals, motion, guide, manifest)
+- Runtime DB: C1-M1-PRES-20260406 status updated to `completed`
 
 ## Lessons Learned
 
-- Motion review is clearer when Storyboard B shows both the approved still and the actual playback asset; hiding the video behind a file path is not sufficient for HIL.
-- A motion-aware script should not be judged only by structural completeness. The review surface must let the operator verify that narration and visible motion genuinely align.
-- Runtime ledgers drift unless the real active bundle is reconciled back into APP state before shift close.
-- Reporting paths need timezone normalization because the repo already contains mixed historical timestamp formats.
+- The structural walk needle mechanism catches drift between workflow docs and walk definitions — worth running before every shift close, not just at session end.
+- Voice selection with hash verification (`--voice-selection`) prevents accidental voice substitution between preview and generation — should be the default workflow.
+- Motion-aware compositor correctly handles both still and video localization in a single sync-visuals pass — no manual motion copy needed.
+- Quinn-R's WPM check is a useful pre-composition sanity gate but the tolerance of 1 WPM over ceiling is operationally acceptable given natural speech variation.
 
 ## Artifact Update Checklist
 
 - [x] `next-session-start-here.md`
 - [x] `SESSION-HANDOFF.md`
-- [x] `docs/project-context.md`
-- [x] `docs/workflow/human-in-the-loop.md`
-- [x] `docs/workflow/production-operator-card-v4.md`
-- [x] `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
-- [x] `docs/workflow/trial-run-pass2-artifacts-contract.md`
-- [x] `skills/bmad-agent-content-creator/references/template-segment-manifest.md`
-- [x] `skills/bmad-agent-marcus/SKILL.md`
-- [x] `skills/bmad-agent-marcus/references/conversation-mgmt.md`
-- [x] `skills/bmad-agent-marcus/scripts/generate-storyboard.py`
-- [x] `skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py`
-- [x] `skills/compositor/references/manifest-interpretation.md`
-- [x] `skills/compositor/scripts/compositor_operations.py`
-- [x] `skills/sensory-bridges/scripts/video_to_agent.py`
-- [x] `skills/production-coordination/scripts/run_reporting.py`
-- [x] `state/config/runs/C1-M1-PRES-20260406/`
-- [x] `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260406-motion/storyboard/`
-- [x] `exports/storyboard-C1-M1-PRES-20260406-storyboard-b-rerender-20260408-0433-publish-receipt.json`
+- [x] `docs/project-context.md` (updated for run completion status)
+- [x] `docs/user-guide.md` (Step 11 voice selection row)
+- [x] `docs/dev-guide.md` (ElevenLabs CLI section)
+- [x] `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (§12 suggested command + structural walk needle fix)
+- [x] `skills/elevenlabs-audio/SKILL.md` (manifest narration row)
+- [x] `skills/elevenlabs-audio/scripts/elevenlabs_operations.py` (--voice-selection, progress_callback)
+- [x] `skills/elevenlabs-audio/scripts/tests/test_elevenlabs_operations.py` (4 new tests)
+- [x] `skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py` (changes from this session)
+- [x] `state/runtime/coordination.db` (run status: completed)
 
 ## Next Session
 
-- Start from `master`
-- Checkout `ops/c1m1-trial-storyboard-b-hil`
-- Open the published Storyboard B and capture explicit HIL disposition
-- If approved:
-  - reopen `C1-M1-PRES-20260406`
-  - proceed to downstream audio for the existing Pass 2 artifacts
-- If changes are requested:
-  - determine whether Storyboard-only edits are sufficient or whether Irene Pass 2 must be rerun
-- Do not start a new tracked bundle until `C1-M1-PRES-20260406` is resolved
+- The `C1-M1-PRES-20260406` run is **completed**. The assembly bundle is ready for human Descript composition.
+- Start from `master`.
+- Next work: Begin a new production run, or address any pending backlog/epic work.
+- No continuing blocked items for this run.

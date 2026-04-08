@@ -416,6 +416,21 @@ Before a human assembles in Descript, **localize** Gate-approved stills next to 
 - **`guide`** emits the Descript Assembly Guide; the legacy **two-argument** form (`manifest` then `output`, without the `guide` subcommand) still works.
 - Tests: `pytest skills/compositor/scripts/tests`
 
+### ElevenLabs manifest narration CLI
+
+From the repo root, using the project `.venv`:
+
+```bash
+.venv\Scripts\python.exe skills/elevenlabs-audio/scripts/elevenlabs_operations.py manifest \
+  path/to/assembly-bundle/segment-manifest.yaml \
+  --output-dir path/to/assembly-bundle \
+  --voice-selection path/to/voice-selection.json
+```
+
+- **`manifest`** subcommand reads a segment manifest, synthesizes narration for each segment via ElevenLabs, and writes audio + VTT files back alongside the manifest.
+- **`--voice-selection`** (optional) — path to `voice-selection.json`. When provided the tool (1) verifies `locked_manifest_hash` and `locked_script_hash` against the Gate 3 locked artifacts before any API spend, (2) auto-resolves the selected voice as the default synthesis voice (explicit `--default-voice-id` still overrides), and (3) emits per-segment progress to stderr.
+- Tests: `pytest skills/elevenlabs-audio/scripts/tests`
+
 ---
 
 ## API Client Anatomy

@@ -505,14 +505,56 @@ Motion-specific rules:
 Rerun rule:
 - If Prompt 8 is being re-run after a partial or invalid Pass 2 attempt, restart at Prompt 8 itself once Gate 2 and Motion Gate remain valid; do not jump ahead to Storyboard B from stale Pass 2 artifacts.
 
-Required HIL review:
-- Regenerate Storyboard B with script context before downstream audio finalization.
+## 8B) Storyboard B Regeneration + HIL Review (Post-Pass 2)
+
+Regenerate Storyboard B with script context before downstream audio finalization.
+
+Marcus, after Irene Pass 2 G4 and Motion Gate approval, regenerate Storyboard B with full script context before Gate 3 or any audio spend. **Generation of storyboards (both A and B) now always concludes with the existing publish_snapshot_tree routine (in generate-storyboard.py) to post the hydrated snapshot to the site repo, generating a publish-receipt.json containing the live GitHub.io URL for HIL review.**
+
+Inputs:
+- `[BUNDLE_PATH]/narration-script.md`
+- `[BUNDLE_PATH]/segment-manifest.yaml`
+- `[BUNDLE_PATH]/authorized-storyboard.json`
+- `[BUNDLE_PATH]/motion_plan.yaml` (final approved state)
+- `[BUNDLE_PATH]/perception-artifacts.json` (motion perception confirmations)
+
+Required behavior:
+- Treat `authorized-storyboard.json` + approved local winner-slide PNGs as the sole slide identity source of truth.
+- Hydrate storyboard.json and regenerate `storyboard/index.html` with script context (thumbnails, script/script-notes panels, orientation/provenance, related-assets including motion clips, perception cues).
+- Preserve all Motion Gate-approved `motion_asset_path` bindings; use motion-first narration cues for non-static segments.
+- Do not reuse prior storyboard review projections.
+- **Always conclude with the existing publish routine to copy snapshot to target_subdir under assets/storyboards/ in the jlenrique.github.io repo and emit publish-receipt.json with `publish_url`.**
+
+Required command (example):
+```powershell
+python skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
+  --manifest [BUNDLE_PATH]/storyboard/storyboard.json `
+  --run-id [RUN_ID] `
+  --output [BUNDLE_PATH]/authorized-storyboard.json `
+  --script-context [BUNDLE_PATH]/narration-script.md `
+  --motion-plan [BUNDLE_PATH]/motion_plan.yaml
+# Follow-on generate-storyboard.py call (with --segment-manifest) will now always trigger publish_snapshot_tree
+```
+
+Required validation:
+- Vera G4 (re-run if changed)
+- `validate-irene-pass2-handoff.py` (confirm motion perception alignment)
+- Confirm publish-receipt.json exists with valid `publish_url` and "status": "published"
+
+Required HIL review (replaces prior bullet):
+- Operator reviews regenerated reviewer-friendly HTML storyboard surface **from the live publish_url** (e.g. https://jlenrique.github.io/assets/storyboards/.../index.html).
+- Explicit approval on the script-context-aware winner deck.
+- Record approval artifact (e.g. update receipt or create approval note linked to the URL).
+
+Gate rule:
+- Gate 3 (Prompt 9) is blocked until this regeneration + publish-to-Git + HIL approval completes.
+- Revision at Gate 3 must trigger re-regeneration of Storyboard B with updated script context + re-publish before any downstream spend.
 
 ---
 
 ## 9) Gate 3 Decision - Lock the Approved Pass 2 Package
 
-This prompt begins only after Storyboard B is explicitly approved.
+This prompt begins only after **8B Storyboard B regeneration + explicit HIL approval** (with full script context).
 
 ```
 Gate 3 decision: [APPROVED or REVISION].
@@ -522,19 +564,21 @@ If APPROVED:
 - lock `[BUNDLE_PATH]/segment-manifest.yaml`
 - lock `[BUNDLE_PATH]/pass2-envelope.json`
 - lock the final Motion Gate-approved `[BUNDLE_PATH]/motion_plan.yaml`
-- record that downstream audio/composition work must use the approved Storyboard B package as-is
+- record that downstream audio/composition work must use the approved Storyboard B package (with script context) as-is
+- (see cross-ref to `docs/fidelity-gate-map.md` and `trial-run-pass2-artifacts-contract.md`)
 
 If REVISION:
 - list only the affected segment ids / slide ids and required edits
 - patch only the named artifacts
-- rerun Prompt 8 validation and regenerate Storyboard B before any downstream spend
+- rerun Prompt 8 validation + 8B Storyboard B regeneration (with updated script context) before any downstream spend
 ```
 
 Required governance at this stage:
 - treat `authorized-storyboard.json` plus the approved local winner-slide PNGs as the only slide identity source of truth
 - do not use `storyboard/index.html`, unresolved review payloads, or stale Pass 2 artifacts as execution inputs
-- preserve the exact Motion Gate-approved `motion_asset_path` for every non-static segment
+- preserve the exact Motion Gate-approved `motion_asset_path` for every non-static segment (see consolidated "Motion Contract" rules)
 - do not re-open Gate 2M, motion generation, or Motion Gate from downstream prompts unless the operator explicitly redirects the run
+- cross-ref: `docs/human-in-the-loop.md` for HIL protocol
 
 Motion-specific lock rule:
 - Gate 3 approval must lock not only the script and manifest, but also the approved `motion_plan.yaml` bindings for every non-static segment
@@ -687,6 +731,20 @@ Voice rules:
 - use the locked manifest only; do not regenerate copy ad hoc during ElevenLabs execution
 - preserve segment order continuity across requests
 - prefer pronunciation dictionaries over one-off wording hacks for medical terminology
+
+Suggested command surface:
+
+```powershell
+python skills/elevenlabs-audio/scripts/elevenlabs_operations.py manifest `
+  [BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml `
+  --output-dir [BUNDLE_PATH]/assembly-bundle `
+  --voice-selection [BUNDLE_PATH]/voice-selection.json
+```
+
+The `--voice-selection` flag causes the tool to:
+- verify `locked_manifest_hash` and `locked_script_hash` against the Gate 3 locked artifacts before any ElevenLabs spend
+- auto-resolve `selected_voice_id` as the default synthesis voice (explicit `--default-voice-id` still overrides)
+- emit per-segment progress to stderr during synthesis
 
 Go/no-go:
 - no go if the Voice Director would need to rewrite narration text instead of synthesizing the approved text

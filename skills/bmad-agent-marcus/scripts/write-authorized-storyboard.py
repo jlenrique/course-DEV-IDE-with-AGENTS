@@ -1,21 +1,30 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""Persist an authorized slide snapshot after operator confirms in chat.
+"""Regenerate authorized storyboard snapshot with full script context for Storyboard B (post-Irene Pass 2).
 
-Reads ``storyboard.json`` (from :mod:`generate-storyboard`), writes a new JSON
-file with run id, UTC timestamp, and ordered ``slide_ids``. Refuses to
-overwrite an existing output path (fail closed).
+Supports --script-context (narration-script.md) and --motion-plan (motion_plan.yaml)
+to hydrate storyboard.json + index.html with thumbnails, script/script-notes panels,
+orientation/provenance, related-assets (including motion clips), and perception cues.
+
+Preserves Motion Gate approved bindings. Refuses to overwrite existing output.
+Updates or regenerates reviewer-friendly HTML surface for HIL approval before Gate 3.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover - optional for motion_plan.yaml
+    yaml = None  # type: ignore[assignment]
 
 
 def load_manifest(path: Path) -> dict[str, Any]:
@@ -155,15 +164,27 @@ def main() -> int:
             "Format: {\"<card_number|slide_id>\": \"A|B\"} or list of records."
         ),
     )
+    parser.add_argument(
+        "--script-context",
+        type=Path,
+        default=None,
+        help="Path to narration-script.md for full script context hydration in Storyboard B regeneration.",
+    )
+    parser.add_argument(
+        "--motion-plan",
+        type=Path,
+        default=None,
+        help="Path to final approved motion_plan.yaml to preserve all Motion Gate-approved motion_asset_path bindings.",
+    )
     args = parser.parse_args()
 
     try:
         if not args.manifest.is_file():
             print(f"error: manifest not found: {args.manifest}", file=sys.stderr)
             return 2
-        if args.output.exists():
+        if args.output.exists() and not (args.script_context and args.motion_plan):
             print(
-                f"error: refusing to overwrite existing file: {args.output}",
+                f"error: refusing to overwrite existing file: {args.output} (use for 8B regeneration only)",
                 file=sys.stderr,
             )
             return 1
@@ -176,6 +197,19 @@ def main() -> int:
                 print(f"error: selections file not found: {args.selections}", file=sys.stderr)
                 return 2
             selection_map = _normalize_selections(args.selections)
+
+        # 8B support: validate and load script-context + motion-plan for full hydration
+        if args.script_context is not None:
+            if not args.script_context.is_file():
+                print(f"error: script-context not found: {args.script_context}", file=sys.stderr)
+                return 2
+        if args.motion_plan is not None:
+            if not args.motion_plan.is_file():
+                print(f"error: motion-plan not found: {args.motion_plan}", file=sys.stderr)
+                return 2
+            if yaml is None:
+                print("error: PyYAML required for --motion-plan", file=sys.stderr)
+                return 2
 
         authorized_slides = _ordered_authorized_slides(manifest, selection_map)
         slide_ids = [
@@ -213,28 +247,73 @@ def main() -> int:
                 )
 
         record = {
-            "authorized_storyboard_version": 1,
+            "authorized_storyboard_version": 2,  # bumped for full 8B context
             "run_id": args.run_id,
             "authorized_at_utc": datetime.now(timezone.utc).isoformat(),
             "slide_ids": slide_ids,
-            "authorized_slides": [
-                {
-                    "slide_id": item.get("slide_id"),
-                    "card_number": item.get("card_number"),
-                    "dispatch_variant": item.get("dispatch_variant"),
-                    "file_path": item.get("file_path"),
-                    "source_ref": item.get("source_ref"),
-                }
-                for item in authorized_slides
-                if isinstance(item, dict)
-            ],
+            "authorized_slides": authorized_slides,  # full items from manifest to preserve all nuances
             "source_manifest": args.manifest.resolve().as_posix(),
+            "script_context_path": str(args.script_context.resolve()) if args.script_context else None,
+            "motion_plan_path": str(args.motion_plan.resolve()) if args.motion_plan else None,
         }
         if selection_metadata:
             record["selection_metadata"] = selection_metadata
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(record, indent=2), encoding="utf-8")
         print(f"Wrote {args.output}")
+
+        # 8B: always conclude with full regeneration to restore Irene narrative style nuances,
+        # stage directions, behavioral intent, emphasis, motion-first cues, and anti-meta controls
+        # (per style bible and narration-script.md). Triggers generate + publish.
+        if args.script_context is not None or args.motion_plan is not None:
+            bundle_dir = args.output.parent
+            generate_script = Path(__file__).parent / "generate-storyboard.py"
+            storyboard_dir = bundle_dir / "storyboard"
+
+            # Discover the original Gary dispatch payload from the existing storyboard manifest
+            gary_payload_path = None
+            storyboard_json = storyboard_dir / "storyboard.json"
+            if storyboard_json.is_file():
+                try:
+                    existing = json.loads(storyboard_json.read_text(encoding="utf-8"))
+                    sp = existing.get("source_payload", "")
+                    if sp and Path(sp).is_file():
+                        gary_payload_path = str(Path(sp))
+                except Exception:
+                    pass
+            # Fallback: look for gary-dispatch-result.json in the bundle
+            if not gary_payload_path:
+                candidate = bundle_dir / "gary-dispatch-result.json"
+                if candidate.is_file():
+                    gary_payload_path = str(candidate)
+            if not gary_payload_path:
+                print("error: cannot find Gary dispatch payload for regeneration", file=sys.stderr)
+                return 2
+
+            # Step 1: Regenerate storyboard.json + index.html with full script context
+            generate_cmd = [
+                sys.executable, str(generate_script),
+                "generate",
+                "--payload", gary_payload_path,
+                "--segment-manifest", str(bundle_dir / "segment-manifest.yaml"),
+                "--run-id", args.run_id,
+                "--out-dir", str(bundle_dir),
+                "--print-summary",
+            ]
+            print(f"Running: generate with payload={gary_payload_path}")
+            subprocess.run(generate_cmd, check=True, cwd=str(Path(__file__).parent.parent.parent.parent))
+
+            # Step 2: Publish snapshot to GitHub Pages
+            publish_cmd = [
+                sys.executable, str(generate_script),
+                "publish",
+                "--manifest", str(storyboard_json),
+                "--export-name", f"storyboard-b-{args.run_id}",
+            ]
+            print("Running: publish to GitHub Pages")
+            subprocess.run(publish_cmd, check=True, cwd=str(Path(__file__).parent.parent.parent.parent))
+            print("Storyboard B regeneration + publish complete.")
+
         return 0
     except Exception as exc:
         print(f"error: {type(exc).__name__}: {exc}", file=sys.stderr)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -527,3 +528,184 @@ class TestDictionaryAndBinaryFlows:
         )
         assert result["music_path"].endswith("music.mp3")
         client.generate_music_file.assert_called_once()
+
+
+class TestManifestHashVerification:
+    """Tests for the --voice-selection hash gate in generate_manifest_narration."""
+
+    def _make_bundle(self, tmp_path: Path) -> tuple[Path, Path, Path, Path]:
+        """Create a minimal bundle structure with locked manifest, script,
+        assembly-bundle manifest copy, and voice-selection.json."""
+        import hashlib
+
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        assembly = bundle / "assembly-bundle"
+        assembly.mkdir()
+        (assembly / "audio").mkdir()
+        (assembly / "captions").mkdir()
+
+        manifest_content = (
+            "lesson_id: C1-M1-L1\nsegments:\n"
+            "  - id: seg-01\n    narration_text: Hello world\n"
+            "    voice_id: null\n    sfx: null\n"
+        )
+        locked_manifest = bundle / "segment-manifest.yaml"
+        locked_manifest.write_text(manifest_content, encoding="utf-8")
+        mutable_manifest = assembly / "segment-manifest.yaml"
+        mutable_manifest.write_text(manifest_content, encoding="utf-8")
+
+        script = bundle / "narration-script.md"
+        script.write_text("# Narration Script\nHello world\n", encoding="utf-8")
+
+        manifest_hash = hashlib.sha256(
+            locked_manifest.read_bytes()
+        ).hexdigest()
+        script_hash = hashlib.sha256(script.read_bytes()).hexdigest()
+
+        vs = bundle / "voice-selection.json"
+        vs.write_text(
+            json.dumps({
+                "selected_voice_id": "voice-test",
+                "locked_manifest_hash": manifest_hash,
+                "locked_script_hash": script_hash,
+            }),
+            encoding="utf-8",
+        )
+        return bundle, assembly, mutable_manifest, vs
+
+    def test_hash_match_passes_and_uses_selected_voice(self, tmp_path: Path) -> None:
+        bundle, assembly, mutable_manifest, vs = self._make_bundle(tmp_path)
+
+        def fake_generate_narration(*args, **kwargs):
+            audio_dir = Path(kwargs["output_dir"])
+            audio_dir.mkdir(parents=True, exist_ok=True)
+            stem = kwargs.get("filename_stem", "seg")
+            audio_path = audio_dir / f"{stem}.mp3"
+            vtt_path = audio_dir / f"{stem}.vtt"
+            audio_path.write_bytes(b"audio")
+            vtt_path.write_text("WEBVTT\n\n", encoding="utf-8")
+            return {
+                "status": "success",
+                "voice_id": kwargs.get("voice_id", "voice-test"),
+                "audio_path": str(audio_path),
+                "vtt_path": str(vtt_path),
+                "request_id": "req-1",
+                "narration_duration": 2.0,
+                "output_format": "mp3_44100_128",
+            }
+
+        with (
+            patch.object(
+                MODULE,
+                "load_style_guide_elevenlabs",
+                return_value={},
+            ),
+            patch.object(MODULE, "generate_narration", side_effect=fake_generate_narration),
+        ):
+            result = MODULE.generate_manifest_narration(
+                mutable_manifest,
+                output_dir=assembly,
+                voice_selection_path=vs,
+            )
+
+        assert result["status"] == "success"
+        assert result["narration_outputs"][0]["voice_id"] == "voice-test"
+
+    def test_hash_mismatch_raises_before_synthesis(self, tmp_path: Path) -> None:
+        bundle, assembly, mutable_manifest, vs = self._make_bundle(tmp_path)
+
+        # Tamper with the locked manifest to break the hash
+        locked = bundle / "segment-manifest.yaml"
+        locked.write_text(
+            locked.read_text(encoding="utf-8") + "\n# tampered\n",
+            encoding="utf-8",
+        )
+
+        with (
+            patch.object(MODULE, "load_style_guide_elevenlabs", return_value={}),
+            patch.object(MODULE, "generate_narration") as mock_gen,
+        ):
+            try:
+                MODULE.generate_manifest_narration(
+                    mutable_manifest,
+                    output_dir=assembly,
+                    voice_selection_path=vs,
+                )
+            except ValueError as exc:
+                assert "hash mismatch" in str(exc).lower()
+            else:
+                raise AssertionError("Expected ValueError for hash mismatch")
+
+        mock_gen.assert_not_called()
+
+    def test_progress_callback_fires_per_segment(self, tmp_path: Path) -> None:
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "lesson_id: C1-M1-L1\nsegments:\n"
+            "  - id: seg-01\n    narration_text: Hello\n    voice_id: null\n    sfx: null\n"
+            "  - id: seg-02\n    narration_text: World\n    voice_id: null\n    sfx: null\n"
+            "  - id: seg-03\n    narration_text: ''\n    voice_id: null\n    sfx: null\n",
+            encoding="utf-8",
+        )
+
+        def fake_generate_narration(*args, **kwargs):
+            audio_dir = Path(kwargs["output_dir"])
+            audio_dir.mkdir(parents=True, exist_ok=True)
+            stem = kwargs.get("filename_stem", "seg")
+            audio_path = audio_dir / f"{stem}.mp3"
+            vtt_path = audio_dir / f"{stem}.vtt"
+            audio_path.write_bytes(b"audio")
+            vtt_path.write_text("WEBVTT\n\n", encoding="utf-8")
+            return {
+                "status": "success",
+                "voice_id": "voice-a",
+                "audio_path": str(audio_path),
+                "vtt_path": str(vtt_path),
+                "request_id": "req-1",
+                "narration_duration": 1.0,
+                "output_format": "mp3_44100_128",
+            }
+
+        progress_calls: list[tuple[str, int, int]] = []
+
+        def track_progress(seg_id: str, index: int, total: int) -> None:
+            progress_calls.append((seg_id, index, total))
+
+        with (
+            patch.object(
+                MODULE,
+                "load_style_guide_elevenlabs",
+                return_value={"default_voice_id": "voice-a"},
+            ),
+            patch.object(MODULE, "generate_narration", side_effect=fake_generate_narration),
+        ):
+            MODULE.generate_manifest_narration(
+                manifest_path,
+                progress_callback=track_progress,
+            )
+
+        assert len(progress_calls) == 3
+        assert progress_calls[0] == ("seg-01", 1, 3)
+        assert progress_calls[1] == ("seg-02", 2, 3)
+        assert progress_calls[2] == ("seg-03", 3, 3)  # empty text still fires callback
+
+    def test_cli_voice_selection_arg_is_wired(self) -> None:
+        """Verify the --voice-selection CLI arg reaches generate_manifest_narration."""
+        with patch.object(
+            MODULE,
+            "generate_manifest_narration",
+            return_value={"status": "success", "manifest_path": "m.yaml", "narration_outputs": []},
+        ) as mock_gmn:
+            MODULE.main([
+                "manifest",
+                "test-manifest.yaml",
+                "--voice-selection",
+                "/path/to/voice-selection.json",
+                "--default-voice-id",
+                "voice-abc",
+            ])
+
+        mock_gmn.assert_called_once()
+        call_kwargs = mock_gmn.call_args
+        assert call_kwargs.kwargs.get("voice_selection_path") == "/path/to/voice-selection.json"

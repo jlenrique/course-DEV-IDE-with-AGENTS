@@ -35,7 +35,7 @@ Voice Director (agent - judgment) -> elevenlabs-audio (skill - tool expertise) -
 |-----------|---------------|------|
 | Voice catalog preview recommendations | `list_voices()` / `get_voice()` | Pre-audio HIL voice selection with catalog sample links |
 | Narration with timestamps | `text_to_speech_with_timestamps()` | Primary instructional narration path |
-| Manifest-driven narration | `generate_manifest_narration()` | Standard Marcus -> ElevenLabs production path |
+| Manifest-driven narration | `generate_manifest_narration()` | Standard Marcus -> ElevenLabs production path. Supports `--voice-selection` for pre-synthesis hash verification and auto voice resolution. |
 | Pronunciation dictionaries | `create_pronunciation_dictionary_from_file()` / `list_pronunciation_dictionaries()` | Medical terminology support |
 | Dialogue | `text_to_dialogue()` | Case-study multi-speaker outputs |
 | Sound effects | `text_to_sound_effect()` | Transition and emphasis cues |

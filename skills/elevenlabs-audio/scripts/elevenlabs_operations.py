@@ -891,19 +891,86 @@ def generate_narration(
     }
 
 
+def _verify_voice_selection_hashes(
+    voice_selection_path: str | Path,
+    manifest_path: str | Path,
+) -> dict[str, Any]:
+    """Verify voice-selection.json hashes match the locked manifest and script.
+
+    Returns the parsed voice-selection data on success.
+    Raises ``ValueError`` if hashes diverge.
+    """
+    vs = _load_json_file(voice_selection_path)
+    expected_manifest_hash = vs.get("locked_manifest_hash", "")
+    expected_script_hash = vs.get("locked_script_hash", "")
+    if not expected_manifest_hash or not expected_script_hash:
+        raise ValueError(
+            "voice-selection.json missing locked_manifest_hash or locked_script_hash"
+        )
+    actual_manifest_hash = _sha256_file(manifest_path)
+    if actual_manifest_hash != expected_manifest_hash:
+        raise ValueError(
+            f"Manifest hash mismatch: voice-selection expects "
+            f"{expected_manifest_hash[:16]}... but locked manifest is "
+            f"{actual_manifest_hash[:16]}..."
+        )
+    # Script hash requires finding the script next to the manifest.
+    manifest_dir = Path(manifest_path).resolve().parent
+    script_candidates = [
+        manifest_dir / "narration-script.md",
+        manifest_dir.parent / "narration-script.md",
+    ]
+    script_path = next((p for p in script_candidates if p.exists()), None)
+    if script_path:
+        actual_script_hash = _sha256_file(script_path)
+        if actual_script_hash != expected_script_hash:
+            raise ValueError(
+                f"Script hash mismatch: voice-selection expects "
+                f"{expected_script_hash[:16]}... but locked script is "
+                f"{actual_script_hash[:16]}..."
+            )
+    return vs
+
+
 def generate_manifest_narration(
     manifest_path: str | Path,
     *,
     output_dir: str | Path | None = None,
     parameter_overrides: dict[str, Any] | None = None,
     default_voice_id: str | None = None,
+    voice_selection_path: str | Path | None = None,
+    progress_callback: Any | None = None,
     client: ElevenLabsClient | None = None,
 ) -> dict[str, Any]:
     """Generate narration for each manifest segment and write results back.
 
     This is the pipeline bridge used by Marcus:
     Irene manifest -> ElevenLabs narration assets -> updated manifest.
+
+    Parameters
+    ----------
+    voice_selection_path:
+        Optional path to ``voice-selection.json``.  When provided the function
+        verifies ``locked_manifest_hash`` and ``locked_script_hash`` match the
+        Gate 3 locked artifacts *before* any ElevenLabs spend.  The
+        ``selected_voice_id`` from the file also serves as the default voice
+        (unless *default_voice_id* is explicitly provided).
+    progress_callback:
+        Optional ``callable(segment_id, index, total)`` invoked after each
+        segment is synthesized so the caller can report progress.
     """
+    # ── Voice-selection hash gate ────────────────────────────────────────
+    vs_data: dict[str, Any] | None = None
+    if voice_selection_path:
+        # Resolve the locked root manifest for hash comparison.  When the
+        # manifest_path lives under assembly-bundle/, the locked original
+        # sits one directory up.
+        locked_root = Path(manifest_path).resolve().parent.parent / "segment-manifest.yaml"
+        hash_target = locked_root if locked_root.exists() else Path(manifest_path)
+        vs_data = _verify_voice_selection_hashes(voice_selection_path, hash_target)
+        if not default_voice_id:
+            default_voice_id = vs_data.get("selected_voice_id")
+
     if client is None:
         client = ElevenLabsClient()
     manifest = load_manifest(manifest_path)
@@ -919,9 +986,11 @@ def generate_manifest_narration(
     if not resolved_default_voice_id:
         raise ValueError("No ElevenLabs default voice available for manifest processing.")
 
+    segments = manifest.get("segments", [])
+    total_segments = len(segments)
     previous_request_ids: list[str] = []
     outputs: list[dict[str, Any]] = []
-    for segment in manifest.get("segments", []):
+    for seg_index, segment in enumerate(segments, start=1):
         segment_id = segment.get("id", "segment")
         narration_text = (segment.get("narration_text") or "").strip()
         if not narration_text:
@@ -929,6 +998,8 @@ def generate_manifest_narration(
             segment["narration_file"] = None
             segment["narration_vtt"] = None
             segment.setdefault("sfx_file", None)
+            if progress_callback:
+                progress_callback(segment_id, seg_index, total_segments)
             continue
 
         voice_id = segment.get("voice_id") or resolved_default_voice_id
@@ -983,6 +1054,9 @@ def generate_manifest_narration(
                 "sfx_file": segment.get("sfx_file"),
             }
         )
+
+        if progress_callback:
+            progress_callback(segment_id, seg_index, total_segments)
 
     saved_path = save_manifest(manifest, manifest_path)
     return {
@@ -1112,6 +1186,10 @@ def build_parser() -> argparse.ArgumentParser:
     manifest.add_argument("manifest_path")
     manifest.add_argument("--output-dir")
     manifest.add_argument("--default-voice-id")
+    manifest.add_argument(
+        "--voice-selection",
+        help="Path to voice-selection.json; verifies hashes before synthesis",
+    )
 
     voice_preview = subparsers.add_parser(
         "voice-preview",
@@ -1163,10 +1241,19 @@ def main(argv: list[str] | None = None) -> int:
                 description=args.description,
             )
         elif args.command == "manifest":
+            def _cli_progress(seg_id: str, index: int, total: int) -> None:
+                print(
+                    f"[{index}/{total}] {seg_id} synthesized",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
             result = generate_manifest_narration(
                 args.manifest_path,
                 output_dir=args.output_dir,
                 default_voice_id=args.default_voice_id,
+                voice_selection_path=getattr(args, "voice_selection", None),
+                progress_callback=_cli_progress,
             )
         elif args.command == "voice-preview":
             attributes = (

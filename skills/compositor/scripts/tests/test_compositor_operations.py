@@ -153,6 +153,23 @@ class TestValidation:
         else:  # pragma: no cover
             raise AssertionError("Expected validation failure")
 
+    def test_validate_manifest_rejects_video_visual_file_for_motion_segments(self) -> None:
+        manifest = sample_manifest()
+        manifest["segments"][0].update(
+            {
+                "motion_type": "video",
+                "motion_asset_path": "course-content/staging/C1-M1-L1/motion/seg-01_motion.mp4",
+                "motion_duration_seconds": 5.0,
+                "visual_file": "course-content/staging/C1-M1-L1/motion/seg-01_motion.mp4",
+            }
+        )
+        try:
+            MODULE.validate_manifest(manifest)
+        except ValueError as exc:
+            assert "visual_file as the approved still reference" in str(exc)
+        else:  # pragma: no cover
+            raise AssertionError("Expected validation failure")
+
 
 class TestSyncApprovedVisuals:
     def test_copies_visuals_and_updates_manifest(self, tmp_path: Path) -> None:

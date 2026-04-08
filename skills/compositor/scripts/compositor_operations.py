@@ -15,6 +15,8 @@ from typing import Any
 
 import yaml
 
+_VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".m4v"}
+
 
 def load_manifest(manifest_path: str | Path) -> dict[str, Any]:
     """Load a manifest from disk."""
@@ -194,6 +196,11 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
             if not segment.get("motion_duration_seconds"):
                 raise ValueError(
                     f"Segment {segment.get('id', '<unknown>')} missing required fields: motion_duration_seconds"
+                )
+            visual_file = str(segment.get("visual_file") or "").strip()
+            if Path(visual_file).suffix.lower() in _VIDEO_SUFFIXES:
+                raise ValueError(
+                    f"Segment {segment.get('id', '<unknown>')} must keep visual_file as the approved still reference; motion clips belong in motion_asset_path"
                 )
 
 

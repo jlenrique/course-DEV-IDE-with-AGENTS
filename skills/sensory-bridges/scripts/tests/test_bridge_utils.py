@@ -2,10 +2,12 @@
 
 import json
 import threading
+import types
 import pytest
 from unittest.mock import patch
 from pathlib import Path
 
+import skills.sensory_bridges.scripts.bridge_utils as bridge_utils_module
 from skills.sensory_bridges.scripts.bridge_utils import (
     build_request,
     build_response,
@@ -14,6 +16,7 @@ from skills.sensory_bridges.scripts.bridge_utils import (
     VALID_MODALITIES,
     VALID_CONFIDENCE,
     SCHEMA_VERSION,
+    _resolve_bridge_callable,
 )
 from skills.sensory_bridges.scripts.perception_cache import PerceptionCache
 
@@ -168,3 +171,39 @@ class TestPerceptionCache:
 
         raw = json.loads(cache.cache_path.read_text(encoding="utf-8"))
         assert len(raw.get("entries", {})) == 20
+
+
+class TestDynamicBridgeLoading:
+    def test_resolve_bridge_callable_falls_back_to_local_loader(self, monkeypatch):
+        loaded: list[str] = []
+
+        def fake_import_module(name):
+            if name == "skills.sensory_bridges.scripts.video_to_agent":
+                raise ModuleNotFoundError("simulated direct-script import failure")
+            raise AssertionError(f"unexpected import attempt: {name}")
+
+        def fake_load_module(name, file_path):
+            loaded.append(name)
+            if name == "skills.sensory_bridges.scripts.audio_to_agent":
+                return types.SimpleNamespace(transcribe_audio=lambda *args, **kwargs: {})
+            if name == "skills.sensory_bridges.scripts.video_to_agent":
+                return types.SimpleNamespace(extract_video=lambda *args, **kwargs: {"status": "ok"})
+            raise AssertionError(f"unexpected loader target: {name}")
+
+        monkeypatch.setattr(bridge_utils_module.importlib, "import_module", fake_import_module)
+        monkeypatch.setattr(bridge_utils_module, "_load_module_from_path", fake_load_module)
+
+        func = _resolve_bridge_callable(
+            "skills.sensory_bridges.scripts.video_to_agent",
+            "video_to_agent.py",
+            "extract_video",
+            preload=(
+                ("skills.sensory_bridges.scripts.audio_to_agent", "audio_to_agent.py"),
+            ),
+        )
+
+        assert func() == {"status": "ok"}
+        assert loaded == [
+            "skills.sensory_bridges.scripts.audio_to_agent",
+            "skills.sensory_bridges.scripts.video_to_agent",
+        ]

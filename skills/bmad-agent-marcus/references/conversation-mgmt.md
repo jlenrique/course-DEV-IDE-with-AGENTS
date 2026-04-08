@@ -365,7 +365,7 @@ Marcus -> Vera: G5 fidelity check (audio vs. narration script)
 Marcus -> Kira: silent video clips
     │  (runs only after Marcus has received narration_duration from ElevenLabs)
     │  (reads manifest for visual_source, visual_mode, narration_duration)
-    │  (writes visual_file, visual_duration back to manifest)
+    │  (writes motion_asset_path/motion_duration_seconds and keeps visual_file bound to the approved still)
     ▼
 Marcus -> Quinn-R: pre-composition validation
     │

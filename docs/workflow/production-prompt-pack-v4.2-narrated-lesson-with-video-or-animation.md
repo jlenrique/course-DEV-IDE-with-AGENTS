@@ -55,7 +55,7 @@ Persist accepted values as `run-constants.yaml` in the bundle root.
 - THEME_PARAMSET_KEY: [mapped parameter-set key for selected theme]
 - EXECUTION_MODE: tracked/default
 - QUALITY_PRESET: [explore | draft | production | regulated]
-- REQUESTED_CONTENT_TYPE: narrated-deck-video-export
+- REQUESTED_CONTENT_TYPE: narrated-lesson-with-video-or-animation
 - MOTION_ENABLED: true
 - MOTION_BUDGET_MAX_CREDITS: [positive number]
 - MOTION_BUDGET_MODEL_PREFERENCE: [std | pro]
@@ -444,6 +444,7 @@ Marcus, run Motion Gate after motion generation/import is complete.
 Required operator review:
 - confirm generated/imported motion assets are acceptable
 - confirm each non-static slide is either approved or intentionally reset to static
+- confirm the exact approved asset path for each non-static slide before Irene Pass 2 handoff
 
 Required state:
 - every non-static row in `motion_plan.yaml` must be `approved`
@@ -467,23 +468,41 @@ Inputs:
 - source bundle
 - operator directives
 - Irene Pass 1
+- refreshed `[BUNDLE_PATH]/pass2-envelope.json`
 - if `DOUBLE_DISPATCH: true`, `[BUNDLE_PATH]/variant-selection.json`
 - if `MOTION_ENABLED: true`, `[BUNDLE_PATH]/motion_plan.yaml`
+
+Required Marcus behavior before delegation:
+- refresh or regenerate `[BUNDLE_PATH]/pass2-envelope.json` so it reflects the current authorized deck, current `motion_plan.yaml`, expected Pass 2 outputs, and any approved motion assets for this run
+- if this is a rerun, archive or remove stale partial Pass 2 outputs before delegation so Irene writes fresh canonical artifacts at bundle root
+- treat `authorized-storyboard.json` plus the approved local winner-slide PNGs as the slide identity source of truth; do not reuse prior storyboard review projections as execution inputs
+- in motion runs, preserve the exact Motion Gate-approved asset path per non-static slide; do not re-decide motion inside Pass 2
 
 Required outputs:
 - `[BUNDLE_PATH]/narration-script.md`
 - `[BUNDLE_PATH]/segment-manifest.yaml`
 - `[BUNDLE_PATH]/perception-artifacts.json`
-- if motion exists: motion perception confirmations aligned to non-static segments
+- if motion exists: motion perception confirmations aligned to non-static segments, written into `pass2-envelope.json` as `motion_perception_artifacts`
 
 Required validation:
 - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
 - Vera G4
 
+Validator expectations at this stage:
+- every authorized slide must have at least one segment in `segment-manifest.yaml`
+- every manifest segment must have non-empty `narration_text`
+- every manifest segment must contain at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and present in the segment narration text
+- every non-static motion segment must remain bound to the approved `motion_plan.yaml` asset and have matching motion perception confirmation before handoff passes
+
 Motion-specific rules:
 - Irene must hydrate motion fields from `motion_plan.yaml`, not infer them from draft narration.
 - Motion-enabled manifest hydration must fail closed on empty or partial plan coverage.
+- Motion-enabled reruns must fail closed if `motion_plan.yaml` is not already in final Motion Gate-approved state.
 - Non-static segments must pass motion perception confirmation before final handoff.
+- If a segment's approved playback visual is a motion clip (`visual_mode: video`, `motion_type: video`), Irene should write motion-first narration: use the slide once for orientation if needed, then speak primarily to the visible action/change in the approved clip rather than continuing to narrate the static slide layout as if it were still on screen.
+
+Rerun rule:
+- If Prompt 8 is being re-run after a partial or invalid Pass 2 attempt, restart at Prompt 8 itself once Gate 2 and Motion Gate remain valid; do not jump ahead to Storyboard B from stale Pass 2 artifacts.
 
 Required HIL review:
 - Regenerate Storyboard B with script context before downstream audio finalization.

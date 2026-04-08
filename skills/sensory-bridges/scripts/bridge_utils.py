@@ -9,8 +9,10 @@ from __future__ import annotations
 import json
 import logging
 import importlib.util
+import importlib
 import sqlite3
 import sys
+import types
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -43,6 +45,40 @@ def _load_module_from_path(module_name: str, file_path: Path) -> Any:
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _ensure_module_stub(name: str) -> None:
+    """Create a lightweight package stub so dynamic skill imports can resolve."""
+    if name not in sys.modules:
+        sys.modules[name] = types.ModuleType(name)
+
+
+def _ensure_sensory_bridge_package_stubs() -> None:
+    """Mirror the underscore package aliases used throughout the codebase."""
+    _ensure_module_stub("skills")
+    _ensure_module_stub("skills.sensory_bridges")
+    _ensure_module_stub("skills.sensory_bridges.scripts")
+    sys.modules.setdefault("skills.sensory_bridges.scripts.bridge_utils", sys.modules[__name__])
+
+
+def _resolve_bridge_callable(
+    module_name: str,
+    file_name: str,
+    attribute: str,
+    *,
+    preload: tuple[tuple[str, str], ...] = (),
+) -> Any:
+    """Resolve a bridge callable in package or direct-script execution modes."""
+    try:
+        module = importlib.import_module(module_name)
+        return getattr(module, attribute)
+    except Exception:
+        scripts_dir = Path(__file__).resolve().parent
+        _ensure_sensory_bridge_package_stubs()
+        for preload_name, preload_file in preload:
+            _load_module_from_path(preload_name, scripts_dir / preload_file)
+        module = _load_module_from_path(module_name, scripts_dir / file_name)
+        return getattr(module, attribute)
 
 
 def _resolve_perception_cache_class() -> Any:
@@ -273,35 +309,58 @@ def perceive(
             logger.debug("Unable to initialize perception cache", exc_info=True)
 
     if modality == "pptx":
-        from skills.sensory_bridges.scripts.pptx_to_agent import extract_pptx
+        extract_pptx = _resolve_bridge_callable(
+            "skills.sensory_bridges.scripts.pptx_to_agent",
+            "pptx_to_agent.py",
+            "extract_pptx",
+        )
         result = extract_pptx(request["artifact_path"], gate=gate, **kwargs)
         if cache is not None:
             cache.put(request["artifact_path"], modality, result)
         return result
 
     if modality == "pdf":
-        from skills.sensory_bridges.scripts.pdf_to_agent import extract_pdf
+        extract_pdf = _resolve_bridge_callable(
+            "skills.sensory_bridges.scripts.pdf_to_agent",
+            "pdf_to_agent.py",
+            "extract_pdf",
+        )
         result = extract_pdf(request["artifact_path"], gate=gate, **kwargs)
         if cache is not None:
             cache.put(request["artifact_path"], modality, result)
         return result
 
     if modality == "audio":
-        from skills.sensory_bridges.scripts.audio_to_agent import transcribe_audio
+        transcribe_audio = _resolve_bridge_callable(
+            "skills.sensory_bridges.scripts.audio_to_agent",
+            "audio_to_agent.py",
+            "transcribe_audio",
+        )
         result = transcribe_audio(request["artifact_path"], gate=gate, **kwargs)
         if cache is not None:
             cache.put(request["artifact_path"], modality, result)
         return result
 
     if modality == "image":
-        from skills.sensory_bridges.scripts.png_to_agent import analyze_image
+        analyze_image = _resolve_bridge_callable(
+            "skills.sensory_bridges.scripts.png_to_agent",
+            "png_to_agent.py",
+            "analyze_image",
+        )
         result = analyze_image(request["artifact_path"], gate=gate, **kwargs)
         if cache is not None:
             cache.put(request["artifact_path"], modality, result)
         return result
 
     if modality == "video":
-        from skills.sensory_bridges.scripts.video_to_agent import extract_video
+        extract_video = _resolve_bridge_callable(
+            "skills.sensory_bridges.scripts.video_to_agent",
+            "video_to_agent.py",
+            "extract_video",
+            preload=(
+                ("skills.sensory_bridges.scripts.audio_to_agent", "audio_to_agent.py"),
+            ),
+        )
         result = extract_video(request["artifact_path"], gate=gate, **kwargs)
         if cache is not None:
             cache.put(request["artifact_path"], modality, result)

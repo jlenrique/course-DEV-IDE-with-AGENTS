@@ -208,6 +208,29 @@ class TestRunReporting(unittest.TestCase):
         self.assertIn("simulated observability failure", summary["observability_error_message"])
         self.assertTrue(any("Observability summary failed" in r.getMessage() for r in cm.records))
 
+    def test_generate_report_handles_mixed_timezone_timestamps(self) -> None:
+        with TempDB() as db:
+            conn = sqlite3.connect(str(db.path))
+            conn.execute(
+                """
+                UPDATE production_runs
+                SET started_at = '2026-01-01T00:00:00+00:00',
+                    completed_at = '2026-01-01T00:25:00'
+                WHERE run_id = 'RUN-REP'
+                """
+            )
+            conn.commit()
+            conn.close()
+
+            report = run_reporting.generate_run_report(
+                run_id="RUN-REP",
+                db_path=db.path,
+                write_report=False,
+                capture_learning=False,
+            )
+
+            self.assertEqual(report["total_duration_seconds"], 1500.0)
+
 
 class TestDoubleDispatchReporting(unittest.TestCase):
     """Story 12.5: double_dispatch flag appears in run reports."""

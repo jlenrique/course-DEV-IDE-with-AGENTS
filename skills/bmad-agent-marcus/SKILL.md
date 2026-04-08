@@ -114,7 +114,7 @@ Greet the user by name with current settings, last session context summary, and 
 **Two review views (same command, different inputs):**
 
 - **Before Irene (Pass 2):** Gary dispatch only. HTML renders a reviewer-friendly storyboard surface with ordered slide cards, thumbnails, search/filter controls, script status, script notes, and provenance/orientation metadata. Narration stays *Pending (pre-Pass 2)* for every row.
-- **After Irene:** Same generator, add Irene’s **segment manifest YAML** (`segments[].gary_slide_id` + `narration_text` per `skills/bmad-agent-content-creator/references/template-segment-manifest.md`). The same review surface shows **slide preview + narration text** inline. Unmatched slides show *No match* rather than silently appearing pending.
+- **After Irene:** Same generator, add Irene’s **segment manifest YAML** (`segments[].gary_slide_id` + `narration_text` per `skills/bmad-agent-content-creator/references/template-segment-manifest.md`). The same review surface shows **slide preview + narration text** inline. Unmatched slides show *No match* rather than silently appearing pending, multi-segment collisions surface as *Multi-match*, and motion-enabled slides expose their approved motion review metadata.
 
 After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate** the **view-only** storyboard so the operator can review **all slides at once** (creative, literal-text, literal-visual) in run order; after Pass 2, regenerate with `--segment-manifest` to include script. Remote hosted assets remain remote in the storyboard manifest; local slide PNGs remain the review source of truth for Gate 2.
 

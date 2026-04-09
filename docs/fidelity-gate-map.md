@@ -14,6 +14,7 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 | **G1** | Lesson Plan | Irene | Source bundle + SME intent | Gate 1 |
 | **G2** | Slide Brief | Irene | Lesson plan | Gate 1 |
 | **G3** | Generated Slides (PNGs) | Gary | Slide brief | Gate 2 |
+| **G3.5** | PNG Export Validation | Gary | Slide brief + export | Gate 2 |
 | **G4** | Narration Script + Segment Manifest | Irene (Pass 2) | Lesson plan + actual slides (PNGs) | Gate 3 |
 | **G5** | Audio (MP3/WAV) | ElevenLabs Voice Director | Narration script | — |
 | **G6** | Composed Video | Compositor + Human (Descript) | Segment manifest | Gate 4 |

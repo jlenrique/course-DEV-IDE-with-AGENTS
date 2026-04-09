@@ -57,6 +57,7 @@ Build a persistent collaborative intelligence infrastructure for systematically 
 - **Progressive mastery**: L1-L4 single artifacts → L5 multi-artifact sets. L-levels with dot extensions. Levels provisional — agents may propose changes. Regression runs ensure mastered exemplars stay mastered
 - **Export and download**: All reproductions must download production-quality artifacts (PNG for production, PDF for review, PPTX for editing, MP3 for audio) — screenshots supplementary only
 - **Evaluator design requirements** (from Story 3.1): Guide the tool's intelligence (never suppress), extract and compare actual output (not just process compliance), score on content coverage (not exact match), use cheap quality signals per medium, separate woodshed training from production QA, capture know-how from user checkpoint reviews. See `skills/woodshed/SKILL.md` for full reference
+- **Gamma API Mastery module**: Double-dispatch variant generation, literal-visual composite fallback, PNG export normalization with `_materialize_exported_slide_paths`
 - **HIL gates**: human checkpoints at every stage with rubrics and signoff tracking
 - **Pre-flight checks**: Hook-driven MCP/API connectivity verification + tool documentation scanning
 - **Production run reporting**: Comprehensive effectiveness analysis with learning capture in agent memory

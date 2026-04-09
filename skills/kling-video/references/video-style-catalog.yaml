@@ -1,0 +1,332 @@
+catalog_version: 1
+generated_at: '2026-04-09'
+total_styles: 20
+styles:
+- style_id: G03-system-breakout-std-silent
+  display_name: G03 System Breakout Std Silent
+  suite: 20260407-gamma-static-to-life-a
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Animate this split illustration with restrained contrast emphasis: slightly static on the constrained
+    side and more energetic depth and path motion on the innovator side, while preserving the split composition and message
+    clarity.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-gamma-static-to-life-a\g03-system-breakout-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-gamma-static-to-life-a\receipts\g03-system-breakout-std-silent.json
+  tags:
+  - general
+- style_id: G04-paperwork-vs-digital-fork-std-silent
+  display_name: G04 Paperwork Vs Digital Fork Std Silent
+  suite: 20260407-gamma-static-to-life-a
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Bring this decision-point illustration to life with subtle forward drift, restrained emphasis on the split
+    between paperwork and digital innovation, and gentle motion in the dashboard elements while preserving the physician as
+    the focal anchor.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-gamma-static-to-life-a\g04-paperwork-vs-digital-fork-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-gamma-static-to-life-a\receipts\g04-paperwork-vs-digital-fork-std-silent.json
+  tags:
+  - general
+- style_id: G01-roadmap-pathway-std-silent
+  display_name: G01 Roadmap Pathway Std Silent
+  suite: 20260407-gamma-static-to-life-a-retry1
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Bring this roadmap illustration to life with restrained forward movement, subtle layered depth, and guided
+    emphasis along the pathway toward the future vision. Preserve all text, icons, and milestone relationships.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-gamma-static-to-life-a-retry1\g01-roadmap-pathway-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-gamma-static-to-life-a-retry1\receipts\g01-roadmap-pathway-std-silent.json
+  tags:
+  - instructional
+- style_id: G02-hospital-crossroads-std-silent
+  display_name: G02 Hospital Crossroads Std Silent
+  suite: 20260407-gamma-static-to-life-a-retry1
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Add subtle camera drift and gentle emphasis to the directional signs and clinician stance, preserving
+    the hospital crossroads composition and all sign relationships without redesigning the scene.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-gamma-static-to-life-a-retry1\g02-hospital-crossroads-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-gamma-static-to-life-a-retry1\receipts\g02-hospital-crossroads-std-silent.json
+  tags:
+  - healthcare
+- style_id: I1-image2video-std-silent
+  display_name: I1 Image2Video Std Silent
+  suite: 20260407-kling-matrix-a
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Add subtle depth motion and a restrained push-in while preserving the approved slide composition and text
+    relationships. No new elements.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-matrix-a\i1-image2video-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-matrix-a\receipts\i1-image2video-std-silent.json
+  tags:
+  - instructional
+- style_id: I2-image2video-pro-silent
+  display_name: I2 Image2Video Pro Silent
+  suite: 20260407-kling-matrix-a
+  operation: image2video
+  model: kling-v2-6
+  mode: pro
+  duration: '5'
+  prompt_template: 'Add subtle layered motion and gentle cinematic depth while preserving the approved slide composition,
+    hierarchy, and all text relationships.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-matrix-a\i2-image2video-pro-silent__kling-v2-6_pro_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-matrix-a\receipts\i2-image2video-pro-silent.json
+  tags:
+  - instructional
+- style_id: T1-text2video-std-silent
+  display_name: T1 Text2Video Std Silent
+  suite: 20260407-kling-matrix-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Busy hospital corridor in a modern medical center, soft camera drift, clinicians moving through frame,
+    cool clean healthcare palette, credible professional atmosphere, no text overlays.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-matrix-a\t1-text2video-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-matrix-a\receipts\t1-text2video-std-silent.json
+  tags:
+  - healthcare
+- style_id: K01-beauty-glam-closeup-std-silent
+  display_name: K01 Beauty Glam Closeup Std Silent
+  suite: 20260407-kling-phase1-fourpack-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Cinematic beauty close-up of a woman in a soft ivory faux-fur hood, luminous skin, delicate eyelashes,
+    gentle hair movement, warm diffused studio lighting, shallow depth of field, calm micro-expression, slow camera drift,
+    elegant editorial glamour, no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase1-fourpack-a\k01-beauty-glam-closeup-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase1-fourpack-a\receipts\k01-beauty-glam-closeup-std-silent.json
+  tags:
+  - beauty
+- style_id: K03-luxury-product-macro-std-silent
+  display_name: K03 Luxury Product Macro Std Silent
+  suite: 20260407-kling-phase1-fourpack-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Editorial luxury product macro shot of a premium smartphone resting among soft peach roses and eucalyptus
+    on a cream surface, glossy black screen, warm copper rim light, shallow depth of field, slow elegant push-in, subtle reflection
+    shimmer, refined commercial aesthetic, no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase1-fourpack-a\k03-luxury-product-macro-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase1-fourpack-a\receipts\k03-luxury-product-macro-std-silent.json
+  tags:
+  - product
+- style_id: K05-slide-preserving-motion-card-std-silent
+  display_name: K05 Slide Preserving Motion Card Std Silent
+  suite: 20260407-kling-phase1-fourpack-a
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Add restrained layered depth and a gentle cinematic push-in while preserving the approved slide composition,
+    typography, and all text relationships. No new elements, no layout changes.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase1-fourpack-a\k05-slide-preserving-motion-card-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase1-fourpack-a\receipts\k05-slide-preserving-motion-card-std-silent.json
+  tags:
+  - instructional
+- style_id: K06-infographic-roadmap-reveal-std-silent
+  display_name: K06 Infographic Roadmap Reveal Std Silent
+  suite: 20260407-kling-phase1-fourpack-a
+  operation: image2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Animate this structured collaboration graphic with subtle depth, gentle relationship emphasis, and a calm
+    reveal rhythm while preserving all text, node placement, and conceptual clarity. No redesign.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase1-fourpack-a\k06-infographic-roadmap-reveal-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase1-fourpack-a\receipts\k06-infographic-roadmap-reveal-std-silent.json
+  tags:
+  - general
+- style_id: K02-clean-fashion-portrait-std-silent
+  display_name: K02 Clean Fashion Portrait Std Silent
+  suite: 20260407-kling-phase2-fourpack-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Editorial fashion portrait of a poised man in a deep burgundy tailored jacket standing in a refined colonnade
+    interior, subtle breathing and eye focus shift, soft camera drift, clean lighting, polished modern portrait realism, no
+    text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase2-fourpack-a\k02-clean-fashion-portrait-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase2-fourpack-a\receipts\k02-clean-fashion-portrait-std-silent.json
+  tags:
+  - portrait
+- style_id: K07-clinical-hallway-atmosphere-std-silent
+  display_name: K07 Clinical Hallway Atmosphere Std Silent
+  suite: 20260407-kling-phase2-fourpack-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Modern hospital hallway at shift change, restrained camera drift forward, soft natural movement of clinicians
+    in the distance, clean medical lighting, credible professional atmosphere, calm realistic healthcare tone, no text overlays.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase2-fourpack-a\k07-clinical-hallway-atmosphere-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase2-fourpack-a\receipts\k07-clinical-hallway-atmosphere-std-silent.json
+  tags:
+  - healthcare
+- style_id: K08-neon-cityscape-std-silent
+  display_name: K08 Neon Cityscape Std Silent
+  suite: 20260407-kling-phase2-fourpack-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Rainy neon city intersection at night, glowing signs reflected on wet pavement, slow elevated camera drift,
+    gentle traffic motion and ambient light shimmer, cinematic urban atmosphere, no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase2-fourpack-a\k08-neon-cityscape-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase2-fourpack-a\receipts\k08-neon-cityscape-std-silent.json
+  tags:
+  - urban
+- style_id: K09-stylized-3d-mascot-idle-std-silent
+  display_name: K09 Stylized 3D Mascot Idle Std Silent
+  suite: 20260407-kling-phase2-fourpack-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Stylized 3D bunny mascot standing on a softly lit stage, subtle idle movement, gentle breathing, tiny
+    head turn, expressive eyes, colorful concert-style backlights, clean playful character rendering, no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-phase2-fourpack-a\k09-stylized-3d-mascot-idle-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-phase2-fourpack-a\receipts\k09-stylized-3d-mascot-idle-std-silent.json
+  tags:
+  - 3d
+- style_id: K04-macro-surreal-detail-std-silent
+  display_name: K04 Macro Surreal Detail Std Silent
+  suite: 20260407-kling-remaining-safe-two-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Surreal macro close-up of an eye framed by pastel lashes and delicate metallic machine details, shallow
+    depth of field, tiny focus breathing, subtle lighting shimmer, high texture detail, dreamlike editorial macro aesthetic,
+    no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-remaining-safe-two-a\k04-macro-surreal-detail-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-remaining-safe-two-a\receipts\k04-macro-surreal-detail-std-silent.json
+  tags:
+  - product
+  - surreal
+- style_id: K10-anthropomorphic-animal-comedy-std-silent
+  display_name: K10 Anthropomorphic Animal Comedy Std Silent
+  suite: 20260407-kling-remaining-safe-two-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Anthropomorphic cow in cozy red loungewear holding a smartphone and coffee mug in a softly lit bedroom,
+    subtle body sway, small eye and head movement, gentle comedic realism, clean stylized detail, no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-remaining-safe-two-a\k10-anthropomorphic-animal-comedy-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-remaining-safe-two-a\receipts\k10-anthropomorphic-animal-comedy-std-silent.json
+  tags:
+  - character
+- style_id: V3-public-surface-probe
+  display_name: V3 Public Surface Probe
+  suite: 20260407-kling-v3-singapore-b
+  operation: text2video
+  model: kling-v3
+  mode: pro
+  duration: '10'
+  prompt_template: 'Multi-angle cinematic professional montage with richer scene variation and restrained realism, intended
+    as a public-surface 3.0 capability probe.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-v3-singapore-b\v3-public-surface-probe__kling-v3_pro_10s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-v3-singapore-b\receipts\v3-public-surface-probe.json
+  tags:
+  - general
+- style_id: E01-whimsical-handpainted-healthcare-std-silent
+  display_name: E01 Whimsical Handpainted Healthcare Std Silent
+  suite: 20260407-kling-whimsical-healthcare-a
+  operation: text2video
+  model: kling-v2-6
+  mode: std
+  duration: '5'
+  prompt_template: 'Whimsical hand-painted animated healthcare scene in a warm storybook style: a kind young clinician walking
+    through a softly lit clinic hallway with floating paper charts transforming into glowing digital icons, gentle breeze
+    through curtains, watercolor textures, expressive but calm character motion, hopeful healing atmosphere, no text.
+
+    '
+  negative_prompt: ''
+  video_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\reports\kling-validation\20260407-kling-whimsical-healthcare-a\e01-whimsical-handpainted-healthcare-std-silent__kling-v2-6_std_5s.mp4
+  receipt_path: reports\kling-validation\20260407-kling-whimsical-healthcare-a\receipts\e01-whimsical-handpainted-healthcare-std-silent.json
+  tags:
+  - illustration
+- style_id: prod-c1m1-slide01-20260409
+  display_name: 'Production: Clinician Dilemma (Push-In)'
+  suite: production-20260409
+  operation: image2video
+  model: kling-v2-6
+  mode: pro
+  duration: '5'
+  prompt_template: "Subtle camera push-in on the clinician figure. Healthcare icons gently pulse and rotate. Background elements\
+    \ shift with parallax depth. Professional, measured movement \u2014 not dramatic. The figure remains centered and grounded."
+  negative_prompt: ''
+  video_path: course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/motion/slide-01-motion.mp4
+  receipt_path: course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/motion/motion-generation-slide-01.json
+  tags:
+  - healthcare
+  - instructional
+  - production-proven

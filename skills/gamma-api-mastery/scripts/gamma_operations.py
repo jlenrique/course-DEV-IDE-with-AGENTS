@@ -1320,6 +1320,21 @@ def download_export(
     return output_path
 
 
+def _gamma_export_sort_key(path: Path) -> tuple[int, str]:
+    """Parse the leading numeric prefix from Gamma export filenames.
+
+    Gamma names exported PNGs as ``{N}_{Title}.png`` (e.g.,
+    ``1_The-Modern-Clinicians-Dilemma.png``). This key sorts them by
+    that leading number so positional mapping to our card numbers is
+    correct. Falls back to lexicographic sort if no leading number.
+    """
+    import re as _re
+    match = _re.match(r"^(\d+)", path.stem)
+    if match:
+        return int(match.group(1)), path.stem
+    return 9999, path.stem
+
+
 def _materialize_exported_slide_paths(
     downloaded_path: Path,
     *,
@@ -1353,9 +1368,12 @@ def _materialize_exported_slide_paths(
             archive.extractall(extract_dir)
 
         extracted_images = sorted(
-            path
-            for path in extract_dir.rglob("*")
-            if path.is_file() and path.suffix.lower() in image_extensions
+            (
+                path
+                for path in extract_dir.rglob("*")
+                if path.is_file() and path.suffix.lower() in image_extensions
+            ),
+            key=lambda p: _gamma_export_sort_key(p),
         )
         if len(extracted_images) != len(expected_card_numbers):
             raise ValueError(
@@ -1364,8 +1382,12 @@ def _materialize_exported_slide_paths(
                 f"got {len(extracted_images)} from {downloaded_path.name}."
             )
 
+        # Positional mapping: Gamma exports are numbered sequentially (1-N)
+        # in the same order the slides were submitted. Our expected_card_numbers
+        # list preserves that submission order, so position i in the sorted
+        # export maps to expected_card_numbers[i].
         resolved_paths: list[str] = []
-        for source_path, card_number in zip(extracted_images, expected_card_numbers, strict=False):
+        for source_path, card_number in zip(extracted_images, expected_card_numbers):
             target_path = export_dir / f"{module_lesson_part}_slide_{card_number:02d}.png"
             target_path.write_bytes(source_path.read_bytes())
             resolved_paths.append(str(target_path))

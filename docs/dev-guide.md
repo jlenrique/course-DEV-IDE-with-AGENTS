@@ -449,6 +449,27 @@ All API clients extend `BaseAPIClient` in `scripts/api_clients/base_client.py`.
 | **Raw responses** | `get_raw()` / `post_raw()` for binary content (audio, etc.) |
 | **JSON parsing** | Automatic with fallback for non-JSON responses |
 
+### Gamma PNG Export Handling
+
+Gamma's PNG export may return a single image or a ZIP archive of multiple images. The `_materialize_exported_slide_paths` function in `skills/gamma-api-mastery/scripts/gamma_operations.py` handles this normalization:
+
+```python
+def _materialize_exported_slide_paths(
+    downloaded_path: Path,
+    *,
+    requested_format: str | None,
+    expected_card_numbers: list[int],
+    module_lesson_part: str,
+    export_dir: Path,
+    label: str,
+) -> list[str]:
+    # Parses slide_XX.png filenames, handles _variant_A/B suffixes
+    # Sorts numerically, validates against expected_card_numbers
+    # Returns deterministic per-card PNG paths
+```
+
+This ensures slide_01.png maps to card 1, etc., preventing storyboard misalignment.
+
 ### Creating a New Client
 
 ```python

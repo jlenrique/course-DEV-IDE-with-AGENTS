@@ -717,6 +717,7 @@ def validate_irene_pass2_handoff(
     non_png_file_path_for: list[str] = []
     remote_file_path_for: list[str] = []
     missing_local_png_for: list[str] = []
+    png_card_mismatch_for: list[str] = []
     gary_slide_path_by_id: dict[str, str] = {}
     bundle_dir = _bundle_dir_from_inputs(payload, envelope_path=envelope_path)
     for item in gary:
@@ -725,6 +726,7 @@ def validate_irene_pass2_handoff(
         slide_label = str(item.get("slide_id") or item.get("card_number") or "unknown")
         file_path = item.get("file_path")
         source_ref = item.get("source_ref")
+        card_number = item.get("card_number")
         if not isinstance(file_path, str) or not file_path.strip():
             missing_file_path_for.append(slide_label)
         else:
@@ -738,6 +740,18 @@ def validate_irene_pass2_handoff(
                 bundle_dir=bundle_dir,
             ) is None:
                 missing_local_png_for.append(slide_label)
+
+            # Check PNG filename number matches card_number
+            if isinstance(card_number, int) and card_number > 0:
+                filename = Path(normalized_path).name
+                if filename.startswith("slide_") and filename.endswith(".png"):
+                    num_str = filename[6:-4]  # Remove "slide_" and ".png"
+                    try:
+                        filename_number = int(num_str)
+                        if filename_number != card_number:
+                            png_card_mismatch_for.append(slide_label)
+                    except ValueError:
+                        pass  # Non-numeric, skip check
 
             slide_id = item.get("slide_id")
             if isinstance(slide_id, str) and slide_id.strip():

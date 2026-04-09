@@ -3,40 +3,58 @@
 > Scope note: this file is the hot-start for the next repo session.
 > For production operations, pair it with `docs/operations-context.md` and the workflow docs it points to.
 
-## Current State (as of 2026-04-09, mid-run)
+## Current State (as of 2026-04-09, mid-run session 2)
 
 - Active branch: `ops/next-session`
-- Expected git state: working tree has uncommitted session work to be committed
-- Active production run: `C1-M1-PRES-20260409` — **IN PROGRESS** (Prompts 1-7D complete, paused before Kira video gen + Irene Pass 2)
+- Active production run: `C1-M1-PRES-20260409` — **IN PROGRESS** (Prompts 1-7D complete, Motion Gate closed)
 - Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion`
 - Run status in DB: `active`
 - Workflow: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
 
-## Run C1-M1-PRES-20260409 Status
+## Immediate Next Action
 
-### Completed Prompts
-- Prompt 1: Activation + Preflight — PASS
-- Prompt 2: Source Authority Map — PASS (carried from C1-M1-PRES-20260406)
-- Prompt 2A: Operator Directives — carried, approved
-- Prompt 3: Ingestion + Validation — PASS
-- Prompt 4: Quality Gate + Irene Packet — PASS, Vera G0 PASS
-- Prompt 4.5: Slide Count & Runtime — locked (15 slides, 10 min, 40s avg, 0.5 variability)
-- Prompt 5: Irene Pass 1 — 15 slides, Gate 1 PASS (Vera G1, G2, Quinn-R G2)
-- Prompt 5.5: HIL Mode Approval — approved (11 creative, 3 literal-text, 1 literal-visual)
-- Prompt 6: Pre-Dispatch Package — all 7 artifacts built, validated
-- Prompt 6B: Literal-Visual Checkpoint — card-03.png confirmed
-- Prompt 7: Gary Dispatch — double-dispatch with deliberate strategies, 30 PNGs on disk, validator PASS
-- Prompt 7B: Variant Selection — 14×B + slide 9×A, operator-exported from interactive storyboard UI
-- Prompt 7C: Storyboard A + Gate 2 — authorized-storyboard.json written, 15 winner slides collapsed
-- Prompt 7D: Gate 2M Motion — slides 1,5 = video (Kira), all others = static, motion_plan.yaml applied
+1. Stay on `ops/next-session` branch — continue from here.
+2. **Perception bridge** — sensory bridge read of all 15 winner stills + 1 video clip (slide 01 only).
+3. **Irene Pass 2** — narration with "triple vision" (perceived visuals + on-screen text + source material from extracted.md). Motion-first narration for slide 01 speaks to visible action in the approved B-roll clip.
 
-### Next Prompts (in order)
-1. **Fix PNG export-to-card mapping** — CRITICAL BLOCKER. Exported PNGs are mis-mapped to card numbers. `_materialize_exported_slide_paths` in `gamma_operations.py` assumes positional correspondence but Gamma reorders slides internally. Must fix for this run AND harden code to preclude future mix-ups. Investigate with party mode team: content-based or metadata-based mapping needed.
-2. **Re-verify storyboard** — After mapping fix, regenerate storyboard and confirm thumbnails match card numbers. Variant selection may need re-confirmation if storyboard showed wrong images.
-3. **Kira video generation** — slides 1 and 5, pro model, 125 credit budget. Kira is proven from prior run (C1-M1-PRES-20260406). Sequencing note: Kira MUST run before Irene Pass 2 (moved forward from later prompt pack position). May experiment with additional video styles.
-4. **Motion Gate** — approve generated clips
-5. **Perception bridge** — sensory bridge read of all 15 winner stills + 2 video clips
-6. **Irene Pass 2** — narration with "triple vision" (actual visuals perceived via bridge + on-screen text + source material from extracted.md). Motion-first narration for slides 1 and 5 speaks to visible action in approved clips.
+## Completed Prompts This Run
+
+| Prompt | Status | Key artifacts |
+|--------|--------|---------------|
+| 1: Activation + Preflight | PASS | `preflight-results.json` |
+| 2: Source Authority Map | PASS (carried) | `metadata.json` |
+| 2A: Operator Directives | carried, approved | `operator-directives.md` |
+| 3: Ingestion + Validation | PASS | `extracted.md`, `ingestion-evidence.md` |
+| 4: Quality Gate + Irene Packet | PASS, Vera G0 PASS | `irene-packet.md`, `ingestion-quality-gate-receipt.md` |
+| 4.5: Slide Count & Runtime | locked | 15 slides, 10 min, 40s avg, 0.5 variability |
+| 5: Irene Pass 1 | Gate 1 PASS | `irene-pass1.md` (includes text usability constraint) |
+| 5.5: HIL Mode Approval | approved | `hil-mode-approval.json` (11 creative, 3 literal-text, 1 literal-visual) |
+| 6: Pre-Dispatch Package | validated | All 7 Gary artifacts |
+| 6B: Literal-Visual Checkpoint | PASS | `literal-visual-operator-packet.md` |
+| 7: Gary Dispatch | PASS | 30 PNGs (15×2 variants), correctly mapped, validator PASS |
+| 7B: Variant Selection | confirmed (re-reviewed after mapping fix) | `variant-selection.json` (9B + 6A) |
+| 7C: Gate 2 + Winner Auth | PASS | `authorized-storyboard.json` (15 winners) |
+| 7D: Gate 2M Motion | closed | `motion_plan.yaml` (1 video, 14 static) |
+
+## Motion Gate Final Status
+
+- Slide 01: **video** — K07 clinical hallway B-roll (text2video, std, 5s). APPROVED.
+  - `motion/slide-01-motion.mp4` (4.1 MB)
+  - Prompt: "Cinematic B-roll of a busy modern hospital corridor at shift change..."
+- Slide 05: **static** — downgraded from video. Kling text2video cannot produce usable illustrative content for instructional slides (gibberish text, poor illustrations).
+- All other slides: **static**
+
+## Variant Selection (final, re-confirmed with correct PNG mapping)
+
+| Slide | Winner | Slide | Winner | Slide | Winner |
+|-------|--------|-------|--------|-------|--------|
+| 1 | B | 6 | A | 11 | B |
+| 2 | B | 7 | B | 12 | B |
+| 3 | B | 8 | B | 13 | A |
+| 4 | B | 9 | A | 14 | B |
+| 5 | A | 10 | A | 15 | A |
+
+9 × B (narrative/storytelling) + 6 × A (analytical/data-driven)
 
 ## Key Run Parameters
 
@@ -47,8 +65,8 @@ double_dispatch: true
 deliberate_dispatch: true
 variant_strategies: instr_focus (creative), proportional_illus (literal-text), literal_freedom (literal-visual)
 motion_enabled: true
-motion_budget: 125 credits, pro model
-motion_slides: 1 (video), 5 (video), rest static
+motion_budget: 125 credits, pro model (only ~8 used)
+motion_slides: 1 (video only), rest static
 locked_slide_count: 15
 target_total_runtime_minutes: 10
 slide_runtime_average_seconds: 40
@@ -56,34 +74,38 @@ theme: hil-2026-apc-nejal-A (Gamma API ID: njim9kuhfnljvaa)
 voice: TBD (not yet selected this run)
 ```
 
-## Branch Metadata
-
-```bash
-# Already on ops/next-session — continue from here
-git status
-```
-
-## Code Changes This Session (to be committed)
+## Code Changes This Session (committed)
 
 | File | Change |
 |------|--------|
-| `gamma_operations.py` | Double-dispatch export dir routing, CLI theme override fix, composite fallback URL fix, deliberate variant strategies |
+| `gamma_operations.py` | PNG export sort key fix (`_gamma_export_sort_key`), double-dispatch export dirs, CLI theme override fix, composite fallback URL fix |
 | `validate-gary-dispatch-ready.py` | Double-dispatch paired card sequence support |
-| `generate-storyboard.py` | Interactive A/B selection UI, project-root asset resolution, publish overwrite support |
-| `write-authorized-storyboard.py` | Nested `{selections: {...}}` format support from browser export |
+| `generate-storyboard.py` | Interactive A/B selection UI, project-root asset resolution, publish overwrite |
+| `write-authorized-storyboard.py` | Nested `{selections: {...}}` format support |
 | `slide_count_runtime_estimator.py` | Removed hard cap, added --max-slides |
-| `test_gamma_operations.py` | Fixed deliberate dispatch test fixtures |
-| `rerun-carry-forward-manifest.md` | New doc for re-run bundle setup |
+| `build_style_picker.py` | NEW — Video style picker builder + GitHub Pages publisher |
+| `video-style-catalog.yaml` | NEW — 20 proven video styles with full API metadata |
+| `rerun-carry-forward-manifest.md` | NEW — Re-run bundle setup documentation |
+| `.gitignore` | Track resources/ structured docs, ignore only binary artifacts |
+
+## Uncommitted Work (needs commit before next session starts)
+
+- Updated `motion_plan.yaml` (slide 05 -> static)
+- Updated `motion-designations.json` (slide 05 -> static)
+- Updated `gamma_operations.py` (PNG sort key fix from this session)
+- Updated `validate-irene-pass2-handoff.py` (PNG card mismatch detection)
+- New `video-style-catalog.yaml` and `build_style_picker.py`
+- Various doc updates
+
+## Published Tools
+
+- **Storyboard:** https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260409/index.html
+- **Video Style Picker:** https://jlenrique.github.io/assets/video-style-picker/index.html
 
 ## Known Issues
 
-1. **PNG export ordering**: Gamma deck export PNGs don't match card numbers. The `_materialize_exported_slide_paths` function in `gamma_operations.py` needs investigation. This affects storyboard thumbnail accuracy and perception bridge input.
-2. **3 test failures**: `TestExecuteGenerationDeliberateDispatch` PNG export tests have mock fixture issues (not code bugs — live dispatch works correctly).
-3. **Vera/Quinn storyboard scores**: Deck-level, not per-slide. Per-slide scoring requires running Vera G3 perception on each PNG individually.
-
-## Storyboard URL
-
-https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260409/index.html
+1. **3 test failures**: `TestExecuteGenerationDeliberateDispatch` PNG export tests have mock fixture issues (not code bugs).
+2. **Kling text2video limitation**: Cannot render English text/labels. All text2video prompts must be purely illustrative. Documented in motion-generation-slide-05.json retry_reason.
 
 ## Hot-Start Paths
 
@@ -91,4 +113,8 @@ https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260409/index.html
 - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
 - `docs/workflow/rerun-carry-forward-manifest.md`
 - Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/`
-- Exemplar: `resources/exemplars/gamma/L3-mm-of-innovation/brief.md`
+- Irene Pass 1: `[BUNDLE]/irene-pass1.md` (includes text usability constraint)
+- Authorized storyboard: `[BUNDLE]/authorized-storyboard.json`
+- Motion plan: `[BUNDLE]/motion_plan.yaml`
+- Winner PNGs: `[BUNDLE]/gamma-export/` (variant A) and `[BUNDLE]/gamma-export-B/` (variant B)
+- Slide 01 video: `[BUNDLE]/motion/slide-01-motion.mp4`

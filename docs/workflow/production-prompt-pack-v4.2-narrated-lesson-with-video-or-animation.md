@@ -320,6 +320,7 @@ Required outputs:
 Required validation:
 - Vera G3 on every dispatch set produced
 - `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
+- PNG export-to-card mapping validation (ensure slide_XX.png matches card number XX)
 - If `DOUBLE_DISPATCH: true`, run the same validator against `[BUNDLE_PATH]/gary-dispatch-result-B.json`
 
 Required write:

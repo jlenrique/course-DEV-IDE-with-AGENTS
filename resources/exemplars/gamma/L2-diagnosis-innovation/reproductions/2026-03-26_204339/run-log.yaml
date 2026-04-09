@@ -1,0 +1,47 @@
+exemplar_id: L2-diagnosis-innovation
+timestamp: 2026-03-26_204339
+analysis:
+  layout_pattern: title-plus-body
+  content_sections:
+  - '**Body**'
+  pedagogical_type: content-delivery
+  title: Diagnosis = Innovation
+  word_count: 299
+  has_multiple_sections: false
+reproduction_spec:
+  input_text: 'Diagnosis = Innovation
+
+
+    Your clinical training has already prepared you to be an innovator. The process
+    you use every day mirrors the innovation process exactly.'
+  text_mode: preserve
+  format: presentation
+  num_cards: 1
+  additional_instructions: Single-focus layout with bold headline and short body paragraph.
+    Minimal text, clean layout. Output ONLY the provided text. Do not add content.
+  image_options: &id001
+    source: noImages
+  export_as: pdf
+api_interaction:
+  endpoint: POST /v1.0/generations
+  parameters:
+    input_text: 'Diagnosis = Innovation
+
+
+      Your clinical training has already prepared you to be an innovator. The process
+      you use every day mirrors the innovation process exactly.'
+    text_mode: preserve
+    format: presentation
+    num_cards: 1
+    additional_instructions: Single-focus layout with bold headline and short body
+      paragraph. Minimal text, clean layout. Output ONLY the provided text. Do not
+      add content.
+    image_options: *id001
+    export_as: pdf
+  generation_id: ''
+  gamma_url: https://gamma.app/docs/9yvv26x9mmw011b
+  export_url: https://assets.api.gamma.app/export/pdf/9yvv26x9mmw011b/e2be2a6fc2e82833ff71a6d008140fe3/Diagnosis-Innovation.pdf
+  artifact_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\course-content\staging\Diagnosis-Innovation.pdf
+status: completed
+error: null
+artifact_path: C:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS\resources\exemplars\gamma\L2-diagnosis-innovation\reproductions\2026-03-26_204339\output\Diagnosis-Innovation.pdf

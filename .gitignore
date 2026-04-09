@@ -14,8 +14,12 @@ exports/
 # Generated reports (structural walk, prompt harness, etc.)
 reports/
 
-# Repo-root resources (local drops and exemplar runs; use git add -f to force-track if needed)
-resources/
+# Resources — track structured docs, ignore large binary artifacts
+resources/Gamma-visuals/*.png
+resources/exemplars/**/reproductions/**/*.png
+resources/exemplars/**/reproductions/**/*.pdf
+resources/exemplars/**/reproductions/**/*.pptx
+resources/exemplars/**/reproductions/**/*.mp3
 course-content/**/private/
 
 # Staging workspace — local / mutable; not versioned

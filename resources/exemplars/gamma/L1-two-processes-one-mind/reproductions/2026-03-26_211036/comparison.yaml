@@ -1,0 +1,26 @@
+exemplar_id: L1-two-processes-one-mind
+timestamp: 2026-03-26_211036
+scores:
+  structural_fidelity:
+    score: 2
+    notes: 'Text similarity: 0.29. Title present: True. Source lines: 12, Repro lines:
+      31.'
+  content_completeness:
+    score: 5
+    notes: 'Key phrases found: 11/12 (92%). Missing: [''both require rapid hypothesis
+      formation, experimentation, and iteration to find root causes.''].'
+  parameter_accuracy:
+    score: 5
+    notes: 4/4 key parameters correctly set.
+  context_alignment:
+    score: 4
+    notes: 'Pedagogical type: narrative. Title+content alignment: 92%.'
+  creative_quality:
+    score: 4
+    notes: 'File size: 37,847 bytes. Visually rich.'
+conclusion: 'Layout: two-column-parallel. Similarity: 0.29. Content coverage: 92%.
+  File size: 37,847B. Embellishment: high. Missing: both require rapid hypothesis
+  formation, experimentation, and iteration to find root causes.'
+pass_fail:
+  result: fail
+  reason: High-weight dimension below 3

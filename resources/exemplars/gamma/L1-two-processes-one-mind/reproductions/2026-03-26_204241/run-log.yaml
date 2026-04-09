@@ -1,0 +1,51 @@
+exemplar_id: L1-two-processes-one-mind
+timestamp: 2026-03-26_204241
+analysis:
+  layout_pattern: two-column-parallel
+  content_sections:
+  - '**Left column — Clinical Diagnosis:**'
+  - '**Right column — Design Thinking:**'
+  pedagogical_type: narrative
+  title: Two Processes, One Mind
+  word_count: 336
+  has_multiple_sections: true
+reproduction_spec:
+  input_text: 'Two Processes, One Mind
+
+
+    Clinical Diagnosis:
+
+    - History & Physical
+
+    - Form hypothesis
+
+    - Order labs & imaging
+
+    - Iterate until diagnosis
+
+
+    Design Thinking:
+
+    - Empathize with users
+
+    - Define the problem
+
+    - Ideate solutions
+
+    - Prototype & test
+
+
+    Both require rapid hypothesis formation, experimentation, and iteration to find
+    root causes.'
+  text_mode: preserve
+  format: presentation
+  num_cards: 1
+  additional_instructions: Two-column parallel comparison layout. Equal-width columns
+    side by side. No additional content beyond what is provided.
+  image_options:
+    source: noImages
+  export_as: pdf
+api_interaction: {}
+status: error
+error: 'HTTP 404: Not Found'
+artifact_path: null

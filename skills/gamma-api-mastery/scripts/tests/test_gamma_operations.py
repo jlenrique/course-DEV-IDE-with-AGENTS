@@ -944,6 +944,94 @@ class TestGaryOutboundContract:
             "literal-visual",
         }
 
+
+class TestExecuteGenerationDeliberateDispatch:
+    """Tests for deliberate variant strategies in double dispatch."""
+
+    def test_applies_deliberate_variant_strategies(self) -> None:
+        """Happy path: variant_strategies applied to A/B params."""
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-a"}
+        mock_client.wait_for_generation.side_effect = [
+            {"id": "gen-a", "status": "completed", "gammaUrl": "url-a"},
+            {"id": "gen-b", "status": "completed", "gammaUrl": "url-b"},
+        ]
+
+        params = {
+            "input_text": "Test content",
+            "textMode": "generate",
+            "double_dispatch": True,
+            "variant_strategies": {
+                "A": {"additionalInstructions": "Focus on data."},
+                "B": {"additionalInstructions": "Focus on narrative."},
+            },
+            **_valid_theme_resolution(),
+            "themeId": "theme_abc",
+        }
+
+        result = execute_generation(params, client=mock_client)
+
+        # Verify A call got A's diffs
+        a_call = mock_client.generate.call_args_list[0]
+        assert "Focus on data." in a_call[1]["additionalInstructions"]
+
+        # Verify B call got B's diffs
+        b_call = mock_client.generate.call_args_list[1]
+        assert "Focus on narrative." in b_call[1]["additionalInstructions"]
+
+        assert result["generation_mode"] == "double-dispatch"
+        assert len(result["gary_slide_output"]) == 2
+
+    def test_fallback_on_invalid_variant_strategies(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Invalid strategies: log warning, fallback to uniform."""
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-uniform"}
+        mock_client.wait_for_generation.side_effect = [
+            {"id": "gen-uniform", "status": "completed", "gammaUrl": "url-uniform"},
+        ] * 2
+
+        params = {
+            "input_text": "Test content",
+            "textMode": "generate",
+            "double_dispatch": True,
+            "variant_strategies": "not-a-dict",
+            **_valid_theme_resolution(),
+            "themeId": "theme_abc",
+        }
+
+        with caplog.at_level(logging.WARNING, logger="gamma_operations"):
+            result = execute_generation(params, client=mock_client)
+
+        assert "variant_strategies not a dict, falling back to uniform stochastic" in caplog.text
+        # Both calls identical (uniform)
+        calls = mock_client.generate.call_args_list
+        assert calls[0][1]["additional_instructions"] == calls[1][1]["additional_instructions"]
+
+    def test_fallback_on_no_variant_strategies(self, caplog: pytest.LogCaptureFixture) -> None:
+        """No strategies: log info, fallback to uniform."""
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"id": "gen-uniform"}
+        mock_client.wait_for_generation.side_effect = [
+            {"id": "gen-uniform", "status": "completed", "gammaUrl": "url-uniform"},
+        ] * 2
+
+        params = {
+            "input_text": "Test content",
+            "textMode": "generate",
+            "double_dispatch": True,
+            "deliberate_dispatch": True,
+            **_valid_theme_resolution(),
+            "themeId": "theme_abc",
+        }
+
+        with caplog.at_level(logging.INFO, logger="gamma_operations"):
+            result = execute_generation(params, client=mock_client)
+
+        assert "No variant_strategies provided" in caplog.text
+        # Both calls identical
+        calls = mock_client.generate.call_args_list
+        assert calls[0][1]["additional_instructions"] == calls[1][1]["additional_instructions"]
+
     def test_literal_visual_call_uses_template_api(self) -> None:
         slides = [
             {"slide_number": 1, "content": "Creative card", "fidelity": "creative"},

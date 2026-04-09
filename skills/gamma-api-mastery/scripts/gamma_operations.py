@@ -750,6 +750,22 @@ def execute_generation(
         right_params.pop("double_dispatch", None)
         right_params.pop("doubleDispatch", None)
 
+        # Apply deliberate variant strategies if provided
+        variant_strategies = params.get("variant_strategies")
+        if isinstance(variant_strategies, dict):
+            a_diffs = variant_strategies.get("A", {})
+            b_diffs = variant_strategies.get("B", {})
+            if isinstance(a_diffs, dict) and isinstance(b_diffs, dict):
+                left_params.update(a_diffs)
+                right_params.update(b_diffs)
+                logger.info("Applied deliberate variant strategies: A=%s, B=%s", a_diffs, b_diffs)
+            else:
+                logger.warning("Invalid variant_strategies format, falling back to uniform stochastic")
+        elif variant_strategies is not None:
+            logger.warning("variant_strategies not a dict, falling back to uniform stochastic")
+        else:
+            logger.info("No variant_strategies provided, using uniform stochastic")
+
         left = execute_generation(
             left_params,
             slides=slides,

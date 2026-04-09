@@ -51,6 +51,8 @@ def build_run_context(
     preset: str,
     base_dir: str | Path | None = None,
     double_dispatch: bool = False,
+    deliberate_dispatch: bool = False,
+    variant_strategies: dict[str, Any] | None = None,
     motion_enabled: bool = False,
     motion_budget_max_credits: float | None = None,
     motion_budget_model_preference: str = "std",
@@ -78,6 +80,8 @@ def build_run_context(
         "run_id": run_id,
         "content_type": content_type,
         "double_dispatch": double_dispatch,
+        "deliberate_dispatch": deliberate_dispatch,
+        "variant_strategies": variant_strategies or {},
         "motion_enabled": motion_enabled,
         "motion_budget": {
             "max_credits": motion_budget_max_credits,
@@ -134,11 +138,18 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--content-type", default="unknown")
     parser.add_argument("--preset", default="draft")
     parser.add_argument("--double-dispatch", action="store_true", default=False)
+    parser.add_argument("--deliberate-dispatch", action="store_true", default=False)
+    parser.add_argument("--variant-strategies-json", default=None)
     parser.add_argument("--motion-enabled", action="store_true", default=False)
     parser.add_argument("--motion-budget-max-credits", type=float, default=None)
     parser.add_argument("--motion-budget-model-preference", default="std")
     parser.add_argument("--base-dir", default=None)
     args = parser.parse_args(argv)
+
+    variant_strategies = None
+    if args.variant_strategies_json:
+        with open(args.variant_strategies_json, 'r', encoding='utf-8') as f:
+            variant_strategies = json.load(f)
 
     paths = build_run_context(
         run_id=args.run_id,
@@ -148,6 +159,8 @@ def main(argv: list[str] | None = None) -> None:
         content_type=args.content_type,
         preset=args.preset,
         double_dispatch=args.double_dispatch,
+        deliberate_dispatch=args.deliberate_dispatch,
+        variant_strategies=variant_strategies,
         motion_enabled=args.motion_enabled,
         motion_budget_max_credits=args.motion_budget_max_credits,
         motion_budget_model_preference=args.motion_budget_model_preference,

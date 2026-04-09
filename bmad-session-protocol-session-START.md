@@ -2,6 +2,23 @@
 
 Companion to `bmad-session-protocol-session-WRAPUP.md`. Together these two files guarantee reliable context transfer between sessions.
 
+## §0: Project Purpose TL;DR (For Unfamiliar Agents)
+
+**Purpose**: Build a persistent collaborative intelligence infrastructure for systematically scaling creative expertise in online course content production. A custom master orchestrator agent (Marcus) coordinates specialist agents that manipulate professional media tools through skills backed by Python scripts for API calls, while systematically capturing creative decision-making patterns in BMad memory sidecars for iterative refinement and reuse.
+
+**Architecture**: Agents are skill directories created via `bmad-agent-builder` six-phase discovery process, living under `skills/bmad-agent-{name}/`. Skills are SKILL.md directories with references/ + scripts/ for tool mastery. Cursor plugin packaging enables native IDE integration.
+
+**Repo Contract**:
+```
+course-content/courses/     # Published content
+course-content/staging/     # Agent drafts (human review queue)
+skills/                     # Agent skill directories (auto-discovered)
+_bmad/                      # BMad Method artifacts
+docs/                       # Architecture + agent guides
+scripts/                    # Python infrastructure
+state/                      # YAML configs + SQLite runtime
+```
+
 ### Context transfer contract
 
 The startup protocol **reads** certain files; the wrapup protocol **writes** them. Every read must have a corresponding write, or context is lost.
@@ -52,6 +69,34 @@ Open and read:
 - `docs/project-context.md`
 - **Course content context**: `docs/agent-environment.md` (MCP, API, platform guidance)
 
+### 1.5: APP Agent Team & Skills Catalog (For Coding Agents)
+
+**Master Orchestrator**: Marcus (`skills/bmad-agent-marcus/SKILL.md`) — Creative Production Orchestrator. Coordinates all APP runs. Consult for production workflows.
+
+**Core APP Agents** (Top 12, see `_bmad/_config/agent-manifest.csv` for full 16):
+| Agent | Role | Path |
+|-------|------|------|
+| Marcus 🎬 | Production orchestrator | `skills/bmad-agent-marcus/` |
+| Irene 📝 | Content creator (lesson plans, scripts) | `skills/bmad-agent-content-creator/` |
+| Gary 🎨 | Slide generation (Gamma API) | `skills/bmad-agent-gamma/` |
+| ElevenLabs 🎤 | Voice synthesis | `skills/bmad-agent-elevenlabs/` |
+| Canvas 📚 | LMS deployment | `skills/bmad-agent-canvas/` |
+| Kira 🎥 | Video generation (Kling) | `skills/bmad-agent-kling/` |
+| Quinn-R 🧪 | Quality review | `skills/bmad-agent-quality-reviewer/` |
+| Vera 🔍 | Fidelity assessment | `skills/bmad-agent-fidelity-assessor/` |
+| Source Wrangler 📄 | External content ingestion | `skills/source-wrangler/` |
+| Tech Spec Wrangler 🔧 | Tool documentation refresh | `skills/tech-spec-wrangler/` |
+| Compositor 🎬 | Video assembly | `skills/compositor/` |
+| Woodshed 🏋️ | Exemplar mastery training | `skills/woodshed/` |
+
+**Shared Skills** (available to all agents):
+- `pre-flight-check` — System readiness verification
+- `production-coordination` — Workflow management
+- `sensory-bridges` — Multimodal perception (image/audio/PDF)
+- `parameter-intelligence` — Tool parameter optimization
+
+**Do NOT create ad-hoc scripts**: Use existing agents/skills first. If missing, request via `bmad-agent-builder`.
+
 ### 2. Confirm branch
 
 Check the current Git branch and compare it with the branch instructions recorded in `next-session-start-here.md`.
@@ -89,13 +134,25 @@ If one IDE points to a different worktree path, stop and re-open that IDE on the
 
 ### 4. Confirm BMAD phase
 
-Determine which BMAD phase applies to this session's objective: 
+Determine which BMAD phase applies to this session's objective:
 - **1-analysis** (brainstorming, research, ideation)
-- **2-planning** (PRD, UX design, architecture documentation) 
+- **2-planning** (PRD, UX design, architecture documentation)
 - **3-solutioning** (epics/stories, implementation readiness)
 - **4-implementation** (story development, code review, testing)
 
 Some subsequent steps are implementation-only; skip those steps in earlier phases.
+
+### 4.5: BMAD Glossary (For Unfamiliar Agents)
+
+| Term | Meaning |
+|------|---------|
+| **BMAD Phases** | 1-analysis → 2-planning → 3-solutioning → 4-implementation |
+| **Artifacts** | Deliverables: PRD (requirements), architecture (design), epics/stories (work breakdown), sprint-status.yaml (progress) |
+| **Agents** | Custom AI assistants created via `bmad-agent-builder` (e.g., Marcus orchestrator) |
+| **Skills** | Reusable capabilities (SKILL.md + scripts/) for tool mastery |
+| **Memory Sidecars** | `_bmad/memory/{agent}-sidecar/` for learning/persistence |
+| **Party Mode** | Multi-agent discussions via `bmad-party-mode` skill |
+| **Woodshed** | Exemplar-driven skill training (study → reproduce → compare) |
 
 ### 5. Review BMAD status artifacts
 
@@ -131,6 +188,13 @@ If these files don't exist yet, note their absence — the project may be in ear
 ### 7. Open implementation files
 
 Open primary implementation files for the target acceptance criteria. If tests exist for the target scope, open those too.
+
+**Coding Entry Points** (for APP development):
+- **Marcus Orchestrator**: `skills/bmad-agent-marcus/scripts/` (production run scripts)
+- **API Clients**: `scripts/api_clients/` (Gamma, ElevenLabs, Canvas, etc.)
+- **Utilities**: `scripts/utilities/` (file ops, logging, state management)
+- **State Management**: `state/runtime/coordination.db` (SQLite), `state/config/` (YAML configs)
+- **Tests**: `tests/` (unit/integration for agents/skills)
 
 *Skip if the session objective is analysis, planning, or review only.*
 

@@ -702,6 +702,7 @@ Inputs:
 
 Required Marcus behavior:
 - delegate a preview-only request to the Voice Director; do not generate any new audio in this prompt
+- confirm the audio buffer (default 1.5s lead-in + 1.5s tail) and capture the operator-approved value for voice selection
 - provide the operator with exactly one of these review paths:
   - `continuity_preview` or `default_plus_alternatives`:
     - previously used voice for this presentation, if one exists
@@ -722,6 +723,7 @@ python skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-preview `
   --presentation-attributes-json "{...}" `
   [--previous-voice-receipt [BUNDLE_PATH]/voice-selection.json] `
   [--ideal-voice-description "..."] `
+  [--audio-buffer-seconds 1.5] `
   --output-path [BUNDLE_PATH]/voice-preview-options.json
 ```
 
@@ -738,7 +740,8 @@ python skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-select `
   --selected-voice-id [VOICE_ID] `
   --output-path [BUNDLE_PATH]/voice-selection.json `
   [--operator-notes "..."] `
-  [--override-reason "..."]
+  [--override-reason "..."] `
+  [--audio-buffer-seconds 1.5]
 ```
 
 Required fields in `voice-selection.json`:
@@ -748,6 +751,7 @@ Required fields in `voice-selection.json`:
 - `preview_url`
 - `selection_rationale`
 - `selected_from_rank`
+- `audio_buffer_seconds`
 - `locked_manifest_hash`
 - `locked_script_hash`
 - `override_reason` when the operator selects a non-primary candidate
@@ -790,6 +794,7 @@ Required outputs:
   - `narration_duration`
   - `narration_file`
   - `narration_vtt`
+  - `audio_buffer_seconds`
   - `sfx_file` where applicable
 
 Motion-specific rules:
@@ -809,12 +814,14 @@ Suggested command surface:
 python skills/elevenlabs-audio/scripts/elevenlabs_operations.py manifest `
   [BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml `
   --output-dir [BUNDLE_PATH]/assembly-bundle `
-  --voice-selection [BUNDLE_PATH]/voice-selection.json
+  --voice-selection [BUNDLE_PATH]/voice-selection.json `
+  [--audio-buffer-seconds 1.5]
 ```
 
 The `--voice-selection` flag causes the tool to:
 - verify `locked_manifest_hash` and `locked_script_hash` against the Gate 3 locked artifacts before any ElevenLabs spend
 - auto-resolve `selected_voice_id` as the default synthesis voice (explicit `--default-voice-id` still overrides)
+- apply `audio_buffer_seconds` to each clip, offset VTT cues by the lead-in buffer, and update `narration_duration`
 - emit per-segment progress to stderr during synthesis
 
 Go/no-go:

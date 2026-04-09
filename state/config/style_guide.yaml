@@ -34,6 +34,7 @@ tool_parameters:
     style: 0.0
     model_id: ""            # e.g. "eleven_multilingual_v2"
     output_format: "mp3_44100_128"
+    audio_buffer_seconds: 1.5
 
   canvas:
     default_course_id: ""

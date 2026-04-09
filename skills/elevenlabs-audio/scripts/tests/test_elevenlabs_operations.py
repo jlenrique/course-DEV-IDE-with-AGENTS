@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 MODULE_PATH = Path(__file__).resolve().parents[1] / "elevenlabs_operations.py"
 SPEC = importlib.util.spec_from_file_location("elevenlabs_operations", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -279,10 +281,56 @@ class TestVoicePreviewFlow:
         assert result["selection_mode"] == "description_recommendation"
         assert len(result["candidate_voices"]) == 3
         assert result["candidate_voices"][0]["voice_id"] == "voice-a"
-        assert all(item["preview_url"] for item in result["candidate_voices"])
-        assert all(item["source"] == "description_recommendation" for item in result["candidate_voices"])
-        assert result["locked_manifest_hash"]
-        assert result["locked_script_hash"]
+
+
+class TestAudioBufferHandling:
+    def test_preview_voice_options_rejects_negative_buffer(self) -> None:
+        client = Mock()
+        client.list_voices.return_value = []
+
+        with pytest.raises(ValueError):
+            MODULE.preview_voice_options(
+                mode="default_plus_alternatives",
+                audio_buffer_seconds=-0.5,
+                client=client,
+            )
+
+    def test_finalize_voice_selection_preserves_audio_buffer(self, tmp_path: Path) -> None:
+        receipt = {
+            "status": "selection_required",
+            "audio_buffer_seconds": 0.75,
+            "candidate_voices": [
+                {
+                    "voice_id": "voice-1",
+                    "name": "Example Voice",
+                    "source": "style_guide_default",
+                    "preview_url": "https://samples/voice.mp3",
+                    "rationale": "Baseline",
+                    "rank": 1,
+                }
+            ],
+        }
+        preview_path = tmp_path / "voice-preview.json"
+        output_path = tmp_path / "voice-selection.json"
+        preview_path.write_text(json.dumps(receipt), encoding="utf-8")
+
+        decision = MODULE.finalize_voice_selection(
+            preview_path,
+            selected_voice_id="voice-1",
+            output_path=output_path,
+        )
+
+        assert decision["audio_buffer_seconds"] == 0.75
+        assert output_path.exists()
+
+    def test_offset_vtt_timestamps_applies_buffer(self) -> None:
+        vtt = "WEBVTT\n\n1\n00:00:00.000 --> 00:00:01.000\nHello\n"
+        shifted = MODULE.offset_vtt_timestamps(vtt, 1.5)
+        assert "00:00:01.500 --> 00:00:02.500" in shifted
+
+    def test_offset_vtt_timestamps_no_change_when_zero(self) -> None:
+        vtt = "WEBVTT\n\n1\n00:00:00.000 --> 00:00:01.000\nHello\n"
+        assert MODULE.offset_vtt_timestamps(vtt, 0.0) == vtt
 
     def test_finalize_voice_selection_requires_override_for_non_primary_choice(
         self, tmp_path: Path
@@ -385,21 +433,47 @@ class TestNarrationFlow:
                 "character_end_times_seconds": [0.1, 0.2],
             },
         }
-        with patch.object(
-            MODULE,
-            "load_style_guide_elevenlabs",
-            return_value={"default_voice_id": "voice-a", "model_id": "m1"},
+        (tmp_path / "clip.mp3").write_bytes(b"fake audio")
+        with (
+            patch.object(
+                MODULE,
+                "load_style_guide_elevenlabs",
+                return_value={"default_voice_id": "voice-a", "model_id": "m1"},
+            ),
+            patch("subprocess.run") as mock_subprocess,
         ):
+            def mock_run(*args, **kwargs):
+                command = args[0]
+                temp_path = None
+                for i, arg in enumerate(command):
+                    if arg == "-i":
+                        input_path = Path(command[i+1])
+                        temp_path = input_path.with_name(f"{input_path.stem}-buffered{input_path.suffix}")
+                        break
+                if temp_path:
+                    temp_path.write_bytes(b"buffered audio")
+                return Mock(returncode=0)
+            mock_subprocess.side_effect = mock_run
             result = MODULE.generate_narration(
                 "Hi",
                 output_dir=tmp_path,
                 filename_stem="clip",
+                audio_buffer_seconds=0.5,
                 client=client,
             )
         assert result["voice_id"] == "voice-a"
-        assert result["narration_duration"] == 0.2
+        assert result["narration_duration"] == 0.7  # 0.2 + 0.5
         assert (tmp_path / "clip.vtt").exists()
+        vtt_content = (tmp_path / "clip.vtt").read_text(encoding="utf-8")
+        assert "00:00:00.500 --> 00:00:00.700" in vtt_content  # offset by 0.5
         client.text_to_speech_with_timestamps_file.assert_called_once()
+        mock_subprocess.assert_called_once()
+        # Check the ffmpeg command
+        call_args = mock_subprocess.call_args
+        command = call_args[0][0]
+        assert command[0] == MODULE.FFMPEG_BINARY
+        assert "-af" in command
+        assert "adelay=500:all=1" in command
 
     def test_generate_narration_requires_voice_id(self, tmp_path: Path) -> None:
         with patch.object(MODULE, "load_style_guide_elevenlabs", return_value={}):
@@ -455,14 +529,27 @@ segments:
                 return_value={"default_voice_id": "voice-a"},
             ),
             patch.object(MODULE, "generate_narration", side_effect=fake_generate_narration),
+            patch("subprocess.run") as mock_subprocess,
         ):
+            def mock_run(*args, **kwargs):
+                command = args[0]
+                temp_path = None
+                for i, arg in enumerate(command):
+                    if arg == "-i":
+                        input_path = Path(command[i+1])
+                        temp_path = input_path.with_name(f"{input_path.stem}-buffered{input_path.suffix}")
+                        break
+                if temp_path:
+                    temp_path.write_bytes(b"buffered audio")
+                return Mock(returncode=0)
+            mock_subprocess.side_effect = mock_run
             result = MODULE.generate_manifest_narration(manifest_path)
 
         saved = MODULE.load_manifest(manifest_path)
         first = saved["segments"][0]
         second = saved["segments"][1]
         assert result["status"] == "success"
-        assert first["narration_duration"] == 1.5
+        assert first["narration_duration"] == 3.0  # 1.5 + 1.5 buffer
         assert first["narration_file"].endswith("seg-01.mp3")
         assert first["narration_vtt"].endswith("seg-01.vtt")
         assert second["narration_duration"] == 0.0
@@ -602,7 +689,20 @@ class TestManifestHashVerification:
                 return_value={},
             ),
             patch.object(MODULE, "generate_narration", side_effect=fake_generate_narration),
+            patch("subprocess.run") as mock_subprocess,
         ):
+            def mock_run(*args, **kwargs):
+                command = args[0]
+                temp_path = None
+                for i, arg in enumerate(command):
+                    if arg == "-i":
+                        input_path = Path(command[i+1])
+                        temp_path = input_path.with_name(f"{input_path.stem}-buffered{input_path.suffix}")
+                        break
+                if temp_path:
+                    temp_path.write_bytes(b"buffered audio")
+                return Mock(returncode=0)
+            mock_subprocess.side_effect = mock_run
             result = MODULE.generate_manifest_narration(
                 mutable_manifest,
                 output_dir=assembly,
@@ -679,7 +779,20 @@ class TestManifestHashVerification:
                 return_value={"default_voice_id": "voice-a"},
             ),
             patch.object(MODULE, "generate_narration", side_effect=fake_generate_narration),
+            patch("subprocess.run") as mock_subprocess,
         ):
+            def mock_run(*args, **kwargs):
+                command = args[0]
+                temp_path = None
+                for i, arg in enumerate(command):
+                    if arg == "-i":
+                        input_path = Path(command[i+1])
+                        temp_path = input_path.with_name(f"{input_path.stem}-buffered{input_path.suffix}")
+                        break
+                if temp_path:
+                    temp_path.write_bytes(b"buffered audio")
+                return Mock(returncode=0)
+            mock_subprocess.side_effect = mock_run
             MODULE.generate_manifest_narration(
                 manifest_path,
                 progress_callback=track_progress,

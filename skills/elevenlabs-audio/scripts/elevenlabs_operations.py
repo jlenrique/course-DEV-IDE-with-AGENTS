@@ -18,6 +18,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import sys
 from typing import Any
 import xml.sax.saxutils as xml_utils
@@ -30,8 +31,14 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.api_clients.elevenlabs_client import ElevenLabsClient
+from scripts.utilities.ffmpeg import resolve_ffmpeg_binary
 
 load_dotenv(PROJECT_ROOT / ".env")
+
+try:
+    FFMPEG_BINARY = resolve_ffmpeg_binary()
+except Exception as e:
+    raise RuntimeError(f"ffmpeg not available: {e}")
 
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
 VOICE_PROFILES_PATH = (
@@ -91,6 +98,7 @@ VOICE_CLARITY_HINTS = {
     "professional",
     "warm",
 }
+DEFAULT_AUDIO_BUFFER_SECONDS = 1.5
 
 
 def load_style_guide_elevenlabs() -> dict[str, Any]:
@@ -119,6 +127,34 @@ def merge_parameters(
             if value is not None and value != "":
                 merged[key] = value
     return merged
+
+
+def _coerce_audio_buffer_seconds(value: Any | None) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        resolved = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("audio_buffer_seconds must be a number.") from exc
+    if resolved < 0:
+        raise ValueError("audio_buffer_seconds must be non-negative.")
+    return resolved
+
+
+def _resolve_audio_buffer_seconds(
+    value: Any | None,
+    *,
+    style_defaults: dict[str, Any] | None = None,
+    fallback: float = DEFAULT_AUDIO_BUFFER_SECONDS,
+) -> float:
+    resolved = _coerce_audio_buffer_seconds(value)
+    if resolved is not None:
+        return resolved
+    style_defaults = style_defaults or {}
+    resolved = _coerce_audio_buffer_seconds(style_defaults.get("audio_buffer_seconds"))
+    if resolved is not None:
+        return resolved
+    return fallback
 
 
 def _merge_unique_terms(*groups: list[str] | tuple[str, ...] | set[str] | None) -> list[str]:
@@ -410,6 +446,7 @@ def preview_voice_options(
     previous_voice_receipt_path: str | Path | None = None,
     ideal_voice_description: str | None = None,
     style_defaults: dict[str, Any] | None = None,
+    audio_buffer_seconds: float | None = None,
     locked_manifest_path: str | Path | None = None,
     locked_script_path: str | Path | None = None,
     output_path: str | Path | None = None,
@@ -423,6 +460,9 @@ def preview_voice_options(
     if client is None:
         client = ElevenLabsClient()
     style_defaults = style_defaults or load_style_guide_elevenlabs()
+    resolved_audio_buffer_seconds = _resolve_audio_buffer_seconds(
+        audio_buffer_seconds, style_defaults=style_defaults
+    )
     voices = client.list_voices()
     voice_map = {
         str(voice.get("voice_id") or "").strip(): voice
@@ -539,6 +579,7 @@ def preview_voice_options(
             "presentation_context": context_chunks,
             "candidate_voices": recommendations,
             "catalog_voice_count": len(voices),
+            "audio_buffer_seconds": resolved_audio_buffer_seconds,
             "selected_voice_id": None,
             "selected_voice_name": None,
             "selected_from_rank": None,
@@ -670,6 +711,7 @@ def preview_voice_options(
         "presentation_context": context_chunks,
         "candidate_voices": candidate_voices,
         "catalog_voice_count": len(voices),
+        "audio_buffer_seconds": resolved_audio_buffer_seconds,
         "selected_voice_id": None,
         "selected_voice_name": None,
         "selected_from_rank": None,
@@ -696,6 +738,7 @@ def finalize_voice_selection(
     output_path: str | Path | None = None,
     operator_notes: str | None = None,
     override_reason: str | None = None,
+    audio_buffer_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Persist the operator's selected voice from a preview receipt."""
     receipt = _load_json_file(preview_receipt_path)
@@ -717,6 +760,11 @@ def finalize_voice_selection(
             "override_reason is required when selecting a non-primary preview candidate."
         )
 
+    resolved_audio_buffer_seconds = _resolve_audio_buffer_seconds(
+        audio_buffer_seconds if audio_buffer_seconds is not None else receipt.get("audio_buffer_seconds"),
+        style_defaults=load_style_guide_elevenlabs(),
+    )
+
     decision = dict(receipt)
     decision.update(
         {
@@ -727,6 +775,7 @@ def finalize_voice_selection(
             "selected_from_rank": selected_rank,
             "preview_url": selected_candidate.get("preview_url"),
             "selection_rationale": selected_candidate.get("rationale"),
+            "audio_buffer_seconds": resolved_audio_buffer_seconds,
             "operator_notes": operator_notes,
             "override_reason": override_reason,
             "voice_preview_receipt_path": str(Path(preview_receipt_path)),
@@ -777,6 +826,14 @@ def _format_vtt_timestamp(value: float) -> str:
     return f"{hours:02}:{minutes:02}:{seconds:02}.{milliseconds:03}"
 
 
+def _parse_vtt_timestamp(value: str) -> float:
+    match = re.match(r"^(\d{2}):(\d{2}):(\d{2})\.(\d{3})$", value.strip())
+    if not match:
+        raise ValueError(f"Invalid VTT timestamp: {value}")
+    hours, minutes, seconds, milliseconds = (int(part) for part in match.groups())
+    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
+
+
 def alignment_to_vtt(alignment: dict[str, Any] | None) -> str:
     """Convert ElevenLabs character alignment to a word-level WebVTT track."""
     if not alignment:
@@ -816,6 +873,63 @@ def alignment_to_vtt(alignment: dict[str, Any] | None) -> str:
     return "\n".join(lines)
 
 
+def offset_vtt_timestamps(vtt_text: str, offset_seconds: float) -> str:
+    if offset_seconds <= 0:
+        return vtt_text
+    lines = vtt_text.splitlines()
+    updated: list[str] = []
+    for line in lines:
+        if "-->" not in line:
+            updated.append(line)
+            continue
+        start_text, end_text = (part.strip() for part in line.split("-->", 1))
+        try:
+            start = _parse_vtt_timestamp(start_text) + offset_seconds
+            end = _parse_vtt_timestamp(end_text) + offset_seconds
+        except ValueError as e:
+            raise ValueError(f"Invalid VTT timestamp in line: {line}") from e
+        updated.append(f"{_format_vtt_timestamp(start)} --> {_format_vtt_timestamp(end)}")
+    suffix = "\n" if vtt_text.endswith("\n") else ""
+    return "\n".join(updated) + suffix
+
+
+def _apply_audio_buffer(
+    audio_path: Path,
+    *,
+    lead_seconds: float,
+    tail_seconds: float,
+    base_duration: float,
+    ffmpeg_path: str | None = None,
+) -> None:
+    if lead_seconds <= 0 and tail_seconds <= 0:
+        return
+    if lead_seconds < 0 or tail_seconds < 0:
+        raise ValueError("audio_buffer_seconds must be non-negative.")
+    ffmpeg = ffmpeg_path or FFMPEG_BINARY
+    temp_path = audio_path.with_name(f"{audio_path.stem}-buffered{audio_path.suffix}")
+    filter_parts: list[str] = []
+    if lead_seconds > 0:
+        lead_ms = int(round(lead_seconds * 1000))
+        filter_parts.append(f"adelay={lead_ms}:all=1")
+    if tail_seconds > 0:
+        filter_parts.append(f"apad=pad_dur={tail_seconds}")
+    filter_str = ",".join(filter_parts) if filter_parts else "anull"
+    target_duration = max(0.0, base_duration + lead_seconds + tail_seconds)
+    command = [
+        ffmpeg,
+        "-y",
+        "-i",
+        str(audio_path),
+        "-af",
+        filter_str,
+        "-t",
+        f"{target_duration:.3f}",
+        str(temp_path),
+    ]
+    subprocess.run(command, capture_output=True, text=True, check=True)
+    temp_path.replace(audio_path)
+
+
 def load_manifest(manifest_path: str | Path) -> dict[str, Any]:
     """Load a YAML segment manifest from disk."""
     manifest_path = Path(manifest_path)
@@ -843,6 +957,7 @@ def generate_narration(
     pronunciation_dictionary_locators: list[dict[str, str]] | None = None,
     previous_request_ids: list[str] | None = None,
     next_request_ids: list[str] | None = None,
+    audio_buffer_seconds: float = 0.0,
     client: ElevenLabsClient | None = None,
 ) -> dict[str, Any]:
     """Generate narration audio + VTT using style-guide defaults and overrides."""
@@ -873,13 +988,23 @@ def generate_narration(
         previous_request_ids=previous_request_ids,
         next_request_ids=next_request_ids,
     )
-    vtt_path.write_text(
-        alignment_to_vtt(result.get("normalized_alignment") or result.get("alignment")),
-        encoding="utf-8",
-    )
+    vtt = alignment_to_vtt(result.get("normalized_alignment") or result.get("alignment"))
+    vtt_path.write_text(vtt, encoding="utf-8")
     alignment = result.get("normalized_alignment") or result.get("alignment") or {}
     ends = alignment.get("character_end_times_seconds", [])
     duration_seconds = ends[-1] if ends else 0.0
+
+    if audio_buffer_seconds > 0:
+        _apply_audio_buffer(
+            audio_path,
+            lead_seconds=audio_buffer_seconds,
+            tail_seconds=0,
+            base_duration=duration_seconds,
+        )
+        vtt = offset_vtt_timestamps(vtt, audio_buffer_seconds)
+        vtt_path.write_text(vtt, encoding="utf-8")
+        duration_seconds += audio_buffer_seconds
+
     return {
         "status": "success",
         "voice_id": resolved_voice_id,
@@ -939,6 +1064,7 @@ def generate_manifest_narration(
     parameter_overrides: dict[str, Any] | None = None,
     default_voice_id: str | None = None,
     voice_selection_path: str | Path | None = None,
+    audio_buffer_seconds: float | None = None,
     progress_callback: Any | None = None,
     client: ElevenLabsClient | None = None,
 ) -> dict[str, Any]:
@@ -986,6 +1112,16 @@ def generate_manifest_narration(
     if not resolved_default_voice_id:
         raise ValueError("No ElevenLabs default voice available for manifest processing.")
 
+    resolved_audio_buffer_seconds = _resolve_audio_buffer_seconds(
+        audio_buffer_seconds
+        if audio_buffer_seconds is not None
+        else (vs_data or {}).get("audio_buffer_seconds"),
+        style_defaults=merged,
+    )
+    ffmpeg_path = None
+    if resolved_audio_buffer_seconds > 0:
+        ffmpeg_path = resolve_ffmpeg_binary()
+
     segments = manifest.get("segments", [])
     total_segments = len(segments)
     previous_request_ids: list[str] = []
@@ -997,6 +1133,7 @@ def generate_manifest_narration(
             segment["narration_duration"] = 0.0
             segment["narration_file"] = None
             segment["narration_vtt"] = None
+            segment["audio_buffer_seconds"] = 0.0
             segment.setdefault("sfx_file", None)
             if progress_callback:
                 progress_callback(segment_id, seg_index, total_segments)
@@ -1025,9 +1162,27 @@ def generate_manifest_narration(
             )
             generated_vtt_path.unlink()
 
-        segment["narration_duration"] = result["narration_duration"]
+        buffer_seconds = resolved_audio_buffer_seconds
+        narration_duration = result["narration_duration"]
+        if buffer_seconds > 0:
+            _apply_audio_buffer(
+                audio_path,
+                lead_seconds=buffer_seconds,
+                tail_seconds=0,
+                base_duration=narration_duration,
+                ffmpeg_path=ffmpeg_path,
+            )
+            updated_vtt = offset_vtt_timestamps(
+                final_vtt_path.read_text(encoding="utf-8"),
+                buffer_seconds,
+            )
+            final_vtt_path.write_text(updated_vtt, encoding="utf-8")
+            narration_duration += buffer_seconds
+
+        segment["narration_duration"] = narration_duration
         segment["narration_file"] = str(audio_path)
         segment["narration_vtt"] = str(final_vtt_path)
+        segment["audio_buffer_seconds"] = buffer_seconds
         segment.setdefault("sfx_file", None)
 
         sfx_cue = segment.get("sfx")
@@ -1048,9 +1203,10 @@ def generate_manifest_narration(
                 "segment_id": segment_id,
                 "voice_id": voice_id,
                 "request_id": result.get("request_id"),
-                "narration_duration": result["narration_duration"],
+                "narration_duration": narration_duration,
                 "narration_file": segment["narration_file"],
                 "narration_vtt": segment["narration_vtt"],
+                "audio_buffer_seconds": buffer_seconds,
                 "sfx_file": segment.get("sfx_file"),
             }
         )
@@ -1190,6 +1346,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--voice-selection",
         help="Path to voice-selection.json; verifies hashes before synthesis",
     )
+    manifest.add_argument("--audio-buffer-seconds", type=float)
 
     voice_preview = subparsers.add_parser(
         "voice-preview",
@@ -1204,6 +1361,7 @@ def build_parser() -> argparse.ArgumentParser:
     voice_preview.add_argument("--previous-voice-id")
     voice_preview.add_argument("--previous-voice-receipt")
     voice_preview.add_argument("--ideal-voice-description")
+    voice_preview.add_argument("--audio-buffer-seconds", type=float)
     voice_preview.add_argument("--locked-manifest")
     voice_preview.add_argument("--locked-script")
     voice_preview.add_argument("--output-path")
@@ -1217,6 +1375,7 @@ def build_parser() -> argparse.ArgumentParser:
     voice_select.add_argument("--output-path")
     voice_select.add_argument("--operator-notes")
     voice_select.add_argument("--override-reason")
+    voice_select.add_argument("--audio-buffer-seconds", type=float)
 
     return parser
 
@@ -1253,6 +1412,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_dir=args.output_dir,
                 default_voice_id=args.default_voice_id,
                 voice_selection_path=getattr(args, "voice_selection", None),
+                audio_buffer_seconds=getattr(args, "audio_buffer_seconds", None),
                 progress_callback=_cli_progress,
             )
         elif args.command == "voice-preview":
@@ -1267,6 +1427,7 @@ def main(argv: list[str] | None = None) -> int:
                 previous_voice_id=args.previous_voice_id,
                 previous_voice_receipt_path=args.previous_voice_receipt,
                 ideal_voice_description=args.ideal_voice_description,
+                audio_buffer_seconds=args.audio_buffer_seconds,
                 locked_manifest_path=args.locked_manifest,
                 locked_script_path=args.locked_script,
                 output_path=args.output_path,
@@ -1278,6 +1439,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_path=args.output_path,
                 operator_notes=args.operator_notes,
                 override_reason=args.override_reason,
+                audio_buffer_seconds=args.audio_buffer_seconds,
             )
         else:
             result = generate_sound_effect(

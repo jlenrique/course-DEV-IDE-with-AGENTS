@@ -31,11 +31,12 @@
 - Prompt 7D: Gate 2M Motion — slides 1,5 = video (Kira), all others = static, motion_plan.yaml applied
 
 ### Next Prompts (in order)
-1. **Fix PNG export ordering** — CRITICAL: exported PNGs are mis-mapped to card numbers. `_materialize_exported_slide_paths` in `gamma_operations.py` assumes positional correspondence but Gamma reorders internally. Investigate and fix before any perception.
-2. **Kira video generation** — slides 1 and 5, pro model, 125 credit budget. Use Kling API.
-3. **Motion Gate** — approve generated clips
-4. **Perception bridge** — sensory bridge read of all 15 winner stills + 2 video clips
-5. **Irene Pass 2** — narration with "triple vision" (visuals + on-screen text + source material)
+1. **Fix PNG export-to-card mapping** — CRITICAL BLOCKER. Exported PNGs are mis-mapped to card numbers. `_materialize_exported_slide_paths` in `gamma_operations.py` assumes positional correspondence but Gamma reorders slides internally. Must fix for this run AND harden code to preclude future mix-ups. Investigate with party mode team: content-based or metadata-based mapping needed.
+2. **Re-verify storyboard** — After mapping fix, regenerate storyboard and confirm thumbnails match card numbers. Variant selection may need re-confirmation if storyboard showed wrong images.
+3. **Kira video generation** — slides 1 and 5, pro model, 125 credit budget. Kira is proven from prior run (C1-M1-PRES-20260406). Sequencing note: Kira MUST run before Irene Pass 2 (moved forward from later prompt pack position). May experiment with additional video styles.
+4. **Motion Gate** — approve generated clips
+5. **Perception bridge** — sensory bridge read of all 15 winner stills + 2 video clips
+6. **Irene Pass 2** — narration with "triple vision" (actual visuals perceived via bridge + on-screen text + source material from extracted.md). Motion-first narration for slides 1 and 5 speaks to visible action in approved clips.
 
 ## Key Run Parameters
 

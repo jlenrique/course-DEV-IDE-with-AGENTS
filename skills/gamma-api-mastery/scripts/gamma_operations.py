@@ -766,6 +766,27 @@ def execute_generation(
         else:
             logger.info("No variant_strategies provided, using uniform stochastic")
 
+        # Set variant-specific export directories so both A and B get local PNGs.
+        base_export_dir = (
+            params.get("export_dir")
+            or params.get("exportDir")
+            or ""
+        )
+        if base_export_dir:
+            base_export = Path(str(base_export_dir))
+            left_params["export_dir"] = str(base_export)
+            # Variant B exports to a sibling directory with -B suffix
+            right_params["export_dir"] = str(
+                base_export.parent / f"{base_export.name}-B"
+            )
+            Path(left_params["export_dir"]).mkdir(parents=True, exist_ok=True)
+            Path(right_params["export_dir"]).mkdir(parents=True, exist_ok=True)
+            logger.info(
+                "Double-dispatch export dirs: A=%s, B=%s",
+                left_params["export_dir"],
+                right_params["export_dir"],
+            )
+
         left = execute_generation(
             left_params,
             slides=slides,
@@ -1694,8 +1715,18 @@ def generate_deck_mixed_fidelity(
                     preint_source = PROJECT_ROOT / preint_source
 
                 if preint_source and preint_source.is_file() and literal_visual_file_path:
-                    target_path = Path(literal_visual_file_path)
+                    # If file_path is a remote URL (template failed, no local
+                    # export), compute a local target in the export directory.
+                    if _is_remote_http_ref(str(literal_visual_file_path)):
+                        target_path = (
+                            export_dir / f"{module_lesson_part}_literal-visual-{card_num:02d}.png"
+                            if export_dir
+                            else PROJECT_ROOT / f"literal-visual-{card_num:02d}.png"
+                        )
+                    else:
+                        target_path = Path(literal_visual_file_path)
                     _composite_full_bleed(preint_source, target_path)
+                    literal_visual_file_path = str(target_path)
                     literal_visual_source = "composite-preintegration"
                     logger.info(
                         "literal-visual card %d: composite from preintegration %s → %s",
@@ -1703,7 +1734,14 @@ def generate_deck_mixed_fidelity(
                     )
                 elif img_url and literal_visual_file_path:
                     # No local PNG — download from URL and composite.
-                    target_path = Path(literal_visual_file_path)
+                    if _is_remote_http_ref(str(literal_visual_file_path)):
+                        target_path = (
+                            export_dir / f"{module_lesson_part}_literal-visual-{card_num:02d}.png"
+                            if export_dir
+                            else PROJECT_ROOT / f"literal-visual-{card_num:02d}.png"
+                        )
+                    else:
+                        target_path = Path(literal_visual_file_path)
                     try:
                         dl_resp = requests.get(img_url, timeout=60)
                         dl_resp.raise_for_status()
@@ -2201,9 +2239,12 @@ if __name__ == "__main__":
             idx = sys.argv.index("--theme-resolution-json") + 1
             theme_resolution = json.loads(Path(sys.argv[idx]).read_text(encoding="utf-8"))
             params["theme_resolution"] = theme_resolution
-            resolved_theme_key = theme_resolution.get("resolved_theme_key")
-            if resolved_theme_key:
-                params["themeId"] = resolved_theme_key
+            # Only set themeId from resolution if --style-preset didn't
+            # already resolve it to the actual Gamma API theme ID.
+            if "themeId" not in params:
+                resolved_theme_key = theme_resolution.get("resolved_theme_key")
+                if resolved_theme_key:
+                    params["themeId"] = resolved_theme_key
 
         params.setdefault("input_text", input_text)
         params.setdefault("textMode", "generate")

@@ -489,11 +489,33 @@ def validate_gary_dispatch_ready(
         )
 
     card_sequence = _card_sequence(slides)
-    contiguous_from_one = (
-        bool(card_sequence)
-        and all(isinstance(n, int) for n in card_sequence)
-        and card_sequence == list(range(1, len(card_sequence) + 1))
+    is_double_dispatch = bool(
+        payload.get("generation_mode") == "double-dispatch"
+        or payload.get("double_dispatch", {}).get("enabled")
     )
+    if is_double_dispatch:
+        # In double-dispatch, each card_number appears exactly twice (A+B).
+        unique_cards = sorted(set(card_sequence))
+        contiguous_from_one = (
+            bool(unique_cards)
+            and all(isinstance(n, int) for n in unique_cards)
+            and unique_cards == list(range(1, len(unique_cards) + 1))
+        )
+        # Verify each card appears exactly twice
+        from collections import Counter
+        counts = Counter(card_sequence)
+        bad_counts = {k: v for k, v in counts.items() if v != 2}
+        if bad_counts:
+            errors.append(
+                f"double-dispatch: each card_number must appear exactly twice (A+B); "
+                f"mismatched: {bad_counts}"
+            )
+    else:
+        contiguous_from_one = (
+            bool(card_sequence)
+            and all(isinstance(n, int) for n in card_sequence)
+            and card_sequence == list(range(1, len(card_sequence) + 1))
+        )
     if card_sequence and not contiguous_from_one:
         errors.append(
             "gary_slide_output card_number sequence must be contiguous and start at 1 (1..N)"

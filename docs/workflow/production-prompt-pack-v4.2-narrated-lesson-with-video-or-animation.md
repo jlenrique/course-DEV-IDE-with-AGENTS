@@ -188,6 +188,31 @@ Stop if any dimension or G0 fails.
 
 ---
 
+## 4.5) Precursor Step: Slide Count & Runtime Polling
+
+Marcus, run the slide count and runtime precursor step for RUN_ID [RUN_ID].
+
+Required analysis:
+- Run `scripts/utilities/slide_count_runtime_estimator.py` on `[BUNDLE_PATH]/extracted.md`
+- Generate recommendations for slide count, total runtime, average slide runtime, variability scale
+
+Required polling:
+- Poll operator with 3-minute hold, 15-minute auto-close
+- Allow confirmation or override of all parameters
+- Validate mathematical feasibility before locking
+- Flag issues and recommend fixes if infeasible
+
+Required locking:
+- Persist locked values in `run-constants.yaml`:
+  - `locked_slide_count`
+  - `target_total_runtime_minutes`
+  - `slide_runtime_average_seconds`
+  - `slide_runtime_variability_scale`
+
+Stop and wait for operator lock confirmation.
+
+---
+
 ## 5) Irene Pass 1 Structure + Gate 1 Fidelity
 
 Marcus, delegate Irene Pass 1 for RUN_ID [RUN_ID].
@@ -213,6 +238,28 @@ Hard constraints:
 - Literal-visual slides must carry complete spec cards.
 
 Stop after Gate 1 review and approval.
+
+### Prompt 5.5: Irene Mode Assignments + HIL Approval
+
+Marcus, after Irene Pass 1, run HIL review of mode assignments.
+
+Required inputs:
+- `[BUNDLE_PATH]/irene-pass1.md` (with mode assignments per slide)
+- `slide_mode_proportions` from run-constants.yaml
+
+Required HIL task:
+- Review Irene's mode assignments against operator proportions
+- Approve or override specific slide modes
+- Ensure proportions are approximately met (within 10% tolerance)
+
+Required write:
+- `[BUNDLE_PATH]/hil-mode-approval.json` with final approved modes per slide
+
+Gate rule:
+- Irene Pass 1 cannot proceed to Gate 1 until HIL approval is recorded.
+- If overrides change proportions significantly, flag for operator re-confirmation.
+
+Stop after HIL approval.
 
 ---
 

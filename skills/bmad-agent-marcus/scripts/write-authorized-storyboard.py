@@ -119,7 +119,9 @@ def _normalize_selections(path: Path) -> dict[str, str]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     out: dict[str, str] = {}
     if isinstance(raw, dict):
-        for key, value in raw.items():
+        # Support nested {selections: {...}} from browser export UI
+        inner = raw.get("selections") if isinstance(raw.get("selections"), dict) else raw
+        for key, value in inner.items():
             if str(value).strip().upper() in {"A", "B"}:
                 out[str(key)] = str(value).strip().upper()
         return out

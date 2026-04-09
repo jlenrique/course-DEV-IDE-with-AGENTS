@@ -279,9 +279,8 @@ def publish_snapshot_tree(
         }
 
     if target_dir.exists():
-        raise ValueError(
-            f"publish target already exists with different contents: {safe_subdir}"
-        )
+        # Replace existing publish with updated content (same run, updated storyboard).
+        shutil.rmtree(target_dir)
     shutil.copytree(snapshot_dir, target_dir)
     return {
         "changed": True,
@@ -327,13 +326,19 @@ def _resolve_asset_ref(
     if _is_remote_ref(raw_ref):
         return raw_ref, "remote"
 
-    try:
-        abs_candidate = (asset_base / raw_ref).resolve()
-        if abs_candidate.is_file():
-            rel = Path(os.path.relpath(abs_candidate, storyboard_dir)).as_posix()
-            return rel, "present"
-    except OSError:
-        return raw_ref, "missing"
+    # Try multiple resolution paths: relative to asset_base, project root, or absolute.
+    candidates = [
+        (asset_base / raw_ref).resolve(),
+        (PROJECT_ROOT / raw_ref).resolve(),
+        Path(raw_ref).resolve(),
+    ]
+    for abs_candidate in candidates:
+        try:
+            if abs_candidate.is_file():
+                rel = Path(os.path.relpath(abs_candidate, storyboard_dir)).as_posix()
+                return rel, "present"
+        except OSError:
+            continue
     return raw_ref, "missing"
 
 
@@ -1241,6 +1246,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         return '<div class="script-state">No motion preview available.</div>'
 
     pair_section_rows: list[str] = []
+    run_id_escaped = html.escape(str(manifest.get("run_id") or ""), quote=True)
     for pair in dd.get("variant_pairs", []) if isinstance(dd, dict) else []:
         if not isinstance(pair, dict):
             continue
@@ -1248,26 +1254,87 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         var_b = pair.get("variants", {}).get("B") if isinstance(pair.get("variants"), dict) else None
         if not isinstance(var_a, dict) or not isinstance(var_b, dict):
             continue
+        cn = html.escape(str(pair.get('card_number', '')))
+        pre_selected = str(pair.get('selected_variant') or '').strip().upper()
+        a_cls = ' class="variant-selected"' if pre_selected == "A" else ""
+        b_cls = ' class="variant-selected"' if pre_selected == "B" else ""
         pair_section_rows.append(
-            "<tr>"
-            f"<td>{html.escape(str(pair.get('card_number', '')))}</td>"
-            f"<td>{_preview_markup(var_a, size='variant')}</td>"
-            f"<td>{_preview_markup(var_b, size='variant')}</td>"
+            f'<tr data-card="{cn}">'
+            f"<td>{cn}</td>"
+            f'<td{a_cls} data-variant="A">{_preview_markup(var_a, size="variant")}'
+            f'<button class="pick-btn" data-card="{cn}" data-pick="A"'
+            f'{" disabled" if pre_selected == "A" else ""}>Pick A</button></td>'
+            f'<td{b_cls} data-variant="B">{_preview_markup(var_b, size="variant")}'
+            f'<button class="pick-btn" data-card="{cn}" data-pick="B"'
+            f'{" disabled" if pre_selected == "B" else ""}>Pick B</button></td>'
             f"<td>Vera={html.escape(str(var_a.get('vera_score', 'n/a')))}<br/>Quinn={html.escape(str(var_a.get('quinn_score', 'n/a')))}</td>"
             f"<td>Vera={html.escape(str(var_b.get('vera_score', 'n/a')))}<br/>Quinn={html.escape(str(var_b.get('quinn_score', 'n/a')))}</td>"
-            f"<td>{html.escape(str(pair.get('selected_variant') or 'pending'))}</td>"
+            f'<td class="sel-status" data-card="{cn}">{pre_selected or "pending"}</td>'
             "</tr>"
         )
     pair_section_html = ""
     if pair_section_rows:
+        total_pairs = len(pair_section_rows)
         pair_section_html = (
             '<section class="variant-section">'
             "<h2>Variant Selection</h2>"
+            f'<div class="sel-toolbar">'
+            f'<span class="sel-progress" id="sel-progress">0 / {total_pairs} selected</span>'
+            '<button class="sel-all-btn" id="sel-all-a">All A</button>'
+            '<button class="sel-all-btn" id="sel-all-b">All B</button>'
+            '<button class="sel-export-btn" id="sel-export" disabled>Export selection JSON</button>'
+            '</div>'
             '<table class="variant-table"><thead><tr>'
             "<th>card</th><th>variant A</th><th>variant B</th><th>A scores</th><th>B scores</th><th>selected</th>"
             "</tr></thead><tbody>"
             + "\n".join(pair_section_rows)
             + "</tbody></table></section>"
+            '<script>'
+            'const SEL={};\n'
+            f'const RUN_ID="{run_id_escaped}";\n'
+            f'const TOTAL={total_pairs};\n'
+            'function pick(card,v){'
+            'SEL[card]=v;'
+            'const row=document.querySelector(`tr[data-card="${card}"]`);'
+            'if(row){'
+            'row.querySelectorAll("td[data-variant]").forEach(td=>{'
+            'td.classList.toggle("variant-selected",td.dataset.variant===v);'
+            'const btn=td.querySelector(".pick-btn");'
+            'if(btn)btn.disabled=(btn.dataset.pick===v);'
+            '});'
+            'const st=row.querySelector(".sel-status");if(st)st.textContent=v;'
+            '}'
+            'const n=Object.keys(SEL).length;'
+            'document.getElementById("sel-progress").textContent=n+" / "+TOTAL+" selected";'
+            'document.getElementById("sel-export").disabled=(n<TOTAL);'
+            '}\n'
+            'document.querySelectorAll(".pick-btn").forEach(b=>'
+            'b.addEventListener("click",()=>pick(b.dataset.card,b.dataset.pick)));\n'
+            'document.getElementById("sel-all-a").addEventListener("click",()=>'
+            'document.querySelectorAll("tr[data-card]").forEach(r=>pick(r.dataset.card,"A")));\n'
+            'document.getElementById("sel-all-b").addEventListener("click",()=>'
+            'document.querySelectorAll("tr[data-card]").forEach(r=>pick(r.dataset.card,"B")));\n'
+            'document.getElementById("sel-export").addEventListener("click",()=>{'
+            'const out={run_id:RUN_ID,selected_at:new Date().toISOString(),selections:{}};'
+            'Object.entries(SEL).sort(([a],[b])=>a-b).forEach(([k,v])=>out.selections[k]=v);'
+            'const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});'
+            'const a=document.createElement("a");a.href=URL.createObjectURL(blob);'
+            'a.download="variant-selection.json";a.click();'
+            '});\n'
+            '</script>'
+            '<style>'
+            '.sel-toolbar{display:flex;gap:12px;align-items:center;margin:12px 0;flex-wrap:wrap}'
+            '.sel-progress{font-weight:600;min-width:140px}'
+            '.sel-all-btn,.sel-export-btn{padding:6px 14px;border:1px solid #555;border-radius:4px;'
+            'background:#f0f0f0;cursor:pointer;font-size:13px}'
+            '.sel-all-btn:hover,.sel-export-btn:hover:not([disabled]){background:#ddd}'
+            '.sel-export-btn:disabled{opacity:.4;cursor:not-allowed}'
+            '.pick-btn{display:block;margin:6px auto 0;padding:4px 16px;border:1px solid #888;'
+            'border-radius:3px;background:#e8e8e8;cursor:pointer;font-size:12px}'
+            '.pick-btn:hover:not([disabled]){background:#cde}'
+            '.pick-btn:disabled{opacity:.4;cursor:not-allowed}'
+            'td.variant-selected{outline:3px solid #2a7;background:#eafbf2}'
+            '</style>'
         )
 
     selected_preview_rows: list[str] = []

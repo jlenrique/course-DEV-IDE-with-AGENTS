@@ -22,6 +22,9 @@ from typing import Any
 
 import urllib.request
 
+# Add project root to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
+
 from scripts.utilities.env_loader import load_env
 from scripts.utilities.file_helpers import project_root, safe_read_json
 from scripts.utilities.logging_setup import setup_logging

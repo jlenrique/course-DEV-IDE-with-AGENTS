@@ -55,6 +55,7 @@ Required evidence artifacts:
 - `authorized-storyboard.json` (if Gate 2 storyboard approval occurred)
 - `variant-selection.json` (if `DOUBLE_DISPATCH` was enabled)
 - `motion-designations.json` and `motion_plan.yaml` (if `MOTION_ENABLED` was enabled)
+- `pass2-prep-receipt.json` and `recovery/inspection/pass2-inspection-pack.json` (if Prompt 8 prep occurred)
 - Pass 2 handoff validator output (if Irene Pass 2 occurred)
 - post-Pass-2 storyboard evidence (if Storyboard B review occurred)
 - Stage receipts per prompt

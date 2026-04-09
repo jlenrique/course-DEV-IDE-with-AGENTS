@@ -164,6 +164,8 @@ Fast path:
 - **Skip if `MOTION_ENABLED` is false.**
 - Confirm `video` slides route to Kling and `animation` slides route to manual animation import.
 - Confirm non-static rows acquire concrete asset paths and no intended row remains unresolved.
+- Build the reviewer-facing inspection pack:
+  - `py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle [BUNDLE_PATH]`
 - Confirm over-budget clips either downgrade once (`pro -> std`) or pause the run for operator action.
 - Go/no-go: no go on silent partial continuation.
 
@@ -176,6 +178,9 @@ Fast path:
 - Confirm preconditions:
   - order 1..N, file_path present, source_ref present, perception_artifacts aligned, artifacts consistent
   - if `MOTION_ENABLED: true`, `motion_plan.yaml` fully covers the authorized deck
+- Regenerate the handoff with the canonical Marcus helper before Irene runs:
+  - `py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle [BUNDLE_PATH]`
+- Confirm `pass2-prep-receipt.json` exists and any stale prior Pass 2 root artifacts were archived under `recovery/archive/pass2-reruns/`.
 - Delegate Irene Pass 2.
 - Validate handoff envelope:
   - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
@@ -212,6 +217,7 @@ Collect and keep:
 - `authorized-storyboard.json`
 - `variant-selection.json` (if `DOUBLE_DISPATCH: true`)
 - `motion-designations.json` and `motion_plan.yaml` (if `MOTION_ENABLED: true`)
+- `pass2-prep-receipt.json` and inspection-pack receipt (if Irene Pass 2 prep occurred)
 - Pass 2 handoff validator output
 - final stage receipts per prompt
 

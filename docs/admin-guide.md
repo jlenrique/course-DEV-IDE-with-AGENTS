@@ -86,7 +86,8 @@ node scripts/heartbeat_check.mjs
 │   ├── style-bible/        ← Authoritative brand standards (human-curated)
 │   ├── exemplars/          ← Worked production patterns
 │   └── tool-inventory/
-│       └── tool-access-matrix.md  ← 17-tool audit
+│       ├── tool-access-matrix.md  ← 17-tool audit
+│       └── local-binary-paths.md  ← repo-local executable signposts (for example bundled ffmpeg)
 ├── hooks/
 │   ├── hooks.json          ← Cursor event hooks
 │   └── scripts/            ← Hook implementation scripts
@@ -497,9 +498,13 @@ Before the instructional lead follows the **Happy-path walkthrough** in [`docs/u
 4. **Prompt pack family** — standard narrated runs use `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`; motion-enabled narrated runs use `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`.
 5. **Double-dispatch** — if enabled, plan for `variant-selection.json` plus winner-only `authorized-storyboard.json` before downstream narration or motion work.
 6. **Motion workflow** — if `MOTION_ENABLED` is true, require explicit motion budget inputs, Gate 2M coverage, `motion_plan.yaml`, and Motion Gate closure before Irene Pass 2.
-7. **Literal-visual policy** — literal-visual slides are full-slide image-only. Dispatch payload content for literal-visual slides must be URL-only image references; supporting prose belongs in Irene Pass 2 narration/script.
-8. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
-9. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+7. **Canonical motion helpers** — for motion-enabled runs, prefer:
+   - `py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle <bundle-dir>`
+   - `py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle <bundle-dir>`
+8. **Bundled ffmpeg discoverability** — if media tooling cannot find `ffmpeg` on `PATH`, check `resources/tool-inventory/local-binary-paths.md` and the resolver in `scripts/utilities/ffmpeg.py` before installing or patching around it.
+9. **Literal-visual policy** — literal-visual slides are full-slide image-only. Dispatch payload content for literal-visual slides must be URL-only image references; supporting prose belongs in Irene Pass 2 narration/script.
+10. **HTTPS assets** — Any `diagram_cards` images must be **publicly fetchable HTTPS URLs** (Gamma API); local-only files are not sufficient without hosting.
+11. **Compositor** — Developers run `compositor_operations.py` (`sync-visuals`, `guide`) from the project `.venv` if Marcus does not invoke it; see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 ### Adding a New Tool Integration
 

@@ -1,9 +1,7 @@
-"""Tests for video sensory bridge."""
-
-import types
-from pathlib import Path
-import pytest
 from unittest.mock import patch
+from pathlib import Path
+
+import pytest
 
 from skills.sensory_bridges.scripts.video_to_agent import (
     _check_ffmpeg,
@@ -15,12 +13,8 @@ from skills.sensory_bridges.scripts.bridge_utils import validate_response
 
 
 class TestFfmpegResolution:
-    @patch("skills.sensory_bridges.scripts.video_to_agent.shutil.which", return_value=None)
-    def test_resolve_ffmpeg_binary_falls_back_to_imageio(self, mock_which):
-        fake_module = types.SimpleNamespace(get_ffmpeg_exe=lambda: "C:/venv/ffmpeg.exe")
-        with patch.dict("sys.modules", {"imageio_ffmpeg": fake_module}):
-            assert resolve_ffmpeg_binary() == "C:/venv/ffmpeg.exe"
-        mock_which.assert_called_once_with("ffmpeg")
+    def test_resolve_ffmpeg_binary_explicit_path_wins(self):
+        assert resolve_ffmpeg_binary("C:/tools/ffmpeg.exe") == "C:/tools/ffmpeg.exe"
 
     @patch(
         "skills.sensory_bridges.scripts.video_to_agent.resolve_ffmpeg_binary",

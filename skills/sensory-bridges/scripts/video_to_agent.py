@@ -6,37 +6,29 @@ transcription (ElevenLabs STT accepts video files directly).
 
 from __future__ import annotations
 
+import importlib.util
 import logging
-import os
-import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.utilities.ffmpeg import resolve_ffmpeg_binary
+except ModuleNotFoundError:  # pragma: no cover - direct file import fallback
+    REPO_ROOT = Path(__file__).resolve().parents[3]
+    ffmpeg_module_path = REPO_ROOT / "scripts" / "utilities" / "ffmpeg.py"
+    spec = importlib.util.spec_from_file_location("repo_shared_ffmpeg", ffmpeg_module_path)
+    if spec is None or spec.loader is None:
+        raise
+    ffmpeg_module = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("repo_shared_ffmpeg", ffmpeg_module)
+    spec.loader.exec_module(ffmpeg_module)
+    resolve_ffmpeg_binary = ffmpeg_module.resolve_ffmpeg_binary
 from skills.sensory_bridges.scripts.bridge_utils import build_response
 
 logger = logging.getLogger(__name__)
-
-
-def resolve_ffmpeg_binary(explicit_path: str | None = None) -> str:
-    """Resolve ffmpeg from env, PATH, or the imageio-ffmpeg wheel."""
-    candidate = explicit_path or os.environ.get("FFMPEG_BINARY")
-    if candidate:
-        return candidate
-
-    on_path = shutil.which("ffmpeg")
-    if on_path:
-        return on_path
-
-    try:
-        from imageio_ffmpeg import get_ffmpeg_exe
-    except ModuleNotFoundError as exc:  # pragma: no cover - runtime dependency
-        raise RuntimeError(
-            "ffmpeg is not available. Install imageio-ffmpeg or provide FFMPEG_BINARY."
-        ) from exc
-
-    return str(get_ffmpeg_exe())
 
 
 def _check_ffmpeg() -> bool:

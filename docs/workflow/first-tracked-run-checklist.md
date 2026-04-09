@@ -68,9 +68,12 @@ For each literal-visual card in gary-diagram-cards.json:
 - [ ] Write <bundle-dir>/motion-designations.json and <bundle-dir>/motion_plan.yaml.
 - [ ] Confirm every authorized slide has Gate 2M coverage.
 - [ ] Complete motion generation/import and close Motion Gate before Irene Pass 2.
+- [ ] Build `recovery/inspection/` artifacts with `py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle <bundle-dir>`.
 
 ## F) Irene Pass 2 and Grounding
 
+- [ ] Regenerate the Pass 2 handoff with `py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle <bundle-dir>`.
+- [ ] Confirm `pass2-prep-receipt.json` exists and stale root Pass 2 artifacts were archived if this is a rerun.
 - [ ] Delegate Irene Pass 2 using approved gary_slide_output.
 - [ ] Confirm narration grounding is based on approved local slide PNGs in gary_slide_output.
 - [ ] Treat literal_visual_publish as provenance/audit context only.

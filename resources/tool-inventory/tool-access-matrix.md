@@ -20,6 +20,7 @@ This document catalogs all tools integrated into the course content production p
 - **User-level MCPs** already available: Playwright (browser automation), Ref (doc search/reading)
 - **API keys** documented in `docs/admin-guide.md`: Tier 1-3 tools with documentation links; values live in local `.env` only
 - **Manual tools** require agent-guided workflows where agents provide specs and users execute in tool UI
+- **Bundled local binaries** used by repo scripts are signposted in `resources/tool-inventory/local-binary-paths.md`
 
 ## Implementation Status
 
@@ -29,8 +30,23 @@ This document catalogs all tools integrated into the course content production p
 - **Tier 4**: Manual workflows (Vyond, CourseArc, Articulate)
 - **Local FS**: Box Drive sync client
 
+## Bundled Binaries
+
+For cross-platform compatibility and dependency isolation, certain binaries are bundled in the `bin/` directory:
+
+- **ffmpeg.exe**: Windows executable for media processing (scripts/utilities/ffmpeg.py resolves bundled first)
+- Future: Additional platform-specific binaries as needed
+
+Bundled binaries take precedence over system PATH installations for consistent behavior across environments.
+
 ## Security Notes
 
 - All API keys stored in local `.env` only (not committed)
 - MCP servers configured for Cursor IDE integration
 - Heartbeat checks validate connectivity pre-production
+
+## Bundled Local Binaries
+
+- `ffmpeg` may be available through the repo virtual environment even when it is not on `PATH`.
+- Canonical operator signpost: `resources/tool-inventory/local-binary-paths.md`
+- Repo scripts should resolve `ffmpeg` via `scripts/utilities/ffmpeg.py` before assuming it is unavailable.

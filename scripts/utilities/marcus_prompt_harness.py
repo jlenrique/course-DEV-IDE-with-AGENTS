@@ -1,22 +1,29 @@
-"""Generate a standard v4.1 Marcus prompt harness and Quinn watcher report."""
+"""Generate a Marcus prompt harness and Quinn watcher report."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover - pyyaml is a declared dependency
+    yaml = None  # type: ignore[assignment]
 
 from scripts.utilities.file_helpers import project_root
 from scripts.utilities.run_constants import RunConstantsError, load_run_constants
 
 
 STANDARD_PROMPT_PACK = Path("docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md")
+MOTION_PROMPT_PACK = Path("docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md")
 SESSION_LAUNCHER = Path("docs/workflow/production-session-launcher.md")
 DEFAULT_OUTPUT_DIR = Path("reports/prompt-harness/standard-v4.1")
+MOTION_OUTPUT_DIR = Path("reports/prompt-harness/motion-v4.2")
 STANDARD_STEP_HEADINGS = (
     "1) Activation + Preflight Contract Gate",
     "2) Source Authority Map Before Ingestion",
@@ -29,6 +36,23 @@ STANDARD_STEP_HEADINGS = (
     "7) Dispatch + Export + Sort Verification (Single Operation)",
     "7B) Variant Selection Gate (Double-Dispatch Only)",
     "8) Irene Pass 2 — Dual-Channel Narration with Inline Perception",
+)
+MOTION_STEP_HEADINGS = (
+    "1) Activation + Preflight Contract Gate",
+    "2) Source Authority Map Before Ingestion",
+    "2A) Operator Directives (Mandatory)",
+    "3) Ingestion Execution + Evidence Log",
+    "4) Ingestion Quality Gate + Irene Packet",
+    "5) Irene Pass 1 Structure + Gate 1 Fidelity",
+    "6) Gate 1 Approved -> Pre-Dispatch Package Build (No Send)",
+    "6B) Literal-Visual Operator Build + Confirmation",
+    "7) Gary Dispatch + Export + Sort Verification",
+    "7B) Variant Selection Gate (Double-Dispatch Only)",
+    "7C) Storyboard A + Gate 2 Approval + Winner Authorization",
+    "7D) Gate 2M Motion Designation",
+    "7E) Motion Generation / Import",
+    "7F) Motion Gate",
+    "8) Irene Pass 2 - Motion-Aware Narration + Segment Manifest",
 )
 
 
@@ -45,6 +69,7 @@ class HarnessContext:
     execution_mode: str
     quality_preset: str
     double_dispatch: bool
+    motion_enabled: bool
     field_sources: dict[str, str]
 
 
@@ -154,6 +179,8 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         quality_preset = choose("quality_preset", run_constants.quality_preset, "run-constants.yaml")
         double_dispatch = run_constants.double_dispatch
         field_sources["double_dispatch"] = "run-constants.yaml"
+        motion_enabled = run_constants.motion_enabled
+        field_sources["motion_enabled"] = "run-constants.yaml"
     else:
         run_id = choose("run_id", f"C1-M1-PRES-{_now_utc().strftime('%Y%m%d')}", "plausible fallback")
         lesson_slug = choose("lesson_slug", _slug_from_bundle_name(resolved_bundle), "bundle-dir name")
@@ -172,6 +199,8 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         quality_preset = choose("quality_preset", "production", "plausible fallback")
         double_dispatch = False
         field_sources["double_dispatch"] = "plausible fallback"
+        motion_enabled = (resolved_bundle / "motion_plan.yaml").is_file()
+        field_sources["motion_enabled"] = "bundle filesystem" if motion_enabled else "plausible fallback"
 
     return HarnessContext(
         run_id=run_id,
@@ -185,6 +214,7 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         execution_mode=execution_mode,
         quality_preset=quality_preset,
         double_dispatch=double_dispatch,
+        motion_enabled=motion_enabled,
         field_sources=field_sources,
     )
 
@@ -217,6 +247,13 @@ def _read_json(path: Path) -> dict[str, Any] | None:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
+def _read_yaml(path: Path) -> dict[str, Any] | None:
+    if not path.is_file() or yaml is None:
+        return None
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else None
+
+
 def _extract_markdown_key_values(path: Path) -> dict[str, str]:
     text = _read_text(path)
     if text is None:
@@ -232,6 +269,14 @@ def _extract_markdown_key_values(path: Path) -> dict[str, str]:
     return values
 
 
+def _prompt_pack_path(context: HarnessContext) -> Path:
+    return MOTION_PROMPT_PACK if context.motion_enabled else STANDARD_PROMPT_PACK
+
+
+def _step_headings(context: HarnessContext) -> tuple[str, ...]:
+    return MOTION_STEP_HEADINGS if context.motion_enabled else STANDARD_STEP_HEADINGS
+
+
 def _artifact_run_id(path: Path) -> str | None:
     if not path.exists():
         return None
@@ -241,6 +286,30 @@ def _artifact_run_id(path: Path) -> str | None:
         return value if isinstance(value, str) else None
     key_values = _extract_markdown_key_values(path)
     return key_values.get("run_id")
+
+
+def _authorized_slide_ids(bundle_dir: Path) -> tuple[str, ...]:
+    payload = _read_json(bundle_dir / "authorized-storyboard.json") or {}
+    slide_ids = payload.get("slide_ids")
+    if isinstance(slide_ids, list):
+        return tuple(item for item in slide_ids if isinstance(item, str) and item.strip())
+    slides = payload.get("authorized_slides")
+    if not isinstance(slides, list):
+        return tuple()
+    out: list[str] = []
+    for slide in slides:
+        if not isinstance(slide, dict):
+            continue
+        slide_id = slide.get("slide_id")
+        if isinstance(slide_id, str) and slide_id.strip():
+            out.append(slide_id)
+    return tuple(out)
+
+
+def _motion_rows(bundle_dir: Path) -> list[dict[str, Any]]:
+    payload = _read_yaml(bundle_dir / "motion_plan.yaml") or {}
+    rows = payload.get("slides")
+    return [row for row in rows if isinstance(row, dict)] if isinstance(rows, list) else []
 
 
 def _step_status(*, direct_ok: bool, inferred_ok: bool, inconsistent: bool, gaps: list[str]) -> str:
@@ -466,7 +535,6 @@ def _check_step_7(bundle_dir: Path) -> StepReport:
     validation = bundle_dir / "gary-dispatch-validation-result.json"
     export_dir = bundle_dir / "gamma-export"
     storyboard = bundle_dir / "storyboard" / "storyboard.json"
-    authorized = bundle_dir / "authorized-storyboard.json"
     evidence: list[str] = []
     gaps: list[str] = []
     inconsistent = False
@@ -491,11 +559,6 @@ def _check_step_7(bundle_dir: Path) -> StepReport:
             inconsistent = True
             gaps.append(f"dispatch validation status={payload.get('status')!r}")
 
-    if authorized.is_file():
-        evidence.append("authorized-storyboard.json present")
-    else:
-        gaps.append("authorized-storyboard.json missing (Gate 2 approval not directly evidenced)")
-
     status = _step_status(
         direct_ok=dispatch_result.is_file() and run_log.is_file() and validation.is_file(),
         inferred_ok=storyboard.is_file(),
@@ -503,8 +566,8 @@ def _check_step_7(bundle_dir: Path) -> StepReport:
         gaps=gaps,
     )
     summary = {
-        "PASS": "Prompt 7 dispatch, validation, and Gate 2 approval are all evidenced.",
-        "PARTIAL": "Dispatch outputs exist, but Gate 2 approval evidence is incomplete.",
+        "PASS": "Prompt 7 dispatch and validation outputs are evidenced.",
+        "PARTIAL": "Dispatch outputs exist, but one or more Prompt 7 receipts are incomplete.",
         "INCONSISTENT": "Prompt 7 has dispatch evidence but a failing validator or inconsistent receipt.",
         "MISSING": "Prompt 7 evidence is missing.",
     }.get(status, "Prompt 7 is only partially evidenced.")
@@ -541,23 +604,223 @@ def _check_step_7b(bundle_dir: Path, *, double_dispatch: bool) -> StepReport:
     )
 
 
-def _check_step_8(bundle_dir: Path) -> StepReport:
-    required = ("narration-script.md", "segment-manifest.yaml", "perception-artifacts.json")
+def _check_step_7c(bundle_dir: Path, *, double_dispatch: bool) -> StepReport:
+    authorized = bundle_dir / "authorized-storyboard.json"
+    evidence: list[str] = []
+    gaps: list[str] = []
+    inconsistent = False
+
+    if authorized.is_file():
+        evidence.append("authorized-storyboard.json present")
+        slide_ids = _authorized_slide_ids(bundle_dir)
+        if slide_ids:
+            evidence.append(f"authorized slide count={len(slide_ids)}")
+        else:
+            inconsistent = True
+            gaps.append("authorized-storyboard.json does not expose any authorized slide IDs")
+    else:
+        gaps.append("authorized-storyboard.json missing")
+
+    if double_dispatch:
+        selection = bundle_dir / "variant-selection.json"
+        if selection.is_file():
+            evidence.append("variant-selection.json present")
+        else:
+            inconsistent = True
+            gaps.append("variant-selection.json missing for double-dispatch winner authorization")
+
+    status = _step_status(
+        direct_ok=authorized.is_file(),
+        inferred_ok=False,
+        inconsistent=inconsistent,
+        gaps=gaps,
+    )
+    summary = "Winner authorization artifact is present." if status == "PASS" else "Prompt 7C evidence is incomplete or inconsistent."
+    return StepReport("7C", MOTION_STEP_HEADINGS[10], status, summary, tuple(evidence), tuple(gaps))
+
+
+def _check_step_7d(bundle_dir: Path, *, motion_enabled: bool) -> StepReport:
+    if not motion_enabled:
+        return StepReport(
+            "7D",
+            MOTION_STEP_HEADINGS[11],
+            "SKIPPED",
+            "Prompt 7D is skipped because MOTION_ENABLED is false.",
+            tuple(),
+            tuple(),
+        )
+
+    designations = bundle_dir / "motion-designations.json"
+    plan = bundle_dir / "motion_plan.yaml"
+    evidence: list[str] = []
+    gaps: list[str] = []
+    inconsistent = False
+
+    if designations.is_file():
+        evidence.append("motion-designations.json present")
+    else:
+        gaps.append("motion-designations.json missing")
+    rows = _motion_rows(bundle_dir)
+    if plan.is_file():
+        evidence.append("motion_plan.yaml present")
+        if rows:
+            evidence.append(f"motion plan slide count={len(rows)}")
+        else:
+            inconsistent = True
+            gaps.append("motion_plan.yaml contains no slide rows")
+    else:
+        gaps.append("motion_plan.yaml missing")
+
+    authorized_ids = _authorized_slide_ids(bundle_dir)
+    if authorized_ids and rows:
+        row_ids = {row.get('slide_id') for row in rows if isinstance(row.get('slide_id'), str)}
+        missing = [slide_id for slide_id in authorized_ids if slide_id not in row_ids]
+        if missing:
+            inconsistent = True
+            gaps.append(f"motion_plan.yaml missing authorized slide coverage for {len(missing)} slides")
+
+    status = _step_status(
+        direct_ok=designations.is_file() and plan.is_file(),
+        inferred_ok=False,
+        inconsistent=inconsistent,
+        gaps=gaps,
+    )
+    summary = "Motion designation artifacts are present." if status == "PASS" else "Prompt 7D evidence is incomplete or inconsistent."
+    return StepReport("7D", MOTION_STEP_HEADINGS[11], status, summary, tuple(evidence), tuple(gaps))
+
+
+def _check_step_7e(bundle_dir: Path, *, motion_enabled: bool) -> StepReport:
+    if not motion_enabled:
+        return StepReport(
+            "7E",
+            MOTION_STEP_HEADINGS[12],
+            "SKIPPED",
+            "Prompt 7E is skipped because MOTION_ENABLED is false.",
+            tuple(),
+            tuple(),
+        )
+
+    rows = _motion_rows(bundle_dir)
+    progress_receipts = sorted(bundle_dir.glob("motion-generation-*.progress.json"))
+    terminal_receipts = sorted((bundle_dir / "motion").glob("motion-generation-*.json"))
+    evidence: list[str] = []
+    gaps: list[str] = []
+    inconsistent = False
+
+    if progress_receipts:
+        evidence.append(f"motion progress receipts={len(progress_receipts)}")
+    if terminal_receipts:
+        evidence.append(f"motion terminal receipts={len(terminal_receipts)}")
+
+    non_static = [row for row in rows if row.get("motion_type") in {"video", "animation"}]
+    unresolved = [
+        row.get("slide_id")
+        for row in non_static
+        if not isinstance(row.get("motion_asset_path"), str) or not str(row.get("motion_asset_path")).strip()
+    ]
+    if non_static:
+        evidence.append(f"non-static rows={len(non_static)}")
+    if unresolved:
+        inconsistent = True
+        gaps.append(f"non-static rows without concrete assets={len(unresolved)}")
+    elif non_static:
+        evidence.append("all non-static rows have concrete asset paths")
+
+    status = _step_status(
+        direct_ok=bool(rows) and not unresolved,
+        inferred_ok=False,
+        inconsistent=inconsistent,
+        gaps=gaps,
+    )
+    summary = "Motion generation/import state is evidenced." if status == "PASS" else "Prompt 7E evidence is incomplete or inconsistent."
+    return StepReport("7E", MOTION_STEP_HEADINGS[12], status, summary, tuple(evidence), tuple(gaps))
+
+
+def _check_step_7f(bundle_dir: Path, *, motion_enabled: bool) -> StepReport:
+    if not motion_enabled:
+        return StepReport(
+            "7F",
+            MOTION_STEP_HEADINGS[13],
+            "SKIPPED",
+            "Prompt 7F is skipped because MOTION_ENABLED is false.",
+            tuple(),
+            tuple(),
+        )
+
+    rows = _motion_rows(bundle_dir)
+    receipt = bundle_dir / "motion-gate-receipt.json"
+    evidence: list[str] = []
+    gaps: list[str] = []
+    inconsistent = False
+
+    if receipt.is_file():
+        evidence.append("motion-gate-receipt.json present")
+        payload = _read_json(receipt) or {}
+        decision = payload.get("decision")
+        if decision == "go":
+            evidence.append("motion gate decision=go")
+        else:
+            inconsistent = True
+            gaps.append(f"motion gate decision={decision!r}")
+    else:
+        gaps.append("motion-gate-receipt.json missing")
+
+    non_static = [row for row in rows if row.get("motion_type") in {"video", "animation"}]
+    non_approved = [
+        row.get("slide_id")
+        for row in non_static
+        if row.get("motion_status") != "approved"
+    ]
+    if non_static:
+        evidence.append(f"approved non-static targets={len(non_static)}")
+    if non_approved:
+        inconsistent = True
+        gaps.append(f"non-static rows not approved={len(non_approved)}")
+
+    status = _step_status(
+        direct_ok=receipt.is_file() and not non_approved,
+        inferred_ok=False,
+        inconsistent=inconsistent,
+        gaps=gaps,
+    )
+    summary = "Motion Gate is cleanly closed." if status == "PASS" else "Prompt 7F evidence is incomplete or inconsistent."
+    return StepReport("7F", MOTION_STEP_HEADINGS[13], status, summary, tuple(evidence), tuple(gaps))
+
+
+def _check_step_8(bundle_dir: Path, *, motion_enabled: bool) -> StepReport:
+    required = ("pass2-envelope.json", "narration-script.md", "segment-manifest.yaml", "perception-artifacts.json")
     evidence = [name for name in required if (bundle_dir / name).exists()]
     gaps = [f"{name} missing" for name in required if not (bundle_dir / name).exists()]
+    inconsistent = False
+    direct_ok = len(gaps) == 0
+
+    if (bundle_dir / "pass2-prep-receipt.json").is_file():
+        evidence.append("pass2-prep-receipt.json present")
+
+    if motion_enabled:
+        envelope = _read_json(bundle_dir / "pass2-envelope.json") or {}
+        motion_artifacts = envelope.get("motion_perception_artifacts")
+        non_static_rows = [row for row in _motion_rows(bundle_dir) if row.get("motion_type") in {"video", "animation"}]
+        if isinstance(motion_artifacts, dict) and (motion_artifacts or not non_static_rows):
+            evidence.append(f"motion_perception_artifacts={len(motion_artifacts)}")
+        else:
+            inconsistent = True
+            gaps.append("pass2-envelope.json missing motion_perception_artifacts for motion-enabled run")
+
     status = _step_status(
-        direct_ok=len(evidence) == len(required),
+        direct_ok=direct_ok,
         inferred_ok=False,
-        inconsistent=False,
+        inconsistent=inconsistent,
         gaps=gaps,
     )
     summary = "Prompt 8 outputs are present." if status == "PASS" else "Prompt 8 outputs are not fully evidenced in this bundle."
-    return StepReport("8", STANDARD_STEP_HEADINGS[10], status, summary, tuple(evidence), tuple(gaps))
+    heading = MOTION_STEP_HEADINGS[14] if motion_enabled else STANDARD_STEP_HEADINGS[10]
+    return StepReport("8", heading, status, summary, tuple(evidence), tuple(gaps))
 
 
 def build_step_reports(context: HarnessContext) -> list[StepReport]:
     bundle_dir = context.bundle_dir
-    return [
+    reports = [
         _check_step_1(bundle_dir),
         _check_step_2(bundle_dir),
         _check_step_2a(bundle_dir),
@@ -568,8 +831,20 @@ def build_step_reports(context: HarnessContext) -> list[StepReport]:
         _check_step_6b(bundle_dir),
         _check_step_7(bundle_dir),
         _check_step_7b(bundle_dir, double_dispatch=context.double_dispatch),
-        _check_step_8(bundle_dir),
     ]
+    if context.motion_enabled:
+        reports.extend(
+            [
+                _check_step_7c(bundle_dir, double_dispatch=context.double_dispatch),
+                _check_step_7d(bundle_dir, motion_enabled=context.motion_enabled),
+                _check_step_7e(bundle_dir, motion_enabled=context.motion_enabled),
+                _check_step_7f(bundle_dir, motion_enabled=context.motion_enabled),
+            ]
+        )
+    reports.append(_check_step_8(bundle_dir, motion_enabled=context.motion_enabled))
+    headings = _step_headings(context)
+    heading_by_step = {report.step: headings[index] for index, report in enumerate(reports) if index < len(headings)}
+    return [replace(report, heading=heading_by_step.get(report.step, report.heading)) for report in reports]
 
 
 def build_consistency_findings(context: HarnessContext) -> list[str]:
@@ -581,6 +856,9 @@ def build_consistency_findings(context: HarnessContext) -> list[str]:
         "literal-visual-operator-receipt.md",
         "gary-dispatch-validation-result.json",
         "gary-dispatch-result.json",
+        "motion-gate-receipt.json",
+        "pass2-prep-receipt.json",
+        "pass2-envelope.json",
     )
     findings: list[str] = []
     for relative in artifacts:
@@ -596,10 +874,12 @@ def build_consistency_findings(context: HarnessContext) -> list[str]:
 
 
 def render_transcript(*, launcher_text: str, step_sections: dict[str, str], context: HarnessContext) -> str:
+    prompt_pack_path = _prompt_pack_path(context)
+    step_headings = _step_headings(context)
     lines = [
         "# Simulated Marcus Prompt Harness",
         "",
-        "This is a deterministic operator-side transcript template for the standard v4.1 prompt pack.",
+        f"This is a deterministic operator-side transcript template for `{prompt_pack_path.as_posix()}`.",
         "Filled values come from bundle evidence when available and plausible fallbacks otherwise.",
         "",
         "## Session Launcher",
@@ -624,15 +904,32 @@ def render_transcript(*, launcher_text: str, step_sections: dict[str, str], cont
         "2A) Operator Directives (Custom Source Instructions)": directive_reply,
         "5) Irene Pass 1 Structure + Gate 1 Fidelity": "Gate 1 approved. Proceed to Prompt 6.",
         "6B) Literal-Visual Operator Build + Confirmation (Mandatory Before Dispatch)": "All required literal-visual assets are operator-ready. Proceed to Prompt 7.",
+        "6B) Literal-Visual Operator Build + Confirmation": "All required literal-visual assets are operator-ready. Proceed to Prompt 7.",
         "7) Dispatch + Export + Sort Verification (Single Operation)": (
             "Gate 2 approved. Proceed to Prompt 8."
             if not context.double_dispatch
             else "Gate 2 approved. Proceed to Prompt 7B."
         ),
-        "7B) Variant Selection Gate (Double-Dispatch Only)": "Variant selections recorded. Proceed to Prompt 8.",
+        "7) Gary Dispatch + Export + Sort Verification": (
+            "Dispatch and Storyboard A review are complete. Proceed to Prompt 7C."
+            if not context.double_dispatch
+            else "Dispatch is complete. Proceed to Prompt 7B."
+        ),
+        "7B) Variant Selection Gate (Double-Dispatch Only)": (
+            "Variant selections recorded. Proceed to Prompt 7C."
+            if context.motion_enabled
+            else "Variant selections recorded. Proceed to Prompt 8."
+        ),
+        "7C) Storyboard A + Gate 2 Approval + Winner Authorization": (
+            "Gate 2 approved. Winner deck authorized. Proceed to Prompt 7D."
+            if context.motion_enabled
+            else "Gate 2 approved. Winner deck authorized."
+        ),
+        "7D) Gate 2M Motion Designation": "Motion designation approved. Proceed to Prompt 7E.",
+        "7F) Motion Gate": "Motion Gate closed cleanly. Proceed to Prompt 8.",
     }
 
-    for heading in STANDARD_STEP_HEADINGS:
+    for heading in step_headings:
         section = step_sections.get(heading)
         if section is None:
             continue
@@ -671,6 +968,7 @@ def render_quinn_report(
     step_reports: list[StepReport],
     consistency_findings: list[str],
 ) -> str:
+    prompt_pack_path = _prompt_pack_path(context)
     status_counts: dict[str, int] = {}
     for report in step_reports:
         status_counts[report.status] = status_counts.get(report.status, 0) + 1
@@ -681,7 +979,7 @@ def render_quinn_report(
     lines = [
         "# Quinn Watcher Report",
         "",
-        f"**Prompt pack:** `{STANDARD_PROMPT_PACK.as_posix()}`",
+        f"**Prompt pack:** `{prompt_pack_path.as_posix()}`",
         f"**Bundle:** `{context.bundle_path}`",
         f"**Canonical RUN_ID:** `{context.run_id}`",
         f"**Overall watcher status:** `{overall_status}`",
@@ -702,6 +1000,7 @@ def render_quinn_report(
         "execution_mode",
         "quality_preset",
         "double_dispatch",
+        "motion_enabled",
     ):
         value: Any = getattr(context, field)
         if isinstance(value, tuple):
@@ -778,7 +1077,7 @@ def write_harness_outputs(
     quinn_path.write_text(quinn_report, encoding="utf-8")
     summary_payload = {
         "generated_at": _now_utc().isoformat(),
-        "prompt_pack": STANDARD_PROMPT_PACK.as_posix(),
+        "prompt_pack": _prompt_pack_path(context).as_posix(),
         "bundle_path": context.bundle_path,
         "context": {
             **asdict(context),
@@ -809,7 +1108,7 @@ def run_harness(
 ) -> dict[str, Any]:
     repo_root = root or project_root()
     context = infer_context(root=repo_root, bundle_dir=bundle_dir)
-    sections = _extract_sections(repo_root / STANDARD_PROMPT_PACK)
+    sections = _extract_sections(repo_root / _prompt_pack_path(context))
     launcher_text = _read_text(repo_root / SESSION_LAUNCHER) or ""
     transcript = render_transcript(launcher_text=launcher_text, step_sections=sections, context=context)
     step_reports = build_step_reports(context)
@@ -819,7 +1118,10 @@ def run_harness(
         step_reports=step_reports,
         consistency_findings=consistency_findings,
     )
-    target_dir = build_output_dir(repo_root, output_dir)
+    target_base = output_dir
+    if target_base is None:
+        target_base = repo_root / (MOTION_OUTPUT_DIR if context.motion_enabled else DEFAULT_OUTPUT_DIR)
+    target_dir = build_output_dir(repo_root, target_base)
     files = write_harness_outputs(
         root=repo_root,
         output_dir=target_dir,

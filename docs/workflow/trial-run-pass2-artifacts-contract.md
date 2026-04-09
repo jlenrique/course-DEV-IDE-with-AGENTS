@@ -16,6 +16,7 @@ Scope:
 - authorized-storyboard.json
 - variant-selection.json (double-dispatch runs only)
 - motion-designations.json and motion_plan.yaml (motion-enabled runs only)
+- pass2-envelope.json and pass2-prep-receipt.json
 
 Core invariant:
 - Each slide has exactly one mode: creative, literal-text, or literal-visual.
@@ -298,6 +299,35 @@ Rules:
 - `apply` must fail closed on unknown slide IDs or incomplete slide coverage.
 - Static runs skip this artifact entirely.
 - Irene Pass 2 hydrates manifest motion fields from this sidecar and fails closed on incomplete coverage for non-static rows.
+
+## 8E) pass2-envelope.json and pass2-prep-receipt.json
+
+Purpose: canonical Marcus-generated handoff state for Irene Pass 2, refreshed from the authoritative winner deck and current motion plan before narration work begins.
+
+Required `pass2-envelope.json` fields:
+- run_id
+- lesson_slug
+- bundle_path
+- handoff_status
+- authorized_storyboard_path
+- gary_slide_output
+- expected_outputs
+- motion_plan_path when `MOTION_ENABLED` is true
+- approved_motion_assets when `MOTION_ENABLED` is true
+- motion_perception_artifacts when `MOTION_ENABLED` is true and Pass 2 has completed
+
+Required `pass2-prep-receipt.json` fields:
+- run_id
+- bundle_path
+- prepared_at_utc
+- archived_prior_outputs
+- reported_static_motion_leftovers
+- handoff_status
+
+Rules:
+- Marcus should regenerate these artifacts through the canonical helper before every Prompt 8 run.
+- Reruns must archive stale root-level Pass 2 outputs under `recovery/archive/pass2-reruns/` before Irene writes fresh canonical artifacts.
+- Static-slide motion leftovers may remain on disk for audit, but they must not be rebound into the fresh handoff.
 
 ## 9) Vera Gate Contracts (Authority Source)
 

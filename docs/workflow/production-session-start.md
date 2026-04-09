@@ -150,6 +150,10 @@ Mandatory anti-drift confirmations for this session:
 - Prompt 6B literal-visual operator checkpoint is required before Prompt 7 dispatch.
 - Storyboard A is required after Gary dispatch and before Gate 2 approval.
 - Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
+- Motion-enabled shifts should use the canonical Marcus helpers rather than ad hoc file edits:
+  - `py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle <bundle-dir>`
+  - `py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle <bundle-dir>`
+- If media tooling needs `ffmpeg`, check `resources/tool-inventory/local-binary-paths.md` and the repo resolver in `scripts/utilities/ffmpeg.py` before assuming the binary is absent.
 
 For this shift, define:
 

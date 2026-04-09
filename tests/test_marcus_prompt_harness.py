@@ -33,6 +33,7 @@ def _minimal_run_constants(bundle_dir: Path) -> None:
                 "execution_mode: tracked/default",
                 "quality_preset: production",
                 "double_dispatch: false",
+                "motion_enabled: false",
             ]
         ),
     )
@@ -49,6 +50,7 @@ def test_infer_context_prefers_run_constants(tmp_path: Path) -> None:
     assert context.lesson_slug == "apc-c1m1-tejal"
     assert context.field_sources["run_id"] == "run-constants.yaml"
     assert context.double_dispatch is False
+    assert context.motion_enabled is False
 
 
 def test_build_step_reports_marks_prompt_2_inferred_without_direct_map(tmp_path: Path) -> None:
@@ -104,3 +106,107 @@ def test_render_quinn_report_includes_step_summary(tmp_path: Path) -> None:
     assert "Overall watcher status:" in report
     assert "| `1` | `PASS` |" in report
     assert "| `8` | `MISSING` |" in report
+
+
+def test_infer_context_detects_motion_from_run_constants(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    _write(
+        bundle_dir / "run-constants.yaml",
+        "\n".join(
+            [
+                "schema_version: 1",
+                'frozen_at_utc: "2026-04-05T00:00:00Z"',
+                "run_id: C1-M1-PRES-20260405",
+                "lesson_slug: apc-c1m1-tejal",
+                f"bundle_path: {bundle_dir.as_posix()}",
+                "primary_source_file: C:/example/source.pdf",
+                "optional_context_assets: none",
+                "theme_selection: hil-2026-apc-nejal-A",
+                "theme_paramset_key: hil-2026-apc-nejal-A",
+                "execution_mode: tracked/default",
+                "quality_preset: production",
+                "double_dispatch: true",
+                "motion_enabled: true",
+                "motion_budget:",
+                "  max_credits: 12",
+                "  model_preference: std",
+            ]
+        ),
+    )
+
+    context = infer_context(root=tmp_path, bundle_dir=bundle_dir)
+
+    assert context.double_dispatch is True
+    assert context.motion_enabled is True
+    assert context.field_sources["motion_enabled"] == "run-constants.yaml"
+
+
+def test_build_step_reports_adds_motion_steps_for_motion_runs(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    _write(
+        bundle_dir / "run-constants.yaml",
+        "\n".join(
+            [
+                "schema_version: 1",
+                'frozen_at_utc: "2026-04-05T00:00:00Z"',
+                "run_id: C1-M1-PRES-20260405",
+                "lesson_slug: apc-c1m1-tejal",
+                f"bundle_path: {bundle_dir.as_posix()}",
+                "primary_source_file: C:/example/source.pdf",
+                "optional_context_assets: none",
+                "theme_selection: hil-2026-apc-nejal-A",
+                "theme_paramset_key: hil-2026-apc-nejal-A",
+                "execution_mode: tracked/default",
+                "quality_preset: production",
+                "double_dispatch: true",
+                "motion_enabled: true",
+                "motion_budget:",
+                "  max_credits: 12",
+                "  model_preference: std",
+            ]
+        ),
+    )
+    _write(bundle_dir / "authorized-storyboard.json", json.dumps({"slide_ids": ["slide-01"]}))
+    _write(bundle_dir / "variant-selection.json", json.dumps({"run_id": "C1-M1-PRES-20260405"}))
+    _write(bundle_dir / "motion-designations.json", json.dumps({"run_id": "C1-M1-PRES-20260405"}))
+    _write(
+        bundle_dir / "motion_plan.yaml",
+        "\n".join(
+            [
+                "run_id: C1-M1-PRES-20260405",
+                "motion_enabled: true",
+                "slides:",
+                "  - slide_id: slide-01",
+                "    motion_type: video",
+                "    motion_status: approved",
+                "    motion_asset_path: C:/example/slide-01.mp4",
+            ]
+        ),
+    )
+    _write(bundle_dir / "motion-gate-receipt.json", json.dumps({"run_id": "C1-M1-PRES-20260405", "decision": "go"}))
+    _write(
+        bundle_dir / "pass2-envelope.json",
+        json.dumps(
+            {
+                "run_id": "C1-M1-PRES-20260405",
+                "motion_perception_artifacts": {"slide-01": {"artifact_path": "C:/example/slide-01.mp4"}},
+            }
+        ),
+    )
+    _write(bundle_dir / "narration-script.md", "# narration")
+    _write(bundle_dir / "segment-manifest.yaml", "segments: []")
+    _write(bundle_dir / "perception-artifacts.json", json.dumps([]))
+
+    context = infer_context(root=tmp_path, bundle_dir=bundle_dir)
+    reports = build_step_reports(context)
+    steps = {item.step: item for item in reports}
+
+    assert "7C" in steps
+    assert "7D" in steps
+    assert "7E" in steps
+    assert "7F" in steps
+    assert steps["7D"].status == "PASS"
+    assert steps["7F"].status == "PASS"
+    assert steps["8"].heading == "8) Irene Pass 2 - Motion-Aware Narration + Segment Manifest"

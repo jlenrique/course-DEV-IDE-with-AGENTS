@@ -9,31 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 
-
-def resolve_ffmpeg_binary(explicit_path: str | None = None) -> str:
-    """Resolve an ffmpeg executable path."""
-    candidate = explicit_path or os.environ.get("FFMPEG_BINARY")
-    if candidate:
-        return candidate
-
-    on_path = shutil.which("ffmpeg")
-    if on_path:
-        return on_path
-
-    try:
-        from imageio_ffmpeg import get_ffmpeg_exe
-    except ModuleNotFoundError as exc:  # pragma: no cover - runtime dependency
-        raise RuntimeError(
-            "ffmpeg is not available. Install imageio-ffmpeg or provide --ffmpeg-binary."
-        ) from exc
-
-    return str(get_ffmpeg_exe())
+from scripts.utilities.ffmpeg import resolve_ffmpeg_binary
 
 
 def build_slow_tail_filter(

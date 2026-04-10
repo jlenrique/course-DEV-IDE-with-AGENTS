@@ -57,10 +57,19 @@ perception_confirmation:
   artifact: "{file path}"
   modality: "{modality}"
   confidence: "{HIGH|MEDIUM|LOW}"
-  summary: "{what the agent perceived — 1-3 sentences}"
+  summary: "{what the agent perceived - 1-3 sentences}"
   gate: "{G0-G6}"
   action: "{proceeding|escalating}"
 ```
+
+Bridges may also emit modality-specific advisory summaries when they help
+downstream pacing or narration decisions:
+
+- Image: `visual_complexity_level`, `visual_complexity_summary`
+- Video: `temporal_event_density_level`, `temporal_event_density_summary`
+
+These enrich perception. They do not weaken the requirement to escalate LOW
+confidence artifacts.
 
 ## Who Must Follow This Protocol
 

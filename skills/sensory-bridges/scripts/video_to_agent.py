@@ -88,6 +88,56 @@ def _extract_keyframes(
     ]
 
 
+def _classify_temporal_event_density(
+    *,
+    keyframes: list[dict[str, Any]],
+    total_duration_ms: int,
+    audio_transcript: str,
+) -> tuple[str, str]:
+    """Summarize how much visual change the narrator may need to track."""
+    duration_seconds = max(total_duration_ms / 1000.0, 0.0)
+    keyframe_count = len(keyframes)
+    events_per_10_seconds = 0.0
+    if duration_seconds > 0:
+        events_per_10_seconds = (keyframe_count / duration_seconds) * 10.0
+
+    transcript_words = len(audio_transcript.split())
+    score = 0
+    if keyframe_count >= 3:
+        score += 1
+    if keyframe_count >= 7:
+        score += 1
+    if events_per_10_seconds >= 1.5:
+        score += 1
+    if events_per_10_seconds >= 3.0:
+        score += 1
+    if transcript_words >= 40 and keyframe_count <= 2:
+        score -= 1
+
+    if score <= 1:
+        level = "low"
+    elif score <= 3:
+        level = "moderate"
+    else:
+        level = "high"
+
+    summary = (
+        f"{level.title()} temporal event density: {keyframe_count} keyframe(s)"
+        + (f" across {duration_seconds:.1f}s" if duration_seconds > 0 else "")
+        + ". "
+    )
+    if duration_seconds > 0:
+        summary += f"Approximate event pace is {events_per_10_seconds:.1f} key moments per 10 seconds. "
+    if level == "low":
+        summary += "Narration can stay concept-led because the clip appears visually steady."
+    elif level == "moderate":
+        summary += "Narration should track the main transitions without calling every frame."
+    else:
+        summary += "Narration should stay tightly aligned to visible changes because the clip evolves quickly."
+
+    return level, summary
+
+
 def extract_video(
     artifact_path: str | Path,
     gate: str = "G6",
@@ -142,6 +192,12 @@ def extract_video(
         confidence = "HIGH"
         rationale = f"{len(keyframes)} keyframes extracted, audio transcribed ({len(audio_transcript)} chars)"
 
+    density_level, density_summary = _classify_temporal_event_density(
+        keyframes=keyframes,
+        total_duration_ms=total_duration_ms,
+        audio_transcript=audio_transcript,
+    )
+
     return build_response(
         modality="video",
         artifact_path=path,
@@ -151,4 +207,6 @@ def extract_video(
         audio_transcript=audio_transcript,
         total_duration_ms=total_duration_ms,
         scene_changes=len(keyframes),
+        temporal_event_density_level=density_level,
+        temporal_event_density_summary=density_summary,
     )

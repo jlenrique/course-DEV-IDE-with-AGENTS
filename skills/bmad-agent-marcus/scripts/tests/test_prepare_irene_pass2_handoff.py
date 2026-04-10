@@ -105,8 +105,35 @@ def _make_bundle(
         encoding="utf-8",
     )
 
-    (bundle / "irene-pass1.md").write_text("# Irene Pass 1\n", encoding="utf-8")
+    (bundle / "irene-pass1.md").write_text(
+        "\n".join(
+            [
+                "# Irene Pass 1",
+                "",
+                "## Runtime budget",
+                "",
+                "| Slide | Target (s) | Cumulative (min) |",
+                "|-------|-----------|-----------------|",
+                "| 1 | 45 | 0:45 |",
+                "| 2 | 35 | 1:20 |",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     (bundle / "operator-directives.md").write_text("# Operator Directives\n", encoding="utf-8")
+    (bundle / "run-constants.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "locked_slide_count": 2,
+                "target_total_runtime_minutes": 2,
+                "slide_runtime_average_seconds": 40,
+                "slide_runtime_variability_scale": 0.5,
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
 
     if double_dispatch and include_variant_selection:
         (bundle / "variant-selection.json").write_text(
@@ -165,6 +192,9 @@ def test_prepares_envelope_with_exact_motion_gate_asset_path(tmp_path: Path) -> 
     assert envelope["motion_enabled"] is True
     assert envelope["approved_motion_assets"]["slide-01"].endswith("slide-01-motion.mp4")
     assert envelope["motion_perception_artifacts"] == []
+    assert envelope["runtime_plan"]["locked_slide_count"] == 2
+    assert envelope["runtime_plan"]["per_slide_targets"][0]["target_runtime_seconds"] == 45.0
+    assert envelope["voice_direction_defaults"]["speed"] == 1.0
 
 
 def test_fails_when_motion_enabled_plan_has_incomplete_authorized_coverage(tmp_path: Path) -> None:

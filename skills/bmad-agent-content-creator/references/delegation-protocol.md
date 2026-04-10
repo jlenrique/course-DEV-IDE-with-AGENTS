@@ -31,6 +31,7 @@ Every brief to a BMad writer includes ALL of the following:
 - **Format Constraints** — Structure requirements: word count range, section count, paragraph density, whether dialogue or narration, etc.
 - **Key Terminology** — Medical/clinical terms that MUST appear in the output. These are non-negotiable vocabulary anchors.
 - **Source Reference** — `source_ref` citation tracing this brief to its origin in the source bundle or lesson plan. Format: `{filename}#{path_expression}` (see `docs/source-ref-grammar.md`). Required for every content field that carries pedagogical assertions.
+- **Runtime Intent** — For Pass 2 narration, specify the slide's timing role, expected detail density, and whether the visual is light, medium, or heavy to decode.
 
 ### Optional Fields
 
@@ -39,6 +40,7 @@ Every brief to a BMad writer includes ALL of the following:
 - **Visual Hierarchy** (Caravaggio only) — Hero element per slide, attention flow, density targets.
 - **Slide-Script Pairing** (Caravaggio only) — Which narration script this pairs with, synchronization requirements.
 - **Length Constraints** — Estimated word count, slide count, or duration target.
+- **Timing Rationale** — Why this piece should be shorter, average, or longer than neighboring slides, tied to purpose, detail load, or visual complexity.
 - **Tone Guidance** — From style bible voice standards. Formal academic vs. clinical conversational vs. empathetic narrative.
 - **Existing Content Refs** — Related artifacts already produced for cross-reference consistency.
 
@@ -79,3 +81,5 @@ After assembly, annotate each artifact with consumption notes for the downstream
 | Assessment Brief | Qualtrics | Question type (MC, matching, ordering), Bloom's level tag, distractor rationale |
 | Lesson Plan | All specialists | Module/lesson position, learning objective map, content sequence, timing estimates |
 | First-Person Explainer | ElevenLabs | Voice character profile, pacing notes, clinical terminology pronunciation |
+
+For Pass 2 narration, Irene should also preserve a slide-level runtime rationale in the paired segment manifest so downstream review can tell whether runtime variance was earned by pedagogy rather than improvised.

@@ -83,6 +83,8 @@ class ElevenLabsClient(BaseAPIClient):
         stability: float | None = None,
         similarity_boost: float | None = None,
         style: float | None = None,
+        speed: float | None = None,
+        use_speaker_boost: bool | None = None,
     ) -> dict[str, Any] | None:
         """Build request-scoped voice settings when values are provided."""
         settings = self._clean_payload(
@@ -90,6 +92,8 @@ class ElevenLabsClient(BaseAPIClient):
                 "stability": stability,
                 "similarity_boost": similarity_boost,
                 "style": style,
+                "speed": speed,
+                "use_speaker_boost": use_speaker_boost,
             }
         )
         return settings or None
@@ -103,6 +107,8 @@ class ElevenLabsClient(BaseAPIClient):
         stability: float | None = 0.5,
         similarity_boost: float | None = 0.75,
         style: float | None = 0.0,
+        speed: float | None = None,
+        use_speaker_boost: bool | None = None,
         output_format: str = "mp3_44100_128",
         language_code: str | None = None,
         pronunciation_dictionary_locators: list[dict[str, str]] | None = None,
@@ -124,6 +130,8 @@ class ElevenLabsClient(BaseAPIClient):
             stability: Voice stability (0.0-1.0).
             similarity_boost: Voice clarity/similarity (0.0-1.0).
             style: Style exaggeration (0.0-1.0).
+            speed: Playback speed multiplier (0.7-1.2).
+            use_speaker_boost: Subtle speaker similarity boost when supported.
             output_format: Audio format string.
             language_code: Optional ISO-639-1 language code override.
             pronunciation_dictionary_locators: Optional dictionary ids/version ids.
@@ -148,6 +156,8 @@ class ElevenLabsClient(BaseAPIClient):
                     stability=stability,
                     similarity_boost=similarity_boost,
                     style=style,
+                    speed=speed,
+                    use_speaker_boost=use_speaker_boost,
                 ),
                 "pronunciation_dictionary_locators": pronunciation_dictionary_locators,
                 "seed": seed,
@@ -178,6 +188,8 @@ class ElevenLabsClient(BaseAPIClient):
         stability: float | None = 0.5,
         similarity_boost: float | None = 0.75,
         style: float | None = 0.0,
+        speed: float | None = None,
+        use_speaker_boost: bool | None = None,
         output_format: str = "mp3_44100_128",
         language_code: str | None = None,
         pronunciation_dictionary_locators: list[dict[str, str]] | None = None,
@@ -200,6 +212,8 @@ class ElevenLabsClient(BaseAPIClient):
                     stability=stability,
                     similarity_boost=similarity_boost,
                     style=style,
+                    speed=speed,
+                    use_speaker_boost=use_speaker_boost,
                 ),
                 "pronunciation_dictionary_locators": pronunciation_dictionary_locators,
                 "seed": seed,

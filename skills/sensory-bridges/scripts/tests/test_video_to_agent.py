@@ -70,6 +70,8 @@ class TestExtractVideo:
         assert result["confidence"] == "MEDIUM"
         assert "ffmpeg not available" in result["confidence_rationale"]
         assert result["audio_transcript"] == "Hello world"
+        assert result["temporal_event_density_level"] == "low"
+        assert "visually steady" in result["temporal_event_density_summary"].lower()
         assert validate_response(result) == []
 
     @patch(
@@ -85,3 +87,23 @@ class TestExtractVideo:
 
         assert result["confidence"] == "LOW"
         assert validate_response(result) == []
+
+    @patch("skills.sensory_bridges.scripts.video_to_agent.resolve_ffmpeg_binary", return_value="ffmpeg-bin")
+    @patch("skills.sensory_bridges.scripts.video_to_agent._extract_keyframes")
+    def test_dense_motion_gets_high_temporal_event_summary(self, mock_keyframes, mock_ffmpeg, tmp_path):
+        f = tmp_path / "test.mp4"
+        f.write_bytes(b"\x00")
+        mock_keyframes.return_value = [
+            {"frame_index": i, "frame_path": f"frame_{i:04d}.png", "timestamp_ms": i * 500}
+            for i in range(8)
+        ]
+        mock_result = {
+            "transcript_text": "Short transcript",
+            "total_duration_ms": 12000,
+        }
+
+        with patch("skills.sensory_bridges.scripts.audio_to_agent.transcribe_audio", return_value=mock_result):
+            result = extract_video(f)
+
+        assert result["temporal_event_density_level"] == "high"
+        assert "aligned to visible changes" in result["temporal_event_density_summary"].lower()

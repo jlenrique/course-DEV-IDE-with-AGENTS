@@ -73,6 +73,8 @@ def _make_perception(
         ],
         "slide_title": f"Slide {card_number} Title",
         "text_blocks": [f"Block {card_number}"],
+        "visual_complexity_level": "moderate",
+        "visual_complexity_summary": "Moderate visual complexity: balanced slide needing selective detail.",
         "slide_id": sid,
         "card_number": card_number,
         "source_image_path": f"course-content/staging/card-{card_number:02d}.png",
@@ -96,6 +98,8 @@ def _mock_perceive_high(**kwargs):
         ],
         "slide_title": "Mock Title",
         "text_blocks": ["Mock block"],
+        "visual_complexity_level": "moderate",
+        "visual_complexity_summary": "Moderate visual complexity: balanced slide needing selective detail.",
     }
 
 
@@ -114,6 +118,8 @@ def _mock_perceive_low(**kwargs):
         "visual_elements": [],
         "slide_title": "",
         "text_blocks": [],
+        "visual_complexity_level": "low",
+        "visual_complexity_summary": "Low visual complexity: minimal orientation needed.",
     }
 
 
@@ -132,6 +138,8 @@ def _mock_perceive_medium(**kwargs):
         "visual_elements": [{"type": "unknown", "description": "unclear", "position": "?"}],
         "slide_title": "",
         "text_blocks": ["Partial"],
+        "visual_complexity_level": "moderate",
+        "visual_complexity_summary": "Moderate visual complexity: some orientation required.",
     }
 
 
@@ -324,6 +332,7 @@ class TestBuildPerceptionConfirmation:
 
         assert "Revenue Trends" in conf["summary"]
         assert "2 visual element" in conf["summary"]
+        assert "visual complexity" in conf["summary"]
 
     def test_empty_perception_has_no_details_summary(self):
         perception = {
@@ -651,9 +660,14 @@ class TestMotionPerceptionContract:
             "motion_type": "video",
         }
         perception = _make_perception(2, confidence="HIGH")
+        perception["temporal_event_density_summary"] = (
+            "Moderate temporal event density: 4 keyframes across 12.0s. "
+            "Narration should track the main transitions without calling every frame."
+        )
         conf = build_motion_perception_confirmation(segment, perception)
         assert conf["modality"] == "video"
         assert "motion (video)" in conf["summary"]
+        assert "temporal event density" in conf["summary"]
 
     def test_ready_for_mixed_static_and_motion_segments(self, tmp_path: Path):
         motion_asset = tmp_path / "slide-02_motion.mp4"

@@ -122,6 +122,15 @@ For motion-enabled narrated runs, Marcus now has two canonical utility steps bef
 - `skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py` builds reviewer-facing slide and motion inspection artifacts under `recovery/inspection/`
 - `skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py` refreshes `pass2-envelope.json`, archives stale rerun outputs, and writes `pass2-prep-receipt.json`
 
+In both narrated workflows, Irene Pass 2 now carries explicit timing metadata in the segment manifest so slide-length variation is explainable rather than accidental:
+- `timing_role`
+- `content_density`
+- `visual_detail_load`
+- `duration_rationale`
+- `bridge_type`
+
+Marcus's Pass 2 validator treats these as auditable handoff expectations and warns when runtime-band drift, weak timing rationale, or intro/outro bridge cadence gaps suggest the script is becoming mechanically uniform.
+
 ### Production run authority (baton)
 
 When Marcus is running a **production run**, the system may hold an active **run baton** (a small JSON file under `state/runtime/`). If you open a **specialist agent directly** (for example Gary or Irene) while that run is active, the specialist should prompt you: continue with Marcus for the run, or enter **standalone consult mode** for a side conversation that does not change the active run. You do not need to edit baton files yourself; Marcus and the specialists follow the contract in the implementation skills.
@@ -248,6 +257,8 @@ Current workflow family:
 - For the motion-enabled + double-dispatch happy path, use `tests/happy-path-simulation-motion-double-dispatch-20260405.md`.
 
 For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Before ElevenLabs synthesis begins, Marcus can also run a preview-only voice-selection checkpoint that gives you catalog sample links for the carry-forward/default voice plus alternatives, or three description-led recommendations if you describe the ideal narrator. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+
+The ElevenLabs path now preserves script-led pacing as the primary driver. The system can pass mild voice-direction controls like `speed`, `emotional_variability`, and `pace_variability`, but those are refinements, not substitutes for Irene's writing judgment.
 
 If a motion/perception step reports missing `ffmpeg`, do not assume the binary is absent just because it is not on `PATH`. The repo records the bundled location in [local-binary-paths.md](resources/tool-inventory/local-binary-paths.md), and repo scripts should resolve it automatically through `scripts/utilities/ffmpeg.py`.
 

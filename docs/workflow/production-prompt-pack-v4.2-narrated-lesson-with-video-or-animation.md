@@ -532,6 +532,8 @@ Inputs:
 
 Required Marcus behavior before delegation:
 - refresh or regenerate `[BUNDLE_PATH]/pass2-envelope.json` so it reflects the current authorized deck, current `motion_plan.yaml`, expected Pass 2 outputs, and any approved motion assets for this run
+- carry forward the locked runtime plan into `pass2-envelope.json` as structured data, including slide-count/runtime settings and any per-slide runtime targets from Irene Pass 1
+- carry forward `voice_direction_defaults` into `pass2-envelope.json` so downstream voice work inherits the current recommended ElevenLabs starting settings
 - if this is a rerun, archive or remove stale partial Pass 2 outputs before delegation so Irene writes fresh canonical artifacts at bundle root
 - treat `authorized-storyboard.json` plus the approved local winner-slide PNGs as the slide identity source of truth; do not reuse prior storyboard review projections as execution inputs
 - in motion runs, preserve the exact Motion Gate-approved asset path per non-static slide; do not re-decide motion inside Pass 2
@@ -553,7 +555,16 @@ Required outputs:
 - `[BUNDLE_PATH]/narration-script.md`
 - `[BUNDLE_PATH]/segment-manifest.yaml`
 - `[BUNDLE_PATH]/perception-artifacts.json`
+- image perception artifacts must include `visual_complexity_level` and `visual_complexity_summary`
 - if motion exists: motion perception confirmations aligned to non-static segments, written into `pass2-envelope.json` as `motion_perception_artifacts`
+- if motion exists: video perception artifacts should include `temporal_event_density_level` and `temporal_event_density_summary`
+
+Required Pass 2 timing metadata per segment:
+- `timing_role`
+- `content_density`
+- `visual_detail_load`
+- `duration_rationale`
+- `bridge_type`
 
 Required validation:
 - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
@@ -564,6 +575,9 @@ Validator expectations at this stage:
 - every manifest segment must have non-empty `narration_text`
 - every manifest segment must contain at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and present in the segment narration text
 - every manifest segment must remain audience-directed when `narration-script-parameters.yaml` forbids meta slide language; grounded cues stay required, but slide-tour phrasing does not pass
+- if `runtime_plan.per_slide_targets[]` exists, Pass 2 validation should warn when narration word count falls materially outside the soft runtime band implied by target runtime and `narration_density.target_wpm`
+- missing or invalid `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, or weak timing rationale should surface as warnings rather than hidden drift
+- bridge-cadence gaps should surface as warnings when the configured intro/outro cadence is exceeded
 - every non-static motion segment must remain bound to the approved `motion_plan.yaml` asset and have matching motion perception confirmation before handoff passes
 
 Motion-specific rules:
@@ -776,6 +790,7 @@ Inputs:
 - downstream mutable manifest path: `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
 - source of truth to copy from: locked `[BUNDLE_PATH]/segment-manifest.yaml`
 - locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/pass2-envelope.json` when present, so the Voice Director can inherit runtime-plan and voice-direction defaults
 - approved `[BUNDLE_PATH]/voice-selection.json`
 - style-guide defaults and any approved pronunciation dictionaries
 
@@ -806,6 +821,8 @@ Motion-specific rules:
 Voice rules:
 - use the locked manifest only; do not regenerate copy ad hoc during ElevenLabs execution
 - preserve segment order continuity across requests
+- preserve script-led runtime variability as the primary driver; use ElevenLabs `speed` only for mild delivery nudges rather than hard duration forcing
+- when present, treat pipeline `emotional_variability` as the upstream control for ElevenLabs stability and `pace_variability` as the bound on per-segment speed nudges
 - prefer pronunciation dictionaries over one-off wording hacks for medical terminology
 
 Suggested command surface:
@@ -840,12 +857,16 @@ Inputs:
 - approved motion clips for every non-static segment
 
 Required Quinn-R checks:
-- narration WPM is within the expected range
+- narration WPM is reviewed against the expected range, with advisory notes when the approved script itself already implies the pacing rather than ElevenLabs causing the issue
 - VTT timestamps are monotonic
 - segment coverage is complete
 - when `motion_type != static`, `motion_duration_seconds` is coherent against `narration_duration`
 - video/animation duration vs narration duration stays within accepted tolerance, or explicit edit guidance is produced
 - required audio/SFX/music files referenced by the manifest exist
+
+Advisory vs blocking rule:
+- blocking: missing assets, missing coverage, non-monotonic VTT, unreadable motion assets, or material motion mismatch that would make composition incorrect
+- advisory: script-implied pacing variance, upstream runtime-band warnings, weak timing rationale, or bridge-cadence drift that the operator accepts
 
 Motion-specific rules:
 - treat `narration_duration` as the authoritative timing signal for downstream composition

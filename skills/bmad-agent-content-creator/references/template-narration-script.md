@@ -30,6 +30,8 @@ For each slide/segment - segment IDs must match `[SEGMENT: seg-XX]` markers exac
 - Pacing: {measured/deliberate | conversational flow | building urgency}
 - Emphasis: {key phrases to stress, marked with *asterisks*}
 - Behavioral Intent: {credible | moving | alarming | urgent | reflective | attention-reset | provocative}
+- Timing Rationale: {why this slide should run shorter, average, or longer than nearby slides; tie to slide purpose, content density, and/or visual burden}
+- Bridge Type: {none | intro | outro | both}
 
 **Visual References** (Story 13.2 - from `visual_reference_injector`):
 ```yaml
@@ -83,4 +85,6 @@ brief spatial disambiguation is genuinely necessary.}
 
 Every `[SEGMENT: seg-XX]` marker must have a corresponding entry in the paired manifest.yaml.
 Irene populates `narration_text` and `visual_cue` in the manifest from this script.
+Irene should also preserve the segment's timing rationale in the paired manifest so runtime variance remains auditable downstream.
+When a segment includes an explicit intro/outro, Irene should preserve that as `bridge_type` in the manifest so bridge cadence remains auditable downstream.
 ElevenLabs writes back `narration_duration`, `narration_file`, `narration_vtt` after generation.

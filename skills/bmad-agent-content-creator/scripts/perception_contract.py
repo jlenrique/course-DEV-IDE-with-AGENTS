@@ -204,6 +204,7 @@ def build_perception_confirmation(
     layout = perception_result.get("layout_description", "")
     title = perception_result.get("slide_title", "")
     n_elements = len(perception_result.get("visual_elements", []))
+    visual_complexity = perception_result.get("visual_complexity_summary", "")
 
     summary_parts = []
     if title:
@@ -212,6 +213,8 @@ def build_perception_confirmation(
         summary_parts.append(layout)
     if n_elements:
         summary_parts.append(f"{n_elements} visual element(s)")
+    if visual_complexity:
+        summary_parts.append(visual_complexity)
 
     summary = "; ".join(summary_parts) if summary_parts else "no details extracted"
 
@@ -436,8 +439,12 @@ def build_motion_perception_confirmation(
     )
     motion_type = str(segment.get("motion_type") or "motion").strip()
     confidence = perception_result.get("confidence", "LOW")
-    layout = perception_result.get("layout_description", "")
-    summary = layout or perception_result.get("slide_title") or "no details extracted"
+    summary = (
+        perception_result.get("temporal_event_density_summary")
+        or perception_result.get("layout_description")
+        or perception_result.get("slide_title")
+        or "no details extracted"
+    )
     return {
         "artifact": str(perception_result.get("artifact_path", "")),
         "modality": "video",

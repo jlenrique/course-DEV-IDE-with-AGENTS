@@ -567,11 +567,31 @@ Inputs for this step:
 - Source bundle: `[BUNDLE_PATH]/extracted.md`
 - Operator directives: `[BUNDLE_PATH]/operator-directives.md`
 - Irene Pass 1: `[BUNDLE_PATH]/irene-pass1.md`
+- refreshed `[BUNDLE_PATH]/pass2-envelope.json`
 - If `DOUBLE_DISPATCH: true`: variant selections from `[BUNDLE_PATH]/variant-selection.json`
 
 Double-dispatch input resolution:
 - When `DOUBLE_DISPATCH: true`, build a merged slide output by selecting per-slide from variant A (`gary-dispatch-result.json`) or variant B (`gary-dispatch-result-B.json`) according to `variant-selection.json`.
 - The merged set becomes `gary_slide_output` for Irene.
+
+Required Marcus behavior before delegation:
+- refresh or regenerate `[BUNDLE_PATH]/pass2-envelope.json` so it reflects the current authorized winner deck, expected Pass 2 outputs, and any locked runtime/voice-direction defaults for this run
+- carry forward the locked runtime plan into `pass2-envelope.json` as structured data, including slide-count/runtime settings and any per-slide runtime targets from Irene Pass 1
+- carry forward `voice_direction_defaults` into `pass2-envelope.json` so downstream voice work inherits the current recommended ElevenLabs starting settings
+- if this is a rerun, archive or remove stale partial Pass 2 outputs before delegation so Irene writes fresh canonical artifacts at bundle root
+- treat the approved winner-slide PNGs as the slide identity source of truth; do not reuse stale storyboard review projections as execution inputs
+
+Canonical Marcus prep command:
+
+```powershell
+py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py `
+  --bundle [BUNDLE_PATH]
+```
+
+Expected prep outputs before Irene runs:
+- fresh `[BUNDLE_PATH]/pass2-envelope.json`
+- `[BUNDLE_PATH]/pass2-prep-receipt.json`
+- stale prior Pass 2 root artifacts archived under `[BUNDLE_PATH]/recovery/archive/pass2-reruns/` when this is a rerun
 
 Delegate Irene Pass 2 with `gary_slide_output`.
 Use `gary_slide_output` as source-of-truth for order and visual paths.
@@ -579,7 +599,8 @@ Use `gary_slide_output` as source-of-truth for order and visual paths.
 Irene generates `perception_artifacts` inline during Pass 2:
 - For each slide PNG, Irene reads the image and emits a perception artifact as a side-effect of writing the narration segment.
 - Perception artifacts follow the canonical schema from `sensory-bridges/bridge_utils.py`.
-- The `png_to_agent.py` bridge is a schema wrapper — the LLM agent does the actual visual reading.
+- The `png_to_agent.py` bridge is a schema wrapper - the LLM agent does the actual visual reading.
+- Image perception artifacts should include `visual_complexity_level` and `visual_complexity_summary` so Irene can better justify runtime variability from slide burden.
 
 ### Dual-channel grounding protocol
 
@@ -607,6 +628,7 @@ Script-level parameters (from narration-script-parameters.yaml):
 - `engagement_stance` — narrator posture, direct address, rhetorical questions
 - `source_depth` — how deep into extraction material per fidelity class
 - `pronunciation_sensitivity` — flagging policy for ElevenLabs downstream
+- `runtime_variability` — slide-length variability driven by pedagogical purpose, concept density, visual burden, and explicit bridge cadence rather than arbitrary padding
 
 ### Required outputs
 - `[BUNDLE_PATH]/narration-script.md`
@@ -620,6 +642,11 @@ Script-level parameters (from narration-script-parameters.yaml):
 - visual_file
 - narration_text
 - duration_estimate_seconds
+- timing_role
+- content_density
+- visual_detail_load
+- duration_rationale
+- bridge_type
 - source_ref
 
 ### Post-Pass-2 completeness validation
@@ -631,6 +658,9 @@ This confirms:
 - perception_artifacts present and aligned 1:1 with Gary slide_ids
 - card sequence integrity preserved
 - file_path and source_ref populated for all cards
+- if `runtime_plan.per_slide_targets[]` exists, narration word count drift outside the soft runtime band is reported as a warning rather than hidden
+- missing or invalid `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, or weak timing rationale are surfaced as warnings
+- bridge-cadence gaps are surfaced as warnings when the configured intro/outro cadence is exceeded
 
 If validator `status: fail`:
 - output exact missing fields by segment id
@@ -665,6 +695,193 @@ Fallback (detailed):
   - identify which creative slides lack source depth
   - show the source_ref anchor content vs. the narration text
   - redraft only the affected segments with `stance: explain-behind` reinforced
+
+---
+
+## 9) Gate 3 Decision - Lock the Approved Pass 2 Package
+
+This prompt begins only after Storyboard B regeneration and explicit HIL approval with script context.
+
+If APPROVED:
+- lock `[BUNDLE_PATH]/narration-script.md`
+- lock `[BUNDLE_PATH]/segment-manifest.yaml`
+- lock `[BUNDLE_PATH]/pass2-envelope.json`
+- record that downstream audio/composition work must use the approved Storyboard B package as-is
+
+If REVISION:
+- list only the affected segment ids / slide ids and required edits
+- patch only the named artifacts
+- rerun Prompt 8 validation and Storyboard B regeneration before any downstream spend
+
+Gate rule:
+- no downstream audio or composition work begins until Gate 3 is explicit and the package is locked
+
+---
+
+## 10) Fidelity + Quality Before Additional Spend
+
+Marcus, run the downstream readiness checks on the Gate 3-approved package before ElevenLabs and compositor spend.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json`
+- Storyboard B approval record
+
+Required Marcus behavior:
+- present the most recent Prompt 8 Vera G4 receipt if the artifacts are unchanged
+- if any Pass 2 artifact changed after Prompt 8, rerun Vera G4 on the changed package before continuing
+- run Quinn-R on the approved Pass 2 package before ElevenLabs spend
+
+Required checks:
+- no G4 critical findings remain open
+- Quinn-R sees no blocker that would make audio generation wasteful
+- Pass 2 warning-level runtime/rationale findings remain advisory unless the operator directs remediation
+
+Go/no-go:
+- no go if the approved package would require regenerated copy before synthesis
+
+---
+
+## 11) ElevenLabs Voice Selection HIL - Catalog Preview Before Spend
+
+Marcus, before actual ElevenLabs narration generation, run the Voice Director in preview-only mode on the locked Gate 3 package.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json`
+- voice continuity state for this presentation when available
+- style-guide ElevenLabs defaults for new-presentation fallback
+- governed recommendation profile from `state/config/elevenlabs-voice-profiles.yaml`
+- presentation attributes that matter for voice fit: audience, tone, content type, pacing expectations
+
+Required Marcus behavior:
+- delegate a preview-only request to the Voice Director; do not generate any new audio in this prompt
+- confirm the audio buffer (default 1.5s lead-in + 1.5s tail) and capture the operator-approved value for voice selection
+- provide the operator with exactly one of these review paths:
+  - `continuity_preview` or `default_plus_alternatives`
+  - `description_driven_search`
+- present catalog sample links only; these must be existing ElevenLabs preview/sample URLs, not newly generated clips
+- bind the preview receipt to the locked Gate 3 package by recording the script/manifest hashes in the preview artifact
+
+Required writes:
+- `[BUNDLE_PATH]/voice-preview-options.json`
+- `[BUNDLE_PATH]/voice-selection-review.md`
+- after operator approval: `[BUNDLE_PATH]/voice-selection.json`
+
+Go/no-go:
+- no go to ElevenLabs synthesis until the operator has approved a lesson-level default voice or explicitly accepted an existing prior selection
+
+---
+
+## 12) ElevenLabs - Locked Manifest Audio Generation
+
+Marcus, delegate the Voice Director to run manifest-driven narration from the locked Gate 3 package.
+
+Inputs:
+- downstream mutable manifest path: `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- source of truth to copy from: locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/pass2-envelope.json` when present, so the Voice Director can inherit runtime-plan and voice-direction defaults
+- approved `[BUNDLE_PATH]/voice-selection.json`
+- style-guide defaults and any approved pronunciation dictionaries
+
+Required Marcus behavior before delegation:
+- create or refresh `[BUNDLE_PATH]/assembly-bundle/`
+- designate `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml` as the downstream mutable manifest for audio/composition
+- if needed, copy the locked root manifest into the assembly bundle before ElevenLabs so the same manifest path is mutated downstream
+- keep segment order and segment ids frozen
+- verify `voice-selection.json.locked_manifest_hash` and `voice-selection.json.locked_script_hash` still match the locked Gate 3 package before synthesis begins
+- pass the approved lesson-level `selected_voice_id` from `voice-selection.json` as the default synthesis voice without mutating the locked root manifest
+
+Required outputs:
+- `[BUNDLE_PATH]/assembly-bundle/audio/`
+- `[BUNDLE_PATH]/assembly-bundle/captions/`
+- updated `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml` with:
+  - `narration_duration`
+  - `narration_file`
+  - `narration_vtt`
+  - `audio_buffer_seconds`
+  - `sfx_file` where applicable
+
+Voice rules:
+- use the locked manifest only; do not regenerate copy ad hoc during ElevenLabs execution
+- preserve segment order continuity across requests
+- preserve script-led runtime variability as the primary driver; use ElevenLabs `speed` only for mild delivery nudges rather than hard duration forcing
+- when present, treat pipeline `emotional_variability` as the upstream control for ElevenLabs stability and `pace_variability` as the bound on per-segment speed nudges
+- preserve explicit intro/outro bridge beats rather than flattening them away during delivery
+- prefer pronunciation dictionaries over one-off wording hacks for medical terminology
+
+Go/no-go:
+- no go if the Voice Director would need to rewrite narration text instead of synthesizing the approved text
+
+---
+
+## 13) Quinn-R Pre-Composition - Audio, Caption, and Alignment
+
+Marcus, run Quinn-R pre-composition review after ElevenLabs completes and before compositor packaging.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- generated audio and VTT assets
+- approved still PNG references
+
+Required Quinn-R checks:
+- narration WPM is reviewed against the expected range, with advisory notes when the approved script itself already implies the pacing rather than ElevenLabs causing the issue
+- VTT timestamps are monotonic
+- segment coverage is complete
+- required audio/SFX/music files referenced by the manifest exist
+
+Advisory vs blocking rule:
+- blocking: missing assets, missing coverage, non-monotonic VTT, unreadable paths, or any issue that would make compositor packaging incorrect
+- advisory: runtime-band drift, weak or missing timing-rationale metadata, bridge-cadence gaps already surfaced upstream, or script-implied pacing variance that the operator accepts
+
+Go/no-go:
+- no go to compositor until Quinn-R pre-composition passes or the operator explicitly accepts the reported non-blocking notes
+
+---
+
+## 14) Compositor - Assembly Bundle + Descript Guide
+
+Marcus, build the final assembly bundle for Descript from the pre-composition-approved manifest.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- generated audio/captions
+- approved still PNG references
+
+Required Marcus/compositor behavior:
+- run compositor `sync-visuals` on `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- localize approved stills into `[BUNDLE_PATH]/assembly-bundle/visuals/`
+- regenerate `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- preserve `behavioral_intent` and any explicit `bridge_type` context in the guide so connective intros/outros are not edited out accidentally
+
+Required assembly-bundle contents:
+- `segment-manifest.yaml`
+- `DESCRIPT-ASSEMBLY-GUIDE.md`
+- `audio/`
+- `captions/`
+- `visuals/`
+
+---
+
+## 15) Operator Handoff - Descript Package Ready
+
+Marcus, present the final handoff package for the human operator who will assemble/edit in Descript.
+
+Required handoff receipt:
+- run id
+- assembly bundle path
+- manifest path
+- Descript guide path
+- audio status
+- captions status
+- visuals status
+- open notes, if any
+
+Completion condition:
+- this prompt pack's required path is complete once the assembly bundle and guide are ready for Descript handoff
 
 ---
 

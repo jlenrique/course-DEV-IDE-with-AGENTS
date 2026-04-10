@@ -312,9 +312,32 @@ Required `pass2-envelope.json` fields:
 - authorized_storyboard_path
 - gary_slide_output
 - expected_outputs
+- runtime_plan with:
+  - locked_slide_count
+  - target_total_runtime_minutes
+  - slide_runtime_average_seconds
+  - slide_runtime_variability_scale
+  - per_slide_targets[] when Irene Pass 1 produced the runtime budget table
+- voice_direction_defaults carrying the current recommended ElevenLabs starting settings
+  - stability
+  - similarity_boost
+  - style
+  - speed
+  - use_speaker_boost
+  - emotional_variability
+  - pace_variability
 - motion_plan_path when `MOTION_ENABLED` is true
 - approved_motion_assets when `MOTION_ENABLED` is true
 - motion_perception_artifacts when `MOTION_ENABLED` is true and Pass 2 has completed
+- perception_artifacts entries should carry `visual_complexity_level` and `visual_complexity_summary`
+- motion_perception_artifacts entries should carry `temporal_event_density_level` and `temporal_event_density_summary`
+
+Required Pass 2 segment-manifest timing metadata:
+- timing_role
+- content_density
+- visual_detail_load
+- duration_rationale
+- bridge_type
 
 Required `pass2-prep-receipt.json` fields:
 - run_id
@@ -350,7 +373,8 @@ narration strategy. G4-07 evaluation explicitly references both:
   (creative: source-primary; literal-text: slide-primary; literal-visual: guided interpretation)
 - `state/config/narration-script-parameters.yaml` — script-wide style knobs
   (density, slide_echo, visual_narration, terminology, bridging, engagement,
-  source_depth, pronunciation, meta slide-language policy)
+  source_depth, pronunciation, meta slide-language policy, runtime_variability,
+  bridge cadence, timing-rationale expectations)
 
 These files are consumed by Irene Pass 2 during generation and by Vera during
 G4 evaluation. Changes to profile defaults may cause G4-07 failures — check
@@ -399,5 +423,11 @@ After Irene Pass 2:
   - every segment row remains audience-directed when `narration-script-parameters.yaml` forbids meta slide language; visual grounding must still be demonstrable through the traceable cues above
   - every non-static motion segment remains bound to the approved `motion_plan.yaml` asset and has matching motion perception confirmation for that asset
   - `narration-script.md` and `segment-manifest.yaml` both exist at bundle root before downstream audio/script work begins
+
+After Irene Pass 2, `validate-irene-pass2-handoff.py` should also emit advisory warnings when:
+- narration word count falls materially outside the soft runtime band implied by `runtime_plan.per_slide_targets[]` and `narration_density.target_wpm`
+- required timing metadata is missing or invalid (`timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, `bridge_type`)
+- `duration_rationale` is too weak to justify runtime variance
+- the configured intro/outro bridge cadence is exceeded without a marked `bridge_type`
 
 Contract version: 1.0

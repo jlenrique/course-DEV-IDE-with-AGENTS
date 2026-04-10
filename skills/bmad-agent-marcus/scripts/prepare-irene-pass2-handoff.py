@@ -41,6 +41,12 @@ ARCHIVE_SUBDIR = Path("recovery") / "archive" / "pass2-reruns"
 DEFAULT_ENVELOPE_FILENAME = "pass2-envelope.json"
 DEFAULT_RECEIPT_FILENAME = "pass2-prep-receipt.json"
 STATIC_MOTION_PATTERN = re.compile(r"slide[-_](\d{2})", re.IGNORECASE)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+RUN_CONSTANTS_FILENAME = "run-constants.yaml"
+STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
+RUNTIME_ROW_RE = re.compile(
+    r"^\|\s*(?P<slide>\d+)\s*\|\s*(?P<target>\d+(?:\.\d+)?)\s*\|\s*(?P<cumulative>\d+:\d{2})\s*\|$"
+)
 
 
 def _utc_now() -> datetime:
@@ -69,6 +75,72 @@ def _load_yaml_object(path: Path) -> dict[str, Any]:
 
 def _bundle_input(bundle_dir: Path, filename: str) -> Path:
     return bundle_dir / filename
+
+
+def _parse_runtime_budget_rows(irene_pass1_path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for raw_line in irene_pass1_path.read_text(encoding="utf-8").splitlines():
+        match = RUNTIME_ROW_RE.match(raw_line.strip())
+        if not match:
+            continue
+        slide = int(match.group("slide"))
+        target_seconds = float(match.group("target"))
+        cumulative_minutes, cumulative_seconds = match.group("cumulative").split(":")
+        rows.append(
+            {
+                "card_number": slide,
+                "target_runtime_seconds": target_seconds,
+                "cumulative_runtime_seconds": int(cumulative_minutes) * 60 + int(cumulative_seconds),
+            }
+        )
+    return rows
+
+
+def _load_runtime_plan(bundle_dir: Path, irene_pass1_path: Path) -> dict[str, Any] | None:
+    run_constants_path = _bundle_input(bundle_dir, RUN_CONSTANTS_FILENAME)
+    if not run_constants_path.is_file() and not irene_pass1_path.is_file():
+        return None
+
+    run_constants: dict[str, Any] = {}
+    if run_constants_path.is_file():
+        run_constants = _load_yaml_object(run_constants_path)
+
+    runtime_plan: dict[str, Any] = {
+        "locked_slide_count": run_constants.get("locked_slide_count"),
+        "target_total_runtime_minutes": run_constants.get("target_total_runtime_minutes"),
+        "slide_runtime_average_seconds": run_constants.get("slide_runtime_average_seconds"),
+        "slide_runtime_variability_scale": run_constants.get("slide_runtime_variability_scale"),
+    }
+    if irene_pass1_path.is_file():
+        per_slide_targets = _parse_runtime_budget_rows(irene_pass1_path)
+        if per_slide_targets:
+            runtime_plan["per_slide_targets"] = per_slide_targets
+    if not any(value not in (None, "", []) for value in runtime_plan.values()):
+        return None
+    return runtime_plan
+
+
+def _load_voice_direction_defaults() -> dict[str, Any]:
+    if yaml is None or not STYLE_GUIDE_PATH.is_file():
+        return {}
+    data = yaml.safe_load(STYLE_GUIDE_PATH.read_text(encoding="utf-8")) or {}
+    elevenlabs = data.get("tool_parameters", {}).get("elevenlabs", {})
+    if not isinstance(elevenlabs, dict):
+        return {}
+    defaults = {}
+    for key in (
+        "stability",
+        "similarity_boost",
+        "style",
+        "speed",
+        "use_speaker_boost",
+        "emotional_variability",
+        "pace_variability",
+    ):
+        value = elevenlabs.get(key)
+        if value not in (None, ""):
+            defaults[key] = value
+    return defaults
 
 
 def _slug_from_bundle_name(bundle_dir: Path) -> str:
@@ -422,6 +494,12 @@ def prepare_irene_pass2_handoff(
         archive_dir, archived_files = _archive_stale_outputs(bundle_dir=bundle, now=ts)
 
     expected_outputs = [str(bundle / name) for name in EXPECTED_PASS2_OUTPUTS]
+    runtime_plan = (
+        _load_runtime_plan(bundle, irene_pass1_path)
+        if irene_pass1_path.is_file()
+        else None
+    )
+    voice_direction_defaults = _load_voice_direction_defaults()
     envelope: dict[str, Any] = {
         "run_id": str(
             dispatch_payload.get("run_id")
@@ -450,6 +528,10 @@ def prepare_irene_pass2_handoff(
             "motion_plan": str(motion_plan_path) if motion_plan_path.is_file() else None,
         },
     }
+    if runtime_plan:
+        envelope["runtime_plan"] = runtime_plan
+    if voice_direction_defaults:
+        envelope["voice_direction_defaults"] = voice_direction_defaults
     literal_visual_publish = dispatch_payload.get("literal_visual_publish")
     if isinstance(literal_visual_publish, dict):
         envelope["literal_visual_publish"] = literal_visual_publish

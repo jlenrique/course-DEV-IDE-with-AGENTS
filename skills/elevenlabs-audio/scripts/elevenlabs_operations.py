@@ -99,6 +99,9 @@ VOICE_CLARITY_HINTS = {
     "warm",
 }
 DEFAULT_AUDIO_BUFFER_SECONDS = 1.5
+DEFAULT_PACE_VARIABILITY = 0.05
+MIN_ELEVENLABS_SPEED = 0.7
+MAX_ELEVENLABS_SPEED = 1.2
 
 
 def load_style_guide_elevenlabs() -> dict[str, Any]:
@@ -127,6 +130,86 @@ def merge_parameters(
             if value is not None and value != "":
                 merged[key] = value
     return merged
+
+
+def _coerce_float(
+    value: Any | None,
+    *,
+    field_name: str,
+) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be a number.") from exc
+
+
+def _coerce_bool(value: Any | None, *, field_name: str) -> bool | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return value
+    normalized = str(value).strip().lower()
+    if normalized in {"true", "1", "yes", "on"}:
+        return True
+    if normalized in {"false", "0", "no", "off"}:
+        return False
+    raise ValueError(f"{field_name} must be a boolean.")
+
+
+def _clamp(value: float, minimum: float, maximum: float) -> float:
+    return max(minimum, min(maximum, value))
+
+
+def _resolve_voice_direction(
+    merged: dict[str, Any],
+) -> dict[str, Any]:
+    """Resolve raw ElevenLabs settings plus pipeline-level abstractions.
+
+    `emotional_variability` is a pipeline abstraction that maps inversely to
+    ElevenLabs stability when stability is not explicitly set.
+    """
+
+    stability = _coerce_float(merged.get("stability"), field_name="stability")
+    similarity_boost = _coerce_float(
+        merged.get("similarity_boost"),
+        field_name="similarity_boost",
+    )
+    style = _coerce_float(merged.get("style"), field_name="style")
+    speed = _coerce_float(merged.get("speed"), field_name="speed")
+    use_speaker_boost = _coerce_bool(
+        merged.get("use_speaker_boost"),
+        field_name="use_speaker_boost",
+    )
+    emotional_variability = _coerce_float(
+        merged.get("emotional_variability"),
+        field_name="emotional_variability",
+    )
+    pace_variability = _coerce_float(
+        merged.get("pace_variability"),
+        field_name="pace_variability",
+    )
+
+    if emotional_variability is not None:
+        emotional_variability = _clamp(emotional_variability, 0.0, 1.0)
+    if stability is None and emotional_variability is not None:
+        stability = 1.0 - emotional_variability
+    if speed is not None:
+        speed = _clamp(speed, MIN_ELEVENLABS_SPEED, MAX_ELEVENLABS_SPEED)
+    if pace_variability is None:
+        pace_variability = DEFAULT_PACE_VARIABILITY
+    pace_variability = _clamp(pace_variability, 0.0, 0.25)
+
+    return {
+        "stability": stability,
+        "similarity_boost": similarity_boost,
+        "style": style,
+        "speed": speed,
+        "use_speaker_boost": use_speaker_boost,
+        "emotional_variability": emotional_variability,
+        "pace_variability": pace_variability,
+    }
 
 
 def _coerce_audio_buffer_seconds(value: Any | None) -> float | None:
@@ -595,6 +678,7 @@ def preview_voice_options(
             result["locked_script_hash"] = _sha256_file(locked_script_path)
         if output_path:
             write_json_output(result, output_path)
+            write_voice_selection_review(result, output_path)
             result["output_path"] = str(Path(output_path))
         return result
 
@@ -727,6 +811,7 @@ def preview_voice_options(
         result["locked_script_hash"] = _sha256_file(locked_script_path)
     if output_path:
         write_json_output(result, output_path)
+        write_voice_selection_review(result, output_path)
         result["output_path"] = str(Path(output_path))
     return result
 
@@ -907,25 +992,40 @@ def _apply_audio_buffer(
         raise ValueError("audio_buffer_seconds must be non-negative.")
     ffmpeg = ffmpeg_path or FFMPEG_BINARY
     temp_path = audio_path.with_name(f"{audio_path.stem}-buffered{audio_path.suffix}")
-    filter_parts: list[str] = []
+    silence_inputs: list[tuple[str, float]] = []
     if lead_seconds > 0:
-        lead_ms = int(round(lead_seconds * 1000))
-        filter_parts.append(f"adelay={lead_ms}:all=1")
+        silence_inputs.append(("lead", lead_seconds))
     if tail_seconds > 0:
-        filter_parts.append(f"apad=pad_dur={tail_seconds}")
-    filter_str = ",".join(filter_parts) if filter_parts else "anull"
-    target_duration = max(0.0, base_duration + lead_seconds + tail_seconds)
-    command = [
-        ffmpeg,
-        "-y",
-        "-i",
-        str(audio_path),
-        "-af",
-        filter_str,
-        "-t",
-        f"{target_duration:.3f}",
-        str(temp_path),
-    ]
+        silence_inputs.append(("tail", tail_seconds))
+
+    command = [ffmpeg, "-y"]
+    input_count = 0
+    for _, duration in silence_inputs:
+        command.extend(
+            [
+                "-f",
+                "lavfi",
+                "-t",
+                f"{duration:.3f}",
+                "-i",
+                "anullsrc=r=44100:cl=stereo",
+            ]
+        )
+        input_count += 1
+    command.extend(["-i", str(audio_path)])
+    audio_input_index = input_count
+    input_count += 1
+    filter_inputs = [f"[{idx}:a]" for idx in range(input_count)]
+    filter_str = "".join(filter_inputs) + f"concat=n={input_count}:v=0:a=1[out]"
+    command.extend(
+        [
+            "-filter_complex",
+            filter_str,
+            "-map",
+            "[out]",
+            str(temp_path),
+        ]
+    )
     subprocess.run(command, capture_output=True, text=True, check=True)
     temp_path.replace(audio_path)
 
@@ -969,6 +1069,7 @@ def generate_narration(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     merged = merge_parameters(load_style_guide_elevenlabs(), parameter_overrides)
+    voice_direction = _resolve_voice_direction(merged)
     resolved_voice_id = voice_id or merged.get("default_voice_id")
     if not resolved_voice_id:
         raise ValueError("No ElevenLabs voice_id available from args or style guide.")
@@ -980,9 +1081,13 @@ def generate_narration(
         resolved_voice_id,
         audio_path,
         model_id=merged.get("model_id", "eleven_multilingual_v2"),
-        stability=merged.get("stability", 0.5),
-        similarity_boost=merged.get("similarity_boost", 0.75),
-        style=merged.get("style", 0.0),
+        stability=voice_direction["stability"] if voice_direction["stability"] is not None else 0.5,
+        similarity_boost=voice_direction["similarity_boost"]
+        if voice_direction["similarity_boost"] is not None
+        else 0.75,
+        style=voice_direction["style"] if voice_direction["style"] is not None else 0.0,
+        speed=voice_direction["speed"],
+        use_speaker_boost=voice_direction["use_speaker_boost"],
         output_format=merged.get("output_format", "mp3_44100_128"),
         pronunciation_dictionary_locators=pronunciation_dictionary_locators,
         previous_request_ids=previous_request_ids,
@@ -1013,6 +1118,7 @@ def generate_narration(
         "request_id": result.get("request_id"),
         "narration_duration": duration_seconds,
         "output_format": result.get("output_format"),
+        "voice_direction": voice_direction,
     }
 
 
@@ -1048,13 +1154,27 @@ def _verify_voice_selection_hashes(
     script_path = next((p for p in script_candidates if p.exists()), None)
     if script_path:
         actual_script_hash = _sha256_file(script_path)
-        if actual_script_hash != expected_script_hash:
-            raise ValueError(
-                f"Script hash mismatch: voice-selection expects "
-                f"{expected_script_hash[:16]}... but locked script is "
-                f"{actual_script_hash[:16]}..."
-            )
+    if actual_script_hash != expected_script_hash:
+        raise ValueError(
+            f"Script hash mismatch: voice-selection expects "
+            f"{expected_script_hash[:16]}... but locked script is "
+            f"{actual_script_hash[:16]}..."
+        )
     return vs
+
+
+def _load_pass2_envelope_voice_direction_defaults(manifest_path: str | Path) -> dict[str, Any]:
+    manifest_dir = Path(manifest_path).resolve().parent
+    bundle_dir = manifest_dir.parent if manifest_dir.name == "assembly-bundle" else manifest_dir
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    if not envelope_path.is_file():
+        return {}
+    try:
+        envelope = _load_json_file(envelope_path)
+    except Exception:
+        return {}
+    defaults = envelope.get("voice_direction_defaults", {})
+    return defaults if isinstance(defaults, dict) else {}
 
 
 def generate_manifest_narration(
@@ -1107,7 +1227,14 @@ def generate_manifest_narration(
     audio_dir.mkdir(parents=True, exist_ok=True)
     captions_dir.mkdir(parents=True, exist_ok=True)
 
-    merged = merge_parameters(load_style_guide_elevenlabs(), parameter_overrides)
+    merged = merge_parameters(
+        merge_parameters(
+            load_style_guide_elevenlabs(),
+            _load_pass2_envelope_voice_direction_defaults(manifest_path),
+        ),
+        parameter_overrides,
+    )
+    voice_direction = _resolve_voice_direction(merged)
     resolved_default_voice_id = default_voice_id or merged.get("default_voice_id")
     if not resolved_default_voice_id:
         raise ValueError("No ElevenLabs default voice available for manifest processing.")
@@ -1124,6 +1251,19 @@ def generate_manifest_narration(
 
     segments = manifest.get("segments", [])
     total_segments = len(segments)
+    estimated_durations = [
+        float(segment["duration_estimate_seconds"])
+        for segment in segments
+        if segment.get("duration_estimate_seconds") not in (None, "")
+    ]
+    mean_estimated_duration = (
+        sum(estimated_durations) / len(estimated_durations) if estimated_durations else None
+    )
+    max_estimated_delta = (
+        max(abs(duration - mean_estimated_duration) for duration in estimated_durations)
+        if estimated_durations and mean_estimated_duration is not None
+        else 0.0
+    )
     previous_request_ids: list[str] = []
     outputs: list[dict[str, Any]] = []
     for seg_index, segment in enumerate(segments, start=1):
@@ -1140,12 +1280,33 @@ def generate_manifest_narration(
             continue
 
         voice_id = segment.get("voice_id") or resolved_default_voice_id
+        segment_speed = voice_direction["speed"]
+        duration_estimate = _coerce_float(
+            segment.get("duration_estimate_seconds"),
+            field_name=f"{segment_id}.duration_estimate_seconds",
+        )
+        if (
+            segment_speed is not None
+            and duration_estimate is not None
+            and mean_estimated_duration is not None
+            and max_estimated_delta > 0
+            and voice_direction["pace_variability"] > 0
+        ):
+            relative_delta = (duration_estimate - mean_estimated_duration) / max_estimated_delta
+            segment_speed = _clamp(
+                segment_speed - (relative_delta * voice_direction["pace_variability"]),
+                MIN_ELEVENLABS_SPEED,
+                MAX_ELEVENLABS_SPEED,
+            )
+        segment_overrides = dict(parameter_overrides or {})
+        if segment_speed is not None:
+            segment_overrides["speed"] = segment_speed
         result = generate_narration(
             narration_text,
             output_dir=audio_dir,
             filename_stem=segment_id,
             voice_id=voice_id,
-            parameter_overrides=parameter_overrides,
+            parameter_overrides=segment_overrides,
             previous_request_ids=previous_request_ids or None,
             client=client,
         )
@@ -1208,6 +1369,8 @@ def generate_manifest_narration(
                 "narration_vtt": segment["narration_vtt"],
                 "audio_buffer_seconds": buffer_seconds,
                 "sfx_file": segment.get("sfx_file"),
+                "duration_estimate_seconds": duration_estimate,
+                "speed": segment_speed,
             }
         )
 
@@ -1219,6 +1382,7 @@ def generate_manifest_narration(
         "status": "success",
         "manifest_path": str(saved_path),
         "narration_outputs": outputs,
+        "voice_direction": voice_direction,
     }
 
 
@@ -1308,6 +1472,97 @@ def write_json_output(payload: dict[str, Any], output_path: str | Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return output_path
+
+
+def _voice_review_markdown_path(output_path: str | Path) -> Path:
+    """Resolve the sibling review markdown path for a preview receipt."""
+    output_path = Path(output_path)
+    return output_path.with_name("voice-selection-review.md")
+
+
+def write_voice_selection_review(
+    preview_receipt: dict[str, Any], output_path: str | Path
+) -> Path:
+    """Persist a human-readable review surface for Prompt 11 voice selection."""
+    review_path = _voice_review_markdown_path(output_path)
+    review_path.parent.mkdir(parents=True, exist_ok=True)
+
+    mode = str(preview_receipt.get("mode") or "unknown")
+    profile_name = str(preview_receipt.get("profile_name") or "unknown")
+    audio_buffer_seconds = preview_receipt.get("audio_buffer_seconds")
+    presentation_voice_source = preview_receipt.get("presentation_voice_source") or {}
+    source_type = str(presentation_voice_source.get("type") or "none")
+    source_voice_name = str(presentation_voice_source.get("voice_name") or "").strip()
+    source_voice_id = str(presentation_voice_source.get("voice_id") or "").strip()
+    source_fallback = str(
+        presentation_voice_source.get("fallback_reason") or ""
+    ).strip()
+
+    lines = [
+        "# Voice Selection Review",
+        "",
+        f"- Status: `{preview_receipt.get('status', 'unknown')}`",
+        f"- Review path: `{mode}`",
+        f"- Profile: `{profile_name}`",
+        f"- Audio buffer seconds: `{audio_buffer_seconds}`",
+        "",
+        "## Locked Gate 3 Package",
+        f"- Narration script: `{preview_receipt.get('locked_script_path', 'missing')}`",
+        f"- Narration script SHA-256: `{preview_receipt.get('locked_script_hash', 'missing')}`",
+        f"- Segment manifest: `{preview_receipt.get('locked_manifest_path', 'missing')}`",
+        f"- Segment manifest SHA-256: `{preview_receipt.get('locked_manifest_hash', 'missing')}`",
+        "",
+        "## Continuity Context",
+        f"- Presentation voice source: `{source_type}`",
+    ]
+    if source_voice_name or source_voice_id:
+        lines.append(
+            f"- Source voice: `{source_voice_name or 'unknown'}` (`{source_voice_id or 'unknown'}`)"
+        )
+    if source_fallback:
+        lines.append(f"- Fallback reason: {source_fallback}")
+
+    presentation_context = _flatten_voice_context(
+        preview_receipt.get("presentation_context")
+    )
+    if presentation_context:
+        lines.extend(["", "## Presentation Context"])
+        for item in presentation_context:
+            lines.append(f"- {item}")
+
+    lines.extend(["", "## Candidates"])
+    for candidate in preview_receipt.get("candidate_voices", []):
+        rank = candidate.get("rank", "?")
+        name = candidate.get("name") or candidate.get("voice_id") or "Unknown voice"
+        voice_id = candidate.get("voice_id") or "unknown"
+        source = candidate.get("source") or "unknown"
+        basis = candidate.get("selection_basis") or "candidate"
+        lines.extend(
+            [
+                f"### Rank {rank}: {name}",
+                f"- Voice ID: `{voice_id}`",
+                f"- Source: `{source}`",
+                f"- Basis: {basis}",
+                f"- Preview URL: {candidate.get('preview_url') or 'missing'}",
+                f"- Rationale: {candidate.get('rationale') or 'No rationale provided.'}",
+            ]
+        )
+        description = candidate.get("description")
+        if description:
+            lines.append(f"- Description: {description}")
+
+    lines.extend(
+        [
+            "",
+            "## Operator Decision",
+            "- Select the carry-forward voice or one alternative.",
+            "- If selecting a non-primary candidate, record an override reason.",
+            "- Do not proceed to synthesis until `voice-selection.json` is written and hashes still match the locked script and manifest.",
+            "",
+        ]
+    )
+    review_path.write_text("\n".join(lines), encoding="utf-8")
+    return review_path
 
 
 def build_parser() -> argparse.ArgumentParser:

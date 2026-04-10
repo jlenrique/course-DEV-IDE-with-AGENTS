@@ -18,13 +18,8 @@ Scripts are invoked by Quinn-R during quality gate reviews or by Marcus for pre-
 | `./scripts/accessibility_checker.py` | Post | WCAG 2.1 AA scanning: reading level, heading hierarchy, alt text, caption sync | Quinn-R (CC capability) |
 | `./scripts/brand_validator.py` | Post | Style bible compliance: color codes, typography, voice markers | Quinn-R (BV capability) |
 | `./scripts/visual_fill_validator.py` | Post | Literal-visual full-slide fill: edge-band sampling confirms image occupies entire slide with no empty borders | Quinn-R / Marcus (post-dispatch) |
+| `./scripts/precomposition_validator.py` | Pre | Pre-composition asset validation: WPM review, VTT monotonicity, segment coverage, motion-fit checks, advisory/runtime nuance | Quinn-R / Marcus |
 | `./scripts/quality_logger.py` | Both | Log quality review results to SQLite `quality_gates` table | Quinn-R (after review) |
-
-**Future scripts (planned for Story 3.4 ElevenLabs):**
-| Script | Pass | Purpose |
-|--------|------|---------|
-| `audio_quality_checker.py` | Pre | WPM validation (130-170), VTT timestamp monotonicity, segment coverage >95% |
-| `composition_validator.py` | Pre | Video duration vs narration duration (±0.5s), segment manifest completeness |
 
 ## References
 
@@ -33,3 +28,7 @@ Scripts are invoked by Quinn-R during quality gate reviews or by Marcus for pre-
 | `./references/quality-standards.md` | Review dimensions (all 7), severity levels, pass/fail thresholds, two-pass model |
 | `./references/accessibility-standards.md` | WCAG 2.1 AA checklist for educational content + caption sync requirements |
 | `./references/brand-validation.md` | Style bible compliance rules and marker extraction |
+
+Pre-composition policy note:
+- blocking findings include missing assets, missing coverage, non-monotonic VTT, unreadable motion assets, and material motion mismatch
+- advisory findings include script-implied pacing variance, runtime-band drift, weak timing rationale, and bridge-cadence gaps already surfaced upstream

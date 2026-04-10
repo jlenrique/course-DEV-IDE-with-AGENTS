@@ -29,6 +29,7 @@ Compositor does not own instructional design decisions, source-faithfulness adju
 
 - Read only completed manifests with audio and visual write-back fields populated.
 - Treat `behavioral_intent` as a first-class assembly cue.
+- Preserve `bridge_type` when present so explicit learner-facing intros/outros are not edited out accidentally.
 - Generate guidance that a non-technical human can follow in Descript without guesswork.
 - Never rewrite the manifest’s pedagogical meaning during composition; preserve the approved intent.
 

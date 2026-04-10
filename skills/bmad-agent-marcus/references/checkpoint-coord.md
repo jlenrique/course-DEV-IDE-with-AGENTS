@@ -31,7 +31,7 @@ The production pipeline has four mandatory human checkpoints. Each gate has defi
 ### HIL Gate 3 — Script & Manifest Review
 **Timing:** After Irene Pass 2; before ElevenLabs runs and before Kira can be queued
 **What to review:** Narration script (prose quality, pedagogical accuracy, slide complementarity) + segment manifest (segment structure, SFX/music cues, visual assignments)
-**Review criteria:** Narration complements visuals (doesn't duplicate), appropriate tone and pacing, accurate medical content, logical segment structure, manifest field completeness, and whether narration + manifest preserve the intended behavioral/affective effect
+**Review criteria:** Narration complements visuals (doesn't duplicate), appropriate tone and pacing, accurate medical content, logical segment structure, manifest field completeness, whether runtime variance is justified (`timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`), whether bridge cadence is intentional (`bridge_type`), and whether narration + manifest preserve the intended behavioral/affective effect
 **Approve → next step:** Marcus sends the approved script + manifest to ElevenLabs first. Once ElevenLabs returns `narration_duration` and audio artifacts to Marcus, Marcus can then delegate duration-targeted video work to Kira and route the completed manifest onward.
 **Revision → back to:** Irene Pass 2 with specific feedback on script or manifest
 
@@ -116,4 +116,4 @@ Quinn-R runs **automated quality checks between gates**, so artifacts presented 
 | Gate 3 | Manifest schema completeness, narration coverage |
 | Gate 4 (post-composition) | Audio levels, caption sync, composition integrity |
 
-Quinn-R's pre-composition pass (before Gate 4 — before the user opens Descript) validates: narration WPM (130-170), VTT monotonicity, segment coverage, video duration vs narration duration (±0.5s). If pre-composition fails, route failing assets back to the producing agent before presenting the Descript Assembly Guide to the user.
+Quinn-R's pre-composition pass (before Gate 4 — before the user opens Descript) validates: narration WPM with script-aware advisory downgrade when appropriate, VTT monotonicity, segment coverage, video duration vs narration duration (±0.5s), and missing asset paths. If pre-composition fails on blocking findings, route failing assets back to the producing agent before presenting the Descript Assembly Guide to the user. Advisory findings such as runtime-band drift or bridge-cadence gaps should be shown to the operator rather than silently escalated.

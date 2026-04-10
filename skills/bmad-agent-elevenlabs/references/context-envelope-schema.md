@@ -23,6 +23,10 @@ presentation_attributes:
 ideal_voice_description: null
 previous_voice_selection_path: "course-content/staging/C1-M1-L1/voice-selection.json"
 voice_selection_profile: "clinical-instructional"
+voice_direction:
+  emotional_variability: 0.5    # pipeline abstraction; maps inversely to stability when stability is unset
+  speed: 1.0
+  pace_variability: 0.05
 previous_request_ids: []
 next_request_ids: []
 user_constraints: []
@@ -78,6 +82,8 @@ narration_outputs:
 parameter_decisions:
   voice_id: "voice-abc"
   model_id: "eleven_multilingual_v2"
+  speed: 1.0
+  emotional_variability: 0.5
   output_format: "mp3_44100_128"
 voice_preview_options:
   mode: "default_plus_alternatives"

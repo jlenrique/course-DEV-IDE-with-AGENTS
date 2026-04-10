@@ -33,10 +33,10 @@ read from the same perception response — no duplicate perception runs.
 | Modality | Fields Used | Purpose |
 |----------|-------------|---------|
 | PPTX | `slides[].text_frames[]` | Learning objective alignment, content density |
-| Image | `layout_description`, `visual_elements[]` | Brand consistency (colors, fonts), accessibility (contrast) |
+| Image | `layout_description`, `visual_elements[]`, `visual_complexity_level`, `visual_complexity_summary` | Brand consistency (colors, fonts), accessibility (contrast), narration-support burden |
 | Audio | `wpm`, `total_duration_ms` | Audio quality metrics, pacing assessment |
 | PDF | `total_pages`, `scanned_pages` | Source quality flag for upstream review |
-| Video | `keyframes[]`, `scene_changes` | Composition integrity, transition quality |
+| Video | `keyframes[]`, `scene_changes`, `temporal_event_density_level`, `temporal_event_density_summary` | Composition integrity, transition quality, motion-aware narration fit |
 
 ### Existing Deterministic Validators
 

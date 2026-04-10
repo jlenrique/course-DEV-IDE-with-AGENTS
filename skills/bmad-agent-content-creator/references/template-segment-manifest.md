@@ -30,6 +30,11 @@ segments:
     narration_ref: string   # Pointer to narration script section, e.g., "narration-script.md#segment-1"
     narration_text: string  # Full narration text for this segment (copy from script)
     duration_estimate_seconds: float | null  # Irene estimate before ElevenLabs writes actual narration_duration
+    timing_role: enum | null  # pedagogical role driving runtime: anchor | concept-build | evidence-walkthrough | framework-walkthrough | example | transition | reflection | checkpoint | summary | call-to-action
+    content_density: enum | null  # light | medium | heavy
+    visual_detail_load: enum | null  # light | medium | heavy
+    duration_rationale: string | null  # concise explanation for why this slide should run shorter, average, or longer than neighbors
+    bridge_type: enum | null  # none | intro | outro | both
     behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
@@ -56,6 +61,8 @@ segments:
 
   # Duration precedence rule:
   # - Use duration_estimate_seconds for planning before audio generation.
+  # - duration_estimate_seconds should be justified by timing_role, content_density,
+  #   visual_detail_load, and duration_rationale. The estimate is not arbitrary.
   # - Once narration_duration is populated by ElevenLabs, downstream tools must treat narration_duration as authoritative.
 ```
 
@@ -100,6 +107,21 @@ Default behavior remains additive and backward compatible:
 | `gary` | Gary's Gamma-generated PNG for this segment |
 | `kira` | Kira-generated video clip (animation or B-roll) |
 | `null` | No visual asset from an agent (text-frame, pause-beat using prior frame) |
+
+### `timing_role` Values
+
+| Value | Meaning | Usual runtime tendency |
+|-------|---------|------------------------|
+| `anchor` | Opening thesis, orientation, or identity claim | medium to long |
+| `concept-build` | Introduces and unpacks a core idea | medium to long |
+| `evidence-walkthrough` | Multi-part example, case, or comparison | long |
+| `framework-walkthrough` | Explains a named model, sequence, or structure | medium to long |
+| `example` | Concrete application or illustration | medium |
+| `transition` | Moves the learner between ideas | short |
+| `reflection` | Pause or interpretive beat | short to medium |
+| `checkpoint` | Brief orienting recap or learner check | short |
+| `summary` | Synthesis of prior ideas | short to medium |
+| `call-to-action` | Closing invitation or forward pointer | short |
 
 ### `music` Values
 
@@ -266,6 +288,8 @@ Default behavior remains additive and backward compatible:
 **ElevenLabs agent reads:**
 - `narration_text` per segment — text to synthesize
 - `behavioral_intent` — delivery cue for tone, pacing, and emphasis
+- `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale` — context for why the text was written at this length; use these for gentle delivery shaping, not for ad hoc copy rewriting
+- `bridge_type` — whether the segment includes an explicit intro/outro beat that should be preserved naturally rather than flattened
 - `voice_id` — per-segment voice override when present; otherwise use the lesson default from Marcus/style guide
 - `sfx` — SFX cue to generate or look up
 - `music` — music direction (swell/duck/out)
@@ -292,7 +316,13 @@ Motion-aware compositor note:
 - `narration_duration` — validates WPM (130-170), checks monotonicity in VTT
 - `visual_duration` vs `narration_duration` — validates ±0.5s tolerance
 - Segment coverage — validates all segments have narration files
+- `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale` — validates whether runtime variance was pedagogically justified rather than arbitrary
+- `bridge_type` — validates that explicit learner-facing intros/outros appear often enough to support orientation without making the lesson formulaic
 - `behavioral_intent` — checks whether the artifact set appears to support the intended affective goal rather than fighting it
+
+Quinn-R interpretation note:
+- blocking findings should cover missing assets, missing coverage, non-monotonic VTT, unreadable motion assets, and material duration mismatch
+- advisory findings should cover script-implied pacing variance, runtime-band drift, weak timing rationale, and bridge-cadence gaps the operator may explicitly accept
 
 ---
 
@@ -301,6 +331,10 @@ Motion-aware compositor note:
 - Produce the manifest in the same task as the narration script — they are always paired
 - Segment IDs must match `[SEGMENT: seg-XX]` markers in the narration script exactly
 - `behavioral_intent` should be concise and action-guiding, not literary. Think "credible", "urgent", "attention-reset", "reflective", not long prose.
+- `timing_role`, `content_density`, and `visual_detail_load` should explain why this slide deserves its runtime.
+- `duration_rationale` must reference at least two of: pedagogical purpose, concept/detail load, visual burden.
+- Use `bridge_type` sparingly but intentionally; it exists to enforce occasional connective tissue, not repetitive transition clutter.
+- Do not make neighboring slides different lengths just to create variety. Runtime variance should come from content burden and rhetorical function.
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment
 - For `static-hold` segments referencing Gary PNGs: populate `visual_file` with the Gary-provided path from `gary_slide_output` immediately — don't leave it null

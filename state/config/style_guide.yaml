@@ -30,8 +30,12 @@ tool_parameters:
     voice_selection_profile: "clinical-instructional"  # see state/config/elevenlabs-voice-profiles.yaml
     preview_candidate_count: 3
     stability: 0.5
+    emotional_variability: 0.5   # pipeline abstraction; lower stability = broader emotional range
     similarity_boost: 0.75
     style: 0.0
+    speed: 1.0
+    pace_variability: 0.05       # mild per-segment speed nudge around the base speed
+    use_speaker_boost: false
     model_id: ""            # e.g. "eleven_multilingual_v2"
     output_format: "mp3_44100_128"
     audio_buffer_seconds: 1.5

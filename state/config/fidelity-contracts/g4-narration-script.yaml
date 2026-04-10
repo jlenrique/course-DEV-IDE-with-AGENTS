@@ -112,3 +112,11 @@ criteria:
     config_refs:
       - "state/config/narration-grounding-profiles.yaml"
       - "state/config/narration-script-parameters.yaml"
+
+notes:
+  - >
+    Runtime-variability metadata such as timing_role, content_density,
+    visual_detail_load, duration_rationale, and bridge_type are governed by
+    narration-script-parameters.yaml and Pass 2 handoff validation. They shape
+    narration quality and delivery planning, but are not a separate source-
+    faithfulness criterion under G4.

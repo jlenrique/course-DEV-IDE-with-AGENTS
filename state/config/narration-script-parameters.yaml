@@ -115,3 +115,68 @@ pronunciation_sensitivity:
   auto_flag: true
   phonetic_format: IPA_lite
   flag_threshold: medical_and_proper_nouns
+
+# ---------------------------------------------------------------------------
+# 9. runtime_variability -- how Irene earns slide-length differences
+# ---------------------------------------------------------------------------
+runtime_variability:
+  enabled: true
+  required_manifest_fields:
+    - timing_role
+    - content_density
+    - visual_detail_load
+    - duration_rationale
+    - bridge_type
+  allowed_timing_roles:
+    - anchor
+    - concept-build
+    - evidence-walkthrough
+    - framework-walkthrough
+    - example
+    - transition
+    - reflection
+    - checkpoint
+    - summary
+    - call-to-action
+  allowed_density_levels:
+    - light
+    - medium
+    - heavy
+  rationale_dimensions:
+    purpose:
+      - purpose
+      - role
+      - transition
+      - anchor
+      - reflection
+      - summary
+      - walkthrough
+      - build
+      - checkpoint
+    density:
+      - detail
+      - density
+      - complexity
+      - scaffold
+      - unpack
+      - explain
+      - concept
+      - framework
+    visual:
+      - visual
+      - illustration
+      - diagram
+      - chart
+      - table
+      - roadmap
+      - figure
+      - text-heavy
+      - labels
+  bridge_cadence:
+    enabled: true
+    require_intro_or_outro_every_minutes: 3.0
+    require_intro_or_outro_every_slides: 5
+    accepted_bridge_types:
+      - intro
+      - outro
+      - both

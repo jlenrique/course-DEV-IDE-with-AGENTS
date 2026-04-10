@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+import re
 
 try:
     import yaml
@@ -41,6 +42,7 @@ SEGMENT_MANIFEST_FILENAME = "segment-manifest.yaml"
 PERCEPTION_ARTIFACTS_FILENAME = "perception-artifacts.json"
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 NARRATION_PARAMS_PATH = PROJECT_ROOT / "state" / "config" / "narration-script-parameters.yaml"
+WORD_RE = re.compile(r"\b\w+(?:[-']\w+)?\b")
 
 
 def _is_remote_http_ref(value: str) -> bool:
@@ -175,6 +177,45 @@ def _load_meta_slide_language_guardrails() -> dict[str, Any]:
         if isinstance(item, str) and str(item).strip()
     ]
     return {"policy": policy, "forbidden_phrases": forbidden_phrases}
+
+
+def _load_narration_density() -> dict[str, Any]:
+    if yaml is None or not NARRATION_PARAMS_PATH.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    density = data.get("narration_density", {})
+    return density if isinstance(density, dict) else {}
+
+
+def _load_runtime_variability() -> dict[str, Any]:
+    if yaml is None or not NARRATION_PARAMS_PATH.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    runtime_variability = data.get("runtime_variability", {})
+    return runtime_variability if isinstance(runtime_variability, dict) else {}
+
+
+def _word_count(text: str) -> int:
+    return len(WORD_RE.findall(text or ""))
+
+
+def _rationale_dimension_hits(
+    rationale: str,
+    *,
+    dimension_keywords: dict[str, list[str]],
+) -> set[str]:
+    lowered = rationale.lower()
+    hits: set[str] = set()
+    for dimension, keywords in dimension_keywords.items():
+        if any(keyword.lower() in lowered for keyword in keywords):
+            hits.add(dimension)
+    return hits
 
 
 def _find_forbidden_meta_segments_in_script(
@@ -346,13 +387,20 @@ def _validate_bundle_pass2_outputs(
         "perception_artifact_mismatches": [],
         "motion_segments_missing_perception_confirmation": [],
         "motion_segments_with_unapproved_asset_binding": [],
+        "runtime_budget_warnings": [],
+        "missing_runtime_rationale_fields": [],
+        "weak_runtime_rationales": [],
+        "bridge_cadence_warnings": [],
     }
 
     if bundle_dir is None:
         return {"errors": [], "details": details}
 
     errors: list[str] = []
+    warnings: list[str] = []
     meta_guardrails = _load_meta_slide_language_guardrails()
+    narration_density = _load_narration_density()
+    runtime_variability = _load_runtime_variability()
 
     narration_path = _resolve_bundle_output_path(
         payload,
@@ -481,14 +529,102 @@ def _validate_bundle_pass2_outputs(
     motion_segments_with_noncanonical_visual_file: list[str] = []
     segments_with_forbidden_meta_slide_language: list[str] = []
     segments_with_behavioral_intent_mismatch: list[str] = []
+    runtime_budget_warnings: list[str] = []
+    missing_runtime_rationale_fields: list[str] = []
+    weak_runtime_rationales: list[str] = []
+    runtime_targets_by_card = {
+        int(entry.get("card_number")): float(entry.get("target_runtime_seconds"))
+        for entry in payload.get("runtime_plan", {}).get("per_slide_targets", [])
+        if isinstance(entry, dict)
+        and entry.get("card_number") not in (None, "")
+        and entry.get("target_runtime_seconds") not in (None, "")
+    }
+    target_wpm = narration_density.get("target_wpm")
+    try:
+        target_wpm = float(target_wpm) if target_wpm not in (None, "") else None
+    except (TypeError, ValueError):
+        target_wpm = None
+    required_runtime_fields = {
+        str(item).strip()
+        for item in runtime_variability.get("required_manifest_fields", [])
+        if isinstance(item, str) and str(item).strip()
+    }
+    allowed_timing_roles = {
+        str(item).strip()
+        for item in runtime_variability.get("allowed_timing_roles", [])
+        if isinstance(item, str) and str(item).strip()
+    }
+    allowed_density_levels = {
+        str(item).strip()
+        for item in runtime_variability.get("allowed_density_levels", [])
+        if isinstance(item, str) and str(item).strip()
+    }
+    raw_dimension_keywords = runtime_variability.get("rationale_dimensions", {})
+    dimension_keywords = {
+        str(key).strip(): [
+            str(value).strip()
+            for value in values
+            if isinstance(value, str) and str(value).strip()
+        ]
+        for key, values in raw_dimension_keywords.items()
+        if isinstance(key, str) and isinstance(values, list)
+    }
+    bridge_cadence = runtime_variability.get("bridge_cadence", {})
+    bridge_cadence_enabled = bool(bridge_cadence.get("enabled"))
+    try:
+        bridge_minutes = float(bridge_cadence.get("require_intro_or_outro_every_minutes"))
+    except (TypeError, ValueError):
+        bridge_minutes = 0.0
+    try:
+        bridge_slides = int(bridge_cadence.get("require_intro_or_outro_every_slides"))
+    except (TypeError, ValueError):
+        bridge_slides = 0
+    accepted_bridge_types = {
+        str(item).strip()
+        for item in bridge_cadence.get("accepted_bridge_types", [])
+        if isinstance(item, str) and str(item).strip()
+    }
+    allowed_bridge_types = set(accepted_bridge_types) | {"none"}
+    ordered_slide_records: list[dict[str, Any]] = []
+    ordered_slide_index: dict[str, dict[str, Any]] = {}
     for segment in segments:
         if not isinstance(segment, dict):
             continue
         seg_id = str(segment.get("id") or "<missing-id>").strip() or "<missing-id>"
         slide_id = str(segment.get("gary_slide_id") or segment.get("slide_id") or "").strip()
+        card_number = segment.get("gary_card_number")
         if slide_id:
             manifest_slide_ids.append(slide_id)
             manifest_slide_id_set.add(slide_id)
+        slide_key = slide_id or (str(card_number) if card_number not in (None, "") else seg_id)
+        bridge_type = str(segment.get("bridge_type") or "none").strip().lower() or "none"
+        duration_estimate_raw = segment.get("duration_estimate_seconds")
+        try:
+            duration_estimate = (
+                float(duration_estimate_raw)
+                if duration_estimate_raw not in (None, "")
+                else float(runtime_targets_by_card.get(card_number))
+                if isinstance(card_number, int) and card_number in runtime_targets_by_card
+                else 0.0
+            )
+        except (TypeError, ValueError):
+            duration_estimate = 0.0
+        slide_record = ordered_slide_index.get(slide_key)
+        if slide_record is None:
+            slide_record = {
+                "seg_id": seg_id,
+                "slide_id": slide_id,
+                "card_number": card_number,
+                "bridge_type": bridge_type,
+                "duration_estimate_seconds": duration_estimate,
+            }
+            ordered_slide_index[slide_key] = slide_record
+            ordered_slide_records.append(slide_record)
+        else:
+            if slide_record.get("bridge_type") in (None, "", "none") and bridge_type != "none":
+                slide_record["bridge_type"] = bridge_type
+            if not slide_record.get("duration_estimate_seconds") and duration_estimate:
+                slide_record["duration_estimate_seconds"] = duration_estimate
 
         narration_text = str(segment.get("narration_text") or "").strip()
         if not narration_text:
@@ -501,6 +637,77 @@ def _validate_bundle_pass2_outputs(
         manifest_intent = str(segment.get("behavioral_intent") or "").strip()
         if script_intent and manifest_intent and script_intent != manifest_intent:
             segments_with_behavioral_intent_mismatch.append(seg_id)
+
+        if (
+            isinstance(card_number, int)
+            and card_number in runtime_targets_by_card
+            and target_wpm
+            and narration_text
+        ):
+            target_seconds = runtime_targets_by_card[card_number]
+            expected_words = target_seconds * target_wpm / 60.0
+            lower_bound = expected_words * 0.8
+            upper_bound = expected_words * 1.2
+            words = _word_count(narration_text)
+            if words < lower_bound or words > upper_bound:
+                runtime_budget_warnings.append(
+                    f"{seg_id}: narration word count {words} falls outside the soft runtime band "
+                    f"for slide {card_number} ({target_seconds:.1f}s at {target_wpm:.0f} WPM -> "
+                    f"{lower_bound:.0f}-{upper_bound:.0f} words)."
+                )
+            if required_runtime_fields:
+                field_values = {
+                    "timing_role": str(segment.get("timing_role") or "").strip(),
+                    "content_density": str(segment.get("content_density") or "").strip(),
+                    "visual_detail_load": str(segment.get("visual_detail_load") or "").strip(),
+                    "duration_rationale": str(segment.get("duration_rationale") or "").strip(),
+                    "bridge_type": str(segment.get("bridge_type") or "").strip().lower(),
+                }
+                missing_fields = [
+                    field_name
+                    for field_name in required_runtime_fields
+                    if not field_values.get(field_name)
+                ]
+                if (
+                    field_values["timing_role"]
+                    and allowed_timing_roles
+                    and field_values["timing_role"] not in allowed_timing_roles
+                ):
+                    missing_fields.append("timing_role(valid)")
+                if (
+                    field_values["content_density"]
+                    and allowed_density_levels
+                    and field_values["content_density"] not in allowed_density_levels
+                ):
+                    missing_fields.append("content_density(valid)")
+                if (
+                    field_values["visual_detail_load"]
+                    and allowed_density_levels
+                    and field_values["visual_detail_load"] not in allowed_density_levels
+                ):
+                    missing_fields.append("visual_detail_load(valid)")
+                if (
+                    field_values["bridge_type"]
+                    and allowed_bridge_types
+                    and field_values["bridge_type"] not in allowed_bridge_types
+                ):
+                    missing_fields.append("bridge_type(valid)")
+                if missing_fields:
+                    missing_runtime_rationale_fields.append(
+                        f"{seg_id}: missing or invalid runtime rationale fields: {', '.join(missing_fields)}."
+                    )
+
+                rationale = field_values["duration_rationale"]
+                if rationale and dimension_keywords:
+                    dimension_hits = _rationale_dimension_hits(
+                        rationale,
+                        dimension_keywords=dimension_keywords,
+                    )
+                    if len(dimension_hits) < 2:
+                        weak_runtime_rationales.append(
+                            f"{seg_id}: duration_rationale should reference at least two runtime dimensions "
+                            f"(purpose, density, visual burden); detected {', '.join(sorted(dimension_hits)) or 'none'}."
+                        )
 
         refs = segment.get("visual_references", [])
         valid_visual_cue_found = False
@@ -596,6 +803,33 @@ def _validate_bundle_pass2_outputs(
     details["motion_segments_with_noncanonical_visual_file"] = sorted(
         set(motion_segments_with_noncanonical_visual_file)
     )
+    details["runtime_budget_warnings"] = sorted(set(runtime_budget_warnings))
+    details["missing_runtime_rationale_fields"] = sorted(set(missing_runtime_rationale_fields))
+    details["weak_runtime_rationales"] = sorted(set(weak_runtime_rationales))
+    bridge_cadence_warnings: list[str] = []
+    if bridge_cadence_enabled and ordered_slide_records and (bridge_minutes > 0 or bridge_slides > 0):
+        slides_since_bridge = 0
+        seconds_since_bridge = 0.0
+        for index, record in enumerate(ordered_slide_records, start=1):
+            bridge_type = str(record.get("bridge_type") or "none").strip().lower() or "none"
+            if accepted_bridge_types and bridge_type in accepted_bridge_types:
+                slides_since_bridge = 0
+                seconds_since_bridge = 0.0
+            else:
+                if index > 1:
+                    slides_since_bridge += 1
+                    seconds_since_bridge += float(record.get("duration_estimate_seconds") or 0.0)
+                slides_exceeded = bool(bridge_slides > 0 and slides_since_bridge >= bridge_slides)
+                minutes_exceeded = bool(bridge_minutes > 0 and seconds_since_bridge >= bridge_minutes * 60.0)
+                if slides_exceeded or minutes_exceeded:
+                    bridge_cadence_warnings.append(
+                        f"{record.get('seg_id')}: explicit intro/outro bridge cadence exceeded before this slide "
+                        f"({slides_since_bridge} slides, {seconds_since_bridge/60.0:.1f} estimated minutes without a marked bridge; "
+                        f"target <= {bridge_slides} slides or <= {bridge_minutes:.1f} minutes)."
+                    )
+                    slides_since_bridge = 0
+                    seconds_since_bridge = 0.0
+    details["bridge_cadence_warnings"] = sorted(set(bridge_cadence_warnings))
     envelope_artifacts_by_key = {
         _artifact_identity_key(item): _normalize_artifact_for_compare(item)
         for item in perception_artifacts
@@ -673,7 +907,12 @@ def _validate_bundle_pass2_outputs(
             + ", ".join(sorted(set(motion_segments_missing_perception_confirmation)))
         )
 
-    return {"errors": errors, "details": details}
+    warnings.extend(details["runtime_budget_warnings"])
+    warnings.extend(details["missing_runtime_rationale_fields"])
+    warnings.extend(details["weak_runtime_rationales"])
+    warnings.extend(details["bridge_cadence_warnings"])
+
+    return {"errors": errors, "warnings": warnings, "details": details}
 
 
 def validate_irene_pass2_handoff(
@@ -841,6 +1080,7 @@ def validate_irene_pass2_handoff(
         perception_artifacts=[item for item in perception if isinstance(item, dict)],
     )
     errors.extend(bundle_checks["errors"])
+    warnings = bundle_checks.get("warnings", [])
 
     remediation_hint = (
         "Perception artifacts are emitted inline during Pass 2. "
@@ -858,6 +1098,7 @@ def validate_irene_pass2_handoff(
         "required_fields": list(REQUIRED_PASS2_FIELDS),
         "missing_fields": missing_fields,
         "errors": errors,
+        "warnings": warnings,
         "card_sequence": card_sequence,
         "order_check": {
             "strictly_ascending": strictly_ascending,

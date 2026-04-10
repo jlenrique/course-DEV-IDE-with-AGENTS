@@ -188,6 +188,8 @@ Fast path:
     - every authorized slide has at least one manifest segment
     - every segment has non-empty `narration_text`
     - every segment has at least one non-empty visual `narration_cue` traceable to perception and present in narration
+    - every runtime-planned segment carries `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, and `bridge_type`
+    - warning-level runtime drift, weak timing rationale, or bridge-cadence gaps are reviewed explicitly rather than ignored
     - every non-static motion segment is still bound to the approved motion asset and has matching motion perception confirmation
 - Run G4.
 - Go/no-go: no go downstream if G4 critical findings.

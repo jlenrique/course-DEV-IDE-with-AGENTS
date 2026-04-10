@@ -26,6 +26,17 @@
 - `attention-reset` -> simplify the screen and create a pacing reset
 - `reflective` -> avoid busy overlays or abrupt cuts
 
+## Bridge Cadence
+
+`bridge_type` should become an explicit continuity note when present:
+
+- `intro` -> preserve the opening bridge into the slide rather than trimming it as disposable setup
+- `outro` -> preserve the handoff into the next slide unless the human intentionally rewrites the transition logic
+- `both` -> preserve both directions if they still sound natural in assembly
+- `none` -> no special continuity protection needed
+
+Do not flatten marked bridges away just to make cuts tighter. They exist to support learner orientation across longer spans.
+
 ## Missing Fields
 
 - If a required assembly field is missing, fail fast with a clear error

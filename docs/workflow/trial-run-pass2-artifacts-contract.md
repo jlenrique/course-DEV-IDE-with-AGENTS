@@ -360,7 +360,7 @@ Gate contracts live in: `state/config/fidelity-contracts/`
 - G1: `g1-lesson-plan.yaml`
 - G2: `g2-slide-brief.yaml`
 - G3: `g3-generated-slides.yaml`
-- G4: `g4-narration-script.yaml` (9 criteria, incl. G4-07 source depth utilization, G4-08 perception lineage binding, and G4-09 audience-directed visual grounding)
+- G4: `g4-narration-script.yaml` (12 criteria, incl. G4-07 source depth utilization, G4-08 perception lineage binding, G4-09 audience-directed visual grounding, and runtime/script-policy criteria G4-10 through G4-12)
 
 Shared schema: `state/config/fidelity-contracts/_schema.yaml`
 
@@ -424,10 +424,12 @@ After Irene Pass 2:
   - every non-static motion segment remains bound to the approved `motion_plan.yaml` asset and has matching motion perception confirmation for that asset
   - `narration-script.md` and `segment-manifest.yaml` both exist at bundle root before downstream audio/script work begins
 
-After Irene Pass 2, `validate-irene-pass2-handoff.py` should also emit advisory warnings when:
+After Irene Pass 2, `validate-irene-pass2-handoff.py` should fail closed in strict mode when:
 - narration word count falls materially outside the soft runtime band implied by `runtime_plan.per_slide_targets[]` and `narration_density.target_wpm`
 - required timing metadata is missing or invalid (`timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, `bridge_type`)
 - `duration_rationale` is too weak to justify runtime variance
 - the configured intro/outro bridge cadence is exceeded without a marked `bridge_type`
+
+Advisory mode remains available by explicit operator choice (`--runtime-policy-advisory`) for exploratory diagnostics, but production gating should use strict mode.
 
 Contract version: 1.0

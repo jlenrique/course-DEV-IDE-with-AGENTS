@@ -40,6 +40,7 @@ STALE_PASS2_FILES = (
 ARCHIVE_SUBDIR = Path("recovery") / "archive" / "pass2-reruns"
 DEFAULT_ENVELOPE_FILENAME = "pass2-envelope.json"
 DEFAULT_RECEIPT_FILENAME = "pass2-prep-receipt.json"
+REPO_ROOT = Path(__file__).resolve().parents[3]
 STATIC_MOTION_PATTERN = re.compile(r"slide[-_](\d{2})", re.IGNORECASE)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RUN_CONSTANTS_FILENAME = "run-constants.yaml"
@@ -164,6 +165,23 @@ def _dispatch_row_lookup(dispatch_payload: dict[str, Any]) -> dict[str, dict[str
     return lookup
 
 
+def _resolve_slide_asset_path(file_path: str, *, bundle_dir: Path) -> Path:
+    """Resolve slide asset paths from either bundle-local or repo-root-relative inputs."""
+    candidate = Path(file_path)
+    if candidate.is_absolute():
+        return candidate.resolve()
+
+    bundle_relative = (bundle_dir / candidate).resolve()
+    if bundle_relative.is_file():
+        return bundle_relative
+
+    repo_relative = (REPO_ROOT / candidate).resolve()
+    if repo_relative.is_file():
+        return repo_relative
+
+    return bundle_relative
+
+
 def _normalize_slide_row(
     row: dict[str, Any],
     *,
@@ -184,9 +202,7 @@ def _normalize_slide_row(
         errors.append(f"{slide_id or '<missing-slide-id>'}: file_path is required")
         resolved_file = None
     else:
-        resolved_file = Path(file_path)
-        if not resolved_file.is_absolute():
-            resolved_file = (bundle_dir / resolved_file).resolve()
+        resolved_file = _resolve_slide_asset_path(file_path, bundle_dir=bundle_dir)
         if resolved_file.suffix.lower() != ".png":
             errors.append(f"{slide_id or '<missing-slide-id>'}: file_path must end with .png")
         if not resolved_file.is_file():

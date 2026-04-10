@@ -43,6 +43,20 @@ PERCEPTION_ARTIFACTS_FILENAME = "perception-artifacts.json"
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 NARRATION_PARAMS_PATH = PROJECT_ROOT / "state" / "config" / "narration-script-parameters.yaml"
 WORD_RE = re.compile(r"\b\w+(?:[-']\w+)?\b")
+_FALLBACK_INTRO_PATTERNS = [
+    "in this section",
+    "let's turn to",
+    "we'll begin",
+    "welcome",
+    "to start",
+]
+_FALLBACK_OUTRO_PATTERNS = [
+    "next, we'll",
+    "to wrap up",
+    "moving forward",
+    "in summary",
+    "that brings us",
+]
 
 
 def _is_remote_http_ref(value: str) -> bool:
@@ -199,6 +213,60 @@ def _load_runtime_variability() -> dict[str, Any]:
         return {}
     runtime_variability = data.get("runtime_variability", {})
     return runtime_variability if isinstance(runtime_variability, dict) else {}
+
+
+def _load_pedagogical_bridging() -> dict[str, Any]:
+    if yaml is None or not NARRATION_PARAMS_PATH.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    bridging = data.get("pedagogical_bridging", {})
+    return bridging if isinstance(bridging, dict) else {}
+
+
+def _normalize_phrase_patterns(raw: Any) -> list[str]:
+    if not isinstance(raw, list):
+        return []
+    return [str(item).strip() for item in raw if isinstance(item, str) and str(item).strip()]
+
+
+def _text_matches_any_phrase_pattern(text: str, patterns: list[str]) -> bool:
+    if not patterns:
+        return False
+    lowered = text.lower()
+    return any(pattern.lower() in lowered for pattern in patterns)
+
+
+def _spoken_bridge_issue_message(
+    bridge_type: str,
+    narration_text: str,
+    *,
+    intro_patterns: list[str],
+    outro_patterns: list[str],
+) -> str | None:
+    """Return a short machine reason if narration_text lacks required spoken cues."""
+    bt = str(bridge_type or "none").strip().lower() or "none"
+    if bt == "none":
+        return None
+    if not str(narration_text or "").strip():
+        return "is empty"
+    if bt == "intro":
+        if not _text_matches_any_phrase_pattern(narration_text, intro_patterns):
+            return f"lacks intro-class cue (expected substring from {len(intro_patterns)} pattern(s))"
+        return None
+    if bt == "outro":
+        if not _text_matches_any_phrase_pattern(narration_text, outro_patterns):
+            return f"lacks outro-class cue (expected substring from {len(outro_patterns)} pattern(s))"
+        return None
+    if bt == "both":
+        if not _text_matches_any_phrase_pattern(narration_text, intro_patterns):
+            return f"lacks intro-class cue for bridge_type both (expected substring from {len(intro_patterns)} pattern(s))"
+        if not _text_matches_any_phrase_pattern(narration_text, outro_patterns):
+            return f"lacks outro-class cue for bridge_type both (expected substring from {len(outro_patterns)} pattern(s))"
+        return None
+    return None
 
 
 def _word_count(text: str) -> int:
@@ -363,6 +431,7 @@ def _validate_bundle_pass2_outputs(
     gary_slide_ids: list[str],
     gary_slide_path_by_id: dict[str, str],
     perception_artifacts: list[dict[str, Any]],
+    runtime_policy_strict: bool,
 ) -> dict[str, Any]:
     details: dict[str, Any] = {
         "narration_script_path": None,
@@ -384,6 +453,8 @@ def _validate_bundle_pass2_outputs(
         "segments_with_forbidden_meta_slide_language": [],
         "script_segments_with_forbidden_meta_slide_language": [],
         "segments_with_behavioral_intent_mismatch": [],
+        "segments_missing_behavioral_intent": [],
+        "motion_segments_with_static_narration_hint": [],
         "perception_artifact_mismatches": [],
         "motion_segments_missing_perception_confirmation": [],
         "motion_segments_with_unapproved_asset_binding": [],
@@ -391,6 +462,7 @@ def _validate_bundle_pass2_outputs(
         "missing_runtime_rationale_fields": [],
         "weak_runtime_rationales": [],
         "bridge_cadence_warnings": [],
+        "spoken_bridge_warnings": [],
     }
 
     if bundle_dir is None:
@@ -401,6 +473,18 @@ def _validate_bundle_pass2_outputs(
     meta_guardrails = _load_meta_slide_language_guardrails()
     narration_density = _load_narration_density()
     runtime_variability = _load_runtime_variability()
+    pedagogical_bridging = _load_pedagogical_bridging()
+    spoken_policy_raw = pedagogical_bridging.get("spoken_bridge_policy", {})
+    spoken_policy = spoken_policy_raw if isinstance(spoken_policy_raw, dict) else {}
+    spoken_enforcement = str(spoken_policy.get("enforcement") or "warn").strip().lower()
+    if spoken_enforcement not in {"off", "warn", "error"}:
+        spoken_enforcement = "warn"
+    intro_patterns = _normalize_phrase_patterns(spoken_policy.get("intro_phrase_patterns"))
+    outro_patterns = _normalize_phrase_patterns(spoken_policy.get("outro_phrase_patterns"))
+    if not intro_patterns:
+        intro_patterns = list(_FALLBACK_INTRO_PATTERNS)
+    if not outro_patterns:
+        outro_patterns = list(_FALLBACK_OUTRO_PATTERNS)
 
     narration_path = _resolve_bundle_output_path(
         payload,
@@ -491,6 +575,7 @@ def _validate_bundle_pass2_outputs(
     manifest_slide_ids: list[str] = []
     manifest_slide_id_set: set[str] = set()
     motion_segments: list[dict[str, Any]] = []
+    spoken_bridge_warnings: list[str] = []
     perception_elements_by_slide = _build_perception_element_lookup(perception_artifacts)
     perception_slide_ids = {
         str(item.get("slide_id") or "").strip()
@@ -529,6 +614,8 @@ def _validate_bundle_pass2_outputs(
     motion_segments_with_noncanonical_visual_file: list[str] = []
     segments_with_forbidden_meta_slide_language: list[str] = []
     segments_with_behavioral_intent_mismatch: list[str] = []
+    segments_missing_behavioral_intent: list[str] = []
+    motion_segments_with_static_narration_hint: list[str] = []
     runtime_budget_warnings: list[str] = []
     missing_runtime_rationale_fields: list[str] = []
     weak_runtime_rationales: list[str] = []
@@ -633,10 +720,32 @@ def _validate_bundle_pass2_outputs(
             lowered = narration_text.lower()
             if any(phrase in lowered for phrase in meta_guardrails["forbidden_phrases"]):
                 segments_with_forbidden_meta_slide_language.append(seg_id)
+        if (
+            spoken_enforcement != "off"
+            and bridge_type not in ("", "none")
+            and narration_text
+        ):
+            cue_issue = _spoken_bridge_issue_message(
+                bridge_type,
+                narration_text,
+                intro_patterns=intro_patterns,
+                outro_patterns=outro_patterns,
+            )
+            if cue_issue:
+                msg = (
+                    f"{seg_id}: bridge_type is {bridge_type} but narration_text {cue_issue} "
+                    f"(spoken_bridge_policy enforcement={spoken_enforcement})."
+                )
+                if spoken_enforcement == "error":
+                    errors.append(msg)
+                else:
+                    spoken_bridge_warnings.append(msg)
         script_intent = str(script_behavioral_intents.get(seg_id) or "").strip()
         manifest_intent = str(segment.get("behavioral_intent") or "").strip()
         if script_intent and manifest_intent and script_intent != manifest_intent:
             segments_with_behavioral_intent_mismatch.append(seg_id)
+        if not script_intent and not manifest_intent:
+            segments_missing_behavioral_intent.append(seg_id)
 
         if (
             isinstance(card_number, int)
@@ -744,6 +853,23 @@ def _validate_bundle_pass2_outputs(
         motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
         if motion_type != "static":
             motion_segments.append(segment)
+
+            # Heuristic: motion-first narration check for video segments.
+            # Video segments should reference dynamic/temporal visual content,
+            # not just describe the static slide layout.
+            visual_mode = str(segment.get("visual_mode") or "").strip().lower()
+            if visual_mode == "video" and narration_text:
+                _motion_keywords = (
+                    "motion", "movement", "moves", "moving", "animation", "animated",
+                    "transition", "change", "changes", "changing", "process",
+                    "progresses", "progression", "sequence", "flow", "flows",
+                    "shifts", "transforms", "evolves", "unfolds", "action",
+                    "plays", "clip", "video", "dynamic",
+                )
+                narration_lower = narration_text.lower()
+                if not any(kw in narration_lower for kw in _motion_keywords):
+                    motion_segments_with_static_narration_hint.append(seg_id)
+
             approved_assignment = motion_plan_by_slide_id.get(slide_id, {})
             approved_asset = str(approved_assignment.get("motion_asset_path") or "").strip()
             segment_asset = str(segment.get("motion_asset_path") or "").strip()
@@ -794,6 +920,12 @@ def _validate_bundle_pass2_outputs(
     details["segments_with_behavioral_intent_mismatch"] = sorted(
         set(segments_with_behavioral_intent_mismatch)
     )
+    details["segments_missing_behavioral_intent"] = sorted(
+        set(segments_missing_behavioral_intent)
+    )
+    details["motion_segments_with_static_narration_hint"] = sorted(
+        set(motion_segments_with_static_narration_hint)
+    )
     details["motion_segments_missing_perception_confirmation"] = sorted(
         set(motion_segments_missing_perception_confirmation)
     )
@@ -830,6 +962,7 @@ def _validate_bundle_pass2_outputs(
                     slides_since_bridge = 0
                     seconds_since_bridge = 0.0
     details["bridge_cadence_warnings"] = sorted(set(bridge_cadence_warnings))
+    details["spoken_bridge_warnings"] = sorted(set(spoken_bridge_warnings))
     envelope_artifacts_by_key = {
         _artifact_identity_key(item): _normalize_artifact_for_compare(item)
         for item in perception_artifacts
@@ -882,6 +1015,16 @@ def _validate_bundle_pass2_outputs(
             "narration-script.md and segment-manifest.yaml disagree on behavioral_intent for segment(s): "
             + ", ".join(details["segments_with_behavioral_intent_mismatch"])
         )
+    if details["segments_missing_behavioral_intent"]:
+        warnings.append(
+            "segment(s) have no behavioral_intent in either narration-script.md or segment-manifest.yaml: "
+            + ", ".join(details["segments_missing_behavioral_intent"])
+        )
+    if details["motion_segments_with_static_narration_hint"]:
+        warnings.append(
+            "video segment(s) may lack motion-first narration — narration does not reference dynamic/temporal visual content: "
+            + ", ".join(details["motion_segments_with_static_narration_hint"])
+        )
     if mismatch_keys:
         errors.append(
             "perception-artifacts.json must match the envelope perception_artifacts for artifact key(s): "
@@ -911,6 +1054,23 @@ def _validate_bundle_pass2_outputs(
     warnings.extend(details["missing_runtime_rationale_fields"])
     warnings.extend(details["weak_runtime_rationales"])
     warnings.extend(details["bridge_cadence_warnings"])
+    warnings.extend(details["spoken_bridge_warnings"])
+
+    if runtime_policy_strict:
+        runtime_policy_violations = (
+            details["runtime_budget_warnings"]
+            + details["missing_runtime_rationale_fields"]
+            + details["weak_runtime_rationales"]
+            + details["bridge_cadence_warnings"]
+        )
+        if spoken_enforcement == "warn":
+            runtime_policy_violations += details["spoken_bridge_warnings"]
+        errors.extend(
+            [
+                f"runtime_policy_violation: {violation}"
+                for violation in runtime_policy_violations
+            ]
+        )
 
     return {"errors": errors, "warnings": warnings, "details": details}
 
@@ -920,6 +1080,7 @@ def validate_irene_pass2_handoff(
     *,
     expected_artifact_hint: str | None = None,
     envelope_path: Path | None = None,
+    runtime_policy_strict: bool = True,
 ) -> dict[str, Any]:
     """Validate required Pass 2 inputs and sequencing integrity."""
     missing_fields = [key for key in REQUIRED_PASS2_FIELDS if key not in payload]
@@ -1078,6 +1239,7 @@ def validate_irene_pass2_handoff(
         gary_slide_ids=gary_slide_ids,
         gary_slide_path_by_id=gary_slide_path_by_id,
         perception_artifacts=[item for item in perception if isinstance(item, dict)],
+        runtime_policy_strict=runtime_policy_strict,
     )
     errors.extend(bundle_checks["errors"])
     warnings = bundle_checks.get("warnings", [])
@@ -1095,6 +1257,7 @@ def validate_irene_pass2_handoff(
     status = "pass" if not errors else "fail"
     return {
         "status": status,
+        "runtime_policy_mode": "strict" if runtime_policy_strict else "advisory",
         "required_fields": list(REQUIRED_PASS2_FIELDS),
         "missing_fields": missing_fields,
         "errors": errors,
@@ -1135,6 +1298,11 @@ def main() -> int:
         default=None,
         help="Optional path hint shown in remediation guidance",
     )
+    parser.add_argument(
+        "--runtime-policy-advisory",
+        action="store_true",
+        help="Keep runtime/script-policy findings as warnings instead of hard failures.",
+    )
     args = parser.parse_args()
 
     try:
@@ -1143,6 +1311,7 @@ def main() -> int:
             payload,
             expected_artifact_hint=args.expected_artifact_hint,
             envelope_path=args.envelope,
+            runtime_policy_strict=not args.runtime_policy_advisory,
         )
         print(json.dumps(result, indent=2))
         return 0 if result["status"] == "pass" else 1

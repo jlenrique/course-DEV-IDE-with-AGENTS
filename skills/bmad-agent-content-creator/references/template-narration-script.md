@@ -31,7 +31,7 @@ For each slide/segment - segment IDs must match `[SEGMENT: seg-XX]` markers exac
 - Emphasis: {key phrases to stress, marked with *asterisks*}
 - Behavioral Intent: {credible | moving | alarming | urgent | reflective | attention-reset | provocative}
 - Timing Rationale: {why this slide should run shorter, average, or longer than nearby slides; tie to slide purpose, content density, and/or visual burden}
-- Bridge Type: {none | intro | outro | both}
+- Bridge Type: {none | intro | outro | both} — when not `none`, the **Narration** body below must include learner-heard intro/outro language that matches the configured spoken-bridge patterns in `narration-script-parameters.yaml` (see `references/spoken-bridging-language.md`).
 
 **Visual References** (Story 13.2 - from `visual_reference_injector`):
 ```yaml
@@ -55,7 +55,10 @@ References guide the learner's eye - they do not annotate.
 Keep the narration audience-directed. Prefer phrasing like "Notice how...", "Here, you can see...",
 "What matters for clinicians is...", or direct role-address. Avoid production-meta phrasing such as
 "the slide title", "the panel on the right", "the box on the left", or "the approved slide" unless
-brief spatial disambiguation is genuinely necessary.}
+brief spatial disambiguation is genuinely necessary.
+When **Bridge Type** is `intro`, `outro`, or `both`, this block must include natural spoken
+bridging lines (section orient, handoff, or summary stitch) consistent with
+`pedagogical_bridging.spoken_bridge_policy` — the manifest tag alone is not sufficient for TTS.}
 
 **Transition to next segment:**
 {How this segment connects to the next - pedagogical bridge}

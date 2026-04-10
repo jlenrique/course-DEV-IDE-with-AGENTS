@@ -21,7 +21,7 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 
 L1 fidelity contracts for each gate are defined in `state/config/fidelity-contracts/g{n}-*.yaml`.
 
-For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth.
+For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth. G4 carries 15 criteria (5 deterministic L1 + 10 agentic L2): G4-01 through G4-12 (original), G4-13 (behavioral_intent validation), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness).
 
 ---
 
@@ -91,6 +91,8 @@ For each assessment dimension, exactly one agent owns the judgment. No dimension
 | **Motion designation and gate closure** | Marcus + human checkpoint | Gate 2M presentation, motion-plan completeness, Motion Gate closure on approved/reset assets | Kira, Irene, Quinn-R |
 
 **Key boundary:** The Fidelity Assessor asks "is this *right* relative to the source?" Quinn-R asks "is this *good* against standards and learner-effect intent?" The producing agent asks "did I execute the tool *well* within my lane?"
+
+**G4-specific boundary note:** Behavioral intent validation is split: Vera G4-13 checks whether narration supports the *claim* (fidelity to authoring intent), while Quinn-R IF checks whether the *learner effect* is achieved (quality of execution). Motion_brief fidelity (G4-14) is Vera's domain (source traceability of the motion description). SFX/music cue selection appropriateness is Quinn-R's CI domain (quality judgment).
 
 ---
 

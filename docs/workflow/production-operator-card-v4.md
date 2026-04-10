@@ -193,11 +193,28 @@ Fast path:
     - every segment has non-empty `narration_text`
     - every segment has at least one non-empty visual `narration_cue` traceable to perception and present in narration
     - every runtime-planned segment carries `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, and `bridge_type`
-    - warning-level runtime drift, weak timing rationale, or bridge-cadence gaps are reviewed explicitly rather than ignored
+  - runtime drift, weak timing rationale, and bridge-cadence gaps are treated as hard failures in strict mode (use advisory mode only when explicitly approved)
     - every non-static motion segment is still bound to the approved motion asset and has matching motion perception confirmation
 - Run G4.
 - Go/no-go: no go downstream if G4 critical findings.
 - Regenerate Storyboard B (slide + script context) and get explicit approval before downstream audio/script finalization.
+
+### 11B. ElevenLabs input package review
+- Confirm a pre-synthesis package review is shown before any ElevenLabs spend.
+- Require:
+  - `elevenlabs-input-review.md`
+  - locked script hash
+  - locked manifest hash
+  - selected voice id + preview/source
+  - audio buffer
+  - runtime-plan summary
+  - bridge-cadence expectations
+  - any segment-level voice overrides
+  - any inherited non-default voice-direction controls
+- Go/no-go: no go to Prompt 12 until the displayed package is explicitly approved.
+
+### 12. Prompt 12: ElevenLabs synthesis
+- Confirm `elevenlabs-input-review.md` matches the current locked package before generation starts.
 
 ---
 

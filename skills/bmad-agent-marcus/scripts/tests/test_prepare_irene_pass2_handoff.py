@@ -320,6 +320,86 @@ def test_cli_returns_exit_one_on_invalid_motion_plan(tmp_path: Path) -> None:
     assert data["status"] == "fail"
 
 
+def test_prepares_envelope_when_authorized_storyboard_uses_repo_relative_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo_root = tmp_path / "repo-root"
+    bundle = repo_root / "course-content" / "staging" / "tracked" / "source-bundles" / "bundle"
+    bundle.mkdir(parents=True)
+
+    slide_01 = bundle / "slide-01.png"
+    slide_02 = bundle / "slide-02.png"
+    slide_01.write_bytes(b"png")
+    slide_02.write_bytes(b"png")
+
+    monkeypatch.setattr(module, "REPO_ROOT", repo_root)
+
+    relative_slide_01 = slide_01.relative_to(repo_root)
+    relative_slide_02 = slide_02.relative_to(repo_root)
+
+    dispatch_payload = {
+        "run_id": "RUN-001",
+        "lesson_slug": "lesson-alpha",
+        "generation_mode": "single-dispatch",
+        "gary_slide_output": [
+            {
+                "slide_id": "slide-01",
+                "card_number": 1,
+                "file_path": str(relative_slide_01),
+                "source_ref": "extracted.md#slide-01",
+                "visual_description": "Opening slide",
+                "fidelity": "creative",
+            },
+            {
+                "slide_id": "slide-02",
+                "card_number": 2,
+                "file_path": str(relative_slide_02),
+                "source_ref": "extracted.md#slide-02",
+                "visual_description": "Second slide",
+                "fidelity": "literal-text",
+            },
+        ],
+    }
+    (bundle / "gary-dispatch-result.json").write_text(json.dumps(dispatch_payload), encoding="utf-8")
+
+    authorized_storyboard = {
+        "run_id": "RUN-001",
+        "lesson_slug": "lesson-alpha",
+        "slide_ids": ["slide-01", "slide-02"],
+        "authorized_slides": [
+            {
+                "slide_id": "slide-01",
+                "card_number": 1,
+                "file_path": str(relative_slide_01),
+                "source_ref": "extracted.md#slide-01",
+                "visual_description": "Opening slide",
+                "fidelity": "creative",
+            },
+            {
+                "slide_id": "slide-02",
+                "card_number": 2,
+                "file_path": str(relative_slide_02),
+                "source_ref": "extracted.md#slide-02",
+                "visual_description": "Second slide",
+                "fidelity": "literal-text",
+            },
+        ],
+    }
+    (bundle / "authorized-storyboard.json").write_text(
+        json.dumps(authorized_storyboard),
+        encoding="utf-8",
+    )
+    (bundle / "irene-pass1.md").write_text("# Irene Pass 1\n", encoding="utf-8")
+    (bundle / "operator-directives.md").write_text("# Operator Directives\n", encoding="utf-8")
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "prepared"
+    envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
+    assert envelope["gary_slide_output"][0]["file_path"] == str(slide_01.resolve())
+
+
 def test_cli_returns_exception_payload_when_bundle_missing(tmp_path: Path) -> None:
     missing_bundle = tmp_path / "missing"
 

@@ -310,3 +310,60 @@ def validate_manifest_visual_references(
         "errors": errors,
         "warnings": warnings,
     }
+
+
+def validate_visual_cue_coherence(
+    segments: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Irene self-check: verify visual_cue text aligns with visual_references.
+
+    For each segment that has both a ``visual_cue`` field and a
+    ``visual_references`` list, checks that the visual_cue description is
+    substantively reflected in at least one visual_references element
+    description.  This catches drift where Irene writes a visual_cue that
+    does not correspond to any perception-grounded visual reference.
+
+    Returns:
+      - valid: bool
+      - errors: list of error strings (hard coherence failures)
+      - warnings: list of warning strings (soft mismatches)
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        seg_id = segment.get("id", "")
+        visual_cue = str(segment.get("visual_cue") or "").strip()
+        refs = segment.get("visual_references", [])
+
+        if not visual_cue or not isinstance(refs, list) or not refs:
+            continue
+
+        # Check if any visual_references element description overlaps with
+        # the visual_cue text (case-insensitive substring match).
+        cue_lower = visual_cue.lower()
+        matched = False
+        for ref in refs:
+            if not isinstance(ref, dict):
+                continue
+            element = str(ref.get("element") or "").strip().lower()
+            if element and element in cue_lower:
+                matched = True
+                break
+            if element and cue_lower in element:
+                matched = True
+                break
+
+        if not matched:
+            warnings.append(
+                f"Segment {seg_id}: visual_cue '{visual_cue}' does not match any "
+                f"visual_references element description — review for coherence"
+            )
+
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+    }

@@ -129,7 +129,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
    - **`--related-assets`:** optional JSON/YAML for non-slide run artifacts (video/audio/interactive/source links) appended after slide rows.
    - **`--run-id`:** optional APP run identifier for Channel C log correlation.
 
-2. **Review:** Open `storyboard/index.html` in a browser. The page is static and self-contained: summary banner, ordered slide cards, click-to-expand thumbnails, script/script-notes panels, issue filtering, and a separate related-assets section. No approval controls live in the page.
+2. **Review:** Open `storyboard/index.html` in a browser. The page is static and self-contained: collapsible summary banner (Run details `<details>` element, open by default), ordered slide cards, click-to-expand thumbnails, script/script-notes panels, issue filtering, and a separate related-assets section. Motion-enabled cards use a stacked layout (slide + video in column 1, script spanning column 2) to eliminate dead space. No approval controls live in the page.
 
 3. **Share/export (self-contained snapshot):** When the operator wants to share the storyboard outside the repo, export a sanitized snapshot from the canonical manifest:
 

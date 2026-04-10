@@ -3,9 +3,10 @@
 > Scope note: this file is the hot-start for the next repo session.
 > For production operations, pair it with `docs/operations-context.md` and the workflow docs it points to.
 
-## Current State (as of 2026-04-09, mid-run session 2)
+## Current State (as of 2026-04-10, end of session 3)
 
-- Active branch: `ops/next-session`
+- Repository baseline branch: `master` (after merge)
+- Next working branch: `ops/next-session` (created from updated master, pushed with upstream)
 - Active production run: `C1-M1-PRES-20260409` — **IN PROGRESS** (Prompts 1-7D complete, Motion Gate closed)
 - Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion`
 - Run status in DB: `active`
@@ -13,9 +14,24 @@
 
 ## Immediate Next Action
 
-1. Stay on `ops/next-session` branch — continue from here.
-2. **Perception bridge** — sensory bridge read of all 15 winner stills + 1 video clip (slide 01 only).
-3. **Irene Pass 2** — narration with "triple vision" (perceived visuals + on-screen text + source material from extracted.md). Motion-first narration for slide 01 speaks to visible action in the approved B-roll clip.
+1. Checkout `ops/next-session`:
+   ```powershell
+   cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
+   git checkout ops/next-session
+   git pull origin ops/next-session
+   ```
+2. **Prompt 8: Irene Pass 2** — perception bridge read of all 15 winner stills + 1 video clip (slide 01 only), then narration with "triple vision" (perceived visuals + on-screen text + source material from extracted.md). Motion-first narration for slide 01 speaks to visible action in the approved B-roll clip.
+3. After Pass 2 + G4 validation: **Prompt 8B: Storyboard B Regeneration + HIL Review** — regenerate with script context, publish to GitHub Pages, operator reviews from live URL.
+
+## Session 3 Completed Work
+
+| Area | Details |
+|------|---------|
+| Gap remediation (34-field contract) | 6 files across Vera G4, Quinn-R, Irene validators. 55/55 tests. |
+| Storyboard B HTML redesign | Header: 3-col grid + collapsible `<details>` (−43% height). Motion card: stacked slide+video layout (−21% height, dead space eliminated). Static cards unchanged. 34/34 tests. |
+| Narration config schemas | New `narration-script-parameters.yaml`, `g4-narration-script.yaml` fidelity contract, runtime variability framework, template updates. |
+| validate-irene-pass2-handoff.py | Enhanced validation (external + session edits). |
+| gate-evaluation-protocol.md | Updated gate protocol (external edits). |
 
 ## Completed Prompts This Run
 
@@ -40,21 +56,8 @@
 
 - Slide 01: **video** — K07 clinical hallway B-roll (text2video, std, 5s). APPROVED.
   - `motion/slide-01-motion.mp4` (4.1 MB)
-  - Prompt: "Cinematic B-roll of a busy modern hospital corridor at shift change..."
-- Slide 05: **static** — downgraded from video. Kling text2video cannot produce usable illustrative content for instructional slides (gibberish text, poor illustrations).
+- Slide 05: **static** — downgraded from video.
 - All other slides: **static**
-
-## Variant Selection (final, re-confirmed with correct PNG mapping)
-
-| Slide | Winner | Slide | Winner | Slide | Winner |
-|-------|--------|-------|--------|-------|--------|
-| 1 | B | 6 | A | 11 | B |
-| 2 | B | 7 | B | 12 | B |
-| 3 | B | 8 | B | 13 | A |
-| 4 | B | 9 | A | 14 | B |
-| 5 | A | 10 | A | 15 | A |
-
-9 × B (narrative/storytelling) + 6 × A (analytical/data-driven)
 
 ## Key Run Parameters
 
@@ -63,9 +66,7 @@ run_id: C1-M1-PRES-20260409
 prior_run_id: C1-M1-PRES-20260406
 double_dispatch: true
 deliberate_dispatch: true
-variant_strategies: instr_focus (creative), proportional_illus (literal-text), literal_freedom (literal-visual)
 motion_enabled: true
-motion_budget: 125 credits, pro model (only ~8 used)
 motion_slides: 1 (video only), rest static
 locked_slide_count: 15
 target_total_runtime_minutes: 10
@@ -73,29 +74,6 @@ slide_runtime_average_seconds: 40
 theme: hil-2026-apc-nejal-A (Gamma API ID: njim9kuhfnljvaa)
 voice: TBD (not yet selected this run)
 ```
-
-## Code Changes This Session (committed)
-
-| File | Change |
-|------|--------|
-| `gamma_operations.py` | PNG export sort key fix (`_gamma_export_sort_key`), double-dispatch export dirs, CLI theme override fix, composite fallback URL fix |
-| `validate-gary-dispatch-ready.py` | Double-dispatch paired card sequence support |
-| `generate-storyboard.py` | Interactive A/B selection UI, project-root asset resolution, publish overwrite |
-| `write-authorized-storyboard.py` | Nested `{selections: {...}}` format support |
-| `slide_count_runtime_estimator.py` | Removed hard cap, added --max-slides |
-| `build_style_picker.py` | NEW — Video style picker builder + GitHub Pages publisher |
-| `video-style-catalog.yaml` | NEW — 20 proven video styles with full API metadata |
-| `rerun-carry-forward-manifest.md` | NEW — Re-run bundle setup documentation |
-| `.gitignore` | Track resources/ structured docs, ignore only binary artifacts |
-
-## Uncommitted Work (needs commit before next session starts)
-
-- Updated `motion_plan.yaml` (slide 05 -> static)
-- Updated `motion-designations.json` (slide 05 -> static)
-- Updated `gamma_operations.py` (PNG sort key fix from this session)
-- Updated `validate-irene-pass2-handoff.py` (PNG card mismatch detection)
-- New `video-style-catalog.yaml` and `build_style_picker.py`
-- Various doc updates
 
 ## Published Tools
 
@@ -105,7 +83,7 @@ voice: TBD (not yet selected this run)
 ## Known Issues
 
 1. **3 test failures**: `TestExecuteGenerationDeliberateDispatch` PNG export tests have mock fixture issues (not code bugs).
-2. **Kling text2video limitation**: Cannot render English text/labels. All text2video prompts must be purely illustrative. Documented in motion-generation-slide-05.json retry_reason.
+2. **Kling text2video limitation**: Cannot render English text/labels. All text2video prompts must be purely illustrative.
 
 ## Hot-Start Paths
 

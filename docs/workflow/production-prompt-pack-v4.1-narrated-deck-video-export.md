@@ -685,6 +685,8 @@ Required HIL review (Storyboard B, before audio/script finalization):
 - Regenerate storyboard with script context using:
   - Gary payload: `[BUNDLE_PATH]/gary-dispatch-result.json`
   - Segment manifest: `[BUNDLE_PATH]/segment-manifest.yaml`
+- Ensure `[BUNDLE_PATH]/pass2-envelope.json` is available next to the payload (or pass `--pass2-envelope` to `generate-storyboard.py generate`) so Storyboard B surfaces `runtime_plan`, `script_policy`, and `voice_direction_defaults` (`emotional_variability`, `pace_variability`) in the header, including WPM target plus pace-variability coupling.
+- For per-slide runtime target display, use `per_slide_runtime_targets` by `slide_id` when present; otherwise fall back to `runtime_plan.per_slide_targets` by `card_number`.
 - Present manifest-derived summary for slide+script alignment review.
 - Require explicit operator approval before downstream audio/script finalization (for example ElevenLabs generation).
 - Before any downstream ElevenLabs synthesis, insert the same catalog-preview voice-selection checkpoint used by the motion-enabled workflow: anchor on the previously approved lesson voice when available or the style-guide default otherwise, provide two APP-selected alternatives, and block synthesis until the operator has a recorded lesson-level voice decision tied to the locked script/manifest hashes.
@@ -779,6 +781,39 @@ Go/no-go:
 
 ---
 
+## 11B) ElevenLabs Input Package HIL Review Before Spend
+
+Marcus, before Prompt 12 synthesis, deliberately display the exact locked ElevenLabs input package and wait for explicit operator GO.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json` when present
+- approved `[BUNDLE_PATH]/voice-selection.json`
+
+Required Marcus behavior:
+- present a concise, operator-readable package review that shows:
+  - locked script path + hash
+  - locked manifest path + hash
+  - approved lesson-level voice id and preview/source
+  - audio buffer setting
+  - segment count and segment id range
+  - any explicit segment-level `voice_id` overrides
+  - any non-default voice-direction controls inherited from `pass2-envelope.json` such as `speed`, `emotional_variability`, and `pace_variability`
+  - runtime-plan summary sufficient to show the intended slide-length variability
+  - bridge-cadence expectations sufficient to show how intros/outros are meant to appear
+- write the review artifact before asking for approval
+- require explicit operator GO before Prompt 12 begins
+
+Required writes:
+- `[BUNDLE_PATH]/elevenlabs-input-review.md`
+
+Go/no-go:
+- no go to Prompt 12 until the operator explicitly approves the displayed ElevenLabs input package
+- if the locked script, manifest, voice selection, or inherited voice-direction defaults change after this review, regenerate the review artifact and re-approve before synthesis
+
+---
+
 ## 12) ElevenLabs - Locked Manifest Audio Generation
 
 Marcus, delegate the Voice Director to run manifest-driven narration from the locked Gate 3 package.
@@ -796,6 +831,7 @@ Required Marcus behavior before delegation:
 - designate `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml` as the downstream mutable manifest for audio/composition
 - if needed, copy the locked root manifest into the assembly bundle before ElevenLabs so the same manifest path is mutated downstream
 - keep segment order and segment ids frozen
+- confirm `[BUNDLE_PATH]/elevenlabs-input-review.md` exists and corresponds to the current locked package before synthesis begins
 - verify `voice-selection.json.locked_manifest_hash` and `voice-selection.json.locked_script_hash` still match the locked Gate 3 package before synthesis begins
 - pass the approved lesson-level `selected_voice_id` from `voice-selection.json` as the default synthesis voice without mutating the locked root manifest
 

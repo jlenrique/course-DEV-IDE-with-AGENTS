@@ -34,7 +34,9 @@ or approves prose:
 
 5. `bridge_type`
    Whether this slide carries an explicit learner-facing intro, outro, both,
-   or none.
+   or none. When non-`none`, the **spoken narration** (not only YAML) must
+   include matching connective language; see `spoken-bridging-language.md`
+   and `pedagogical_bridging.spoken_bridge_policy` in `narration-script-parameters.yaml`.
 
 ## Timing Role Definitions
 
@@ -107,12 +109,17 @@ Weak examples:
 Learners benefit from periodic connective tissue, but not from robotic
 transition language on every slide.
 
-Use a configurable cadence rule:
+Use a configurable cadence rule (authoritative values live in
+`runtime_variability.bridge_cadence` inside `narration-script-parameters.yaml`):
 - include at least one brief explicit slide intro or outro every `X` minutes
 - or after every `Y` slides
 
 Recommended default:
 - every `3.0` minutes or `5` slides
+
+Cadence caps may change per production run; Irene must read the active YAML
+each Pass 2. **Verbosity** of each bridge (short clause vs fuller beat) is
+modulated separately via `pedagogical_bridging.bridge_frequency_scale`.
 
 Use explicit bridges when they help the learner:
 - re-orient after several dense slides

@@ -419,6 +419,99 @@ segments:
     assert "<dt>Motion source</dt><dd>kling</dd>" in html
 
 
+def test_storyboard_b_surfaces_runtime_and_script_policy_metadata(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            }
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    envelope_path = bundle / "pass2-envelope.json"
+    envelope_path.write_text(
+        json.dumps(
+            {
+                "runtime_plan": {
+                    "target_total_runtime_minutes": 7,
+                    "slide_runtime_average_seconds": 28,
+                    "slide_runtime_variability_scale": 0.2,
+                },
+                "script_policy": {
+                    "narration_density": {"target_wpm": 150},
+                    "engagement_stance": {"posture": "coach"},
+                },
+                "voice_direction_defaults": {
+                    "emotional_variability": 0.45,
+                    "pace_variability": 0.05,
+                },
+                "per_slide_runtime_targets": {
+                    "m1-c1": 29,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        """
+segments:
+  - id: seg-01
+    gary_slide_id: m1-c1
+    narration_text: "Runtime-policy aware line."
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: "Anchor concept; deliberate pacing."
+    bridge_type: none
+    behavioral_intent: confidence
+""",
+        encoding="utf-8",
+    )
+
+    storyboard_policy_meta = mod.load_storyboard_policy_meta(payload_path=payload_path)
+    assert storyboard_policy_meta["runtime_plan"]["target_total_runtime_minutes"] == 7
+    assert storyboard_policy_meta["script_policy"]["narration_density"]["target_wpm"] == 150
+    assert storyboard_policy_meta["voice_direction_defaults"]["emotional_variability"] == 0.45
+    assert storyboard_policy_meta["per_slide_runtime_targets"]["m1-c1"] == 29
+
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+        storyboard_policy_meta=storyboard_policy_meta,
+    )
+    slide = manifest["slides"][0]
+    assert slide["runtime_target_seconds"] == 29
+    assert slide["timing_role"] == "anchor"
+    assert slide["content_density"] == "medium"
+    assert slide["duration_rationale"] == "Anchor concept; deliberate pacing."
+    assert manifest["storyboard_policy"]["runtime_plan"]["slide_runtime_average_seconds"] == 28
+
+    html = mod.render_index_html(manifest)
+    assert "Runtime and script policy" in html
+    assert "Target total 7 min" in html
+    assert "<dt>Runtime target (s)</dt><dd>29</dd>" in html
+    assert "<dt>Timing role</dt><dd>anchor</dd>" in html
+    assert "<dt>Narration density target</dt><dd>150</dd>" in html
+    assert "WPM 150 +/- pace 0.05" in html
+    assert "Emotional variability 0.45" in html
+    assert "Pace variability 0.05" in html
+
+
 def test_load_related_assets_parses_and_validates(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
@@ -629,6 +722,250 @@ def test_cli_generate_with_segment_manifest(tmp_path: Path) -> None:
     assert data["storyboard_view"] == "slides_with_script"
     html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
     assert "From CLI test." in html
+
+
+def test_cli_generate_can_ingest_pass2_envelope_metadata(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(
+        json.dumps(
+            {
+                "gary_slide_output": [
+                    {
+                        "slide_id": "m1-c1",
+                        "fidelity": "creative",
+                        "card_number": 1,
+                        "source_ref": "src-a",
+                        "file_path": "slides/s1.png",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    envelope_path = bundle / "pass2-envelope.json"
+    envelope_path.write_text(
+        json.dumps(
+            {
+                "runtime_plan": {
+                    "target_total_runtime_minutes": 6,
+                    "slide_runtime_average_seconds": 24,
+                    "slide_runtime_variability_scale": 0.15,
+                },
+                "script_policy": {
+                    "narration_density": {"target_wpm": 145},
+                    "engagement_stance": {"posture": "mentor"},
+                },
+                "voice_direction_defaults": {
+                    "emotional_variability": 0.4,
+                    "pace_variability": 0.06,
+                },
+                "per_slide_runtime_targets": {"m1-c1": 25},
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        "segments:\n"
+        "  - gary_slide_id: m1-c1\n"
+        "    narration_text: Runtime from CLI envelope.\n",
+        encoding="utf-8",
+    )
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_GENERATE_SCRIPT),
+            "generate",
+            "--payload",
+            str(payload_path),
+            "--out-dir",
+            str(bundle),
+            "--segment-manifest",
+            str(manifest_yaml),
+            "--pass2-envelope",
+            str(envelope_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads((bundle / "storyboard" / "storyboard.json").read_text(encoding="utf-8"))
+    assert data["storyboard_policy"]["runtime_plan"]["target_total_runtime_minutes"] == 6
+    assert data["storyboard_policy"]["script_policy"]["engagement_stance"]["posture"] == "mentor"
+    assert data["storyboard_policy"]["voice_direction_defaults"]["emotional_variability"] == 0.4
+    assert data["slides"][0]["runtime_target_seconds"] == 25
+    html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
+    assert "Target total 6 min" in html
+    assert "<dt>Runtime target (s)</dt><dd>25</dd>" in html
+    assert "WPM 145 +/- pace 0.06" in html
+    assert "Emotional variability 0.4" in html
+
+
+def test_runtime_targets_can_fallback_to_runtime_plan_card_rows(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 7,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            }
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    envelope_path = bundle / "pass2-envelope.json"
+    envelope_path.write_text(
+        json.dumps(
+            {
+                "runtime_plan": {
+                    "per_slide_targets": [
+                        {"card_number": 7, "target_runtime_seconds": 32},
+                    ]
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        "segments:\n"
+        "  - gary_slide_id: m1-c1\n"
+        "    narration_text: Card mapped runtime target.\n",
+        encoding="utf-8",
+    )
+    policy_meta = mod.load_storyboard_policy_meta(payload_path=payload_path, explicit_envelope_path=envelope_path)
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+        storyboard_policy_meta=policy_meta,
+    )
+    assert manifest["slides"][0]["runtime_target_seconds"] == 32
+
+
+def test_runtime_target_slide_id_map_overrides_card_fallback(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 7,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            }
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    envelope_path = bundle / "pass2-envelope.json"
+    envelope_path.write_text(
+        json.dumps(
+            {
+                "runtime_plan": {
+                    "per_slide_targets": [
+                        {"card_number": 7, "target_runtime_seconds": 32},
+                    ]
+                },
+                "per_slide_runtime_targets": {
+                    "m1-c1": 29,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        "segments:\n"
+        "  - gary_slide_id: m1-c1\n"
+        "    narration_text: Precedence runtime target.\n",
+        encoding="utf-8",
+    )
+    policy_meta = mod.load_storyboard_policy_meta(payload_path=payload_path, explicit_envelope_path=envelope_path)
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+        storyboard_policy_meta=policy_meta,
+    )
+    assert manifest["slides"][0]["runtime_target_seconds"] == 29
+
+
+def test_load_storyboard_policy_meta_accepts_yaml_envelope(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    bundle.mkdir(parents=True)
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps({"gary_slide_output": []}), encoding="utf-8")
+    envelope_yaml = bundle / "pass2-envelope.yaml"
+    envelope_yaml.write_text(
+        """
+runtime_plan:
+  target_total_runtime_minutes: 5
+  slide_runtime_average_seconds: 20
+script_policy:
+  narration_density:
+    target_wpm: 140
+voice_direction_defaults:
+  emotional_variability: 0.35
+  pace_variability: 0.04
+""",
+        encoding="utf-8",
+    )
+    policy_meta = mod.load_storyboard_policy_meta(
+        payload_path=payload_path,
+        explicit_envelope_path=envelope_yaml,
+    )
+    assert policy_meta["runtime_plan"]["target_total_runtime_minutes"] == 5
+    assert policy_meta["script_policy"]["narration_density"]["target_wpm"] == 140
+    assert policy_meta["voice_direction_defaults"]["pace_variability"] == 0.04
+
+
+def test_storyboard_policy_falls_back_to_config_when_script_policy_missing(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    bundle.mkdir(parents=True)
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps({"gary_slide_output": []}), encoding="utf-8")
+    envelope_path = bundle / "pass2-envelope.json"
+    envelope_path.write_text(
+        json.dumps(
+            {
+                "runtime_plan": {"target_total_runtime_minutes": 5},
+                "voice_direction_defaults": {"pace_variability": 0.04},
+            }
+        ),
+        encoding="utf-8",
+    )
+    policy_meta = mod.load_storyboard_policy_meta(
+        payload_path=payload_path,
+        explicit_envelope_path=envelope_path,
+    )
+    assert policy_meta["runtime_plan"]["target_total_runtime_minutes"] == 5
+    assert policy_meta["script_policy"]["narration_density"]["target_wpm"] == 150
+    assert policy_meta["script_policy"]["engagement_stance"]["posture"] == "collegial_guide"
 
 
 def test_cli_generate_with_related_assets(tmp_path: Path) -> None:
@@ -1181,7 +1518,7 @@ def test_publish_snapshot_tree_is_non_destructive_and_idempotent(tmp_path: Path)
     assert (repo_root / "README.md").read_text(encoding="utf-8") == "keep me"
 
 
-def test_publish_snapshot_tree_rejects_different_existing_target(tmp_path: Path) -> None:
+def test_publish_snapshot_tree_replaces_different_existing_target(tmp_path: Path) -> None:
     mod = _load_generate_module()
     snapshot_dir = tmp_path / "snapshot"
     snapshot_dir.mkdir(parents=True)
@@ -1193,13 +1530,108 @@ def test_publish_snapshot_tree_rejects_different_existing_target(tmp_path: Path)
     target_dir.mkdir(parents=True)
     (target_dir / "index.html").write_text("<html>old</html>", encoding="utf-8")
 
-    try:
-        mod.publish_snapshot_tree(
-            snapshot_dir,
-            repo_root=repo_root,
-            target_subdir="assets/storyboards/RUN-EXPORT-4",
-        )
-    except ValueError as exc:
-        assert "already exists with different contents" in str(exc)
-    else:
-        raise AssertionError("expected publish_snapshot_tree to reject differing existing target")
+    result = mod.publish_snapshot_tree(
+        snapshot_dir,
+        repo_root=repo_root,
+        target_subdir="assets/storyboards/RUN-EXPORT-4",
+    )
+    assert result["changed"] is True
+    assert (target_dir / "index.html").read_text(encoding="utf-8") == "<html>new</html>"
+
+
+def test_storyboard_b_header_collapsible_and_motion_card_layout(tmp_path: Path) -> None:
+    """Regression: header uses collapsible details + 3-col grid; motion cards get dedicated layout class."""
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    motion = bundle / "motion"
+    slides.mkdir(parents=True)
+    motion.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    (motion / "clip.mp4").write_bytes(b"mp4")
+
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            },
+            {
+                "slide_id": "m1-c2",
+                "fidelity": "literal-text",
+                "card_number": 2,
+                "source_ref": "src-b",
+                "file_path": "slides/s2.png",
+            },
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    manifest_yaml = bundle / "manifest.yaml"
+    manifest_yaml.write_text(
+        f"""
+segments:
+  - id: seg-01
+    gary_slide_id: m1-c1
+    narration_ref: narration-script.md#seg-01
+    narration_text: "Motion-aware line."
+    visual_mode: video
+    visual_file: {(slides / 's1.png').as_posix()}
+    motion_type: video
+    motion_asset_path: {(motion / 'clip.mp4').as_posix()}
+    motion_status: approved
+    motion_source: kling
+    motion_duration_seconds: 5.0
+    visual_references:
+      - element: callout
+        narration_cue: "Motion-aware line."
+  - id: seg-02
+    gary_slide_id: m1-c2
+    narration_ref: narration-script.md#seg-02
+    narration_text: "Static line."
+    visual_mode: static
+    visual_file: {(slides / 's2.png').as_posix()}
+    visual_references:
+      - element: text
+        narration_cue: "Static line."
+""",
+        encoding="utf-8",
+    )
+
+    storyboard_dir = bundle / "storyboard"
+    manifest_data = mod.build_manifest(
+        json.loads(payload_path.read_text(encoding="utf-8")),
+        payload_path=payload_path,
+        storyboard_dir=storyboard_dir,
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+    )
+
+    html = mod.render_index_html(manifest_data)
+
+    # Header: collapsible details wrapper with run-details summary
+    assert '<details class="summary-details" open>' in html
+    assert "<summary>Run details</summary>" in html
+
+    # Header: 3-column grid CSS
+    assert "grid-template-columns: repeat(3, 1fr)" in html
+
+    # Motion card gets dedicated layout class
+    assert 'class="slide-card-body slide-card-body--motion"' in html
+
+    # Static card does NOT get the motion class (only 1 card div has it)
+    assert html.count('class="slide-card-body slide-card-body--motion"') == 1
+
+    # Standard card keeps plain class
+    assert 'class="slide-card-body">' in html
+
+    # Motion card CSS rules are present
+    assert ".slide-card-body--motion .slide-preview-panel" in html
+    assert ".slide-card-body--motion .motion-preview-panel" in html
+    assert ".slide-card-body--motion .slide-script-panel" in html

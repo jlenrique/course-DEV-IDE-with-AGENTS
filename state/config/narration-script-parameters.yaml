@@ -82,10 +82,29 @@ terminology_treatment:
 # 5. pedagogical_bridging — transition style between segments
 # ---------------------------------------------------------------------------
 # transition_style: conceptual | sequential | question_driven | narrative_arc
-# bridge_density:   every_segment | key_transitions_only
+# bridge_frequency_scale: how verbose spoken bridging lines are when they appear
+#   (minimal | moderate | rich). Authoritative scheduling caps live under
+#   runtime_variability.bridge_cadence (minutes + slides between explicit bridges).
 pedagogical_bridging:
   transition_style: conceptual
-  bridge_density: every_segment
+  bridge_frequency_scale: moderate
+  spoken_bridge_policy:
+    # off = skip deterministic spoken-bridge cue checks
+    # warn = emit warnings (promoted to errors when Pass 2 runtime_policy_strict)
+    # error = always fail closed when narration_text lacks cues for manifest bridge_type
+    enforcement: warn
+    intro_phrase_patterns:
+      - "in this section"
+      - "let's turn to"
+      - "we'll begin"
+      - "welcome"
+      - "to start"
+    outro_phrase_patterns:
+      - "next, we'll"
+      - "to wrap up"
+      - "moving forward"
+      - "in summary"
+      - "that brings us"
 
 # ---------------------------------------------------------------------------
 # 6. engagement_stance — narrator-learner relationship

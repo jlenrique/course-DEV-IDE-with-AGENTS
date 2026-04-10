@@ -5,6 +5,17 @@
 # Cursor / Playwright MCP local logs
 .playwright-mcp/
 
+# BMad framework — installed/distributed by bmb; never version-control
+_bmad/
+_bmad-output/
+
+# BMad skills distributed to IDE surfaces (installed by bmb setup)
+.agents/
+.claude/
+.cline/
+.github/skills/
+.cursor/skills/
+
 # Optional local-only drops (large media, exports)
 secrets/
 

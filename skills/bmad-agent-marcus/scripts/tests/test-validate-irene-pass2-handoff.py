@@ -51,6 +51,7 @@ def _write_complete_bundle_outputs(
     include_runtime_rationale_fields: bool = False,
     runtime_rationale_overrides: dict[str, dict[str, str]] | None = None,
     bridge_type_overrides: dict[str, str] | None = None,
+    disable_spoken_bridge_enrichment: bool = False,
 ) -> dict[str, object]:
     approved_motion_asset = bundle_dir / "motion-approved.mp4"
     approved_motion_asset.write_bytes(b"mp4")
@@ -119,6 +120,21 @@ def _write_complete_bundle_outputs(
             segment.update(runtime_rationale_overrides[seg_id])
         if bridge_type_overrides and seg_id in bridge_type_overrides:
             segment["bridge_type"] = bridge_type_overrides[seg_id]
+
+        if not disable_spoken_bridge_enrichment:
+            bt_enrich = str(segment.get("bridge_type") or "none").strip().lower()
+            narr = str(segment["narration_text"])
+            if bt_enrich == "intro":
+                segment["narration_text"] = f"In this section we explore the idea. {narr}"
+            elif bt_enrich == "outro":
+                segment["narration_text"] = (
+                    f"{narr} Next, we'll connect this to what comes next."
+                )
+            elif bt_enrich == "both":
+                segment["narration_text"] = (
+                    f"In this section we explore the idea. {narr} "
+                    "To wrap up, we consolidate before moving forward."
+                )
 
         if motion and index == 1:
             segment["motion_type"] = "video"
@@ -481,6 +497,178 @@ def test_cli_exit_code_and_json_output(
     assert data["status"] in {"pass", "fail"}
 
 
+def test_cli_strict_runtime_policy_fails_by_default(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Opening slide",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        narration_text_overrides={
+            "seg-01": "notice cue 1 brief script that is intentionally too short for runtime strict mode"
+        },
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    payload["runtime_plan"] = {"per_slide_targets": [{"card_number": 1, "target_runtime_seconds": 55.0}]}
+
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH), "--envelope", str(envelope_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    data = json.loads(proc.stdout)
+    assert proc.returncode == 1
+    assert data["status"] == "fail"
+    assert data["runtime_policy_mode"] == "strict"
+    assert any("runtime_policy_violation:" in msg for msg in data["errors"])
+
+
+def test_cli_runtime_policy_advisory_flag_allows_runtime_warnings(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Opening slide",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        narration_text_overrides={
+            "seg-01": "notice cue 1 brief script that is intentionally too short for runtime advisory mode"
+        },
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    payload["runtime_plan"] = {"per_slide_targets": [{"card_number": 1, "target_runtime_seconds": 55.0}]}
+
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--envelope",
+            str(envelope_path),
+            "--runtime-policy-advisory",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    data = json.loads(proc.stdout)
+    assert proc.returncode == 0
+    assert data["status"] == "pass"
+    assert data["runtime_policy_mode"] == "advisory"
+    assert not any("runtime_policy_violation:" in msg for msg in data["errors"])
+    assert any("soft runtime band" in msg for msg in data["warnings"])
+
+
+def test_cli_returns_exit_code_2_on_invalid_envelope_payload(tmp_path: Path) -> None:
+    envelope_path = tmp_path / "pass2-envelope.json"
+    envelope_path.write_text("{ this is not valid json", encoding="utf-8")
+
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH), "--envelope", str(envelope_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    data = json.loads(proc.stdout)
+    assert proc.returncode == 2
+    assert data["status"] == "fail"
+    assert any("validator_exception:" in msg for msg in data["errors"])
+
+
+def test_cli_accepts_yaml_envelope(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "s-1",
+                "card_number": 1,
+                "file_path": str(slide),
+                "source_ref": "slide-brief.md#Slide 1",
+            }
+        ],
+        "perception_artifacts": [
+            {
+                "slide_id": "s-1",
+                "source_image_path": str(slide),
+                "visual_elements": [{"description": "Element 1"}],
+            }
+        ],
+    }
+    payload.update(
+        _write_complete_bundle_outputs(
+            bundle_dir,
+            slide_ids=["s-1"],
+            gary_slide_output=payload["gary_slide_output"],  # type: ignore[arg-type]
+            perception_artifacts=payload["perception_artifacts"],  # type: ignore[arg-type]
+        )
+    )
+
+    envelope_path = bundle_dir / "pass2-envelope.yaml"
+    envelope_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH), "--envelope", str(envelope_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    data = json.loads(proc.stdout)
+    assert proc.returncode == 0
+    assert data["status"] == "pass"
+
+
 def test_bundle_validation_fails_when_authorized_slide_missing_manifest_segment(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
@@ -520,7 +708,11 @@ def test_bundle_validation_fails_when_authorized_slide_missing_manifest_segment(
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
 
     assert result["status"] == "fail"
     assert result["pass2_outputs"]["missing_manifest_for_slide_ids"] == ["s-2"]
@@ -565,7 +757,11 @@ def test_bundle_validation_fails_when_segment_narration_text_empty(tmp_path: Pat
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
 
     assert result["status"] == "fail"
     assert result["pass2_outputs"]["segments_missing_narration_text"] == ["seg-02"]
@@ -610,7 +806,11 @@ def test_bundle_validation_fails_when_visual_narration_cue_missing(tmp_path: Pat
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
 
     assert result["status"] == "fail"
     assert result["pass2_outputs"]["segments_missing_visual_narration_cue"] == ["seg-02"]
@@ -658,7 +858,11 @@ def test_bundle_validation_fails_when_meta_slide_language_is_forbidden(tmp_path:
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
 
     assert result["status"] == "fail"
     assert result["pass2_outputs"]["segments_with_forbidden_meta_slide_language"] == ["seg-02"]
@@ -974,7 +1178,7 @@ def test_fails_when_gary_file_path_is_remote() -> None:
     assert any("must reference local downloaded PNGs" in msg for msg in result["errors"])
 
 
-def test_runtime_budget_mismatch_is_reported_as_warning(tmp_path: Path) -> None:
+def test_runtime_budget_mismatch_fails_in_strict_mode(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     slide = bundle_dir / "slide-01.png"
@@ -1016,12 +1220,12 @@ def test_runtime_budget_mismatch_is_reported_as_warning(tmp_path: Path) -> None:
 
     result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
 
-    assert result["status"] == "pass"
-    assert result["warnings"]
+    assert result["status"] == "fail"
+    assert any("runtime_policy_violation:" in error for error in result["errors"])
     assert any("soft runtime band" in warning for warning in result["warnings"])
 
 
-def test_runtime_rationale_fields_are_warned_when_missing(tmp_path: Path) -> None:
+def test_runtime_rationale_fields_fail_in_strict_mode_when_missing(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     slide = bundle_dir / "slide-01.png"
@@ -1060,7 +1264,8 @@ def test_runtime_rationale_fields_are_warned_when_missing(tmp_path: Path) -> Non
 
     result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
 
-    assert result["status"] == "pass"
+    assert result["status"] == "fail"
+    assert any("runtime_policy_violation:" in error for error in result["errors"])
     assert any("runtime rationale fields" in warning for warning in result["warnings"])
 
 
@@ -1102,14 +1307,18 @@ def test_runtime_rationale_is_not_warned_when_specific(tmp_path: Path) -> None:
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
 
     assert result["status"] == "pass"
     assert not any("runtime rationale fields" in warning for warning in result["warnings"])
     assert not any("duration_rationale should reference" in warning for warning in result["warnings"])
 
 
-def test_bridge_cadence_warns_when_no_explicit_bridge_appears_within_span(tmp_path: Path) -> None:
+def test_bridge_cadence_fails_in_strict_mode_when_span_exceeded(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     slide_ids = [f"s-{index}" for index in range(1, 7)]
@@ -1154,7 +1363,8 @@ def test_bridge_cadence_warns_when_no_explicit_bridge_appears_within_span(tmp_pa
 
     result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
 
-    assert result["status"] == "pass"
+    assert result["status"] == "fail"
+    assert any("runtime_policy_violation:" in error for error in result["errors"])
     assert any("bridge cadence exceeded" in warning for warning in result["warnings"])
 
 
@@ -1202,10 +1412,65 @@ def test_bridge_cadence_passes_when_marked_bridge_resets_span(tmp_path: Path) ->
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
 
     assert result["status"] == "pass"
     assert not any("bridge cadence exceeded" in warning for warning in result["warnings"])
+
+
+def test_runtime_policy_can_be_downgraded_to_advisory_mode(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Opening slide",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        narration_text_overrides={
+            "seg-01": "notice cue 1 brief script that is intentionally too short for the runtime target"
+        },
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    payload["runtime_plan"] = {
+        "per_slide_targets": [
+            {"card_number": 1, "target_runtime_seconds": 55.0},
+        ]
+    }
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
+
+    assert result["status"] == "pass"
+    assert result["runtime_policy_mode"] == "advisory"
+    assert any("soft runtime band" in warning for warning in result["warnings"])
 
 
 def test_cli_fails_when_local_png_missing_on_disk(tmp_path: Path) -> None:
@@ -1239,3 +1504,137 @@ def test_cli_fails_when_local_png_missing_on_disk(tmp_path: Path) -> None:
     data = json.loads(proc.stdout)
     assert data["status"] == "fail"
     assert any("does not exist on disk" in msg for msg in data.get("errors", []))
+
+
+def _bundle_with_intro_bridge_no_spoken_cue(tmp_path: Path) -> tuple[Path, dict]:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        include_runtime_rationale_fields=True,
+        bridge_type_overrides={"seg-01": "intro"},
+        disable_spoken_bridge_enrichment=True,
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+    return envelope_path, payload
+
+
+def test_spoken_bridge_warns_in_advisory_mode_when_cues_missing(
+    tmp_path: Path,
+) -> None:
+    envelope_path, payload = _bundle_with_intro_bridge_no_spoken_cue(tmp_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
+    assert result["status"] == "pass"
+    assert any("spoken_bridge_policy" in w for w in result["warnings"])
+
+
+def test_spoken_bridge_strict_mode_fails_when_cues_missing(tmp_path: Path) -> None:
+    envelope_path, payload = _bundle_with_intro_bridge_no_spoken_cue(tmp_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+    assert result["status"] == "fail"
+    assert any(
+        "runtime_policy_violation:" in e and "spoken_bridge_policy" in e
+        for e in result["errors"]
+    )
+
+
+def test_spoken_bridge_error_enforcement_fails_without_pattern(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    def fake_pedagogical_bridging() -> dict:
+        return {
+            "spoken_bridge_policy": {
+                "enforcement": "error",
+                "intro_phrase_patterns": ["in this section"],
+                "outro_phrase_patterns": ["next, we'll"],
+            }
+        }
+
+    monkeypatch.setattr(module, "_load_pedagogical_bridging", fake_pedagogical_bridging)
+    envelope_path, payload = _bundle_with_intro_bridge_no_spoken_cue(tmp_path)
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=False,
+    )
+    assert result["status"] == "fail"
+    assert any("bridge_type is intro" in e for e in result["errors"])
+
+
+def test_spoken_bridge_passes_when_default_enrichment_matches_patterns(
+    tmp_path: Path,
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        include_runtime_rationale_fields=True,
+        bridge_type_overrides={"seg-01": "intro"},
+        disable_spoken_bridge_enrichment=False,
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+    assert result["status"] == "pass"
+    assert not any("spoken_bridge_policy" in w for w in result["warnings"])

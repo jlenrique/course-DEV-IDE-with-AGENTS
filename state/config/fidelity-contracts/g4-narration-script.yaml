@@ -113,10 +113,57 @@ criteria:
       - "state/config/narration-grounding-profiles.yaml"
       - "state/config/narration-script-parameters.yaml"
 
-notes:
-  - >
-    Runtime-variability metadata such as timing_role, content_density,
-    visual_detail_load, duration_rationale, and bridge_type are governed by
-    narration-script-parameters.yaml and Pass 2 handoff validation. They shape
-    narration quality and delivery planning, but are not a separate source-
-    faithfulness criterion under G4.
+  - id: "G4-10"
+    name: "Runtime plan coherence"
+    description: >
+      Segment-level runtime decisions must remain coherent with the approved
+      runtime plan controls (total runtime target, per-slide targets, average
+      runtime assumptions, and variance policy) so narration pacing does not
+      drift from the locked production plan.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: >
+      Segment durations and runtime metadata are present and reconcile against
+      runtime_plan targets (including target_total_runtime_minutes and
+      per_slide_targets) with any out-of-band variance explicitly justified.
+    requires_perception: false
+    config_refs:
+      - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-11"
+    name: "Timing rationale completeness"
+    description: >
+      Every segment must include timing rationale fields required by the
+      runtime_variability policy, using valid enumerations and sufficiently
+      explicit rationale text to justify intentional runtime variance.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: >
+      timing_role, content_density, visual_detail_load, duration_rationale,
+      and bridge_type are populated and valid per runtime_variability policy;
+      weak or missing rationale is a contract failure, not an advisory note.
+    requires_perception: false
+    config_refs:
+      - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-12"
+    name: "Script-parameter policy adherence"
+    description: >
+      Narration must follow configured script-level controls for pacing and
+      audience guidance (density, visual reference behavior, bridge cadence,
+      and meta-language policy) so delivery intent remains consistent with the
+      approved narration strategy.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: >
+      Narration and manifest behavior align with narration-script-parameters
+      policy defaults and guardrails; deviations must be intentional and
+      traceable, not accidental drift.
+    requires_perception: true
+    perception_modality: image
+    config_refs:
+      - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"

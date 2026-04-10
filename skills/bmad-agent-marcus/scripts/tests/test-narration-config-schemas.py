@@ -17,6 +17,9 @@ CONFIG_DIR = ROOT / "state" / "config"
 PROFILES_PATH = CONFIG_DIR / "narration-grounding-profiles.yaml"
 PARAMS_PATH = CONFIG_DIR / "narration-script-parameters.yaml"
 G4_CONTRACT_PATH = CONFIG_DIR / "fidelity-contracts" / "g4-narration-script.yaml"
+VERA_G4_PROTOCOL_PATH = (
+    ROOT / "skills" / "bmad-agent-fidelity-assessor" / "references" / "gate-evaluation-protocol.md"
+)
 
 FIDELITY_CLASSES = {"creative", "literal-text", "literal-visual"}
 
@@ -39,6 +42,12 @@ def params() -> dict:
 def g4_contract() -> dict:
     assert G4_CONTRACT_PATH.exists(), f"Missing: {G4_CONTRACT_PATH}"
     return yaml.safe_load(G4_CONTRACT_PATH.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def vera_g4_protocol_text() -> str:
+    assert VERA_G4_PROTOCOL_PATH.exists(), f"Missing: {VERA_G4_PROTOCOL_PATH}"
+    return VERA_G4_PROTOCOL_PATH.read_text(encoding="utf-8")
 
 
 # ---- Narration Grounding Profiles Tests ----
@@ -95,6 +104,7 @@ class TestNarrationScriptParameters:
         "engagement_stance",
         "source_depth",
         "pronunciation_sensitivity",
+        "runtime_variability",
     ]
 
     @pytest.mark.parametrize("section", REQUIRED_TOP_LEVEL)
@@ -173,6 +183,18 @@ class TestNarrationScriptParameters:
         valid = {"conceptual", "sequential", "question_driven", "narrative_arc"}
         assert params["pedagogical_bridging"]["transition_style"] in valid
 
+    def test_bridge_frequency_scale_valid(self, params: dict) -> None:
+        valid = {"minimal", "moderate", "rich"}
+        assert params["pedagogical_bridging"]["bridge_frequency_scale"] in valid
+
+    def test_spoken_bridge_policy_configured(self, params: dict) -> None:
+        pol = params["pedagogical_bridging"]["spoken_bridge_policy"]
+        assert pol["enforcement"] in {"off", "warn", "error"}
+        assert isinstance(pol["intro_phrase_patterns"], list)
+        assert isinstance(pol["outro_phrase_patterns"], list)
+        assert len(pol["intro_phrase_patterns"]) >= 1
+        assert len(pol["outro_phrase_patterns"]) >= 1
+
     # -- engagement_stance --
 
     def test_engagement_posture_valid(self, params: dict) -> None:
@@ -193,6 +215,21 @@ class TestNarrationScriptParameters:
 
     def test_pronunciation_auto_flag_is_bool(self, params: dict) -> None:
         assert isinstance(params["pronunciation_sensitivity"]["auto_flag"], bool)
+
+    # -- runtime_variability --
+
+    def test_runtime_variability_enabled_is_bool(self, params: dict) -> None:
+        assert isinstance(params["runtime_variability"]["enabled"], bool)
+
+    def test_runtime_variability_required_fields_non_empty(self, params: dict) -> None:
+        fields = params["runtime_variability"]["required_manifest_fields"]
+        assert isinstance(fields, list)
+        assert len(fields) >= 5
+
+    def test_runtime_variability_bridge_types_present(self, params: dict) -> None:
+        bridge_types = params["runtime_variability"]["bridge_cadence"]["accepted_bridge_types"]
+        assert isinstance(bridge_types, list)
+        assert bridge_types
 
 
 # ---- Cross-file consistency tests ----
@@ -241,6 +278,47 @@ class TestCrossFileConsistency:
         assert g4_09 is not None
         assert g4_09["requires_perception"] is True
 
+    def test_g4_08_perception_lineage_present(self, g4_contract: dict) -> None:
+        criteria = g4_contract["criteria"]
+        g4_08 = next((c for c in criteria if c["id"] == "G4-08"), None)
+        assert g4_08 is not None, "G4-08 criterion not found in contract"
+        assert g4_08["evaluation_type"] == "deterministic"
+        assert g4_08["requires_perception"] is False
+
+    def test_g4_10_references_runtime_policy(self, g4_contract: dict) -> None:
+        criteria = g4_contract["criteria"]
+        g4_10 = next((c for c in criteria if c["id"] == "G4-10"), None)
+        assert g4_10 is not None, "G4-10 criterion not found in contract"
+        refs = g4_10.get("config_refs", [])
+        assert any("narration-script-parameters" in r for r in refs)
+        assert g4_10["evaluation_type"] == "deterministic"
+        assert g4_10["requires_perception"] is False
+
+    def test_g4_11_references_runtime_policy(self, g4_contract: dict) -> None:
+        criteria = g4_contract["criteria"]
+        g4_11 = next((c for c in criteria if c["id"] == "G4-11"), None)
+        assert g4_11 is not None, "G4-11 criterion not found in contract"
+        refs = g4_11.get("config_refs", [])
+        assert any("narration-script-parameters" in r for r in refs)
+        assert g4_11["evaluation_type"] == "deterministic"
+        assert g4_11["requires_perception"] is False
+
+    def test_g4_12_references_script_policy(self, g4_contract: dict) -> None:
+        criteria = g4_contract["criteria"]
+        g4_12 = next((c for c in criteria if c["id"] == "G4-12"), None)
+        assert g4_12 is not None, "G4-12 criterion not found in contract"
+        refs = g4_12.get("config_refs", [])
+        assert any("narration-grounding-profiles" in r for r in refs)
+        assert any("narration-script-parameters" in r for r in refs)
+        assert g4_12["evaluation_type"] == "agentic"
+        assert g4_12["requires_perception"] is True
+
+    def test_vera_protocol_documents_g4_16_spoken_bridges(
+        self, vera_g4_protocol_text: str
+    ) -> None:
+        assert "G4-16" in vera_g4_protocol_text
+        assert "spoken_bridge_policy" in vera_g4_protocol_text
+
     def test_g4_07_only_applies_to_creative(self, g4_contract: dict) -> None:
         criteria = g4_contract["criteria"]
         g4_07 = next((c for c in criteria if c["id"] == "G4-07"), None)
@@ -264,3 +342,12 @@ class TestCrossFileConsistency:
         ids = [c["id"] for c in g4_contract["criteria"]]
         expected = [f"G4-{str(i).zfill(2)}" for i in range(1, len(ids) + 1)]
         assert ids == expected
+
+    def test_g4_ids_are_mirrored_in_vera_protocol(
+        self,
+        g4_contract: dict,
+        vera_g4_protocol_text: str,
+    ) -> None:
+        criteria_ids = [c["id"] for c in g4_contract["criteria"]]
+        for criterion_id in criteria_ids:
+            assert criterion_id in vera_g4_protocol_text, f"{criterion_id} missing in Vera G4 protocol"

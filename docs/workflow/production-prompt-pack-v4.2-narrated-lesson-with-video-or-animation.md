@@ -579,10 +579,18 @@ Validator expectations at this stage:
 - every manifest segment must have non-empty `narration_text`
 - every manifest segment must contain at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and present in the segment narration text
 - every manifest segment must remain audience-directed when `narration-script-parameters.yaml` forbids meta slide language; grounded cues stay required, but slide-tour phrasing does not pass
-- if `runtime_plan.per_slide_targets[]` exists, Pass 2 validation should warn when narration word count falls materially outside the soft runtime band implied by target runtime and `narration_density.target_wpm`
-- missing or invalid `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, or weak timing rationale should surface as warnings rather than hidden drift
-- bridge-cadence gaps should surface as warnings when the configured intro/outro cadence is exceeded
+- if `runtime_plan.per_slide_targets[]` exists, Pass 2 validation fails closed when narration word count falls materially outside the soft runtime band implied by target runtime and `narration_density.target_wpm` (unless explicitly run in advisory mode)
+- missing or invalid `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, or weak timing rationale are hard failures in strict mode (not advisory drift)
+- bridge-cadence gaps are hard failures in strict mode when the configured intro/outro cadence is exceeded
 - every non-static motion segment must remain bound to the approved `motion_plan.yaml` asset and have matching motion perception confirmation before handoff passes
+- every manifest segment should include a non-empty `behavioral_intent` in both narration-script.md and segment-manifest.yaml; segments missing `behavioral_intent` generate a warning (Vera G4-13 validates quality at gate time)
+- video segments (`visual_mode: video`) should contain motion-first narration referencing dynamic/temporal visual content; the validator flags segments whose narration lacks motion keywords as a heuristic advisory (Vera G4-09 performs the agentic assessment)
+
+Vera G4 criteria at this gate (15 criteria):
+- G4-01 through G4-12 (existing): slide correspondence, visual accuracy, assessment exactness, terminology consistency, invention detection, manifest alignment, source depth, perception lineage, audience-directed visual grounding (now including motion-first narration for video segments), runtime plan coherence, timing rationale completeness, script-parameter policy
+- **G4-13 (new)**: behavioral_intent validation — verifies the claim is segment-specific and narration supports the stated learner effect
+- **G4-14 (new)**: motion_brief fidelity — verifies motion_brief descriptions match motion perception confirmations
+- **G4-15 (new)**: duration_rationale semantic correctness — agentic companion to G4-11, verifying rationale quality beyond field presence
 
 Motion-specific rules:
 - Irene must hydrate motion fields from `motion_plan.yaml`, not infer them from draft narration.
@@ -610,6 +618,9 @@ Inputs:
 Required behavior:
 - Treat `authorized-storyboard.json` + approved local winner-slide PNGs as the sole slide identity source of truth.
 - Hydrate storyboard.json and regenerate `storyboard/index.html` with script context (thumbnails, script/script-notes panels, orientation/provenance, related-assets including motion clips, perception cues).
+- Include Storyboard B runtime/script-policy metadata in the header (target total runtime, target average slide runtime, target slide-runtime variance, script policy highlights) sourced from `pass2-envelope.json` when present.
+- Include voice-direction variability defaults in the Storyboard B header when present (`voice_direction_defaults.emotional_variability`, `voice_direction_defaults.pace_variability`) so operators can compare script intent vs synthesis settings before spend.
+- Include per-slide timing-policy metadata in the reviewer evidence panel when available (runtime target seconds, timing role, content density, visual detail load, duration rationale, bridge type, behavioral intent) from `segment-manifest.yaml` / `pass2-envelope.json`.
 - Preserve all Motion Gate-approved `motion_asset_path` bindings; use motion-first narration cues for non-static segments.
 - Do not reuse prior storyboard review projections.
 - **Always conclude with the existing publish routine to copy snapshot to target_subdir under assets/storyboards/ in the jlenrique.github.io repo and emit publish-receipt.json with `publish_url`.**
@@ -626,8 +637,8 @@ Required command (example):
 ```
 
 Required validation:
-- Vera G4 (re-run if changed)
-- `validate-irene-pass2-handoff.py` (confirm motion perception alignment)
+- Vera G4 (re-run if changed) — includes G4-13 (behavioral_intent), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic), and G4-09 motion-first narration checks
+- `validate-irene-pass2-handoff.py` (confirm motion perception alignment + behavioral_intent presence + motion-first narration heuristic)
 - Confirm publish-receipt.json exists with valid `publish_url` and "status": "published"
 
 Required HIL review (replaces prior bullet):
@@ -687,13 +698,13 @@ Inputs:
 
 Required Marcus behavior:
 - present the most recent Prompt 8 Vera G4 receipt if the artifacts are unchanged
-- if any Pass 2 artifact changed after Prompt 8, rerun Vera G4 on the changed package before continuing
-- run Quinn-R on the approved Pass 2 package before ElevenLabs spend
+- if any Pass 2 artifact changed after Prompt 8, rerun Vera G4 on the changed package before continuing — G4 now includes G4-13 (behavioral_intent), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness), and extended G4-09 (motion-first narration quality)
+- run Quinn-R on the approved Pass 2 package before ElevenLabs spend — Quinn-R now includes SFX/music cue selection check (CI sub-check), behavioral_intent pre-composition validation (IF extension), and bridge re-validation at pre-composition
 - in motion runs, include motion-cue alignment and approved-asset-path drift checks against `motion_plan.yaml`
 
 Required checks:
-- no G4 critical findings remain open
-- Quinn-R sees no blocker that would make audio generation wasteful
+- no G4 critical findings remain open (includes new G4-13, G4-14, G4-15 criteria)
+- Quinn-R sees no blocker that would make audio generation wasteful (includes SFX/music cue and behavioral_intent coherence checks)
 - every non-static segment still preserves:
   - `visual_file` as the approved still/poster-frame reference
   - `motion_asset_path` as the approved playback asset
@@ -786,6 +797,39 @@ Go/no-go:
 
 ---
 
+## 11B) ElevenLabs Input Package HIL Review Before Spend
+
+Marcus, before Prompt 12 synthesis, deliberately display the exact locked ElevenLabs input package and wait for explicit operator GO.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json` when present
+- approved `[BUNDLE_PATH]/voice-selection.json`
+
+Required Marcus behavior:
+- present a concise, operator-readable package review that shows:
+  - locked script path + hash
+  - locked manifest path + hash
+  - approved lesson-level voice id and preview/source
+  - audio buffer setting
+  - segment count and segment id range
+  - any explicit segment-level `voice_id` overrides
+  - any non-default voice-direction controls inherited from `pass2-envelope.json` such as `speed`, `emotional_variability`, and `pace_variability`
+  - runtime-plan summary sufficient to show the intended slide-length variability
+  - bridge-cadence expectations sufficient to show how intros/outros are meant to appear
+- write the review artifact before asking for approval
+- require explicit operator GO before Prompt 12 begins
+
+Required writes:
+- `[BUNDLE_PATH]/elevenlabs-input-review.md`
+
+Go/no-go:
+- no go to Prompt 12 until the operator explicitly approves the displayed ElevenLabs input package
+- if the locked script, manifest, voice selection, or inherited voice-direction defaults change after this review, regenerate the review artifact and re-approve before synthesis
+
+---
+
 ## 12) ElevenLabs - Locked Manifest Audio Generation
 
 Marcus, delegate the Voice Director to run manifest-driven narration from the locked Gate 3 package.
@@ -803,6 +847,7 @@ Required Marcus behavior before delegation:
 - designate `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml` as the downstream mutable manifest for audio/composition
 - if needed, copy the locked root manifest into the assembly bundle before ElevenLabs so the same manifest path is mutated downstream
 - keep segment order and segment ids frozen
+- confirm `[BUNDLE_PATH]/elevenlabs-input-review.md` exists and corresponds to the current locked package before synthesis begins
 - verify `voice-selection.json.locked_manifest_hash` and `voice-selection.json.locked_script_hash` still match the locked Gate 3 package before synthesis begins
 - pass the approved lesson-level `selected_voice_id` from `voice-selection.json` as the default synthesis voice without mutating the locked root manifest
 

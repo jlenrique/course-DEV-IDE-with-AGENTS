@@ -83,6 +83,12 @@ Check whether the artifact actually supports the intended learner effect defined
 - Evaluate whether the visual/audio choices reinforce that effect or flatten it
 - Severity: Medium for weak execution, High when the artifact fights the intended effect
 
+**Pre-composition behavioral_intent validation (G4 artifacts):** When reviewing narration script + segment manifest before audio generation:
+- Verify `behavioral_intent` is present on every segment (warn if missing)
+- Cross-check that `behavioral_intent` is coherent across the narration script stage directions, segment manifest, and any composition notes for the same segment
+- Flag segments where the narration tone/content contradicts the stated `behavioral_intent` (e.g., clinical monotone narration paired with an "inspire curiosity" intent)
+- For non-static segments (`visual_mode: video`), confirm the motion-first narration approach supports the stated behavioral effect rather than undermining it with static-slide description
+
 ### Step 6: Content accuracy scan
 
 Flag potential medical/clinical accuracy concerns:
@@ -147,3 +153,19 @@ When the review includes narration or final assembly:
 - **AQ**: narration WPM, VTT monotonicity, pronunciation support, segment coverage
 - **CI**: video duration vs narration duration, caption sync, transition consistency, assembly coherence
 - **IF**: the emotional/behavioral effect should survive into the assembled output, not be lost in technically correct but flat composition
+
+### SFX / Music Cue Selection (CI sub-check)
+
+When `sfx` or `music` cue fields are present in the segment manifest:
+- Verify cue selections are contextually appropriate for the segment's content and pedagogical purpose
+- Check that SFX/music choices support the segment's `behavioral_intent` (e.g., a calming music cue should not accompany an "urgency" intent)
+- Flag jarring transitions where adjacent segments have incompatible audio atmosphere cues
+- Severity: Medium for suboptimal cue selection, High if the cue actively undermines the learning experience
+
+### Bridge Re-validation at Pre-Composition
+
+When reviewing the approved Pass 2 package before composition spend:
+- Confirm that intro/outro bridge segments are still correctly placed after any Gate 3 revisions
+- Verify bridge cadence (intro/outro every N slides or M minutes) remains within the configured policy from `narration-script-parameters.yaml`
+- Flag bridge segments whose `behavioral_intent` does not serve a transitional or framing purpose
+- Severity: Medium for cadence drift, High if bridge placement creates pedagogical discontinuity

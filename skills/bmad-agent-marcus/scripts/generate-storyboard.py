@@ -389,6 +389,12 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
                 "segment_id": str(seg.get("id") or "").strip() or None,
                 "narration_ref": str(seg.get("narration_ref") or "").strip() or None,
                 "narration_text": str(nt).strip(),
+                "timing_role": str(seg.get("timing_role") or "").strip() or None,
+                "content_density": str(seg.get("content_density") or "").strip() or None,
+                "visual_detail_load": str(seg.get("visual_detail_load") or "").strip() or None,
+                "duration_rationale": str(seg.get("duration_rationale") or "").strip() or None,
+                "bridge_type": str(seg.get("bridge_type") or "").strip() or None,
+                "behavioral_intent": str(seg.get("behavioral_intent") or "").strip() or None,
                 "motion_type": str(seg.get("motion_type") or "").strip() or None,
                 "motion_asset_path": str(seg.get("motion_asset_path") or "").strip() or None,
                 "motion_status": str(seg.get("motion_status") or "").strip() or None,
@@ -439,6 +445,12 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
             ),
             "visual_mode": _coalesce_attachment_value([entry.get("visual_mode") for entry in entries]),
             "visual_file": _coalesce_attachment_value([entry.get("visual_file") for entry in entries]),
+            "timing_role": _coalesce_attachment_value([entry.get("timing_role") for entry in entries]),
+            "content_density": _coalesce_attachment_value([entry.get("content_density") for entry in entries]),
+            "visual_detail_load": _coalesce_attachment_value([entry.get("visual_detail_load") for entry in entries]),
+            "duration_rationale": _coalesce_attachment_value([entry.get("duration_rationale") for entry in entries]),
+            "bridge_type": _coalesce_attachment_value([entry.get("bridge_type") for entry in entries]),
+            "behavioral_intent": _coalesce_attachment_value([entry.get("behavioral_intent") for entry in entries]),
             "visual_references": visual_references,
         }
 
@@ -633,6 +645,53 @@ def load_related_assets(
     return out
 
 
+def load_storyboard_policy_meta(
+    *,
+    payload_path: Path,
+    explicit_envelope_path: Path | None = None,
+) -> dict[str, Any]:
+    """Load optional runtime/script-policy metadata for Storyboard B headers."""
+    envelope_path = explicit_envelope_path or (payload_path.parent / "pass2-envelope.json")
+    runtime_plan: dict[str, Any] = {}
+    script_policy: dict[str, Any] = {}
+    voice_direction_defaults: dict[str, Any] = {}
+    per_slide_runtime_targets: dict[str, Any] = {}
+
+    if envelope_path.is_file():
+        envelope = load_payload(envelope_path)
+        runtime_plan_raw = envelope.get("runtime_plan")
+        if isinstance(runtime_plan_raw, dict):
+            runtime_plan = runtime_plan_raw
+        script_policy_raw = envelope.get("script_policy")
+        if isinstance(script_policy_raw, dict):
+            script_policy = script_policy_raw
+        voice_defaults_raw = envelope.get("voice_direction_defaults")
+        if isinstance(voice_defaults_raw, dict):
+            voice_direction_defaults = voice_defaults_raw
+        per_slide_runtime_raw = envelope.get("per_slide_runtime_targets")
+        if isinstance(per_slide_runtime_raw, dict):
+            per_slide_runtime_targets = per_slide_runtime_raw
+
+    # Backfill script-policy defaults when envelope does not carry them.
+    if not script_policy and yaml is not None:
+        params_path = PROJECT_ROOT / "state" / "config" / "narration-script-parameters.yaml"
+        if params_path.is_file():
+            params_data = yaml.safe_load(params_path.read_text(encoding="utf-8"))
+            if isinstance(params_data, dict):
+                script_policy = {
+                    "narration_density": params_data.get("narration_density", {}),
+                    "engagement_stance": params_data.get("engagement_stance", {}),
+                }
+
+    return {
+        "envelope_source": envelope_path.resolve().as_posix() if envelope_path.is_file() else None,
+        "runtime_plan": runtime_plan,
+        "script_policy": script_policy,
+        "voice_direction_defaults": voice_direction_defaults,
+        "per_slide_runtime_targets": per_slide_runtime_targets,
+    }
+
+
 def build_manifest(
     payload: dict[str, Any],
     *,
@@ -643,6 +702,7 @@ def build_manifest(
     segment_manifest_path: Path | None = None,
     related_assets: list[dict[str, Any]] | None = None,
     run_id: str | None = None,
+    storyboard_policy_meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return manifest dict and do not write files."""
     slides_in = payload.get("gary_slide_output")
@@ -651,6 +711,26 @@ def build_manifest(
     storyboard_dir = storyboard_dir.resolve()
     slides_out: list[dict[str, Any]] = []
     pair_map: dict[str, dict[str, Any]] = {}
+    storyboard_policy_meta = storyboard_policy_meta or {}
+    per_slide_runtime_targets = (
+        storyboard_policy_meta.get("per_slide_runtime_targets")
+        if isinstance(storyboard_policy_meta.get("per_slide_runtime_targets"), dict)
+        else {}
+    )
+    runtime_plan = (
+        storyboard_policy_meta.get("runtime_plan")
+        if isinstance(storyboard_policy_meta.get("runtime_plan"), dict)
+        else {}
+    )
+    per_slide_runtime_targets_by_card: dict[str, Any] = {}
+    for entry in runtime_plan.get("per_slide_targets", []):
+        if not isinstance(entry, dict):
+            continue
+        card_number = entry.get("card_number")
+        target_runtime_seconds = entry.get("target_runtime_seconds")
+        if card_number in (None, "") or target_runtime_seconds in (None, ""):
+            continue
+        per_slide_runtime_targets_by_card[str(card_number)] = target_runtime_seconds
 
     for idx, raw in enumerate(slides_in, start=1):
         if not isinstance(raw, dict):
@@ -693,6 +773,12 @@ def build_manifest(
         motion_duration_seconds = None
         visual_mode = None
         visual_file = None
+        timing_role = None
+        content_density = None
+        visual_detail_load = None
+        duration_rationale = None
+        bridge_type = None
+        behavioral_intent = None
         if narration_by_slide_id:
             matched = narration_by_slide_id.get(slide_id)
             if isinstance(matched, dict):
@@ -720,6 +806,12 @@ def build_manifest(
                 motion_duration_seconds = matched.get("motion_duration_seconds")
                 visual_mode = matched.get("visual_mode")
                 visual_file = matched.get("visual_file")
+                timing_role = matched.get("timing_role")
+                content_density = matched.get("content_density")
+                visual_detail_load = matched.get("visual_detail_load")
+                duration_rationale = matched.get("duration_rationale")
+                bridge_type = matched.get("bridge_type")
+                behavioral_intent = matched.get("behavioral_intent")
                 if segment_match_count > 1:
                     narration_status = "multi_match"
                 elif narration_text:
@@ -759,6 +851,9 @@ def build_manifest(
             issue_flags.append("has_findings")
 
         row_id = _build_slide_row_id(slide_id, dispatch_variant, idx)
+        runtime_target_seconds = per_slide_runtime_targets.get(slide_id)
+        if runtime_target_seconds in (None, ""):
+            runtime_target_seconds = per_slide_runtime_targets_by_card.get(str(card_number))
 
         slides_out.append(
             {
@@ -803,6 +898,13 @@ def build_manifest(
                 "motion_duration_seconds": motion_duration_seconds,
                 "visual_mode": visual_mode,
                 "visual_file": visual_file,
+                "timing_role": timing_role,
+                "content_density": content_density,
+                "visual_detail_load": visual_detail_load,
+                "duration_rationale": duration_rationale,
+                "bridge_type": bridge_type,
+                "behavioral_intent": behavioral_intent,
+                "runtime_target_seconds": runtime_target_seconds,
                 "script_notes": script_notes,
                 "issue_flags": issue_flags,
             }
@@ -867,6 +969,24 @@ def build_manifest(
         "slides": slides_out,
         "related_assets": normalized_related_assets,
         "run_id": run_id,
+        "storyboard_policy": {
+            "envelope_source": storyboard_policy_meta.get("envelope_source"),
+            "runtime_plan": (
+                storyboard_policy_meta.get("runtime_plan")
+                if isinstance(storyboard_policy_meta.get("runtime_plan"), dict)
+                else {}
+            ),
+            "script_policy": (
+                storyboard_policy_meta.get("script_policy")
+                if isinstance(storyboard_policy_meta.get("script_policy"), dict)
+                else {}
+            ),
+            "voice_direction_defaults": (
+                storyboard_policy_meta.get("voice_direction_defaults")
+                if isinstance(storyboard_policy_meta.get("voice_direction_defaults"), dict)
+                else {}
+            ),
+        },
         "rows": rows,
         "review_meta": {
             "total_slides": len(slides_out),
@@ -924,6 +1044,9 @@ def format_summary(manifest: dict[str, Any]) -> str:
         if isinstance(s, dict)
     ]
     review_meta = manifest.get("review_meta") if isinstance(manifest.get("review_meta"), dict) else {}
+    storyboard_policy = (
+        manifest.get("storyboard_policy") if isinstance(manifest.get("storyboard_policy"), dict) else {}
+    )
     counts = Counter(fids)
     checkpoint_label = str(manifest.get("checkpoint_label") or "Storyboard")
     lines = [
@@ -1180,6 +1303,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     slides = manifest.get("slides") if isinstance(manifest.get("slides"), list) else []
     related_assets = manifest.get("related_assets") if isinstance(manifest.get("related_assets"), list) else []
     review_meta = manifest.get("review_meta") if isinstance(manifest.get("review_meta"), dict) else {}
+    storyboard_policy = (
+        manifest.get("storyboard_policy") if isinstance(manifest.get("storyboard_policy"), dict) else {}
+    )
     dd = manifest.get("double_dispatch") if isinstance(manifest.get("double_dispatch"), dict) else {}
     actionable_issue_count = sum(
         1
@@ -1416,8 +1542,17 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         motion_duration = html.escape(
             str(motion_duration_raw if motion_duration_raw not in (None, "") else "n/a")
         )
+        runtime_target_seconds = html.escape(
+            str(slide.get("runtime_target_seconds") if slide.get("runtime_target_seconds") not in (None, "") else "n/a")
+        )
         visual_mode = html.escape(str(slide.get("visual_mode") or "n/a"))
         visual_file = html.escape(str(slide.get("visual_file") or "n/a"))
+        timing_role = html.escape(str(slide.get("timing_role") or "n/a"))
+        content_density = html.escape(str(slide.get("content_density") or "n/a"))
+        visual_detail_load = html.escape(str(slide.get("visual_detail_load") or "n/a"))
+        duration_rationale = html.escape(str(slide.get("duration_rationale") or "n/a"))
+        bridge_type = html.escape(str(slide.get("bridge_type") or "n/a"))
+        behavioral_intent = html.escape(str(slide.get("behavioral_intent") or "n/a"))
         matched_segment_ids = [
             str(item).strip()
             for item in slide.get("matched_segment_ids", [])
@@ -1473,7 +1608,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<span class="badge">orientation {orientation}</span>'
             f'{selected_markup}{issue_badges}'
             '</div></header>'
-            '<div class="slide-card-body">'
+            f'<div class="slide-card-body{" slide-card-body--motion" if motion_type != "static" else ""}">'
             '<section class="slide-preview-panel">'
             '<div class="panel-label">Approved slide</div>'
             f'{_preview_markup(slide)}'
@@ -1508,7 +1643,14 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<div><dt>Motion status</dt><dd>{motion_status}</dd></div>'
             f'<div><dt>Motion source</dt><dd>{motion_source}</dd></div>'
             f'<div><dt>Motion duration</dt><dd>{motion_duration}</dd></div>'
+            f'<div><dt>Runtime target (s)</dt><dd>{runtime_target_seconds}</dd></div>'
             f'<div><dt>Motion asset</dt><dd>{motion_asset_path}</dd></div>'
+            f'<div><dt>Timing role</dt><dd>{timing_role}</dd></div>'
+            f'<div><dt>Content density</dt><dd>{content_density}</dd></div>'
+            f'<div><dt>Visual detail load</dt><dd>{visual_detail_load}</dd></div>'
+            f'<div><dt>Bridge type</dt><dd>{bridge_type}</dd></div>'
+            f'<div><dt>Behavioral intent</dt><dd>{behavioral_intent}</dd></div>'
+            f'<div><dt>Duration rationale</dt><dd>{duration_rationale}</dd></div>'
             f'<div><dt>Quality</dt><dd>{quality_text}</dd></div>'
             '</dl>'
             '<div class="findings-block">'
@@ -1545,6 +1687,71 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     view = html.escape(str(manifest.get("storyboard_view") or "slides_only"))
     checkpoint_label = html.escape(str(manifest.get("checkpoint_label") or "Storyboard"))
     run_id = html.escape(str(manifest.get("run_id") or "unbound"))
+    runtime_plan = (
+        storyboard_policy.get("runtime_plan")
+        if isinstance(storyboard_policy.get("runtime_plan"), dict)
+        else {}
+    )
+    script_policy = (
+        storyboard_policy.get("script_policy")
+        if isinstance(storyboard_policy.get("script_policy"), dict)
+        else {}
+    )
+    voice_direction_defaults = (
+        storyboard_policy.get("voice_direction_defaults")
+        if isinstance(storyboard_policy.get("voice_direction_defaults"), dict)
+        else {}
+    )
+    runtime_total_minutes = html.escape(
+        str(
+            runtime_plan.get("target_total_runtime_minutes")
+            or runtime_plan.get("target_total_minutes")
+            or "n/a"
+        )
+    )
+    runtime_avg_seconds = html.escape(
+        str(
+            runtime_plan.get("slide_runtime_average_seconds")
+            or runtime_plan.get("target_avg_slide_seconds")
+            or "n/a"
+        )
+    )
+    runtime_variance = html.escape(
+        str(
+            runtime_plan.get("slide_runtime_variability_scale")
+            or runtime_plan.get("target_slide_variance_seconds")
+            or "n/a"
+        )
+    )
+    narration_density_block = script_policy.get("narration_density")
+    target_wpm_value: Any = None
+    if isinstance(narration_density_block, dict):
+        target_wpm_value = narration_density_block.get("target_wpm")
+        script_narration_density = html.escape(
+            str(
+                target_wpm_value
+                or narration_density_block.get("mean_words_per_slide")
+                or "n/a"
+            )
+        )
+    else:
+        script_narration_density = html.escape(str(script_policy.get("narration_density") or "n/a"))
+    target_wpm = html.escape(
+        str(
+            target_wpm_value
+            or script_policy.get("target_wpm")
+            or "n/a"
+        )
+    )
+    engagement_stance_block = script_policy.get("engagement_stance")
+    if isinstance(engagement_stance_block, dict):
+        script_engagement_stance = html.escape(str(engagement_stance_block.get("posture") or "n/a"))
+    else:
+        script_engagement_stance = html.escape(str(script_policy.get("engagement_stance") or "n/a"))
+    emotional_variability = html.escape(str(voice_direction_defaults.get("emotional_variability") or "n/a"))
+    pace_variability = html.escape(str(voice_direction_defaults.get("pace_variability") or "n/a"))
+    wpm_pace_coupling = html.escape(f"{target_wpm} wpm +/- pace {pace_variability}")
+    policy_source = html.escape(str(storyboard_policy.get("envelope_source") or "n/a"))
     meta_badges = [
         f'<span class="meta-pill">Run {run_id}</span>',
         f'<span class="meta-pill">{checkpoint_label}</span>',
@@ -1552,6 +1759,12 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         f'<span class="meta-pill">Slides {review_meta.get("total_slides", len(slides))}</span>',
         f'<span class="meta-pill">Narrated {review_meta.get("slides_with_narration", 0)}</span>',
         f'<span class="meta-pill">Missing assets {review_meta.get("missing_assets", 0)}</span>',
+        f'<span class="meta-pill">Target total {runtime_total_minutes} min</span>',
+        f'<span class="meta-pill">Avg slide {runtime_avg_seconds}s</span>',
+        f'<span class="meta-pill">Runtime variability {runtime_variance}</span>',
+        f'<span class="meta-pill">Emotional variability {emotional_variability}</span>',
+        f'<span class="meta-pill">Pace variability {pace_variability}</span>',
+        f'<span class="meta-pill">WPM {target_wpm} +/- pace {pace_variability}</span>',
     ]
     if review_meta.get("double_dispatch_enabled"):
         meta_badges.append('<span class="meta-pill">Double dispatch</span>')
@@ -1593,12 +1806,17 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .meta-pill-row, .badge-row {{ display: flex; flex-wrap: wrap; gap: 10px; }}
     .meta-pill, .badge {{ display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 12px; font-size: 0.86rem; font-weight: 600; }}
     .meta-pill {{ background: rgba(255,255,255,0.14); color: #fff; }}
-    .summary-grid {{ display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; margin-top: 18px; }}
-    .summary-panel {{ background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 16px; }}
-    .summary-panel h2 {{ margin: 0 0 10px 0; font-size: 1rem; }}
-    .summary-panel p {{ margin: 0; color: rgba(255,255,255,0.88); }}
-    .summary-panel dl {{ margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; }}
-    .summary-panel dt {{ color: rgba(255,255,255,0.7); font-weight: 600; }}
+    .summary-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }}
+    .summary-details {{ margin-top: 10px; }}
+    .summary-details > summary {{ cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem; color: rgba(255,255,255,0.7); font-weight: 600; padding: 4px 0; }}
+    .summary-details > summary::after {{ content: " [collapse]"; font-size: 0.78rem; }}
+    .summary-details:not([open]) > summary::after {{ content: " [expand]"; }}
+    .summary-panel {{ background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 14px; }}
+    .summary-panel h2 {{ margin: 0 0 8px 0; font-size: 0.95rem; }}
+    .summary-panel p {{ margin: 0; color: rgba(255,255,255,0.88); font-size: 0.9rem; }}
+    .summary-panel dl {{ margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; }}
+    .summary-panel dt {{ color: rgba(255,255,255,0.7); font-weight: 600; font-size: 0.88rem; }}
+    .summary-panel dd {{ margin: 0; overflow-wrap: anywhere; font-size: 0.88rem; }}
     .toolbar {{ display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; box-shadow: var(--shadow); }}
     .toolbar input[type="search"] {{ min-width: 260px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font: inherit; }}
     .toolbar label {{ display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; color: var(--muted); }}
@@ -1628,6 +1846,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .slide-thumbnail {{ max-height: 280px; object-fit: contain; background: #f8fafc; }}
     .variant-thumbnail {{ max-width: 260px; max-height: 150px; object-fit: contain; }}
     .motion-preview-panel {{ margin-top: 14px; }}
+    .slide-card-body--motion .slide-preview-panel {{ grid-column: 1; grid-row: 1; }}
+    .slide-card-body--motion .motion-preview-panel {{ grid-column: 1; grid-row: 2; margin-top: 0; }}
+    .slide-card-body--motion .slide-script-panel {{ grid-column: 2; grid-row: 1 / -1; }}
     .motion-preview-wrap {{ display: grid; gap: 8px; }}
     .motion-preview {{ width: 100%; max-height: 280px; border-radius: 14px; border: 1px solid var(--line); background: #020617; box-shadow: 0 6px 18px rgba(17, 24, 39, 0.12); }}
     .motion-link {{ font-size: 0.9rem; color: var(--accent); text-decoration: none; font-weight: 600; }}
@@ -1664,6 +1885,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     @media (max-width: 980px) {{
       .summary-grid, .slide-card-body, .panel-grid {{ grid-template-columns: 1fr; }}
       .slide-card-header {{ flex-direction: column; }}
+      .slide-card-body--motion .slide-preview-panel,
+      .slide-card-body--motion .motion-preview-panel,
+      .slide-card-body--motion .slide-script-panel {{ grid-column: auto; grid-row: auto; }}
     }}
   </style>
 </head>
@@ -1673,7 +1897,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       <h1>{checkpoint_label} Review</h1>
       <p>Static storyboard review surface for human approval. The JSON manifest remains the source of truth; this page is a reviewer-friendly projection.</p>
       <div class="meta-pill-row">{''.join(meta_badges)}</div>
-      <div class="summary-grid">
+      <details class="summary-details" open>
+        <summary>Run details</summary>
+        <div class="summary-grid">
         <div class="summary-panel">
           <h2>Run summary</h2>
           <p>Generated at {generated_at}. Fidelity mix: {fidelity_markup}.</p>
@@ -1687,7 +1913,16 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             <div><dt>Slides with findings</dt><dd>{html.escape(str(review_meta.get("slides_with_findings", 0)))}</dd></div>
           </dl>
         </div>
-      </div>
+        <div class="summary-panel">
+          <h2>Runtime and script policy</h2>
+          <dl>
+            <div><dt>Narration density target</dt><dd>{script_narration_density}</dd></div>
+            <div><dt>Engagement stance</dt><dd>{script_engagement_stance}</dd></div>
+            <div><dt>Policy source</dt><dd>{policy_source}</dd></div>
+          </dl>
+        </div>
+        </div>
+      </details>
     </section>
 
     {pair_section_html}
@@ -1835,6 +2070,11 @@ def cmd_generate(args: argparse.Namespace) -> int:
         )
 
     run_id: str | None = getattr(args, "run_id", None)
+    pass2_envelope_path: Path | None = getattr(args, "pass2_envelope", None)
+    storyboard_policy_meta = load_storyboard_policy_meta(
+        payload_path=payload_path,
+        explicit_envelope_path=pass2_envelope_path,
+    )
 
     manifest = build_manifest(
         payload,
@@ -1845,6 +2085,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         segment_manifest_path=segment_manifest_path,
         related_assets=related_assets,
         run_id=run_id,
+        storyboard_policy_meta=storyboard_policy_meta,
     )
     write_bundle(manifest, storyboard_dir)
 
@@ -2028,6 +2269,15 @@ def main() -> int:
         type=str,
         default=None,
         help="Production run ID for traceability in manifest metadata and logs.",
+    )
+    gen.add_argument(
+        "--pass2-envelope",
+        type=Path,
+        default=None,
+        help=(
+            "Optional pass2-envelope JSON/YAML to enrich Storyboard B with "
+            "runtime-plan and script-policy metadata (default: payload sibling pass2-envelope.json)."
+        ),
     )
     gen.set_defaults(func=cmd_generate)
 

@@ -1,4 +1,4 @@
-# Session Handoff - 2026-04-10 (Session 3)
+# Session Handoff - 2026-04-10 (Session 3+)
 
 ## Completed Work
 
@@ -20,15 +20,27 @@
 - **Test:** New regression test `test_storyboard_b_header_collapsible_and_motion_card_layout`. 34/34 tests green.
 - **Doc:** Updated SKILL.md Review section noting collapsible banner + motion layout.
 
-### 3. External Changes (by user or other tools)
+### 3. Production Run Progress (Prompts 8-12, completed outside IDE sessions)
+- **Prompt 8:** Irene Pass 2 — narration script with triple vision + perception bridge. Vera G4 PASS (fidelity 1.0).
+- **Prompt 8B:** Storyboard B regenerated with script context, published to GitHub Pages, HIL approved.
+- **Prompt 9:** Gate 3 — APPROVED. Narration script + segment manifest SHA-256 locked.
+- **Prompt 10:** Fidelity/quality readiness — GO (fidelity gate), voice-selection hash refreshed.
+- **Prompt 11:** Voice selection — Marc B. Laurent (o0t0Wz5oSDuuCV6p7rba), continuity score 92, approved.
+- **Prompt 11B:** ElevenLabs input review — reviewed and approved before synthesis spend.
+- **Prompt 12:** ElevenLabs synthesis — 15 MP3 audio files + 15 VTT caption files in assembly-bundle.
+
+### 4. External Changes (by user or other tools)
 - `validate-irene-pass2-handoff.py` — enhanced validation.
 - `gate-evaluation-protocol.md` — updated gate protocol.
 
 ## What Is Next
 
-- **Prompt 8: Irene Pass 2** — perception bridge read of 15 winner stills + 1 video clip, then narration with triple vision.
-- **Prompt 8B: Storyboard B Regeneration** — regenerate with script context, publish to GitHub Pages, operator HIL review.
-- Prompts 9-15 remain for this run (Gate 3 → ElevenLabs → composition → handoff).
+- **Rerun Prompt 13: Quinn-R Pre-Composition** — previous run FAILED with 6 blocking findings:
+  - WPM violations: seg-01 (179.58), seg-03 (183.26), seg-06 (172.99), seg-07 (173.11) — all exceed 170 WPM target
+  - Motion duration mismatch: seg-01 clip=5.041s vs narration=29.736s (delta −24.695s)
+  - Remediation decision required before rerun (ElevenLabs re-synthesis, narration trim, or editing-phase motion extension)
+- **Prompt 14: Compositor** — motion-aware assembly bundle + Descript guide.
+- **Prompt 15: Operator Handoff** — final Descript package.
 
 ## Unresolved Issues / Risks
 

@@ -3,12 +3,13 @@
 > Scope note: this file is the hot-start for the next repo session.
 > For production operations, pair it with `docs/operations-context.md` and the workflow docs it points to.
 
-## Current State (as of 2026-04-10, end of session 3)
+## Current State (as of 2026-04-10, end of session 3+)
 
 - Repository baseline branch: `master` (after merge)
 - Next working branch: `ops/next-session` (created from updated master, pushed with upstream)
-- Active production run: `C1-M1-PRES-20260409` — **IN PROGRESS** (Prompts 1-7D complete, Motion Gate closed)
+- Active production run: `C1-M1-PRES-20260409` — **IN PROGRESS** (Prompts 1-12 complete, Prompt 13 FAILED — needs rerun)
 - Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion`
+- Assembly bundle: `[BUNDLE]/assembly-bundle/` (fully populated: 15 MP3s, 15 VTTs, segment-manifest.yaml)
 - Run status in DB: `active`
 - Workflow: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
 
@@ -20,8 +21,12 @@
    git checkout ops/next-session
    git pull origin ops/next-session
    ```
-2. **Prompt 8: Irene Pass 2** — perception bridge read of all 15 winner stills + 1 video clip (slide 01 only), then narration with "triple vision" (perceived visuals + on-screen text + source material from extracted.md). Motion-first narration for slide 01 speaks to visible action in the approved B-roll clip.
-3. After Pass 2 + G4 validation: **Prompt 8B: Storyboard B Regeneration + HIL Review** — regenerate with script context, publish to GitHub Pages, operator reviews from live URL.
+2. **Rerun Prompt 13: Quinn-R Pre-Composition** — previous run FAILED with 6 blocking findings:
+   - **WPM violations** (4 segments exceed 170 WPM target): seg-01 (179.58), seg-03 (183.26), seg-06 (172.99), seg-07 (173.11)
+   - **Motion duration mismatch** on seg-01: clip=5.041s vs narration=29.736s (delta −24.695s)
+   - Remediation decision required before rerun — see Prompt 13 advisory/blocking rules in workflow doc
+3. After Prompt 13 passes: **Prompt 14: Compositor** — motion-aware assembly bundle + Descript guide.
+4. Then **Prompt 15: Operator Handoff** — final Descript package.
 
 ## Session 3 Completed Work
 
@@ -51,6 +56,14 @@
 | 7B: Variant Selection | confirmed (re-reviewed after mapping fix) | `variant-selection.json` (9B + 6A) |
 | 7C: Gate 2 + Winner Auth | PASS | `authorized-storyboard.json` (15 winners) |
 | 7D: Gate 2M Motion | closed | `motion_plan.yaml` (1 video, 14 static) |
+| 8: Irene Pass 2 | Vera G4 PASS (fidelity 1.0) | `narration-script.md`, `pass2-envelope.json`, `vera-g4-fidelity-trace-report.yaml` |
+| 8B: Storyboard B Regen + HIL | published, approved | `storyboard-C1-M1-PRES-20260409-publish-receipt.json`, live at GitHub Pages |
+| 9: Gate 3 Decision | APPROVED | `gate-3-approval.json` (SHA-256 locked narration-script + segment-manifest) |
+| 10: Fidelity + Quality | GO (fidelity), NO_GO refreshed | `prompt-10-readiness.json` (voice-selection hash mismatch resolved) |
+| 11: Voice Selection HIL | approved | `voice-selection.json` — Marc B. Laurent (o0t0Wz5oSDuuCV6p7rba), continuity score 92 |
+| 11B: ElevenLabs Input Review | reviewed | `elevenlabs-input-review.md`, `elevenlabs-dispatch-preview.json` |
+| 12: ElevenLabs Synthesis | complete | `assembly-bundle/audio/` (15 MP3s), `assembly-bundle/captions/` (15 VTTs) |
+| 13: Quinn-R Pre-Composition | **FAIL** — rerun needed | `quinnr-precomposition-review.json` — 6 blocking findings (WPM + motion mismatch) |
 
 ## Motion Gate Final Status
 
@@ -72,7 +85,7 @@ locked_slide_count: 15
 target_total_runtime_minutes: 10
 slide_runtime_average_seconds: 40
 theme: hil-2026-apc-nejal-A (Gamma API ID: njim9kuhfnljvaa)
-voice: TBD (not yet selected this run)
+voice: Marc B. Laurent (o0t0Wz5oSDuuCV6p7rba) — continuity selection, score 92
 ```
 
 ## Published Tools
@@ -91,7 +104,14 @@ voice: TBD (not yet selected this run)
 - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
 - `docs/workflow/rerun-carry-forward-manifest.md`
 - Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/`
-- Irene Pass 1: `[BUNDLE]/irene-pass1.md` (includes text usability constraint)
+- Assembly bundle: `[BUNDLE]/assembly-bundle/` (15 MP3s, 15 VTTs, segment-manifest.yaml)
+- Quinn-R pre-comp failure: `[BUNDLE]/assembly-bundle/quinnr-precomposition-review.json`
+- Locked narration script: `[BUNDLE]/narration-script.md`
+- Segment manifest: `[BUNDLE]/segment-manifest.yaml`
+- Gate 3 approval: `[BUNDLE]/gate-3-approval.json`
+- Voice selection: `[BUNDLE]/voice-selection.json`
+- Pass 2 envelope: `[BUNDLE]/pass2-envelope.json`
+- Vera G4 report: `[BUNDLE]/vera-g4-fidelity-trace-report.yaml`
 - Authorized storyboard: `[BUNDLE]/authorized-storyboard.json`
 - Motion plan: `[BUNDLE]/motion_plan.yaml`
 - Winner PNGs: `[BUNDLE]/gamma-export/` (variant A) and `[BUNDLE]/gamma-export-B/` (variant B)

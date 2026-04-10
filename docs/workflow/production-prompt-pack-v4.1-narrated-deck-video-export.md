@@ -34,11 +34,15 @@ Primary contract references:
 - `docs/workflow/trial-run-pass2-artifacts-contract.md`
 - `state/config/fidelity-contracts/` (G0-G4)
 
+Execution convention:
+- Use the repo-local interpreter for every repo command in this prompt pack: `.\.venv\Scripts\python.exe`
+- Do not rely on global `python`, `py`, or bare `pytest` during production operations.
+
 ---
 
 ## Run Constants (set once)
 
-After acceptance, persist the same fields as **`run-constants.yaml`** in the bundle root so tooling can load them (`python -m scripts.utilities.run_constants --bundle-dir [BUNDLE_PATH]`). See `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B.
+After acceptance, persist the same fields as **`run-constants.yaml`** in the bundle root so tooling can load them (`.\.venv\Scripts\python.exe -m scripts.utilities.run_constants --bundle-dir [BUNDLE_PATH]`). See `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B.
 
 - RUN_ID: [e.g., C1-M1-PRES-20260405]
 - LESSON_SLUG: [e.g., apc-c1m1-tejal]
@@ -65,8 +69,8 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 6. Toolchain preflight status (Source Wrangler, sensory bridges, Gamma auth/API, Python runtime).
 
 Required commands:
-- `py -3.13 -m scripts.utilities.emit-preflight-receipt --with-preflight --output [BUNDLE_PATH]/preflight-results.json`
-- `py -3.13 -m scripts.utilities.venv_health_check`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --output [BUNDLE_PATH]/preflight-results.json`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `DOUBLE_DISPATCH: true`: run `check_double_dispatch_compatibility()` from preflight runner. Block on fail.
 
 Required write:
@@ -212,7 +216,7 @@ Confidence handling rule:
 - A `high` confidence note with limited caveats is cautionary, not blocking.
 
 Confidence consistency validator:
-- Run `py -3.13 -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH]` after writing bundle artifacts.
+- Run `.\.venv\Scripts\python.exe -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH]` after writing bundle artifacts.
 - If the validator fails, stop and correct the confidence drift before continuing.
 
 Fallback (detailed):
@@ -255,7 +259,7 @@ Gate interpretation rules:
 - Do not downgrade a source from `high` to `medium/low` unless the gate records explicit evidence.
 - A `high` confidence source with non-blocking caveats can still pass planning usability and fidelity usability.
 - Vera G0 must respect operator exclusion directives: content excluded by directive is not an omission.
-- If a receipt is written, re-run `py -3.13 -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH] --receipt [BUNDLE_PATH]/ingestion-quality-gate-receipt.md` before finalizing.
+- If a receipt is written, re-run `.\.venv\Scripts\python.exe -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH] --receipt [BUNDLE_PATH]/ingestion-quality-gate-receipt.md` before finalizing.
 
 Fallback (detailed):
 - If any dimension fails or G0 fails:
@@ -471,7 +475,7 @@ Required outputs under [BUNDLE_PATH]:
 Run internal Vera G3 before Gate 2.
 
 Mandatory technical gate before Gate 2 approval:
-- `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
 
 If validator `status: fail`:
 - report exact `errors`
@@ -584,7 +588,7 @@ Required Marcus behavior before delegation:
 Canonical Marcus prep command:
 
 ```powershell
-py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py `
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py `
   --bundle [BUNDLE_PATH]
 ```
 
@@ -652,7 +656,7 @@ Script-level parameters (from narration-script-parameters.yaml):
 ### Post-Pass-2 completeness validation
 
 After Irene completes Pass 2, run the handoff validator:
-- `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
 
 This confirms:
 - perception_artifacts present and aligned 1:1 with Gary slide_ids

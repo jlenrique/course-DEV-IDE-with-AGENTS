@@ -120,7 +120,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 1. **Generate** (from repo root, paths adjusted to the run bundle):
 
-   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--segment-manifest <manifest.yaml>] [--related-assets <assets.json|yaml>] [--print-summary]`
+   `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/generate-storyboard.py generate --payload <gary-dispatch.json|yaml> --out-dir <bundle-dir> [--asset-base <dir>] [--segment-manifest <manifest.yaml>] [--related-assets <assets.json|yaml>] [--print-summary]`
 
    - Writes `<bundle-dir>/storyboard/storyboard.json` and `.../index.html` (`storyboard_version` 3; `storyboard_view` is `slides_only` or `slides_with_script`).
    - Resolve local PNGs with `--asset-base` when `file_path` is relative to something other than the payload’s directory.
@@ -133,7 +133,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 3. **Share/export (self-contained snapshot):** When the operator wants to share the storyboard outside the repo, export a sanitized snapshot from the canonical manifest:
 
-   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py export --manifest <bundle-dir>/storyboard/storyboard.json`
+   `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/generate-storyboard.py export --manifest <bundle-dir>/storyboard/storyboard.json`
 
    - Writes a self-contained folder under repo-root `exports/storyboard-<RUN_ID>/` plus a deterministic zip at `exports/storyboard-<RUN_ID>.zip`.
    - The exported `index.html` lives at the snapshot root for simple browser-open and Pages hosting.
@@ -142,7 +142,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 4. **Publish (GitHub Pages snapshot):** For tracked/default runs with `GITHUB_PAGES_TOKEN` and a discoverable `site_repo_url`, publish the exact same snapshot tree to the managed public repo:
 
-   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py publish --manifest <bundle-dir>/storyboard/storyboard.json`
+   `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/generate-storyboard.py publish --manifest <bundle-dir>/storyboard/storyboard.json`
 
    - Default destination subtree: `assets/storyboards/<RUN_ID>/`
    - The zip and the published site tree are intentionally the same snapshot shape.
@@ -151,13 +151,13 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 5. **Summarize (manifest-only):** Marcus reads aloud the same recap the tool would print:
 
-   `python skills/bmad-agent-marcus/scripts/generate-storyboard.py summarize --manifest <bundle-dir>/storyboard/storyboard.json`
+   `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/generate-storyboard.py summarize --manifest <bundle-dir>/storyboard/storyboard.json`
 
 6. **Confirm in chat:** Operator explicitly approves after the recap (count, first/last `slide_id`, fidelity counts). In tracked/default runs, do this only after `validate-gary-dispatch-ready.py` returns clean for the dispatch payload.
 
 7. **Authorize (fail closed on overwrite):**
 
-   `python skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py --manifest <bundle-dir>/storyboard/storyboard.json --run-id <RUN_ID> --output <bundle-dir>/authorized-storyboard.json`
+   `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py --manifest <bundle-dir>/storyboard/storyboard.json --run-id <RUN_ID> --output <bundle-dir>/authorized-storyboard.json`
 
    - If `--output` already exists, the script **exits with error** and does not overwrite.
 

@@ -39,10 +39,10 @@ When a **completed assembly bundle** is ready (audio, captions, ElevenLabs summa
 
 1. Run `sync-visuals` (updates `visual_file` paths in the manifest in place, preserving YAML layout):
 
-   `python skills/compositor/scripts/compositor_operations.py sync-visuals path/to/manifest.yaml`
+   `.\.venv\Scripts\python.exe skills/compositor/scripts/compositor_operations.py sync-visuals path/to/manifest.yaml`
 
    Stills land in `path/to/visuals/` (override with `--subdir`).
 
 2. Regenerate the assembly guide so paths point at the localized copies:
 
-   `python skills/compositor/scripts/compositor_operations.py guide path/to/manifest.yaml path/to/DESCRIPT-ASSEMBLY-GUIDE.md`
+   `.\.venv\Scripts\python.exe skills/compositor/scripts/compositor_operations.py guide path/to/manifest.yaml path/to/DESCRIPT-ASSEMBLY-GUIDE.md`

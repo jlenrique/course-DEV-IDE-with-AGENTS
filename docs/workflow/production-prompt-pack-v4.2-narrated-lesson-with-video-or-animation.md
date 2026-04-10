@@ -40,6 +40,10 @@ Primary contract references:
 - `state/config/fidelity-contracts/`
 - `_bmad-output/planning-artifacts/motion-enhanced-workflow-design.md`
 
+Execution convention:
+- Use the repo-local interpreter for every repo command in this prompt pack: `.\.venv\Scripts\python.exe`
+- Do not rely on global `python`, `py`, or bare `pytest` during production operations.
+
 ---
 
 ## Run Constants (set once)
@@ -80,8 +84,8 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 6. Motion + double-dispatch readiness summary.
 
 Required commands:
-- `py -3.13 -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --output [BUNDLE_PATH]/preflight-results.json`
-- `py -3.13 -m scripts.utilities.venv_health_check`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --output [BUNDLE_PATH]/preflight-results.json`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `DOUBLE_DISPATCH: true`, also require double-dispatch compatibility confirmation from preflight runner before proceeding.
 
 Required write:
@@ -159,7 +163,7 @@ Required artifacts:
 - `[BUNDLE_PATH]/ingestion-evidence.md`
 
 Required validator:
-- `py -3.13 -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH]`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH]`
 
 Fallback:
 - If any planning-critical area is medium/low confidence, stop for targeted remediation before Prompt 4.
@@ -318,7 +322,7 @@ Required outputs:
 
 Required validation:
 - Vera G3 on every dispatch set produced
-- `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
 - PNG export-to-card mapping validation (ensure slide_XX.png matches card number XX)
 - If `DOUBLE_DISPATCH: true`, run the same validator against `[BUNDLE_PATH]/gary-dispatch-result-B.json`
 
@@ -375,7 +379,7 @@ Required write:
 Authorization command:
 
 ```powershell
-python skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
   --manifest [BUNDLE_PATH]/storyboard/storyboard.json `
   --run-id [RUN_ID] `
   --output [BUNDLE_PATH]/authorized-storyboard.json `
@@ -416,7 +420,7 @@ Required writes:
 Required commands:
 
 ```powershell
-python skills/production-coordination/scripts/motion_plan.py build `
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/motion_plan.py build `
   --authorized-storyboard [BUNDLE_PATH]/authorized-storyboard.json `
   --output [BUNDLE_PATH]/motion_plan.yaml `
   --designations-output [BUNDLE_PATH]/motion-designations.json `
@@ -426,7 +430,7 @@ python skills/production-coordination/scripts/motion_plan.py build `
 ```
 
 ```powershell
-python skills/production-coordination/scripts/motion_plan.py apply `
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/motion_plan.py apply `
   --motion-plan [BUNDLE_PATH]/motion_plan.yaml `
   --designations [BUNDLE_PATH]/motion-designations.json `
   --output [BUNDLE_PATH]/motion_plan.yaml
@@ -435,7 +439,7 @@ python skills/production-coordination/scripts/motion_plan.py apply `
 Optional routing summary:
 
 ```powershell
-python skills/production-coordination/scripts/motion_plan.py route `
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/motion_plan.py route `
   --motion-plan [BUNDLE_PATH]/motion_plan.yaml
 ```
 
@@ -464,7 +468,7 @@ Required outcomes:
 Recommended authoritative command for `video` rows:
 
 ```powershell
-python skills/production-coordination/scripts/run_motion_generation.py `
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/run_motion_generation.py `
   --motion-plan [BUNDLE_PATH]/motion_plan.yaml `
   --slide-id [AUTHORIZED_SLIDE_ID]
 ```
@@ -477,7 +481,7 @@ Expected receipts per generated slide:
 Recommended inspection-pack command after generation/import settles:
 
 ```powershell
-py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py `
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py `
   --bundle [BUNDLE_PATH]
 ```
 
@@ -541,7 +545,7 @@ Required Marcus behavior before delegation:
 Canonical Marcus prep command:
 
 ```powershell
-py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py `
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py `
   --bundle [BUNDLE_PATH]
 ```
 
@@ -567,7 +571,7 @@ Required Pass 2 timing metadata per segment:
 - `bridge_type`
 
 Required validation:
-- `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
 - Vera G4
 
 Validator expectations at this stage:
@@ -612,7 +616,7 @@ Required behavior:
 
 Required command (example):
 ```powershell
-python skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
   --manifest [BUNDLE_PATH]/storyboard/storyboard.json `
   --run-id [RUN_ID] `
   --output [BUNDLE_PATH]/authorized-storyboard.json `
@@ -730,7 +734,7 @@ Required Marcus behavior:
 Suggested command surface:
 
 ```powershell
-python skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-preview `
+.\.venv\Scripts\python.exe skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-preview `
   --mode [continuity_preview|default_plus_alternatives|description_driven_search] `
   --locked-manifest [BUNDLE_PATH]/segment-manifest.yaml `
   --locked-script [BUNDLE_PATH]/narration-script.md `
@@ -749,7 +753,7 @@ Required writes:
 Suggested decision command surface:
 
 ```powershell
-python skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-select `
+.\.venv\Scripts\python.exe skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-select `
   [BUNDLE_PATH]/voice-preview-options.json `
   --selected-voice-id [VOICE_ID] `
   --output-path [BUNDLE_PATH]/voice-selection.json `
@@ -828,7 +832,7 @@ Voice rules:
 Suggested command surface:
 
 ```powershell
-python skills/elevenlabs-audio/scripts/elevenlabs_operations.py manifest `
+.\.venv\Scripts\python.exe skills/elevenlabs-audio/scripts/elevenlabs_operations.py manifest `
   [BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml `
   --output-dir [BUNDLE_PATH]/assembly-bundle `
   --voice-selection [BUNDLE_PATH]/voice-selection.json `

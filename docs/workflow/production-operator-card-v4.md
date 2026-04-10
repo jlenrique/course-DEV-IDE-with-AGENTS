@@ -11,12 +11,16 @@ Contracts and validators:
 - `skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py`
 - `skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py`
 - `skills/bmad-agent-marcus/scripts/validate-source-bundle-confidence.py` (loads `run-constants.yaml` when present)
-- `python -m scripts.utilities.run_constants --bundle-dir <bundle>` (optional path verification: `--verify-paths`)
+- `.\.venv\Scripts\python.exe -m scripts.utilities.run_constants --bundle-dir <bundle>` (optional path verification: `--verify-paths`)
 
 Session launcher:
 - `docs/workflow/production-session-launcher.md`
 
 VS Code users: use the same production session launcher prompt. VS Code tasks for preflight are defined in `.vscode/tasks.json` (`APP: Session Readiness + Preflight`).
+
+Interpreter rule:
+- Use `.\.venv\Scripts\python.exe` for repo-local commands on this card.
+- Do not use global `py`, `python`, or bare `pytest` during production operations.
 
 ---
 
@@ -54,11 +58,11 @@ Fast path:
 
 ### 1. Prompt 1: Preflight
 - Run:
-  - `py -3.13 -m scripts.utilities.app_session_readiness --with-preflight --format json`
-  - `py -3.13 -m scripts.utilities.venv_health_check`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.app_session_readiness --with-preflight --format json`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `MOTION_ENABLED: true`, require motion-capable readiness path:
-  - `py -3.13 -m scripts.utilities.app_session_readiness --with-preflight --motion-enabled --json-only`
-  - `py -3.13 skills/pre-flight-check/scripts/preflight_runner.py --motion-enabled`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.app_session_readiness --with-preflight --motion-enabled --json-only`
+  - `.\.venv\Scripts\python.exe skills/pre-flight-check/scripts/preflight_runner.py --motion-enabled`
 - Require all invoked checks to return `overall_status = pass`.
 - Write `preflight-results.json`.
 - Go/no-go: no go on any warn/fail.
@@ -126,7 +130,7 @@ Fast path:
 - If composite fallback fired, verify the center-crop framing is acceptable for the specific image.
 - Run G3.
 - Run strict validator:
-  - `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
+  - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
 - Save validator output:
   - `gary-dispatch-validation-result.json`
 - Confirm Storyboard A artifacts and approval:
@@ -165,7 +169,7 @@ Fast path:
 - Confirm `video` slides route to Kling and `animation` slides route to manual animation import.
 - Confirm non-static rows acquire concrete asset paths and no intended row remains unresolved.
 - Build the reviewer-facing inspection pack:
-  - `py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle [BUNDLE_PATH]`
+  - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle [BUNDLE_PATH]`
 - Confirm over-budget clips either downgrade once (`pro -> std`) or pause the run for operator action.
 - Go/no-go: no go on silent partial continuation.
 
@@ -179,11 +183,11 @@ Fast path:
   - order 1..N, file_path present, source_ref present, perception_artifacts aligned, artifacts consistent
   - if `MOTION_ENABLED: true`, `motion_plan.yaml` fully covers the authorized deck
 - Regenerate the handoff with the canonical Marcus helper before Irene runs:
-  - `py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle [BUNDLE_PATH]`
+  - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle [BUNDLE_PATH]`
 - Confirm `pass2-prep-receipt.json` exists and any stale prior Pass 2 root artifacts were archived under `recovery/archive/pass2-reruns/`.
 - Delegate Irene Pass 2.
 - Validate handoff envelope:
-  - `py -3.13 skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
+  - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
   - confirm the validator passes the stricter Pass 2 semantics:
     - every authorized slide has at least one manifest segment
     - every segment has non-empty `narration_text`

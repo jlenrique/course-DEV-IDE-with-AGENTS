@@ -20,7 +20,7 @@ The production pipeline has four mandatory human checkpoints. Each gate has defi
 ### HIL Gate 2 — Slides Review
 **Timing:** After Gary generates slides; before Irene Pass 2
 **Pre-approval technical gate:**
-- Run `py -3.13 skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload <gary-dispatch-result.json>`
+- Run `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload <gary-dispatch-result.json>`
 - Require `status: pass` before presenting approval decision options
 **Dispatch checks enforced:** non-empty `file_path`, non-empty `source_ref`, non-empty slide set, contiguous `card_number` sequence `1..N`
 **What to review:** Gary's Gamma slide PNGs (visual quality, brand compliance, content accuracy, layout clarity)

@@ -87,13 +87,13 @@ Run the production preflight skill/commands.
 Canonical command (VS Code terminal or terminal):
 
 ```
-.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight
+.\.venv\Scripts\python.exe -m scripts.utilities.app_session_readiness --with-preflight
 ```
 
 Alternate (JSON log output):
 
 ```
-.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
+.\.venv\Scripts\python.exe -m scripts.utilities.app_session_readiness --with-preflight --json-only
 ```
 
 Tracked/default run rule:
@@ -151,8 +151,8 @@ Mandatory anti-drift confirmations for this session:
 - Storyboard A is required after Gary dispatch and before Gate 2 approval.
 - Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
 - Motion-enabled shifts should use the canonical Marcus helpers rather than ad hoc file edits:
-  - `py -3.13 skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle <bundle-dir>`
-  - `py -3.13 skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle <bundle-dir>`
+  - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle <bundle-dir>`
+  - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle <bundle-dir>`
 - If media tooling needs `ffmpeg`, check `resources/tool-inventory/local-binary-paths.md` and the repo resolver in `scripts/utilities/ffmpeg.py` before assuming the binary is absent.
 
 For this shift, define:

@@ -1,0 +1,43 @@
+{
+  "bundle_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle",
+  "authorized_storyboard_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/authorized-storyboard.json",
+  "expected_outputs": [
+    "narration-script.md",
+    "segment-manifest.yaml",
+    "perception-artifacts.json"
+  ],
+  "gary_slide_output": [
+    {
+      "slide_id": "s-1",
+      "card_number": 1,
+      "file_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/slide-01.png",
+      "source_ref": "slide-brief.md#Slide 1"
+    },
+    {
+      "slide_id": "s-2",
+      "card_number": 2,
+      "file_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/slide-02.png",
+      "source_ref": "slide-brief.md#Slide 2"
+    }
+  ],
+  "perception_artifacts": [
+    {
+      "slide_id": "s-1",
+      "source_image_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/slide-01.png",
+      "visual_elements": [
+        {
+          "description": "Main Concept"
+        }
+      ]
+    },
+    {
+      "slide_id": "s-2",
+      "source_image_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/slide-02.png",
+      "visual_elements": [
+        {
+          "description": "Rephrased Concept"
+        }
+      ]
+    }
+  ]
+}

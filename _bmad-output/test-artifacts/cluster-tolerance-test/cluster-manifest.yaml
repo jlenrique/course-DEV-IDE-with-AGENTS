@@ -1,0 +1,48 @@
+segments:
+  - id: "seg-01"
+    gary_slide_id: "s-1"
+    gary_card_number: 1
+    narration_text: "This is the head slide establishing the concept."
+    behavioral_intent: "credible"
+    visual_file: "slide-01.png"
+    visual_references:
+      - element: "Main Concept"
+        location_on_slide: "center"
+        narration_cue: "notice the main concept"
+        perception_source: "s-1"
+    motion_type: "static"
+    motion_asset_path: null
+    motion_status: null
+    cluster_id: "c1"
+    cluster_role: "head"
+    cluster_position: "establish"
+    parent_slide_id: null
+    interstitial_type: null
+    isolation_target: null
+    narrative_arc: "From confusion to clarity"
+    cluster_interstitial_count: 1
+    double_dispatch_eligible: true
+  - id: "seg-02"
+    gary_slide_id: "s-2"
+    gary_card_number: 2
+    narration_text: "This interstitial deepens understanding by rephrasing the concept."
+    behavioral_intent: "credible"
+    visual_file: "slide-02.png"
+    visual_references:
+      - element: "Rephrased Concept"
+        location_on_slide: "center"
+        narration_cue: "notice the rephrased concept"
+        perception_source: "s-2"
+    motion_type: "static"
+    motion_asset_path: null
+    motion_status: null
+    cluster_id: "c1"
+    cluster_role: "interstitial"
+    cluster_position: "develop"
+    develop_type: "reframe"
+    parent_slide_id: "s-1"
+    interstitial_type: "emphasis-shift"
+    isolation_target: "Rephrased Concept"
+    narrative_arc: "From confusion to clarity"
+    cluster_interstitial_count: 1
+    double_dispatch_eligible: false

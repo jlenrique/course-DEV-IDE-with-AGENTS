@@ -44,6 +44,7 @@ These specialists are guidance-only (manual-tool pattern): no API runtime, no wo
 
 | Skill | Path | Purpose | Status |
 |-------|------|---------|--------|
+| **Desmond** | `skills/bmad-agent-desmond/` | Descript finishing: assembly-handoff instructions, doc cache refresh, mandatory **Automation Advisory** (REST vs MCP vs manual); sanctum `_bmad/memory/bmad-agent-desmond/` (local) | Active |
 | **Pre-flight check** | `skills/pre-flight-check/` | MCP/API/doc-sources connectivity verification before production runs | Active |
 | **Woodshed** | `skills/woodshed/` | Exemplar-driven agent skill development — study, reproduce, compare, reflect, regress (faithful + creative modes) | Active |
 | **Production coordination** | `skills/production-coordination/` | Workflow stages, delegation, mode management, style guide | Active |
@@ -60,6 +61,7 @@ These specialists are guidance-only (manual-tool pattern): no API runtime, no wo
 - **ElevenLabs**: REST API with xi-api-key header; store `ELEVENLABS_API_KEY` in `.env`.
 - **Qualtrics**: REST API with X-API-TOKEN header; store `QUALTRICS_API_TOKEN` and `QUALTRICS_DATACENTER` in `.env`.
 - **CourseArc**: Confirm with your account team whether any **content export or REST** access exists beyond the UI; plan on **LTI embedding in Canvas** and/or **SCORM** for delivery workflows.
+- **Descript**: REST API `https://descriptapi.com/v1` — Bearer token; store `DESCRIPT_API_KEY` in `.env` (see `docs/admin-guide.md`). Remote MCP for assistants: `https://api.descript.com/v2/mcp` (OAuth/connector per Descript help). Doc snapshots: `skills/bmad-agent-desmond/references/cache/` via `scripts/refresh_descript_reference.py`.
 
 Secrets stay in `.env` or your password manager; never commit tokens.
 

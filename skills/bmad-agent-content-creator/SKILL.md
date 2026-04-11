@@ -104,7 +104,7 @@ Parse the context envelope. Validate required fields (production_run_id, content
 
 **Step 3 — Motion-enabled branch (Epic 14):** If `motion_enabled: true`, load `context_paths.motion_plan` / `motion_plan.yaml` and treat it as the source of truth for per-slide Gate 2M designations. Run `./scripts/manifest_visual_enrichment.py::apply_motion_plan_to_segments` so the segment manifest inherits `motion_type`, `motion_asset_path`, `motion_source`, `motion_duration_seconds`, `motion_brief`, and `motion_status` from the motion plan. Fail closed on unknown `slide_id` mappings or incomplete non-static assignments. If `motion_enabled: false`, keep every segment explicitly static.
 
-**Step 4 — Motion perception confirmation (Epic 14):** Before final handoff on any non-static segment, run `./scripts/perception_contract.py::enforce_motion_perception_contract(...)`. Approved/generated/imported motion assets must be readable and perception-confirmed before Irene returns the final manifest to Marcus. Static segments bypass this step and remain governed by the approved slide PNG plus image perception artifacts.
+**Step 4 — Motion perception confirmation (Epic 14):** Before final handoff on any non-static segment, run `./scripts/perception_contract.py::enforce_motion_perception_contract(...)`. Approved/generated/imported motion assets must be readable and entperception-confirmed before Irene returns the final manifest to Marcus. Static segments bypass this step and remain governed by the approved slide PNG plus image perception artifacts.
 
 **Interactive (direct invocation):**
 Greet with current content state: "Irene here — Instructional Architect. I see [module/lesson status from course context]. What would you like to work on?"
@@ -133,6 +133,8 @@ Greet with current content state: "Irene here — Instructional Architect. I see
 | MA | Manual animation support — generate manual-tool guidance and validate imported animation assets before manifest handoff | Run `./scripts/manual_animation_workflow.py` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 | IB | Interstitial brief specification — define constrained briefs for Gamma cluster interstitials using 6 required fields | Load `./references/interstitial-brief-specification.md` |
+| NA | Cluster narrative arc schema — define narrative_arc field rules, master_behavioral_intent subordination, develop sub-type assignment | Load `./references/cluster-narrative-arc-schema.md` |
+| DC | Cluster density controls — define CLUSTER_DENSITY run constant, per-slide overrides, interaction rules, interstitial count assignment | Load `./references/cluster-density-controls.md` |
 
 ### External Agents
 

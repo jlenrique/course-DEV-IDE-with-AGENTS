@@ -58,8 +58,9 @@ segments:
      parent_slide_id: string | null   # set on interstitials, references the head slide
      interstitial_type: enum | null   # reveal | emphasis-shift | bridge-text | simplification | pace-reset
      isolation_target: string | null  # specific element surfaced from the head slide
-     narrative_arc: string | null     # one-sentence cluster arc, set on head and inherited by cluster members
-     cluster_interstitial_count: int | null  # recommended count for the cluster, 1-3
+      narrative_arc: string | null     # one-sentence cluster arc, set on head and inherited by cluster members
+      master_behavioral_intent: enum | null  # cluster-level behavioral directive (credible, alarming, provocative, reflective, moving, clear-guidance, attention-reset), set on head and inherited by cluster members
+      cluster_interstitial_count: int | null  # recommended count for the cluster, 1-3
      double_dispatch_eligible: boolean | null  # default true, set false for interstitials in MVP
      # ── Written back by ElevenLabs agent ──
     narration_duration: float | null    # seconds
@@ -174,6 +175,7 @@ Default behavior remains additive and backward compatible:
 | `interstitial_type` | enum | nullable | Visual strategy: `reveal` (zoom/isolate), `emphasis-shift` (highlight one element), `bridge-text` (key phrase), `simplification` (reduce complexity), `pace-reset` (rest visual) |
 | `isolation_target` | string | nullable | Specific element from head slide to surface (e.g., "working memory box") |
 | `narrative_arc` | string | nullable | One-sentence emotional journey (e.g., "From confusion to clarity through progressive disclosure") |
+| `master_behavioral_intent` | enum | nullable | Cluster-level behavioral directive inherited by cluster members: `credible`, `alarming`, `provocative`, `reflective`, `moving`, `clear-guidance`, or `attention-reset` |
 | `cluster_interstitial_count` | int | nullable | Planned interstitial count for cluster (1-3) |
 | `double_dispatch_eligible` | boolean | nullable | Whether segment can use double-dispatch; defaults true, false for interstitials in MVP |
 

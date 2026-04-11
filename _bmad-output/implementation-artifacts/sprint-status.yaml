@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-11  # Epics 19-24 added for interstitial cluster MVP. Story 19.1 context created.
+last_updated: 2026-04-11  # Epic 20A review lane reconciled. 20a-1/2/3/4 done; 20a-5 deferred ready-for-dev; 20b-1 is the next implementation target.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -228,7 +228,6 @@ development_status:
   16-1-autonomy-evidence-baseline-decision-framework: backlog
   16-2-shared-governance-enforcement-utilities: backlog
   16-3-expanded-handoff-validators-late-stage: backlog
-  16-4-contract-linting-drift-protection: backlog
   16-5-marcus-autonomous-routing-routine-decisions: backlog
   epic-16-retrospective: optional
 
@@ -261,7 +260,7 @@ development_status:
   # tolerance required before Irene/Gary can plan and dispatch clustered presentations.
   epic-19: in-progress
   19-1-segment-manifest-cluster-schema-extension: done
-  19-2-gary-dispatch-contract-extensions: backlog
+  19-2-gary-dispatch-contract-extensions: ready-for-dev
   19-3-fidelity-gate-contract-updates: backlog
   19-4-validator-hardening-cluster-aware-payloads: backlog
   epic-19-retrospective: optional
@@ -270,16 +269,16 @@ development_status:
   # Defines the editorial decision model and brief quality bar for clustered presentations.
   epic-20a: in-progress
   20a-1-cluster-decision-criteria: done
-   20a-2-interstitial-brief-specification-standard: review
-  20a-3-cluster-narrative-arc-schema: backlog
-  20a-4-operator-cluster-density-controls: backlog
-  20a-5-retrofit-exemplar-library: backlog
+  20a-2-interstitial-brief-specification-standard: done
+  20a-3-cluster-narrative-arc-schema: done
+  20a-4-operator-cluster-density-controls: done
+  20a-5-retrofit-exemplar-library: ready-for-dev  # MVP-deferred — execute after Storyboard A gate passes
   epic-20a-retrospective: optional
 
   # === EPIC 20B: Irene Cluster Intelligence - Implementation (Added 2026-04-11) ===
   # Implements Irene Pass 1 cluster planning and the structural quality gate before Gamma spend.
   epic-20b: backlog
-  20b-1-irene-pass1-cluster-planning-implementation: backlog
+  20b-1-irene-pass1-cluster-planning-implementation: ready-for-dev
   20b-2-cluster-plan-quality-gate-g1-5: backlog
   20b-3-narration-script-parameters-extension-for-clusters: backlog
   epic-20b-retrospective: optional

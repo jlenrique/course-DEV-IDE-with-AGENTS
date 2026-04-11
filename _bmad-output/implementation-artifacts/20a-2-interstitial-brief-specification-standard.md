@@ -1,7 +1,7 @@
 # Story 20a.2: Interstitial Brief Specification Standard
 
 **Epic:** 20A - Irene Cluster Intelligence - Design & Specification
-**Status:** ready-for-dev
+**Status:** done
 **Sprint key:** `20a-2-interstitial-brief-specification-standard`
 **Added:** 2026-04-11
 **Validated:** 2026-04-11

@@ -34,7 +34,7 @@ Clusters are used when a single slide cannot effectively communicate a concept w
 - Dense text blocks that could be broken into digestible chunks
 - Complex diagrams that hide important details
 - Overloaded slides where elements reinforce rather than clarify
-
+nciple
 **Low Visual Complexity Indicators:**
 - Clean, focused visual hierarchy
 - Single dominant element with supporting context
@@ -71,6 +71,8 @@ Clusters are used when a single slide cannot effectively communicate a concept w
 - Time constraints (e.g., "limit to essential clusters only")
 
 **Framework Role:** Operator input can override algorithmic recommendations but should be evaluated against pedagogical merit. The framework should note when overrides align with or contradict the other criteria.
+
+**Implementation:** Operator input is quantified through `CLUSTER_DENSITY` run constant and per-slide overrides. See [cluster-density-controls.md](cluster-density-controls.md) for the complete operator control schema.
 
 ## Decision Framework
 
@@ -134,6 +136,10 @@ For the initial three-cluster Storyboard-A proof:
 ## Integration with Existing Frameworks
 
 This criteria extends the existing pedagogical framework by adding clustering as a decomposition strategy. It complements runtime variability decisions and should be considered alongside existing timing and sequencing guidance.
+
+## Next Step
+
+After confirming cluster head decisions, assign narrative arc and behavioral intent per [cluster-narrative-arc-schema.md](cluster-narrative-arc-schema.md).
 
 ## Future Extensions
 

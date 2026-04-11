@@ -1,13 +1,12 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> Current objective: interstitial slide cluster MVP implementation begun; continue with review and next story.
+> Current objective: Epic 20A design checkpoint is reconciled and closed; begin Epic 20B implementation from a clean, parseable sprint ledger.
 
-## Current State (as of 2026-04-11 01:43 America/New_York)
+## Current State (as of 2026-04-11)
 
 - Active branch: `DEV/slides-redesign`
-- Branch base commit at session close: `d00dfb0a37931240becf6e4870b77280b346e172`
-- Session objective reached: assessed readiness, implemented and completed story 20a-2
+- Session objective reached: repaired sprint ledger corruption, reconciled Epic 20A status truth, and closed review on 20a-2, 20a-3, and 20a-4
 - Testbed locked: **C1M1, part 1 of APC**
 - MVP shape locked:
   - exactly **3 clusters**
@@ -19,59 +18,45 @@
 ## Immediate Next Action
 
 1. Stay on `DEV/slides-redesign`.
-2. Review code-review feedback on 20a-2 if any, mark as done.
-3. Proceed to next story in epic-20a: `20a-3-cluster-narrative-arc-schema` or check sprint-status.yaml for available stories.
-4. Consider implementing `19-1-segment-manifest-cluster-schema-extension.md` if schema work becomes priority.
+2. Start `20b-1-irene-pass1-cluster-planning-implementation`.
+3. Keep `20a-5-retrofit-exemplar-library` deferred until Storyboard A produces real clustered output.
+4. After any future sprint ledger edit, run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py` before updating handoff docs.
 
 ## Session Outcomes Completed
 
-### 1. Readiness Assessment
+### 1. Root Cause and Tracker Repair
 
-- Assessed bmad-check-implementation-readiness report for Epics 19-24
-- Verified patches applied: P1 (YAML), P2 (20a-1 status)
-- Confirmed foundation: schema tested, criteria delivered
-- Verdict: READY
+- Root cause: `sprint-status.yaml` was being manually edited during session closeout without a mandatory parse check, which allowed a stray leading space to corrupt YAML and drift from story-file status truth
+- Fixed the malformed `20a-3` sprint entry and reconciled status truth across the sprint ledger, story files, and handoff docs
+- Added a shutdown guardrail in `bmad-session-protocol-session-WRAPUP.md`
+- Strengthened `tests/test_sprint_status_yaml.py` so parseability and current cluster-story status alignment are regression-checked together
 
-### 2. Story 20a-2 Implementation Complete
+### 2. Epic 20A Review Lane Closed
 
-- `20a-2-interstitial-brief-specification-standard: review`
-- Created interstitial brief specification reference with 6 fields, examples, C1M1 context
-- Updated Irene SKILL.md and delegation-protocol.md
-- All ACs satisfied
+- `20a-2-interstitial-brief-specification-standard: done`
+- `20a-3-cluster-narrative-arc-schema: done`
+- `20a-4-operator-cluster-density-controls: done`
+- `20a-5-retrofit-exemplar-library: ready-for-dev` and still intentionally deferred
 
-### 3. Sprint tracker updated
+### 3. Sprint Tracker Current State
 
-- `_bmad-output/implementation-artifacts/sprint-status.yaml`
-
-Current statuses:
 - `epic-19: in-progress`
 - `19-1-segment-manifest-cluster-schema-extension: done`
+- `19-2-gary-dispatch-contract-extensions: ready-for-dev`
 - `epic-20a: in-progress`
 - `20a-1-cluster-decision-criteria: done`
-- `20a-2-interstitial-brief-specification-standard: review`
+- `20a-2-interstitial-brief-specification-standard: done`
+- `20a-3-cluster-narrative-arc-schema: done`
+- `20a-4-operator-cluster-density-controls: done`
+- `20a-5-retrofit-exemplar-library: ready-for-dev`
+- `20b-1-irene-pass1-cluster-planning-implementation: ready-for-dev`
 
 ## Working Assumptions Locked
 
-- Interstitial-cluster work is active production track
-- Design stories (20a) before implementation (20b)
-- Maintain dependency order: design → schema → dispatch
-
-## Uncommitted Workspace State
-
-Expected local changes at next open:
-
-- modified:
-  - `_bmad-output/implementation-artifacts/sprint-status.yaml`
-  - `skills/bmad-agent-content-creator/SKILL.md`
-  - `skills/bmad-agent-content-creator/references/delegation-protocol.md`
-  - `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
-- untracked:
-  - `skills/bmad-agent-content-creator/references/interstitial-brief-specification.md`
-  - `_bmad-output/brainstorming/party-mode-narrated-slides-enhancement-kickoff-2026-04-10.md`
-  - `_bmad-output/implementation-artifacts/19-1-segment-manifest-cluster-schema-extension.md`
-  - `_bmad-output/implementation-artifacts/20a-1-cluster-decision-criteria.md`
-  - `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
-  - `_bmad-output/planning-artifacts/interstitial-cluster-mvp-c1m1-storyboard-a.md`
+- Interstitial-cluster work is the active production track
+- Epic 20A design stories 20a-1 through 20a-4 are closed
+- `20a-5` remains intentionally deferred until after Storyboard A
+- Epic 20B is the next execution lane
 
 ## Resume Checklist
 
@@ -85,12 +70,13 @@ Then open:
 
 - `SESSION-HANDOFF.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
+- `_bmad-output/implementation-artifacts/20b-1-irene-pass1-cluster-planning-implementation.md`
+- `tests/test_sprint_status_yaml.py`
 
 ## Hot-Start Files
 
 - `SESSION-HANDOFF.md`
 - `next-session-start-here.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
-- `skills/bmad-agent-content-creator/references/interstitial-brief-specification.md`
+- `_bmad-output/implementation-artifacts/20b-1-irene-pass1-cluster-planning-implementation.md`
+- `tests/test_sprint_status_yaml.py`

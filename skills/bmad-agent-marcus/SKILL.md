@@ -204,6 +204,7 @@ Optional: `--strict` on `generate` exits non-zero when any slide has a **missing
 | Bespoke scientific/medical image prompting (manual-tool) | `midjourney-specialist` | active (Story 5.1) | Visual tone, realism constraints, style references, prohibited artifacts |
 | Storyline/Rise interaction authoring guidance (manual-tool) | `articulate-specialist` | active (Story 5.1) | Interaction rubric, branching criteria, remediation rules, SCORM standards |
 | Descript composition assembly guide | `compositor` | active | Completed segment manifest path with still and motion asset references |
+| Descript run-scoped operator brief + Automation Advisory (post-compositor) | `bmad-agent-desmond` (Desmond) | active | `assembly-bundle/` path, `DESCRIPT-ASSEMBLY-GUIDE.md`, run id, workflow template, motion flag, Quinn-R / operator notes; writes `DESMOND-OPERATOR-BRIEF.md` |
 | Fidelity verification — G0 (source bundle completeness) | `fidelity-assessor` (Vera) | active | Gate, bundle dir, source material paths, fidelity contracts path, run mode. See `./references/conversation-mgmt.md` for envelope spec. |
 | Fidelity verification — G1 (lesson plan vs. source bundle) | `fidelity-assessor` (Vera) | active | Gate, lesson plan path, bundle dir. Vera runs BEFORE Quinn-R — fidelity is a precondition for quality. |
 | Fidelity verification — G2 (slide brief vs. lesson plan) | `fidelity-assessor` (Vera) | active | Gate, slide brief path, lesson plan path. |
@@ -217,6 +218,6 @@ Optional: `--strict` on `generate` exits non-zero when any slide has a **missing
 | Survey/evaluation creation | `qualtrics-specialist` | active (Story 3.7) | Learning objectives, assessment constraints, deployment target, response requirements |
 | CourseArc deployment, LTI 1.3 embedding, SCORM and accessibility checks (manual-tool) | `coursearc-specialist` | active (Story 6.1) | LTI settings, SCORM package metadata, interaction accessibility checklist |
 
-**Descript manual-tool handoff:** After Compositor generates the Descript Assembly Guide (or Marcus constructs it from the manifest), Marcus hands the guide + all asset paths to the user for manual assembly in Descript. This is the only step not agent-executed. See `./references/conversation-mgmt.md` for handoff details.
+**Descript manual-tool handoff:** After Compositor generates the Descript Assembly Guide (or Marcus constructs it from the manifest), Marcus delegates to **Desmond** (`bmad-agent-desmond`) for **`DESMOND-OPERATOR-BRIEF.md`** (run-tailored Descript steps + mandatory **Automation Advisory**), then hands **compositor guide + Desmond brief + asset paths** to the user for manual assembly in Descript. Assembly in Descript remains human-executed. See `./references/conversation-mgmt.md` for handoff details and `skills/bmad-agent-desmond/references/automation-advisory.md` for advisory rules.
 
 When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter decisions to save.

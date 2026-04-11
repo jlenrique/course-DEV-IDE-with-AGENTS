@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "notes": "Enable sources one at a time after verifying URLs on descript.com / official API docs. Snapshots go to references/cache/.",
+  "sources": [
+    {
+      "id": "descript-help-home",
+      "url": "https://help.descript.com/",
+      "enabled": true,
+      "kind": "ui_help"
+    },
+    {
+      "id": "descript-api-docs",
+      "url": "https://docs.descriptapi.com/",
+      "enabled": true,
+      "kind": "api"
+    }
+  ]
+}

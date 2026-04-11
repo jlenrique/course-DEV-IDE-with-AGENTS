@@ -904,6 +904,31 @@ Required assembly-bundle contents:
 - `captions/`
 - `visuals/`
 
+Go/no-go:
+- do not advance to **15** until **14.5** completes successfully (Desmond operator brief written)
+
+---
+
+## 14.5) Desmond — Run-scoped Descript operator brief (required)
+
+Marcus delegates to **Desmond** (`skills/bmad-agent-desmond/`) immediately after compositor artifacts exist. Desmond translates the generic compositor guide into **Descript-product-specific** operator steps for **this run** and closes with a mandatory **`## Automation Advisory`** per `skills/bmad-agent-desmond/references/automation-advisory.md`.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/` (entire folder)
+- `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- `run_id`, workflow template (`narrated-deck-video-export`), segment count as relevant
+- Open notes: Quinn-R pre-composition receipt or path, plus **operator-accepted** advisory items
+- Any bundle-local approvals that constrain finishing (e.g. gate-3-approval)
+
+Required output:
+- **`[BUNDLE_PATH]/assembly-bundle/DESMOND-OPERATOR-BRIEF.md`** — same contract as motion pack: run header, Descript-native steps, per-segment callouts for this run, mandatory **`## Automation Advisory`**
+
+Fallback:
+- If Desmond is not invoked in-tool, Marcus (or the operator) still **writes** `DESMOND-OPERATOR-BRIEF.md` following those skill references.
+
+Required assembly-bundle contents (adds to 14):
+- `DESMOND-OPERATOR-BRIEF.md`
+
 ---
 
 ## 15) Operator Handoff - Descript Package Ready
@@ -914,14 +939,23 @@ Required handoff receipt:
 - run id
 - assembly bundle path
 - manifest path
-- Descript guide path
+- compositor guide path (`DESCRIPT-ASSEMBLY-GUIDE.md`)
+- **Desmond operator brief path** (`DESMOND-OPERATOR-BRIEF.md`)
+- **Automation advisory present** (yes — inside `DESMOND-OPERATOR-BRIEF.md` per 14.5)
 - audio status
 - captions status
 - visuals status
 - open notes, if any
 
+Required operator-facing instructions:
+- open **`DESMOND-OPERATOR-BRIEF.md`** for run-specific Descript steps; use **`DESCRIPT-ASSEMBLY-GUIDE.md`** for deterministic segment order and asset inventory
+- import assets from `audio/`, `captions/`, `visuals/`
+- follow manifest/guide segment order exactly
+- do not improvise new narration copy or new motion assets during Descript assembly
+- read **`## Automation Advisory`** before choosing scripted/API work vs manual finishing
+
 Completion condition:
-- this prompt pack's required path is complete once the assembly bundle and guide are ready for Descript handoff
+- this prompt pack's required path is complete once the assembly bundle contains **`DESCRIPT-ASSEMBLY-GUIDE.md`**, **`DESMOND-OPERATOR-BRIEF.md`** (with Automation Advisory), and all referenced media folders are ready for Descript handoff
 
 ---
 

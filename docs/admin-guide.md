@@ -136,7 +136,7 @@ All secrets live in `.env` at the project root. **Never commit this file.** Vari
 
 | Tool | Env Variable(s) | Notes |
 |------|-----------------|-------|
-| **Descript** | `DESCRIPT_API_KEY` | Early access, import/export only; narrated-slide work uses **repo-local assembly bundles** (manifest + `audio/` + `captions/` + `visuals/` + `DESCRIPT-ASSEMBLY-GUIDE.md`). Stills are copied into `visuals/` via compositor **`sync-visuals`** before editors import (see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli)). |
+| **Descript** | `DESCRIPT_API_KEY` | Early access, import/export only; narrated-slide work uses **repo-local assembly bundles** (manifest + `audio/` + `captions/` + `visuals/` + `DESCRIPT-ASSEMBLY-GUIDE.md` + **`DESMOND-OPERATOR-BRIEF.md`** from prompt **14.5** / `bmad-agent-desmond`). Stills are copied into `visuals/` via compositor **`sync-visuals`** before editors import (see [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli)). |
 | **Midjourney** | `MIDJOURNEY_API_KEY` | Third-party wrapper |
 | **CapCut** | `CAPCUT_API_KEY` | Official API status unclear |
 

@@ -25,8 +25,9 @@
    - **WPM violations** (4 segments exceed 170 WPM target): seg-01 (179.58), seg-03 (183.26), seg-06 (172.99), seg-07 (173.11)
    - **Motion duration mismatch** on seg-01: clip=5.041s vs narration=29.736s (delta −24.695s)
    - Remediation decision required before rerun — see Prompt 13 advisory/blocking rules in workflow doc
-3. After Prompt 13 passes: **Prompt 14: Compositor** — motion-aware assembly bundle + Descript guide.
-4. Then **Prompt 15: Operator Handoff** — final Descript package.
+3. After Prompt 13 passes: **Prompt 14: Compositor** — motion-aware assembly bundle + `DESCRIPT-ASSEMBLY-GUIDE.md`.
+4. **Prompt 14.5: Desmond** — write `assembly-bundle/DESMOND-OPERATOR-BRIEF.md` (run-tailored Descript steps + `## Automation Advisory`). See `skills/bmad-agent-desmond/`.
+5. **Prompt 15: Operator Handoff** — package complete only with compositor guide **and** Desmond brief.
 
 ## Session 3 Completed Work
 

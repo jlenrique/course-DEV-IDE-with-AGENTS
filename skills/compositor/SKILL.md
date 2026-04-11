@@ -15,6 +15,8 @@ This is a **skill**, not a specialist agent. Marcus invokes it after Quinn-R's p
 
 Compositor owns **composition planning execution quality**: deterministic manifest interpretation and clear assembly instructions for human execution in Descript.
 
+Downstream, **`bmad-agent-desmond` (Desmond)** produces **`DESMOND-OPERATOR-BRIEF.md`** (prompt pack **14.5**): run-tailored Descript vocabulary and a mandatory **Automation Advisory** — it does not replace this guide’s segment order or asset inventory.
+
 Compositor does not own instructional design decisions, source-faithfulness adjudication, or quality gate authority.
 
 ## Key Paths

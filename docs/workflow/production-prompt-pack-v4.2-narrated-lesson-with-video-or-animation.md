@@ -964,6 +964,35 @@ Motion-specific rules:
 Packaging rule:
 - use the actual compositor output layout for handoff: `visuals/` plus `motion/`
 
+Go/no-go:
+- do not advance to **15** until **14.5** completes successfully (Desmond operator brief written)
+
+---
+
+## 14.5) Desmond — Run-scoped Descript operator brief (required)
+
+Marcus delegates to **Desmond** (`skills/bmad-agent-desmond/`) immediately after compositor artifacts exist. Desmond translates the generic compositor guide into **Descript-product-specific** operator steps for **this run** and closes with a mandatory **`## Automation Advisory`** (REST API vs MCP vs CLI vs manual app) per `skills/bmad-agent-desmond/references/automation-advisory.md`.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/` (entire folder, including localized `visuals/` and `motion/`)
+- `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- `run_id`, workflow template (`narrated-lesson-with-video-or-animation`), `motion_enabled`, slide count / segment count as relevant
+- Open notes: Quinn-R pre-composition receipt or path (`quinnr-precomposition-review.json` or successor), plus **explicit operator-accepted** advisory items (e.g. post-production sync fixes)
+- Any bundle-local approvals that constrain finishing (e.g. `gate-3-approval.json`)
+
+Required output:
+- **`[BUNDLE_PATH]/assembly-bundle/DESMOND-OPERATOR-BRIEF.md`** containing:
+  - **Run header** — lesson title, run id, motion vs static summary, known finishing debt called out in plain language
+  - **Descript-native steps** — timeline/track language grounded in current team conventions (`_bmad/memory/bmad-agent-desmond/` when present) and doc cache under `skills/bmad-agent-desmond/references/cache/`
+  - **Per-segment reminders** where this run differs from a generic lesson (e.g. motion on specific slides, accepted WPM advisory)
+  - **`## Automation Advisory`** — required subsection classifying ingest, assembly, captions, audio polish, export/publish vs **Full / Partial / Manual** for **REST** (`descriptapi.com/v1`), **MCP** (`https://api.descript.com/v2/mcp`), **CLI**, and **Descript app**
+
+Fallback:
+- If Desmond is not invoked in-tool, Marcus (or the operator) still **writes** `DESMOND-OPERATOR-BRIEF.md` to the same contract by following the skill references above.
+
+Required assembly-bundle contents (adds to 14):
+- `DESMOND-OPERATOR-BRIEF.md`
+
 ---
 
 ## 15) Operator Handoff - Descript Package Ready
@@ -974,7 +1003,9 @@ Required handoff receipt:
 - run id
 - assembly bundle path
 - manifest path
-- Descript guide path
+- compositor guide path (`DESCRIPT-ASSEMBLY-GUIDE.md`)
+- **Desmond operator brief path** (`DESMOND-OPERATOR-BRIEF.md`)
+- **Automation advisory present** (yes — must be inside `DESMOND-OPERATOR-BRIEF.md` per 14.5)
 - audio status
 - captions status
 - visuals status
@@ -982,14 +1013,15 @@ Required handoff receipt:
 - open notes, if any
 
 Required operator-facing instructions:
-- open `DESCRIPT-ASSEMBLY-GUIDE.md`
+- open **`DESMOND-OPERATOR-BRIEF.md`** for **run-specific** Descript vocabulary and finishing callouts; use **`DESCRIPT-ASSEMBLY-GUIDE.md`** as the **deterministic** segment order, timings, and asset inventory from compositor
 - import assets from `audio/`, `captions/`, `visuals/`, and `motion/` when present
 - follow manifest/guide segment order exactly
 - treat the approved motion clip as the playback visual for non-static segments and the approved still as the poster/reference asset
 - do not improvise new narration copy or new motion assets during Descript assembly
+- read **`## Automation Advisory`** before choosing scripted/API work vs manual finishing
 
 Completion condition:
-- this prompt pack's required path is complete once the assembly bundle and guide are ready for Descript handoff
+- this prompt pack's required path is complete once the assembly bundle contains **`DESCRIPT-ASSEMBLY-GUIDE.md`**, **`DESMOND-OPERATOR-BRIEF.md`** (with Automation Advisory), and all referenced media folders are ready for Descript handoff
 
 Optional post-handoff operations:
 - append the run update to the trial log

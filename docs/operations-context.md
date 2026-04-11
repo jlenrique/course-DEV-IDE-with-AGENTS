@@ -19,6 +19,7 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 - Full tracked checklist: `docs/workflow/first-tracked-run-checklist.md`
 - Standard prompt pack: `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
 - Motion prompt pack: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- Descript handoff specialist (post-compositor, pre–operator handoff): `skills/bmad-agent-desmond/SKILL.md` — emits `assembly-bundle/DESMOND-OPERATOR-BRIEF.md` with **`## Automation Advisory`** (prompt **14.5** in both v4.1 and v4.2 packs)
 - Artifact contract: `docs/workflow/trial-run-pass2-artifacts-contract.md`
 - Gate ownership: `docs/fidelity-gate-map.md`
 - Judgment boundaries: `docs/lane-matrix.md`
@@ -26,6 +27,7 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 ## Run Invariants
 
 - Marcus is the user-facing orchestrator for production runs.
+- After compositor (**prompt 14**), **prompt 14.5** requires a **Desmond** operator brief (`DESMOND-OPERATOR-BRIEF.md`) before final Descript handoff (**prompt 15**); compositor output alone is not sufficient for pack completion.
 - Production runs use `tracked/default`, not `ad-hoc`.
 - Prompt 2A operator directives are mandatory before ingestion.
 - Prompt 6B blocks Prompt 7 until literal-visual operator readiness is explicit.

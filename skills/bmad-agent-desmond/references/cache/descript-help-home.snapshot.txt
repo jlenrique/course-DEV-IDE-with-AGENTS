@@ -1,0 +1,1396 @@
+---
+fetched_at: 2026-04-11T00:26:41Z
+source_id: descript-help-home
+url: https://help.descript.com/
+http_status: 200
+---
+
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <!-- v27211 -->
+
+
+  <title>Descript Help</title>
+
+  
+
+  <link rel="canonical" href="https://help.descript.com/hc/en-us">
+<link rel="alternate" hreflang="en-us" href="https://help.descript.com/hc/en-us">
+<link rel="alternate" hreflang="x-default" href="https://help.descript.com/hc/en-us">
+
+  <link rel="stylesheet" href="//static.zdassets.com/hc/assets/application-4f03043d3b7bad43ce9a304b007cb1a7.css" media="all" id="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="/hc/theming_assets/9876708/10116344337293/style.css?digest=44150007158541">
+
+  <link rel="icon" type="image/x-icon" href="/hc/theming_assets/01KG04SE565YKW9G581M7R6A42">
+
+    
+
+  <script>
+(function () {
+  try {
+    var path = (window.location && window.location.pathname) || "";
+    if (path.indexOf("/hc/") === 0 && path.indexOf("/comments/") !== -1) {
+      var m = document.createElement("meta");
+      m.setAttribute("name", "robots");
+      m.setAttribute("content", "noindex, nofollow"); // or "noindex, follow"
+      document.head.appendChild(m);
+    }
+  } catch (e) { /* no-op */ }
+})();
+</script>
+
+
+
+<meta name="google-site-verification" content="OyhyPvtYavrbir0tu5DvLhOwZt7ny0mwtkfjwuZH4aQ" />
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MTWQ8DJ');</script>
+<!-- End Google Tag Manager -->
+
+
+<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+<script type="text/javascript">window.Theme = Object.assign(window.Theme || {}, { assets: {}, locale: "en-us", signedIn: false });</script>
+<script type="text/javascript" src="/hc/theming_assets/01J1G332T8T1QV4XGK51SZ1Z7J"></script>
+
+<!-- Custom script to open and scroll cleanly -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const pendingHash = window.location.hash;
+    if (!pendingHash) return;
+
+    const anchorTarget = document.querySelector(pendingHash);
+    if (!anchorTarget) return;
+
+    const scrollToWithOffset = (el) => {
+  const rect = el.getBoundingClientRect();
+  const offset = rect.top + window.scrollY - 140; // 👈 try 120px as a starting point
+  window.scrollTo({ top: offset, behavior: 'smooth' });
+};
+
+    const isAccordionTitle = anchorTarget.classList.contains('accordion__item-title');
+    const accordionItem = anchorTarget.closest('.accordion__item');
+    const accordionTitle = accordionItem?.querySelector('.accordion__item-title');
+    const accordionContent = accordionItem?.querySelector('.accordion__item-content');
+    const anchorInsideAccordion = accordionContent?.contains(anchorTarget) && !isAccordionTitle;
+
+    // Force browser to start at the top
+    if (pendingHash) {
+      window.scrollTo(0, 0);
+    }
+
+    // Delay everything slightly so layout fully loads
+    setTimeout(() => {
+      // Case 1: scroll target is accordion title
+      if (isAccordionTitle && accordionContent) {
+        const isClosed = accordionContent.style.display === '' || accordionContent.style.display === 'none';
+
+        if (isClosed) {
+          anchorTarget.click();
+
+          // Wait for drawer + layout to complete
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              scrollToWithOffset(anchorTarget);
+            });
+          });
+        } else {
+          scrollToWithOffset(anchorTarget);
+        }
+        return;
+      }
+
+      // Case 2: scroll target is heading inside accordion
+      if (anchorInsideAccordion && accordionTitle) {
+        const isClosed = accordionContent.style.display === '' || accordionContent.style.display === 'none';
+
+        if (isClosed) {
+          accordionTitle.click();
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              scrollToWithOffset(anchorTarget);
+            });
+          });
+        } else {
+          scrollToWithOffset(anchorTarget);
+        }
+        return;
+      }
+
+      // Case 3: scroll to regular heading
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollToWithOffset(anchorTarget);
+        });
+      });
+    }, 300);
+  });
+</script>
+
+
+<link rel="stylesheet" href="/hc/theming_assets/01J1G3354WJ5AGZH4MNHPDM5EA">
+<link rel="stylesheet" href="/hc/theming_assets/01J1G336PJHC0KCPJ18DJP7ZZK">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.0/css/all.css"><link rel="stylesheet" href="/hc/theming_assets/01J1G336A8TFZW0S5CE7JYD5NC">
+
+
+<style id="settings-styles">
+  
+  
+
+  /* CSS Custom Properties - Define colors once */
+  :root {
+    --header-bg-color: #fff;
+  }
+
+</style>
+
+<script>
+  // Prevent Sticky.js from initializing on header
+  (function() {
+    var Sticky = window.Sticky;
+    window.Sticky = function(el, opts) {
+      return (el && el.classList.contains('header-fixed'))
+        ? { destroy: function() {} }
+        : (Sticky ? Sticky.call(this, el, opts) : {});
+    };
+  })();
+</script>
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+
+<!-- ---------POSTHOG---------- -->
+
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+    posthog.init('phc_w3ZqFHxxJraLWo3LU7wfDkCEhJZLo0X22W9e0VFu2Vu', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2025-11-30',
+        session_recording: {
+        	maskAllInputs: false,
+        	maskInputOptions: {
+            password: true, 
+            email: true,
+          }
+        }
+    });
+        
+    document.addEventListener('DOMContentLoaded', () => {
+      // Custom event tracking
+        let phSearchEventLastFired = 0;
+
+        document.querySelectorAll('#popular-keywords, #query').forEach(el => {
+          ['click', 'focus'].forEach(event => {
+            el.addEventListener(event, () => {
+              const now = Date.now();
+              if (now - phSearchEventLastFired < 10000) return; // 10 seconds
+              phSearchEventLastFired = now;
+              posthog.capture('intent_search'); 
+            });
+          });
+        });
+
+        document.querySelectorAll('a[href="/hc/en-us/requests/new"], a[href="https://help.descript.com/hc/en-us/articles/10337720480653-Contact-Descript"]').forEach(el => {
+          el.addEventListener('click', function() {
+            posthog.capture('intent_create_ticket');  
+          });
+        });
+
+        document.querySelectorAll('#new_request input[type="submit"]').forEach(el => {
+          el.addEventListener('click', function() { 
+            posthog.capture('submitted_new_ticket');
+          });
+        });       
+		});
+         
+</script>
+  
+</head>
+<body class="">
+  
+  
+  
+
+  <!-- segment -->
+<script>
+  !function(){var i="analytics",analytics=window[i]=window[i]||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","debug","page","screen","once","off","on","addSourceMiddleware","addIntegrationMiddleware","setAnonymousId","addDestinationMiddleware","register"];analytics.factory=function(e){return function(){if(window[i].initialized)return window[i][e].apply(window[i],arguments);var n=Array.prototype.slice.call(arguments);if(["track","screen","alias","group","page","identify"].indexOf(e)>-1){var c=document.querySelector("link[rel='canonical']");n.push({__t:"bpc",c:c&&c.getAttribute("href")||void 0,p:location.pathname,u:location.href,s:location.search,t:document.title,r:document.referrer})}n.unshift(e);analytics.push(n);return analytics}};for(var n=0;n<analytics.methods.length;n++){var key=analytics.methods[n];analytics[key]=analytics.factory(key)}analytics.load=function(key,n){var t=document.createElement("script");t.type="text/javascript";t.async=!0;t.setAttribute("data-global-segment-analytics-key",i);t.src="https://cdn.segment.com/analytics.js/v1/" + key + "/analytics.min.js";var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r);analytics._loadOptions=n};analytics._writeKey="yLZyK1pVrmyYUznZJHlzYwK2oiL8XOaF";;analytics.SNIPPET_VERSION="5.2.0";
+  analytics.load("yLZyK1pVrmyYUznZJHlzYwK2oiL8XOaF");
+  analytics.page();
+  }}();
+</script>
+  
+<script>
+(function () {
+  var SUPPRESS_NATIVE_PAGE = true;
+
+  var MAX_POLL = 20, POLL_MS = 100;
+
+  function getCookieValue(name) {
+    var m = document.cookie.match(new RegExp('(?:^|;\\s*)' + name.replace(/([.$?*|{}()[\]\\/+^])/g,'\\$1') + '=([^;]+)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function readStore(key) {
+    try {
+      var ls = localStorage.getItem(key);
+      if (ls != null) { try { return JSON.parse(ls); } catch { return ls; } }
+    } catch(e) {}
+    var ck = getCookieValue(key);
+    if (ck != null) { try { return JSON.parse(ck); } catch { return ck; } }
+    return null;
+  }
+  function onAnalyticsReady(cb){
+    var tries = 0;
+    (function wait(){
+      if (window.analytics && typeof analytics.ready === 'function') return analytics.ready(cb);
+      if (tries++ > 80) return;
+      setTimeout(wait, 100);
+    })();
+  }
+  function setSegmentAnonId(id) {
+    if (!id) return;
+    try {
+      if (typeof analytics.setAnonymousId === 'function') analytics.setAnonymousId(String(id));
+      else if (analytics.user && typeof analytics.user().anonymousId === 'function') analytics.user().anonymousId(String(id));
+    } catch (e) {}
+  }
+  function getMarketingAnonId() {
+    return readStore('ajs_anonymous_id') || getCookieValue('Application.installId') || null;
+  }
+  function getMarketingUserId() {
+    return readStore('ajs_user_id'); 
+  }
+  function idsForProps(){
+    try {
+      var u = analytics.user && analytics.user();
+      var uid = u && typeof u.id === 'function' ? u.id() : null;
+      var aid = u && typeof u.anonymousId === 'function' ? u.anonymousId() : null;
+      return { descript_id: uid || null, anon_id: uid ? null : aid || null };
+    } catch(e){ return { descript_id: null, anon_id: null }; }
+  }
+
+  async function ensureAnonIdAlignment() {
+    return new Promise(function(resolve){
+      var tries = 0;
+      (function poll(){
+        var anon = getMarketingAnonId();
+        if (anon) { setSegmentAnonId(anon); return resolve(anon); }
+        if (++tries > MAX_POLL) return resolve(null);
+        setTimeout(poll, POLL_MS);
+      })();
+    });
+  }
+  async function fetchMe(){
+    try {
+      var r = await fetch('/api/v2/users/me.json', { credentials: 'same-origin' });
+      if (!r.ok) return null;
+      var j = await r.json();
+      return j && j.user ? j.user : null;
+    } catch(e){ return null; }
+  }
+  async function identifyPreferMarketingUserId(currentAnon){
+    var marketingId = getMarketingUserId();
+    if (marketingId) {
+      if (!analytics.user().id() || analytics.user().id() !== String(marketingId)) {
+        try { if (currentAnon) analytics.alias(String(marketingId)); } catch(e) {}
+        analytics.identify(String(marketingId), {
+          descript_id: String(marketingId),
+          source_identity: 'ajs_user_id_cookie_or_ls'
+        });
+      }
+      return String(marketingId);
+    }
+    var me = await fetchMe();
+    var did = me && me.user_fields && me.user_fields.descript_id;
+    if (did) {
+      try { if (currentAnon) analytics.alias(String(did)); } catch(e) {}
+      analytics.identify(String(did), {
+        descript_id: String(did),
+        source_identity: 'zendesk_user_fields',
+        zendesk_user_id: String(me.id),
+        email: me.email || null,
+        name: me.name || null,
+        role: me.role || null,
+        locale: me.locale || null
+      });
+      return String(did);
+    }
+    return null;
+  }
+
+  function trackHelpCenterPageViewed() {
+    if (!analytics.track) return;
+    var props = Object.assign({
+      path: window.location.pathname,
+      referrer: document.referrer || '',
+      search: window.location.search || '',
+      title: document.title,
+      url: window.location.href
+    }, idsForProps());
+    analytics.track('help_center_page_viewed', props);
+  }
+
+  function bindLinkTracking(){
+    if (!analytics.track) return;
+    document.addEventListener('click', function(e){
+      var a = e.target && e.target.closest && e.target.closest('a');
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (!href || href.indexOf('javascript:') === 0) return;
+
+      var idProps = idsForProps();
+      analytics.track('help_center_link_clicked', Object.assign({
+        href: href,
+        text: (a.textContent || '').trim().slice(0, 200),
+        location_path: window.location.pathname,
+        location_title: document.title
+      }, idProps));
+    }, { capture: true });
+  }
+
+  function bindTrackLinkHelper(){
+    if (!analytics.trackLink) return;
+    analytics.trackLink(document.querySelectorAll('a'), 'help_center_link_clicked', function(el){
+      return Object.assign({
+        href: el.getAttribute('href'),
+        text: (el.textContent || '').trim().slice(0, 200),
+        location_path: window.location.pathname,
+        location_title: document.title
+      }, idsForProps());
+    });
+  }
+
+  function boot(){
+    onAnalyticsReady(async function(){
+      if (SUPPRESS_NATIVE_PAGE && analytics.page) {
+        try { analytics.page = function(){ /* suppressed on purpose */ }; } catch(e){}
+      }
+      var anon = await ensureAnonIdAlignment();
+      await identifyPreferMarketingUserId(anon);
+      trackHelpCenterPageViewed();
+      bindLinkTracking();
+      bindTrackLinkHelper();
+    });
+
+    document.addEventListener('click', function(e){
+      var a = e.target && e.target.closest && e.target.closest('a[href^="/hc/"]');
+      if (!a) return;
+      setTimeout(function(){
+        onAnalyticsReady(async function(){
+          var anon = await ensureAnonIdAlignment();
+          await identifyPreferMarketingUserId(anon);
+          trackHelpCenterPageViewed();
+          bindTrackLinkHelper();
+        });
+      }, 0);
+    });
+    window.addEventListener('popstate', function(){
+      onAnalyticsReady(async function(){
+        var anon = await ensureAnonIdAlignment();
+        await identifyPreferMarketingUserId(anon);
+        trackHelpCenterPageViewed();
+        bindTrackLinkHelper();
+      });
+    });
+  }
+
+  boot();
+})();
+</script>
+
+<script>
+(function(){
+  function _idsForProps(){
+    if (typeof idsForProps === 'function') return idsForProps();
+    try {
+      var u = analytics.user && analytics.user();
+      var uid = u && typeof u.id === 'function' ? u.id() : null;
+      var aid = u && typeof u.anonymousId === 'function' ? u.anonymousId() : null;
+      return { descript_id: uid || null, anon_id: uid ? null : aid || null };
+    } catch(e){ return { descript_id: null, anon_id: null }; }
+  }
+  function track(extra){
+    if (!window.analytics || !analytics.track) return;
+    analytics.track('help_center_iframe_clicked', Object.assign({
+      location_path: window.location.pathname,
+      location_title: document.title
+    }, _idsForProps(), extra || {}));
+  }
+
+  var lastHover = null;
+
+  function wire(iframe){
+    if (!iframe || iframe.__hc_iframe_wired) return;
+    iframe.__hc_iframe_wired = true;
+    if (!iframe.hasAttribute('tabindex')) iframe.setAttribute('tabindex','-1');
+    iframe.addEventListener('pointerenter', function(){ lastHover = iframe; }, true);
+    iframe.addEventListener('pointerleave', function(){ if (lastHover === iframe) lastHover = null; }, true);
+    iframe.addEventListener('focus', function(){ track({ src: iframe.src || '' }); }, true);
+  }
+
+  window.addEventListener('blur', function(){
+    setTimeout(function(){
+      var ae = document.activeElement;
+      if (ae && ae.tagName === 'IFRAME' && (!lastHover || lastHover === ae)) {
+        track({ src: ae.src || '' });
+      }
+    }, 0);
+  });
+
+  document.querySelectorAll('iframe').forEach(wire);
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes && m.addedNodes.forEach(function(n){
+        if (n.tagName === 'IFRAME') wire(n);
+        else if (n.querySelectorAll) n.querySelectorAll('iframe').forEach(wire);
+      });
+    });
+  }).observe(document.documentElement, { childList:true, subtree:true });
+})();
+</script>
+
+
+
+<!-- end of segment -->
+
+
+<!-- Google site verification -->
+<meta name="google-site-verification" content="ep8Z7pi8WDBVPezmbv7JJlWLtuDqo9gki-8Tr-WUvws" />
+
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MTWQ8DJ"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+
+
+<style>
+.simple-lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.simple-lightbox-overlay.active {
+  opacity: 1;
+}
+.simple-lightbox-container {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.simple-lightbox-image {
+  max-width: 100%;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  display: block;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+.simple-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10000;
+  color: #333;
+  transition: background 0.2s ease;
+}
+.simple-lightbox-close:hover {
+  background: #fff;
+}
+</style>
+
+<a class="sr-only sr-only-focusable" tabindex="1" href="#page-container">
+  Skip to main content
+</a>
+
+<div class="layout flex flex-1 flex-column" x-data="Widgets.mobileMenu">
+
+  
+  <header class="header border-bottom text-header bg-header shadow" x-data="Widgets.header({ isFixed: true, isSticky: true })" x-init="init">
+
+    <nav class="navbar container-fluid h-full" :class="{ 'text-header': isOpen }">
+
+      
+      <a href="/hc/en-us" class="navbar-brand mr-auto">
+        <img class="block img-fluid z-100" id="logo" src="/hc/theming_assets/01KG03MRMQXDT9ZG37J8KMXG1D" alt="Descript Help Help Center home page">
+          <span class="navbar-tagline mx-2 white-space-no-wrap lg:font-size-lg">
+              Help Center
+            </span>
+        </a>
+
+      
+      <button class="navbar-toggle ml-2 xl:hidden" x-data x-ref="toggle" :aria-expanded="isOpen && 'true'" @click="toggle" @keydown.escape="toggle">
+        <span></span>
+        <span class="sr-only">Toggle navigation menu</span>
+      </button>
+
+      
+
+      
+      <div class="nav menu menu-standard menu-links-right xl:flex xl:align-items-center xl:font-size-md xl:menu-expanded xl:justify-content-end"
+        x-cloak x-show="isOpen" :class="{ 'text-header': isOpen }"
+        x-transition:enter="transition-fast"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-fast"
+        x-transition:leave-start="opacity-100 text-header"
+        x-transition:leave-end="opacity-0 text-header">
+
+        
+          <div class="search flex text-base mx-4 mb-4 flex-first xl:max-w-13 xl:flex-1 xl:mx-5 xl:mb-0" x-data="Widgets.search">
+              
+                <form role="search" class="form-field flex-1 mb-0" data-search="" action="/hc/en-us/search" accept-charset="UTF-8" method="get"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="search" name="query" id="query" placeholder="Ask a question or search for a feature" aria-label="Ask a question or search for a feature" /></form>
+              
+            <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+              <use xlink:href="#icon-search" />
+            </svg>
+          </div>
+        
+
+        
+          <a class="nav-link header-link" href="https://www.web.descript.com/" x-data="link">
+              Back to Descript
+            </a>
+        
+          
+        
+      </div>
+    </nav>
+  </header> 
+
+
+
+
+
+  <main role="main">
+    
+<div class="hero relative overflow-hidden bg-home bg-cover bg-center">
+
+  
+  <div class="relative container z-30 pb-6 pt-5 lg:pb-8" style="margin-top: 72px;">
+
+    
+    <div class="my-6 text-center">
+        <h1 class="font-size-4xl md:font-size-5xl lg:font-size-6xl">
+            How can we help?
+          </h1>
+      </div>
+
+    
+    <div class="search search-lg my-4 text-base font-size-lg shadow-lg max-w-sm md:my-5 md:font-size-xl mx-auto">
+      <h2 class="sr-only">Search</h2>
+        
+          <form role="search" class="form-field mb-0" data-search="" action="/hc/en-us/search" accept-charset="UTF-8" method="get"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="search" name="query" id="query" placeholder="Ask a question or search for a feature" aria-label="Ask a question or search for a feature" /></form>
+        
+      <svg class="search-icon fill-current transition" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+        <use xlink:href="#icon-search" />
+      </svg>
+    </div>
+
+    
+        <div id="popular-keywords">
+          <script type="text/javascript">
+            ready(function() {
+              Util.renderTemplate(document.getElementById('popular-keywords'), 'popular-keywords', {
+                keywords: "Edit like a doc, Underlord, Translate and dub video, Text-to-speech audio"
+              });
+            })
+          </script>
+        </div>
+      </div>
+
+  
+  
+
+  
+  <div class="absolute z-10 top-0 left-0 h-full w-full bg-hero"></div>
+
+  
+  
+
+  </div> 
+
+<div class="relative flex flex-column z-40" id="page-container">
+
+  
+  
+
+  
+  
+    <div class="content-blocks bg-content-blocks border-bottom" id="content-blocks">
+      <div class="container text-center">
+        
+          
+
+          
+
+          
+          
+            <ul class="list-unstyled row row-sm mb-0 justify-content-center">
+              
+                
+                
+                  <li class="col-12 md:col-6 lg:col-4">
+                    <div class="relative p-5 h-full text-center transition-fast hover:bg-white hover:text-white-inverse hover:grow hover:shadow-lg" x-data="{ color: 'white' }">
+                      
+                        <img alt="Guides &amp; Getting Started" data-asset="image" data-asset-id="category-30809506856717" src="/hc/theming_assets/01KH1HEATDWNX2F025V6AACGVP
+                        " style="height: 90px; width: auto;" />
+                      
+                      <h2 class="" :class="{ 'hover:text-inherit': ['primary', 'secondary', 'tertiary'].indexOf(color) !== -1 }">
+                        <a class="text-inherit link-stretched hover:no-underline hover:text-inherit" href="/hc/en-us/categories/30809506856717-Guides-Getting-Started">
+                          Guides &amp; Getting Started
+                        </a>
+                      </h2>
+                      
+                        <p>
+                          Just getting started? Check out our easy-to-follow getting-started and guide pages to help you get up and running in no time!
+                        </p>
+                      
+                    </div>
+                  </li>
+                
+                
+              
+                
+                
+                  <li class="col-12 md:col-6 lg:col-4">
+                    <div class="relative p-5 h-full text-center transition-fast hover:bg-white hover:text-white-inverse hover:grow hover:shadow-lg" x-data="{ color: 'white' }">
+                      
+                        <img alt="Reference Manual" data-asset="image" data-asset-id="category-30809545746701" src="/hc/theming_assets/01KH1HEB48E5TCK1N2ERT67SFB
+                        " style="height: 90px; width: auto;" />
+                      
+                      <h2 class="" :class="{ 'hover:text-inherit': ['primary', 'secondary', 'tertiary'].indexOf(color) !== -1 }">
+                        <a class="text-inherit link-stretched hover:no-underline hover:text-inherit" href="/hc/en-us/categories/30809545746701-Reference-Manual">
+                          Reference Manual
+                        </a>
+                      </h2>
+                      
+                        <p>
+                          Need detailed information on features? Find in-depth explanations and usage tips in our comprehensive reference manual.
+                        </p>
+                      
+                    </div>
+                  </li>
+                
+                
+              
+                
+                
+                  <li class="col-12 md:col-6 lg:col-4">
+                    <div class="relative p-5 h-full text-center transition-fast hover:bg-white hover:text-white-inverse hover:grow hover:shadow-lg" x-data="{ color: 'white' }">
+                      
+                        <img alt="Troubleshooting" data-asset="image" data-asset-id="category-30809520982413" src="/hc/theming_assets/01KH1HEBFCT1KZGV0JZYB3WAG2
+                        " style="height: 90px; width: auto;" />
+                      
+                      <h2 class="" :class="{ 'hover:text-inherit': ['primary', 'secondary', 'tertiary'].indexOf(color) !== -1 }">
+                        <a class="text-inherit link-stretched hover:no-underline hover:text-inherit" href="/hc/en-us/categories/30809520982413-Troubleshooting">
+                          Troubleshooting
+                        </a>
+                      </h2>
+                      
+                        <p>
+                          Looking for help with common issues with Descript and SquadCast? Find answers in our troubleshooting section.
+                        </p>
+                      
+                    </div>
+                  </li>
+                
+                
+              
+                
+              
+            </ul>
+          
+
+          
+          
+
+        
+
+        
+
+      </div>
+    </div>
+  
+
+  
+  
+    <div class="promoted-articles " id="promoted-articles">
+      <div class="container text-left py-4">
+        
+
+          
+            <h2 class="inline-flex align-items-baseline mt-6" x-data="{ src: Theme.assets['promoted-articles-heading'] }">
+              <template x-if="src">
+                
+              </template>
+                Featured articles
+              </h2>
+          
+            <ul class="row row-sm list-unstyled mb-2">
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/10601763396493-Get-started-with-Descript">Get started with Descript</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Descript is your all-in-one editor for video and audio. Bring in your media, edit it like text, add polish with AI, and sha...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/10601764003341-Record-edit-and-export-your-audio-podcast">Record, edit, and export your audio podcast</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Produce your entire podcast in Descript! Record or import your audio, edit it like a document, enhance the sound quality, a...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/10164599097485-Navigating-Descript">Navigating Descript</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Welcome to Descript
+Descript is a powerful creative platform that brings together audio and video editing, screen recording...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/27177566394509-Translate-your-captions-into-another-language">Translate your captions into another language</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Use Descript’s Translate feature to generate translated captions, subtitles, and transcripts from your original script. 
+If...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/34723305545357-Avatars-Overview">Avatars Overview</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Avatars are animated presenters for your content. They can stand in for a talking head and speak using a stock AI voice or ...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/36803785502221-Underlord-beta-Your-AI-co-editor-in-Descript">Underlord (beta): Your AI co-editor in Descript</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Underlord is Descript’s AI co-editor built specifically for video editing. Just say (type) what you want, and Underlord han...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/27252457732237-AI-Tools-Overview">AI Tools Overview</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Descript&#39;s suite of AI tools help streamline common editing tasks like cleaning up audio, removing repeated words or um&#39;s a...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/10119670449293-Create-clips-from-your-content">Create clips from your content</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Descript&#39;s Create clips AI tool turns long-form content into shorts. It analyzes your composition and generates clip-length...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              
+                <li class="col-12 md:col-6 lg:col-4">
+
+                  <div class="relative media align-items-baseline py-2 h-full font-semibold"><div class="media-body">
+                      <a class="link-stretched" href="/hc/en-us/articles/28800967976205-Get-Started-with-Descript-Rooms">Get Started with Descript Rooms</a>
+                        <p class="my-2 font-size-md break-words font-normal">
+                          Descript Rooms is a browser-based space for recording with others. It combines video conferencing and multi-participant rec...
+                        </p>
+                      </div>
+                  </div>
+                </li>
+              </ul>
+          
+      </div>
+    </div>
+  
+
+  
+  
+
+  
+  
+    <div class="contact-blocks" id="contact-blocks">
+      <script type="text/javascript">
+        ready(function() {
+          Util.renderTemplate(document.getElementById('contact-blocks'), 'contact-blocks', Theme.contactBlocks);
+        })
+      </script>
+    </div>
+  
+
+</div> 
+
+
+      <div
+        data-element="template"
+        data-template="call-to-action">
+      </div>
+    <script type="text/javascript">
+  
+
+  </script>
+
+<script type="text/javascript">document.documentElement.classList.add('home-page')</script>
+  </main>
+
+  <!-- Start of Forethought Widget script
+
+<script
+src="https://solve-widget.forethought.ai/embed.js"
+id="forethought-widget-embed-script"
+data-api-key="3dbd30bc-b0f2-4b85-8691-e699b750f054"
+data-ft-Enterprise-User="false"
+data-ft-In-App="false"
+data-ft-Subscribed-User="false"
+config-ft-persistence-id="help_center"
+data-ft-workflow-tag="Default Descript Brand"
+data-ft-Brand-ID="Help Center"
+></script>
+
+End of Forethought Widget script -->
+
+
+  <footer class="footer mt-6" id="footer">
+
+    
+
+    <div class="container py-7">
+
+      <nav class="nav font-size-md justify-content-center">
+
+        
+          <a class="nav-link" href="https://luma.com/descript?k=c&amp;utm_campaign=webinarhome&amp;utm_medium=helpcenter&amp;utm_source=hcfooter" x-data="link">
+              Events calendar
+            </a>
+        
+          <a class="nav-link" href="https://discord.gg/XTGsZT9p" x-data="link">
+            
+              Join our Discord server
+            
+          </a>
+        
+          <a class="nav-link" href="https://www.youtube.com/@Descript/streams" x-data="link">
+            
+              Watch webinars
+            
+          </a>
+        
+          <a class="nav-link" href="https://www.facebook.com/descriptapp/" target="_blank">
+            <svg class="svg-icon fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M6 0a6 6 0 01.813 11.945V7.63h1.552l.244-1.585H6.812v-.867c0-.658.214-1.242.827-1.242h.985V2.55c-.173-.024-.538-.075-1.23-.075-1.444 0-2.29.767-2.29 2.513v1.055H3.618v1.585h1.484v4.304A6.001 6.001 0 016 0z"></path>
+            </svg>
+          </a>
+        
+          <a class="nav-link" href="https://x.com/descript" target="_blank">
+            <svg class="svg-icon fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14.095479,10.316482L22.286354,1h-1.940718l-7.115352,8.087682L7.551414,1H1l8.589488,12.231093L1,23h1.940717  l7.509372-8.542861L16.448587,23H23L14.095479,10.316482z M11.436522,13.338465l-0.871624-1.218704l-6.924311-9.68815h2.981339  l5.58978,7.82155l0.867949,1.218704l7.26506,10.166271h-2.981339L11.436522,13.338465z"/>
+            </svg>
+          </a>
+        
+          <a class="nav-link" href="https://www.linkedin.com/company/descript/" target="_blank">
+            <svg class="svg-icon fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M10.8 0A1.2 1.2 0 0112 1.2v9.6a1.2 1.2 0 01-1.2 1.2H1.2A1.2 1.2 0 010 10.8V1.2A1.2 1.2 0 011.2 0h9.6zM8.09 4.356a1.87 1.87 0 00-1.598.792l-.085.133h-.024v-.783H4.676v5.727h1.778V7.392c0-.747.142-1.47 1.068-1.47.913 0 .925.854.925 1.518v2.785h1.778V7.084l-.005-.325c-.05-1.38-.456-2.403-2.13-2.403zm-4.531.142h-1.78v5.727h1.78V4.498zm-.89-2.846a1.032 1.032 0 100 2.064 1.032 1.032 0 000-2.064z"></path>
+            </svg>
+          </a>
+        
+          <a class="nav-link" href="https://www.instagram.com/descript_app/" target="_blank">
+            <svg class="svg-icon fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true">
+              <path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"></path>
+            </svg>
+          </a>
+        
+          <a class="nav-link" href="https://www.youtube.com/descript" target="_blank">
+            <svg class="svg-icon fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true">
+              <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"></path>
+            </svg>
+          </a>
+        </nav>
+
+      
+        <div
+          class="fixed bottom-0 left-0"
+          data-element="back-to-top"
+          data-template="back-to-top-link"
+          data-threshold="250px">
+        </div>
+      </div>
+  </footer> 
+
+</div> 
+
+
+<script type="text/javascript" src="/hc/theming_assets/01J1G3369WHN4JZCC5FHJK5CHB" defer></script>
+<script type="text/javascript" src="/hc/theming_assets/01J1G333YK1C0FPKS86KDRHD0Q" defer></script>
+<script type="text/javascript" src="/hc/theming_assets/01J1G335CRTAGC2WSCK7D9M7X8" defer></script>
+<script type="text/javascript" src="/hc/theming_assets/01J1G333033GVSRTVZN8YRWG58" defer></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/combine/npm/alpinejs@3.13.0/dist/cdn.min.js,npm/plyr@~3.6.4/dist/plyr.polyfilled.min.js" defer>
+</script>
+<script type="text/javascript" src="/hc/theming_assets/01J1G3340CFQM9WE0A8CNXADM7" defer></script><script type="text/javascript" src="/hc/theming_assets/01KFM027G0GYCJF148YEY81CDZ"></script><script type="text/javascript" src="/hc/theming_assets/01J1G335965X3N337WDGBNX8PE" defer></script><script type="text/javascript" src="/hc/theming_assets/01J1G335S4X39Z1CZE29940FQ0" defer></script><script type="text/javascript" src="/hc/theming_assets/01J1G334YQP0GPWF4QQDD9GFSH" defer></script>
+
+
+      <script type="text/template" id="tmpl-popular-keywords">
+        <div class="flex flex-first flex-wrap mt-5 mb-4 justify-content-center"
+          x-data="Widgets.popularKeywords"
+          x-init="parseKeywords(`<%= keywords %>`)">
+            <p class="font-semibold m-1">
+                Popular searches:
+              </p>
+          <div class="flex flex-wrap align-items-center">
+            <template x-for="(keyword, index) in keywords" :key="index">
+              <div class="flex align-items-center m-1">
+                <a class="inline-block text-inherit badge bg-translucent blur text-inherit rounded px-3 py-2"
+                  :href="keyword.html_url"
+                  :title="keyword.title"
+                  x-text="keyword.title">
+                </a>
+              </div>
+            </template>
+          </div>
+        </div>
+      </script>
+    
+<script type="text/template" id="tmpl-contact-blocks">
+      <% var getColumnClasses = function(numberColumns) {
+        var classNames = 'col-12 mb-4';
+        if (numberColumns >= 2) classNames += ' md:col-6';
+        if (numberColumns >= 3) classNames += ' lg:col-4';
+        if (numberColumns >= 4) classNames += ' xl:col-3';
+        return classNames;
+      } %>
+      <div class="container py-4">
+        <% if (heading) { %>
+          <h2 class="flex align-items-baseline mt-6" x-data="{ src: Theme.assets['contact-blocks-heading'] }">
+            <template x-if="src">
+              <img class="svg-icon mr-2" src="/hc/theming_assets/01J1G3323FKN8P2TCTZHVEC7XD" alt="" aria-hidden="true" :src="src" />
+            </template>
+            <%= heading %>
+          </h2>
+        <% } %>
+        <ul class="list-unstyled row row-sm justify-content-<% if (blocks.length > numberColumns) { %>start<% } else { %>center<% } %> mb-0">
+          <% blocks.forEach(function(block, index) { %>
+            <li class="<%= getColumnClasses(numberColumns) %>">
+              <div class="card card-body h-full text-base text-white-inverse bg-white <% if (block.html_url) { %> transition-fast hover:shadow-sm  hover:border-primary<% } %>">
+                <div class="media">
+                  <% if (imageHeight) { %>
+                    <img class="mt-4 <% if (block.name) { %>align-self-start<% } else { %>align-self-baseline<% } %>" alt="<%= block.name %>" src="<%= images[index] || images[0] %>" style="height: 36px; width: auto;" />
+                  <% } %>
+                  <div class="media-body<% if (imageHeight) { %> mt-1 ml-4<% } %>">
+                    <% if (block.name) { %>
+                      <h3 class="h4 my-4">
+                        <% if (block.html_url) { %>
+                          <a class="link-stretched text-inherit text-white-inverse hover:text-white-inverse hover:no-underline" href="<%= block.html_url %>" x-data="link">
+                            <%= block.name %>
+                          </a>
+                        <% } else { %>
+                          <%= block.name %>
+                        <% } %>
+                      </h3>
+                    <% } %>
+                    <% if (block.description) { %>
+                      <p class="font-size-md">
+                        <%= block.description %>
+                      </p>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    </script>
+  
+
+    <script type="text/template" id="tmpl-call-to-action">
+      <div class="cta relative mt-6 -mb-6 bg-center bg-cover" style="background-image: url('/hc/theming_assets/01J1G33EJM42JE5ABAV0J749PG')">
+        <div class="container relative z-10 py-6">
+          <div class="max-w-lg mx-auto text-center">
+            
+              <h3 class="h2 md:font-size-3xl">
+                
+                  Can&#39;t find what you&#39;re looking for?
+                
+              </h3>
+            
+            
+           <a
+            class="button button-primary m-2 header-link flex-last xl:order-inherit xl:my-0" href="https://web.descript.com/chat"  target="_blank">
+Contact support          </a>
+          </div>
+        </div>
+        <div class="absolute-top left-0 z-0 w-full h-full cta"></div>
+      </div>
+    </script>
+  
+    <script type="text/template" id="tmpl-back-to-top-link">
+      <button class="flex button button-outline button-sm bg-white p-3 m-4">
+        <span class="sr-only">Return to top</span>
+        <svg class="fill-current" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
+          <polygon points="12.4,40.1 25.8,53.6 40.5,38.8 40.5,97.5 59.5,97.5 59.5,38.8 74.2,53.6 87.6,40.1 50,2.5" />
+        </svg>
+      </button>
+    </script>
+  
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+  <symbol id="icon-search">
+    <circle cx="4.5" cy="4.5" r="4" fill="none" stroke="currentColor"/>
+    <path stroke="currentColor" stroke-linecap="round" d="M11 11L7.5 7.5"/>
+  </symbol>
+  <symbol id="icon-lock">
+    <rect width="12" height="9" x="2" y="7" fill="currentColor" rx="1" ry="1"/>
+    <path fill="none" stroke="currentColor" d="M4.5 7.5V4a3.5 3.5 0 017 0v3.5"/>
+  </symbol>
+  <symbol id="icon-star">
+    <polygon points="213 325 81 405 116 255 0 154 153 141 213 0 273 141 426 154 310 255 345 405"></polygon>
+  </symbol>
+  <symbol id="icon-chevron-down">
+    <path fill="none" stroke="currentColor" stroke-linecap="round" d="M3 4.5l2.6 2.6c.2.2.5.2.7 0L9 4.5"/>
+  </symbol>
+  <symbol id="icon-agent">
+    <path fill="currentColor" d="M6 0C2.7 0 0 2.7 0 6s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm2.3 7H3.7c-.3 0-.4-.3-.3-.5C3.9 7.6 4.9 7 6 7s2.1.6 2.6 1.5c.1.2 0 .5-.3.5z"/>
+  </symbol>
+
+  </svg>
+
+<script type="text/javascript">
+  Theme.assets['custom-blocks-heading'] = "/hc/theming_assets/01KCM0831G8E3Z0NG8GZ5M2CDQ";Theme.assets['content-blocks-heading'] = "/hc/theming_assets/01KCM082QRXJKKX88FDV46AQG7";Theme.assets['promoted-articles-heading'] = "/hc/theming_assets/01KCM0828TYCGH17KVPTC0HHPJ";Theme.assets['promoted-videos-heading'] = "/hc/theming_assets/01KCM0828D8V405N7H7KMY3WG6";Theme.assets['notification'] = "/hc/theming_assets/01KCM08128K8K5Q9YED0Q4E04V";
+  Theme.alternativeLocales = [];
+
+  
+  Theme.contactBlocks = {
+    blocks: [{
+      name: "Contact us",
+      description: "Can't find what you're looking for? Send a message to our team, and we'll help you find the answers.",
+      html_url: "https://help.descript.com/hc/en-us/articles/10337720480653-Contact-Descript"
+    }, {
+      name: "Talk with the community ",
+      description: "Connect with fellow users in our Discord community to share your feedback, experiences, and creations.",
+      html_url: "https://help.descript.com/hc/en-us/articles/10612803483405-The-Descript-Community-on-Discord"
+    }, {
+      name: "Join a live event",
+      description: "Join our weekly live stream tutorials to learn with Descript experts in real time!",
+      html_url: "https://help.descript.com/hc/en-us/articles/12958294760589-Watch-Descript-webinars-and-other-live-events"
+    }, {
+      name: "Subscribe",
+      description: "Discover video tutorials covering a variety of topics",
+      html_url: "https://www.youtube.com"
+    }].slice(0, 3),
+    heading: "Get in touch",
+    images: [
+        "/hc/theming_assets/01KCM082QR7NG57F8B3KNMVKM9", "/hc/theming_assets/01KCM082HWKZ0FC5A28D5SYQXA", "/hc/theming_assets/01KCM0834CC3ZJQTFW4Z7PN1J0", "/hc/theming_assets/01KCM082QR7NG57F8B3KNMVKM9"
+    ],
+    imageHeight: "36px",
+    numberColumns: 3,
+    color: "white"
+  };
+  </script>
+
+
+
+
+
+
+<script type="text/template" id="tmpl-category-tabs">
+  <% var visibleCategories = categories.filter(function(c) { return c.name !== 'Unlisted'; }); %>
+  <ul class="nav nav-tabs white-space-no-wrap collapsible-nav border-0<% if (visibleCategories.length < 2) { %> hidden md:flex<% } %>">
+    <% visibleCategories.forEach(function(category) { %>
+      <li class="nav-item has-dropdown tracking-tight hover:bg-translucent text-base md:text-inherit" aria-selected="<%= category.id === activeCategoryId %>">
+        <% if (category.id === activeCategoryId) { %>
+          <a class="nav-link font-semibold text-base px-0 sm:px-4 hover:text-base is-active" aria-selected="true" href="<%= category.html_url %>">
+            <%= category.name %>
+          </a>
+        <% } else { %>
+          <a class="nav-link font-medium text-inherit px-0 sm:px-4 hover:text-inherit" href="<%= category.html_url %>">
+            <%= category.name %>
+          </a>
+        <% } %>
+        <% if (category.sections.length) { %>
+          <ul class="dropdown-menu list-none font-size-md -mt-1px">
+            <% category.sections.filter(function(s) { return s.name !== 'Unlisted'; }).forEach(function(section) { %>
+              <li class="nav-item">
+                <a class="dropdown-item<% if (section.isActive) { %> is-active<% } %>" href="<%= section.html_url %>">
+                  <%= section.name %>
+                </a>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </li>
+    <% }); %>
+  </ul>
+</script>
+
+
+<script type="text/template" id="tmpl-article-list">
+  <div class="border-top border-bottom lg:border-transparent my-2" x-data="toggle({ isOpen: false })" @collapse:show.stop="open" @collapse:hide.stop="close">
+
+    
+    <h3 class="flex align-items-center justify-content-between my-4 font-size-lg cursor-pointer lg:hidden" data-toggle="collapse" data-target="#sidebar-article-navigation" aria-controls="sidebar-article-navigation" aria-expanded="false">
+      Categories
+      <svg class="fill-current pointer-events-none ml-3" :class="isOpen && 'rotate-180'" width="14px" viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20,19.5 C19.4,19.5 18.9,19.3 18.4,18.9 L1.4,4.9 C0.3,4 0.2,2.4 1.1,1.4 C2,0.3 3.6,0.2 4.6,1.1 L20,13.8 L35.5,1.1 C36.6,0.2 38.1,0.4 39,1.4 C39.9,2.5 39.7,4 38.7,4.9 L21.7,18.9 C21.1,19.3 20.5,19.5 20,19.5 Z" fill-rule="nonzero"></path>
+      </svg>
+    </h3>
+
+    <div class="collapse lg:expand lg:flex-column" id="sidebar-article-navigation">
+      <ul class="list-unstyled font-size-lg w-full">
+        <% categories.filter(function(c) { return c.name !== 'Unlisted'; }).forEach(function(category, index) { %>
+          <li class="font-semibold" x-data="toggle({ isOpen: <%= !!category.isActive %> })" @collapse:show.stop="open" @collapse:hide.stop="close">
+
+            
+            <div class="flex justify-content-between align-items-center">
+              <a class="flex-1 py-3 text-inherit" :class="{ 'text-inherit': !isOpen }" href="<%= category.html_url %>">
+                <%= category.name %>
+              </a>
+              <button class="p-2 ml-1 not-a-button border-radius transition cursor-pointer hover:bg-gray-200 hidden lg:block" :class="{ 'is-active': isOpen }" :aria-expanded="isOpen" data-toggle="collapse" data-target="#category-<%= category.id %>">
+                <svg class="text-inherit fill-current pointer-events-none" :class="{ 'rotate-180': isOpen }" width="12px" height="12px" viewBox="0 0 324 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M162,190 C156,190 150,187 146,183 L7,38 C-2,29 -2,15 7,7 C16,-2 30,-2 39,7 L162,135 L285,7 C293,-2 308,-2 317,7 C326,15 326,29 317,38 L178,183 C174,187 168,190 162,190 Z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="hidden lg:block">
+              
+              <%= partial('partial-article-list-sections', {
+                id: 'category-' + category.id,
+                parentId: '#sidebar-article-navigation',
+                sections: category.sections,
+                activeCategoryId: activeCategoryId,
+                activeSectionId: activeSectionId,
+                activeArticleId: activeArticleId,
+                partial: partial
+              }) %>
+            </div>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
+</script>
+
+
+<script type="text/template" id="tmpl-section-list">
+  <% var maxSections =  5 %>
+  <div class="border-top border-bottom lg:border-transparent my-4" x-data="toggle({ isOpen: false })" @collapse:show.stop="open" @collapse:hide.stop="close">
+
+    
+    <h3 class="flex align-items-center justify-content-between my-4 font-size-lg cursor-pointer lg:hidden" data-toggle="collapse" data-target="#sidebar-section-navigation" aria-controls="sidebar-section-navigation" aria-expanded="false">
+      Toggle navigation menu
+      <svg class="fill-current pointer-events-none ml-3" :class="isOpen && 'rotate-180'" width="14px" viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20,19.5 C19.4,19.5 18.9,19.3 18.4,18.9 L1.4,4.9 C0.3,4 0.2,2.4 1.1,1.4 C2,0.3 3.6,0.2 4.6,1.1 L20,13.8 L35.5,1.1 C36.6,0.2 38.1,0.4 39,1.4 C39.9,2.5 39.7,4 38.7,4.9 L21.7,18.9 C21.1,19.3 20.5,19.5 20,19.5 Z" fill-rule="nonzero"></path>
+      </svg>
+    </h3>
+
+    <div class="collapse lg:expand lg:flex-column" id="sidebar-section-navigation">
+      <ul class="list-unstyled m-0 py-2">
+        <% categories.filter(function(c) { return c.name !== 'Unlisted'; }).forEach(function(category, index) { %>
+          <li>
+            <h3 class="font-size-lg <% if (index === 0) { %>mt-4 lg:mt-0<% } else { %>mt-6<% } %>">
+              <a class="text-inherit" href="<%= category.html_url %>">
+                <%= category.name %>
+              </a>
+            </h3>
+            <%= partial('partial-section-list-sections', { parent: category, sections: category.sections, maxSections: maxSections, partial: partial }) %>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
+</script>
+
+
+<script type="text/template" id="tmpl-category-list">
+  <div class="list-unstyled my-4 border-top border-bottom md:my-5 lg:border-transparent" x-data="toggle({ isOpen: false })" @collapse:show.stop="open" @collapse:hide.stop="close">
+
+    
+    <h3 class="flex align-items-center justify-content-between my-4 font-size-lg cursor-pointer lg:hidden" data-toggle="collapse" data-target="#sidebar-category-navigation" aria-controls="sidebar-category-navigation" aria-expanded="false">
+      Categories
+      <svg class="fill-current pointer-events-none ml-3" :class="isOpen && 'rotate-180'" width="14px" viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20,19.5 C19.4,19.5 18.9,19.3 18.4,18.9 L1.4,4.9 C0.3,4 0.2,2.4 1.1,1.4 C2,0.3 3.6,0.2 4.6,1.1 L20,13.8 L35.5,1.1 C36.6,0.2 38.1,0.4 39,1.4 C39.9,2.5 39.7,4 38.7,4.9 L21.7,18.9 C21.1,19.3 20.5,19.5 20,19.5 Z" fill-rule="nonzero"></path>
+      </svg>
+    </h3>
+
+    <div class="collapse lg:expand lg:flex-column" id="sidebar-category-navigation">
+      <h3 class="font-size-lg mt-0 hidden lg:block">
+        <a class="text-inherit" href="/hc/en-us">
+          Categories
+        </a>
+      </h3>
+      <ul class="list-unstyled font-size-md">
+        <% categories.filter(function(c) { return c.name !== 'Unlisted'; }).forEach(function(category) { %>
+          <li>
+            <a class="block py-2<% if (category.isActive) { %> underline<% } %>" href="<%= category.html_url %>">
+              <%= category.name %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
+</script>
+
+
+
+
+<script type="text/template" id="tmpl-partial-article-list-sections">
+  <% if (sections.length) { %>
+    <ul class="list-none pl-3 mb-0 font-size-base collapse" id="<%= id %>" :class="{ 'is-visible': isOpen }" data-parent="<%= parentId %>">
+      <% sections.filter(function(s) { return s.name !== 'Unlisted'; }).forEach(function(section) { %>
+        <li class="font-medium" x-data="toggle({ isOpen: <%= !!section.isActive %> })" @collapse:show.stop="open" @collapse:hide.stop="close">
+
+          
+          <div class="flex justify-content-between align-items-center">
+            <a class="flex-1 py-2 text-inherit font-semibold" :class="{ 'text-inherit': !isOpen }" href="<%= section.html_url %>">
+              <%= section.name %>
+            </a>
+            <button class="p-2 ml-1 not-a-button border-radius transition cursor-pointer hover:bg-gray-200" :class="{ 'is-active': isOpen }" :aria-expanded="isOpen" data-toggle="collapse" data-target="#section-<%= section.id %>">
+              <svg class="text-inherit fill-current pointer-events-none" :class="{ 'rotate-180': isOpen }" width="12px" height="12px" viewBox="0 0 324 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M162,190 C156,190 150,187 146,183 L7,38 C-2,29 -2,15 7,7 C16,-2 30,-2 39,7 L162,135 L285,7 C293,-2 308,-2 317,7 C326,15 326,29 317,38 L178,183 C174,187 168,190 162,190 Z"></path>
+              </svg>
+            </button>
+          </div>
+
+          
+          <%= partial('partial-article-list-sections', {
+            id: 'section-' + section.id,
+            parentId: '#' + id,
+            sections: section.sections,
+            activeCategoryId: activeCategoryId,
+            activeSectionId: activeSectionId,
+            activeArticleId: activeArticleId,
+            partial: partial
+          }) %>
+
+          
+          <% if (section.articles.length) { %>
+            <ul class="list-none font-size-md pl-0 mb-0 collapse" :class="{ 'is-visible': isOpen }" id="section-<%= section.id %>" data-parent="#<%= id %>">
+              <% section.articles.forEach(function(article) { %>
+                <li>
+                  <a class="block px-3 py-2 border-radius transition text-inherit<% if (article.isActive) { %> bg-gray-100<% } %>" href="<%= article.html_url %>">
+                    <%= article.title %>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+
+        </li>
+      <% }); %>
+    </ul>
+  <% } %>
+</script>
+
+
+<script type="text/template" id="tmpl-partial-section-list-sections">
+  <% if (sections.length) { %>
+    <ul class="list-unstyled font-size-md<% if (parent.hasOwnProperty('parent_section_id')) { %> pl-4 mb-0<% } %>">
+      <% sections.filter(function(s) { return s.name !== 'Unlisted'; }).slice(0, maxSections).forEach(function(section) { %>
+        <li>
+          <a class="block py-2<% if (section.isActive) { %> underline<% } %>" href="<%= section.html_url %>">
+            <%= section.name %>
+          </a>
+          <%= partial('partial-section-list-sections', { parent: section, sections: section.sections, maxSections: maxSections, partial: partial }) %>
+        </li>
+      <% }); %>
+      <% if (sections.length > maxSections) { %>
+        <li>
+          <a class="block py-2" href="<%= parent.html_url %>">
+            See more
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  <% } %>
+</script>
+
+        
+
+
+  <!-- / -->
+
+  
+  <script src="//static.zdassets.com/hc/assets/en-us.32c65bc8ca19487330be.js"></script>
+  
+
+  <script type="text/javascript">
+  /*
+
+    Greetings sourcecode lurker!
+
+    This is for internal Zendesk and legacy usage,
+    we don't support or guarantee any of these values
+    so please don't build stuff on top of them.
+
+  */
+
+  HelpCenter = {};
+  HelpCenter.account = {"subdomain":"descript","environment":"production","name":"Descript"};
+  HelpCenter.user = {"identifier":"da39a3ee5e6b4b0d3255bfef95601890afd80709","email":null,"name":"","role":"anonymous","avatar_url":"https://assets.zendesk.com/hc/assets/default_avatar.png","is_admin":false,"organizations":[],"groups":[]};
+  HelpCenter.internal = {"asset_url":"//static.zdassets.com/hc/assets/","web_widget_asset_composer_url":"https://static.zdassets.com/ekr/snippet.js","current_session":{"locale":"en-us","csrf_token":null,"shared_csrf_token":null},"usage_tracking":{"event":"front_page_viewed","data":"BAh7BjoKX21ldGF7DDoPYWNjb3VudF9pZGkD5LSWOhNoZWxwX2NlbnRlcl9pZGwrCA10IpAzCToNYnJhbmRfaWRsKwiNUxxlMwk6DHVzZXJfaWQwOhN1c2VyX3JvbGVfbmFtZUkiDkFOT05ZTU9VUwY6BkVUOgtsb2NhbGVJIgplbi11cwY7C1Q6GmFub255bW91c190cmFja2luZ19pZDA=--e6ab6a1c8c6fb6919653d462ce1d7713ac48fa78","url":"https://help.descript.com/hc/activity"},"current_record_id":null,"current_record_url":null,"current_record_title":null,"current_text_direction":"ltr","current_brand_id":10116344337293,"current_brand_name":"Descript Help","current_brand_url":"https://descript.zendesk.com","current_brand_active":true,"current_path":null,"show_autocomplete_breadcrumbs":true,"user_info_changing_enabled":false,"has_user_profiles_enabled":true,"has_end_user_attachments":true,"user_aliases_enabled":false,"has_anonymous_kb_voting":false,"has_multi_language_help_center":true,"show_at_mentions":false,"embeddables_config":{"embeddables_web_widget":false,"embeddables_help_center_auth_enabled":false,"embeddables_connect_ipms":false},"answer_bot_subdomain":"static","gather_plan_state":"subscribed","has_article_verification":true,"has_gather":true,"has_ckeditor":true,"has_community_enabled":false,"has_community_badges":true,"has_community_post_content_tagging":false,"has_gather_content_tags":true,"has_guide_content_tags":true,"has_user_segments":true,"has_answer_bot_web_form_enabled":true,"has_garden_modals":false,"theming_cookie_key":"hc-da39a3ee5e6b4b0d3255bfef95601890afd80709-2-preview","is_preview":false,"has_search_settings_in_plan":true,"theming_api_version":3,"theming_settings":{"color_primary":"rgba(101, 26, 56, 1)","color_primary_inverse":"rgba(255, 247, 250, 1)","color_secondary":"rgba(101, 26, 57, 1)","color_secondary_inverse":"#fff","color_tertiary":"rgba(88, 63, 74, 1)","color_tertiary_inverse":"rgba(245, 241, 240, 1)","color_heading":"rgba(57, 10, 26, 1)","color_heading_secondary":"rgba(57, 10, 26, 1)","color_text":"rgba(57, 10, 26, 1)","bg_color":"rgba(253, 252, 252, 1)","bg_color_secondary":"rgba(241, 234, 237, 1)","color_link":"rgba(247, 59, 59, 1)","color_border":"rgba(209, 199, 203, 1)","color_outline":"rgba(135, 135, 224, 0.75)","color_gray_100":"rgba(228, 221, 224, 0.6)","color_gray_600":"rgba(113, 86, 97, 1)","heading_font":"'Lora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif","text_font":"'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif","base_font_size":"16px","favicon":"/hc/theming_assets/01KG04SE565YKW9G581M7R6A42","logo":"/hc/theming_assets/01KG03MRMQXDT9ZG37J8KMXG1D","logo_height":"30px","tagline":"Help Center","homepage_background_image":"/hc/theming_assets/01KG05XZAP2HQKA4SDS0FFC4Z4","community_background_image":"/hc/theming_assets/01KG05XZAP2HQKA4SDS0FFC4Z4","content_block_1_image":"/hc/theming_assets/01KH1HEATDWNX2F025V6AACGVP","content_block_2_image":"/hc/theming_assets/01KH1HEB48E5TCK1N2ERT67SFB","content_block_3_image":"/hc/theming_assets/01KH1HEBFCT1KZGV0JZYB3WAG2","content_block_4_image":"/hc/theming_assets/01J1G33AFFKRF2BH8A39F3TXJ8","content_block_5_image":"/hc/theming_assets/01J1G33AFFKRF2BH8A39F3TXJ8","content_block_6_image":"/hc/theming_assets/01J1G33AFFKRF2BH8A39F3TXJ8","content_block_7_image":"/hc/theming_assets/01J1G33AFFKRF2BH8A39F3TXJ8","content_block_8_image":"/hc/theming_assets/01J1G33AFFKRF2BH8A39F3TXJ8","custom_block_1_image":"/hc/theming_assets/01J1G33BVTH7P14JTPCJ9K3GPZ","custom_block_2_image":"/hc/theming_assets/01J1G33C6QVBGBKH5SMHCX6VF2","custom_block_3_image":"/hc/theming_assets/01J1G33CKPMC2KH2JBTTXX87GK","custom_block_4_image":"/hc/theming_assets/01J1G33CZMHJAT8RZ55ZJZ9RRD","contact_block_1_image":"/hc/theming_assets/01KCM087Z52E9F9650ECD6ZXWW","contact_block_2_image":"/hc/theming_assets/01KCM08899J376GVNCDXYQWB30","contact_block_3_image":"/hc/theming_assets/01KCM088JWPG113CDE5QDVCKGN","contact_block_4_image":"/hc/theming_assets/01KCM088X6TTG6Z3BVDNTRB0PA","cta_block_image":"/hc/theming_assets/01J1G33EJM42JE5ABAV0J749PG","header_search_style":"inline","instant_search":false,"scoped_kb_search":false,"scoped_community_search":false,"search_placeholder":"Ask a question or search for a feature","header_layout":"links-right","fixed_header":true,"sticky_header":true,"nav_style":"standard","nav_breakpoint":"xl","full_width_header":true,"header_height":"72px","color_header_link":"rgba(57, 10, 26, 1)","color_header_link_fixed":"rgba(255, 247, 250, 1)","bg_color_header":"rgba(255, 247, 250, 1)","header_link_1_text":"Back to Descript","header_link_1_url":"https://www.web.descript.com/","header_link_2_text":"","header_link_2_url":"","header_link_3_text":"","header_link_3_url":"","show_submit_a_request_link":false,"category_dropdown_style":"none","show_category_heading":true,"notification_location":"none","notification_content":"notification_content","color_notification":"rgba(255, 247, 250, 1)","bg_color_notification":"rgba(247, 59, 59, 1)","back_to_top_link_style":"standard","boxed_layout":false,"bg_color_boxed":"rgba(241, 234, 237, 1)","hero_heading":"How can we help?","color_hero_heading":"rgba(255, 247, 250, 1)","hero_text":"","color_hero_text":"rgba(241, 234, 237, 1)","hero_image_style":"standard","bg_color_hero":"rgba(179, 199, 210, 0)","bg_color_secondary_hero":"rgba(0, 98, 255, 0)","bg_gradient_hero":"radial","hero_content_alignment":"center","hero_element_shape":"none","popular_keywords_style":"badges","popular_keywords_heading":"Popular searches:","popular_keywords":"Edit like a doc, Underlord, Translate and dub video, Text-to-speech audio","promoted_videos_heading":"","promoted_video_ids":"","recent_activity":"none","custom_block_style":"none","color_custom_blocks":"white","bg_color_custom_blocks":"rgba(241, 234, 237, 1)","custom_blocks_heading":"","number_custom_blocks":"3","number_custom_block_columns":"3","custom_block_alignment":"center","custom_block_image_height":"80px","custom_block_1_title":"Getting started","custom_block_1_description":"Discover everything you need to know to start your journey","custom_block_1_url":"https://www.zenplates.co","custom_block_2_title":"Community","custom_block_2_description":"Share knowledge with other users in our Discord community","custom_block_2_url":"/hc/en-us/community/topics","custom_block_3_title":"Submit a request","custom_block_3_description":"Get in touch with our helpful customer service team","custom_block_3_url":"/hc/en-us/requests/new","custom_block_4_title":"Announcements","custom_block_4_description":"Keep up to date with the latest information","custom_block_4_url":"https://www.zenplates.co","content_block_style":"1-boxes","color_content_blocks":"white","bg_color_content_blocks":"rgba(241, 234, 237, 1)","content_blocks_heading":"","number_content_block_columns":"3","content_block_alignment":"center","content_block_image_height":"90px","article_list_style":"3-bordered","article_list_columns":"3","article_list_excerpt":71,"promoted_article_style":"icon","promoted_article_list_style":"2-unstyled","promoted_article_list_position":"after","promoted_articles_heading":"Featured articles","promoted_article_list_columns":"3","promoted_articles_alignment":"left","promoted_article_list_excerpt":126,"contact_block_style":"cards","color_contact_blocks":"white","contact_blocks_heading":"Get in touch","number_contact_blocks":"3","number_contact_block_columns":"3","contact_block_image_height":"36px","contact_block_1_title":"Contact us","contact_block_1_description":"Can't find what you're looking for? Send a message to our team, and we'll help you find the answers.","contact_block_1_url":"https://help.descript.com/hc/en-us/articles/10337720480653-Contact-Descript","contact_block_2_title":"Talk with the community ","contact_block_2_description":"Connect with fellow users in our Discord community to share your feedback, experiences, and creations.","contact_block_2_url":"https://help.descript.com/hc/en-us/articles/10612803483405-The-Descript-Community-on-Discord","contact_block_3_title":"Join a live event","contact_block_3_description":"Join our weekly live stream tutorials to learn with Descript experts in real time!","contact_block_3_url":"https://help.descript.com/hc/en-us/articles/12958294760589-Watch-Descript-webinars-and-other-live-events","contact_block_4_title":"Subscribe","contact_block_4_description":"Discover video tutorials covering a variety of topics","contact_block_4_url":"https://www.youtube.com","cta_style":"banner","cta_location":"all","cta_element_heading":"Can't find what you're looking for?","color_heading_cta":"rgba(57, 10, 26, 1)","cta_element_body":"","color_text_cta":"rgba(101, 26, 57, 1)","cta_element_link_text":"","bg_color_cta":"rgba(255, 214, 197, 1)","subsection_style":"list","category_sidebar":"article-list","section_sidebar":"article-list","show_follow_section":false,"article_metadata":"none","show_follow_article":false,"table_of_contents_style":"sidebar-left","table_of_contents_heading":"In this article","article_navigation_style":"standard","next_article_title":"Next article","previous_article_title":"Previous article","show_article_voting":false,"show_article_sharing":true,"share_title":"","show_recently_viewed_articles":true,"show_related_articles":true,"show_article_comments":false,"article_sidebar":"articles-in-section","note_title":"Note","color_note":"rgba(241, 234, 237, 1)","warning_title":"Warning","color_warning":"rgba(255, 214, 197, 1)","enable_lightboxes":true,"enable_video_player":true,"form_list_style":"standard","form_tip":"Please ensure that you provide as much information as possible. By doing so, it helps the team provide quick and relevant information.","community_image_style":"standard","show_recent_activity_community":false,"show_follow_topic":false,"show_follow_post":false,"show_post_sharing":false,"footer_layout":"links-center","footer_shape":"none","color_footer_link":"rgba(255, 247, 250, 1)","bg_color_footer":"rgba(57, 10, 26, 1)","footer_link_1_text":"Events calendar","footer_link_1_url":"https://luma.com/descript?k=c\u0026utm_campaign=webinarhome\u0026utm_medium=helpcenter\u0026utm_source=hcfooter","footer_link_2_text":"Join our Discord server","footer_link_2_url":"https://discord.gg/XTGsZT9p","footer_link_3_text":"Watch webinars","footer_link_3_url":"https://www.youtube.com/@Descript/streams","facebook_link":"https://www.facebook.com/descriptapp/","twitter_link":"https://x.com/descript","linkedin_link":"https://www.linkedin.com/company/descript/","instagram_link":"https://www.instagram.com/descript_app/","youtube_link":"https://www.youtube.com/descript","show_credit_link":false,"use_translations":false},"has_pci_credit_card_custom_field":true,"help_center_restricted":false,"is_assuming_someone_else":false,"flash_messages":[],"user_photo_editing_enabled":true,"user_preferred_locale":"en-us","base_locale":"en-us","login_url":"https://descript.zendesk.com/access?locale=en-us\u0026brand_id=10116344337293\u0026return_to=https%3A%2F%2Fhelp.descript.com%2Fhc%2Fen-us","has_alternate_templates":true,"has_custom_statuses_enabled":true,"has_hc_generative_answers_setting_enabled":true,"has_generative_search_with_zgpt_enabled":true,"has_suggested_initial_questions_enabled":false,"has_guide_service_catalog":true,"has_service_catalog_search_poc":false,"has_service_catalog_itam":false,"has_csat_reverse_2_scale_in_mobile":false,"has_knowledge_navigation":false,"has_trial_presumptive_setup":true,"has_unified_navigation":true,"has_unified_navigation_eap_access":true,"has_csat_bet365_branding":false,"has_help_center_gen_search_follow_up_conversation":false,"version":"v27211","dev_mode":false};
+</script>
+
+  
+  
+  <script src="//static.zdassets.com/hc/assets/hc_enduser-a0b851930fe35651a1f7a2fd1fe9d687.js"></script>
+  <script type="text/javascript" src="/hc/theming_assets/9876708/10116344337293/script.js?digest=44150007158541"></script>
+  
+</body>
+</html>

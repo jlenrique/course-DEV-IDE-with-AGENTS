@@ -256,7 +256,7 @@ Current workflow family:
 - `DOUBLE_DISPATCH` is optional in either workflow and always collapses back to a single authorized winner deck in `authorized-storyboard.json`.
 - For the motion-enabled + double-dispatch happy path, use `tests/happy-path-simulation-motion-double-dispatch-20260405.md`.
 
-For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, and **copies** of Gate-approved slide stills under `visuals/`. Before ElevenLabs synthesis begins, Marcus can also run a preview-only voice-selection checkpoint that gives you catalog sample links for the carry-forward/default voice plus alternatives, or three description-led recommendations if you describe the ideal narrator. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
+For narrated slide packs, the team assembles in **Descript** using a single **assembly bundle** folder under `course-content/staging/…`: segment manifest, narration audio and WebVTT captions, ElevenLabs summaries, the Descript Assembly Guide, **`DESMOND-OPERATOR-BRIEF.md`** (run-tailored Descript steps and **Automation Advisory**, prompt **14.5** in the prompt packs; skill `bmad-agent-desmond`), and **copies** of Gate-approved slide stills under `visuals/`. Before ElevenLabs synthesis begins, Marcus can also run a preview-only voice-selection checkpoint that gives you catalog sample links for the carry-forward/default voice plus alternatives, or three description-led recommendations if you describe the ideal narrator. Automation runs **`sync-visuals`** on the manifest so those PNGs sit beside the other assets (not only under the Gary export tree) before you import into Descript. You normally do not run commands yourself—Marcus or the developer does; exact steps live in the [Developer guide — Compositor assembly bundle CLI](dev-guide.md#compositor-assembly-bundle-cli).
 
 The ElevenLabs path now preserves script-led pacing as the primary driver. The system can pass mild voice-direction controls like `speed`, `emotional_variability`, and `pace_variability`, but those are refinements, not substitutes for Irene's writing judgment.
 
@@ -609,7 +609,7 @@ CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output
 ```
 
 **Trial-run checklist (copy — same steps as # column)**  
-☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 9A Voice preview ☐ 10 ElevenLabs ☐ 11 Motion branch only if using the motion workflow template ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Descript
+☐ 0 Mode + pre-flight ☐ 1 Fidelity + URLs ready ☐ 2 Source (opt.) ☐ **3 Phase 1 files** ☐ 4 Gate 1 ☐ 5 Gary + diagram_cards ☐ 6 Gate 2 ☐ **7 Phase 2 files** ☐ 8 Gate 3 ☐ 9 Vera/Quinn-R ☐ 9A Voice preview ☐ 10 ElevenLabs ☐ 11 Motion branch only if using the motion workflow template ☐ 12 Quinn-R pre-comp ☐ 13 Compositor ☐ 14 Desmond operator brief (`DESMOND-OPERATOR-BRIEF.md`) ☐ 15 Descript assembly
 
 **Trial-run running log (in progress)**
 
@@ -620,7 +620,7 @@ CLOSE SHIFT. Execute docs/workflow/production-session-wrapup.md fully and output
 - 2026-03-30 | Note | Repro CLI for image→bundle (optional): `scripts/utilities/build_image_source_bundle.py` — **thin wrapper only**; it does not replace skill logic and requires a JSON payload with vision fields (`_perception_input.json` pattern).
 - 2026-03-30 | Policy | `scripts/utilities/build_image_source_bundle.py` is a **provisional helper**. Default production ingestion remains Marcus → Source Wrangler (+ sensory-bridges where needed). Use the helper only for reproducible replay when a validated perception payload already exists.
 
-**Compositor deliverable:** One **`assembly-bundle/`** folder: `segment-manifest.yaml`, `DESCRIPT-ASSEMBLY-GUIDE.md`, `audio/`, `captions/`, optional `video/`, **`visuals/`** after `sync-visuals` — ready for Descript.
+**Assembly-bundle deliverable (before Descript):** One **`assembly-bundle/`** folder: `segment-manifest.yaml`, `DESCRIPT-ASSEMBLY-GUIDE.md`, **`DESMOND-OPERATOR-BRIEF.md`**, `audio/`, `captions/`, optional `video/`, **`visuals/`** after `sync-visuals`, plus **`motion/`** when the motion workflow applies — ready for Descript.
 
 ---
 

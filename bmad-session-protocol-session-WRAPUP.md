@@ -48,6 +48,11 @@ Update `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` only for
 
 ### 4a. Update sprint status
 
+If `sprint-status.yaml` was edited this session, run:
+- `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py`
+
+Do not close the session with a modified sprint ledger unless that targeted regression check passes or the failure is explicitly recorded as an unresolved blocker.
+
 Update `_bmad-output/implementation-artifacts/sprint-status.yaml` for epic and story Kanban state changes (e.g., `in-progress` → `review` → `done`).
 
 ### 4b. Interaction Testing: 
@@ -146,6 +151,20 @@ Remove or archive any stale session tracking files, orphaned artifacts, or depre
 
 *Skip if the workspace is already clean.*
 
+### 10a. Dirty-worktree reconciliation (mandatory)
+
+Before Git closeout, run:
+- `git status --short`
+
+Partition the worktree into:
+- **Session-owned changes** to include in closeout
+- **Pre-existing unrelated changes** to leave untouched
+
+Rules:
+- Do not stage unrelated modified or untracked files into the session commit.
+- Do not claim ownership of unrelated files in `next-session-start-here.md` or `SESSION-HANDOFF.md`.
+- If unrelated changes remain after the session commit, list them explicitly as ambient worktree state so the next session does not confuse them with the just-closed work.
+
 ### 11. Verify artifact completeness
 
 Cross-check that every artifact listed in `SESSION-HANDOFF.md` (artifact update checklist) is confirmed current. 
@@ -185,6 +204,13 @@ Default end-of-session flow is:
 9. Re-verify `next-session-start-here.md` branch metadata matches reality. If it does not, make a small docs-only follow-up commit and push.
 
 If your team intentionally skips merge-to-master for a session, explicitly record that exception and the exact resume branch in both `next-session-start-here.md` and `SESSION-HANDOFF.md`.
+
+Do not perform the merge-to-master flow when any of the following are true:
+- unrelated pre-existing worktree changes remain
+- the session produced a scoped checkpoint that should stay isolated on the working branch
+- branch metadata or startup commands have not yet been reconciled
+
+In those cases, commit the working branch only, record the exception, and leave the repo in a truthful resume state.
 
 **Course content commit examples**:
 - "Add lesson 3 presentation slides to staging with lesson plan scaffold"

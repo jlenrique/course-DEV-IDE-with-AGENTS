@@ -2,68 +2,75 @@
 
 ## Session Summary
 
-This session repaired the sprint tracking layer for the interstitial-cluster MVP track, reconciled Epic 20A status truth across the canonical artifacts, and closed the 20A review lane for stories 20a-2, 20a-3, and 20a-4.
+This session reviewed the BMAD session protocol set with the BMAD party-mode team, concluded that the protocol was directionally correct but unsafe for dirty-worktree closeout, implemented the agreed improvements, and then used the updated protocol to close the session on the current working branch.
 
 - branch: `DEV/slides-redesign`
-- objective: cluster-based narrated-slide redesign for C1M1
-- status: Epic 20A checkpoint coherent; 20b-1 is the next implementation story
+- objective: validate and, if needed, harden the BMAD session closeout protocol before ending the session
+- status: protocol hardened, session wrapped, next work remains `20b-1`
 
 ## What Was Completed
 
-### 1. Root Cause and Repair
+### 1. Protocol Assessment
 
-- Confirmed the immediate corruption source in `_bmad-output/implementation-artifacts/sprint-status.yaml`: manual closeout edits introduced a stray leading space on the `20a-3` key
-- Confirmed the broader process cause: the shutdown protocol required status edits but did not require a post-edit parse check
-- Repaired the malformed YAML and updated the handoff docs so future sprint-status edits explicitly rerun `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py`
-- Strengthened `tests/test_sprint_status_yaml.py` so it checks both YAML parseability and active cluster-story status alignment
+- Assessed the current BMAD session protocol set as:
+  - `bmad-session-protocol-session-START.md`
+  - `bmad-session-protocol-session-WRAPUP.md`
+- Noted there is no literal `session-xyz` file in the repo; the team agreed the start/wrapup pair is the intended canonical set.
+- Consulted the BMAD party-mode team:
+  - PM: usable, but needed clearer canonical naming and separation from ambient workspace noise
+  - Architect: usable, but needed better handling for nonexistent `xyz` naming and dirty-worktree assumptions
+  - Developer: safe only if wrap-up does not assume a clean tree
+  - QA: not fully safe until dirty-worktree reconciliation and closeout gating were explicit
 
-### 2. Epic 20A Reconciliation
+### 2. Protocol Improvements Implemented
 
-- Set `20a-2-interstitial-brief-specification-standard` to `done`
-- Set `20a-3-cluster-narrative-arc-schema` to `done`
-- Set `20a-4-operator-cluster-density-controls` to `done`
-- Left `20a-5-retrofit-exemplar-library` at `ready-for-dev` with explicit MVP deferral intact
-- Preserved `20b-1-irene-pass1-cluster-planning-implementation` as `ready-for-dev`
-- Updated `next-session-start-here.md` so the repo now points cleanly to `20b-1` as the next move
+- Updated `bmad-session-protocol-session-START.md` to:
+  - declare the canonical start/wrapup protocol pair
+  - handle stale references to a nonexistent literal `session xyz` document
+  - add a dirty-worktree scope fence at session start
+- Updated `bmad-session-protocol-session-WRAPUP.md` to:
+  - require targeted sprint-status regression when `sprint-status.yaml` changes
+  - add mandatory dirty-worktree reconciliation before Git closeout
+  - explicitly skip merge-to-master when unrelated changes remain
 
-### 3. BMAD Tracker Updated
+### 3. Closeout Execution
 
-Current active statuses:
-
-- `epic-19: in-progress`
-- `19-1-segment-manifest-cluster-schema-extension: done`
-- `19-2-gary-dispatch-contract-extensions: ready-for-dev`
-- `epic-20a: in-progress`
-- `20a-1-cluster-decision-criteria: done`
-- `20a-2-interstitial-brief-specification-standard: done`
-- `20a-3-cluster-narrative-arc-schema: done`
-- `20a-4-operator-cluster-density-controls: done`
-- `20a-5-retrofit-exemplar-library: ready-for-dev`
-- `20b-1-irene-pass1-cluster-planning-implementation: ready-for-dev`
-
-## Next Session First Action
-
-Resume on `DEV/slides-redesign` and start with:
-
-1. Start `20b-1-irene-pass1-cluster-planning-implementation`
-2. Keep `20a-5-retrofit-exemplar-library` deferred until Storyboard A produces real cluster output
-3. After any sprint-status edit, run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py` before closing the session
-
-## Why This Order
-
-- Epic 20A design inputs are now coherent enough to unblock Epic 20B
-- `20a-5` is intentionally deferred and should not block `20b-1`
-- The sprint ledger is once again authoritative and guarded by a targeted regression test
+- Verified current branch and worktree state
+- Confirmed unrelated ambient changes remained outside session scope
+- Updated `next-session-start-here.md` to:
+  - point the next session to `20b-1`
+  - record the merge-skipped exception
+  - list ambient unrelated modified/untracked files
+- Closed this session on the working branch without absorbing unrelated changes
 
 ## Validation Summary
 
-- Targeted sprint tracker regression test should pass once the worktree version of `sprint-status.yaml` is in place
-- The remaining validation focus is on status truth, not runtime implementation behavior
+- `git diff --check`
+- `git worktree list`
+- `git status --short`
+- BMAD party-mode re-check after protocol improvements: all four reviewers agreed it was now safe to proceed with wrap-up on this branch
 
-## Recommended Resume Command
+## Next Session First Action
 
-```powershell
-cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
-git checkout DEV/slides-redesign
-git status --short
-```
+1. Resume on `DEV/slides-redesign`
+2. Start `20b-1-irene-pass1-cluster-planning-implementation`
+3. Keep `20a-5-retrofit-exemplar-library` deferred
+4. If `sprint-status.yaml` changes, run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py` before next closeout
+
+## Unresolved / Ambient Worktree State
+
+These changes were intentionally not claimed by this session:
+
+- modified:
+  - `docs/app-design-principles.md`
+  - `pyproject.toml`
+  - `tests/test_python_infrastructure.py`
+- untracked:
+  - `_bmad-output/test-artifacts/test-design-system.md`
+  - `resources/exemplars/canvas/_catalog.yaml`
+  - `resources/exemplars/gamma/_catalog.yaml`
+  - `resources/exemplars/qualtrics/_catalog.yaml`
+
+## Git Closeout Note
+
+Merge-to-master was intentionally skipped for this session because unrelated pre-existing worktree changes remain. The truthful resume branch is `DEV/slides-redesign`.

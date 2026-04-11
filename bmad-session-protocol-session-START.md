@@ -2,6 +2,14 @@
 
 Companion to `bmad-session-protocol-session-WRAPUP.md`. Together these two files guarantee reliable context transfer between sessions.
 
+## Canonical Session Protocol Set
+
+The canonical BMAD session protocol is this pair:
+- `bmad-session-protocol-session-START.md`
+- `bmad-session-protocol-session-WRAPUP.md`
+
+If a user or older note refers to a literal "session xyz" document and no such file exists, treat that as a stale label and use this start/wrapup pair instead. Record the assumption in session notes if it affects execution.
+
 ## §0: Project Purpose TL;DR (For Unfamiliar Agents)
 
 **Purpose**: Build a persistent collaborative intelligence infrastructure for systematically scaling creative expertise in online course content production. A custom master orchestrator agent (Marcus) coordinates specialist agents that manipulate professional media tools through skills backed by Python scripts for API calls, while systematically capturing creative decision-making patterns in BMad memory sidecars for iterative refinement and reuse.
@@ -106,6 +114,20 @@ Check the current Git branch and compare it with the branch instructions recorde
 - If there is an unexplained mismatch, treat `next-session-start-here.md` as stale and record a reconciliation note for wrap-up Step 7 before ending the session.
 
 > **Post-merge convention:** If your team merges to `master` at session end, the next session may open on `master` first. In that case, use the startup commands in `next-session-start-here.md` to checkout/create the next working branch.
+
+### 2b. Dirty-worktree scope fence
+
+Run:
+- `git status --short`
+
+Classify changes before doing any work:
+- **Session-owned changes**: files this session is expected to touch
+- **Pre-existing unrelated changes**: modified or untracked files outside the session scope
+
+Rules:
+- Do not revert, normalize, or silently absorb unrelated changes into the session.
+- If unrelated changes could interfere with the session objective, record the conflict immediately and plan around it.
+- If you proceed with unrelated changes still present, carry that forward into wrap-up notes so closeout does not falsely imply a clean tree.
 
 ### 2a. Worktree and IDE alignment guard (mandatory)
 

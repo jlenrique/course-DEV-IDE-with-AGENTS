@@ -43,10 +43,12 @@ def check_documentation_drift(changed_files):
         if len(code_changes) > 5:
             print(f"  - ... and {len(code_changes) - 5} more.")
             
-        print("\nConsider checking if the following need updates:")
-        print("  - docs/dev-guide.md")
-        print("  - docs/agent-environment.md")
-        print("  - docs/project-context.md")
+        print("\nConsider checking if the following core docs need updates:")
+        print("  - docs/dev-guide.md (Technical architecture & extension points)")
+        print("  - docs/agent-environment.md (API/MCP tool map for agents)")
+        print("  - docs/project-context.md (High-level project status & timeline)")
+        print("  - docs/admin-guide.md (API keys & environment setup)")
+        print("  - docs/user-guide.md (End-user instructions & workflows)")
         print("="*60 + "\n")
         
         # Returning a non-zero exit code will mark the GitHub Action step as "failed"

@@ -1,0 +1,19 @@
+tool: gamma
+agent: gamma-specialist
+description: Gamma API slide generation specialist exemplars
+exemplars:
+  - name: L1-two-processes-one-mind
+    description: L1 fidelity exemplar for two processes one mind concept
+    type: slide-generation
+    created: 2026-04-11
+    status: active
+  - name: L2-diagnosis-innovation
+    description: L2 fidelity exemplar for diagnosis innovation
+    type: slide-generation
+    created: 2026-04-11
+    status: active
+  - name: L3-mm-of-innovation
+    description: L3 fidelity exemplar for mm of innovation
+    type: slide-generation
+    created: 2026-04-11
+    status: active

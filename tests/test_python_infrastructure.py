@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -296,7 +297,8 @@ class TestProjectPackaging:
 
         content = (project_root() / "pyproject.toml").read_text(encoding="utf-8")
         assert "[project]" in content
-        assert 'requires-python = ">=3.10"' in content
+        pyproject = tomllib.loads(content)
+        assert pyproject["project"]["requires-python"] == ">=3.11"
 
 
 # ---------------------------------------------------------------------------

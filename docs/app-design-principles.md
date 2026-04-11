@@ -99,6 +99,23 @@ Every agent consuming a multimodal artifact must follow: **Receive → Perceive 
 
 ---
 
+## Principle 3: Event-Driven Contract Enforcement
+
+Governs the **operational enforcement** of canonical contracts — when and how they are validated.
+
+**Core rule:** Canonical contracts are enforced continuously via event hooks, not ad-hoc audits. Enforcement is fail-closed and mandatory.
+
+**Event-driven enforcement layers:**
+- **Development/startup:** Session startup (app_session_readiness + preflight), post-story (structural walk), periodic maturity audits
+- **Runtime:** Per-gate (Vera fidelity checks), human checkpoints (Storyboard A/B), cumulative drift scans
+- **Merge-time:** Contract linting (planned Story 16.4) — fail on schema changes without lane-matrix updates
+
+**Anti-drift mechanism:** Events trigger validation before spend (e.g., preflight before runs, Vera before Quinn-R). Failures circuit-break the pipeline.
+
+**Gap:** Pre-merge linting (Story 16.4) is backlog — contracts can drift between commits.
+
+---
+
 ## How the principles interact
 
 - The **Hourglass** identifies *where* determinism belongs in the pipeline flow

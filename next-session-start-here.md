@@ -28,7 +28,7 @@
 
 - Root cause: `sprint-status.yaml` was being manually edited during session closeout without a mandatory parse check, which allowed a stray leading space to corrupt YAML and drift from story-file status truth
 - Fixed the malformed `20a-3` sprint entry and reconciled status truth across the sprint ledger, story files, and handoff docs
-- Added a shutdown guardrail in `bmad-session-protocol-session-WRAPUP.md`
+- Added an explicit handoff guardrail in `next-session-start-here.md` and `SESSION-HANDOFF.md` to rerun the sprint-status regression test after future ledger edits
 - Strengthened `tests/test_sprint_status_yaml.py` so parseability and current cluster-story status alignment are regression-checked together
 
 ### 2. Epic 20A Review Lane Closed

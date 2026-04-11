@@ -14,7 +14,7 @@ This session repaired the sprint tracking layer for the interstitial-cluster MVP
 
 - Confirmed the immediate corruption source in `_bmad-output/implementation-artifacts/sprint-status.yaml`: manual closeout edits introduced a stray leading space on the `20a-3` key
 - Confirmed the broader process cause: the shutdown protocol required status edits but did not require a post-edit parse check
-- Repaired the malformed YAML and updated `bmad-session-protocol-session-WRAPUP.md` so future sprint-status edits must run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py`
+- Repaired the malformed YAML and updated the handoff docs so future sprint-status edits explicitly rerun `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py`
 - Strengthened `tests/test_sprint_status_yaml.py` so it checks both YAML parseability and active cluster-story status alignment
 
 ### 2. Epic 20A Reconciliation

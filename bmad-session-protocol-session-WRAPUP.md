@@ -158,10 +158,12 @@ Before Git closeout, run:
 
 Partition the worktree into:
 - **Session-owned changes** to include in closeout
+- **Collaborative in-scope changes** produced during the same session by the user or other active agents/browser contexts
 - **Pre-existing unrelated changes** to leave untouched
 
 Rules:
 - Do not stage unrelated modified or untracked files into the session commit.
+- Do not exclude same-session collaborative changes merely because they were authored by another active agent or browser context working on the same objective.
 - Do not claim ownership of unrelated files in `next-session-start-here.md` or `SESSION-HANDOFF.md`.
 - If unrelated changes remain after the session commit, list them explicitly as ambient worktree state so the next session does not confuse them with the just-closed work.
 

@@ -110,7 +110,9 @@ Open and read:
 Check the current Git branch and compare it with the branch instructions recorded in `next-session-start-here.md`.
 
 - If `next-session-start-here.md` includes both a repository baseline branch and a next working branch, use the **next working branch** as the implementation target.
-- If the current branch differs from the recorded target, checkout the recorded target (or create it from baseline if instructed).
+- If the current branch differs from the recorded target, do **not** assume the current branch is wrong. First determine whether a legitimate post-wrapup event occurred after the handoff was written (for example: the user created the next branch, a docs-only closeout follow-up commit landed, or the branch was advanced intentionally outside the prior session's wrapup flow).
+- If the current branch is a plausible successor to the recorded target and the repo state is otherwise coherent, treat the current branch as authoritative and reconcile `next-session-start-here.md` at the next wrapup instead of force-checking out the older branch.
+- Only checkout the recorded target immediately when the current branch is clearly unrelated to the intended next work.
 - If there is an unexplained mismatch, treat `next-session-start-here.md` as stale and record a reconciliation note for wrap-up Step 7 before ending the session.
 
 > **Post-merge convention:** If your team merges to `master` at session end, the next session may open on `master` first. In that case, use the startup commands in `next-session-start-here.md` to checkout/create the next working branch.
@@ -123,9 +125,12 @@ Run:
 Classify changes before doing any work:
 - **Session-owned changes**: files this session is expected to touch
 - **Pre-existing unrelated changes**: modified or untracked files outside the session scope
+- **Collaborative in-scope changes**: changes made during the same session by the user or by other active agents/browser contexts working on the same objective
 
 Rules:
 - Do not revert, normalize, or silently absorb unrelated changes into the session.
+- Do not misclassify same-session collaborative changes as unrelated just because this agent did not author them.
+- If another browser, terminal, or agent has been working on the same session objective, treat those changes as in-scope until evidence shows otherwise.
 - If unrelated changes could interfere with the session objective, record the conflict immediately and plan around it.
 - If you proceed with unrelated changes still present, carry that forward into wrap-up notes so closeout does not falsely imply a clean tree.
 

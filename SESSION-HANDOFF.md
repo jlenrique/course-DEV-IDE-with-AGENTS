@@ -28,10 +28,13 @@ This session reviewed the BMAD session protocol set with the BMAD party-mode tea
   - declare the canonical start/wrapup protocol pair
   - handle stale references to a nonexistent literal `session xyz` document
   - add a dirty-worktree scope fence at session start
+  - treat legitimate post-wrapup branch advances as reconcilable rather than automatically wrong
+  - distinguish collaborative in-scope changes from truly unrelated changes
 - Updated `bmad-session-protocol-session-WRAPUP.md` to:
   - require targeted sprint-status regression when `sprint-status.yaml` changes
   - add mandatory dirty-worktree reconciliation before Git closeout
   - explicitly skip merge-to-master when unrelated changes remain
+  - keep same-session multi-agent/browser changes in scope when they serve the same objective
 
 ### 3. Closeout Execution
 

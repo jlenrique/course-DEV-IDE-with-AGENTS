@@ -27,6 +27,8 @@
   - mandatory dirty-worktree reconciliation
   - targeted sprint-status regression when `sprint-status.yaml` changes
   - explicit guidance to skip merge-to-master when unrelated changes remain
+- Branch mismatch checks now tolerate legitimate post-wrapup branch advances instead of assuming the current branch is wrong.
+- Dirty-worktree rules now treat same-session user/agent/browser collaboration as in-scope until evidence shows otherwise.
 
 ## Branch Metadata
 

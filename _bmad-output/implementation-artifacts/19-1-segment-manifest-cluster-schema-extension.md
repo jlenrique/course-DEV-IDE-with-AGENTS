@@ -37,20 +37,20 @@ So that Irene, Gary, validators, and storyboard review can carry a three-cluster
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Extend the canonical manifest schema reference (AC: 1-4)
-  - [ ] 1.1: Add the cluster fields to [template-segment-manifest.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-content-creator/references/template-segment-manifest.md)
-  - [ ] 1.2: Document field semantics, nullability, and default expectations
-  - [ ] 1.3: Add a small clustered example snippet showing one head and one interstitial row
-- [ ] Task 2: Preserve backward compatibility explicitly (AC: 2, 5)
-  - [ ] 2.1: Confirm the manifest template still reads cleanly for current non-clustered narrated and motion workflows
-  - [ ] 2.2: Add migration notes stating that old manifests remain valid with all cluster fields absent
-- [ ] Task 3: Check current consumers for tolerance of additive fields (AC: 5)
-  - [ ] 3.1: Review [validate-irene-pass2-handoff.py](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py) for assumptions that would reject unknown manifest keys
-  - [ ] 3.2: Review [generate-storyboard.py](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-marcus/scripts/generate-storyboard.py) for assumptions that would break when clustered manifests appear
-  - [ ] 3.3: Review any manifest round-trip helpers or inspection-pack scripts for silent field stripping
-- [ ] Task 4: Add regression coverage for additive schema tolerance (AC: 5)
-  - [ ] 4.1: Add or extend tests proving existing manifest-loading paths tolerate the new cluster fields without failure
-  - [ ] 4.2: Add one regression fixture covering a clustered manifest row and one covering an unchanged flat manifest row
+- [x] Task 1: Extend the canonical manifest schema reference (AC: 1-4)
+   - [x] 1.1: Add the cluster fields to [template-segment-manifest.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-content-creator/references/template-segment-manifest.md)
+   - [x] 1.2: Document field semantics, nullability, and default expectations
+   - [x] 1.3: Add a small clustered example snippet showing one head and one interstitial row
+- [x] Task 2: Preserve backward compatibility explicitly (AC: 2, 5)
+   - [x] 2.1: Confirm the manifest template still reads cleanly for current non-clustered narrated and motion workflows
+   - [x] 2.2: Add migration notes stating that old manifests remain valid with all cluster fields absent
+- [x] Task 3: Check current consumers for tolerance of additive fields (AC: 5)
+   - [x] 3.1: Review [validate-irene-pass2-handoff.py](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py) for assumptions that would reject unknown manifest keys
+   - [x] 3.2: Review [generate-storyboard.py](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-marcus/scripts/generate-storyboard.py) for assumptions that would break when clustered manifests appear
+   - [x] 3.3: Review any manifest round-trip helpers or inspection-pack scripts for silent field stripping
+- [x] Task 4: Add regression coverage for additive schema tolerance (AC: 5)
+   - [x] 4.1: Add or extend tests proving existing manifest-loading paths tolerate the new cluster fields without failure
+   - [x] 4.2: Add one regression fixture covering a clustered manifest row and one covering an unchanged flat manifest row
 
 ## Dev Notes
 
@@ -134,6 +134,47 @@ Recent commits show active doc and workflow refinement rather than a schema refa
 - [13-3-segment-manifest-visual-references.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/13-3-segment-manifest-visual-references.md)
 - [14-2-segment-manifest-motion-extensions.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/14-2-segment-manifest-motion-extensions.md)
 - [template-segment-manifest.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/skills/bmad-agent-content-creator/references/template-segment-manifest.md)
+
+## Dev Agent Record
+
+### Debug Log
+
+- 2026-04-11: Started implementation of 19-1
+- 2026-04-11: Added cluster fields to template-segment-manifest.md schema
+- 2026-04-11: Added field reference table and migration notes
+- 2026-04-11: Added UC8 clustered presentation example
+- 2026-04-11: Reviewed consumer scripts for tolerance - all use yaml.safe_load and ignore unknown fields
+- 2026-04-11: Marked all tasks complete
+- 2026-04-11: Code review round 1 — fixed YAML parse error in workflow-templates.yaml, updated file list
+- 2026-04-11: Code review round 2 — fixed cluster test KeyError (segments on disk not in payload), renamed test-validate-irene-pass2-handoff.py to underscores for pytest collection (surfaced 36 previously uncollected tests), 120 tests pass
+
+### Completion Notes
+
+Successfully extended the canonical segment manifest schema with cluster fields. All fields are additive and nullable, preserving backward compatibility. Added comprehensive field documentation, migration notes, and a clustered example. Verified that existing manifest consumers tolerate unknown fields without breaking.
+
+### File List
+
+- skills/bmad-agent-content-creator/references/template-segment-manifest.md (modified)
+- skills/bmad-agent-marcus/SKILL.md (modified)
+- skills/bmad-agent-marcus/references/workflow-templates.yaml (modified)
+- skills/bmad-agent-marcus/references/cluster-manifest-reference.md (new)
+- skills/bmad-agent-marcus/scripts/tests/test_validate_irene_pass2_handoff.py (renamed + modified — cluster regression tests + KeyError fix)
+
+### Change Log
+
+- feat: extend segment manifest schema with cluster fields (2026-04-11)
+- fix: repair cluster regression test KeyError and rename test file for pytest collection (2026-04-11)
+
+### Review Findings
+
+- [x] [Review][Patch] YAML parse failure in workflow-templates.yaml — indentation mismatch on gate-4 and new cluster template [workflow-templates.yaml:318]
+- [x] [Review][Patch] Story File List incomplete — missing Marcus SKILL.md, workflow-templates.yaml, cluster-manifest-reference.md
+- [x] [Review][Patch] Cluster regression test KeyError: 'segments' — payload dict lacks segments key, must load from disk manifest [test_validate_irene_pass2_handoff.py:1717]
+- [x] [Review][Defer] Hyphenated test filename not collected in directory scan — renamed to underscores, surfaced 36 previously uncollected tests
+
+## Status
+
+done
 
 ## Completion Status
 

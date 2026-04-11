@@ -44,13 +44,24 @@ segments:
     music: enum             # duck | swell | out | continue | null
     transition_in: enum     # fade | cross-dissolve | cut | none
     transition_out: enum    # fade | cross-dissolve | cut | none
-    # ── Visual references from Irene Pass 2 (Story 13.3) ──
-    visual_references:               # list of visual elements referenced in narration
-      - element: string              # what is referenced (e.g., "comparison timeline")
-        location_on_slide: string    # spatial description (e.g., "left panel")
-        narration_cue: string        # exact narration phrase that references this element
-        perception_source: string    # slide_id from perception_artifacts
-    # ── Written back by ElevenLabs agent ──
+     # ── Visual references from Irene Pass 2 (Story 13.3) ──
+     visual_references:               # list of visual elements referenced in narration
+       - element: string              # what is referenced (e.g., "comparison timeline")
+         location_on_slide: string    # spatial description (e.g., "left panel")
+         narration_cue: string        # exact narration phrase that references this element
+         perception_source: string    # slide_id from perception_artifacts
+     # ── Cluster fields from Irene Pass 2 (Story 19.1) ──
+     cluster_id: string | null        # cluster identifier; null for non-clustered runs
+     cluster_role: enum | null        # head | interstitial
+     cluster_position: enum | null    # establish | develop | tension | resolve
+     develop_type: enum | null        # deepen | reframe | exemplify (only when cluster_position == develop)
+     parent_slide_id: string | null   # set on interstitials, references the head slide
+     interstitial_type: enum | null   # reveal | emphasis-shift | bridge-text | simplification | pace-reset
+     isolation_target: string | null  # specific element surfaced from the head slide
+     narrative_arc: string | null     # one-sentence cluster arc, set on head and inherited by cluster members
+     cluster_interstitial_count: int | null  # recommended count for the cluster, 1-3
+     double_dispatch_eligible: boolean | null  # default true, set false for interstitials in MVP
+     # ── Written back by ElevenLabs agent ──
     narration_duration: float | null    # seconds
     narration_file: string | null       # relative path, e.g., "course-content/staging/C1-M1-L3/audio/seg-01.mp3"
     narration_vtt: string | null        # relative path, e.g., "course-content/staging/C1-M1-L3/captions/seg-01.vtt"
@@ -151,9 +162,32 @@ Default behavior remains additive and backward compatible:
 | `approved` | Motion Gate approved the asset for Irene Pass 2 |
 | `null` | Static segment, no motion lifecycle |
 
+### Cluster Fields
+
+| Field | Type | Nullability | Description |
+|-------|------|-------------|-------------|
+| `cluster_id` | string | nullable | Unique identifier for the cluster; null for non-clustered segments |
+| `cluster_role` | enum | nullable | Membership role: `head` (first in cluster) or `interstitial` (supporting slides) |
+| `cluster_position` | enum | nullable | Narrative position in cluster arc: `establish` (orient), `develop` (deepen/reframe/exemplify), `tension` (complicate), `resolve` (land meaning) |
+| `develop_type` | enum | nullable | Sub-type for `develop` position: `deepen` (unpack), `reframe` (recontextualize), `exemplify` (illustrate) |
+| `parent_slide_id` | string | nullable | For interstitials, references the head slide's `id` |
+| `interstitial_type` | enum | nullable | Visual strategy: `reveal` (zoom/isolate), `emphasis-shift` (highlight one element), `bridge-text` (key phrase), `simplification` (reduce complexity), `pace-reset` (rest visual) |
+| `isolation_target` | string | nullable | Specific element from head slide to surface (e.g., "working memory box") |
+| `narrative_arc` | string | nullable | One-sentence emotional journey (e.g., "From confusion to clarity through progressive disclosure") |
+| `cluster_interstitial_count` | int | nullable | Planned interstitial count for cluster (1-3) |
+| `double_dispatch_eligible` | boolean | nullable | Whether segment can use double-dispatch; defaults true, false for interstitials in MVP |
+
+Defaults: All null for non-clustered runs. `double_dispatch_eligible` defaults to true if null.
+
 ---
 
-## Seven Use Case Patterns
+## Migration Notes (Story 19.1)
+
+All cluster fields are additive and nullable. Existing manifests remain valid with all cluster fields absent (null). Non-clustered runs continue to work unchanged. Cluster fields are optional workflow-specific extensions, following the precedent of motion fields (Story 14.2).
+
+---
+
+## Eight Use Case Patterns
 
 ### UC1 — Narrated Slide Deck (most common)
 ```yaml
@@ -280,6 +314,45 @@ Default behavior remains additive and backward compatible:
   transition_in: fade
   transition_out: fade
 ```
+
+### UC8 — Clustered Presentation (progressive disclosure)
+```yaml
+- id: seg-cluster-1-head
+  narration_text: "Cognitive load theory explains how working memory limits learning..."
+  behavioral_intent: "credible"
+  voice_id: null
+  visual_mode: static-hold
+  visual_source: gary
+  cluster_id: "cluster-1"
+  cluster_role: "head"
+  cluster_position: "establish"
+  narrative_arc: "From overload awareness to capacity management through targeted interventions"
+  cluster_interstitial_count: 2
+  double_dispatch_eligible: true
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: none
+- id: seg-cluster-1-int1
+  narration_text: "The working memory box shows the core constraint..."
+  behavioral_intent: "clear-guidance"
+  voice_id: null
+  visual_mode: static-hold
+  visual_source: gary
+  cluster_id: "cluster-1"
+  cluster_role: "interstitial"
+  cluster_position: "develop"
+  develop_type: "deepen"
+  parent_slide_id: "seg-cluster-1-head"
+  interstitial_type: "emphasis-shift"
+  isolation_target: "working memory capacity box"
+  double_dispatch_eligible: false
+  sfx: null
+  music: continue
+  transition_in: none
+  transition_out: cross-dissolve
+```
+*Note: Cluster head establishes the topic; interstitials progressively disclose elements without introducing new concepts.*
 
 ---
 

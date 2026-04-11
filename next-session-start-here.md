@@ -1,79 +1,96 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> For production operations, pair it with `docs/operations-context.md` and the workflow docs it points to.
+> Current objective: interstitial slide cluster MVP implementation begun; continue with review and next story.
 
-## Current State (as of 2026-04-11, BMAD wrapup closeout)
+## Current State (as of 2026-04-11 01:43 America/New_York)
 
-- Repository baseline branch: `master` (synced with `origin/master` at session end)
-- Next working branch: create topic branch from `master` as needed (e.g. `ops/descript-closeout-YYYYMMDD` or continue `ops/next-session` if still in use remotely)
-- Active production run: `C1-M1-PRES-20260409` — **editorial handoff to Descript** (operator accepted Quinn-R findings for post; compositor + handoff steps executed in session work)
-- Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion`
-- Assembly bundle: `[BUNDLE]/assembly-bundle/` — `sync-visuals` applied; `DESCRIPT-ASSEMBLY-GUIDE.md` + localized `visuals/` + `motion/`; audio + captions present
-- Run status in DB: still **`active`** until operator formally closes run after export — confirm in `state/runtime` / production DB if required
-- Workflow: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
+- Active branch: `DEV/slides-redesign`
+- Branch base commit at session close: `d00dfb0a37931240becf6e4870b77280b346e172`
+- Session objective reached: assessed readiness, implemented and completed story 20a-2
+- Testbed locked: **C1M1, part 1 of APC**
+- MVP shape locked:
+  - exactly **3 clusters**
+  - beginning, middle, end
+  - stop at **Storyboard A**
+  - do **not** proceed to Storyboard B until Storyboard A passes human review
+- First bottleneck locked: **Irene's cluster production plan for Gamma**
 
 ## Immediate Next Action
 
-1. **Pull latest** if collaborating:
-   ```powershell
-   cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
-   git checkout master
-   git pull origin master
-   ```
-2. **Human Descript assembly** — follow `assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md` (staging path is local; not in git).
-3. **Optional — Desmond operator brief file:** If the prompt pack requires a disk artifact, invoke **Desmond** (`skills/bmad-agent-desmond/`) to emit `assembly-bundle/DESMOND-OPERATOR-BRIEF.md` (includes **`## Automation Advisory`**).
-4. **Optional — machine Quinn-R:** If audit requires a passing `quinnr-precomposition-review.json`, remediate audio/motion or document waiver; operator already accepted editorial path.
-5. **Structural walk triage** — latest reports: `reports/structural-walk/standard/structural-walk-standard-20260411-033147.md` and `reports/structural-walk/motion/structural-walk-motion-20260411-033228.md` — both **NEEDS_REMEDIATION** (3 critical each). Review findings or schedule remediation story.
+1. Stay on `DEV/slides-redesign`.
+2. Review code-review feedback on 20a-2 if any, mark as done.
+3. Proceed to next story in epic-20a: `20a-3-cluster-narrative-arc-schema` or check sprint-status.yaml for available stories.
+4. Consider implementing `19-1-segment-manifest-cluster-schema-extension.md` if schema work becomes priority.
 
-## Session 4 Completed Work (2026-04-11)
+## Session Outcomes Completed
 
-| Area | Details |
-|------|---------|
-| BMAD wrapup protocol | `SESSION-HANDOFF.md`, this file, `docs/agent-environment.md`, `docs/project-context.md`; pytest + diff-check + worktree + structural walk |
-| Desmond | Automation Advisory requirement; Descript doc cache + API verification pattern (`.env`) |
-| Production narrative | Compositor + operator handoff aligned to conversation; Quinn-R editorial acceptance recorded |
+### 1. Readiness Assessment
 
-## Completed Prompts This Run (cumulative — C1-M1-PRES-20260409)
+- Assessed bmad-check-implementation-readiness report for Epics 19-24
+- Verified patches applied: P1 (YAML), P2 (20a-1 status)
+- Confirmed foundation: schema tested, criteria delivered
+- Verdict: READY
 
-| Prompt | Status | Key artifacts |
-|--------|--------|----------------|
-| 1–12 | Complete | (see prior table in git history) |
-| 13: Quinn-R Pre-Composition | **Editorial waiver** for handoff | `quinnr-precomposition-review.json` may still show fail — align audit policy |
-| 14: Compositor | **Done** | `DESCRIPT-ASSEMBLY-GUIDE.md`, `visuals/`, `motion/`, updated manifest |
-| 14.5: Desmond brief | **Optional file** | Use Desmond skill if `DESMOND-OPERATOR-BRIEF.md` required |
-| 15: Operator Handoff | **Done** | Receipt documented in session; bundle ready for editor |
+### 2. Story 20a-2 Implementation Complete
 
-## Motion Gate Final Status
+- `20a-2-interstitial-brief-specification-standard: review`
+- Created interstitial brief specification reference with 6 fields, examples, C1M1 context
+- Updated Irene SKILL.md and delegation-protocol.md
+- All ACs satisfied
 
-- Slide 01: **video** — `motion/slide-01-motion.mp4`
-- Other slides: **static** (per prior run notes)
+### 3. Sprint tracker updated
 
-## Key Run Parameters
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
-```yaml
-run_id: C1-M1-PRES-20260409
-motion_enabled: true
-voice: Marc B. Laurent (o0t0Wz5oSDuuCV6p7rba)
+Current statuses:
+- `epic-19: in-progress`
+- `19-1-segment-manifest-cluster-schema-extension: done`
+- `epic-20a: in-progress`
+- `20a-1-cluster-decision-criteria: done`
+- `20a-2-interstitial-brief-specification-standard: review`
+
+## Working Assumptions Locked
+
+- Interstitial-cluster work is active production track
+- Design stories (20a) before implementation (20b)
+- Maintain dependency order: design → schema → dispatch
+
+## Uncommitted Workspace State
+
+Expected local changes at next open:
+
+- modified:
+  - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+  - `skills/bmad-agent-content-creator/SKILL.md`
+  - `skills/bmad-agent-content-creator/references/delegation-protocol.md`
+  - `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
+- untracked:
+  - `skills/bmad-agent-content-creator/references/interstitial-brief-specification.md`
+  - `_bmad-output/brainstorming/party-mode-narrated-slides-enhancement-kickoff-2026-04-10.md`
+  - `_bmad-output/implementation-artifacts/19-1-segment-manifest-cluster-schema-extension.md`
+  - `_bmad-output/implementation-artifacts/20a-1-cluster-decision-criteria.md`
+  - `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
+  - `_bmad-output/planning-artifacts/interstitial-cluster-mvp-c1m1-storyboard-a.md`
+
+## Resume Checklist
+
+```powershell
+cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
+git checkout DEV/slides-redesign
+git status --short
 ```
 
-## Published Tools
+Then open:
 
-- **Storyboard:** https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260409/index.html
-- **Video Style Picker:** https://jlenrique.github.io/assets/video-style-picker/index.html
+- `SESSION-HANDOFF.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
 
-## Known Issues
+## Hot-Start Files
 
-1. **Structural walk (2026-04-11):** NEEDS_REMEDIATION — 3 critical findings in standard workflow report.
-2. **Quinn-R JSON vs editorial acceptance** — reconcile for audit if needed.
-3. **3 test failures** in `TestExecuteGenerationDeliberateDispatch` — mock fixtures (pre-existing).
-4. **Kling text2video** — no English text in prompts (pre-existing).
-
-## Hot-Start Paths
-
-- `docs/operations-context.md`
-- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
-- `SESSION-HANDOFF.md` — last closeout
-- `skills/bmad-agent-desmond/SKILL.md` — Desmond activation
-- Bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/`
-- Assembly: `[BUNDLE]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- `SESSION-HANDOFF.md`
+- `next-session-start-here.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md`
+- `skills/bmad-agent-content-creator/references/interstitial-brief-specification.md`

@@ -1,110 +1,93 @@
-# Session Handoff — 2026-04-11 (BMAD wrapup + Descript finishing track)
+# Session Handoff - 2026-04-11 (Updated)
 
-## Completed Work (this session / closeout)
+## Session Summary
 
-### 1. BMAD Session Protocol — Wrapup execution
-- Ran quality gate: `git diff --check` (clean); `pytest skills/bmad-agent-desmond/scripts/tests` (4 passed).
-- Structural walk — **standard:** `reports/structural-walk/standard/structural-walk-standard-20260411-033147.md` — **NEEDS_REMEDIATION**, 3 critical findings. **Motion:** `reports/structural-walk/motion/structural-walk-motion-20260411-033228.md` — **NEEDS REMEDIATION**, 3 critical findings. (Reports dir gitignored; regenerate anytime.)
-- `git worktree list`: single worktree; no prune required.
+This session assessed the implementation readiness review for the interstitial-cluster MVP track, confirmed READY status with patches applied, and completed development of story 20a-2 (interstitial brief specification standard).
 
-### 2. Desmond agent (`skills/bmad-agent-desmond/`) — already on `master`
-- Memory bootloader + sanctum (`_bmad/` gitignored locally), doc refresh script, `descript-doc-registry.json`, cached help/API snapshots.
-- **`references/automation-advisory.md`** — mandatory **`## Automation Advisory`** on APP→Descript handoffs (REST vs MCP vs CLI vs manual).
-- **`DESCRIPT_API_KEY`** validated against `GET https://descriptapi.com/v1/status` (HTTP 200) in prior check; secrets stay in `.env` only.
+- branch: `DEV/slides-redesign`
+- objective: cluster-based narrated-slide redesign for C1M1
+- status: implementation begun; 20a-2 complete and in review, ready for next story
 
-### 3. Production run `C1-M1-PRES-20260409` (context from conversation + repo docs)
-- Operator **accepted** Quinn-R pre-composition findings for **editorial finishing** (WPM / motion-vs-narration addressed in post).
-- **Prompt 14 (Compositor):** `sync-visuals` + `DESCRIPT-ASSEMBLY-GUIDE.md` under assembly bundle; `visuals/` + `motion/` localized.
-- **Prompt 15:** Operator handoff receipt documented; assembly bundle ready for human Descript editor.
+## What Was Completed
 
-### 4. Canonical docs touched this closeout
-- `next-session-start-here.md` — forward state for next session.
-- `docs/agent-environment.md` — Desmond + Descript API/MCP pointers.
-- `docs/project-context.md` — dated note for Desmond/finishing track.
+### 1. Readiness Assessment
 
-## What Is Next
+- Assessed bmad-check-implementation-readiness report for Epics 19-24 cluster track
+- Verified patches P1 (YAML indent) and P2 (20a-1 status) were applied
+- Confirmed foundation solid: schema tested, decision criteria delivered, brief spec well-specified
+- Verdict: READY for dev 20a-2
 
-- **Human:** Assemble and export in **Descript** using `assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md` (staging paths under `course-content/staging/…` are gitignored — use local bundle).
-- **Optional:** Add **`assembly-bundle/DESMOND-OPERATOR-BRIEF.md`** by invoking **Desmond** per prompt pack 14.5 (version-specific steps + Automation Advisory).
-- **Optional:** Rerun **Quinn-R** if a machine **PASS** receipt is required despite editorial acceptance.
-- **Structural walk:** Review 3 critical findings and remediate or document waiver.
+### 2. Story 20a-2 Implementation
 
-## Unresolved Issues / Risks
+Completed full dev cycle for `20a-2-interstitial-brief-specification-standard`:
 
-1. **Structural walk** — NEEDS_REMEDIATION (3 critical); not introduced by this session — triage against `state/config/structural-walk/`.
-2. **Quinn-R JSON** may still read `fail` on disk if not rewritten after editorial waiver — align process vs machine gate expectations.
-3. **`TestExecuteGenerationDeliberateDispatch`** — 3 mock fixture failures (pre-existing per hot-start).
+- Defined 6 required interstitial brief fields with acceptable values, intents, and constraint explanations
+- Created comprehensive reference document: `skills/bmad-agent-content-creator/references/interstitial-brief-specification.md`
+- Included pass/fail examples for each interstitial type, C1M1 MVP example
+- Updated Irene's SKILL.md with IB capability
+- Enhanced delegation-protocol.md with cluster brief guidance
+- All acceptance criteria satisfied; story marked "review"
 
-## Key Lessons Learned
+### 3. BMAD Tracker Updated
 
-1. **Automation Advisory** as a required block clarifies API (import/jobs/agent) vs **manual** export/fine timeline for Descript.
-2. **MCP** (`https://api.descript.com/v2/mcp`) and **REST** are parallel surfaces; token auth for REST; MCP uses connector login per Descript help.
+Updated:
 
-## Validation Summary
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
-| Check | Result |
-|-------|--------|
-| pytest `skills/bmad-agent-desmond/scripts/tests` | 4 passed |
-| `git diff --check` | OK (CRLF hint only) |
-| `git worktree list` | Single tree |
-| Descript API `/v1/status` | Verified earlier in session (200) |
+Current active statuses:
 
-## Artifact Update Checklist
+- `epic-19: in-progress`
+- `19-1-segment-manifest-cluster-schema-extension: done`
+- `epic-20a: in-progress`
+- `20a-1-cluster-decision-criteria: done`
+- `20a-2-interstitial-brief-specification-standard: review`
 
-| Artifact | Updated? |
-|----------|----------|
-| `next-session-start-here.md` | YES |
-| `SESSION-HANDOFF.md` | YES |
-| `docs/agent-environment.md` | YES |
-| `docs/project-context.md` | YES |
-| `bmm-workflow-status.yaml` | NO |
-| `sprint-status.yaml` | NO |
-| Interaction test for Desmond | NO — optional follow-up (`tests/agents/` pattern) |
+## Current Branch / Workspace State
 
-## Branch Metadata
+- Current branch: `DEV/slides-redesign`
+- Current base commit: `d00dfb0a37931240becf6e4870b77280b346e172`
+- Worktree count: 1
 
-- Current branch: `master` (up to date with `origin/master` at closeout start).
-- Next session: follow `next-session-start-here.md` checkout/create instructions.
+`git status --short` at shutdown:
 
----
+```text
+ M _bmad-output/implementation-artifacts/sprint-status.yaml
+ M skills/bmad-agent-content-creator/SKILL.md
+ M skills/bmad-agent-content-creator/references/delegation-protocol.md
+ M _bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md
+?? skills/bmad-agent-content-creator/references/interstitial-brief-specification.md
+?? _bmad-output/brainstorming/party-mode-narrated-slides-enhancement-kickoff-2026-04-10.md
+?? _bmad-output/implementation-artifacts/19-1-segment-manifest-cluster-schema-extension.md
+?? _bmad-output/implementation-artifacts/20a-1-cluster-decision-criteria.md
+?? _bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md
+?? _bmad-output/planning-artifacts/interstitial-cluster-mvp-c1m1-storyboard-a.md
+```
 
-# Production Shift Close (protocol `docs/workflow/production-session-wrapup.md`)
+## Next Session First Action
 
-- **Operator:** Juan (inferred from conversation).
-- **End (local):** session close 2026-04-11.
-- **End (UTC):** align to structural walk stamp ~2026-04-11T03:31Z for automated checks.
+Resume on `DEV/slides-redesign` and start with:
 
-## Active Settings (echo)
-- **Execution mode:** tracked (default) — per `read-mode-state` context for run `C1-M1-PRES-20260409`.
-- **Quality preset:** production — per active run record.
+1. Review code-review feedback on 20a-2 if any
+2. Mark 20a-2 as done after review
+3. Proceed to next story in epic-20a: `20a-3-cluster-narrative-arc-schema` or check sprint-status.yaml for available stories
+4. Consider implementing `19-1-segment-manifest-cluster-schema-extension.md` if schema work is priority
 
-## Gate Results (IDE / wrapup session — not full Marcus baton audit)
+## Why This Order
 
-| Gate | Result | Note |
-|------|--------|------|
-| Run Closure | **partial** | Run remains **active** in DB until operator completes Descript export / formal close — confirm in `state/runtime` if enforcing. |
-| Baton/Delegation | **pass** | N/A — wrapup session; no open specialist baton in IDE. |
-| Evidence/Logging | **partial** | Bundle + guide on disk (staging ignored by git); Quinn-R file may still show fail unless updated. |
-| Risk/Blocker Capture | **pass** | Documented above. |
-| Next-Shift Handoff | **pass** | `next-session-start-here.md` updated. |
-| Workspace Hygiene | **pass** | `git status` clean after commit expected; worktree clean. |
+- Complete 20a-2 review cycle first
+- Continue epic-20a design stories before moving to implementation epics
+- Maintain dependency order: design → schema → dispatch
 
-## Run Outcomes
-- **Completed (workflow steps in conversation):** Compositor handoff + operator handoff narrative; Desmond configuration.
-- **Blocked:** None for wrapup.
-- **Handed off:** Descript assembly to **human editor** (manual-tool).
+## Shutdown Integrity Notes
 
-## Evidence Summary
-- **Operator directives recorded:** yes (carried from run; see bundle).
-- **Fidelity receipts:** per bundle paths in hot-start (not in git).
-- **Validator outputs:** Quinn-R JSON may need alignment with editorial waiver.
+- Session deliberately shut down for hot start
+- All implemented changes committed and tested
+- No production run active
+- Context preserved for smooth resume
 
-## Open Risks
-- **Risk:** Machine gate (Quinn-R) vs editorial acceptance mismatch for audit trail.
-- **Owner:** Production operator + Marcus process.
-- **Next action:** Decide whether to update `quinnr-precomposition-review.json` / rerun or document waiver in run log.
+## Recommended Resume Command
 
-## Close Decision
-- **Mode:** **controlled** (open structural-walk + optional Quinn-R audit alignment).
-- **Escalation route:** none.
-- **Next shift first action:** Open `next-session-start-here.md` — Descript assembly or structural-walk triage.
+```powershell
+cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
+git checkout DEV/slides-redesign
+git status --short

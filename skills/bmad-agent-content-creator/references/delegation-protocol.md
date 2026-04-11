@@ -83,3 +83,7 @@ After assembly, annotate each artifact with consumption notes for the downstream
 | First-Person Explainer | ElevenLabs | Voice character profile, pacing notes, clinical terminology pronunciation |
 
 For Pass 2 narration, Irene should also preserve a slide-level runtime rationale in the paired segment manifest so downstream review can tell whether runtime variance was earned by pedagogy rather than improvised.
+
+## Cluster Interstitial Briefs
+
+When producing briefs for Gary's cluster interstitials (not standard slide briefs), Irene must follow the interstitial brief specification standard (`./references/interstitial-brief-specification.md`). These briefs are structured contracts with 6 required fields (`interstitial_type`, `isolation_target`, `visual_register_constraint`, `content_scope`, `narration_burden`, `relationship_to_head`) to ensure Gamma receives constrained, coherent instructions that preserve head-slide lineage. Vague briefs lead to decorative slides; use the standard's examples and quality bars to maintain pedagogical intent.

@@ -124,6 +124,7 @@ Greet with current content state: "Irene here — Instructional Architect. I see
 | PQ | Delegation intent verification — review delegated prose for behavioral intent fulfillment and instructional-structure fit (not a quality gate) | Load `./references/delegation-protocol.md` |
 | WD | Writer delegation protocol — select writer, compose brief, review returns, manage revision rounds | Load `./references/delegation-protocol.md` |
 | MG | Segment manifest generation — build YAML production contract from narration script and Gary's slide output, populate all consumer fields | Load `./references/template-segment-manifest.md` |
+| CD | Cluster decision criteria — evaluate slides for clustering potential using concept density, visual complexity, pedagogical weight, and operator input | Load `./references/cluster-decision-criteria.md` |
 | SB | Spoken pedagogical bridging — align manifest `bridge_type` with learner-heard intro/outro language per cadence + frequency scale | Load `./references/spoken-bridging-language.md` |
 | PC | Perception contract enforcement — validate/generate/retry perception artifacts before narration, escalate persistent LOW to Marcus | Run `./scripts/perception_contract.py::enforce_perception_contract` |
 | VR | Visual reference injection — select visual elements from perception, validate count compliance, build traceable metadata for narration | Run `./scripts/visual_reference_injector.py::inject_all_slides` |
@@ -131,6 +132,7 @@ Greet with current content state: "Irene here — Instructional Architect. I see
 | MC | Motion perception confirmation — validate approved motion assets and produce video perception confirmations for non-static segments | Run `./scripts/perception_contract.py::enforce_motion_perception_contract` |
 | MA | Manual animation support — generate manual-tool guidance and validate imported animation assets before manifest handoff | Run `./scripts/manual_animation_workflow.py` |
 | SM | Save Memory | Load `./references/save-memory.md` |
+| IB | Interstitial brief specification — define constrained briefs for Gamma cluster interstitials using 6 required fields | Load `./references/interstitial-brief-specification.md` |
 
 ### External Agents
 

@@ -1638,3 +1638,106 @@ def test_spoken_bridge_passes_when_default_enrichment_matches_patterns(
     )
     assert result["status"] == "pass"
     assert not any("spoken_bridge_policy" in w for w in result["warnings"])
+
+
+def test_cluster_schema_additive_fields_tolerated_flat_manifest(
+    tmp_path: Path,
+) -> None:
+    """Regression test: flat manifest without cluster fields loads without error."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    # Should pass without cluster fields
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+    )
+    assert result["status"] == "pass"
+
+
+def test_cluster_schema_additive_fields_tolerated_clustered_manifest(
+    tmp_path: Path,
+) -> None:
+    """Regression test: clustered manifest with cluster fields loads without error."""
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+    )
+    # Add cluster fields to the on-disk manifest (segments live on disk, not in payload)
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0].update({
+        "cluster_id": "c1",
+        "cluster_role": "head",
+        "cluster_position": "establish",
+        "parent_slide_id": None,
+        "interstitial_type": None,
+        "isolation_target": None,
+        "narrative_arc": "From confusion to clarity",
+        "cluster_interstitial_count": 1,
+        "double_dispatch_eligible": True,
+    })
+    manifest_path.write_text(
+        yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8"
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    # Should pass with cluster fields
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+    )
+    assert result["status"] == "pass"

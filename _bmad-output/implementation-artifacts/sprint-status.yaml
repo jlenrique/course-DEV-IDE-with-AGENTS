@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-11  # Epic 20A review lane reconciled. 20a-1/2/3/4 done; 20a-5 deferred ready-for-dev; 20b-1 is the next implementation target.
+last_updated: 2026-04-12  # Cluster dispatch trial validated (theme applied, PNGs downloaded). Epic 19 done; 20b-2 ready.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -260,9 +260,9 @@ development_status:
   # tolerance required before Irene/Gary can plan and dispatch clustered presentations.
   epic-19: in-progress
   19-1-segment-manifest-cluster-schema-extension: done
-  19-2-gary-dispatch-contract-extensions: ready-for-dev
-  19-3-fidelity-gate-contract-updates: backlog
-  19-4-validator-hardening-cluster-aware-payloads: backlog
+  19-2-gary-dispatch-contract-extensions: done
+  19-3-fidelity-gate-contract-updates: done
+  19-4-validator-hardening-cluster-aware-payloads: review
   epic-19-retrospective: optional
 
   # === EPIC 20A: Irene Cluster Intelligence - Design & Specification (Added 2026-04-11) ===
@@ -277,16 +277,16 @@ development_status:
 
   # === EPIC 20B: Irene Cluster Intelligence - Implementation (Added 2026-04-11) ===
   # Implements Irene Pass 1 cluster planning and the structural quality gate before Gamma spend.
-  epic-20b: backlog
-  20b-1-irene-pass1-cluster-planning-implementation: ready-for-dev
-  20b-2-cluster-plan-quality-gate-g1-5: backlog
+  epic-20b: in-progress
+  20b-1-irene-pass1-cluster-planning-implementation: done
+  20b-2-cluster-plan-quality-gate-g1-5: done
   20b-3-narration-script-parameters-extension-for-clusters: backlog
   epic-20b-retrospective: optional
 
   # === EPIC 21: Gary Cluster Dispatch - Gamma Interpretation (Added 2026-04-11) ===
   # Translates Irene's cluster briefs into coherent Gamma output and validates intra-cluster consistency.
-  epic-21: backlog
-  21-1-visual-design-constraint-library: backlog
+  epic-21: in-progress
+  21-1-visual-design-constraint-library: ready-for-dev
   21-2-cluster-aware-prompt-engineering: backlog
   21-3-cluster-dispatch-sequencing: backlog
   21-4-cluster-coherence-validation-g2-5: backlog

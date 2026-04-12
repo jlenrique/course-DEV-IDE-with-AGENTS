@@ -77,3 +77,8 @@ These changes were intentionally not claimed by this session:
 ## Git Closeout Note
 
 Merge-to-master was intentionally skipped for this session because unrelated pre-existing worktree changes remain. The truthful resume branch is `DEV/slides-redesign`.
+
+## Session Summary (2026-04-12)
+- Trial run Storyboard A: cluster dispatch validated (theme applied, PNGs downloaded, storyboard packet ready for Irene Pass 2).
+- Bugs fixed: PNG download, theme/LLM application.
+- Protocol hardening confirmed safe.

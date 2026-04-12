@@ -450,6 +450,13 @@ All API clients extend `BaseAPIClient` in `scripts/api_clients/base_client.py`.
 | **Raw responses** | `get_raw()` / `post_raw()` for binary content (audio, etc.) |
 | **JSON parsing** | Automatic with fallback for non-JSON responses |
 
+### Theme Resolution and Cluster Dispatch
+
+For cluster-aware Gary dispatch:
+- `run-constants.yaml` → `theme_selection` ("theme-a") → `gary-theme-resolution.json` → `theme_id` ("njim9kuhfnljvaa")
+- `theme_paramset_key` ("preset-a") → `gamma-style-presets.yaml` → `imageOptions.model` ("gemini-3.1-flash-image-mini")
+- Trial script `cluster_dispatch_trial.py` hardcodes canonical values for validation.
+
 ### Gamma PNG Export Handling
 
 Gamma's PNG export may return a single image or a ZIP archive of multiple images. The `_materialize_exported_slide_paths` function in `skills/gamma-api-mastery/scripts/gamma_operations.py` handles this normalization:

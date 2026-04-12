@@ -9,13 +9,15 @@
 - Session objective reached: assessed the current BMAD session protocol docs with the BMAD party-mode team, implemented the agreed safety improvements, and wrapped this session without absorbing unrelated worktree noise
 - Epic 20A checkpoint remains coherent
 - Epic 20B entry story remains `20b-1-irene-pass1-cluster-planning-implementation`
+- Applied fixes to validate-cluster-plan.py for G1.5 quality gate bugs (density default to "none", interstitial count actual match, master_behavioral_intent check, flat leak fields). All targeted tests pass.
+- Applied additional fixes: removed None key from DENSITY_RANGES, updated story md to 13 criteria. All tests pass.
 
 ## Immediate Next Action
 
 1. Stay on `DEV/slides-redesign`.
-2. Start `20b-1-irene-pass1-cluster-planning-implementation`.
-3. Keep `20a-5-retrofit-exemplar-library` deferred until Storyboard A produces real clustered output.
-4. If `sprint-status.yaml` is edited in that work, run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py` before closing the session.
+2. Run full production trial with Marcus: Irene Pass 1 → cluster planning → Gary dispatch → Storyboard A.
+3. Advance to Irene Pass 2 narration on trial output.
+4. If `sprint-status.yaml` changes, run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py`.
 
 ## Protocol Status
 

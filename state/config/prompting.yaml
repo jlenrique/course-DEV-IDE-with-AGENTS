@@ -1,0 +1,25 @@
+templates:
+  small:
+    version: v1
+    body: |
+      Cluster {cluster_id} (small) — intents: {intents}. Goal: {goal}.
+      Apply constraints: {constraints_section}
+      Safety: {safety_section}
+  large:
+    version: v1
+    body: |
+      Cluster {cluster_id} (large) — intents: {intents}. Goal: {goal}.
+      Apply constraints: {constraints_section}
+      Safety: {safety_section}
+safety:
+  clauses:
+    - Stay within this cluster only; do not reference other clusters.
+    - Avoid PII; keep content professional and factual.
+  blocked_terms:
+    - password
+    - social security
+    - credit card
+token_budget:
+  max_per_prompt: 400
+hashing:
+  algorithm: sha256

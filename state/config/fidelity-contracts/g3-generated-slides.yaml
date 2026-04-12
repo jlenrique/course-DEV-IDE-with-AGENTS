@@ -9,11 +9,11 @@ source_of_truth:
 criteria:
   - id: "G3-01"
     name: "Slide count match"
-    description: "Number of generated slides equals number specified in the slide brief"
+    description: "Number of generated slides equals the effective renderable count implied by the slide brief: flat slides plus cluster heads plus each head's declared interstitial expansions"
     fidelity_class: [creative, literal-text, literal-visual]
     severity: high
     evaluation_type: deterministic
-    check: "count(generated_slides) == count(slide_brief.slides)"
+    check: "count(generated_slides) == count(slide_brief.slides where cluster_role in (null, head)) + sum(cluster_interstitial_count for each cluster head)"
     requires_perception: false
 
   - id: "G3-02"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+from pathlib import Path
 
 
 def resolve_ffmpeg_binary(explicit_path: str | None = None) -> str:
@@ -13,9 +14,22 @@ def resolve_ffmpeg_binary(explicit_path: str | None = None) -> str:
         return candidate
 
     # Check bundled binary
-    bundled = os.path.join(os.path.dirname(__file__), "..", "..", "bin", "ffmpeg.exe")
-    if os.path.isfile(bundled):
-        return bundled
+    here = Path(__file__).resolve()
+    project_root = here.parents[2]
+
+    # Check bundled binary
+    bundled = project_root / "bin" / "ffmpeg.exe"
+    if bundled.is_file():
+        return str(bundled)
+
+    # Check venv local installs (Windows/Linux)
+    venv_ffmpeg_candidates = [
+        project_root / ".venv" / "Scripts" / "ffmpeg.exe",
+        project_root / ".venv" / "bin" / "ffmpeg",
+    ]
+    for cand in venv_ffmpeg_candidates:
+        if cand.is_file():
+            return str(cand)
 
     on_path = shutil.which("ffmpeg")
     if on_path:

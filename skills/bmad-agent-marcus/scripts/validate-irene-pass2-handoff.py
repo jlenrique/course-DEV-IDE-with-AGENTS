@@ -574,6 +574,9 @@ def _validate_bundle_pass2_outputs(
 
     manifest_slide_ids: list[str] = []
     manifest_slide_id_set: set[str] = set()
+    interstitial_slide_ids: set[str] = set()
+    interstitials_missing_cluster_id: list[str] = []
+    interstitials_missing_timing_role: list[str] = []
     motion_segments: list[dict[str, Any]] = []
     spoken_bridge_warnings: list[str] = []
     perception_elements_by_slide = _build_perception_element_lookup(perception_artifacts)
@@ -680,9 +683,20 @@ def _validate_bundle_pass2_outputs(
         seg_id = str(segment.get("id") or "<missing-id>").strip() or "<missing-id>"
         slide_id = str(segment.get("gary_slide_id") or segment.get("slide_id") or "").strip()
         card_number = segment.get("gary_card_number")
+        cluster_role = segment.get("cluster_role")
         if slide_id:
             manifest_slide_ids.append(slide_id)
             manifest_slide_id_set.add(slide_id)
+            if cluster_role == "interstitial":
+                interstitial_slide_ids.add(slide_id)
+        # Validate interstitial cluster metadata
+        if cluster_role == "interstitial":
+            cluster_id = segment.get("cluster_id")
+            if not cluster_id:
+                interstitials_missing_cluster_id.append(seg_id)
+            timing_role = str(segment.get("timing_role") or "").strip()
+            if not timing_role:
+                interstitials_missing_timing_role.append(seg_id)
         slide_key = slide_id or (str(card_number) if card_number not in (None, "") else seg_id)
         bridge_type = str(segment.get("bridge_type") or "none").strip().lower() or "none"
         duration_estimate_raw = segment.get("duration_estimate_seconds")
@@ -907,7 +921,10 @@ def _validate_bundle_pass2_outputs(
     missing_manifest_for_slide_ids = [
         slide_id for slide_id in authorized_slide_ids if slide_id not in manifest_slide_id_set
     ]
-    unknown_manifest_slide_ids = sorted(manifest_slide_id_set - set(authorized_slide_ids))
+    # Interstitial slide_ids are valid but not in the authorized storyboard — exclude from unknown check
+    unknown_manifest_slide_ids = sorted(
+        manifest_slide_id_set - set(authorized_slide_ids) - interstitial_slide_ids
+    )
 
     details["missing_manifest_for_slide_ids"] = missing_manifest_for_slide_ids
     details["unknown_manifest_slide_ids"] = unknown_manifest_slide_ids
@@ -979,6 +996,17 @@ def _validate_bundle_pass2_outputs(
         if envelope_artifacts_by_key.get(key) != standalone_artifacts_by_key.get(key)
     )
     details["perception_artifact_mismatches"] = mismatch_keys
+
+    if interstitials_missing_cluster_id:
+        errors.append(
+            "interstitial segment(s) missing required cluster_id: "
+            + ", ".join(sorted(set(interstitials_missing_cluster_id)))
+        )
+    if interstitials_missing_timing_role:
+        errors.append(
+            "interstitial segment(s) missing required timing_role: "
+            + ", ".join(sorted(set(interstitials_missing_timing_role)))
+        )
 
     if missing_manifest_for_slide_ids:
         errors.append(

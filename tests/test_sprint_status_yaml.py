@@ -57,13 +57,23 @@ def test_cluster_story_statuses_match_sprint_status() -> None:
     development_status = parsed["development_status"]
 
     expected_statuses = {
+        "19-2-gary-dispatch-contract-extensions": "done",
+        "19-3-fidelity-gate-contract-updates": "done",
         "20a-2-interstitial-brief-specification-standard": "done",
         "20a-3-cluster-narrative-arc-schema": "done",
         "20a-4-operator-cluster-density-controls": "done",
         "20a-5-retrofit-exemplar-library": "ready-for-dev",
-        "20b-1-irene-pass1-cluster-planning-implementation": "ready-for-dev",
+        "20b-1-irene-pass1-cluster-planning-implementation": "done",
     }
     story_paths = {
+        "19-2-gary-dispatch-contract-extensions": repo_root
+        / "_bmad-output"
+        / "implementation-artifacts"
+        / "19-2-gary-dispatch-contract-extensions.md",
+        "19-3-fidelity-gate-contract-updates": repo_root
+        / "_bmad-output"
+        / "implementation-artifacts"
+        / "19-3-fidelity-gate-contract-updates.md",
         "20a-2-interstitial-brief-specification-standard": repo_root
         / "_bmad-output"
         / "implementation-artifacts"

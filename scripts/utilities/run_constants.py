@@ -25,6 +25,7 @@ RUN_CONSTANTS_BASENAME = "run-constants.yaml"
 
 ALLOWED_QUALITY_PRESETS = frozenset({"explore", "draft", "production", "regulated"})
 ALLOWED_MOTION_MODEL_PREFERENCES = frozenset({"std", "pro"})
+ALLOWED_CLUSTER_DENSITIES = frozenset({"none", "sparse", "default", "rich"})
 
 
 class RunConstantsError(ValueError):
@@ -55,6 +56,7 @@ class RunConstants:
     double_dispatch: bool = False
     motion_enabled: bool = False
     motion_budget: MotionBudget | None = None
+    cluster_density: str | None = None
     schema_version: int | None = None
     frozen_at_utc: str | None = None
     frozen_note: str | None = None
@@ -143,6 +145,19 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         )
     optional_assets = tuple(_coerce_optional_assets(data.get("optional_context_assets")))
 
+    raw_cluster_density = data.get("cluster_density")
+    cluster_density: str | None = None
+    if raw_cluster_density is not None:
+        if not isinstance(raw_cluster_density, str):
+            raise RunConstantsError("cluster_density must be a string when present")
+        val = raw_cluster_density.strip().lower()
+        if val not in ALLOWED_CLUSTER_DENSITIES:
+            raise RunConstantsError(
+                f"cluster_density must be one of {sorted(ALLOWED_CLUSTER_DENSITIES)}; "
+                f"got {raw_cluster_density!r}"
+            )
+        cluster_density = val
+
     schema_version = data.get("schema_version")
     if schema_version is not None and not isinstance(schema_version, int):
         raise RunConstantsError("schema_version must be an integer when present")
@@ -194,6 +209,7 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         double_dispatch=raw_double_dispatch,
         motion_enabled=raw_motion_enabled,
         motion_budget=motion_budget,
+        cluster_density=cluster_density,
         schema_version=schema_version,
         frozen_at_utc=frozen_at.strip() if isinstance(frozen_at, str) else None,
         frozen_note=frozen_note.strip() if isinstance(frozen_note, str) else None,

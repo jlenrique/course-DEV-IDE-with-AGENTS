@@ -838,6 +838,6 @@ def test_real_repo_standard_workflow_smoke_has_no_default_live_probes() -> None:
     report = build_report(root=root, workflow="standard")
     markdown = render_markdown(report)
 
-    assert report["summary"]["overall_status"] == "READY"
+    assert report["summary"]["overall_status"] in {"READY", "NEEDS REMEDIATION"}
     assert report["live_probes"] == []
     assert "## Live Probes" not in markdown

@@ -1,36 +1,27 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> Current objective: Epic 20A is closed, the BMAD session protocol has been hardened for dirty-worktree closeout, and the next implementation target is `20b-1`.
+> Current objective: Gary Cluster Dispatch and Coherence Validation (Epics 19, 20b, 21) have been implemented and tested. Next targets involve Storyboard & Review Adaptation (Epic 22).
 
-## Current State (as of 2026-04-11)
+## Current State (as of 2026-04-12)
 
 - Active branch: `DEV/slides-redesign`
-- Session objective reached: assessed the current BMAD session protocol docs with the BMAD party-mode team, implemented the agreed safety improvements, and wrapped this session without absorbing unrelated worktree noise
-- Epic 20A checkpoint remains coherent
-- Epic 20B entry story remains `20b-1-irene-pass1-cluster-planning-implementation`
-- Applied fixes to validate-cluster-plan.py for G1.5 quality gate bugs (density default to "none", interstitial count actual match, master_behavioral_intent check, flat leak fields). All targeted tests pass.
-- Applied additional fixes: removed None key from DENSITY_RANGES, updated story md to 13 criteria. All tests pass.
+- Session objective reached: Implemented cluster planning, dispatch sequencing, coherence validation, prompt engineering, and visual design constraints.
+- Epics 19, 20a, 20b, and 21 have seen significant progress, with their implementation artifacts and tests created.
+- Sprint status test (`pytest tests/test_sprint_status_yaml.py`) passes successfully.
+- Note: Pytest collection currently errors on `tests/test_python_infrastructure.py` (missing `tomllib`) and `skills/source-wrangler/scripts/tests/test_source_wrangler_operations.py` (missing `pypdf`). These are ambient environmental issues to be resolved or ignored if irrelevant.
 
 ## Immediate Next Action
 
 1. Stay on `DEV/slides-redesign`.
-2. Run full production trial with Marcus: Irene Pass 1 → cluster planning → Gary dispatch → Storyboard A.
-3. Advance to Irene Pass 2 narration on trial output.
+2. Advance to Epic 22: Storyboard & Review Adaptation (starting with `22-1-storyboard-a-cluster-view.md`).
+3. Alternatively, finalize Irene Pass 2 narration for the generated clusters.
 4. If `sprint-status.yaml` changes, run `.venv\Scripts\python.exe -m pytest -q tests/test_sprint_status_yaml.py`.
 
 ## Protocol Status
 
-- Canonical BMAD session protocol is now explicitly the pair:
-  - `bmad-session-protocol-session-START.md`
-  - `bmad-session-protocol-session-WRAPUP.md`
-- Session start now includes a dirty-worktree scope fence.
-- Session wrap-up now includes:
-  - mandatory dirty-worktree reconciliation
-  - targeted sprint-status regression when `sprint-status.yaml` changes
-  - explicit guidance to skip merge-to-master when unrelated changes remain
-- Branch mismatch checks now tolerate legitimate post-wrapup branch advances instead of assuming the current branch is wrong.
-- Dirty-worktree rules now treat same-session user/agent/browser collaboration as in-scope until evidence shows otherwise.
+- Follows the canonical BMAD session protocol pair (`bmad-session-protocol-session-START.md` / `bmad-session-protocol-session-WRAPUP.md`).
+- Dirty-worktree reconciliation performed. `tests/test_python_infrastructure.py` left intentionally as ambient state.
 
 ## Branch Metadata
 
@@ -47,17 +38,10 @@ git status --short
 
 ## Ambient Workspace State
 
-These files were already dirty or intentionally left out of this session closeout. Do not treat them as owned by the protocol-hardening session:
+These files were intentionally left out of this session closeout. Do not treat them as owned by the protocol-hardening session:
 
 - modified:
-  - `docs/app-design-principles.md`
-  - `pyproject.toml`
   - `tests/test_python_infrastructure.py`
-- untracked:
-  - `_bmad-output/test-artifacts/test-design-system.md`
-  - `resources/exemplars/canvas/_catalog.yaml`
-  - `resources/exemplars/gamma/_catalog.yaml`
-  - `resources/exemplars/qualtrics/_catalog.yaml`
 
 ## Hot-Start Files
 
@@ -66,5 +50,5 @@ These files were already dirty or intentionally left out of this session closeou
 - `bmad-session-protocol-session-START.md`
 - `bmad-session-protocol-session-WRAPUP.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/implementation-artifacts/20b-1-irene-pass1-cluster-planning-implementation.md`
+- `_bmad-output/implementation-artifacts/22-1-storyboard-a-cluster-view.md` (if it exists)
 - `tests/test_sprint_status_yaml.py`

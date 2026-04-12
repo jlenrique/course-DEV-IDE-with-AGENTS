@@ -494,20 +494,34 @@ def validate_gary_dispatch_ready(
         or payload.get("double_dispatch", {}).get("enabled")
     )
     if is_double_dispatch:
-        # In double-dispatch, each card_number appears exactly twice (A+B).
+        # In double-dispatch, each card_number appears exactly twice (A+B)
+        # EXCEPT interstitials with double_dispatch_eligible == false (appear once).
         unique_cards = sorted(set(card_sequence))
         contiguous_from_one = (
             bool(unique_cards)
             and all(isinstance(n, int) for n in unique_cards)
             and unique_cards == list(range(1, len(unique_cards) + 1))
         )
-        # Verify each card appears exactly twice
+        # Build expected count per card: interstitials with dd_eligible=false → 1, else → 2
+        expected_count_by_card: dict[int, int] = {}
+        for item in slides:
+            if not isinstance(item, dict):
+                continue
+            cn = item.get("card_number")
+            if isinstance(cn, int):
+                if item.get("double_dispatch_eligible") is False:
+                    expected_count_by_card[cn] = 1
+                else:
+                    expected_count_by_card.setdefault(cn, 2)
         from collections import Counter
         counts = Counter(card_sequence)
-        bad_counts = {k: v for k, v in counts.items() if v != 2}
+        bad_counts = {
+            k: v for k, v in counts.items()
+            if v != expected_count_by_card.get(k, 2)
+        }
         if bad_counts:
             errors.append(
-                f"double-dispatch: each card_number must appear exactly twice (A+B); "
+                f"double-dispatch: card_number count mismatch; "
                 f"mismatched: {bad_counts}"
             )
     else:

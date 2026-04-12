@@ -1,0 +1,131 @@
+gate: "G1.5"
+gate_name: "Cluster Plan"
+producing_agent: "irene"
+hil_gate: "operator-review"
+timing: "After Irene Pass 1 cluster planning, before Gary dispatch"
+source_of_truth:
+  primary: "Irene Pass 1 cluster plan (segment manifest cluster fields)"
+  schema_ref: "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
+  schema_refs:
+    - "skills/bmad-agent-content-creator/references/cluster-decision-criteria.md"
+    - "skills/bmad-agent-content-creator/references/interstitial-brief-specification.md"
+    - "skills/bmad-agent-content-creator/references/cluster-narrative-arc-schema.md"
+    - "skills/bmad-agent-content-creator/references/cluster-density-controls.md"
+
+criteria:
+  - id: "G1.5-01"
+    name: "Cluster structure integrity"
+    description: "Every interstitial segment has a parent_slide_id that references an existing head segment in the same cluster"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "For every segment with cluster_role == interstitial, parent_slide_id is non-null and references a segment with cluster_role == head and the same cluster_id"
+    requires_perception: false
+
+  - id: "G1.5-02"
+    name: "interstitial_type vocabulary"
+    description: "All interstitial_type values use the canonical five-type vocabulary"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == interstitial has interstitial_type in {reveal, emphasis-shift, bridge-text, simplification, pace-reset}"
+    requires_perception: false
+
+  - id: "G1.5-03"
+    name: "isolation_target specificity"
+    description: "Every interstitial has a non-empty isolation_target"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == interstitial has a non-empty isolation_target string"
+    requires_perception: false
+
+  - id: "G1.5-04"
+    name: "narration_burden validity"
+    description: "narration_burden is one of the three valid values for all interstitials"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == interstitial has narration_burden in {low, medium, high}"
+    requires_perception: false
+
+  - id: "G1.5-05"
+    name: "narrative_arc presence"
+    description: "Every cluster head has a non-empty narrative_arc"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == head has a non-empty narrative_arc string"
+    requires_perception: false
+
+  - id: "G1.5-06"
+    name: "develop_type assignment"
+    description: "Every develop-position interstitial has a develop_type assigned"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_position == develop has a non-null develop_type in {deepen, reframe, exemplify}"
+    requires_perception: false
+
+  - id: "G1.5-07"
+    name: "develop_type non-redundancy"
+    description: "No two develop-position interstitials within the same cluster share the same develop_type"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: deterministic
+    check: "For each cluster_id, the set of develop_type values across develop-position interstitials has no duplicates"
+    requires_perception: false
+
+  - id: "G1.5-08"
+    name: "double_dispatch_eligible for interstitials"
+    description: "All interstitial segments have double_dispatch_eligible set to false"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == interstitial has double_dispatch_eligible == false"
+    requires_perception: false
+
+  - id: "G1.5-09"
+    name: "cluster_interstitial_count bounds"
+    description: "cluster_interstitial_count is between 1 and 3 for all cluster heads"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == head has cluster_interstitial_count in {1, 2, 3}"
+    requires_perception: false
+
+  - id: "G1.5-10"
+    name: "density target respected"
+    description: "Total cluster count is within the range set by cluster_density"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: deterministic
+    check: "Count of distinct cluster_ids matches cluster_density target: none=0, sparse=1-2, default=3-5, rich=6+"
+    requires_perception: false
+
+  - id: "G1.5-11"
+    name: "cluster_position completeness"
+    description: "Every clustered segment has a valid cluster_position"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role in {head, interstitial} has cluster_position in {establish, develop, tension, resolve}; head segments must use establish"
+    requires_perception: false
+
+  - id: "G1.5-13"
+    name: "master_behavioral_intent presence"
+    description: "Every cluster head has a non-empty master_behavioral_intent"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: "Every segment with cluster_role == head has a non-empty master_behavioral_intent string"
+    requires_perception: false
+
+  - id: "G1.5-12"
+    name: "non-clustered segments untouched"
+    description: "Segments with cluster_role == null have no cluster metadata set"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: deterministic
+    check: "Every segment with cluster_id == null also has cluster_role == null, cluster_position == null, parent_slide_id == null, interstitial_type == null, isolation_target == null, narrative_arc == null"
+    requires_perception: false

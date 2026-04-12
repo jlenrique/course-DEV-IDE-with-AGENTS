@@ -220,6 +220,67 @@ def test_motion_enabled_requires_explicit_budget() -> None:
         rc.parse_run_constants(raw)
 
 
+_MINIMAL_RAW: dict = {
+    "run_id": "a",
+    "lesson_slug": "b",
+    "bundle_path": "c",
+    "primary_source_file": "d",
+    "optional_context_assets": [],
+    "theme_selection": "t",
+    "theme_paramset_key": "p",
+    "execution_mode": "tracked/default",
+    "quality_preset": "draft",
+}
+
+
+def test_cluster_density_absent_defaults_to_none() -> None:
+    parsed = rc.parse_run_constants(_MINIMAL_RAW)
+    assert parsed.cluster_density is None
+
+
+def test_cluster_density_valid_values() -> None:
+    for value in ("none", "sparse", "default", "rich"):
+        raw = {**_MINIMAL_RAW, "cluster_density": value}
+        parsed = rc.parse_run_constants(raw)
+        assert parsed.cluster_density == value
+
+
+def test_cluster_density_invalid_value_raises() -> None:
+    raw = {**_MINIMAL_RAW, "cluster_density": "maximum"}
+    with pytest.raises(rc.RunConstantsError, match="cluster_density"):
+        rc.parse_run_constants(raw)
+
+
+def test_cluster_density_non_string_raises() -> None:
+    raw = {**_MINIMAL_RAW, "cluster_density": True}
+    with pytest.raises(rc.RunConstantsError, match="cluster_density"):
+        rc.parse_run_constants(raw)
+
+
+def test_cluster_density_in_happy_path_load(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    bundle = root / "bundles" / "slug-001"
+    bundle.mkdir(parents=True)
+    (root / "primary.pdf").write_text("x", encoding="utf-8")
+    data = {
+        "run_id": "T-UNIT-001",
+        "lesson_slug": "slug",
+        "bundle_path": "bundles/slug-001",
+        "primary_source_file": str(root / "primary.pdf"),
+        "optional_context_assets": [],
+        "theme_selection": "th",
+        "theme_paramset_key": "pk",
+        "execution_mode": "tracked/default",
+        "quality_preset": "production",
+        "cluster_density": "sparse",
+    }
+    (bundle / "run-constants.yaml").write_text(
+        yaml.safe_dump(data, sort_keys=False), encoding="utf-8"
+    )
+    loaded = rc.load_run_constants(bundle, root=root)
+    assert loaded.cluster_density == "sparse"
+
+
 def test_main_json_exit_code(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     root = tmp_path / "r"
     bundle = root / "z"

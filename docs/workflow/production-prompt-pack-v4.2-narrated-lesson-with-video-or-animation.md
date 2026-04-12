@@ -266,6 +266,27 @@ Stop after HIL approval.
 
 ---
 
+## 5B) Cluster Plan G1.5 Gate + Operator Review
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none. If `CLUSTER_DENSITY` is none or absent, skip to Prompt 6 immediately.
+
+Marcus, run G1.5 Cluster Plan gate for RUN_ID [RUN_ID]:
+
+Required command:
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/run-g1.5-cluster-gate.py --bundle-dir [BUNDLE_PATH]`
+
+Gate rule:
+- If the command exits non-zero (G1.5 fail): surface the failing criteria, return Irene's cluster plan for revision. **Do not advance to Prompt 6.**
+- If the command exits zero (G1.5 pass): display the contents of `[BUNDLE_PATH]/cluster-plan-review.md` for operator review. **Halt and wait for explicit operator approval.**
+
+Operator approval options:
+- **APPROVE** — cluster plan is sound; proceed to Prompt 6.
+- **REJECT** — return to Irene for revision; re-run Prompt 5 cluster planning section with revision notes, then re-run this gate.
+
+Do not auto-advance. Explicit operator approval is required before Gary dispatch.
+
+---
+
 ## 6) Gate 1 Approved -> Pre-Dispatch Package Build (No Send)
 
 Marcus, after Gate 1 approval, build Gary's pre-dispatch package and stop before dispatch.

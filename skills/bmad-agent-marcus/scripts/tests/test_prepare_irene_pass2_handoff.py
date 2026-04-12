@@ -258,6 +258,42 @@ def test_reports_non_authoritative_motion_leftovers_for_static_reset_slides(tmp_
     assert any("slide-02-motion.json" in entry for entry in leftovers)
 
 
+def test_preserves_cluster_metadata_in_pass2_envelope(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path)
+    dispatch_payload = json.loads((bundle / "gary-dispatch-result.json").read_text(encoding="utf-8"))
+    dispatch_payload["gary_slide_output"][0].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "head",
+            "parent_slide_id": None,
+            "narrative_arc": "Start broad, isolate the friction, then resolve.",
+            "cluster_interstitial_count": 1,
+        }
+    )
+    dispatch_payload["gary_slide_output"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "parent_slide_id": "slide-01",
+        }
+    )
+    (bundle / "gary-dispatch-result.json").write_text(
+        json.dumps(dispatch_payload),
+        encoding="utf-8",
+    )
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "prepared"
+    envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
+    assert envelope["gary_slide_output"][0]["cluster_id"] == "c1"
+    assert envelope["gary_slide_output"][0]["cluster_role"] == "head"
+    assert envelope["gary_slide_output"][0]["parent_slide_id"] is None
+    assert envelope["gary_slide_output"][0]["cluster_interstitial_count"] == 1
+    assert envelope["gary_slide_output"][1]["cluster_role"] == "interstitial"
+    assert envelope["gary_slide_output"][1]["parent_slide_id"] == "slide-01"
+
+
 def test_requires_variant_selection_for_double_dispatch(tmp_path: Path) -> None:
     bundle = _make_bundle(
         tmp_path,

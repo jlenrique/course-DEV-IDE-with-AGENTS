@@ -45,6 +45,13 @@ STATIC_MOTION_PATTERN = re.compile(r"slide[-_](\d{2})", re.IGNORECASE)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RUN_CONSTANTS_FILENAME = "run-constants.yaml"
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
+GARY_CLUSTER_FIELDS = (
+    "cluster_id",
+    "cluster_role",
+    "parent_slide_id",
+    "narrative_arc",
+    "cluster_interstitial_count",
+)
 RUNTIME_ROW_RE = re.compile(
     r"^\|\s*(?P<slide>\d+)\s*\|\s*(?P<target>\d+(?:\.\d+)?)\s*\|\s*(?P<cumulative>\d+:\d{2})\s*\|$"
 )
@@ -232,6 +239,18 @@ def _normalize_slide_row(
         if row.get("literal_visual_source") is not None
         else (dispatch_row.get("literal_visual_source") if dispatch_row else None),
     }
+
+    cluster_present = any(
+        row.get(field) is not None or (dispatch_row.get(field) if dispatch_row else None) is not None
+        for field in GARY_CLUSTER_FIELDS
+    )
+    if cluster_present:
+        for field in GARY_CLUSTER_FIELDS:
+            if row.get(field) is not None:
+                normalized[field] = row.get(field)
+            elif dispatch_row and field in dispatch_row:
+                normalized[field] = dispatch_row.get(field)
+
     return normalized, errors
 
 

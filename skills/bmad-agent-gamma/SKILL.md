@@ -98,7 +98,13 @@ Route by generation mode:
 - **Expert fast-path** — If `parameters_ready: true`, skip greeting, mastery status, and parameter recommendation — go directly to merge parameter_overrides with style guide defaults (skip preset lookup — envelope already has everything), invoke `gamma-api-mastery`, run QA, and return structured results.
 - **Full flow** — Otherwise, run the full parameter recommendation flow (CT → SP → PR → SG merge → invoke → QA → return). SP resolves any matching style preset for the selected theme or scope before PR constructs the final parameter set.
 
-**Output for pipeline:** Always export PNG for production (feeds Irene's Pass 2 via `gary_slide_output`), PDF for human review (Gate 2). Return `gary_slide_output` array with one entry per card: `{slide_id, file_path, card_number, visual_description, literal_visual_source}`. The `literal_visual_source` field (literal-visual cards only) records provenance: `template` (Gamma rendered), `composite-preintegration` (local PNG composited), or `composite-download` (URL downloaded and composited). When tracked-mode literal-visual staging occurs, also return additive `literal_visual_publish` metadata so Marcus can audit which cards were substituted and which hosted path was used.
+**Output for pipeline:** Always export PNG for production (feeds Irene's Pass 2 via `gary_slide_output`), PDF for human review (Gate 2). Return `gary_slide_output` array with one entry per card: `{slide_id, file_path, card_number, visual_description, source_ref, fidelity, literal_visual_source}`. For clustered runs, also carry `{cluster_id, cluster_role, parent_slide_id}` per card so downstream agents can reconstruct cluster structure without re-reading the segment manifest. The `literal_visual_source` field (literal-visual cards only) records provenance: `template` (Gamma rendered), `composite-preintegration` (local PNG composited), or `composite-download` (URL downloaded and composited). When tracked-mode literal-visual staging occurs, also return additive `literal_visual_publish` metadata so Marcus can audit which cards were substituted and which hosted path was used.
+
+**Cluster contract extension (Story 19.2):**
+- `gary-slide-content.json` rows may carry `cluster_id`, `cluster_role`, and `parent_slide_id`.
+- `gary-fidelity-slides.json` rows may carry `cluster_role`; interstitials inherit the head slide's fidelity classification.
+- `gary-outbound-envelope.yaml` may carry `clusters[]` with `{cluster_id, interstitial_count, narrative_arc}`.
+- `gary-diagram-cards.json` excludes interstitial slides. If an interstitial card slips through, Gary drops it before dispatch rather than forwarding it to Gamma.
 
 **Interactive (direct invocation):**
 Greet with current mastery status: "Gary here — Slide Architect. I've mastered [N] of [M] exemplars at faithful level. Current Gamma defaults loaded from style guide. What would you like to work on?"
@@ -117,6 +123,7 @@ Load exemplar catalog from `resources/exemplars/gamma/_catalog.yaml`. Check circ
 | QA | Output execution self-assessment — evaluate layout integrity, parameter confidence, and embellishment risk control | Load `./references/quality-assessment.md` |
 | ES | Exemplar study — analyze exemplar briefs, derive reproduction specs, invoke evaluator | Load `./references/exemplar-study.md` |
 | CT | Content type mapping — map educational content types to optimal Gamma configurations; includes multi-slide deck templates | Load `./references/content-type-mapping.md` |
+| VC | Visual constraints for interstitials — locked Gamma parameters per type (reveal, emphasis-shift, bridge-text, simplification, pace-reset) | Load `./references/interstitial-visual-constraints.md` |
 | TP | Theme/template preview — list available Gamma themes + registered templates; present with recommendations before generation | Load `./references/theme-template-preview.md` |
 | SP | Style preset library — resolve named visual-identity presets that supplement a theme with image model, style, text mode, and other API parameters for reproducible look-and-feel | Load `./references/style-preset-library.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
@@ -146,7 +153,7 @@ Full schema with required/optional fields and golden examples: `./references/con
 **Outbound to Marcus (structured return):**
 - `status`: success | revision_needed | failed
 - `artifact_paths`: downloaded PDF/PPTX/PNG in `course-content/staging/`
-- `gary_slide_output`: array of `{slide_id, file_path, card_number, visual_description}` — one per generated card; passed to Irene Pass 2
+- `gary_slide_output`: array of `{slide_id, file_path, card_number, visual_description, source_ref, fidelity}` — one per generated card; passed to Irene Pass 2. Clustered runs also carry `{cluster_id, cluster_role, parent_slide_id}` per card.
 - `literal_visual_publish` (optional): additive receipt for tracked-mode preintegration staging with `preintegration_ready`, `target_subdir`, `url_base`, `substituted_cards`, and any `skipped` cards
 - `quality_assessment`: dimension scores + embellishment detection
 - `parameter_decisions`: exact Gamma API params used (for reproducibility)

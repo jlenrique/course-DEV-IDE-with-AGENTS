@@ -160,13 +160,13 @@ Apply structural checks: count matching, field presence, schema compliance, para
 - **G5-05 (Duration alignment):** Audio bridge `total_duration_ms` is within ±15% of narration script's estimated duration
 
 **G2 deterministic checks:**
-- **G2-01 (LO traceability):** Every slide section has a non-empty Learning Purpose that references a valid LO from the lesson plan
+- **G2-01 (LO traceability):** Every slide section with `cluster_role` `null` or `head` has a non-empty Learning Purpose that references a valid LO from the lesson plan. `cluster_role == interstitial` inherits LO coverage from its head and is exempt from standalone LO tracing.
 - **G2-02 (Content item completeness):** Every slide has Content, Visual Guidance (Layout, Hero Element, Visual Density), and Learning Purpose populated
 - **G2-04 (Downstream parameter coherence):** literal-text slides specify textMode: preserve; literal-visual specify textMode: preserve + imageOptions.source; creative may use any textMode
 - **G2-06 (Fidelity-control vocabulary):** Literal slides use deterministic vocabulary (text_treatment, image_treatment, layout_constraint, content_scope) — no free-text additionalInstructions
 
 **G3 deterministic checks:**
-- **G3-01 (Slide count match):** count(generated_slides) == count(slide_brief.slides)
+- **G3-01 (Slide count match):** `count(generated_slides) == count(slide_brief.slides where cluster_role in (null, head)) + sum(cluster_interstitial_count for each cluster head)`; this reduces to the legacy flat-deck count rule when cluster metadata is absent.
 - **G3-06 (Provenance manifest):** provenance[] has one entry per card with card_number, source_call, generation_id, fidelity class
 
 ### Agentic Criteria (`evaluation_type: agentic`)
@@ -203,7 +203,7 @@ Apply judgment-based evaluation. Current L2 approach:
 - **G5-04 (No audio invention, modality: audio):** STT transcript contains no words, phrases, or sentences absent from the narration script. Hallucinated audio content is an Invention with critical severity.
 
 **G2 agentic checks:**
-- **G2-03 (Fidelity classification accuracy):** literal-text slides contain verifiable exact-match content; literal-visual reference existing SME images; creative slides have no content requiring verbatim preservation. Over-tagging literal is a violation.
+- **G2-03 (Fidelity classification accuracy):** For slide sections with `cluster_role` `null` or `head`, literal-text slides contain verifiable exact-match content; literal-visual reference existing SME images; creative slides have no content requiring verbatim preservation. `cluster_role == interstitial` inherits fidelity from its head and is exempt from standalone classification. Over-tagging literal on renderable slides is a violation.
 - **G2-05 (No content loss):** For each content block in the lesson plan, at least one slide's Content addresses that block's material
 
 **G3 agentic checks (require perception — modality per L1 contract):**

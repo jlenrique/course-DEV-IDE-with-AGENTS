@@ -34,7 +34,7 @@ segments:
     content_density: enum | null  # light | medium | heavy
     visual_detail_load: enum | null  # light | medium | heavy
     duration_rationale: string | null  # concise explanation for why this slide should run shorter, average, or longer than neighbors
-    bridge_type: enum | null  # none | intro | outro | both
+    bridge_type: enum | null  # none | intro | outro | both | cluster_boundary
     behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
@@ -60,7 +60,8 @@ segments:
      isolation_target: string | null  # specific element surfaced from the head slide
       narrative_arc: string | null     # one-sentence cluster arc, set on head and inherited by cluster members
       master_behavioral_intent: enum | null  # cluster-level behavioral directive (credible, alarming, provocative, reflective, moving, clear-guidance, attention-reset), set on head and inherited by cluster members
-      cluster_interstitial_count: int | null  # recommended count for the cluster, 1-3
+     cluster_interstitial_count: int | null  # recommended count for the cluster, 1-3
+     selected_template_id: string | null     # selected cluster structure template id (e.g., deep-dive)
      double_dispatch_eligible: boolean | null  # default true, set false for interstitials in MVP
      # ── Written back by ElevenLabs agent ──
     narration_duration: float | null    # seconds
@@ -177,6 +178,7 @@ Default behavior remains additive and backward compatible:
 | `narrative_arc` | string | nullable | One-sentence emotional journey (e.g., "From confusion to clarity through progressive disclosure") |
 | `master_behavioral_intent` | enum | nullable | Cluster-level behavioral directive inherited by cluster members: `credible`, `alarming`, `provocative`, `reflective`, `moving`, `clear-guidance`, or `attention-reset` |
 | `cluster_interstitial_count` | int | nullable | Planned interstitial count for cluster (1-3) |
+| `selected_template_id` | string | nullable | Selected cluster structure template for this cluster; copied to all cluster-member rows for traceability |
 | `double_dispatch_eligible` | boolean | nullable | Whether segment can use double-dispatch; defaults true, false for interstitials in MVP |
 
 Defaults: All null for non-clustered runs. `double_dispatch_eligible` defaults to true if null.
@@ -364,7 +366,7 @@ All cluster fields are additive and nullable. Existing manifests remain valid wi
 - `narration_text` per segment — text to synthesize
 - `behavioral_intent` — delivery cue for tone, pacing, and emphasis
 - `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale` — context for why the text was written at this length; use these for gentle delivery shaping, not for ad hoc copy rewriting
-- `bridge_type` — whether the segment includes an explicit intro/outro beat that should be preserved naturally rather than flattened
+- `bridge_type` — whether the segment includes an explicit intro/outro or cluster-boundary beat that should be preserved naturally rather than flattened
 - `voice_id` — per-segment voice override when present; otherwise use the lesson default from Marcus/style guide
 - `sfx` — SFX cue to generate or look up
 - `music` — music direction (swell/duck/out)
@@ -392,7 +394,7 @@ Motion-aware compositor note:
 - `visual_duration` vs `narration_duration` — validates ±0.5s tolerance
 - Segment coverage — validates all segments have narration files
 - `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale` — validates whether runtime variance was pedagogically justified rather than arbitrary
-- `bridge_type` — validates that explicit learner-facing intros/outros appear often enough to support orientation without making the lesson formulaic
+- `bridge_type` — validates that explicit learner-facing intros/outros and cluster-boundary seams appear often enough to support orientation without making the lesson formulaic
 - `behavioral_intent` — checks whether the artifact set appears to support the intended affective goal rather than fighting it
 
 Quinn-R interpretation note:
@@ -409,6 +411,7 @@ Quinn-R interpretation note:
 - `timing_role`, `content_density`, and `visual_detail_load` should explain why this slide deserves its runtime.
 - `duration_rationale` must reference at least two of: pedagogical purpose, concept/detail load, visual burden.
 - Use `bridge_type` sparingly but intentionally; it exists to enforce occasional connective tissue, not repetitive transition clutter.
+- In clustered runs, use `cluster_boundary` on the head slide that opens a new cluster after a prior cluster; keep within-cluster interstitials at `none` unless a tension beat earns a brief pivot.
 - Do not make neighboring slides different lengths just to create variety. Runtime variance should come from content burden and rhetorical function.
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment

@@ -376,8 +376,10 @@ Update bridge cadence logic in `narration-script-parameters.yaml`:
 | **23: Pass 2 Narration** | 3 | Medium | Irene already writes well; cluster awareness is additive |
 | **24: Assembly & Regression** | 4 | Medium | Validator hardening is highest regression risk |
 
-**Total: 7 epics, 28 stories**
+**Total: 7 epics, 28 stories** (Epics 19-24 defined here)
 
-**MVP validation gate:** After Epic 20b + Epic 21 Story 1-2: one cluster in one presentation, human judgment on brief-to-output quality.
+**MVP validation gate:** PASSED (Storyboard A trial, 2026-04-11). All downstream unblocked.
 
-**Parallel execution window:** Epics 22 and 23 can run simultaneously after Epic 21.
+**Parallel execution window:** Epics 22 and 23 run simultaneously after Epic 21.
+
+**Epic 20c (Cluster Intelligence Expansion & Iteration):** Added 2026-04-12 as a separate iterative epic extending this spec. 6 stories covering template library expansion, content-aware selection, source-to-density intelligence, master arc composition, and potential specialty agents (Pax, Lens). See story files in `_bmad-output/implementation-artifacts/20c-*.md`. A/B trial methodology documented in `docs/workflow/operator-script-v4.2-irene-ab-loop.md`.

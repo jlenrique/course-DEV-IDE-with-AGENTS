@@ -1,5 +1,11 @@
 ---
-stepsCompleted: ["step-01-init", "step-02-discovery", "step-02b-vision", "step-02c-executive-summary", "step-03-success", "step-04-journeys", "step-05-domain", "step-06-innovation", "step-07-project-type", "step-08-scoping", "step-09-functional", "step-10-nonfunctional", "step-11-polish", "step-12-complete"]
+stepsCompleted: ["step-01-init", "step-02-discovery", "step-02b-vision", "step-02c-executive-summary", "step-03-success", "step-04-journeys", "step-05-domain", "step-06-innovation", "step-07-project-type", "step-08-scoping", "step-09-functional", "step-10-nonfunctional", "step-11-polish", "step-12-complete", "step-e-01-discovery", "step-e-02-review", "step-e-03-edit"]
+lastEdited: '2026-04-12'
+editHistory:
+  - date: '2026-04-12'
+    changes: 'Epic 20c expansion: FR119-FR125 (template library, content-aware selection, density intelligence, master arc, A/B trials, Pax agent, Lens capability). Epic 20c scope section expanded.'
+  - date: '2026-04-12'
+    changes: 'Phase 4 cluster/interstitial intelligence (Epics 19-24): 27 new FRs (FR92-FR118), 11 FR extensions, Phase 4 scope sections'
 inputDocuments: [
   "_bmad-output/brainstorming/brainstorming-session-20260325-150802.md",
   "docs/project-context.md",
@@ -180,6 +186,59 @@ Target users: Individual educators and instructional designers seeking to scale 
 - Complete "Party Mode on steroids" environment with persistent agent ecosystem using BMad memory sidecars
 - Systematic creative expertise scaling through agent memory patterns across unlimited production scenarios  
 - Platform-agnostic intelligence with comprehensive tool capability registry maintained by tool review agent
+
+### Cluster & Interstitial Intelligence (Phase 4 - Epics 19-24)
+
+**Epic 19: Cluster Schema & Manifest Foundation**
+- Cluster-aware segment manifest schema with backward-compatible field extensions (`cluster_id`, `cluster_role`, `cluster_position`, `parent_slide_id`, `develop_type`, `interstitial_type`, `isolation_target`, `narrative_arc`, `cluster_interstitial_count`, `double_dispatch_eligible`)
+- Machine artifact contract extensions for cluster metadata propagation
+- Fidelity gate contract updates for cluster-aware counting, exemptions, and criteria
+- Validator hardening for cluster-ordered sequences and interstitial segment entries
+
+**Epic 20a: Irene Cluster Intelligence — Design & Specification**
+- Cluster decision criteria framework (concept density, visual complexity, pedagogical weight, operator input)
+- Interstitial brief specification standard between content planning and visual generation
+- Cluster narrative arc schema mapped to storytelling framework (orient → complicate → illuminate → resolve)
+- Operator cluster density controls (sparse | default | rich) with per-slide directives
+- Exemplar library for pattern reuse from existing production runs
+
+**Epic 20b: Irene Cluster Intelligence — Implementation**
+- Irene Pass 1 cluster planning producing cluster-grouped backbone with interstitial briefs
+- G1.5 Cluster Plan quality gate (13 deterministic criteria) with operator HIL review
+- Narration script parameters extension for cluster-specific word ranges and bridge policies
+
+**Epic 20c: Cluster Intelligence Expansion & Iteration**
+- Cluster structure template library (8–12 named structural patterns: deep-dive, contrast-pair, evidence-build, etc.)
+- Content-aware template selection with deterministic scoring, variety/pacing penalties, and master arc bias
+- Source-to-density intelligence: per-slide cluster depth (none/light/moderate/deep) from source material analysis
+- Presentation-level master arc composition with cluster arc_roles (foundation, escalation, pivot, culmination, landing, transition)
+- A/B trial methodology for iterative template/selection refinement (operator-script-v4.2, Prompt 5C.0-5C.6)
+- Presentation Architect specialist agent (Pax): structural blueprint design, template selection, density mapping, arc composition
+- Cluster Design Advisor capability (Lens): micro-level slide decomposition into interstitials, isolation target selection
+
+**Epic 21: Gary Cluster Dispatch — Gamma Interpretation**
+- Visual design constraint library with per-interstitial-type locked parameters
+- Cluster-aware prompt engineering (REMOVE/ISOLATE approach)
+- Atomic cluster dispatch sequencing with circuit-breaker re-dispatch
+- G2.5 Cluster Coherence validation (perception-based checks)
+- Targeted interstitial re-dispatch protocol with operator recovery choices
+
+**Epic 22: Storyboard & Review Adaptation**
+- Storyboard A cluster view with collapsible groups and G2.5 coherence indicators
+- Storyboard B cluster view with narration script context and timing metadata
+- Flat-play sequential preview mode ("view as student")
+- Storyboard generation and publish updates for cluster structure
+
+**Epic 23: Irene Pass 2 Cluster-Aware Narration**
+- Cluster-aware dual-channel grounding (head 80–140 words, interstitial 25–40 words)
+- G4 gate extension with cluster-specific criteria (G4-16 through G4-19)
+- Bridge cadence adaptation (cluster seam triggers vs time/count intervals)
+
+**Epic 24: Assembly, Handoff & Regression Hardening**
+- Assembly contract hardening for cluster-ordered sequences
+- Descript assembly guide enhancement with cluster membership labels
+- ElevenLabs short segment handling with per-role buffer overrides
+- Regression test suite ensuring backward compatibility for non-clustered presentations
 
 ## User Journeys
 
@@ -420,6 +479,16 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - Strategic production orchestration with predictive optimization and resource allocation intelligence
 - Complete collaborative intelligence infrastructure with platform-agnostic tool capability registry
 
+**Phase 4 (Cluster & Interstitial Intelligence - Epics 19-24):**
+- Cluster-aware segment manifest schema and machine artifact contract extensions (Epic 19)
+- Irene cluster intelligence: decision criteria, interstitial briefs, narrative arcs, operator density controls (Epics 20a/20b)
+- Cluster structure template library with content-aware selection, presentation-level arc composition, A/B trial methodology, and potential specialty agents (Epic 20c)
+- G1.5 Cluster Plan and G2.5 Cluster Coherence quality gates with operator HIL (Epics 20b, 21)
+- Gary cluster dispatch with visual constraint library, atomic sequencing, and re-dispatch protocol (Epic 21)
+- Storyboard A/B cluster views with flat-play sequential preview mode (Epic 22)
+- Cluster-aware narration with G4 gate extension and bridge cadence adaptation (Epic 23)
+- Assembly, handoff, and regression hardening for cluster-ordered content (Epic 24)
+
 ### Risk Mitigation Strategy
 
 **Technical Risks:** Simplified agent coordination might not scale to full collaborative intelligence
@@ -443,13 +512,13 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 
 ### Production Workflow Management  
 - FR7: Users can initiate production runs for course modules with context specification
-- FR8: System can maintain production run state across tool failures and interruptions
-- FR9: System can track workflow progress through multiple coordinated stages
+- FR8: System can maintain production run state across tool failures and interruptions, including cluster plan state, coherence validation state, and re-dispatch attempt tracking
+- FR9: System can track workflow progress through multiple coordinated stages, including per-cluster progress and G1.5/G2.5 gate status per cluster
 - FR10: Users can review and approve work at designated human checkpoint gates
 - FR11: System can manage cross-run context and memory for course consistency
 - FR12: Users can access production run history and audit trails
 - FR33: Users can export completed content to target platforms (Canvas, CourseArc, Panopto) with platform-specific formatting
-- FR34: System can manage learning objectives alignment across all content production decisions  
+- FR34: System can manage learning objectives alignment across all content production decisions, including per-cluster LO mapping validation where interstitials inherit head LO scope
 - FR35: Users can configure run presets (explore, draft, production, regulated) with parameter overrides
 
 ### Tool Integration & API Management
@@ -462,25 +531,25 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 ### Skills & Expertise Management
 - FR18: System can store and evolve skills for tool-specific expertise (Gamma prompts, ElevenLabs optimization)
 - FR19: Agents can access and apply skills for specialized tool interactions  
-- FR20: System can capture and crystallize creative decision patterns through skills evolution
-- FR21: Users can review and refine skills based on production outcomes
+- FR20: System can capture and crystallize creative decision patterns through skills evolution, including cluster template effectiveness tracking and operator template utilization patterns
+- FR21: Users can review and refine skills based on production outcomes, including cluster brief quality review, interstitial prompt effectiveness analysis, and template selection refinement
 - FR22: System can version control skills and track effectiveness improvements
 - FR42: System can analyze and recommend tool optimization strategies based on production outcome patterns
 - FR43: System can detect and suggest workflow improvements through systematic experience analysis
 - FR44: Users can access systematic expertise insights and creative pattern recommendations
 
 ### Quality Control & Review
-- FR23: Agents can perform automated quality review at each production stage
-- FR24: System can enforce quality standards through configurable validation rules
-- FR25: Agents can conduct peer review of other agents' outputs against creative standards
+- FR23: Agents can perform automated quality review at each production stage, including G1.5 cluster plan validation and G2.5 cluster coherence assessment
+- FR24: System can enforce quality standards through configurable validation rules, including cluster-specific rule sets keyed to `cluster_density` and `interstitial_type`
+- FR25: Agents can conduct peer review of other agents' outputs against creative standards, including cluster coherence review and template selection review
 - FR26: Users can override quality decisions when creative judgment is required
 - FR27: System can maintain quality audit trails for production accountability
 - FR48: System can provide comprehensive audit trails for compliance and quality assurance reporting
 - FR49: Users can configure accessibility standards enforcement across all content production workflows
 
 ### Content & Asset Management
-- FR28: System can manage course, module, and asset context entities throughout production
-- FR29: System can track asset evolution history and creative decision rationale
+- FR28: System can manage course, module, and asset context entities throughout production, including cluster-level metadata (cluster_id, master_behavioral_intent, template_used, interstitial_count)
+- FR29: System can track asset evolution history and creative decision rationale, including cluster refinement history (template changes, re-dispatch attempts, coherence validation iterations)
 - FR30: Users can define and update brand guidelines, style standards, and creative policies  
 - FR31: System can ensure content accessibility and compliance with educational standards
 - FR32: System can generate release manifests for final content deployment
@@ -497,7 +566,7 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - FR41: Users can validate system configuration before initiating production runs
 
 ### Production Intelligence & Reporting
-- FR50: System can generate comprehensive production run reports including purpose achievement, stage effectiveness, and optimization recommendations
+- FR50: System can generate comprehensive production run reports including purpose achievement, stage effectiveness, and optimization recommendations, including cluster plan effectiveness metrics, G1.5/G2.5 pass rates per cluster, and coherence remediation statistics
 - FR51: Users can access comparative analysis between production runs to track workflow improvement patterns  
 - FR52: System can automatically identify workflow bottlenecks and suggest optimization strategies based on run performance data
 
@@ -551,6 +620,60 @@ This system pioneers the first **persistent collaborative intelligence infrastru
 - FR89: System shall provide observability hooks for gate pass rates, fidelity scores (O/I/A counts), quality trends, and agent performance metrics to support production intelligence reporting
 - FR90: Lane boundary violations detected during production runs shall be logged as governance findings and surfaced in run reports for systematic remediation
 - FR91: System shall enforce ad-hoc run mode as a ledger and learning boundary — observability and cache records shall carry `run_mode` (`default` | `ad-hoc`) so sandbox runs are excluded from course/module building progress metrics; coordination databases, production run completion, quality-gate persistence, and durable sidecar learning (`patterns.md`, `chronology.md`) shall not treat ad-hoc runs as institutional production progress unless explicitly redesigned and documented
+
+### Cluster Entity Model & Schema (Added 2026-04-12)
+- FR92: System shall define cluster-aware segment manifest schema with fields: `cluster_id`, `cluster_role`, `cluster_position`, `parent_slide_id`, `develop_type`, `interstitial_type`, `isolation_target`, `narrative_arc`, `cluster_interstitial_count`, `double_dispatch_eligible` — existing non-clustered segments remain backward-compatible
+- FR93: System shall enforce cluster manifest integrity through deterministic validators: one head per cluster, valid `parent_slide_id` references, ordered positions (establish → develop → tension → resolve), non-redundant develop sub-types within each cluster
+
+### Cluster Intelligence & Decision Making (Added 2026-04-12)
+- FR94: Irene Pass 1 shall evaluate each slide against cluster decision criteria (concept density, visual complexity, pedagogical weight, operator directive) to determine cluster head candidacy
+- FR95: Irene Pass 1 shall generate interstitial briefs for each cluster head specifying: `interstitial_type`, `isolation_target` referencing head content, `visual_register_constraint`, `content_scope`, target `narration_burden` (70% visual, 30% narration)
+- FR96: System shall provide operator control over cluster density via `cluster_density` config (sparse | default | rich) and per-slide directives ("cluster this" | "no cluster")
+- FR97: Irene Pass 1 shall assign per-cluster narrative arc (orient → complicate → illuminate → resolve), `master_behavioral_intent`, and develop sub-types (deepen | reframe | exemplify) for each cluster head
+
+### Cluster Dispatch & Visual Rendering (Added 2026-04-12)
+- FR98: Gary shall dispatch clusters as atomic units in a single Gamma session, head-first, with all interstitials following via `card_split: inputTextBreaks`
+- FR99: Gary shall apply a visual design constraint library with per-interstitial-type locked Gamma parameters (element count caps, palette rules, layout disables)
+- FR100: Gary shall produce interstitial prompts specifying elements to REMOVE/ISOLATE from the head, maintaining visual coherence without adding new elements
+- FR101: System shall perform post-dispatch cluster coherence validation (G2.5) checking: typography match, background consistency, element isolation fidelity, whitespace balance, color temperature, element count compliance
+
+### Cluster Quality Gates (Added 2026-04-12)
+- FR102: System shall implement G1.5 Cluster Plan gate validating cluster structure integrity (13 deterministic criteria), narrative arc completeness, and density compliance — operator conducts HIL review before Gary dispatch
+- FR103: System shall implement G2.5 Cluster Coherence gate validating perception-based checks (typography, background, element isolation, whitespace, element count) post-dispatch and pre-Storyboard-A
+- FR104: System shall maintain cluster-specific fidelity contracts in `state/config/fidelity-contracts/` for G1.5 (cluster plan) and G2.5 (cluster coherence) gates
+
+### Cluster-Aware Narration (Added 2026-04-12)
+- FR105: Irene Pass 2 shall write cluster-aware narration: heads 80–140 words establishing concept and arc, interstitials 25–40 words with 70% visual burden — within-cluster transitions use visual cuts (no spoken bridge), cluster-boundary transitions use synthesis + forward pull (15–20 seconds)
+- FR106: G4 Narration Script gate shall enforce cluster-specific criteria: cluster narration coherence (G4-16), interstitial word budget 25–40 words (G4-17), no new concepts in interstitials (G4-18), cluster arc integrity with resolve echoing establish (G4-19)
+- FR107: Bridge cadence logic shall trigger at cluster seams when clusters are present, overriding slide-count and time-interval triggers — spoken bridge enforcement applies to cluster boundaries only; within-cluster `none` is exempt
+
+### Cluster Template Library & Intelligence (Added 2026-04-12)
+- FR108: System shall define 8–12 cluster structure templates (concept-decomposition, evidence-walkthrough, framework-application, exception-handling, etc.), each specifying positions, develop sub-types, interstitial_type sequences, and narrative arc seeds
+- FR109: System shall provide content-aware template selection matching slide content signals (verb phrases, list count, visual complexity) to template library via deterministic scoring — operator can override
+- FR110: System shall analyze source material per slide to assign `content_density` (sparse | medium | rich), feeding into `cluster_interstitial_count` (lower density → fewer interstitials)
+- FR111: System shall compose per-cluster narrative arcs into presentation-level coherent arc: series orient → series complicate → series illuminate → series resolve
+
+### Cluster Visualization & Review (Added 2026-04-12)
+- FR112: Storyboard A shall render clusters as collapsible groups: head prominent, interstitials indented, cluster header showing topic label, arc, count, and types — collapsed for pacing audit, expanded for per-slide QA with G2.5 coherence indicator (green/yellow/red)
+- FR113: Storyboard B shall render clusters with narration script per segment, visually distinct within- vs between-cluster transitions, per-cluster timing summary, behavioral intent at cluster and segment levels, and timing metadata
+- FR114: System shall provide flat-play sequential preview mode ("view as student"): linear slide sequence with narration, no cluster grouping, student-perspective flow, toggleable from Storyboard B HTML
+
+### Cluster Assembly & Delivery (Added 2026-04-12)
+- FR115: System shall preserve cluster sequence in segment manifest as authoritative ordering — slide-index-to-audio mapping handles interstitial shorter segments, assembly bundle preserves cluster structure
+- FR116: Descript assembly guide shall label each slide with cluster membership and role ([HEAD], [INTERSTITIAL N/M]), explicit within- vs between-cluster transition notes (cut vs beat/pause), and per-interstitial VO notation
+- FR117: ElevenLabs operations shall handle 10–16 second interstitial audio segments without degradation — within-cluster buffer: 0.5s lead + 0.5s tail; between-cluster buffer: standard 1.5s; per-segment buffer override keyed to `cluster_role`
+
+### Interstitial Re-dispatch & Remediation (Added 2026-04-12)
+- FR118: System shall provide targeted interstitial re-dispatch with perception-informed tightened prompts, circuit breaker (max 2 attempts per interstitial), and operator recovery choice for failed remediation (accept as-is, replace with pace-reset, or drop)
+
+### Cluster Intelligence Expansion & Iteration (Added 2026-04-12, Epic 20c)
+- FR119: System shall provide a named cluster structure template library defining reusable structural patterns (deep-dive, contrast-pair, evidence-build, etc.) each specifying interstitial sequence, pacing profile, word ranges, best_for/avoid_when guidance — extensible via YAML
+- FR120: System shall provide content-aware template selection that analyzes source material signals (concept structure, data presence, contrast/tension, evidence density, emotional weight, visual decomposability) and scores templates with variety/pacing penalties and master arc position bias — operator can force, exclude, or prefer specific templates
+- FR121: System shall provide per-slide cluster density intelligence (none/light/moderate/deep) derived from source material analysis (concept centrality, complexity, novelty, assessment alignment) within an operator-set budget constraint (sparse/default/rich)
+- FR122: System shall compose a presentation-level master arc with cluster arc_roles (foundation, escalation, pivot, culmination, landing, transition) governing template selection bias, internal arc variation, and cluster-boundary bridge intentions
+- FR123: System shall support A/B trial methodology for Irene Pass 1 intelligence iteration with locked inputs, deterministic comparative evaluation, HIL judgment (Pass 1 evidence only), feedback capture with testable directives, and loop progression decisions (PROMOTE/ITERATE/ESCALATE)
+- FR124: System may provide a Presentation Architect specialist agent (Pax) for structural blueprint design — template selection, density mapping, arc composition, pacing evaluation — delegated by Marcus before Irene cluster planning, with lane matrix governance boundaries
+- FR125: System may provide a Cluster Design Advisor capability (Lens) for micro-level slide decomposition — isolation target selection, visual register determination, content scope calibration — starting as a capability within Irene, promotable to standalone agent
 
 ## Non-Functional Requirements
 

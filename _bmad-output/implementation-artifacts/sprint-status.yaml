@@ -35,11 +35,76 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-12  # Cluster dispatch trial validated (theme applied, PNGs downloaded). Epic 19 done; 20b-2 ready.
+last_updated: 2026-04-12  # Wave 1 DONE (158 tests). Wave 2 active: 20c-1/20c-2 slices complete (229 tests). A/B trials approved (Pass 1 primary, Pass 2 structural-coherence-check until Epic 23).
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
+
+# =============================================================================
+# DEVELOPMENT PLAN: Interstitial Cluster Completion (Epics 19-24 + 20c)
+# =============================================================================
+# Updated: 2026-04-12
+# Context: MVP gate PASSED (Storyboard A trial, 2026-04-11). All downstream unblocked.
+#   Irene cluster intelligence (20c) is the primary iteration area.
+#   Storyboard/assembly are stable infrastructure built once.
+#
+# WAVE 1 — FOUNDATION ✅ COMPLETE (verified 2026-04-12, 158 tests)
+#   - 20b-3  Narration Params .................. DONE (schema v1.1, cluster sections)
+#   - 22-1   Storyboard A Cluster View ......... DONE (38 tests, collapsible groups)
+#   - 21-5   Re-dispatch Protocol .............. DONE (circuit breaker, CLI guardrails)
+#   - 19-4   Validator Hardening ............... DONE (in review, treated as done for deps)
+#
+# WAVE 2 — IRENE INTELLIGENCE (iterative loop, sessions 2-N)
+#   Core presentation design intelligence. Expect multiple refinement cycles.
+#   A/B TRIALS ACTIVE — operator-script-v4.2-irene-ab-loop.md (Prompt 5C.0-5C.6)
+#
+#   STATUS (2026-04-12):
+#   - 20c-1  Template Library .................. IN-PROGRESS (Slice 1 done: 10 templates, validator, tests)
+#   - 20c-2  Template Selection ................ IN-PROGRESS (Slices 1-5 done: selector, bridge, hydration, fail-closed, evaluator)
+#   - 20c-3  Source-to-Density ................. Ready-for-dev
+#   - 20c-4  Master Arc Composition ............ Ready-for-dev
+#   - 20c-5  Pax agent ........................ Ready-for-dev (when complexity justifies)
+#   - 20c-6  Lens capability ................... Ready-for-dev (start as capability)
+#   - 23-1   Dual-Channel Grounding ............ Ready-for-dev (unblocked by 20b-3)
+#   - 20a-5  Exemplar Library .................. Ready-for-dev (trial data available)
+#
+#   A/B TRIAL PROTOCOL (Pass 1 primary, Pass 2 structural-coherence-check):
+#   1. Implement/refine a 20c story
+#   2. Run A/B via Prompt 5C.0-5C.6 against C1-M1 source content
+#   3. Review cluster plan + Storyboard A output
+#   4. Identify: where do templates fail? what's missing? what's mechanical?
+#   5. PROMOTE / ITERATE / ESCALATE decision
+#   6. Refine and loop back to step 1
+#   Exit when: cluster plans feel intentional, not mechanical. Operator approves.
+#
+#   PASS 2 SCOPE NOTE (remove when 23-1 ships):
+#   Pass 2 operates in structural-coherence-check mode. Epic 23 not yet implemented.
+#   Pass 2 output is indicative, not evaluative. Do NOT let Pass 2 narration quality
+#   influence PROMOTE/ITERATE decisions. Zero Pass 2 quality metrics in evaluator scoring.
+#   All trial receipts must log "pass2_mode: structural-coherence-check".
+#
+# WAVE 3 — CODIFY (after Irene intelligence stabilizes)
+#   Encode quality standards learned from iteration into gates.
+#   - 23-2   G4 Gate Extension ................. Codify "what good looks like"
+#   - 23-3   Bridge Cadence .................... Finalize stitching rules
+#
+# WAVE 4 — DOWNSTREAM (implement once, stable infrastructure)
+#   Mechanical implementation against stabilized Irene output.
+#   - 22-2   Storyboard B + Script
+#   - 22-3   Flat-Play Preview
+#   - 22-4   Generation Script & Publish
+#   - 24-1   Assembly Contract
+#   - 24-2   Descript Guide
+#   - 24-3   ElevenLabs Short Segments
+#
+# WAVE 5 — CAPSTONE
+#   - 24-4   Regression Suite .................. Full end-to-end validation
+#
+# CRITICAL PATH: 20b-3 → 23-1 → [20c iteration loop] → 23-2 → 24-4
+# PARALLEL TRACKS: 22-1 runs with Wave 1. 20c-* stories interleave with 23-1.
+#   22-2/3/4 and 24-1/2/3 run in parallel during Wave 4.
+# =============================================================================
 
 development_status:
   # === EPIC 1: Repository Environment & Agent Infrastructure ===
@@ -256,8 +321,8 @@ development_status:
   epic-18-retrospective: optional
 
   # === EPIC 19: Interstitial Slide Cluster Schema & Manifest Foundation (Added 2026-04-11) ===
-  # Start of the C1M1 three-cluster Storyboard-A MVP. Establishes the additive schema and validator
-  # tolerance required before Irene/Gary can plan and dispatch clustered presentations.
+  # MVP gate PASSED (Storyboard A trial, 2026-04-11). Schema and validators production-ready.
+  # 19-4 in review — treat as done for dependency purposes.
   epic-19: in-progress
   19-1-segment-manifest-cluster-schema-extension: done
   19-2-gary-dispatch-contract-extensions: done
@@ -272,46 +337,65 @@ development_status:
   20a-2-interstitial-brief-specification-standard: done
   20a-3-cluster-narrative-arc-schema: done
   20a-4-operator-cluster-density-controls: done
-  20a-5-retrofit-exemplar-library: ready-for-dev  # MVP-deferred — execute after Storyboard A gate passes
+  20a-5-retrofit-exemplar-library: ready-for-dev  # Unblocked — MVP gate passed. Execute in Wave 2 iteration loop using trial data.
   epic-20a-retrospective: optional
 
   # === EPIC 20B: Irene Cluster Intelligence - Implementation (Added 2026-04-11) ===
   # Implements Irene Pass 1 cluster planning and the structural quality gate before Gamma spend.
-  epic-20b: in-progress
+  epic-20b: done
   20b-1-irene-pass1-cluster-planning-implementation: done
   20b-2-cluster-plan-quality-gate-g1-5: done
-  20b-3-narration-script-parameters-extension-for-clusters: backlog
+  20b-3-narration-script-parameters-extension-for-clusters: done  # Wave 1 closure: narration contract + G4 cluster policy tests verified (2026-04-12, included in 158-pass consolidated run)
   epic-20b-retrospective: optional
 
   # === EPIC 21: Gary Cluster Dispatch - Gamma Interpretation (Added 2026-04-11) ===
   # Translates Irene's cluster briefs into coherent Gamma output and validates intra-cluster consistency.
-  epic-21: in-progress
-  21-1-visual-design-constraint-library: ready-for-dev
-  21-2-cluster-aware-prompt-engineering: backlog
-  21-3-cluster-dispatch-sequencing: backlog
-  21-4-cluster-coherence-validation-g2-5: backlog
-  21-5-interstitial-re-dispatch-protocol: backlog
+  # 2026-04-12: Reconciled — stories 21-1 through 21-4 done per implementation artifacts (commit 89be200).
+  epic-21: done
+  21-1-visual-design-constraint-library: done
+  21-2-cluster-aware-prompt-engineering: done
+  21-3-cluster-dispatch-sequencing: done
+  21-4-cluster-coherence-validation: done  # Note: sprint key aligned with story file (no -g2-5 suffix)
+  21-5-interstitial-re-dispatch-protocol: done  # Wave 1 closure: bundle-local re-dispatch protocol + manual CLI guardrails implemented and tested (2026-04-12)
   epic-21-retrospective: optional
 
+  # === EPIC 20C: Cluster Intelligence Expansion & Iteration (Added 2026-04-12) ===
+  # ITERATIVE EPIC — the primary area of development investment.
+  # Extends Irene's cluster intelligence with template library, content-aware selection,
+  # source-to-density mapping, master arc composition, and specialty agents (Pax, Lens).
+  # Stories run in Wave 2 iteration loop: implement → run → review Storyboard A → refine.
+  # Expect multiple passes per story. Quality bar: cluster plans feel intentional, not mechanical.
+  epic-20c: in-progress
+  20c-1-cluster-structure-template-library: in-progress  # Wave 2 kickoff slice complete: template library + validator/tests; runtime selection integration pending
+  20c-2-content-aware-template-selection-logic: in-progress  # Wave 2 slices complete: selector core + runtime advisory bridge + template-influence hydration; iterative run tuning pending
+  20c-3-source-to-density-intelligence: ready-for-dev  # Per-slide density from source analysis
+  20c-4-master-arc-cluster-arc-composition: ready-for-dev  # Presentation-level arc stitching
+  20c-5-presentation-architect-agent: ready-for-dev  # Pax — structural design specialist
+  20c-6-cluster-design-advisor-capability: ready-for-dev  # Lens — micro-level decomposition (capability, may promote to agent)
+  epic-20c-retrospective: optional
+
   # === EPIC 22: Storyboard & Review Adaptation (Added 2026-04-11) ===
-  epic-22: backlog
-  22-1-storyboard-a-cluster-view: backlog
-  22-2-storyboard-b-cluster-view-with-script-context: backlog
-  22-3-flat-play-sequential-preview-mode: backlog
-  22-4-storyboard-generation-script-publish-updates: backlog
+  # MVP gate passed. 22-1 done. Downstream stories (22-2, 22-4) blocked on 23-1.
+  epic-22: in-progress
+  22-1-storyboard-a-cluster-view: done  # Wave 1 closure: additive cluster view + flat-path compatibility verified (2026-04-12, test_generate_storyboard green)
+  22-2-storyboard-b-cluster-view-with-script-context: ready-for-dev  # Blocked on: 23-1
+  22-3-flat-play-sequential-preview-mode: ready-for-dev  # Unblocked (22-1 done)
+  22-4-storyboard-generation-script-publish-updates: ready-for-dev  # Blocked on: 22-3
   epic-22-retrospective: optional
 
   # === EPIC 23: Irene Pass 2 Cluster-Aware Narration (Added 2026-04-11) ===
-  epic-23: backlog
-  23-1-cluster-aware-dual-channel-grounding: backlog
-  23-2-g4-gate-extension-for-clusters: backlog
-  23-3-bridge-cadence-adaptation: backlog
+  # MVP gate passed. Parallel with Epic 22. 20b-3 dependency satisfied (Wave 1 closure).
+  epic-23: in-progress
+  23-1-cluster-aware-dual-channel-grounding: ready-for-dev  # Unblocked (20b-3 done)
+  23-2-g4-gate-extension-for-clusters: ready-for-dev  # Blocked on: 23-1
+  23-3-bridge-cadence-adaptation: ready-for-dev  # Blocked on: 23-1
   epic-23-retrospective: optional
 
   # === EPIC 24: Assembly, Handoff & Regression Hardening (Added 2026-04-11) ===
-  epic-24: backlog
-  24-1-assembly-contract-hardening: backlog
-  24-2-descript-assembly-guide-enhancement: backlog
-  24-3-elevenlabs-short-segment-handling: backlog
-  24-4-regression-test-suite: backlog
+  # MVP gate passed. Final downstream epic. Blocked on Epic 23.
+  epic-24: in-progress
+  24-1-assembly-contract-hardening: ready-for-dev  # Blocked on: 23-1
+  24-2-descript-assembly-guide-enhancement: ready-for-dev  # Blocked on: 24-1
+  24-3-elevenlabs-short-segment-handling: ready-for-dev  # Blocked on: 23-1
+  24-4-regression-test-suite: ready-for-dev  # Blocked on: 24-1 + 24-3 + 23-2
   epic-24-retrospective: optional

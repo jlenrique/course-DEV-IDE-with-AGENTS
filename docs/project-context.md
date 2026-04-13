@@ -1,15 +1,15 @@
 # Project Context: Multi-Agent Course Content Production System
 
 **Project Name:** course-DEV-IDE-with-AGENTS  
-**Phase:** 4-Implementation (all planned epics complete)
-**Architecture Status:** 14 Epics complete, **91 FRs**, Complete Architecture - Recast for BMad Agent + Cursor Plugin + APP Fidelity Assurance + Agent Governance Architecture
+**Phase:** 4-Implementation (cluster intelligence iteration active)
+**Architecture Status:** 15 legacy epics complete + Epics 19-21 done, **125 FRs**, Complete Architecture with Interstitial Cluster Extensions
 **2026-04-05 Update:** Epics 13 and 14 are now complete, tested, and internally reviewed. Production prompt packs now split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs. `DOUBLE_DISPATCH` remains an inline branch in either pack.
 **2026-04-08 Update:** Storyboard B and downstream motion contracts are now explicit. Motion segments keep the approved still slide in `visual_file`, the approved MP4 in `motion_asset_path`, Storyboard B renders both for review, and motion-first narration should orient briefly to the slide and then speak primarily to the visible action in the approved clip. First complete motion-enabled production run `C1-M1-PRES-20260406` has been executed through all 15 prompts of prompt pack v4.2, with assembly bundle fully packaged for Descript composition.
 **2026-04-11 Update:** **Desmond** (`skills/bmad-agent-desmond/`) — memory-backed agent for Descript-specific operator steps, local Descript doc cache refresh, and mandatory **Automation Advisory** on APP assembly handoffs; `DESCRIPT_API_KEY` used only via `.env` for API verification/tooling (never commit).
 
-**2026-04-12 Update:** Cluster dispatch trial (Storyboard A) validated end-to-end: cluster prompts → Gamma API with theme_id and image model → PNG download. Pipeline ready for full production trials.
-**Current Implementation Status:** Use the dated update above as the source of truth for epic completion and prompt-pack naming; the detailed historical implementation notes below remain as project chronology.
-**Implementation Status:** Epics 1-14 + SB all COMPLETE. Epic 13 visual-aware Irene Pass 2 and Epic 14 motion workflow are implemented, tested, and internally reviewed. Production prompt packs now split by workflow template: `production-prompt-pack-v4.1-narrated-deck-video-export.md` for standard narrated runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled narrated runs.
+**2026-04-12 Update:** Cluster dispatch trial (Storyboard A) validated end-to-end — MVP gate PASSED. Wave 1 foundation complete (20b-3, 22-1, 21-5). Wave 2 Irene intelligence iteration active: Epic 20c (template library, content-aware selection, density intelligence, master arc composition, potential Pax/Lens agents) with A/B trial methodology (`docs/workflow/operator-script-v4.2-irene-ab-loop.md`). Pass 2 in structural-coherence-check mode until Epic 23 ships. PRD expanded to FR125. 229 cluster tests passing.
+**Current Implementation Status:** Use the dated update above as the source of truth for epic completion; the detailed historical implementation notes below remain as project chronology.
+**Implementation Status:** Epics 1-14 + SB all COMPLETE (75 stories). Epics 19-21 COMPLETE (cluster schema, Irene planning, Gary dispatch — 17 stories). Epic 20c IN-PROGRESS (cluster intelligence expansion — 6 stories, iterative). Epics 22-24 READY (storyboard, narration, assembly — 11 stories, blocked on Epic 23). Epics 15-18 BACKLOG (learning, autonomy, research, assets).
 
 ## Purpose
 

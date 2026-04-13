@@ -1,13 +1,13 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-04-05 | **Project Phase:** Complete (all 14 epics done; prompt-pack family split by workflow template; Epic 13/14 runtime controls live)
+**Last Updated:** 2026-04-12 | **Project Phase:** Epics 1–14 complete; Wave 1 cluster features (Epics 19–24) complete (stories 20b-3, 22-1, 21-5 done, 158 tests green); prompt-pack family: v4.1 (standard), v4.2 (motion), v4.3 (cluster + interstitial)
 
 ---
 
 ## Table of Contents
 
-> 2026-04-05 status: Epics 13 and 14 are complete. The live narrated workflow family is now split between `production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled runs. `DOUBLE_DISPATCH` remains an inline branch inside either workflow template.
+> 2026-04-12 status: Epics 1–14 complete. Wave 1 cluster features (Epics 19–24) complete — cluster dispatch sequencing, cluster coherence validation, interstitial redispatch protocol, cluster prompt engineering all landed (stories 20b-3, 22-1, 21-5). The live narrated workflow family is now split three ways: `production-prompt-pack-v4.1-narrated-deck-video-export.md` (standard), `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (motion-enabled), and the v4.3 cluster+interstitial variant (in progress). G1.5 (Cluster Plan) gate added; G4-16–19 cluster criteria planned. `DOUBLE_DISPATCH` remains an inline branch inside either workflow template. New configs in `state/config/`: `prompting.yaml`, `dispatch.yaml`, `validation.yaml`, `narration-script-parameters.yaml`.
 
 1. [Architecture Overview](#architecture-overview)
 2. [Three-Layer Architecture](#three-layer-architecture)
@@ -218,7 +218,7 @@ Literal-visual dispatch rule:
 │  • course_context.yaml                      │  ← Evolves slowly
 │  • style_guide.yaml                         │  ← Agent-writable (learned prefs)
 │  • tool_policies.yaml                       │  ← Admin-managed (run presets)
-│  • fidelity-contracts/ (G0–G6 YAML)         │  ← L1 fidelity criteria
+│  • fidelity-contracts/ (G0–G6 + G1.5 + G2.5 YAML)  │  ← L1 fidelity criteria
 ├─────────────────────────────────────────────┤
 │  SQLite + JSON (state/runtime/)             │  ← Gitignored, ephemeral
 │  • coordination.db + tables               │  ← Production runs, coordination,
@@ -836,7 +836,7 @@ These are the authoritative sources — this guide references them rather than d
 | **Architecture** | `_bmad-output/planning-artifacts/architecture.md` | Full architectural decisions; governance + APP sections |
 | **PRD** | `_bmad-output/planning-artifacts/prd.md` | **91 FRs** (incl. FR81–FR91 governance), success criteria, journeys |
 | **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | Current epic and story catalog, including Epic 13 visual-aware Irene and Epic 14 motion workflow |
-| **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6, Vera vs Quinn-R ordering, role matrix |
+| **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6 + conditional G1.5/G2.5, Vera vs Quinn-R ordering, role matrix |
 | **Lane matrix** | `docs/lane-matrix.md` | Cross-agent judgment ownership |
 | **Fidelity architecture (GOLD)** | `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` | APP / three-layer / hourglass / sensory horizon |
 | **Directory Responsibilities** | `docs/directory-responsibilities.md` | Configuration hierarchy, resolution rules, anti-patterns |

@@ -143,7 +143,9 @@ criteria:
     check: >
       timing_role, content_density, visual_detail_load, duration_rationale,
       and bridge_type are populated and valid per runtime_variability policy;
-      weak or missing rationale is a contract failure, not an advisory note.
+      clustered runs must also satisfy cluster-specific word ranges and
+      within-cluster bridge suppression rules; weak or missing rationale is a
+      contract failure, not an advisory note.
     requires_perception: false
     config_refs:
       - "state/config/narration-script-parameters.yaml"
@@ -161,9 +163,66 @@ criteria:
     check: >
       Narration and manifest behavior align with narration-script-parameters
       policy defaults and guardrails; deviations must be intentional and
-      traceable, not accidental drift.
+      traceable, not accidental drift. When clusters are present, cadence
+      should prefer cluster seams (`bridge_type: cluster_boundary`) while
+      keeping within-cluster bridges suppressed except for explicit tension
+      pivots.
     requires_perception: true
     perception_modality: image
     config_refs:
       - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-13"
+    name: "Behavioral intent validation"
+    description: >
+      For each segment with a behavioral_intent field, the stated intent must
+      be specific to the segment's content, the narration must plausibly
+      support the claimed effect, and consecutive segments must not share
+      identical behavioral_intent text.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      (1) behavioral_intent is segment-specific, not generic boilerplate
+      repeated across consecutive segments; (2) narration's instructional
+      approach plausibly supports the claimed behavioral/affective effect;
+      (3) consecutive segments sharing identical behavioral_intent text are
+      flagged as under-differentiated (medium); narration contradicting its
+      stated intent is high severity.
+    requires_perception: false
+
+  - id: "G4-14"
+    name: "Motion brief fidelity"
+    description: >
+      For each non-static segment with a motion_brief, the described visual
+      action must be consistent with the motion perception confirmation for
+      that segment's motion_asset_path.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      For each non-static segment, motion_brief's described action matches
+      the perceived clip content from motion_asset_path. A motion_brief
+      describing action not present in the perceived clip is an Invention.
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G4-15"
+    name: "Duration rationale semantic correctness"
+    description: >
+      Beyond structural completeness (G4-11), each segment's duration_rationale
+      must provide genuine, segment-specific justification referencing at least
+      two of three runtime dimensions.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: >
+      (1) duration_rationale references at least two of: purpose/timing role,
+      content density, visual detail load/burden; (2) rationale is unique
+      across consecutive segments — identical rationale on 3+ consecutive
+      segments is high severity; (3) purely formulaic rationales with no
+      segment-specific reasoning are medium severity.
+    requires_perception: false
+    config_refs:
       - "state/config/narration-script-parameters.yaml"

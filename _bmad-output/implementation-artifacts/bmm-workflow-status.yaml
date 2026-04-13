@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-05 (Epics 12-14 complete; prompt-pack family split into standard v4.1 and motion v4.2 workflow docs)
+# Last Updated: 2026-04-12 (Epics 19-21 done, 20c in-progress, Wave 1 complete, A/B trials active)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "All 14 epics complete. Epics 12-14 extend the narrated workflow with double-dispatch, visual-aware Irene Pass 2, and motion controls."
-    stories_count: 62
-    epics_count: 14
+    note: "15 legacy epics complete (1-14, SB). Epics 19-24+20c add interstitial cluster intelligence. MVP gate passed. Wave 2 (Irene intelligence iteration) active with A/B trials."
+    stories_count: 97
+    epics_count: 22
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "All 14 epics done. Total: 14 epics, 62 stories."
+    note: "22 epics tracked. 15 legacy done, 4 backlog (15-18), 3 cluster epics in-progress (20c, 22, 23). A/B trial methodology active."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -101,4 +101,4 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Begin tracked trial runs from the clean Epic 14 baseline; keep structural walk, session readiness, and the first-tracked-run checklist as the operating gate."
+next_workflow_step: "Execute Wave 2 Irene intelligence A/B trials (operator-script-v4.2) against C1-M1 source content. Primary refinement target: Pass 1 template selection and cluster planning. Pass 2 in structural-coherence-check mode until Epic 23 ships."

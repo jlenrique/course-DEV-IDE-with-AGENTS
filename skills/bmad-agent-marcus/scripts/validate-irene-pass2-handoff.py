@@ -204,6 +204,12 @@ def _load_narration_density() -> dict[str, Any]:
     return density if isinstance(density, dict) else {}
 
 
+def _load_cluster_narration() -> dict[str, Any]:
+    density = _load_narration_density()
+    cluster_narration = density.get("cluster_narration", {})
+    return cluster_narration if isinstance(cluster_narration, dict) else {}
+
+
 def _load_runtime_variability() -> dict[str, Any]:
     if yaml is None or not NARRATION_PARAMS_PATH.is_file():
         return {}
@@ -248,6 +254,8 @@ def _spoken_bridge_issue_message(
 ) -> str | None:
     """Return a short machine reason if narration_text lacks required spoken cues."""
     bt = str(bridge_type or "none").strip().lower() or "none"
+    if bt == "cluster_boundary":
+        bt = "both"
     if bt == "none":
         return None
     if not str(narration_text or "").strip():
@@ -271,6 +279,32 @@ def _spoken_bridge_issue_message(
 
 def _word_count(text: str) -> int:
     return len(WORD_RE.findall(text or ""))
+
+
+def _normalize_word_range(raw: Any) -> tuple[int, int] | None:
+    if not isinstance(raw, (list, tuple)) or len(raw) != 2:
+        return None
+    try:
+        lower = int(raw[0])
+        upper = int(raw[1])
+    except (TypeError, ValueError):
+        return None
+    if lower <= 0 or upper < lower:
+        return None
+    return lower, upper
+
+
+def _is_cluster_boundary_transition(
+    previous_record: dict[str, Any] | None,
+    current_record: dict[str, Any],
+) -> bool:
+    if previous_record is None:
+        return False
+    previous_cluster_id = str(previous_record.get("cluster_id") or "").strip() or None
+    current_cluster_id = str(current_record.get("cluster_id") or "").strip() or None
+    if previous_cluster_id == current_cluster_id:
+        return False
+    return bool(previous_cluster_id or current_cluster_id)
 
 
 def _rationale_dimension_hits(
@@ -459,9 +493,12 @@ def _validate_bundle_pass2_outputs(
         "motion_segments_missing_perception_confirmation": [],
         "motion_segments_with_unapproved_asset_binding": [],
         "runtime_budget_warnings": [],
+        "cluster_word_range_warnings": [],
         "missing_runtime_rationale_fields": [],
         "weak_runtime_rationales": [],
         "bridge_cadence_warnings": [],
+        "within_cluster_bridge_warnings": [],
+        "cluster_boundary_warnings": [],
         "spoken_bridge_warnings": [],
     }
 
@@ -472,6 +509,7 @@ def _validate_bundle_pass2_outputs(
     warnings: list[str] = []
     meta_guardrails = _load_meta_slide_language_guardrails()
     narration_density = _load_narration_density()
+    cluster_narration = _load_cluster_narration()
     runtime_variability = _load_runtime_variability()
     pedagogical_bridging = _load_pedagogical_bridging()
     spoken_policy_raw = pedagogical_bridging.get("spoken_bridge_policy", {})
@@ -620,8 +658,10 @@ def _validate_bundle_pass2_outputs(
     segments_missing_behavioral_intent: list[str] = []
     motion_segments_with_static_narration_hint: list[str] = []
     runtime_budget_warnings: list[str] = []
+    cluster_word_range_warnings: list[str] = []
     missing_runtime_rationale_fields: list[str] = []
     weak_runtime_rationales: list[str] = []
+    within_cluster_bridge_warnings: list[str] = []
     runtime_targets_by_card = {
         int(entry.get("card_number")): float(entry.get("target_runtime_seconds"))
         for entry in payload.get("runtime_plan", {}).get("per_slide_targets", [])
@@ -675,6 +715,23 @@ def _validate_bundle_pass2_outputs(
         if isinstance(item, str) and str(item).strip()
     }
     allowed_bridge_types = set(accepted_bridge_types) | {"none"}
+    cluster_head_word_range = _normalize_word_range(
+        cluster_narration.get("cluster_head_word_range")
+    )
+    interstitial_word_range = _normalize_word_range(
+        cluster_narration.get("interstitial_word_range")
+    )
+    within_cluster_policy_raw = pedagogical_bridging.get("within_cluster_bridge_policy", {})
+    within_cluster_policy = (
+        within_cluster_policy_raw if isinstance(within_cluster_policy_raw, dict) else {}
+    )
+    within_cluster_default = str(within_cluster_policy.get("default") or "none").strip().lower()
+    tension_override = str(
+        within_cluster_policy.get("tension_position_override") or ""
+    ).strip().lower()
+    cluster_bridge_cadence_override = bool(
+        bridge_cadence.get("cluster_bridge_cadence_override")
+    )
     ordered_slide_records: list[dict[str, Any]] = []
     ordered_slide_index: dict[str, dict[str, Any]] = {}
     for segment in segments:
@@ -683,7 +740,9 @@ def _validate_bundle_pass2_outputs(
         seg_id = str(segment.get("id") or "<missing-id>").strip() or "<missing-id>"
         slide_id = str(segment.get("gary_slide_id") or segment.get("slide_id") or "").strip()
         card_number = segment.get("gary_card_number")
-        cluster_role = segment.get("cluster_role")
+        cluster_role = str(segment.get("cluster_role") or "").strip().lower() or None
+        cluster_id = str(segment.get("cluster_id") or "").strip() or None
+        cluster_position = str(segment.get("cluster_position") or "").strip().lower() or None
         if slide_id:
             manifest_slide_ids.append(slide_id)
             manifest_slide_id_set.add(slide_id)
@@ -691,7 +750,6 @@ def _validate_bundle_pass2_outputs(
                 interstitial_slide_ids.add(slide_id)
         # Validate interstitial cluster metadata
         if cluster_role == "interstitial":
-            cluster_id = segment.get("cluster_id")
             if not cluster_id:
                 interstitials_missing_cluster_id.append(seg_id)
             timing_role = str(segment.get("timing_role") or "").strip()
@@ -718,6 +776,7 @@ def _validate_bundle_pass2_outputs(
                 "card_number": card_number,
                 "bridge_type": bridge_type,
                 "duration_estimate_seconds": duration_estimate,
+                "cluster_id": cluster_id,
             }
             ordered_slide_index[slide_key] = slide_record
             ordered_slide_records.append(slide_record)
@@ -726,14 +785,42 @@ def _validate_bundle_pass2_outputs(
                 slide_record["bridge_type"] = bridge_type
             if not slide_record.get("duration_estimate_seconds") and duration_estimate:
                 slide_record["duration_estimate_seconds"] = duration_estimate
+            if not slide_record.get("cluster_id") and cluster_id:
+                slide_record["cluster_id"] = cluster_id
 
         narration_text = str(segment.get("narration_text") or "").strip()
+        words = _word_count(narration_text)
         if not narration_text:
             segments_missing_narration_text.append(seg_id)
         elif meta_guardrails["policy"] == "forbidden":
             lowered = narration_text.lower()
             if any(phrase in lowered for phrase in meta_guardrails["forbidden_phrases"]):
                 segments_with_forbidden_meta_slide_language.append(seg_id)
+        if narration_text and cluster_role == "head" and cluster_head_word_range is not None:
+            lower, upper = cluster_head_word_range
+            if words < lower or words > upper:
+                cluster_word_range_warnings.append(
+                    f"{seg_id}: cluster head narration word count {words} falls outside "
+                    f"cluster_head_word_range {lower}-{upper}."
+                )
+        if narration_text and cluster_role == "interstitial" and interstitial_word_range is not None:
+            lower, upper = interstitial_word_range
+            if words < lower or words > upper:
+                cluster_word_range_warnings.append(
+                    f"{seg_id}: interstitial narration word count {words} falls outside "
+                    f"interstitial_word_range {lower}-{upper}."
+                )
+        if (
+            cluster_role == "interstitial"
+            and bridge_type != "none"
+            and within_cluster_default == "none"
+            and not (cluster_position == "tension" and tension_override == "pivot")
+        ):
+            within_cluster_bridge_warnings.append(
+                f"{seg_id}: clustered interstitial at position {cluster_position or 'unknown'} "
+                "must use bridge_type none; non-none within-cluster bridges are reserved for "
+                "tension pivots."
+            )
         if (
             spoken_enforcement != "off"
             and bridge_type not in ("", "none")
@@ -771,7 +858,6 @@ def _validate_bundle_pass2_outputs(
             expected_words = target_seconds * target_wpm / 60.0
             lower_bound = expected_words * 0.8
             upper_bound = expected_words * 1.2
-            words = _word_count(narration_text)
             if words < lower_bound or words > upper_bound:
                 runtime_budget_warnings.append(
                     f"{seg_id}: narration word count {words} falls outside the soft runtime band "
@@ -953,14 +1039,26 @@ def _validate_bundle_pass2_outputs(
         set(motion_segments_with_noncanonical_visual_file)
     )
     details["runtime_budget_warnings"] = sorted(set(runtime_budget_warnings))
+    details["cluster_word_range_warnings"] = sorted(set(cluster_word_range_warnings))
     details["missing_runtime_rationale_fields"] = sorted(set(missing_runtime_rationale_fields))
     details["weak_runtime_rationales"] = sorted(set(weak_runtime_rationales))
     bridge_cadence_warnings: list[str] = []
+    cluster_boundary_warnings: list[str] = []
     if bridge_cadence_enabled and ordered_slide_records and (bridge_minutes > 0 or bridge_slides > 0):
         slides_since_bridge = 0
         seconds_since_bridge = 0.0
+        previous_record: dict[str, Any] | None = None
         for index, record in enumerate(ordered_slide_records, start=1):
             bridge_type = str(record.get("bridge_type") or "none").strip().lower() or "none"
+            if (
+                cluster_bridge_cadence_override
+                and _is_cluster_boundary_transition(previous_record, record)
+                and bridge_type != "cluster_boundary"
+            ):
+                cluster_boundary_warnings.append(
+                    f"{record.get('seg_id')}: cluster boundary transition should use bridge_type "
+                    "cluster_boundary when cluster_bridge_cadence_override=true."
+                )
             if accepted_bridge_types and bridge_type in accepted_bridge_types:
                 slides_since_bridge = 0
                 seconds_since_bridge = 0.0
@@ -978,7 +1076,10 @@ def _validate_bundle_pass2_outputs(
                     )
                     slides_since_bridge = 0
                     seconds_since_bridge = 0.0
+            previous_record = record
     details["bridge_cadence_warnings"] = sorted(set(bridge_cadence_warnings))
+    details["within_cluster_bridge_warnings"] = sorted(set(within_cluster_bridge_warnings))
+    details["cluster_boundary_warnings"] = sorted(set(cluster_boundary_warnings))
     details["spoken_bridge_warnings"] = sorted(set(spoken_bridge_warnings))
     envelope_artifacts_by_key = {
         _artifact_identity_key(item): _normalize_artifact_for_compare(item)
@@ -1079,17 +1180,23 @@ def _validate_bundle_pass2_outputs(
         )
 
     warnings.extend(details["runtime_budget_warnings"])
+    warnings.extend(details["cluster_word_range_warnings"])
     warnings.extend(details["missing_runtime_rationale_fields"])
     warnings.extend(details["weak_runtime_rationales"])
     warnings.extend(details["bridge_cadence_warnings"])
+    warnings.extend(details["within_cluster_bridge_warnings"])
+    warnings.extend(details["cluster_boundary_warnings"])
     warnings.extend(details["spoken_bridge_warnings"])
 
     if runtime_policy_strict:
         runtime_policy_violations = (
             details["runtime_budget_warnings"]
+            + details["cluster_word_range_warnings"]
             + details["missing_runtime_rationale_fields"]
             + details["weak_runtime_rationales"]
             + details["bridge_cadence_warnings"]
+            + details["within_cluster_bridge_warnings"]
+            + details["cluster_boundary_warnings"]
         )
         if spoken_enforcement == "warn":
             runtime_policy_violations += details["spoken_bridge_warnings"]

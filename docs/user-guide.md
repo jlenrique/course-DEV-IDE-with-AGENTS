@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-04-05 | **Project Phase:** Complete (Epics 1-14 done; standard and motion workflow templates live)
+**Last Updated:** 2026-04-12 | **Project Phase:** Epics 1–14 complete; Wave 1 cluster features live (v4.3 prompt pack); standard, motion, and cluster workflow templates available
 
 ---
 

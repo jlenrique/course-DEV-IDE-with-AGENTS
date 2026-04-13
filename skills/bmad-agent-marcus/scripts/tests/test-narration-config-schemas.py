@@ -94,6 +94,7 @@ class TestNarrationGroundingProfiles:
 class TestNarrationScriptParameters:
     def test_schema_version_present(self, params: dict) -> None:
         assert "schema_version" in params
+        assert params["schema_version"] == "1.1"
 
     REQUIRED_TOP_LEVEL = [
         "narration_density",
@@ -120,6 +121,11 @@ class TestNarrationScriptParameters:
     def test_density_min_lt_mean_lt_max(self, params: dict) -> None:
         d = params["narration_density"]
         assert d["min_words_per_slide"] < d["mean_words_per_slide"] < d["max_words_per_slide"]
+
+    def test_cluster_narration_ranges_configured(self, params: dict) -> None:
+        cluster = params["narration_density"]["cluster_narration"]
+        assert cluster["cluster_head_word_range"] == [80, 140]
+        assert cluster["interstitial_word_range"] == [25, 40]
 
     # -- slide_echo --
 
@@ -195,6 +201,17 @@ class TestNarrationScriptParameters:
         assert len(pol["intro_phrase_patterns"]) >= 1
         assert len(pol["outro_phrase_patterns"]) >= 1
 
+    def test_cluster_bridge_policy_configured(self, params: dict) -> None:
+        policy = params["pedagogical_bridging"]["within_cluster_bridge_policy"]
+        assert policy["default"] == "none"
+        assert policy["tension_position_override"] == "pivot"
+
+    def test_cluster_boundary_bridge_style_configured(self, params: dict) -> None:
+        style = params["pedagogical_bridging"]["cluster_boundary_bridge_style"]
+        assert style["mode"] == "synthesis_plus_forward_pull"
+        assert style["target_seconds"] == [15, 20]
+        assert style["target_words"] == [37, 50]
+
     # -- engagement_stance --
 
     def test_engagement_posture_valid(self, params: dict) -> None:
@@ -230,6 +247,11 @@ class TestNarrationScriptParameters:
         bridge_types = params["runtime_variability"]["bridge_cadence"]["accepted_bridge_types"]
         assert isinstance(bridge_types, list)
         assert bridge_types
+        assert "cluster_boundary" in bridge_types
+
+    def test_runtime_variability_cluster_override_enabled(self, params: dict) -> None:
+        cadence = params["runtime_variability"]["bridge_cadence"]
+        assert cadence["cluster_bridge_cadence_override"] is True
 
 
 # ---- Cross-file consistency tests ----

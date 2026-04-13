@@ -34,6 +34,14 @@ Per-deployment, per-course configuration that evolves through orchestrator conve
 | `style_guide.yaml` | Per-tool parameter preferences only (Gamma LLM, ElevenLabs voice ID, Canvas course ID, etc.) | Read before generation; write-back learned preferences |
 | `course_context.yaml` | Course hierarchy — name, code, modules, lessons, learning objectives | Read for scope resolution; updated as curriculum planning proceeds |
 | `tool_policies.yaml` | Run presets (explore/draft/production/regulated), quality gate thresholds, retry policy, fallback strategies | Read for quality enforcement; rarely updated by agents |
+| `narration-script-parameters.yaml` | Script-level tunable knobs for Irene Pass 2 — narration density, word ranges, cluster head/interstitial word budgets, bridge cadence policy | Read by Irene + Vera G4; human-tuned |
+| `prompting.yaml` | Cluster prompt engineering templates (small/large), safety clauses, token budget, hashing config | Read by cluster dispatch scripts; human-curated templates |
+| `dispatch.yaml` | Cluster dispatch sequencing policy — ordering, batch size, max concurrency, retry/backoff, hashing | Read by `skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py`; operational tuning |
+| `validation.yaml` | Cluster coherence validation rules — required/forbidden terms, sequencing enforcement, sampling mode, hashing | Read by `skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py` |
+
+**Subdirectory: `state/config/fidelity-contracts/`** — L1 fidelity contract YAML per gate. One file per gate (e.g., `g0-source-bundle.yaml`, `g1.5-cluster-plan.yaml`, `g2.5-cluster-coherence.yaml`, `g4-narration-script.yaml`). Each defines evaluation criteria with `id`, `severity`, `evaluation_type` (deterministic or agentic), and `check` specification. G1.5 and G2.5 are conditional — present only for lessons with cluster segments.
+
+**Subdirectory: `state/config/structural-walk/`** — Workflow-specific manifest files for the structural walk tool (`standard.yaml`, `motion.yaml`, `cluster.yaml`). See `docs/structural-walk.md`.
 
 **Does NOT contain**: brand identity, colors, typography, voice/tone, or accessibility standards. Those live in `resources/style-bible/`.
 

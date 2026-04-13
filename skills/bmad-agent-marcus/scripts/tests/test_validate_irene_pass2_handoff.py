@@ -135,6 +135,11 @@ def _write_complete_bundle_outputs(
                     f"In this section we explore the idea. {narr} "
                     "To wrap up, we consolidate before moving forward."
                 )
+            elif bt_enrich == "cluster_boundary":
+                segment["narration_text"] = (
+                    f"In this section we synthesize what the prior cluster established. {narr} "
+                    "Next, we'll pull that thread into the new topic."
+                )
 
         if motion and index == 1:
             segment["motion_type"] = "video"
@@ -1251,6 +1256,8 @@ def test_runtime_rationale_fields_fail_in_strict_mode_when_missing(tmp_path: Pat
         slide_ids=["s-1"],
         gary_slide_output=gary_slide_output,
         perception_artifacts=perception_artifacts,
+        narration_text_overrides={"seg-01": " ".join(["headword"] * 100)},
+        cue_overrides={"seg-01": "headword"},
     )
     payload["gary_slide_output"] = gary_slide_output
     payload["perception_artifacts"] = perception_artifacts
@@ -1679,6 +1686,7 @@ def test_cluster_schema_additive_fields_tolerated_flat_manifest(
     result = validate_irene_pass2_handoff(
         payload,
         envelope_path=envelope_path,
+        runtime_policy_strict=False,
     )
     assert result["status"] == "pass"
 
@@ -1739,5 +1747,442 @@ def test_cluster_schema_additive_fields_tolerated_clustered_manifest(
     result = validate_irene_pass2_handoff(
         payload,
         envelope_path=envelope_path,
+        runtime_policy_strict=False,
     )
     assert result["status"] == "pass"
+
+
+def test_cluster_word_ranges_pass_when_head_and_interstitial_fit_contract(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide_paths = [bundle_dir / "slide-01.png", bundle_dir / "slide-02.png"]
+    for slide_path in slide_paths:
+        slide_path.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide_paths[0]),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Head slide",
+        },
+        {
+            "slide_id": "s-2",
+            "card_number": 2,
+            "file_path": str(slide_paths[1]),
+            "source_ref": "slide-brief.md#Slide 2",
+            "visual_description": "Interstitial slide",
+        },
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide_paths[0]),
+            "visual_elements": [{"description": "Element 1"}],
+        },
+        {
+            "slide_id": "s-2",
+            "source_image_path": str(slide_paths[1]),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1", "s-2"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        narration_text_overrides={
+            "seg-01": " ".join(["headword"] * 100),
+            "seg-02": " ".join(["bridge"] * 30),
+        },
+        cue_overrides={"seg-01": "headword", "seg-02": "bridge"},
+        include_runtime_rationale_fields=True,
+    )
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "head",
+            "cluster_position": "establish",
+            "narrative_arc": "From big picture to focused detail",
+            "cluster_interstitial_count": 1,
+        }
+    )
+    manifest_data["segments"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "cluster_position": "develop",
+            "parent_slide_id": "s-1",
+            "interstitial_type": "emphasis-shift",
+            "isolation_target": "Element 2",
+        }
+    )
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+
+    assert result["status"] == "pass"
+    assert not any("cluster_head_word_range" in warning for warning in result["warnings"])
+    assert not any("interstitial_word_range" in warning for warning in result["warnings"])
+
+
+def test_cluster_interstitial_word_range_fails_when_too_long(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide_paths = [bundle_dir / "slide-01.png", bundle_dir / "slide-02.png"]
+    for slide_path in slide_paths:
+        slide_path.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide_paths[0]),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Head slide",
+        },
+        {
+            "slide_id": "s-2",
+            "card_number": 2,
+            "file_path": str(slide_paths[1]),
+            "source_ref": "slide-brief.md#Slide 2",
+            "visual_description": "Interstitial slide",
+        },
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide_paths[0]),
+            "visual_elements": [{"description": "Element 1"}],
+        },
+        {
+            "slide_id": "s-2",
+            "source_image_path": str(slide_paths[1]),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1", "s-2"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        narration_text_overrides={
+            "seg-01": " ".join(["headword"] * 100),
+            "seg-02": " ".join(["longword"] * 45),
+        },
+        cue_overrides={"seg-01": "headword", "seg-02": "longword"},
+        include_runtime_rationale_fields=True,
+    )
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "head",
+            "cluster_position": "establish",
+            "narrative_arc": "From big picture to focused detail",
+            "cluster_interstitial_count": 1,
+        }
+    )
+    manifest_data["segments"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "cluster_position": "develop",
+            "parent_slide_id": "s-1",
+            "interstitial_type": "emphasis-shift",
+            "isolation_target": "Element 2",
+        }
+    )
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+
+    assert result["status"] == "fail"
+    assert any(
+        "runtime_policy_violation:" in error and "interstitial_word_range" in error
+        for error in result["errors"]
+    )
+
+
+def test_non_tension_interstitial_bridge_fails_under_cluster_policy(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide_paths = [bundle_dir / "slide-01.png", bundle_dir / "slide-02.png"]
+    for slide_path in slide_paths:
+        slide_path.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide_paths[0]),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Head slide",
+        },
+        {
+            "slide_id": "s-2",
+            "card_number": 2,
+            "file_path": str(slide_paths[1]),
+            "source_ref": "slide-brief.md#Slide 2",
+            "visual_description": "Interstitial slide",
+        },
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide_paths[0]),
+            "visual_elements": [{"description": "Element 1"}],
+        },
+        {
+            "slide_id": "s-2",
+            "source_image_path": str(slide_paths[1]),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1", "s-2"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        bridge_type_overrides={"seg-02": "intro"},
+        include_runtime_rationale_fields=True,
+    )
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "head",
+            "cluster_position": "establish",
+            "narrative_arc": "From big picture to focused detail",
+            "cluster_interstitial_count": 1,
+        }
+    )
+    manifest_data["segments"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "cluster_position": "develop",
+            "parent_slide_id": "s-1",
+            "interstitial_type": "emphasis-shift",
+            "isolation_target": "Element 2",
+        }
+    )
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+
+    assert result["status"] == "fail"
+    assert any(
+        "runtime_policy_violation:" in error and "within-cluster bridges are reserved" in error
+        for error in result["errors"]
+    )
+
+
+def test_cluster_boundary_bridge_resets_cadence_at_cluster_seam(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide_ids = [f"s-{index}" for index in range(1, 5)]
+    gary_slide_output = []
+    perception_artifacts = []
+    for index, slide_id in enumerate(slide_ids, start=1):
+        slide = bundle_dir / f"slide-{index:02d}.png"
+        slide.write_bytes(b"png")
+        gary_slide_output.append(
+            {
+                "slide_id": slide_id,
+                "card_number": index,
+                "file_path": str(slide),
+                "source_ref": f"slide-brief.md#Slide {index}",
+                "visual_description": f"Slide {index}",
+            }
+        )
+        perception_artifacts.append(
+            {
+                "slide_id": slide_id,
+                "source_image_path": str(slide),
+                "visual_elements": [{"description": f"Element {index}"}],
+            }
+        )
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=slide_ids,
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        include_runtime_rationale_fields=True,
+        bridge_type_overrides={"seg-03": "cluster_boundary"},
+        narration_text_overrides={
+            "seg-01": " ".join(["headone"] * 100),
+            "seg-02": " ".join(["tighttwo"] * 30),
+            "seg-03": (
+                "In this section we synthesize what the prior cluster established. "
+                + " ".join(["boundary"] * 80)
+                + " Next, we'll pull that thread into the new topic."
+            ),
+            "seg-04": " ".join(["tightfour"] * 30),
+        },
+        cue_overrides={
+            "seg-01": "headone",
+            "seg-02": "tighttwo",
+            "seg-03": "boundary",
+            "seg-04": "tightfour",
+        },
+    )
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0].update(
+        {"cluster_id": "c1", "cluster_role": "head", "cluster_position": "establish"}
+    )
+    manifest_data["segments"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "cluster_position": "tension",
+            "parent_slide_id": "s-1",
+            "interstitial_type": "reveal",
+        }
+    )
+    manifest_data["segments"][2].update(
+        {"cluster_id": "c2", "cluster_role": "head", "cluster_position": "establish"}
+    )
+    manifest_data["segments"][3].update(
+        {
+            "cluster_id": "c2",
+            "cluster_role": "interstitial",
+            "cluster_position": "resolve",
+            "parent_slide_id": "s-3",
+            "interstitial_type": "simplification",
+        }
+    )
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+
+    assert result["status"] == "pass"
+    assert not any(
+        "cluster boundary transition should use bridge_type cluster_boundary" in warning
+        for warning in result["warnings"]
+    )
+
+
+def test_cluster_boundary_cadence_override_fails_when_boundary_bridge_missing(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide_ids = [f"s-{index}" for index in range(1, 5)]
+    gary_slide_output = []
+    perception_artifacts = []
+    for index, slide_id in enumerate(slide_ids, start=1):
+        slide = bundle_dir / f"slide-{index:02d}.png"
+        slide.write_bytes(b"png")
+        gary_slide_output.append(
+            {
+                "slide_id": slide_id,
+                "card_number": index,
+                "file_path": str(slide),
+                "source_ref": f"slide-brief.md#Slide {index}",
+                "visual_description": f"Slide {index}",
+            }
+        )
+        perception_artifacts.append(
+            {
+                "slide_id": slide_id,
+                "source_image_path": str(slide),
+                "visual_elements": [{"description": f"Element {index}"}],
+            }
+        )
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=slide_ids,
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        include_runtime_rationale_fields=True,
+        narration_text_overrides={
+            "seg-01": " ".join(["headone"] * 100),
+            "seg-02": " ".join(["tighttwo"] * 30),
+            "seg-03": " ".join(["headthree"] * 100),
+            "seg-04": " ".join(["tightfour"] * 30),
+        },
+        cue_overrides={
+            "seg-01": "headone",
+            "seg-02": "tighttwo",
+            "seg-03": "headthree",
+            "seg-04": "tightfour",
+        },
+    )
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0].update(
+        {"cluster_id": "c1", "cluster_role": "head", "cluster_position": "establish"}
+    )
+    manifest_data["segments"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "cluster_position": "tension",
+            "parent_slide_id": "s-1",
+            "interstitial_type": "reveal",
+        }
+    )
+    manifest_data["segments"][2].update(
+        {"cluster_id": "c2", "cluster_role": "head", "cluster_position": "establish"}
+    )
+    manifest_data["segments"][3].update(
+        {
+            "cluster_id": "c2",
+            "cluster_role": "interstitial",
+            "cluster_position": "resolve",
+            "parent_slide_id": "s-3",
+            "interstitial_type": "simplification",
+        }
+    )
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+
+    assert result["status"] == "fail"
+    assert any(
+        "runtime_policy_violation:" in error
+        and "cluster boundary transition should use bridge_type cluster_boundary" in error
+        for error in result["errors"]
+    )

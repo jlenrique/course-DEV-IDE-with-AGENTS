@@ -22,6 +22,7 @@ def _load_module():
 
 mod = _load_module()
 validate_cluster = mod.validate_cluster
+validate_interstitial_replacement = mod.validate_interstitial_replacement
 CoherenceValidationError = mod.CoherenceValidationError
 load_validation_config = mod.load_validation_config
 
@@ -81,3 +82,27 @@ def test_invalid_outputs_type_raises():
     with pytest.raises(CoherenceValidationError) as exc:
         validate_cluster(manifest=_manifest(), outputs={"bad": "data"}, config=cfg)
     assert exc.value.code == "invalid_output_format"
+
+
+def test_interstitial_replacement_pass_happy_path():
+    cfg = _config()
+    report = validate_interstitial_replacement(
+        head_output={"slide_id": "head-1", "text": "Coherent base context."},
+        replacement_output={"slide_id": "int-2", "text": "Coherent interstitial bridge."},
+        constraints={"required_terms": ["coherent"]},
+        config=cfg,
+        seed="seedB",
+    )
+    assert report["decision"] == "pass"
+    assert report["report_hash"]
+
+
+def test_interstitial_replacement_requires_slide_ids():
+    cfg = _config()
+    with pytest.raises(CoherenceValidationError) as exc:
+        validate_interstitial_replacement(
+            head_output={"text": "missing id"},
+            replacement_output={"slide_id": "int-2", "text": "ok"},
+            config=cfg,
+        )
+    assert exc.value.code == "missing_required_field"

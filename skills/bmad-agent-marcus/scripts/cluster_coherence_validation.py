@@ -136,6 +136,37 @@ def validate_cluster(
     return report
 
 
+def validate_interstitial_replacement(
+    *,
+    head_output: Dict[str, Any],
+    replacement_output: Dict[str, Any],
+    constraints: Dict[str, Any] | None = None,
+    config: Dict[str, Any] | None = None,
+    seed: str | None = None,
+) -> Dict[str, Any]:
+    """Run coherence validation for a replacement interstitial against head context only."""
+    head_id = str(head_output.get("slide_id") or "").strip()
+    replacement_id = str(replacement_output.get("slide_id") or "").strip()
+    if not head_id or not replacement_id:
+        raise CoherenceValidationError(
+            "missing_required_field",
+            "head_output.slide_id and replacement_output.slide_id are required",
+        )
+    manifest = {"segments": [{"slide_id": head_id}, {"slide_id": replacement_id}]}
+    outputs = [
+        {"slide_id": head_id, "text": str(head_output.get("text") or "")},
+        {"slide_id": replacement_id, "text": str(replacement_output.get("text") or "")},
+    ]
+    return validate_cluster(
+        manifest=manifest,
+        outputs=outputs,
+        constraints=constraints,
+        sequencing_expectations={"expected_ids": [head_id, replacement_id]},
+        config=config,
+        seed=seed,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate cluster coherence")
     parser.add_argument("--manifest", type=Path, required=True, help="Path to manifest YAML")

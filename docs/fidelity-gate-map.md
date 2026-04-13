@@ -12,6 +12,7 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 |------|----------|----------------|----------------|----------|
 | **G0** | Source Bundle (`extracted.md`) | Source Wrangler | Original SME materials | — |
 | **G1** | Lesson Plan | Irene | Source bundle + SME intent | Gate 1 |
+| **G1.5** | Cluster Plan | Irene | Lesson plan + cluster decision criteria | Operator Review |
 | **G2** | Slide Brief | Irene | Lesson plan | Gate 1 |
 | **G3** | Generated Slides (PNGs) | Gary | Slide brief | Gate 2 |
 | **G3.5** | PNG Export Validation | Gary | Slide brief + export | Gate 2 |
@@ -23,6 +24,14 @@ L1 fidelity contracts for each gate are defined in `state/config/fidelity-contra
 
 For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth. G4 carries 15 criteria (5 deterministic L1 + 10 agentic L2): G4-01 through G4-12 (original), G4-13 (behavioral_intent validation), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness).
 
+> **✅ Contract drift resolved (2026-04-12):** G4-13, G4-14, and G4-15 are now codified in `state/config/fidelity-contracts/g4-narration-script.yaml`.
+
+Four additional cluster-specific criteria are planned (⏳ not yet codified in YAML): G4-16 (cluster narration coherence), G4-17 (interstitial word budget), G4-18 (no new concepts in interstitials), G4-19 (cluster arc integrity). See `_bmad-output/planning-artifacts/epics-interstitial-clusters.md` for definitions.
+
+G2.5 (Cluster Coherence) runs after Gary cluster dispatch, before Storyboard A and Irene Pass 2. Its L1 contract (`state/config/fidelity-contracts/g2.5-cluster-coherence.yaml`) defines 6 perception-based criteria covering typography match, background treatment, element isolation, whitespace ratio, color temperature, and aggregate coherence scoring. G2.5 is skipped when the lesson contains no clusters.
+
+G1.5 (Cluster Plan) runs after Irene Pass 1 cluster planning, before Gary dispatch. Its L1 contract (`state/config/fidelity-contracts/g1.5-cluster-plan.yaml`) defines 13 deterministic criteria covering cluster structure integrity, interstitial vocabulary, narrative arc completeness, density controls, and position metadata. All 13 criteria are evaluation_type: deterministic. G1.5 is skipped when the lesson contains no clusters.
+
 ---
 
 ## Fidelity Gates vs. HIL Gates
@@ -30,7 +39,9 @@ For G4, the L1 contract must reference both Irene Pass 2 templates: the narratio
 Fidelity gates are **automated pre-checks** that run before human checkpoints. HIL gates are **human review** checkpoints.
 
 ```
-G0 → G1 → G2 → [HIL Gate 1] → G3 → [HIL Gate 2] → G4 → [HIL Gate 3] → G5 → G6 → [HIL Gate 4]
+G0 → G1 → G1.5* → G2 → G2.5* → [HIL Gate 1] → G3 → [HIL Gate 2] → G4 → [HIL Gate 3] → G5 → G6 → [HIL Gate 4]
+
+*G1.5 and G2.5 are conditional — present only when the lesson plan contains cluster segments.
 ```
 
 Operational anti-drift checkpoints layered on top of the gate chain:

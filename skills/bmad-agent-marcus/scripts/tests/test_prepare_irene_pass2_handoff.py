@@ -260,6 +260,7 @@ def test_reports_non_authoritative_motion_leftovers_for_static_reset_slides(tmp_
 
 def test_preserves_cluster_metadata_in_pass2_envelope(tmp_path: Path) -> None:
     bundle = _make_bundle(tmp_path)
+    (bundle / "operator-directives.md").write_text("force_template: quick-punch\n", encoding="utf-8")
     dispatch_payload = json.loads((bundle / "gary-dispatch-result.json").read_text(encoding="utf-8"))
     dispatch_payload["gary_slide_output"][0].update(
         {
@@ -292,6 +293,91 @@ def test_preserves_cluster_metadata_in_pass2_envelope(tmp_path: Path) -> None:
     assert envelope["gary_slide_output"][0]["cluster_interstitial_count"] == 1
     assert envelope["gary_slide_output"][1]["cluster_role"] == "interstitial"
     assert envelope["gary_slide_output"][1]["parent_slide_id"] == "slide-01"
+
+
+def test_envelope_includes_cluster_template_plan_when_clustered(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path)
+    (bundle / "operator-directives.md").write_text("force_template: quick-punch\n", encoding="utf-8")
+    dispatch_payload = json.loads((bundle / "gary-dispatch-result.json").read_text(encoding="utf-8"))
+    dispatch_payload["gary_slide_output"][0].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "head",
+            "parent_slide_id": None,
+            "narrative_arc": "Start broad, isolate tension, resolve.",
+            "cluster_interstitial_count": 1,
+        }
+    )
+    dispatch_payload["gary_slide_output"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "parent_slide_id": "slide-01",
+        }
+    )
+    (bundle / "gary-dispatch-result.json").write_text(
+        json.dumps(dispatch_payload),
+        encoding="utf-8",
+    )
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "prepared"
+    envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
+    assert "cluster_template_plan" in envelope
+    plan = envelope["cluster_template_plan"]
+    assert plan["schema_version"] == "1.0"
+    assert isinstance(plan["clusters"], list)
+    assert plan["clusters"][0]["cluster_id"] == "c1"
+    assert plan["clusters"][0]["selected_template_id"]
+    assert "selected_template_ids_by_cluster" in plan
+    selected_template_id = plan["clusters"][0]["selected_template_id"]
+    assert plan["selected_template_ids_by_cluster"]["c1"] == selected_template_id
+    assert envelope["gary_slide_output"][0]["selected_template_id"] == selected_template_id
+    assert envelope["gary_slide_output"][1]["selected_template_id"] == selected_template_id
+    assert envelope["gary_slide_output"][1]["cluster_position"]
+    assert envelope["gary_slide_output"][1]["interstitial_type"]
+    assert envelope["gary_slide_output"][1]["double_dispatch_eligible"] is False
+
+
+def test_template_hydration_emits_conflict_warnings_without_overwrite(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path)
+    dispatch_payload = json.loads((bundle / "gary-dispatch-result.json").read_text(encoding="utf-8"))
+    dispatch_payload["gary_slide_output"][0].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "head",
+            "parent_slide_id": None,
+            "narrative_arc": "Start broad, isolate tension, resolve.",
+            "cluster_interstitial_count": 1,
+        }
+    )
+    dispatch_payload["gary_slide_output"][1].update(
+        {
+            "cluster_id": "c1",
+            "cluster_role": "interstitial",
+            "parent_slide_id": "slide-01",
+            "cluster_position": "resolve",
+            "interstitial_type": "pace-reset",
+        }
+    )
+    (bundle / "gary-dispatch-result.json").write_text(
+        json.dumps(dispatch_payload),
+        encoding="utf-8",
+    )
+
+    result = prepare_irene_pass2_handoff(bundle)
+    assert result["status"] == "fail"
+    assert any("differs from template" in warning for warning in result["warnings"])
+    assert any("mismatch expected" in error for error in result["errors"])
+
+
+def test_envelope_omits_cluster_template_plan_when_unclustered(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path)
+    result = prepare_irene_pass2_handoff(bundle)
+    assert result["status"] == "prepared"
+    envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
+    assert "cluster_template_plan" not in envelope
 
 
 def test_requires_variant_selection_for_double_dispatch(tmp_path: Path) -> None:

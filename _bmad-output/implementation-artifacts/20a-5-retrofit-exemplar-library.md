@@ -7,7 +7,7 @@
 **Validated:** 2026-04-11
 **Depends on:** [20a-1-cluster-decision-criteria.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/20a-1-cluster-decision-criteria.md), [20a-2-interstitial-brief-specification-standard.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md), [20a-3-cluster-narrative-arc-schema.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/20a-3-cluster-narrative-arc-schema.md), [epics-interstitial-clusters.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/planning-artifacts/epics-interstitial-clusters.md)
 
-> ⚠️ **MVP Deferral Notice:** This story is explicitly deferred from the Storyboard-A MVP scope per `interstitial-cluster-mvp-c1m1-storyboard-a.md`. It should only be executed **after the Storyboard A gate passes** — real cluster production data from the first run will make these exemplars significantly more grounded and accurate than pre-run analysis alone. Do not execute this story before Epic 20b + Epic 21 Stories 1-2 have produced at least one cluster output.
+> **Unblocked:** MVP gate passed (Storyboard A trial, 2026-04-11). Real cluster production data is now available from the trial run. Execute in Wave 2 iteration loop alongside Epic 20c template/intelligence work.
 
 ## Story
 

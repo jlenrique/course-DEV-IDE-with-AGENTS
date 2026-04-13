@@ -1,13 +1,13 @@
 # Admin Guide — System Configuration and Operations
 
 **Audience:** System administrators and the project owner responsible for environment setup, tool connectivity, and operational health.
-**Last Updated:** 2026-04-05 | **Project Phase:** Complete (all 14 epics done; prompt-pack family split by workflow template; Epic 13/14 controls live)
+**Last Updated:** 2026-04-12 | **Project Phase:** Epics 1–14 complete; Wave 1 cluster features (Epics 19–24) complete; prompt-pack family: v4.1 / v4.2 / v4.3
 
 ---
 
 ## Table of Contents
 
-> 2026-04-05 status: Epics 13 and 14 are complete. Production prompt packs now split by workflow template, with the v4.1 pack for non-motion narrated runs and the v4.2 pack for motion-enabled narrated runs. `DOUBLE_DISPATCH` remains an inline branch in either workflow.
+> 2026-04-12 status: Epics 1–14 complete. Wave 1 cluster features (Epics 19–24) landed (stories 20b-3, 22-1, 21-5). Prompt packs: v4.1 (standard), v4.2 (motion), v4.3 (cluster + interstitial). G1.5 Cluster Plan gate added. New cluster configs: `prompting.yaml`, `dispatch.yaml`, `validation.yaml` in `state/config/`.
 
 1. [Environment Setup](#environment-setup)
 2. [API Keys and Credentials](#api-keys-and-credentials)
@@ -76,7 +76,11 @@ node scripts/heartbeat_check.mjs
 │   │   ├── course_context.yaml
 │   │   ├── style_guide.yaml
 │   │   ├── tool_policies.yaml
-│   │   └── fidelity-contracts/   ← L1 fidelity contract YAML per gate (G0–G6)
+│   │   ├── prompting.yaml            ← Cluster prompt engineering templates
+│   │   ├── dispatch.yaml             ← Cluster dispatch sequencing policy
+│   │   ├── validation.yaml           ← Cluster coherence validation rules
+│   │   ├── narration-script-parameters.yaml  ← Irene Pass 2 tunable knobs
+│   │   └── fidelity-contracts/   ← L1 fidelity contract YAML per gate (G0–G6 + G1.5 + G2.5)
 │   └── runtime/            ← Ephemeral runtime (gitignored)
 │       ├── coordination.db
 │       ├── mode_state.json       ← default vs ad-hoc mode (manage_mode.py)
@@ -263,7 +267,7 @@ Three tiers of state serve different purposes. See [docs/directory-responsibilit
 | `state/config/course_context.yaml` | Course hierarchy, modules, learning objectives | Marcus + user |
 | `state/config/style_guide.yaml` | Per-tool parameter preferences (voice IDs, LLM choices, etc.) | Marcus (learned preferences) |
 | `state/config/tool_policies.yaml` | Run presets, quality gate thresholds, retry policy | Admin (rarely changes) |
-| `state/config/fidelity-contracts/` | Versioned L1 criteria per fidelity gate (G0–G6); referenced by Vera and docs | Maintained with architecture |
+| `state/config/fidelity-contracts/` | Versioned L1 criteria per fidelity gate (G0–G6 + G1.5 + G2.5); referenced by Vera and docs | Maintained with architecture |
 
 **Important:** These files contain tool *dial settings* and *fidelity contracts* — brand identity, colors, typography, and voice/tone live in `resources/style-bible/` (see below).
 

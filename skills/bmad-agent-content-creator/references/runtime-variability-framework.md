@@ -113,6 +113,9 @@ Use a configurable cadence rule (authoritative values live in
 `runtime_variability.bridge_cadence` inside `narration-script-parameters.yaml`):
 - include at least one brief explicit slide intro or outro every `X` minutes
 - or after every `Y` slides
+- when clustered presentations are active and `cluster_bridge_cadence_override`
+  is true, prefer `bridge_type: cluster_boundary` at seams between clusters;
+  the slide/minute caps remain upper bounds if no seam occurs in time
 
 Recommended default:
 - every `3.0` minutes or `5` slides
@@ -135,6 +138,14 @@ Too much connective language can make the lesson sound formulaic.
 - `intro`
 - `outro`
 - `both`
+- `cluster_boundary`
+
+Clustered-run rule:
+- cluster heads may use `cluster_boundary` when entering a new cluster after a
+  prior cluster or flat segment
+- within-cluster interstitials default to `bridge_type: none`
+- only `cluster_position: tension` may carry a brief pivot beat inside a
+  cluster; do not normalize that into routine bridge language
 
 Good uses:
 - a brief intro when a new slide reframes the previous idea

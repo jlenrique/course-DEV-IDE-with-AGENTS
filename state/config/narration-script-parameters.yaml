@@ -8,7 +8,7 @@
 # Consumed by: Irene Pass 2, G4 Narration Script gate, quality-reviewer agent.
 # Contract: state/config/fidelity-contracts/g4-narration-script.yaml
 
-schema_version: "1.0"
+schema_version: "1.1"
 
 # ---------------------------------------------------------------------------
 # 1. narration_density — how much to say per slide
@@ -18,6 +18,9 @@ narration_density:
   mean_words_per_slide: 95     # default ballpark across all slides
   min_words_per_slide: 25      # breathing room for visual-heavy slides
   max_words_per_slide: 220     # cap on any single segment
+  cluster_narration:
+    cluster_head_word_range: [80, 140]  # head slide establishes concept + arc
+    interstitial_word_range: [25, 40]   # interstitials stay terse and visual-led
 
 # ---------------------------------------------------------------------------
 # 2. slide_echo — how much narration mirrors visible slide text
@@ -88,6 +91,13 @@ terminology_treatment:
 pedagogical_bridging:
   transition_style: conceptual
   bridge_frequency_scale: moderate
+  within_cluster_bridge_policy:
+    default: none              # suppress spoken bridges inside clusters by default
+    tension_position_override: pivot
+  cluster_boundary_bridge_style:
+    mode: synthesis_plus_forward_pull
+    target_seconds: [15, 20]
+    target_words: [37, 50]
   spoken_bridge_policy:
     # off = skip deterministic spoken-bridge cue checks
     # warn = emit warnings (promoted to errors when Pass 2 runtime_policy_strict)
@@ -195,7 +205,9 @@ runtime_variability:
     enabled: true
     require_intro_or_outro_every_minutes: 3.0
     require_intro_or_outro_every_slides: 5
+    cluster_bridge_cadence_override: true
     accepted_bridge_types:
       - intro
       - outro
       - both
+      - cluster_boundary

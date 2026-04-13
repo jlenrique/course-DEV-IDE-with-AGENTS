@@ -74,6 +74,62 @@ def _all_present_payload() -> dict:
     }
 
 
+def _clustered_payload() -> dict:
+    return {
+        "gary_slide_output": [
+            {
+                "slide_id": "s-1",
+                "title": "Core concept",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-1",
+                "file_path": "slides/s1.png",
+            },
+            {
+                "slide_id": "s-2",
+                "title": "Focused reveal",
+                "fidelity": "creative",
+                "card_number": 2,
+                "source_ref": "src-2",
+                "file_path": "slides/s2.png",
+            },
+            {
+                "slide_id": "s-3",
+                "title": "Standalone recap",
+                "fidelity": "literal-text",
+                "card_number": 3,
+                "source_ref": "src-3",
+                "file_path": "slides/s3.png",
+            },
+        ]
+    }
+
+
+def _cluster_manifest_yaml() -> str:
+    return """
+segments:
+  - id: seg-01
+    gary_slide_id: s-1
+    cluster_id: c1
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: "From confusion to clarity"
+    cluster_interstitial_count: 1
+  - id: seg-02
+    gary_slide_id: s-2
+    cluster_id: c1
+    cluster_role: interstitial
+    cluster_position: develop
+    develop_type: reframe
+    parent_slide_id: s-1
+    interstitial_type: emphasis-shift
+    isolation_target: Reframed concept
+    narrative_arc: "From confusion to clarity"
+  - id: seg-03
+    gary_slide_id: s-3
+"""
+
+
 def _write_test_png(path: Path, *, size: tuple[int, int] = (12, 6)) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", size, color=(10, 90, 160)).save(path, format="PNG")
@@ -603,6 +659,137 @@ def test_manifest_and_html_include_related_assets(tmp_path: Path) -> None:
     assert "Related assets: 1 row(s) appended after slides." in summary
 
 
+def test_build_manifest_derives_cluster_groups_from_segment_metadata(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    _write_test_png(slides / "s3.png")
+    payload = _clustered_payload()
+    payload["gary_slide_output"][0]["selected_template_id"] = "deep-dive"
+    payload["gary_slide_output"][1]["selected_template_id"] = "deep-dive"
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    manifest_yaml = bundle / "segment-manifest.yaml"
+    manifest_yaml.write_text(_cluster_manifest_yaml(), encoding="utf-8")
+
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+    )
+
+    assert manifest["checkpoint_label"] == "Storyboard A"
+    assert manifest["review_meta"]["cluster_group_count"] == 1
+    assert manifest["review_meta"]["clustered_slide_count"] == 2
+    assert manifest["review_meta"]["flat_slide_count"] == 1
+    assert len(manifest["cluster_groups"]) == 1
+    cluster = manifest["cluster_groups"][0]
+    assert cluster["cluster_id"] == "c1"
+    assert cluster["head_slide_id"] == "s-1"
+    assert cluster["head_row_id"] == "slide-s-1"
+    assert cluster["row_ids"] == ["slide-s-1", "slide-s-2"]
+    assert cluster["interstitial_count"] == 1
+    assert cluster["interstitial_types"] == ["emphasis-shift"]
+    by_id = {slide["slide_id"]: slide for slide in manifest["slides"]}
+    assert by_id["s-1"]["cluster_role"] == "head"
+    assert by_id["s-2"]["cluster_role"] == "interstitial"
+    assert by_id["s-2"]["isolation_target"] == "Reframed concept"
+    assert by_id["s-1"]["selected_template_id"] == "deep-dive"
+    assert by_id["s-2"]["selected_template_id"] == "deep-dive"
+    assert by_id["s-3"]["cluster_id"] is None
+
+
+def test_storyboard_a_cluster_view_is_additive_and_opt_in_for_coherence_report(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    _write_test_png(slides / "s3.png")
+    payload = _clustered_payload()
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    manifest_yaml = bundle / "segment-manifest.yaml"
+    manifest_yaml.write_text(_cluster_manifest_yaml(), encoding="utf-8")
+    coherence_report = bundle / "cluster-coherence.json"
+    coherence_report.write_text(
+        json.dumps(
+            {
+                "cluster_reports": [
+                    {
+                        "cluster_id": "c1",
+                        "report": {
+                            "decision": "warn",
+                            "score": 0.82,
+                            "report_hash": "abc123",
+                            "violations": ["ordering_mismatch"],
+                            "slide_results": [
+                                {"slide_id": "s-2", "decision": "fail", "score": 0.41},
+                            ],
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+        cluster_coherence_by_id=mod.load_cluster_coherence_by_id(coherence_report),
+    )
+    html = mod.render_index_html(manifest)
+
+    assert 'data-role="cluster-group"' in html
+    assert "Expand all clusters" in html
+    assert "Collapse all clusters" in html
+    assert "Cluster c1" in html
+    assert "From confusion to clarity" in html
+    assert "Types emphasis-shift" in html
+    assert "Balance n/a" in html
+    assert "Review FAIL 0.41" in html
+    assert "Cluster position" in html
+    assert "Isolation target" in html
+    assert 'badge-coherence-warn' in html
+    assert 'slide-card--cluster-interstitial' in html
+    assert 'slide-card--coherence-fail' in html
+
+
+def test_flat_storyboard_html_remains_without_cluster_controls(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_all_present_payload()), encoding="utf-8")
+    manifest = mod.build_manifest(
+        _all_present_payload(),
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+    )
+
+    assert "cluster_groups" not in manifest
+    html = mod.render_index_html(manifest)
+    assert '<details class="cluster-group"' not in html
+    assert "Expand all clusters" not in html
+    assert "Collapse all clusters" not in html
+
+
 def test_cli_generate_strict_fails_on_missing(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"
     slides = bundle / "slides"
@@ -722,6 +909,59 @@ def test_cli_generate_with_segment_manifest(tmp_path: Path) -> None:
     assert data["storyboard_view"] == "slides_with_script"
     html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
     assert "From CLI test." in html
+
+
+def test_cli_generate_accepts_cluster_coherence_report(tmp_path: Path) -> None:
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    _write_test_png(slides / "s3.png")
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(_clustered_payload()), encoding="utf-8")
+    manifest_yaml = bundle / "segment-manifest.yaml"
+    manifest_yaml.write_text(_cluster_manifest_yaml(), encoding="utf-8")
+    coherence_report = bundle / "cluster-coherence.json"
+    coherence_report.write_text(
+        json.dumps(
+            {
+                "cluster_reports": [
+                    {
+                        "cluster_id": "c1",
+                        "report": {
+                            "decision": "pass",
+                            "score": 0.95,
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(_GENERATE_SCRIPT),
+            "generate",
+            "--payload",
+            str(payload_path),
+            "--out-dir",
+            str(bundle),
+            "--segment-manifest",
+            str(manifest_yaml),
+            "--cluster-coherence-report",
+            str(coherence_report),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads((bundle / "storyboard" / "storyboard.json").read_text(encoding="utf-8"))
+    assert data["cluster_groups"][0]["coherence"]["decision"] == "pass"
+    html = (bundle / "storyboard" / "index.html").read_text(encoding="utf-8")
+    assert "Coherence PASS 0.95" in html
 
 
 def test_cli_generate_can_ingest_pass2_envelope_metadata(tmp_path: Path) -> None:

@@ -1,0 +1,47 @@
+schema_version: "1.0"
+description: >
+  Human-readable companion schema for Creative Director directives.
+  JSON schema is canonical for machine validation.
+
+required_top_level_fields:
+  - schema_version
+  - experience_profile
+  - slide_mode_proportions
+  - narration_profile_controls
+  - creative_rationale
+
+experience_profile:
+  allowed_values:
+    - visual-led
+    - text-led
+
+slide_mode_proportions:
+  required_keys:
+    - literal-text
+    - literal-visual
+    - creative
+  numeric_bounds:
+    min: 0.0
+    max: 1.0
+  sum_rule:
+    target: 1.0
+    tolerance: 0.001
+
+narration_profile_controls:
+  required_keys:
+    - narrator_source_authority
+    - slide_content_density
+    - elaboration_budget
+  allowed_values:
+    narrator_source_authority:
+      - source-grounded
+      - balanced
+      - slide-led
+    slide_content_density:
+      - lean
+      - adaptive
+      - dense
+    elaboration_budget:
+      - low
+      - medium
+      - high

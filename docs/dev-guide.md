@@ -820,7 +820,6 @@ course-DEV-IDE-with-AGENTS/
 │
 ├── bmad-session-protocol-session-START.md   ← BMAD start-of-session protocol
 ├── bmad-session-protocol-session-WRAPUP.md  ← BMAD end-of-session protocol
-├── bmad-session-protocol-session-MISC.md    ← BMAD reference notes
 ├── next-session-start-here.md         ← Hot-start context for next session
 └── SESSION-HANDOFF.md                 ← Session record and handoff context
 ```

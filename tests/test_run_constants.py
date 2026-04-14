@@ -27,6 +27,11 @@ def _write_valid_constants(bundle: Path, root: Path, *, bundle_rel: str | None =
         "double_dispatch": False,
         "motion_enabled": False,
         "motion_budget": {"max_credits": 24, "model_preference": "std"},
+        "slide_mode_proportions": {
+            "literal-text": 0.25,
+            "literal-visual": 0.35,
+            "creative": 0.40,
+        },
     }
     (bundle / "run-constants.yaml").write_text(
         yaml.safe_dump(data, sort_keys=False),
@@ -50,6 +55,11 @@ def test_load_run_constants_happy_path(tmp_path: Path) -> None:
     assert loaded.motion_budget is not None
     assert loaded.motion_budget.max_credits == 24
     assert loaded.motion_budget.model_preference == "std"
+    assert loaded.slide_mode_proportions == {
+        "literal-text": 0.25,
+        "literal-visual": 0.35,
+        "creative": 0.40,
+    }
 
 
 def test_bundle_path_must_match_directory(tmp_path: Path) -> None:
@@ -279,6 +289,101 @@ def test_cluster_density_in_happy_path_load(tmp_path: Path) -> None:
     )
     loaded = rc.load_run_constants(bundle, root=root)
     assert loaded.cluster_density == "sparse"
+
+
+def test_slide_mode_proportions_valid_values_parse() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": 0.2,
+            "literal-visual": 0.4,
+            "creative": 0.4,
+        },
+    }
+    parsed = rc.parse_run_constants(raw)
+    assert parsed.slide_mode_proportions == {
+        "literal-text": 0.2,
+        "literal-visual": 0.4,
+        "creative": 0.4,
+    }
+
+
+def test_slide_mode_proportions_missing_key_raises() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": 0.6,
+            "creative": 0.4,
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="exactly"):
+        rc.parse_run_constants(raw)
+
+
+def test_slide_mode_proportions_extra_key_raises() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": 0.3,
+            "literal-visual": 0.3,
+            "creative": 0.3,
+            "experimental": 0.1,
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="unexpected keys"):
+        rc.parse_run_constants(raw)
+
+
+def test_slide_mode_proportions_non_numeric_raises() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": "high",
+            "literal-visual": 0.5,
+            "creative": 0.5,
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="must be numeric"):
+        rc.parse_run_constants(raw)
+
+
+def test_slide_mode_proportions_bool_value_raises() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": True,
+            "literal-visual": 0.5,
+            "creative": 0.5,
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="must be numeric"):
+        rc.parse_run_constants(raw)
+
+
+def test_slide_mode_proportions_out_of_range_raises() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": -0.1,
+            "literal-visual": 0.6,
+            "creative": 0.5,
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="within \\[0, 1\\]"):
+        rc.parse_run_constants(raw)
+
+
+def test_slide_mode_proportions_sum_not_one_raises() -> None:
+    raw = {
+        **_MINIMAL_RAW,
+        "slide_mode_proportions": {
+            "literal-text": 0.2,
+            "literal-visual": 0.2,
+            "creative": 0.2,
+        },
+    }
+    with pytest.raises(rc.RunConstantsError, match="must sum to 1.0"):
+        rc.parse_run_constants(raw)
 
 
 def test_main_json_exit_code(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

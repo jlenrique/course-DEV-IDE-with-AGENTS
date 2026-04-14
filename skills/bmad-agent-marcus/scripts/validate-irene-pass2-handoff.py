@@ -232,6 +232,17 @@ def _load_pedagogical_bridging() -> dict[str, Any]:
     return bridging if isinstance(bridging, dict) else {}
 
 
+def _load_narration_profile_controls() -> dict[str, Any]:
+    if yaml is None or not NARRATION_PARAMS_PATH.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    controls = data.get("narration_profile_controls", {})
+    return controls if isinstance(controls, dict) else {}
+
+
 def _normalize_phrase_patterns(raw: Any) -> list[str]:
     if not isinstance(raw, list):
         return []
@@ -454,7 +465,10 @@ def _build_perception_element_lookup(
                 description = str(element.get("description") or "").strip()
                 if description:
                     descriptions.add(description)
-        lookup[slide_id] = descriptions
+        if slide_id in lookup:
+            lookup[slide_id].update(descriptions)
+        else:
+            lookup[slide_id] = descriptions
     return lookup
 
 
@@ -500,6 +514,7 @@ def _validate_bundle_pass2_outputs(
         "within_cluster_bridge_warnings": [],
         "cluster_boundary_warnings": [],
         "spoken_bridge_warnings": [],
+        "active_narration_profile_controls": {},
     }
 
     if bundle_dir is None:
@@ -523,6 +538,7 @@ def _validate_bundle_pass2_outputs(
         intro_patterns = list(_FALLBACK_INTRO_PATTERNS)
     if not outro_patterns:
         outro_patterns = list(_FALLBACK_OUTRO_PATTERNS)
+    details["active_narration_profile_controls"] = _load_narration_profile_controls()
 
     narration_path = _resolve_bundle_output_path(
         payload,
@@ -864,59 +880,98 @@ def _validate_bundle_pass2_outputs(
                     f"for slide {card_number} ({target_seconds:.1f}s at {target_wpm:.0f} WPM -> "
                     f"{lower_bound:.0f}-{upper_bound:.0f} words)."
                 )
-            if required_runtime_fields:
-                field_values = {
-                    "timing_role": str(segment.get("timing_role") or "").strip(),
-                    "content_density": str(segment.get("content_density") or "").strip(),
-                    "visual_detail_load": str(segment.get("visual_detail_load") or "").strip(),
-                    "duration_rationale": str(segment.get("duration_rationale") or "").strip(),
-                    "bridge_type": str(segment.get("bridge_type") or "").strip().lower(),
-                }
-                missing_fields = [
-                    field_name
-                    for field_name in required_runtime_fields
-                    if not field_values.get(field_name)
-                ]
-                if (
-                    field_values["timing_role"]
-                    and allowed_timing_roles
-                    and field_values["timing_role"] not in allowed_timing_roles
-                ):
-                    missing_fields.append("timing_role(valid)")
-                if (
-                    field_values["content_density"]
-                    and allowed_density_levels
-                    and field_values["content_density"] not in allowed_density_levels
-                ):
-                    missing_fields.append("content_density(valid)")
-                if (
-                    field_values["visual_detail_load"]
-                    and allowed_density_levels
-                    and field_values["visual_detail_load"] not in allowed_density_levels
-                ):
-                    missing_fields.append("visual_detail_load(valid)")
-                if (
-                    field_values["bridge_type"]
-                    and allowed_bridge_types
-                    and field_values["bridge_type"] not in allowed_bridge_types
-                ):
-                    missing_fields.append("bridge_type(valid)")
-                if missing_fields:
-                    missing_runtime_rationale_fields.append(
-                        f"{seg_id}: missing or invalid runtime rationale fields: {', '.join(missing_fields)}."
-                    )
 
-                rationale = field_values["duration_rationale"]
-                if rationale and dimension_keywords:
-                    dimension_hits = _rationale_dimension_hits(
-                        rationale,
-                        dimension_keywords=dimension_keywords,
+        should_validate_runtime_fields = bool(required_runtime_fields) and (
+            (isinstance(card_number, int) and card_number in runtime_targets_by_card)
+            or any(
+                segment.get(field_name) not in (None, "")
+                for field_name in (
+                    "timing_role",
+                    "content_density",
+                    "visual_detail_load",
+                    "duration_rationale",
+                    "bridge_type",
+                    "onset_delay",
+                    "dwell",
+                    "cluster_gap",
+                    "transition_buffer",
+                )
+            )
+        )
+        if should_validate_runtime_fields:
+            field_values = {
+                "timing_role": str(segment.get("timing_role") or "").strip(),
+                "content_density": str(segment.get("content_density") or "").strip(),
+                "visual_detail_load": str(segment.get("visual_detail_load") or "").strip(),
+                "duration_rationale": str(segment.get("duration_rationale") or "").strip(),
+                "bridge_type": str(segment.get("bridge_type") or "").strip().lower(),
+                "onset_delay": segment.get("onset_delay"),
+                "dwell": segment.get("dwell"),
+                "cluster_gap": segment.get("cluster_gap"),
+                "transition_buffer": segment.get("transition_buffer"),
+            }
+            missing_fields: list[str] = []
+            for field_name in required_runtime_fields:
+                raw_value = field_values.get(field_name)
+                if field_name in {"onset_delay", "dwell", "cluster_gap", "transition_buffer"}:
+                    # Backward-compat default: absent timing buffers behave as 0.0.
+                    # We only enforce validity when an explicit value is provided.
+                    continue
+                elif not raw_value:
+                    missing_fields.append(field_name)
+            for float_field in ("onset_delay", "dwell", "cluster_gap", "transition_buffer"):
+                if float_field not in required_runtime_fields:
+                    continue
+                raw_value = field_values.get(float_field)
+                if raw_value in (None, ""):
+                    continue
+                try:
+                    parsed_value = float(raw_value)
+                except (TypeError, ValueError):
+                    missing_fields.append(f"{float_field}(float)")
+                    continue
+                if parsed_value < 0:
+                    missing_fields.append(f"{float_field}(>=0)")
+            if (
+                field_values["timing_role"]
+                and allowed_timing_roles
+                and field_values["timing_role"] not in allowed_timing_roles
+            ):
+                missing_fields.append("timing_role(valid)")
+            if (
+                field_values["content_density"]
+                and allowed_density_levels
+                and field_values["content_density"] not in allowed_density_levels
+            ):
+                missing_fields.append("content_density(valid)")
+            if (
+                field_values["visual_detail_load"]
+                and allowed_density_levels
+                and field_values["visual_detail_load"] not in allowed_density_levels
+            ):
+                missing_fields.append("visual_detail_load(valid)")
+            if (
+                field_values["bridge_type"]
+                and allowed_bridge_types
+                and field_values["bridge_type"] not in allowed_bridge_types
+            ):
+                missing_fields.append("bridge_type(valid)")
+            if missing_fields:
+                missing_runtime_rationale_fields.append(
+                    f"{seg_id}: missing or invalid runtime rationale fields: {', '.join(missing_fields)}."
+                )
+
+            rationale = field_values["duration_rationale"]
+            if rationale and dimension_keywords:
+                dimension_hits = _rationale_dimension_hits(
+                    rationale,
+                    dimension_keywords=dimension_keywords,
+                )
+                if len(dimension_hits) < 2:
+                    weak_runtime_rationales.append(
+                        f"{seg_id}: duration_rationale should reference at least two runtime dimensions "
+                        f"(purpose, density, visual burden); detected {', '.join(sorted(dimension_hits)) or 'none'}."
                     )
-                    if len(dimension_hits) < 2:
-                        weak_runtime_rationales.append(
-                            f"{seg_id}: duration_rationale should reference at least two runtime dimensions "
-                            f"(purpose, density, visual burden); detected {', '.join(sorted(dimension_hits)) or 'none'}."
-                        )
 
         refs = segment.get("visual_references", [])
         valid_visual_cue_found = False
@@ -947,7 +1002,7 @@ def _validate_bundle_pass2_outputs(
                 for ref in refs
                 if isinstance(ref, dict) and str(ref.get("narration_cue") or "").strip()
             }
-            if not trace_sources:
+            if not trace_sources or slide_id not in trace_sources:
                 segments_with_untraceable_visual_cues.append(seg_id)
 
         motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
@@ -1128,6 +1183,11 @@ def _validate_bundle_pass2_outputs(
         errors.append(
             "segment-manifest.yaml has segment(s) without a non-empty visual narration_cue tied to perception and present in narration_text: "
             + ", ".join(sorted(set(segments_missing_visual_narration_cue)))
+        )
+    if segments_with_untraceable_visual_cues:
+        errors.append(
+            "segment-manifest.yaml has segment(s) with visual narration cues that do not trace to the segment's own slide_id perception lineage: "
+            + ", ".join(sorted(set(segments_with_untraceable_visual_cues)))
         )
     if segments_with_forbidden_meta_slide_language:
         errors.append(
@@ -1316,6 +1376,11 @@ def validate_irene_pass2_handoff(
         errors.append(
             "gary_slide_output file_path does not exist on disk for: "
             + ", ".join(missing_local_png_for)
+        )
+    if png_card_mismatch_for:
+        errors.append(
+            "gary_slide_output card_number does not match slide_XX.png filename for: "
+            + ", ".join(png_card_mismatch_for)
         )
     if missing_source_ref_for:
         errors.append(

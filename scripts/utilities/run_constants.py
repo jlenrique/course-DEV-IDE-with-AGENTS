@@ -26,6 +26,9 @@ RUN_CONSTANTS_BASENAME = "run-constants.yaml"
 ALLOWED_QUALITY_PRESETS = frozenset({"explore", "draft", "production", "regulated"})
 ALLOWED_MOTION_MODEL_PREFERENCES = frozenset({"std", "pro"})
 ALLOWED_CLUSTER_DENSITIES = frozenset({"none", "sparse", "default", "rich"})
+SLIDE_MODE_KEYS = ("literal-text", "literal-visual", "creative")
+SLIDE_MODE_KEY_SET = frozenset(SLIDE_MODE_KEYS)
+SLIDE_MODE_SUM_TOLERANCE = 0.001
 
 
 class RunConstantsError(ValueError):
@@ -57,6 +60,7 @@ class RunConstants:
     motion_enabled: bool = False
     motion_budget: MotionBudget | None = None
     cluster_density: str | None = None
+    slide_mode_proportions: dict[str, float] | None = None
     schema_version: int | None = None
     frozen_at_utc: str | None = None
     frozen_note: str | None = None
@@ -104,6 +108,50 @@ def _normalize_execution_mode(mode: str) -> str:
         "execution_mode must be tracked/default (or aliases tracked|default) or ad-hoc; "
         f"got {mode!r}"
     )
+
+
+def _parse_slide_mode_proportions(raw: Any) -> dict[str, float] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise RunConstantsError("slide_mode_proportions must be an object when present")
+
+    keys = set(raw.keys())
+    if keys != set(SLIDE_MODE_KEYS):
+        missing = sorted(SLIDE_MODE_KEY_SET - keys)
+        extra = sorted(keys - SLIDE_MODE_KEY_SET)
+        details: list[str] = []
+        if missing:
+            details.append(f"missing keys {missing}")
+        if extra:
+            details.append(f"unexpected keys {extra}")
+        detail_msg = "; ".join(details) if details else "invalid key set"
+        raise RunConstantsError(
+            "slide_mode_proportions must include exactly "
+            f"{list(SLIDE_MODE_KEYS)}; {detail_msg}"
+        )
+
+    parsed: dict[str, float] = {}
+    for key in SLIDE_MODE_KEYS:
+        value = raw.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise RunConstantsError(
+                f"slide_mode_proportions.{key} must be numeric; got {type(value).__name__}"
+            )
+        numeric = float(value)
+        if numeric < 0 or numeric > 1:
+            raise RunConstantsError(
+                f"slide_mode_proportions.{key} must be within [0, 1]; got {numeric}"
+            )
+        parsed[key] = numeric
+
+    total = sum(parsed.values())
+    if abs(total - 1.0) > SLIDE_MODE_SUM_TOLERANCE:
+        raise RunConstantsError(
+            "slide_mode_proportions values must sum to 1.0 within "
+            f"±{SLIDE_MODE_SUM_TOLERANCE}; got {total:.6f}"
+        )
+    return parsed
 
 
 def load_run_constants_dict(path: Path) -> dict[str, Any]:
@@ -157,6 +205,7 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
                 f"got {raw_cluster_density!r}"
             )
         cluster_density = val
+    slide_mode_proportions = _parse_slide_mode_proportions(data.get("slide_mode_proportions"))
 
     schema_version = data.get("schema_version")
     if schema_version is not None and not isinstance(schema_version, int):
@@ -210,6 +259,7 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         motion_enabled=raw_motion_enabled,
         motion_budget=motion_budget,
         cluster_density=cluster_density,
+        slide_mode_proportions=slide_mode_proportions,
         schema_version=schema_version,
         frozen_at_utc=frozen_at.strip() if isinstance(frozen_at, str) else None,
         frozen_note=frozen_note.strip() if isinstance(frozen_note, str) else None,

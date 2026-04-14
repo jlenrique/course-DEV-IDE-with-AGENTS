@@ -1,0 +1,480 @@
+schema_version: "1.0"
+story_anchor: "20c-7-parameter-audit-registry-schema"
+description: >
+  Canonical machine-readable registry index for creative-control parameters.
+  Entries may represent currently implemented parameters or planned placeholders
+  required by downstream stories.
+
+families:
+  run-constants:
+    owner: "Marcus runtime"
+    description: "Run identity, execution mode, quality, and budget controls."
+  narration-time:
+    owner: "Irene + narration contracts"
+    description: "Script-generation and delivery-shaping controls."
+  assembly-time:
+    owner: "Irene manifest + Compositor stack"
+    description: "Timing and composition controls applied during assembly."
+
+status_values:
+  - implemented
+  - planned
+
+required_entry_fields:
+  - key
+  - family
+  - type
+  - status
+
+field_glossary:
+  key: "Canonical parameter identifier used across docs, contracts, and code."
+  family: "Top-level ownership group: run-constants, narration-time, or assembly-time."
+  type: "Storage and validation shape for parameter values."
+  status: "Lifecycle state. `implemented` means active in code/contracts; `planned` means reserved for future stories."
+  source: "Primary implementation or contract file for implemented parameters."
+  planned_story: "Story ID that introduces the parameter when status is planned."
+
+strictness_policy:
+  unknown_family: fail
+  unknown_status: fail
+  duplicate_key: fail
+  missing_required_entry_field: fail
+
+examples:
+  valid_entry:
+    key: onset_delay
+    family: assembly-time
+    type: float
+    status: planned
+    planned_story: 20c-8
+    description: "Delay before segment narration begins."
+  invalid_entry_missing_status:
+    key: onset_delay
+    family: assembly-time
+    type: float
+    planned_story: 20c-8
+
+entries:
+  - key: run_id
+    family: run-constants
+    type: string
+    status: implemented
+    source: scripts/utilities/run_constants.py
+    consumers:
+      - scripts/utilities/marcus_prompt_harness.py
+      - scripts/utilities/app_session_readiness.py
+  - key: lesson_slug
+    family: run-constants
+    type: string
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: execution_mode
+    family: run-constants
+    type: enum
+    allowed_values:
+      - tracked/default
+      - ad-hoc
+    aliases:
+      tracked: tracked/default
+      default: tracked/default
+      ad_hoc: ad-hoc
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: quality_preset
+    family: run-constants
+    type: enum
+    allowed_values:
+      - explore
+      - draft
+      - production
+      - regulated
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: double_dispatch
+    family: run-constants
+    type: boolean
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: motion_enabled
+    family: run-constants
+    type: boolean
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: motion_budget.max_credits
+    family: run-constants
+    type: float
+    constraints:
+      minimum_exclusive: 0
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: motion_budget.model_preference
+    family: run-constants
+    type: enum
+    allowed_values:
+      - std
+      - pro
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: cluster_density
+    family: run-constants
+    type: enum
+    allowed_values:
+      - none
+      - sparse
+      - default
+      - rich
+    status: implemented
+    source: scripts/utilities/run_constants.py
+  - key: slide_mode_proportions
+    family: run-constants
+    type: object
+    status: implemented
+    source: scripts/utilities/run_constants.py
+    consumers:
+      - scripts/utilities/run_constants.py
+    description: "Resolved creative mode distribution map (literal-text, literal-visual, creative) for run constants."
+
+  - key: narration_density.target_wpm
+    family: narration-time
+    type: integer
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: slide_echo.default
+    family: narration-time
+    type: enum
+    allowed_values:
+      - verbatim
+      - paraphrase
+      - inspired
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: visual_narration.visual_references_per_slide
+    family: narration-time
+    type: integer
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: pedagogical_bridging.transition_style
+    family: narration-time
+    type: enum
+    allowed_values:
+      - conceptual
+      - sequential
+      - question_driven
+      - narrative_arc
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: engagement_stance.posture
+    family: narration-time
+    type: enum
+    allowed_values:
+      - lecturer
+      - collegial_guide
+      - coach
+      - storyteller
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: runtime_variability.allowed_timing_roles
+    family: narration-time
+    type: list[enum]
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: runtime_variability.allowed_density_levels
+    family: narration-time
+    type: list[enum]
+    allowed_values:
+      - light
+      - medium
+      - heavy
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: runtime_variability.bridge_cadence.require_intro_or_outro_every_minutes
+    family: narration-time
+    type: float
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: runtime_variability.bridge_cadence.require_intro_or_outro_every_slides
+    family: narration-time
+    type: integer
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+  - key: profiles.creative
+    family: narration-time
+    type: object
+    status: implemented
+    source: state/config/narration-grounding-profiles.yaml
+  - key: profiles.literal-text
+    family: narration-time
+    type: object
+    status: implemented
+    source: state/config/narration-grounding-profiles.yaml
+  - key: profiles.literal-visual
+    family: narration-time
+    type: object
+    status: implemented
+    source: state/config/narration-grounding-profiles.yaml
+  - key: default_profile
+    family: narration-time
+    type: string
+    status: implemented
+    source: state/config/elevenlabs-voice-profiles.yaml
+  - key: narration_profile_controls.narrator_source_authority
+    family: narration-time
+    type: enum
+    allowed_values:
+      - source-grounded
+      - balanced
+      - slide-led
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Sets source-vs-slide authority weighting for narration framing."
+  - key: narration_profile_controls.slide_content_density
+    family: narration-time
+    type: enum
+    allowed_values:
+      - lean
+      - adaptive
+      - dense
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls how much explanatory narration sits on top of slide content."
+  - key: narration_profile_controls.elaboration_budget
+    family: narration-time
+    type: enum
+    allowed_values:
+      - low
+      - medium
+      - high
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls narration expansion depth and example budget."
+  - key: narration_profile_controls.connective_weight
+    family: narration-time
+    type: enum
+    allowed_values:
+      - light
+      - balanced
+      - heavy
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls connective phrasing intensity between narrative points."
+  - key: narration_profile_controls.callback_frequency
+    family: narration-time
+    type: enum
+    allowed_values:
+      - sparse
+      - moderate
+      - frequent
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls frequency of callbacks to previously established concepts."
+  - key: narration_profile_controls.visual_narration_coupling
+    family: narration-time
+    type: enum
+    allowed_values:
+      - loose
+      - balanced
+      - tight
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls coupling tightness between spoken narration and visual anchoring."
+  - key: narration_profile_controls.rhetorical_richness
+    family: narration-time
+    type: enum
+    allowed_values:
+      - restrained
+      - balanced
+      - expressive
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls rhetorical texture and variety in narration language."
+  - key: narration_profile_controls.vocabulary_register
+    family: narration-time
+    type: enum
+    allowed_values:
+      - accessible
+      - professional
+      - specialist
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls vocabulary register used by narration."
+  - key: narration_profile_controls.arc_awareness
+    family: narration-time
+    type: enum
+    allowed_values:
+      - low
+      - medium
+      - high
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls explicit signaling of narrative arc progression."
+  - key: narration_profile_controls.narrative_tension
+    family: narration-time
+    type: enum
+    allowed_values:
+      - low
+      - medium
+      - high
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls narrative tension shaping in delivery."
+  - key: narration_profile_controls.emotional_coloring
+    family: narration-time
+    type: enum
+    allowed_values:
+      - neutral
+      - warm
+      - vivid
+    status: implemented
+    source: state/config/narration-script-parameters.yaml
+    description: "Controls emotional color intensity in narration tone."
+
+  - key: duration_estimate_seconds
+    family: assembly-time
+    type: float_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: timing_role
+    family: assembly-time
+    type: enum_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: content_density
+    family: assembly-time
+    type: enum_or_null
+    allowed_values:
+      - light
+      - medium
+      - heavy
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: visual_detail_load
+    family: assembly-time
+    type: enum_or_null
+    allowed_values:
+      - light
+      - medium
+      - heavy
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: duration_rationale
+    family: assembly-time
+    type: string_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: bridge_type
+    family: assembly-time
+    type: enum_or_null
+    allowed_values:
+      - none
+      - intro
+      - outro
+      - both
+      - cluster_boundary
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: transition_in
+    family: assembly-time
+    type: enum
+    allowed_values:
+      - fade
+      - cross-dissolve
+      - cut
+      - none
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: transition_out
+    family: assembly-time
+    type: enum
+    allowed_values:
+      - fade
+      - cross-dissolve
+      - cut
+      - none
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: music
+    family: assembly-time
+    type: enum_or_null
+    allowed_values:
+      - duck
+      - swell
+      - out
+      - continue
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: narration_duration
+    family: assembly-time
+    type: float_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: visual_duration
+    family: assembly-time
+    type: float_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: motion_type
+    family: assembly-time
+    type: enum
+    allowed_values:
+      - static
+      - video
+      - animation
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: motion_asset_path
+    family: assembly-time
+    type: string_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: motion_duration_seconds
+    family: assembly-time
+    type: float_or_null
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+  - key: motion_status
+    family: assembly-time
+    type: enum_or_null
+    allowed_values:
+      - pending
+      - generated
+      - imported
+      - approved
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+
+  - key: onset_delay
+    family: assembly-time
+    type: float
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+    consumers:
+      - skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py
+      - skills/quality-control/scripts/precomposition_validator.py
+    description: "Delay before segment narration begins."
+  - key: dwell
+    family: assembly-time
+    type: float
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+    consumers:
+      - skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py
+      - skills/quality-control/scripts/precomposition_validator.py
+    description: "Hold duration after narration completion."
+  - key: cluster_gap
+    family: assembly-time
+    type: float
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+    consumers:
+      - skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py
+      - skills/quality-control/scripts/precomposition_validator.py
+    description: "Extra spacing between cluster boundaries."
+  - key: transition_buffer
+    family: assembly-time
+    type: float
+    status: implemented
+    source: skills/bmad-agent-content-creator/references/template-segment-manifest.md
+    consumers:
+      - skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py
+      - skills/quality-control/scripts/precomposition_validator.py
+    description: "Minimum safety buffer around transitions."

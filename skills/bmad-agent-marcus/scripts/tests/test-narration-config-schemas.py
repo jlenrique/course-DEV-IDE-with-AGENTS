@@ -106,6 +106,7 @@ class TestNarrationScriptParameters:
         "source_depth",
         "pronunciation_sensitivity",
         "runtime_variability",
+        "narration_profile_controls",
     ]
 
     @pytest.mark.parametrize("section", REQUIRED_TOP_LEVEL)
@@ -252,6 +253,52 @@ class TestNarrationScriptParameters:
     def test_runtime_variability_cluster_override_enabled(self, params: dict) -> None:
         cadence = params["runtime_variability"]["bridge_cadence"]
         assert cadence["cluster_bridge_cadence_override"] is True
+
+    # -- narration_profile_controls --
+
+    def test_profile_controls_narrator_source_authority_valid(self, params: dict) -> None:
+        valid = {"source-grounded", "balanced", "slide-led"}
+        assert params["narration_profile_controls"]["narrator_source_authority"] in valid
+
+    def test_profile_controls_slide_content_density_valid(self, params: dict) -> None:
+        valid = {"lean", "adaptive", "dense"}
+        assert params["narration_profile_controls"]["slide_content_density"] in valid
+
+    def test_profile_controls_elaboration_budget_valid(self, params: dict) -> None:
+        valid = {"low", "medium", "high"}
+        assert params["narration_profile_controls"]["elaboration_budget"] in valid
+
+    def test_profile_controls_connective_weight_valid(self, params: dict) -> None:
+        valid = {"light", "balanced", "heavy"}
+        assert params["narration_profile_controls"]["connective_weight"] in valid
+
+    def test_profile_controls_callback_frequency_valid(self, params: dict) -> None:
+        valid = {"sparse", "moderate", "frequent"}
+        assert params["narration_profile_controls"]["callback_frequency"] in valid
+
+    def test_profile_controls_visual_narration_coupling_valid(self, params: dict) -> None:
+        valid = {"loose", "balanced", "tight"}
+        assert params["narration_profile_controls"]["visual_narration_coupling"] in valid
+
+    def test_profile_controls_rhetorical_richness_valid(self, params: dict) -> None:
+        valid = {"restrained", "balanced", "expressive"}
+        assert params["narration_profile_controls"]["rhetorical_richness"] in valid
+
+    def test_profile_controls_vocabulary_register_valid(self, params: dict) -> None:
+        valid = {"accessible", "professional", "specialist"}
+        assert params["narration_profile_controls"]["vocabulary_register"] in valid
+
+    def test_profile_controls_arc_awareness_valid(self, params: dict) -> None:
+        valid = {"low", "medium", "high"}
+        assert params["narration_profile_controls"]["arc_awareness"] in valid
+
+    def test_profile_controls_narrative_tension_valid(self, params: dict) -> None:
+        valid = {"low", "medium", "high"}
+        assert params["narration_profile_controls"]["narrative_tension"] in valid
+
+    def test_profile_controls_emotional_coloring_valid(self, params: dict) -> None:
+        valid = {"neutral", "warm", "vivid"}
+        assert params["narration_profile_controls"]["emotional_coloring"] in valid
 
 
 # ---- Cross-file consistency tests ----

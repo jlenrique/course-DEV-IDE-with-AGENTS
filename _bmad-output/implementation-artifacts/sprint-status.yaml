@@ -387,12 +387,12 @@ development_status:
   20c-4-master-arc-cluster-arc-composition: deferred  # Deferred: return after profile runs validate clustering quality
   20c-5-presentation-architect-agent: deferred  # Deferred: Pax — when complexity justifies
   20c-6-cluster-design-advisor-capability: deferred  # Deferred: Lens — when complexity justifies
-  20c-7-parameter-audit-registry-schema: ready-for-dev  # Wave 2B: catalog all params (3 families), create registry schema + parameter directory doc
-  20c-8-assembly-timing-parameters: ready-for-dev  # Wave 2B: onset_delay, dwell, cluster_gap, transition_buffer. Deps: 20c-7
-  20c-9-narration-parameter-expansion: ready-for-dev  # Wave 2B: narrator_source_authority, slide_content_density, elaboration_budget, etc. Deps: 20c-7
-  20c-10-creative-director-agent: ready-for-dev  # Wave 2B: CD agent via bmad-agent-builder. Deps: 20c-7, soft 8/9
-  20c-11-creative-directive-schema: ready-for-dev  # Wave 2B: directive artifact format + writer script. Deps: 20c-10
-  20c-12-experience-profile-definitions: ready-for-dev  # Wave 2B: Visual-Led + Text-Led extreme profiles. Deps: 20c-8, 9, 10
+  20c-7-parameter-audit-registry-schema: done  # Wave 2B complete (2026-04-14): cataloged 3 parameter families, added docs/parameter-directory.md, added state/config/parameter-registry-schema.yaml, and added registry validation tests
+  20c-8-assembly-timing-parameters: done  # Wave 2B complete (2026-04-14): onset_delay/dwell/cluster_gap/transition_buffer wired into manifest reference, Pass2 and precomposition validators, and test coverage
+  20c-9-narration-parameter-expansion: in-progress  # Wave 2B slice 1+2 (2026-04-14): expanded narration_profile_controls set and aligned config + registry + schema validation
+  20c-10-creative-director-agent: in-progress  # Wave 2B (2026-04-14): contract-first CD scaffold + slide_mode_proportions validation path initiated
+  20c-11-creative-directive-schema: in-progress  # Wave 2B (2026-04-14): schema artifacts (JSON+YAML) created; writer/validation wiring pending
+  20c-12-experience-profile-definitions: in-progress  # Wave 2B (2026-04-14): bootstrap profile targets + schema tests in place; resolver wiring and runtime proof pending.
   20c-13-profile-resolver-wiring: ready-for-dev  # Wave 2B: resolver into RunConstants + Marcus. Deps: 20c-12, 20c-3
   20c-14-e2e-validation-both-profiles: ready-for-dev  # Wave 2B: C1-M1 through both profiles, comparison. Deps: 20c-13
   epic-20c-retrospective: optional

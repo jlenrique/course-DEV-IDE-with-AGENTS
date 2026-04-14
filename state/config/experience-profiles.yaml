@@ -1,0 +1,26 @@
+schema_version: "1.0"
+description: >
+  Initial profile targets for Creative Director outputs and future profile resolver wiring.
+
+profiles:
+  visual-led:
+    label: "Visual-Led"
+    slide_mode_proportions:
+      literal-text: 0.15
+      literal-visual: 0.25
+      creative: 0.60
+    narration_profile_controls:
+      narrator_source_authority: source-grounded
+      slide_content_density: adaptive
+      elaboration_budget: medium
+
+  text-led:
+    label: "Text-Led"
+    slide_mode_proportions:
+      literal-text: 0.60
+      literal-visual: 0.25
+      creative: 0.15
+    narration_profile_controls:
+      narrator_source_authority: slide-led
+      slide_content_density: dense
+      elaboration_budget: low

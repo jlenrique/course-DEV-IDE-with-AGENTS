@@ -113,6 +113,10 @@ def _write_complete_bundle_outputs(
                         "Longer because this concept-build slide carries medium detail density "
                         "and the visual needs guided explanation."
                     ),
+                    "onset_delay": 0.0,
+                    "dwell": 0.25,
+                    "cluster_gap": 0.0,
+                    "transition_buffer": 0.1,
                     "bridge_type": "none",
                 }
             )
@@ -413,6 +417,143 @@ def test_fails_when_file_path_or_source_ref_missing() -> None:
     assert result["status"] == "fail"
     assert result["consistency"]["missing_file_path_for"] == ["s-1"]
     assert result["consistency"]["missing_source_ref_for"] == ["s-2"]
+
+
+def test_fails_when_card_number_does_not_match_slide_filename() -> None:
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "s-1",
+                "card_number": 2,
+                "file_path": "course-content/staging/slide_01.png",
+                "source_ref": "slide-brief.md#Slide 1",
+            }
+        ],
+        "perception_artifacts": [
+            {
+                "slide_id": "s-1",
+                "source_image_path": "course-content/staging/slide_01.png",
+            }
+        ],
+    }
+
+    result = validate_irene_pass2_handoff(payload)
+
+    assert result["status"] == "fail"
+    assert any("card_number does not match slide_XX.png filename" in msg for msg in result["errors"])
+
+
+def test_bundle_validation_accepts_multi_artifact_perception_for_same_slide(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "slide-01.png"
+    slide.write_bytes(b"png")
+
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide),
+            "visual_elements": [{"description": "Element 1"}],
+        },
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+    )
+
+    # Force segment cue to require the element only present in first artifact.
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0]["visual_references"][0]["element"] = "Element 2"
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+
+    assert result["status"] == "pass"
+
+
+def test_bundle_validation_fails_when_visual_cue_traces_to_other_slide(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide_1 = bundle_dir / "slide-01.png"
+    slide_2 = bundle_dir / "slide-02.png"
+    slide_1.write_bytes(b"png")
+    slide_2.write_bytes(b"png")
+
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide_1),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        },
+        {
+            "slide_id": "s-2",
+            "card_number": 2,
+            "file_path": str(slide_2),
+            "source_ref": "slide-brief.md#Slide 2",
+            "visual_description": "Slide 2",
+        },
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide_1),
+            "visual_elements": [{"description": "Element 1"}],
+        },
+        {
+            "slide_id": "s-2",
+            "source_image_path": str(slide_2),
+            "visual_elements": [{"description": "Element 2"}],
+        },
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=["s-1", "s-2"],
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+    )
+
+    manifest_path = bundle_dir / "segment-manifest.yaml"
+    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest_data["segments"][0]["visual_references"][0]["perception_source"] = "s-2"
+    manifest_data["segments"][0]["visual_references"][0]["element"] = "Element 2"
+    manifest_path.write_text(yaml.safe_dump(manifest_data, sort_keys=False), encoding="utf-8")
+
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+
+    assert result["status"] == "fail"
+    assert any(
+        "do not trace to the segment's own slide_id perception lineage" in msg
+        for msg in result["errors"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -929,6 +1070,45 @@ def test_bundle_validation_fails_when_standalone_perception_artifacts_drift_from
 
     assert result["status"] == "fail"
     assert result["pass2_outputs"]["perception_artifact_mismatches"] == ["s-1"]
+
+
+def test_bundle_validation_reports_active_narration_profile_controls(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    slide = bundle_dir / "card-01.png"
+    slide.write_bytes(b"png")
+
+    payload = {
+        "gary_slide_output": [
+            {"slide_id": "s-1", "card_number": 1, "file_path": str(slide), "source_ref": "slide-1"},
+        ],
+        "perception_artifacts": [
+            {
+                "slide_id": "s-1",
+                "source_image_path": str(slide),
+                "visual_elements": [{"description": "Element 1"}],
+            },
+        ],
+    }
+    payload.update(
+        _write_complete_bundle_outputs(
+            bundle_dir,
+            slide_ids=["s-1"],
+            gary_slide_output=payload["gary_slide_output"],  # type: ignore[arg-type]
+            perception_artifacts=payload["perception_artifacts"],  # type: ignore[arg-type]
+        )
+    )
+
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
+
+    controls = result["pass2_outputs"]["active_narration_profile_controls"]
+    assert isinstance(controls, dict)
+    assert "narrator_source_authority" in controls
+    assert "slide_content_density" in controls
+    assert "elaboration_budget" in controls
 
 
 def test_bundle_validation_fails_when_behavioral_intent_drifts_between_script_and_manifest(tmp_path: Path) -> None:
@@ -1679,6 +1859,9 @@ def test_cluster_schema_additive_fields_tolerated_flat_manifest(
     )
     payload["gary_slide_output"] = gary_slide_output
     payload["perception_artifacts"] = perception_artifacts
+    payload["runtime_plan"] = {
+        "per_slide_targets": [{"card_number": 1, "target_runtime_seconds": 25.0}]
+    }
     envelope_path = bundle_dir / "pass2-envelope.json"
     envelope_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -2184,5 +2367,58 @@ def test_cluster_boundary_cadence_override_fails_when_boundary_bridge_missing(tm
     assert any(
         "runtime_policy_violation:" in error
         and "cluster boundary transition should use bridge_type cluster_boundary" in error
+        for error in result["errors"]
+    )
+
+
+def test_runtime_timing_buffer_fields_fail_when_negative_in_strict_mode(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir(parents=True)
+    slide_ids = ["s-1"]
+    slide_png = bundle_dir / "slide-01.png"
+    slide_png.write_bytes(b"png")
+    gary_slide_output = [
+        {
+            "slide_id": "s-1",
+            "card_number": 1,
+            "file_path": str(slide_png),
+            "source_ref": "slide-brief.md#Slide 1",
+            "visual_description": "Slide 1",
+        }
+    ]
+    perception_artifacts = [
+        {
+            "slide_id": "s-1",
+            "source_image_path": str(slide_png),
+            "visual_elements": [{"description": "Element 1"}],
+        }
+    ]
+    payload = _write_complete_bundle_outputs(
+        bundle_dir,
+        slide_ids=slide_ids,
+        gary_slide_output=gary_slide_output,
+        perception_artifacts=perception_artifacts,
+        include_runtime_rationale_fields=True,
+        runtime_rationale_overrides={
+            "seg-01": {
+                "onset_delay": -0.5,
+            }
+        },
+    )
+    payload["gary_slide_output"] = gary_slide_output
+    payload["perception_artifacts"] = perception_artifacts
+    envelope_path = bundle_dir / "pass2-envelope.json"
+    envelope_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_irene_pass2_handoff(
+        payload,
+        envelope_path=envelope_path,
+        runtime_policy_strict=True,
+    )
+
+    assert result["status"] == "fail"
+    assert any("onset_delay(>=0)" in warning for warning in result["warnings"])
+    assert any(
+        "runtime_policy_violation:" in error and "onset_delay(>=0)" in error
         for error in result["errors"]
     )

@@ -34,6 +34,10 @@ segments:
     content_density: enum | null  # light | medium | heavy
     visual_detail_load: enum | null  # light | medium | heavy
     duration_rationale: string | null  # concise explanation for why this slide should run shorter, average, or longer than neighbors
+    onset_delay: float | null  # seconds to wait before narration starts for this segment (default 0.0)
+    dwell: float | null  # seconds to hold after narration ends before transition (default 0.0)
+    cluster_gap: float | null  # extra inter-segment spacing at cluster boundaries (default 0.0)
+    transition_buffer: float | null  # minimum transition safety buffer in seconds (default 0.0)
     bridge_type: enum | null  # none | intro | outro | both | cluster_boundary
     behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
@@ -182,6 +186,15 @@ Default behavior remains additive and backward compatible:
 | `double_dispatch_eligible` | boolean | nullable | Whether segment can use double-dispatch; defaults true, false for interstitials in MVP |
 
 Defaults: All null for non-clustered runs. `double_dispatch_eligible` defaults to true if null.
+
+### Timing Buffer Fields (Story 20c-8)
+
+| Field | Type | Nullability | Description |
+|-------|------|-------------|-------------|
+| `onset_delay` | float | nullable | Delay before narration starts for the segment. |
+| `dwell` | float | nullable | Hold duration after narration ends before transitioning. |
+| `cluster_gap` | float | nullable | Extra spacing applied when entering a new cluster boundary. |
+| `transition_buffer` | float | nullable | Minimum safety buffer around transition operations. |
 
 ---
 

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "state/config/schemas/creative-directive.schema.json",
+  "title": "CreativeDirective",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experience_profile",
+    "slide_mode_proportions",
+    "narration_profile_controls",
+    "creative_rationale"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "experience_profile": {
+      "type": "string",
+      "enum": [
+        "visual-led",
+        "text-led"
+      ]
+    },
+    "slide_mode_proportions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "literal-text",
+        "literal-visual",
+        "creative"
+      ],
+      "properties": {
+        "literal-text": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "literal-visual": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "creative": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "narration_profile_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "narrator_source_authority",
+        "slide_content_density",
+        "elaboration_budget"
+      ],
+      "properties": {
+        "narrator_source_authority": {
+          "type": "string",
+          "enum": [
+            "source-grounded",
+            "balanced",
+            "slide-led"
+          ]
+        },
+        "slide_content_density": {
+          "type": "string",
+          "enum": [
+            "lean",
+            "adaptive",
+            "dense"
+          ]
+        },
+        "elaboration_budget": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      }
+    },
+    "creative_rationale": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

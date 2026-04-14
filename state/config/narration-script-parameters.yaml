@@ -156,6 +156,10 @@ runtime_variability:
     - visual_detail_load
     - duration_rationale
     - bridge_type
+    - onset_delay
+    - dwell
+    - cluster_gap
+    - transition_buffer
   allowed_timing_roles:
     - anchor
     - concept-build
@@ -211,3 +215,73 @@ runtime_variability:
       - outro
       - both
       - cluster_boundary
+
+# ---------------------------------------------------------------------------
+# 10. narration_profile_controls -- high-level narration shaping knobs
+# ---------------------------------------------------------------------------
+# narrator_source_authority:
+#   source-grounded  -> prioritize extracted/source-backed claims first
+#   balanced         -> balance source grounding with slide rhetoric
+#   slide-led        -> prioritize slide-forward explanations and cues
+#
+# slide_content_density:
+#   lean     -> concise narration relative to visible slide content
+#   adaptive -> default; adapts by timing_role/content_density
+#   dense    -> richer explanatory layer beyond visible text
+#
+# elaboration_budget:
+#   low      -> prioritize brevity and directness
+#   medium   -> default explanatory depth
+#   high     -> allow expanded explanation and examples
+#
+# connective_weight:
+#   light    -> minimal connective phrasing between points
+#   balanced -> default connective pacing
+#   heavy    -> explicit connective stitching throughout
+#
+# callback_frequency:
+#   sparse   -> occasional call-backs to prior concepts
+#   moderate -> default call-back cadence
+#   frequent -> frequent call-backs for narrative continuity
+#
+# visual_narration_coupling:
+#   loose    -> visual references are occasional and selective
+#   balanced -> default coupling between spoken and visual channels
+#   tight    -> strong coupling with frequent visual anchoring
+#
+# rhetorical_richness:
+#   restrained -> plain, direct phrasing
+#   balanced   -> moderate rhetorical variety
+#   expressive -> richer rhetorical shaping
+#
+# vocabulary_register:
+#   accessible -> plain-language instructional vocabulary
+#   professional -> domain-professional tone (default)
+#   specialist -> specialist/technical register
+#
+# arc_awareness:
+#   low      -> minimal explicit arc signaling
+#   medium   -> default arc continuity signaling
+#   high     -> explicit arc markers and progression cues
+#
+# narrative_tension:
+#   low      -> low-intensity, explanatory cadence
+#   medium   -> default instructional tension
+#   high     -> stronger tension-and-release shaping
+#
+# emotional_coloring:
+#   neutral  -> objective instructional tone
+#   warm     -> supportive/encouraging emotional color
+#   vivid    -> stronger emotional coloration when appropriate
+narration_profile_controls:
+  narrator_source_authority: balanced
+  slide_content_density: adaptive
+  elaboration_budget: medium
+  connective_weight: balanced
+  callback_frequency: moderate
+  visual_narration_coupling: balanced
+  rhetorical_richness: balanced
+  vocabulary_register: professional
+  arc_awareness: medium
+  narrative_tension: medium
+  emotional_coloring: neutral

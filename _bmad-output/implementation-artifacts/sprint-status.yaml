@@ -35,57 +35,71 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-12  # Wave 1 DONE (158 tests). Wave 2 active: 20c-1/20c-2 slices complete (229 tests). A/B trials approved (Pass 1 primary, Pass 2 structural-coherence-check until Epic 23).
+last_updated: 2026-04-14  # Wave 2 REPLAN: A/B trials skipped (experience profiles replace them). CD agent + parameter registry + two extreme profiles added. 20c-4/5/6 + 23-1 deferred. Cluster maturity reached through profile-driven trial runs, not isolated A/B loops.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 # =============================================================================
-# DEVELOPMENT PLAN: Interstitial Cluster Completion (Epics 19-24 + 20c)
+# DEVELOPMENT PLAN: Cluster Intelligence + Creative Control (Epics 19-24 + 20c)
 # =============================================================================
-# Updated: 2026-04-12
+# Updated: 2026-04-14
 # Context: MVP gate PASSED (Storyboard A trial, 2026-04-11). All downstream unblocked.
-#   Irene cluster intelligence (20c) is the primary iteration area.
-#   Storyboard/assembly are stable infrastructure built once.
+#   REPLAN: A/B trials SKIPPED — replaced by experience-profile-driven trial runs.
+#   Creative Director agent + parameter registry added as parallel development stream.
+#   Clustering and creative control mature together through profile-driven runs.
 #
-# WAVE 1 — FOUNDATION ✅ COMPLETE (verified 2026-04-12, 158 tests)
+# WAVE 1 — FOUNDATION (COMPLETE, verified 2026-04-12, 158 tests)
 #   - 20b-3  Narration Params .................. DONE (schema v1.1, cluster sections)
 #   - 22-1   Storyboard A Cluster View ......... DONE (38 tests, collapsible groups)
 #   - 21-5   Re-dispatch Protocol .............. DONE (circuit breaker, CLI guardrails)
 #   - 19-4   Validator Hardening ............... DONE (in review, treated as done for deps)
 #
-# WAVE 2 — IRENE INTELLIGENCE (iterative loop, sessions 2-N)
-#   Core presentation design intelligence. Expect multiple refinement cycles.
-#   A/B TRIALS ACTIVE — operator-script-v4.2-irene-ab-loop.md (Prompt 5C.0-5C.6)
+# WAVE 2A — CLUSTER MATURITY (complete template/selection before creative layer)
+#   Bring clustering to "good enough for profile runs" state.
+#   A/B trials skipped; clustering quality validated through profile-driven runs.
 #
-#   STATUS (2026-04-12):
-#   - 20c-1  Template Library .................. IN-PROGRESS (Slice 1 done: 10 templates, validator, tests)
-#   - 20c-2  Template Selection ................ IN-PROGRESS (Slices 1-5 done: selector, bridge, hydration, fail-closed, evaluator)
-#   - 20c-3  Source-to-Density ................. Ready-for-dev
-#   - 20c-4  Master Arc Composition ............ Ready-for-dev
-#   - 20c-5  Pax agent ........................ Ready-for-dev (when complexity justifies)
-#   - 20c-6  Lens capability ................... Ready-for-dev (start as capability)
-#   - 23-1   Dual-Channel Grounding ............ Ready-for-dev (unblocked by 20b-3)
-#   - 20a-5  Exemplar Library .................. Ready-for-dev (trial data available)
+#   STATUS (2026-04-14):
+#   - 20c-1  Template Library .................. IN-PROGRESS (Slice 1 done: 10 templates)
+#   - 20c-2  Template Selection ................ DONE (Slices 1-5: selector, bridge, hydration, fail-closed, evaluator)
+#   - 20c-3  Static Density Configs ............ Ready-for-dev (COMPRESSED: two hardcoded density configs, not full engine)
 #
-#   A/B TRIAL PROTOCOL (Pass 1 primary, Pass 2 structural-coherence-check):
-#   1. Implement/refine a 20c story
-#   2. Run A/B via Prompt 5C.0-5C.6 against C1-M1 source content
-#   3. Review cluster plan + Storyboard A output
-#   4. Identify: where do templates fail? what's missing? what's mechanical?
-#   5. PROMOTE / ITERATE / ESCALATE decision
-#   6. Refine and loop back to step 1
-#   Exit when: cluster plans feel intentional, not mechanical. Operator approves.
+# WAVE 2B — PARAMETER REGISTRY + CREATIVE DIRECTOR (parallel with 2A completion)
+#   Build the parameter infrastructure and CD agent that unlocks creative control.
+#   Three parameter families: Run Constants, Narration-time, Assembly-time.
 #
-#   PASS 2 SCOPE NOTE (remove when 23-1 ships):
-#   Pass 2 operates in structural-coherence-check mode. Epic 23 not yet implemented.
-#   Pass 2 output is indicative, not evaluative. Do NOT let Pass 2 narration quality
-#   influence PROMOTE/ITERATE decisions. Zero Pass 2 quality metrics in evaluator scoring.
-#   All trial receipts must log "pass2_mode: structural-coherence-check".
+#   - 20c-7   Parameter Audit & Registry ........ Ready-for-dev (no deps, START HERE)
+#   - 20c-8   Assembly Timing Parameters ........ Ready-for-dev (deps: 20c-7)
+#   - 20c-9   Narration Parameter Expansion ..... Ready-for-dev (deps: 20c-7)
+#   - 20c-10  CD Agent Creation ................. Ready-for-dev (deps: 20c-7, soft on 8/9)
+#   - 20c-11  Creative Directive Schema ......... Ready-for-dev (deps: 20c-10)
+#   - 20c-12  Experience Profiles (2 extremes) .. Ready-for-dev (deps: 20c-8, 9, 10)
+#   - 20c-13  Profile Resolver Wiring ........... Ready-for-dev (deps: 20c-12, 20c-3)
+#   - 20c-14  E2E Validation (C1-M1, both) ..... Ready-for-dev (deps: 20c-13)
 #
-# WAVE 3 — CODIFY (after Irene intelligence stabilizes)
-#   Encode quality standards learned from iteration into gates.
+#   CRITICAL PATH: 20c-7 → 20c-8/9 (parallel) → 20c-10 → 20c-12 → 20c-13 → 20c-14
+#   BOTTLENECK: 20c-10 (CD agent builder session)
+#
+#   PARAMETER DIRECTORY: Master reference doc (docs/parameter-directory.md) produced
+#   as part of 20c-7, maintained as parameters are added in 20c-8/9 and beyond.
+#   Serves as "bible" for CD, specialty agents, and HIL operators.
+#
+# WAVE 2 DEFERRED (return after profile-driven runs validate clustering)
+#   These stories deferred because profile runs will expose gaps more effectively
+#   than isolated A/B trials. Return when creative control iteration stabilizes.
+#   - 20c-4  Master Arc Composition ............ Deferred (arc composition enriches profiles later)
+#   - 20c-5  Pax Agent ........................ Deferred (when complexity justifies)
+#   - 20c-6  Lens Capability ................... Deferred (start as capability)
+#   - 23-1   Dual-Channel Grounding ............ Deferred (cluster-aware Pass 2 grounding)
+#   - 20a-5  Exemplar Library .................. Deferred (trial data from profile runs)
+#
+#   REACTIVATION CRITERIA: After 20c-14 (E2E validation) reveals specific gaps in
+#   clustering quality, reactivate the relevant deferred story to address it.
+#   Profile runs serve as the integration test that A/B trials were designed to be.
+#
+# WAVE 3 — CODIFY (after clustering + creative control stabilize)
+#   Encode quality standards learned from profile-driven iteration into gates.
 #   - 23-2   G4 Gate Extension ................. Codify "what good looks like"
 #   - 23-3   Bridge Cadence .................... Finalize stitching rules
 #
@@ -101,9 +115,9 @@ story_location: _bmad-output/implementation-artifacts
 # WAVE 5 — CAPSTONE
 #   - 24-4   Regression Suite .................. Full end-to-end validation
 #
-# CRITICAL PATH: 20b-3 → 23-1 → [20c iteration loop] → 23-2 → 24-4
-# PARALLEL TRACKS: 22-1 runs with Wave 1. 20c-* stories interleave with 23-1.
-#   22-2/3/4 and 24-1/2/3 run in parallel during Wave 4.
+# CRITICAL PATH: 20c-7 → 20c-10 → 20c-13 → 20c-14 → [reactivate deferred] → 23-2 → 24-4
+# PARALLEL STREAMS: Wave 2A (cluster maturity) runs alongside Wave 2B (creative control).
+#   Both converge at 20c-13 (resolver wiring) and validate together at 20c-14.
 # =============================================================================
 
 development_status:
@@ -359,19 +373,28 @@ development_status:
   21-5-interstitial-re-dispatch-protocol: done  # Wave 1 closure: bundle-local re-dispatch protocol + manual CLI guardrails implemented and tested (2026-04-12)
   epic-21-retrospective: optional
 
-  # === EPIC 20C: Cluster Intelligence Expansion & Iteration (Added 2026-04-12) ===
-  # ITERATIVE EPIC — the primary area of development investment.
-  # Extends Irene's cluster intelligence with template library, content-aware selection,
-  # source-to-density mapping, master arc composition, and specialty agents (Pax, Lens).
-  # Stories run in Wave 2 iteration loop: implement → run → review Storyboard A → refine.
-  # Expect multiple passes per story. Quality bar: cluster plans feel intentional, not mechanical.
+  # === EPIC 20C: Cluster Intelligence + Creative Control (Added 2026-04-12, Replanned 2026-04-14) ===
+  # ITERATIVE EPIC — expanded scope: cluster intelligence + parameter registry + CD agent + profiles.
+  # Wave 2A: mature clustering (templates + selection + static density).
+  # Wave 2B: parameter registry, CD agent, experience profiles, profile resolver.
+  # A/B trials SKIPPED — profile-driven runs replace them. Clustering and creative control
+  # mature together through extreme-profile runs against C1-M1.
+  # 20c-4/5/6 deferred until profile runs reveal specific gaps.
   epic-20c: in-progress
-  20c-1-cluster-structure-template-library: in-progress  # Wave 2 kickoff slice complete: template library + validator/tests; runtime selection integration pending
-  20c-2-content-aware-template-selection-logic: in-progress  # Wave 2 slices complete: selector core + runtime advisory bridge + template-influence hydration; iterative run tuning pending
-  20c-3-source-to-density-intelligence: ready-for-dev  # Per-slide density from source analysis
-  20c-4-master-arc-cluster-arc-composition: ready-for-dev  # Presentation-level arc stitching
-  20c-5-presentation-architect-agent: ready-for-dev  # Pax — structural design specialist
-  20c-6-cluster-design-advisor-capability: ready-for-dev  # Lens — micro-level decomposition (capability, may promote to agent)
+  20c-1-cluster-structure-template-library: in-progress  # Wave 2A: slice 1 done (10 templates); runtime selection integration pending
+  20c-2-content-aware-template-selection-logic: done  # Wave 2A: slices 1-5 complete (selector, bridge, hydration, fail-closed, evaluator)
+  20c-3-static-density-configs: ready-for-dev  # Wave 2A COMPRESSED: two hardcoded density configs (visual-led + text-led), not full engine
+  20c-4-master-arc-cluster-arc-composition: deferred  # Deferred: return after profile runs validate clustering quality
+  20c-5-presentation-architect-agent: deferred  # Deferred: Pax — when complexity justifies
+  20c-6-cluster-design-advisor-capability: deferred  # Deferred: Lens — when complexity justifies
+  20c-7-parameter-audit-registry-schema: ready-for-dev  # Wave 2B: catalog all params (3 families), create registry schema + parameter directory doc
+  20c-8-assembly-timing-parameters: ready-for-dev  # Wave 2B: onset_delay, dwell, cluster_gap, transition_buffer. Deps: 20c-7
+  20c-9-narration-parameter-expansion: ready-for-dev  # Wave 2B: narrator_source_authority, slide_content_density, elaboration_budget, etc. Deps: 20c-7
+  20c-10-creative-director-agent: ready-for-dev  # Wave 2B: CD agent via bmad-agent-builder. Deps: 20c-7, soft 8/9
+  20c-11-creative-directive-schema: ready-for-dev  # Wave 2B: directive artifact format + writer script. Deps: 20c-10
+  20c-12-experience-profile-definitions: ready-for-dev  # Wave 2B: Visual-Led + Text-Led extreme profiles. Deps: 20c-8, 9, 10
+  20c-13-profile-resolver-wiring: ready-for-dev  # Wave 2B: resolver into RunConstants + Marcus. Deps: 20c-12, 20c-3
+  20c-14-e2e-validation-both-profiles: ready-for-dev  # Wave 2B: C1-M1 through both profiles, comparison. Deps: 20c-13
   epic-20c-retrospective: optional
 
   # === EPIC 22: Storyboard & Review Adaptation (Added 2026-04-11) ===
@@ -385,8 +408,9 @@ development_status:
 
   # === EPIC 23: Irene Pass 2 Cluster-Aware Narration (Added 2026-04-11) ===
   # MVP gate passed. Parallel with Epic 22. 20b-3 dependency satisfied (Wave 1 closure).
+  # 2026-04-14: 23-1 deferred to Wave 2 Deferred — reactivate after profile-driven runs.
   epic-23: in-progress
-  23-1-cluster-aware-dual-channel-grounding: ready-for-dev  # Unblocked (20b-3 done)
+  23-1-cluster-aware-dual-channel-grounding: deferred  # Deferred 2026-04-14: reactivate after 20c-14 profile validation
   23-2-g4-gate-extension-for-clusters: ready-for-dev  # Blocked on: 23-1
   23-3-bridge-cadence-adaptation: ready-for-dev  # Blocked on: 23-1
   epic-23-retrospective: optional

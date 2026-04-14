@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-12 (Epics 19-21 done, 20c in-progress, Wave 1 complete, A/B trials active)
+# Last Updated: 2026-04-14 (Wave 2 REPLAN: A/B skipped, CD agent + parameter registry + experience profiles added. 20c-2 done, 20c-4/5/6 + 23-1 deferred.)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -101,4 +101,4 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Execute Wave 2 Irene intelligence A/B trials (operator-script-v4.2) against C1-M1 source content. Primary refinement target: Pass 1 template selection and cluster planning. Pass 2 in structural-coherence-check mode until Epic 23 ships."
+next_workflow_step: "Execute 20c-7 Parameter Audit & Registry Schema — catalog all parameters across 3 families (Run Constants, Narration-time, Assembly-time), create docs/parameter-directory.md. Then proceed through Wave 2B stories (20c-8 through 20c-14) to build CD agent, experience profiles, and profile resolver. A/B trials skipped; profile-driven runs replace them."

@@ -1,74 +1,81 @@
-# Session Handoff - 2026-04-12 (Evening Session)
+# Session Handoff — 2026-04-14
 
 ## Session Summary
 
-This session conducted a comprehensive review and planning sprint for the interstitial cluster feature set (Epics 19-24 + 20c). No implementation code was written. The session produced: critical review of prior discussion, party mode consensus on 5 decision points, 18 new story files, Epic 20c (6 stories for Irene intelligence expansion), revised development plan with iterative Wave structure, A/B trial methodology approval, and full document reconciliation.
+**Objective:** Design parameter registry, Creative Director agent architecture, and sprint replan for experience-profile-driven development.
 
-- branch: `DEV/slides-redesign`
-- objective: Review project state, create remaining story files for Epics 19-24, design Epic 20c expansion, establish A/B trial methodology, update all planning artifacts.
-- status: All planning artifacts updated. A/B trials approved and operator script active. Ready for Wave 2 execution.
+**Phase:** Planning / architectural design (no code written)
 
-## What Was Completed
+**What was completed:**
 
-### Critical Review
-- Identified 8 accuracy issues in prior party mode discussion (overstated Epic 19 status, wrong story count, invented story, parallelization contradiction)
-- Discovered sprint-status drift: stories 21-2, 21-3, 21-4 were done in code but listed as backlog in tracking
+1. **Party Mode roundtable (5 rounds, 16 agent spawns):** Winston, Amelia, Murat, Caravaggio, Sophia, Dr. Quinn, John — full team engaged on parameter architecture.
 
-### Story File Creation (18 files)
-- **Created:** 20b-3, 21-5, 22-1 through 22-4, 23-1 through 23-3, 24-1 through 24-4
-- **Created (Epic 20c):** 20c-1 through 20c-6 (template library, content-aware selection, source-to-density, master arc composition, Pax agent, Lens capability)
-- **Updated:** 20a-5 (removed MVP deferral notice)
+2. **Parameter landscape survey:** Comprehensive audit of 150+ existing parameters across the codebase — run constants, quality presets, narration script params, template scoring, API client defaults, voice profiles, gamma style presets, dispatch policy, motion budgeting, fidelity contracts.
 
-### A/B Trial Methodology
-- Operator script v4.2 updated with Pass 2 scope limitation (structural-coherence-check)
-- HIL contamination prevention guidance at Prompt 5C.4
-- Receipt tagging (pass2_mode field) in Prompts 5C.0 and 5C.6
-- Removal trigger documented in story 23-1
+3. **Three parameter families identified:**
+   - **Run Constants** — operational switches, budgets, paths, identifiers (what to build, with what resources)
+   - **Narration-time** — creative controls for how Irene writes scripts (echo, bridging, engagement, rhetorical devices)
+   - **Assembly-time** — timing controls for how Compositor arranges the final product (silence, gaps, dwell, onset delays)
 
-### Document Updates
-- **PRD:** FR119-FR125 added (Epic 20c capabilities). Edit history updated.
-- **Epics spec:** MVP gate marked PASSED. Epic 20c cross-reference added.
-- **Sprint-status:** Full development plan rewritten (5 waves). Wave 1 marked complete. Wave 2 A/B protocol documented.
-- **Workflow status:** Updated to reflect 22 epics, 97 stories, current next step.
-- **Project context:** Updated phase, FR count, implementation status, Wave 2 description.
-- **Operator script:** Status changed to active. Three consensus items applied.
+4. **New parameters identified (not yet implemented):**
+   - Assembly-time: `post_narration_dwell`, `pre_narration_onset_delay`, `intra_cluster_gap`, `inter_cluster_gap`, `visual_beat_seconds`
+   - Narration-time: `narrator_source_authority`, `slide_content_density`, `elaboration_budget`, `connective_weight`, `callback_frequency`, `visual_narration_coupling`, `rhetorical_richness`, `vocabulary_register`, `arc_awareness`, `narrative_tension`, `emotional_coloring`
+   - Experience-level: `opening_hook_style`, `closing_style`, `emotional_arc`, `pacing_contour`, `cognitive_load_arc`
+
+5. **Creative Director agent architecture spec (Winston v1.0):**
+   - Agent at `skills/bmad-agent-cd/` — second pillar alongside Marcus
+   - Option B interaction model: params for deterministic executors + params AND structured briefs for LLM interpreters
+   - Two modes: pre-production directive generation + gate-triggered review (G2, G3, G4)
+   - Creative directive artifact schema: global (emotional arc, pacing, rhetorical strategy) + per-specialist sections
+   - Max 2 revision rounds per gate per cluster
+   - CD asks "is this right?" (creative fit) vs Quinn-R's "is this good?" (quality)
+
+6. **CD-to-Irene brief design (Caravaggio):**
+   - Minimal brief (~200 tokens): tone_reference, arc_shape (3-5 waypoints), kill_list (5 max), coupling_intent (tight/moderate/loose), source_authority (read/interpret/riff)
+   - Validated against narration-script-parameters.yaml before dispatch
+   - Irene's priority order: source fidelity -> parameter constraints -> visual-motion coherence -> creative directive
+
+7. **Two extreme profiles designed:**
+   - **Visual-Led:** slide_echo=inspired, slide_mode_proportions heavy creative, storyteller posture, ElevenLabs style=0.65, high variability, rich bridging, narrator_source_authority=source_material
+   - **Text-Led:** slide_echo=verbatim, slide_mode_proportions heavy literal_text, lecturer posture, ElevenLabs style=0.30, low variability, minimal bridging, narrator_source_authority=slide
+
+8. **Sprint replan executed:**
+   - A/B trials SKIPPED — profile-driven runs replace them
+   - 20c-2 marked done, 20c-3 compressed to static density configs
+   - 20c-4/5/6 + 23-1 deferred (reactivate after profile runs)
+   - 8 new stories added (20c-7 through 20c-14)
+   - sprint-status.yaml updated and tests passing (2/2)
 
 ## What Is Next
 
-1. **Immediate:** First A/B trial loop against C1-M1 (operator-script-v4.2, Prompt 5C.0-5C.6)
-2. **Wave 2 iteration:** Template selection refinement, source-to-density intelligence, master arc composition
-3. **When Irene intelligence stabilizes:** Codify in G4 gate (23-2), bridge cadence (23-3)
-4. **Then:** Downstream mechanical work (22-2/3/4, 24-1/2/3, 24-4)
+Execute 20c-7 (Parameter Audit & Registry Schema) as the starting block — no dependencies. This produces `docs/parameter-directory.md` and a registry schema. Then proceed through Wave 2B critical path: 20c-7 -> 20c-8/9 (parallel) -> 20c-10 (CD agent builder session — bottleneck) -> 20c-12 -> 20c-13 -> 20c-14 (E2E validation with both profiles against C1-M1).
 
-## Unresolved Issues / Risks
+## Unresolved Issues
 
-- **19-4 in review:** Treated as done for dependency purposes. Low risk.
-- **Template scoring weights:** Initial defaults, need calibration via A/B trials.
-- **Pass 2 contamination:** Mitigated by operator script guidance but depends on reviewer discipline.
-- **Pax/Lens agent decision:** Placeholder stories created. Decision on agent vs. capability deferred to when complexity justifies it.
+- **Resolver vs. agent tension:** Team recommended deterministic resolver; user overrode to full LLM agent. The CD agent needs to justify its LLM cost through creative judgment that a lookup can't provide. Watch for this during 20c-10 agent builder session.
+- **CD brief granularity:** Winston's spec has per-segment emotional arc entries; Caravaggio says <200 tokens total. Resolution: support both — minimal brief mode for most runs, enriched mode for high-stakes production.
+- **Clustering quality unvalidated:** A/B trials skipped. Profile-driven runs at 20c-14 serve as integration test. If clustering produces incoherent groupings, reactivate 20c-4 (arc) or 23-1 (grounding).
+- **New parameters not yet implemented:** ~15 new parameters identified but not yet added to YAML configs or code.
 
 ## Key Lessons Learned
 
-- Sprint-status tracking can drift when multiple sessions implement stories without updating the YAML. Always reconcile story file status against sprint-status at session start.
-- MVP gate was already passed but not reflected in planning artifacts. Future gates should be explicitly marked in sprint-status the moment they pass.
-- Party mode consensus is effective for resolving multi-faceted decisions quickly. The Pass 2 contamination risk (John's catch) would have been missed without the PM perspective.
+- **Party Mode with real subagents produces genuine architectural insight.** Five rounds with 4 agents each yielded a coherent architecture (3 parameter families, CD agent spec, two-tier experience model) that would have taken much longer through serial discussion.
+- **Caravaggio's "five-field brief" principle** — creative direction should be the smallest document the recipient reads but the one they remember longest. Under 200 tokens. Permission or prohibition, never instruction.
+- **Dr. Quinn's dead zone analysis** — identified parameter combinations that produce indistinguishable output (e.g., echo mode at max density, posture without tension arc). This should inform the parameter directory to warn operators away from dead zones.
+- **Winston's narration-time vs. assembly-time distinction** is load-bearing. Silence/pause parameters are purely assembly-time (Compositor), not narration-time (Irene). Conflating them creates unpredictable side effects.
 
 ## Validation Summary
 
-- sprint-status.yaml: YAML parses, 2 tests pass
-- git diff --check: 1 trailing whitespace found and fixed (PRD FR34)
-- No implementation code changed this session (pure planning/documentation)
+- sprint-status.yaml: YAML parses clean, 2/2 tests passing
+- git diff --check: clean (CRLF warning only)
+- No code changes this session — planning/architecture only
 
 ## Artifact Update Checklist
 
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — reconciled, plan rewritten
-- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — updated
-- [x] `_bmad-output/planning-artifacts/prd.md` — FR119-125 added, edit history updated
-- [x] `_bmad-output/planning-artifacts/epics-interstitial-clusters.md` — MVP gate marked, 20c reference added
-- [x] `docs/project-context.md` — phase, FR count, implementation status updated
-- [x] `docs/workflow/operator-script-v4.2-irene-ab-loop.md` — Pass 2 scope, HIL guidance, receipt tagging
-- [x] `next-session-start-here.md` — rewritten for A/B trial focus
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 8 new stories, deferrals, compression, Wave 2A/2B structure
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — updated last_updated + next_workflow_step
+- [x] `docs/project-context.md` — 2026-04-14 update block with replan summary
+- [x] `next-session-start-here.md` — complete rewrite for new sprint direction
 - [x] `SESSION-HANDOFF.md` — this file
-- [x] 18 story files in `_bmad-output/implementation-artifacts/`
-- [x] `_bmad-output/implementation-artifacts/20a-5-retrofit-exemplar-library.md` — MVP notice removed
-- [x] `_bmad-output/implementation-artifacts/23-1-cluster-aware-dual-channel-grounding.md` — removal trigger added
+- [ ] `docs/agent-environment.md` — no changes needed (no MCP/API/skill changes)
+- [ ] Guides (user/admin/dev) — no changes needed this session

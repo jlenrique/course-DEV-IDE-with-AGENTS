@@ -46,6 +46,7 @@ These parameters freeze run identity, execution mode, budget, and baseline routi
 | `motion_budget.model_preference` | enum | `std`, `pro` | implemented | `run_constants.py` |
 | `cluster_density` | enum | `none`, `sparse`, `default`, `rich` | implemented | `run_constants.py` |
 | `slide_mode_proportions` | object | distribution map for `literal-text`, `literal-visual`, `creative` | implemented | `scripts/utilities/run_constants.py` |
+| `experience_profile` | enum | `visual-led`, `text-led`, `none` | implemented | `scripts/utilities/run_constants.py` |
 | `schema_version` | integer | optional | implemented | `run_constants.py` |
 | `frozen_at_utc` | string | optional timestamp | implemented | `run_constants.py` |
 | `frozen_note` | string | optional | implemented | `run_constants.py` |

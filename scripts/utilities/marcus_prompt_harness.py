@@ -77,6 +77,7 @@ class HarnessContext:
     double_dispatch: bool
     motion_enabled: bool
     cluster_density: str | None
+    experience_profile: str | None
     field_sources: dict[str, str]
 
 
@@ -162,18 +163,17 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
 
     field_sources: dict[str, str] = {}
     run_constants = None
+    run_constants_path = resolved_bundle / "run-constants.yaml"
 
-    try:
-        if resolved_bundle.is_dir():
-            run_constants = load_run_constants(resolved_bundle, root=root)
-    except RunConstantsError:
-        run_constants = None
+    if resolved_bundle.is_dir() and run_constants_path.is_file():
+        run_constants = load_run_constants(resolved_bundle, root=root)
 
     def choose(field: str, value: str, source: str) -> str:
         field_sources[field] = source
         return value
 
     cluster_density = None
+    experience_profile = None
     if run_constants is not None:
         run_id = choose("run_id", run_constants.run_id, "run-constants.yaml")
         lesson_slug = choose("lesson_slug", run_constants.lesson_slug, "run-constants.yaml")
@@ -191,6 +191,8 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         field_sources["motion_enabled"] = "run-constants.yaml"
         cluster_density = run_constants.cluster_density
         field_sources["cluster_density"] = "run-constants.yaml"
+        experience_profile = run_constants.experience_profile
+        field_sources["experience_profile"] = "run-constants.yaml"
     else:
         run_id = choose("run_id", f"C1-M1-PRES-{_now_utc().strftime('%Y%m%d')}", "plausible fallback")
         lesson_slug = choose("lesson_slug", _slug_from_bundle_name(resolved_bundle), "bundle-dir name")
@@ -213,6 +215,8 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         field_sources["motion_enabled"] = "bundle filesystem" if motion_enabled else "plausible fallback"
         cluster_density = None
         field_sources["cluster_density"] = "plausible fallback"
+        experience_profile = None
+        field_sources["experience_profile"] = "plausible fallback"
 
     return HarnessContext(
         run_id=run_id,
@@ -228,6 +232,7 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         double_dispatch=double_dispatch,
         motion_enabled=motion_enabled,
         cluster_density=cluster_density,
+        experience_profile=experience_profile,
         field_sources=field_sources,
     )
 
@@ -834,8 +839,14 @@ def _check_step_8(bundle_dir: Path, *, motion_enabled: bool) -> StepReport:
         envelope = _read_json(bundle_dir / "pass2-envelope.json") or {}
         motion_artifacts = envelope.get("motion_perception_artifacts")
         non_static_rows = [row for row in _motion_rows(bundle_dir) if row.get("motion_type") in {"video", "animation"}]
-        if isinstance(motion_artifacts, dict) and (motion_artifacts or not non_static_rows):
-            evidence.append(f"motion_perception_artifacts={len(motion_artifacts)}")
+        motion_artifact_count: int | None = None
+        if isinstance(motion_artifacts, dict):
+            motion_artifact_count = len(motion_artifacts)
+        elif isinstance(motion_artifacts, list):
+            motion_artifact_count = len(motion_artifacts)
+
+        if motion_artifact_count is not None and (motion_artifact_count > 0 or not non_static_rows):
+            evidence.append(f"motion_perception_artifacts={motion_artifact_count}")
         else:
             inconsistent = True
             gaps.append("pass2-envelope.json missing motion_perception_artifacts for motion-enabled run")
@@ -1036,6 +1047,7 @@ def render_quinn_report(
         "quality_preset",
         "double_dispatch",
         "motion_enabled",
+        "experience_profile",
     ):
         value: Any = getattr(context, field)
         if isinstance(value, tuple):

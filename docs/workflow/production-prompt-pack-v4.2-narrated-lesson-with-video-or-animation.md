@@ -64,11 +64,18 @@ Persist accepted values as `run-constants.yaml` in the bundle root.
 - MOTION_BUDGET_MAX_CREDITS: [positive number]
 - MOTION_BUDGET_MODEL_PREFERENCE: [std | pro]
 - DOUBLE_DISPATCH: [true | false]
+- EXPERIENCE_PROFILE: [persist only the mapped machine value after the plain-language emphasis question; otherwise omit]
 
 Operator rule:
 - Do not change run constants mid-run.
 - `MOTION_ENABLED: true` requires an explicit positive budget.
 - `DOUBLE_DISPATCH` changes only the Gary selection branch, not the rest of the workflow.
+- Marcus must ask the operator in plain language: "Should the visuals lead, or should the text lead for this lesson?"
+- Do not ask the operator to choose an `experience_profile` by name.
+- Mapping rule for persisted run constants:
+  - visuals lead -> `experience_profile: visual-led`
+  - text lead -> `experience_profile: text-led`
+  - no preference stated -> omit `experience_profile` and preserve legacy behavior
 
 ---
 

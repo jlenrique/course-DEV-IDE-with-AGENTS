@@ -1077,6 +1077,11 @@ def test_bundle_validation_reports_active_narration_profile_controls(tmp_path: P
     bundle_dir.mkdir()
     slide = bundle_dir / "card-01.png"
     slide.write_bytes(b"png")
+    envelope_controls = {
+        "narrator_source_authority": "slide-led",
+        "slide_content_density": "dense",
+        "elaboration_budget": "low",
+    }
 
     payload = {
         "gary_slide_output": [
@@ -1089,6 +1094,7 @@ def test_bundle_validation_reports_active_narration_profile_controls(tmp_path: P
                 "visual_elements": [{"description": "Element 1"}],
             },
         ],
+        "narration_profile_controls": envelope_controls,
     }
     payload.update(
         _write_complete_bundle_outputs(
@@ -1105,10 +1111,7 @@ def test_bundle_validation_reports_active_narration_profile_controls(tmp_path: P
     result = validate_irene_pass2_handoff(payload, envelope_path=envelope_path)
 
     controls = result["pass2_outputs"]["active_narration_profile_controls"]
-    assert isinstance(controls, dict)
-    assert "narrator_source_authority" in controls
-    assert "slide_content_density" in controls
-    assert "elaboration_budget" in controls
+    assert controls == envelope_controls
 
 
 def test_bundle_validation_fails_when_behavioral_intent_drifts_between_script_and_manifest(tmp_path: Path) -> None:

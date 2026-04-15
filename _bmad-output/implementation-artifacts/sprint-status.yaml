@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-25
-last_updated: 2026-04-14  # Wave 2 REPLAN: A/B trials skipped (experience profiles replace them). CD agent + parameter registry + two extreme profiles added. 20c-4/5/6 + 23-1 deferred. Cluster maturity reached through profile-driven trial runs, not isolated A/B loops.
+last_updated: 2026-04-14  # 20c-14 closed to review: Marcus-facing profile intake, CD intake contract, validator audit surface, and copied C1-M1 proof bundles validated. Next step set to 20c-3 static-density-configs.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -75,8 +75,8 @@ story_location: _bmad-output/implementation-artifacts
 #   - 20c-10  CD Agent Creation ................. Ready-for-dev (deps: 20c-7, soft on 8/9)
 #   - 20c-11  Creative Directive Schema ......... Ready-for-dev (deps: 20c-10)
 #   - 20c-12  Experience Profiles (2 extremes) .. Ready-for-dev (deps: 20c-8, 9, 10)
-#   - 20c-13  Profile Resolver Wiring ........... Ready-for-dev (deps: 20c-12, 20c-3)
-#   - 20c-14  E2E Validation (C1-M1, both) ..... Ready-for-dev (deps: 20c-13)
+#   - 20c-13  Profile Resolver Wiring ........... Review (deps: 20c-12, 20c-3)
+#   - 20c-14  E2E Validation (C1-M1, both) ..... Review (deps: 20c-13)
 #
 #   CRITICAL PATH: 20c-7 → 20c-8/9 (parallel) → 20c-10 → 20c-12 → 20c-13 → 20c-14
 #   BOTTLENECK: 20c-10 (CD agent builder session)
@@ -383,7 +383,7 @@ development_status:
   epic-20c: in-progress
   20c-1-cluster-structure-template-library: in-progress  # Wave 2A: slice 1 done (10 templates); runtime selection integration pending
   20c-2-content-aware-template-selection-logic: done  # Wave 2A: slices 1-5 complete (selector, bridge, hydration, fail-closed, evaluator)
-  20c-3-static-density-configs: ready-for-dev  # Wave 2A COMPRESSED: two hardcoded density configs (visual-led + text-led), not full engine
+  20c-3-static-density-configs: done  # Wave 2A COMPRESSED: profile-resolved static density mapping is implemented, reviewed cleanly, and validated in the full test suite
   20c-4-master-arc-cluster-arc-composition: deferred  # Deferred: return after profile runs validate clustering quality
   20c-5-presentation-architect-agent: deferred  # Deferred: Pax — when complexity justifies
   20c-6-cluster-design-advisor-capability: deferred  # Deferred: Lens — when complexity justifies
@@ -393,8 +393,8 @@ development_status:
   20c-10-creative-director-agent: in-progress  # Wave 2B (2026-04-14): contract-first CD scaffold + slide_mode_proportions validation path initiated
   20c-11-creative-directive-schema: in-progress  # Wave 2B (2026-04-14): schema artifacts (JSON+YAML) created; writer/validation wiring pending
   20c-12-experience-profile-definitions: in-progress  # Wave 2B (2026-04-14): bootstrap profile targets + schema tests in place; resolver wiring and runtime proof pending.
-  20c-13-profile-resolver-wiring: ready-for-dev  # Wave 2B: resolver into RunConstants + Marcus. Deps: 20c-12, 20c-3
-  20c-14-e2e-validation-both-profiles: ready-for-dev  # Wave 2B: C1-M1 through both profiles, comparison. Deps: 20c-13
+  20c-13-profile-resolver-wiring: done  # Wave 2B: resolver into RunConstants + Marcus implemented; formally reviewed clean after contract tightening and full-suite validation.
+  20c-14-e2e-validation-both-profiles: done  # Wave 2B: Marcus-facing profile intake, CD intake contract, envelope propagation, validator audit surface, and proof artifacts reviewed clean after full-suite validation.
   epic-20c-retrospective: optional
 
   # === EPIC 22: Storyboard & Review Adaptation (Added 2026-04-11) ===

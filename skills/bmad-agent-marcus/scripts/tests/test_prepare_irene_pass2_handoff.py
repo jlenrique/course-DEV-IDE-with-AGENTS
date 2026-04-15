@@ -9,6 +9,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from scripts.utilities.run_constants import resolve_experience_profile
+
 ROOT = Path(__file__).resolve().parents[4]
 SCRIPT_PATH = ROOT / "skills" / "bmad-agent-marcus" / "scripts" / "prepare-irene-pass2-handoff.py"
 
@@ -39,6 +41,7 @@ def _make_bundle(
     complete_motion_coverage: bool = True,
     stale_outputs: bool = False,
     static_motion_leftover: bool = False,
+    experience_profile: str | None = None,
 ) -> Path:
     bundle = tmp_path / "bundle"
     bundle.mkdir()
@@ -122,16 +125,16 @@ def _make_bundle(
         encoding="utf-8",
     )
     (bundle / "operator-directives.md").write_text("# Operator Directives\n", encoding="utf-8")
+    run_constants = {
+        "locked_slide_count": 2,
+        "target_total_runtime_minutes": 2,
+        "slide_runtime_average_seconds": 40,
+        "slide_runtime_variability_scale": 0.5,
+    }
+    if experience_profile is not None:
+        run_constants["experience_profile"] = experience_profile
     (bundle / "run-constants.yaml").write_text(
-        yaml.safe_dump(
-            {
-                "locked_slide_count": 2,
-                "target_total_runtime_minutes": 2,
-                "slide_runtime_average_seconds": 40,
-                "slide_runtime_variability_scale": 0.5,
-            },
-            sort_keys=False,
-        ),
+        yaml.safe_dump(run_constants, sort_keys=False),
         encoding="utf-8",
     )
 
@@ -195,6 +198,61 @@ def test_prepares_envelope_with_exact_motion_gate_asset_path(tmp_path: Path) -> 
     assert envelope["runtime_plan"]["locked_slide_count"] == 2
     assert envelope["runtime_plan"]["per_slide_targets"][0]["target_runtime_seconds"] == 45.0
     assert envelope["voice_direction_defaults"]["speed"] == 1.0
+    assert "experience_profile" not in envelope
+    assert "narration_profile_controls" not in envelope
+
+
+def test_envelope_includes_visual_led_narration_profile_controls(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path, experience_profile="visual-led")
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "prepared"
+    envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
+    expected = resolve_experience_profile("visual-led")
+    assert envelope["experience_profile"] == "visual-led"
+    assert envelope["narration_profile_controls"] == expected["narration_profile_controls"]
+
+
+def test_envelope_includes_text_led_narration_profile_controls(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path, experience_profile="text-led")
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "prepared"
+    envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
+    expected = resolve_experience_profile("text-led")
+    assert envelope["experience_profile"] == "text-led"
+    assert envelope["narration_profile_controls"] == expected["narration_profile_controls"]
+
+
+def test_invalid_experience_profile_fails_preparation(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path, experience_profile="wrong-profile")
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "fail"
+    assert any("unknown experience profile" in error for error in result["errors"])
+
+
+def test_conflicting_run_constants_profile_contract_fails_preparation(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path, experience_profile="text-led")
+    run_constants_path = bundle / "run-constants.yaml"
+    run_constants = yaml.safe_load(run_constants_path.read_text(encoding="utf-8"))
+    assert isinstance(run_constants, dict)
+    run_constants["cluster_density"] = "default"
+    run_constants_path.write_text(
+        yaml.safe_dump(run_constants, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "fail"
+    assert any(
+        "cluster_density must match the resolved experience_profile values" in error
+        for error in result["errors"]
+    )
 
 
 def test_fails_when_motion_enabled_plan_has_incomplete_authorized_coverage(tmp_path: Path) -> None:
@@ -520,6 +578,32 @@ def test_prepares_envelope_when_authorized_storyboard_uses_repo_relative_paths(
     assert result["status"] == "prepared"
     envelope = json.loads((bundle / "pass2-envelope.json").read_text(encoding="utf-8"))
     assert envelope["gary_slide_output"][0]["file_path"] == str(slide_01.resolve())
+
+
+def test_fails_when_authorized_storyboard_row_omits_file_path_even_if_dispatch_has_one(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path)
+    authorized_path = bundle / "authorized-storyboard.json"
+    authorized_storyboard = json.loads(authorized_path.read_text(encoding="utf-8"))
+    authorized_storyboard["authorized_slides"][0].pop("file_path", None)
+    authorized_path.write_text(json.dumps(authorized_storyboard), encoding="utf-8")
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "fail"
+    assert any("file_path is required" in error for error in result["errors"])
+
+
+def test_fails_when_authorized_storyboard_row_omits_source_ref_even_if_dispatch_has_one(tmp_path: Path) -> None:
+    bundle = _make_bundle(tmp_path)
+    authorized_path = bundle / "authorized-storyboard.json"
+    authorized_storyboard = json.loads(authorized_path.read_text(encoding="utf-8"))
+    authorized_storyboard["authorized_slides"][0].pop("source_ref", None)
+    authorized_path.write_text(json.dumps(authorized_storyboard), encoding="utf-8")
+
+    result = prepare_irene_pass2_handoff(bundle)
+
+    assert result["status"] == "fail"
+    assert any("source_ref is required" in error for error in result["errors"])
 
 
 def test_cli_returns_exception_payload_when_bundle_missing(tmp_path: Path) -> None:

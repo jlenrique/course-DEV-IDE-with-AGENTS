@@ -6,6 +6,13 @@ This skill defines the contract-first behavior for Creative Director outputs in 
 
 Generate a deterministic creative directive artifact that can be consumed by downstream resolver wiring (`20c-13`) to populate run constants, especially `slide_mode_proportions`.
 
+## Intake Contract
+
+- This skill is invoked only through Marcus's envelope.
+- It receives all run context, constraints, and upstream artifacts from Marcus's envelope rather than by discovering them independently.
+- It returns structured output only to Marcus.
+- It does not write run constants, mutate production state, or create alternate operator-facing intake surfaces.
+
 ## Required Output Contract
 
 CD output MUST follow `references/creative-directive-contract.md` and include:

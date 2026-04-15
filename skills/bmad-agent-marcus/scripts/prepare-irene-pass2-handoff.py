@@ -30,11 +30,19 @@ except ImportError:  # pragma: no cover - optional for yaml input
 SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from cluster_template_planner import (
     build_cluster_template_plan,
     load_default_template_library,
     load_operator_template_overrides,
+)
+from scripts.utilities.run_constants import (
+    RunConstantsError,
+    parse_run_constants,
+    resolve_experience_profile,
 )
 
 
@@ -51,7 +59,6 @@ STALE_PASS2_FILES = (
 ARCHIVE_SUBDIR = Path("recovery") / "archive" / "pass2-reruns"
 DEFAULT_ENVELOPE_FILENAME = "pass2-envelope.json"
 DEFAULT_RECEIPT_FILENAME = "pass2-prep-receipt.json"
-REPO_ROOT = Path(__file__).resolve().parents[3]
 STATIC_MOTION_PATTERN = re.compile(r"slide[-_](\d{2})", re.IGNORECASE)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RUN_CONSTANTS_FILENAME = "run-constants.yaml"
@@ -141,6 +148,37 @@ def _load_runtime_plan(bundle_dir: Path, irene_pass1_path: Path) -> dict[str, An
     if not any(value not in (None, "", []) for value in runtime_plan.values()):
         return None
     return runtime_plan
+
+
+def _load_experience_profile_payload(bundle_dir: Path) -> tuple[str | None, dict[str, Any] | None]:
+    run_constants_path = _bundle_input(bundle_dir, RUN_CONSTANTS_FILENAME)
+    if not run_constants_path.is_file():
+        return None, None
+
+    raw_run_constants = _load_yaml_object(run_constants_path)
+    raw_profile = raw_run_constants.get("experience_profile")
+    if raw_profile is None:
+        return None, None
+
+    validation_payload = {
+        "run_id": "pass2-profile-validation",
+        "lesson_slug": "pass2-profile-validation",
+        "bundle_path": str(bundle_dir),
+        "primary_source_file": "pass2-profile-validation.pdf",
+        "optional_context_assets": [],
+        "theme_selection": "pass2-profile-validation",
+        "theme_paramset_key": "pass2-profile-validation",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        **raw_run_constants,
+    }
+    parsed_run_constants = parse_run_constants(validation_payload)
+    if parsed_run_constants.experience_profile is None:
+        return None, None
+
+    normalized_profile = parsed_run_constants.experience_profile
+    resolved = resolve_experience_profile(normalized_profile)
+    return normalized_profile, resolved
 
 
 def _load_voice_direction_defaults() -> dict[str, Any]:
@@ -445,7 +483,7 @@ def _normalize_slide_row(
     if not isinstance(card_number, int) or card_number <= 0:
         errors.append(f"{slide_id or '<missing-slide-id>'}: card_number must be a positive integer")
 
-    file_path = str(row.get("file_path") or dispatch_row.get("file_path") if dispatch_row else row.get("file_path") or "").strip()
+    file_path = str(row.get("file_path") or "").strip()
     if not file_path:
         errors.append(f"{slide_id or '<missing-slide-id>'}: file_path is required")
         resolved_file = None
@@ -456,7 +494,7 @@ def _normalize_slide_row(
         if not resolved_file.is_file():
             errors.append(f"{slide_id or '<missing-slide-id>'}: file_path does not exist on disk")
 
-    source_ref = str(row.get("source_ref") or dispatch_row.get("source_ref") if dispatch_row else row.get("source_ref") or "").strip()
+    source_ref = str(row.get("source_ref") or "").strip()
     if not source_ref:
         errors.append(f"{slide_id or '<missing-slide-id>'}: source_ref is required")
 
@@ -741,6 +779,13 @@ def prepare_irene_pass2_handoff(
     warnings.extend(motion_warnings)
     errors.extend(motion_errors)
 
+    experience_profile: str | None = None
+    resolved_profile: dict[str, Any] | None = None
+    try:
+        experience_profile, resolved_profile = _load_experience_profile_payload(bundle)
+    except RunConstantsError as exc:
+        errors.append(str(exc))
+
     non_authoritative_motion_leftovers = _detect_non_authoritative_motion_leftovers(
         bundle_dir=bundle,
         authorized_rows=gary_slide_output,
@@ -808,6 +853,9 @@ def prepare_irene_pass2_handoff(
         envelope["runtime_plan"] = runtime_plan
     if voice_direction_defaults:
         envelope["voice_direction_defaults"] = voice_direction_defaults
+    if experience_profile is not None and resolved_profile is not None:
+        envelope["experience_profile"] = experience_profile
+        envelope["narration_profile_controls"] = resolved_profile["narration_profile_controls"]
     try:
         template_library = load_default_template_library()
         overrides = load_operator_template_overrides(

@@ -5,6 +5,7 @@ description: >
 profiles:
   visual-led:
     label: "Visual-Led"
+    cluster_density: default
     slide_mode_proportions:
       literal-text: 0.15
       literal-visual: 0.25
@@ -16,6 +17,7 @@ profiles:
 
   text-led:
     label: "Text-Led"
+    cluster_density: rich
     slide_mode_proportions:
       literal-text: 0.60
       literal-visual: 0.25

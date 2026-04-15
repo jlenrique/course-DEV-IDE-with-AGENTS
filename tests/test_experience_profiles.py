@@ -7,6 +7,8 @@ from typing import Any
 
 import yaml
 
+from scripts.utilities import run_constants as rc
+
 
 PROFILES_PATH = Path("state/config/experience-profiles.yaml")
 EXPECTED_MODE_KEYS = {"literal-text", "literal-visual", "creative"}
@@ -52,3 +54,57 @@ def test_profile_narration_controls_have_required_keys() -> None:
         controls = profile_data.get("narration_profile_controls")
         assert isinstance(controls, dict), f"{profile_name} missing narration_profile_controls"
         assert required_controls.issubset(controls.keys())
+
+
+def test_profile_cluster_density_is_present_and_valid() -> None:
+    profiles = _load_profiles()["profiles"]
+    allowed = rc.ALLOWED_CLUSTER_DENSITIES
+    for profile_name, profile_data in profiles.items():
+        cluster_density = profile_data.get("cluster_density")
+        assert isinstance(cluster_density, str), f"{profile_name} missing cluster_density"
+        assert cluster_density in allowed
+
+
+def test_every_profile_name_is_accepted_by_parse_run_constants() -> None:
+    profiles = _load_profiles()["profiles"]
+    base = {
+        "run_id": "profile-contract",
+        "lesson_slug": "lesson",
+        "bundle_path": "bundle",
+        "primary_source_file": "primary.pdf",
+        "optional_context_assets": [],
+        "theme_selection": "theme",
+        "theme_paramset_key": "preset",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+    }
+
+    for profile_name, profile_data in profiles.items():
+        parsed = rc.parse_run_constants(
+            {
+                **base,
+                "experience_profile": profile_name,
+            }
+        )
+        assert parsed.experience_profile == profile_name
+        assert parsed.cluster_density == rc.resolve_experience_profile(profile_name)["cluster_density"]
+        assert parsed.slide_mode_proportions == profile_data["slide_mode_proportions"]
+
+
+def test_downstream_skills_do_not_reference_experience_profiles_directly() -> None:
+    allowed_upstream_dirs = {"bmad-agent-cd", "bmad-agent-marcus"}
+    offenders: list[str] = []
+
+    for skill_dir in Path("skills").iterdir():
+        if not skill_dir.is_dir() or skill_dir.name in allowed_upstream_dirs:
+            continue
+        for path in skill_dir.rglob("*"):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".mp3", ".mp4", ".db"}:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            if "experience-profiles" in text:
+                offenders.append(str(path).replace("\\", "/"))
+
+    assert offenders == []

@@ -133,6 +133,16 @@ entries:
     consumers:
       - scripts/utilities/run_constants.py
     description: "Resolved creative mode distribution map (literal-text, literal-visual, creative) for run constants."
+  - key: experience_profile
+    family: run-constants
+    type: enum
+    allowed_values:
+      - visual-led
+      - text-led
+      - none
+    status: implemented
+    source: scripts/utilities/run_constants.py
+    description: "Experience profile selection for creative control orchestration."
 
   - key: narration_density.target_wpm
     family: narration-time

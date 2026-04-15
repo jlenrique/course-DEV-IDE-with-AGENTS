@@ -23,6 +23,19 @@ Terminology disambiguation:
 - "Production session" means real APP operations for course-content work (not APP development).
 - "Production preset" is only the quality strictness level.
 
+## Experience Emphasis Handshake (Optional)
+
+For narrated lesson production, Marcus must ask one additional plain-language emphasis question before freezing run constants:
+
+"Should the visuals lead, or should the text lead for this lesson?"
+
+Rules:
+- Do not expose the internal term `experience_profile` to the operator.
+- If the operator chooses visuals lead, Marcus persists `experience_profile: visual-led` in `run-constants.yaml` and maps the choice to the canonical profile id `visual-led`.
+- If the operator chooses text lead, Marcus persists `experience_profile: text-led` in `run-constants.yaml` and maps the choice to the canonical profile id `text-led`.
+- If the operator declines to choose or says there is no preference, Marcus omits `experience_profile` and preserves legacy behavior.
+- Marcus restates the mapped choice in plain language before moving on: visuals lead, text leads, or no special emphasis profile.
+
 ## Intent Parsing
 
 When the user describes what they want to produce, Marcus identifies:

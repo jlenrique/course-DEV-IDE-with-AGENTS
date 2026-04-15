@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover - pyyaml is a declared dependency
 from scripts.utilities.file_helpers import project_root as default_project_root
 
 RUN_CONSTANTS_BASENAME = "run-constants.yaml"
+EXPERIENCE_PROFILES_PATH = default_project_root() / "state" / "config" / "experience-profiles.yaml"
 
 ALLOWED_QUALITY_PRESETS = frozenset({"explore", "draft", "production", "regulated"})
 ALLOWED_MOTION_MODEL_PREFERENCES = frozenset({"std", "pro"})
@@ -60,6 +61,7 @@ class RunConstants:
     motion_enabled: bool = False
     motion_budget: MotionBudget | None = None
     cluster_density: str | None = None
+    experience_profile: str | None = None
     slide_mode_proportions: dict[str, float] | None = None
     schema_version: int | None = None
     frozen_at_utc: str | None = None
@@ -154,6 +156,75 @@ def _parse_slide_mode_proportions(raw: Any) -> dict[str, float] | None:
     return parsed
 
 
+def _load_experience_profiles(profiles_path: Path) -> dict[str, dict[str, Any]]:
+    if yaml is None:
+        raise RunConstantsError("pyyaml is required to load experience profiles")
+    try:
+        raw = yaml.safe_load(profiles_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise RunConstantsError(f"Invalid YAML in {profiles_path}: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise RunConstantsError(f"Expected mapping at root of {profiles_path}")
+
+    profiles = raw.get("profiles")
+    if not isinstance(profiles, dict):
+        raise RunConstantsError(
+            f"experience profiles file must define a 'profiles' mapping: {profiles_path}"
+        )
+    return profiles
+
+
+def _resolve_profile_cluster_density(profile_name: str, profile_data: dict[str, Any]) -> str:
+    cluster_density = profile_data.get("cluster_density")
+    if not isinstance(cluster_density, str) or not cluster_density.strip():
+        raise RunConstantsError(
+            f"experience profile {profile_name!r} must define cluster_density"
+        )
+    normalized_density = cluster_density.strip().lower()
+    if normalized_density not in ALLOWED_CLUSTER_DENSITIES:
+        raise RunConstantsError(
+            f"experience profile {profile_name!r} resolved invalid cluster_density "
+            f"{cluster_density!r}"
+        )
+    return normalized_density
+
+
+def resolve_experience_profile(
+    profile_name: str,
+    *,
+    profiles_path: Path = EXPERIENCE_PROFILES_PATH,
+) -> dict[str, Any]:
+    """Resolve a named experience profile to its canonical runtime values."""
+    if not isinstance(profile_name, str) or not profile_name.strip():
+        raise RunConstantsError("experience_profile must be a non-empty string")
+
+    normalized_name = profile_name.strip().lower()
+    profiles = _load_experience_profiles(profiles_path)
+    profile_data = profiles.get(normalized_name)
+    if not isinstance(profile_data, dict):
+        raise RunConstantsError(f"unknown experience profile: {profile_name!r}")
+
+    slide_mode_proportions = _parse_slide_mode_proportions(
+        profile_data.get("slide_mode_proportions")
+    )
+    if slide_mode_proportions is None:
+        raise RunConstantsError(
+            f"experience profile {normalized_name!r} must define slide_mode_proportions"
+        )
+
+    narration_profile_controls = profile_data.get("narration_profile_controls")
+    if not isinstance(narration_profile_controls, dict):
+        raise RunConstantsError(
+            f"experience profile {normalized_name!r} must define narration_profile_controls"
+        )
+
+    return {
+        "cluster_density": _resolve_profile_cluster_density(normalized_name, profile_data),
+        "slide_mode_proportions": dict(slide_mode_proportions),
+        "narration_profile_controls": dict(narration_profile_controls),
+    }
+
+
 def load_run_constants_dict(path: Path) -> dict[str, Any]:
     """Parse run-constants.yaml into a dict (internal helper)."""
     if yaml is None:
@@ -205,7 +276,35 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
                 f"got {raw_cluster_density!r}"
             )
         cluster_density = val
+
+    raw_experience_profile = data.get("experience_profile")
+    experience_profile: str | None = None
+    resolved_profile: dict[str, Any] | None = None
+    if raw_experience_profile is not None:
+        if not isinstance(raw_experience_profile, str):
+            raise RunConstantsError("experience_profile must be a string when present")
+        experience_profile = raw_experience_profile.strip().lower()
+        if not experience_profile:
+            raise RunConstantsError("experience_profile must be a non-empty string")
+        resolved_profile = resolve_experience_profile(experience_profile)
+
     slide_mode_proportions = _parse_slide_mode_proportions(data.get("slide_mode_proportions"))
+    if cluster_density is None and resolved_profile is not None:
+        cluster_density = resolved_profile["cluster_density"]
+    elif cluster_density is not None and resolved_profile is not None:
+        expected_density = resolved_profile["cluster_density"]
+        if cluster_density != expected_density:
+            raise RunConstantsError(
+                "cluster_density must match the resolved experience_profile values"
+            )
+    if slide_mode_proportions is None and resolved_profile is not None:
+        slide_mode_proportions = dict(resolved_profile["slide_mode_proportions"])
+    elif slide_mode_proportions is not None and resolved_profile is not None:
+        expected = resolved_profile["slide_mode_proportions"]
+        if slide_mode_proportions != expected:
+            raise RunConstantsError(
+                "slide_mode_proportions must match the resolved experience_profile values"
+            )
 
     schema_version = data.get("schema_version")
     if schema_version is not None and not isinstance(schema_version, int):
@@ -259,6 +358,7 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         motion_enabled=raw_motion_enabled,
         motion_budget=motion_budget,
         cluster_density=cluster_density,
+        experience_profile=experience_profile,
         slide_mode_proportions=slide_mode_proportions,
         schema_version=schema_version,
         frozen_at_utc=frozen_at.strip() if isinstance(frozen_at, str) else None,

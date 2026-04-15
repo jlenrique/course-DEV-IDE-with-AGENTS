@@ -243,6 +243,13 @@ def _load_narration_profile_controls() -> dict[str, Any]:
     return controls if isinstance(controls, dict) else {}
 
 
+def _active_narration_profile_controls(payload: dict[str, Any]) -> dict[str, Any]:
+    envelope_controls = payload.get("narration_profile_controls")
+    if isinstance(envelope_controls, dict):
+        return dict(envelope_controls)
+    return _load_narration_profile_controls()
+
+
 def _normalize_phrase_patterns(raw: Any) -> list[str]:
     if not isinstance(raw, list):
         return []
@@ -538,7 +545,7 @@ def _validate_bundle_pass2_outputs(
         intro_patterns = list(_FALLBACK_INTRO_PATTERNS)
     if not outro_patterns:
         outro_patterns = list(_FALLBACK_OUTRO_PATTERNS)
-    details["active_narration_profile_controls"] = _load_narration_profile_controls()
+    details["active_narration_profile_controls"] = _active_narration_profile_controls(payload)
 
     narration_path = _resolve_bundle_output_path(
         payload,

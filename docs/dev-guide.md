@@ -695,6 +695,17 @@ set KLING_LIVE_STRICT=1
 .venv\Scripts\python -m pytest tests/test_integration_kling.py --run-live --run-live-e2e -v
 ```
 
+### VSCode Tasks
+
+The project includes VSCode tasks for common development workflows. Access via **Terminal → Run Task** or **Ctrl+Shift+P → Tasks: Run Task**.
+
+| Task Name | Description | Command |
+|-----------|-------------|---------|
+| **APP: Progress Map** | Generate text progress report from sprint-status.yaml | `.venv\Scripts\python.exe -m scripts.utilities.progress_map` |
+| **APP: Progress Map (JSON)** | Generate JSON progress report for scripting/automation | `.venv\Scripts\python.exe -m scripts.utilities.progress_map --json` |
+
+These tasks use the project's virtual environment and provide quick access to progress visualization without manual CLI invocation.
+
 ### Ruff Lint Policy (Ratchet)
 
 The project uses a ratchet policy so delivery can continue while lint debt is reduced incrementally:

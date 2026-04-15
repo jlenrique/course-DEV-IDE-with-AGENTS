@@ -54,6 +54,17 @@ Not git-versioned. Operational state that doesn't survive a fresh clone.
 | `coordination.db` | SQLite — production runs, agent coordination, quality gate records |
 | `backup/` | Database backup and restore scripts |
 
+### `scripts/` — Executable Code and Utilities
+
+Python scripts for API clients, state management, utilities, and CLI tools. Organized by function.
+
+| Subdirectory | Contents |
+|--------------|----------|
+| `api_clients/` | API client classes extending `BaseAPIClient` (Gamma, ElevenLabs, Canvas, etc.) |
+| `state_management/` | SQLite database operations and schema management |
+| `utilities/` | Shared utilities: run constants parsing, file helpers, logging, progress map CLI |
+| `tests/` | Cross-cutting test utilities and fixtures |
+
 ### `resources/style-bible/` — Authoritative Brand Reference
 
 The single source of truth for all brand and content standards. Human-curated, not agent-writable.

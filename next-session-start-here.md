@@ -70,17 +70,8 @@ git status --short
 
 ## Ambient Workspace State
 
-These files were present in the worktree before this closeout and are not owned by the scoped session commit:
-
-- modified: `.vscode/tasks.json`
-- modified: `_bmad-output/planning-artifacts/prd.md`
-- modified: `docs/dev-guide.md`
-- modified: `docs/directory-responsibilities.md`
-- deleted: `bmad-session-protocol-session-MISC.md`
-- untracked: `_bmad-output/review-harmonization-20260414.md`
-- untracked: `_bmad-output/review-harmonization-20260414-v2.md`
-- untracked: `_bmad-output/review-harmonization-20260415.md`
-- untracked: `maintenance/`
+- No known ambient local changes are expected after the final cleanup commit/push for this session.
+- If a dirty tree appears on next startup, treat it as new post-closeout work rather than part of this handoff.
 
 ## Hot-Start Files
 

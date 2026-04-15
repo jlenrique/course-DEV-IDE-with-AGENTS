@@ -41,6 +41,7 @@
 5. **Wrapup/state sync**
    - Updated the canonical story artifacts and YAML trackers so `20c-3`, `20c-13`, and `20c-14` are now `done`.
    - Refreshed `next-session-start-here.md`, `SESSION-HANDOFF.md`, and `docs/project-context.md` for the actual post-session state.
+   - Final cleanup batch retained the progress-map utility and its related VS Code/docs wiring, tracked the intended planning/maintenance artifacts, and discarded the non-canonical review-harmonization reports.
 
 ## What Is Next
 
@@ -100,6 +101,12 @@ Primary next step is to **formally review the remaining Wave 2B foundation stori
 - [x] `tests/test_experience_profiles.py`
 - [x] `tests/test_marcus_prompt_harness.py`
 - [x] `tests/test_progress_map.py`
+- [x] `.vscode/tasks.json`
+- [x] `docs/dev-guide.md`
+- [x] `docs/directory-responsibilities.md`
+- [x] `_bmad-output/planning-artifacts/prd.md`
+- [x] `maintenance/doc review prompt 2026-04-12.txt`
+- [x] `maintenance/progress-map-job-aid.md`
 - [x] `next-session-start-here.md`
 - [x] `SESSION-HANDOFF.md`
 - [x] `docs/project-context.md`

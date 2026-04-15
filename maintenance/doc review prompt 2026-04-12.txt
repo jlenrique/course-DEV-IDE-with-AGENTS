@@ -1,0 +1,21 @@
+Review file changes that have occurred over the past hour.  Then, update and cross-harmonize implicated resources:
+
+1a. Iterate through the project's primary documentation for user, admin, and dev reference.
+
+1b. Do not overlook BMAD framework documents such as the current PRD and sets of Epics, stories, and related sprints.
+
+1c. Also within scope are misellaneous docs and other files, such as verification or quality gate scripts, that must be kept current with the latest updates to the state of the codebase or project plans. The parameter-directory.md is especially important to keep current (and pruned when needed).
+
+2a. Be sure not to overlook documents and mechanism that protect against architectural drift or regressions.
+
+2b. sprint-status.yaml may serve as a primary (but not necessarily perfect) source of truth when it comes to cross-harmonization across resources.
+
+3. Once you have identified the recently changed files and updated implicated documents, scripts, or mechanisms, publish a comprehensive report here in the chat, and save a copy to the appropriate location in our project. 
+
+Other conditions for completing this task: 
+
+A. Consulte with a BMAD party mode team, including their tech writer agent, at the beginning of this work (to assist with planning) and at the end (to review the report).
+
+B. Note the critical role in this task of the directory-responsibilities.md in the docs subfolder for identifying docs/scripts/mechanisms to be considered when updating against changes to project content.  
+
+Refer to this directory at the beginning of a review and update run, and update the directory with any new knowledge acquired during a run.

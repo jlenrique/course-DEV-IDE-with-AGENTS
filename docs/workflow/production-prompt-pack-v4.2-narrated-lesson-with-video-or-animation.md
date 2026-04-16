@@ -99,7 +99,7 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 6. Motion + double-dispatch readiness summary.
 
 Required commands:
-- `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --output [BUNDLE_PATH]/preflight-results.json`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
 - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `DOUBLE_DISPATCH: true`, also require double-dispatch compatibility confirmation from preflight runner before proceeding.
 
@@ -1202,6 +1202,7 @@ Primary contract references:
 
 ## Changelog
 
+- **v4.2g (2026-04-16)** — Prompt 1: added `--bundle-dir [BUNDLE_PATH]` to preflight command (was identified as a blocker in the 2026-04-15 trial run — preflight skipped bundle-specific run-constants.yaml validation without it).
 - **v4.2f (2026-04-15)** — Preamble reordered: Pre-Run Checklist → Run Constants → Initialization → Execution Rules → Prompts. Added audience tags (OPERATOR vs MARCUS). Prompt 2 gains greenfield vs. resume guidance. Prompt 2A rewritten with concrete directive examples, governance rules (focus=emphasis, exclusion=provenance, special treatment=override), and resume-run re-confirmation. Prompt 3 adds ingestion scope rule (extract ALL content), extraction completeness validation (word-count floor check, HALT threshold), and cross-validation hint for Notion-exported PDFs. Prompt 4 now requires per-dimension evidence sentences (bare PASS/FAIL rejected). Source Wrangler agent vision document created (`_bmad-output/planning-artifacts/source-wrangler-agent-vision.md`). Design principles, lineage, and changelog moved to appendix.
 - **v4.2e (2026-04-15)** — Story 20c-15: profile-aware slide count estimator integrated into Prompt 4.5, 2-input operator poll (parent_slide_count + target_total_runtime_minutes), experience-profile-driven feasibility triangle, run-constants locking.
 - **v4.2d (2026-04-15)** — Pre-Run Checklist added for visual-led profile. Run Constants updated with concrete C1-M1-PRES-20260415 values, experience profile mapping rule, and CLUSTER_DENSITY. Initialization Instructions expanded with step-by-step bundle setup. Artifact verification protocol added to Execution Rules.

@@ -126,10 +126,10 @@ def _make_bundle(
     )
     (bundle / "operator-directives.md").write_text("# Operator Directives\n", encoding="utf-8")
     run_constants = {
-        "locked_slide_count": 2,
+        "parent_slide_count": 2,
         "target_total_runtime_minutes": 2,
-        "slide_runtime_average_seconds": 40,
-        "slide_runtime_variability_scale": 0.5,
+        "estimated_total_slides": 4,
+        "avg_slide_seconds": 30,
     }
     if experience_profile is not None:
         run_constants["experience_profile"] = experience_profile
@@ -195,7 +195,7 @@ def test_prepares_envelope_with_exact_motion_gate_asset_path(tmp_path: Path) -> 
     assert envelope["motion_enabled"] is True
     assert envelope["approved_motion_assets"]["slide-01"].endswith("slide-01-motion.mp4")
     assert envelope["motion_perception_artifacts"] == []
-    assert envelope["runtime_plan"]["locked_slide_count"] == 2
+    assert envelope["runtime_plan"]["parent_slide_count"] == 2
     assert envelope["runtime_plan"]["per_slide_targets"][0]["target_runtime_seconds"] == 45.0
     assert envelope["voice_direction_defaults"]["speed"] == 1.0
     assert "experience_profile" not in envelope

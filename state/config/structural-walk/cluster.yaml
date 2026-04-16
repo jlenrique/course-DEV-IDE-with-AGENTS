@@ -52,6 +52,14 @@ cross_cutting:
   - component: G2.5 fidelity contract
     path: state/config/fidelity-contracts/g2.5-cluster-coherence.yaml
     check_mode: yaml
+  - component: Creative directive contract
+    path: skills/bmad-agent-cd/references/creative-directive-contract.md
+  - component: Experience profiles registry
+    path: state/config/experience-profiles.yaml
+    check_mode: yaml
+  - component: Parameter registry schema
+    path: state/config/parameter-registry-schema.yaml
+    check_mode: yaml
 anti_drift:
   - name: Cluster plan gate in fidelity gate map
     path: docs/fidelity-gate-map.md
@@ -80,6 +88,11 @@ anti_drift:
       - "CLUSTER_DENSITY"
       - "G1.5"
       - "G2.5"
+  - name: Operations context experience-profile invariant
+    path: docs/operations-context.md
+    needles:
+      - "EXPERIENCE_PROFILE"
+      - "narration_profile_controls"
 sequence_doc_parity:
   - stage: cluster-plan
     path: docs/workflow/cluster-workflow.md
@@ -97,7 +110,7 @@ dry_run:
     - key: sequence-preview
       label: Marcus workflow sequence preview
       scope: cluster
-      input: skills/bmad-agent-marcus/references/workflow-templates.yaml:cluster
+      input: skills/bmad-agent-marcus/references/workflow-templates.yaml:clustered-narrated-deck-video-export
       kind: sequence
     - key: sequence-doc-parity
       label: Marcus sequence-to-document parity

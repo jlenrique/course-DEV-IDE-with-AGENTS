@@ -248,6 +248,7 @@ class TestNarrationScriptParameters:
         bridge_types = params["runtime_variability"]["bridge_cadence"]["accepted_bridge_types"]
         assert isinstance(bridge_types, list)
         assert bridge_types
+        assert "pivot" in bridge_types
         assert "cluster_boundary" in bridge_types
 
     def test_runtime_variability_cluster_override_enabled(self, params: dict) -> None:
@@ -382,11 +383,28 @@ class TestCrossFileConsistency:
         assert g4_12["evaluation_type"] == "agentic"
         assert g4_12["requires_perception"] is True
 
-    def test_vera_protocol_documents_g4_16_spoken_bridges(
+    def test_g4_contract_includes_cluster_criteria_16_to_19(
+        self,
+        g4_contract: dict,
+    ) -> None:
+        criteria = {c["id"]: c for c in g4_contract["criteria"]}
+        for criterion_id in ("G4-16", "G4-17", "G4-18", "G4-19"):
+            assert criterion_id in criteria, f"{criterion_id} missing in G4 contract"
+            assert criteria[criterion_id]["scope"] == "cluster"
+            assert criteria[criterion_id]["severity"] == "high"
+            assert criteria[criterion_id]["description"]
+            assert criteria[criterion_id]["check_type"]
+
+    def test_vera_protocol_documents_g4_16_to_g4_19_cluster_extensions(
         self, vera_g4_protocol_text: str
     ) -> None:
         assert "G4-16" in vera_g4_protocol_text
-        assert "spoken_bridge_policy" in vera_g4_protocol_text
+        assert "G4-17" in vera_g4_protocol_text
+        assert "G4-18" in vera_g4_protocol_text
+        assert "G4-19" in vera_g4_protocol_text
+        assert "master_behavioral_intent" in vera_g4_protocol_text
+        assert "No new concepts" in vera_g4_protocol_text
+        assert "Cluster arc integrity" in vera_g4_protocol_text
 
     def test_g4_07_only_applies_to_creative(self, g4_contract: dict) -> None:
         criteria = g4_contract["criteria"]

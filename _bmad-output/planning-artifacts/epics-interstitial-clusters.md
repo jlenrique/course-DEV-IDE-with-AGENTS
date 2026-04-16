@@ -501,6 +501,20 @@ Build the parameter infrastructure and CD agent that unlocks creative control. T
 - **Status:** Done
 - **Dependencies:** 20c-13 (resolver wired)
 - Run C1-M1 through both profiles (visual-led, text-led) with comparison. This is the integration proof and the SPOC gap closure story.
+
+#### Story 20c-15: Parent Slide Count — Profile-Aware Estimator
+- **Status:** Done
+- **Dependencies:** 20c-14 (E2E validation complete, profiles proven)
+- Rename `locked_slide_count` → `parent_slide_count`. Operator polls for only `parent_slide_count` and `target_total_runtime_minutes`. All other parameters (`estimated_total_slides`, `avg_slide_seconds`, word budgets) are system-derived from the experience profile's `cluster_expansion` block. Estimator runs a 5-condition feasibility triangle (PASS/WARN/BLOCK). Operator polling loops on BLOCK, surfaces WARN for ACK.
+- **Story file:** `_bmad-output/implementation-artifacts/20c-15-parent-slide-count-profile-aware-estimator.md`
+- **Key changes:**
+  1. `experience-profiles.yaml` schema 1.0→1.1, `cluster_expansion` blocks added
+  2. `slide_count_runtime_estimator.py` rewritten with `estimate_and_validate()`
+  3. `operator_polling.py` simplified to 2-input poll with feasibility loop
+  4. Prompt 4.5 rewritten for profile-aware workflow
+  5. G1.5 gate: 3 new criteria (expansion compliance, cluster balance, runtime fit)
+  6. G4 gate: G4-10 and G4-17 updated for profile-derived values
+  7. Field rename propagation across 8+ downstream files
 - **Acceptance criteria:**
   1. Prompt pack updated with plain-language profile selection step during run-constants handshake (operator never sees "experience profile" terminology — Marcus asks "should the visuals lead or the text?")
   2. Marcus conversation-management reference updated to elicit, map, and confirm profile choice

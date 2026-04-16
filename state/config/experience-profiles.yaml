@@ -1,6 +1,7 @@
-schema_version: "1.0"
+schema_version: "1.1"
 description: >
-  Initial profile targets for Creative Director outputs and future profile resolver wiring.
+  Profile targets for Creative Director outputs, profile resolver, and cluster expansion estimation.
+  v1.1: Added cluster_expansion blocks per profile for parent slide count architecture (Story 20c-15).
 
 profiles:
   visual-led:
@@ -14,6 +15,22 @@ profiles:
       narrator_source_authority: source-grounded
       slide_content_density: adaptive
       elaboration_budget: medium
+      connective_weight: balanced
+      callback_frequency: moderate
+      visual_narration_coupling: balanced
+      rhetorical_richness: balanced
+      vocabulary_register: professional
+      arc_awareness: medium
+      narrative_tension: medium
+      emotional_coloring: neutral
+    cluster_expansion:
+      avg_interstitials_per_cluster: 1.5
+      interstitial_range: [0, 3]
+      singleton_ratio: 0.30
+      cluster_head_word_range: [60, 100]
+      interstitial_word_range: [15, 30]
+      estimator_advisory:
+        parents_per_minute: 1.5
 
   text-led:
     label: "Text-Led"
@@ -26,3 +43,19 @@ profiles:
       narrator_source_authority: slide-led
       slide_content_density: dense
       elaboration_budget: low
+      connective_weight: balanced
+      callback_frequency: moderate
+      visual_narration_coupling: balanced
+      rhetorical_richness: balanced
+      vocabulary_register: professional
+      arc_awareness: medium
+      narrative_tension: medium
+      emotional_coloring: neutral
+    cluster_expansion:
+      avg_interstitials_per_cluster: 3.0
+      interstitial_range: [1, 5]
+      singleton_ratio: 0.10
+      cluster_head_word_range: [80, 140]
+      interstitial_word_range: [25, 40]
+      estimator_advisory:
+        parents_per_minute: 0.95

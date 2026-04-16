@@ -117,19 +117,22 @@ criteria:
     name: "Runtime plan coherence"
     description: >
       Segment-level runtime decisions must remain coherent with the approved
-      runtime plan controls (total runtime target, per-slide targets, average
-      runtime assumptions, and variance policy) so narration pacing does not
-      drift from the locked production plan.
+      runtime plan controls derived from `parent_slide_count`,
+      `target_total_runtime_minutes`, and the experience profile's
+      cluster_expansion parameters. Narration pacing must not drift from the
+      locked production plan.
     fidelity_class: [creative, literal-text, literal-visual]
     severity: high
     evaluation_type: deterministic
     check: >
       Segment durations and runtime metadata are present and reconcile against
-      runtime_plan targets (including target_total_runtime_minutes and
-      per_slide_targets) with any out-of-band variance explicitly justified.
+      runtime_plan targets (including target_total_runtime_minutes,
+      estimated_total_slides, avg_slide_seconds, and per_slide_targets) with
+      any out-of-band variance explicitly justified.
     requires_perception: false
     config_refs:
       - "state/config/narration-script-parameters.yaml"
+      - "state/config/experience-profiles.yaml"
 
   - id: "G4-11"
     name: "Timing rationale completeness"
@@ -226,3 +229,78 @@ criteria:
     requires_perception: false
     config_refs:
       - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-16"
+    name: "Cluster narration coherence"
+    description: >
+      In clustered runs, each interstitial segment's behavioral intent must
+      remain subordinate to the cluster head's master_behavioral_intent.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: behavioral-intent-subordination
+    check: >
+      For every cluster, all interstitial behavioral_intent values must serve
+      the cluster's master_behavioral_intent according to the documented
+      compatibility map.
+    requires_perception: false
+    config_refs:
+      - "skills/bmad-agent-content-creator/references/cluster-narrative-arc-schema.md"
+      - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-17"
+    name: "Cluster word budget"
+    description: >
+      Clustered narration must use the dedicated head and interstitial word
+      budgets. When an experience profile is active, the profile's
+      cluster_expansion.head_words and interstitial_words ranges take
+      precedence over narration-script-parameters defaults.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: cluster-word-budget
+    check: >
+      Cluster heads must stay within the effective head word range and
+      interstitials within the effective interstitial word range, each
+      with a ±5 word tolerance. Effective ranges come from the experience
+      profile's cluster_expansion block when present, falling back to
+      narration-script-parameters.yaml cluster_narration defaults.
+    requires_perception: false
+    config_refs:
+      - "state/config/narration-script-parameters.yaml"
+      - "state/config/experience-profiles.yaml"
+
+  - id: "G4-18"
+    name: "No new concepts in interstitials"
+    description: >
+      Interstitial narration should stay inside the concept scope established by
+      the head segment and its source-backed brief rather than introducing fresh
+      domain concepts.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: concept-scope-heuristic
+    check: >
+      Extract concept tokens from the head narration and any resolvable
+      source_ref text, then flag interstitial narration that introduces
+      concept-bearing terms outside that head scope.
+    requires_perception: false
+
+  - id: "G4-19"
+    name: "Cluster arc integrity"
+    description: >
+      Cluster position sequencing and the final resolve beat must preserve a
+      coherent cluster-level narrative arc.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: arc-integrity
+    check: >
+      Cluster positions must remain in canonical order and the resolve segment
+      must callback to establish concepts using a meaningful keyword overlap
+      heuristic.
+    requires_perception: false

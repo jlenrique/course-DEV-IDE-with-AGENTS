@@ -129,7 +129,7 @@ If multiple overrides target the same slide, the last directive wins and Irene m
 
 - `cluster_density: none` + `double_dispatch: true` should be treated as incompatible
 - `cluster_density: rich` + `double_dispatch: false` should emit a warning about reduced fidelity
-- `locked_slide_count` and `target_total_runtime_minutes` may constrain how many clusters are feasible
+- `parent_slide_count`, `estimated_total_slides`, and `target_total_runtime_minutes` may constrain how many clusters are feasible
 
 ## Contract Authority
 

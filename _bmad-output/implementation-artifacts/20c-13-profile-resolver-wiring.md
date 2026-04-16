@@ -233,3 +233,27 @@ All tests (existing + new) must pass before marking the story done.
 ## SPOC Gap Note
 
 This story opens a SPOC gap: the resolver exists but no prompt pack triggers it. Marcus can pass `experience_profile` in run-constants but isn't conversationally prompted to do so. This gap is deliberate and bounded — **closed by 20c-14** (prompt pack update + Marcus reference update + CD intake contract + E2E validation).
+
+## Adversarial Review (BMAD)
+
+### Blind Hunter
+- Reviewed `resolve_experience_profile()` and `parse_run_constants()` paths: unknown profiles raise `RunConstantsError`; experience profile strings normalized with `.strip().lower()` consistently before lookup (matches YAML keys).
+- No additional code defect found in this session. Downstream `creative_directive_validator` hardened separately (20c-11) for `schema_version` const—resolver and validator both read the same `experience-profiles.yaml` for values.
+
+### Edge Case Hunter
+- Malformed profiles YAML surfaces via `_load_experience_profiles` / resolver errors; empty profile name rejected.
+
+### Acceptance Auditor
+- AC1–8 verified against `tests/test_run_constants.py` and `tests/test_experience_profiles.py` (including static-analysis guard for direct `experience-profiles` references outside allowlisted skills).
+
+Review closed: 2026-04-15 (BMAD re-review; no resolver code change required).
+
+## BMAD tracking closure
+
+**Framework:** Per `sprint-status.yaml` — **`done`** = ACs met + verification green + layered BMAD review complete + sprint key `done`.
+
+| Check | State |
+|-------|--------|
+| ACs | Met (`resolve_experience_profile` + `parse_run_constants` + static guard) |
+| Verification | `tests/test_run_constants.py`, `tests/test_experience_profiles.py` per story |
+| **`sprint-status.yaml`** | **`20c-13-profile-resolver-wiring`: `done`** (reconciled 2026-04-15) |

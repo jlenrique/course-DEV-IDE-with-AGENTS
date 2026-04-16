@@ -4,7 +4,7 @@ Review file changes that have occurred over the past hour.  Then, update and cro
 
 1b. Do not overlook BMAD framework documents such as the current PRD and sets of Epics, stories, and related sprints.
 
-1c. Also within scope are misellaneous docs and other files, such as verification or quality gate scripts, that must be kept current with the latest updates to the state of the codebase or project plans. The parameter-directory.md is especially important to keep current (and pruned when needed).
+1c. Also within scope are miscellaneous docs and other files, such as verification, the 'structural_walk.py', or quality gate scripts, that must be kept current with the latest updates to the state of the codebase or project plans. The parameter-directory.md is especially important to keep current (and pruned when needed).
 
 2a. Be sure not to overlook documents and mechanism that protect against architectural drift or regressions.
 

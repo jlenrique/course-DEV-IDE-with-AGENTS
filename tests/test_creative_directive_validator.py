@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from scripts.utilities.creative_directive_validator import validate_creative_directive
 
 
@@ -20,12 +22,40 @@ def _base_directive() -> dict[str, Any]:
             "narrator_source_authority": "source-grounded",
             "slide_content_density": "adaptive",
             "elaboration_budget": "medium",
+            "connective_weight": "balanced",
+            "callback_frequency": "moderate",
+            "visual_narration_coupling": "balanced",
+            "rhetorical_richness": "balanced",
+            "vocabulary_register": "professional",
+            "arc_awareness": "medium",
+            "narrative_tension": "medium",
+            "emotional_coloring": "neutral",
         },
         "creative_rationale": "Favor rich visual storytelling for this profile.",
     }
 
 
 def test_validate_creative_directive_passes_on_profile_aligned_payload() -> None:
+    errors = validate_creative_directive(_base_directive())
+    assert errors == []
+
+
+def test_validate_creative_directive_fails_wrong_schema_version_string() -> None:
+    payload = _base_directive()
+    payload["schema_version"] = "2.0"
+    errors = validate_creative_directive(payload)
+    assert any("schema_version must be the string" in err for err in errors)
+
+
+def test_validate_creative_directive_fails_non_string_schema_version() -> None:
+    payload = _base_directive()
+    payload["schema_version"] = 1  # type: ignore[assignment]
+    errors = validate_creative_directive(payload)
+    assert any("schema_version must be the string" in err for err in errors)
+
+
+def test_validate_creative_directive_uses_repo_anchored_paths(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    monkeypatch.chdir(tmp_path)
     errors = validate_creative_directive(_base_directive())
     assert errors == []
 
@@ -49,6 +79,13 @@ def test_validate_creative_directive_fails_unknown_nested_control_key() -> None:
     payload["narration_profile_controls"]["extra_style"] = "experimental"
     errors = validate_creative_directive(payload)
     assert any("contains unknown keys" in err for err in errors)
+
+
+def test_validate_creative_directive_fails_missing_expanded_control_key() -> None:
+    payload = _base_directive()
+    del payload["narration_profile_controls"]["callback_frequency"]
+    errors = validate_creative_directive(payload)
+    assert any("missing required key: callback_frequency" in err for err in errors)
 
 
 def test_validate_creative_directive_fails_sum_rule() -> None:

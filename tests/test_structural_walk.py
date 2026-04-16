@@ -121,6 +121,36 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             '                {"stage": "gate-4"},\n'
             "            ],\n"
             "        },\n"
+            '        "clustered-narrated-deck-video-export": {\n'
+            '            "label": "Clustered Narrated Deck Video Export (Interstitial MVP)",\n'
+            '            "aliases": ["cluster-presentation"],\n'
+            '            "stages": [\n'
+            '                {"stage": "source-wrangling"},\n'
+            '                {"stage": "lesson-plan-and-slide-brief"},\n'
+            '                {"stage": "fidelity-g1"},\n'
+            '                {"stage": "cluster-plan"},\n'
+            '                {"stage": "fidelity-g2"},\n'
+            '                {"stage": "quality-g2"},\n'
+            '                {"stage": "gate-1"},\n'
+            '                {"stage": "imagine-handoff"},\n'
+            '                {"stage": "slide-generation"},\n'
+            '                {"stage": "cluster-coherence"},\n'
+            '                {"stage": "storyboard"},\n'
+            '                {"stage": "fidelity-g3"},\n'
+            '                {"stage": "quality-g3"},\n'
+            '                {"stage": "gate-2"},\n'
+            '                {"stage": "narration-and-manifest"},\n'
+            '                {"stage": "fidelity-g4"},\n'
+            '                {"stage": "quality-g4"},\n'
+            '                {"stage": "gate-3"},\n'
+            '                {"stage": "audio-generation"},\n'
+            '                {"stage": "fidelity-g5"},\n'
+            '                {"stage": "pre-composition-validation"},\n'
+            '                {"stage": "composition-guide"},\n'
+            '                {"stage": "post-composition-validation"},\n'
+            '                {"stage": "gate-4"},\n'
+            "            ],\n"
+            "        },\n"
             "    }\n"
             "\n"
             "def build_workflow_lookup(workflow_templates):\n"
@@ -178,6 +208,35 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             "      - stage: gate-2m\n"
             "      - stage: motion-generation\n"
             "      - stage: motion-gate\n"
+            "      - stage: narration-and-manifest\n"
+            "      - stage: fidelity-g4\n"
+            "      - stage: quality-g4\n"
+            "      - stage: gate-3\n"
+            "      - stage: audio-generation\n"
+            "      - stage: fidelity-g5\n"
+            "      - stage: pre-composition-validation\n"
+            "      - stage: composition-guide\n"
+            "      - stage: post-composition-validation\n"
+            "      - stage: gate-4\n"
+            "  clustered-narrated-deck-video-export:\n"
+            '    label: "Clustered Narrated Deck Video Export (Interstitial MVP)"\n'
+            "    aliases:\n"
+            "      - cluster-presentation\n"
+            "    stages:\n"
+            "      - stage: source-wrangling\n"
+            "      - stage: lesson-plan-and-slide-brief\n"
+            "      - stage: fidelity-g1\n"
+            "      - stage: cluster-plan\n"
+            "      - stage: fidelity-g2\n"
+            "      - stage: quality-g2\n"
+            "      - stage: gate-1\n"
+            "      - stage: imagine-handoff\n"
+            "      - stage: slide-generation\n"
+            "      - stage: cluster-coherence\n"
+            "      - stage: storyboard\n"
+            "      - stage: fidelity-g3\n"
+            "      - stage: quality-g3\n"
+            "      - stage: gate-2\n"
             "      - stage: narration-and-manifest\n"
             "      - stage: fidelity-g4\n"
             "      - stage: quality-g4\n"
@@ -332,6 +391,20 @@ def test_manifest_loader_reads_repo_manifest_contract(tmp_path: Path) -> None:
     assert spec.dry_run_steps[1].kind == "sequence"
     assert spec.dry_run_steps[2].kind == "sequence_docs"
     assert len(spec.sequence_doc_parity_specs) == 6
+
+
+def test_manifest_loader_reads_cluster_manifest_contract(tmp_path: Path) -> None:
+    _create_minimal_repo(tmp_path, "cluster")
+
+    spec = load_workflow_spec(tmp_path, "cluster")
+
+    assert spec.key == "cluster"
+    assert spec.title == "Cluster-enabled narrated workflow"
+    assert any(item.component == "Cluster template library" for item in spec.cross_cutting_specs)
+    assert any(item.component == "Creative directive contract" for item in spec.cross_cutting_specs)
+    assert len(spec.dry_run_steps) == 3
+    assert spec.dry_run_steps[1].kind == "sequence"
+    assert len(spec.sequence_doc_parity_specs) == 2
 
 
 def test_manifest_loader_rejects_missing_title(tmp_path: Path) -> None:
@@ -708,6 +781,29 @@ def test_motion_dry_run_preview_adds_marcus_motion_sequence(tmp_path: Path) -> N
     assert "Validated 6 sequence-doc checkpoint(s)" in parity_row["evidence"]
 
 
+def test_cluster_dry_run_preview_adds_cluster_sequence(tmp_path: Path) -> None:
+    _create_minimal_repo(tmp_path, "cluster")
+
+    report = build_report(root=tmp_path, workflow="cluster", dry_run=True)
+    markdown = render_markdown(report)
+
+    assert report["dry_run"]["summary"] == {"planned": 3, "passed": 3, "blocked": 0}
+    assert "## Dry Run Plan" in markdown
+    assert "## Dry Run Results" in markdown
+    sequence_row = next(
+        row for row in report["dry_run"]["results"] if row["step"] == "Marcus workflow sequence preview"
+    )
+    assert sequence_row["result"] == "Pass"
+    assert "clustered-narrated-deck-video-export:" in sequence_row["evidence"]
+    assert "cluster-plan" in sequence_row["evidence"]
+    assert "cluster-coherence" in sequence_row["evidence"]
+    parity_row = next(
+        row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
+    )
+    assert parity_row["result"] == "Pass"
+    assert "Validated 2 sequence-doc checkpoint(s)" in parity_row["evidence"]
+
+
 def test_motion_dry_run_blocks_when_marcus_plan_resolution_fails(tmp_path: Path) -> None:
     _create_minimal_repo(tmp_path, "motion")
     (tmp_path / "skills" / "bmad-agent-marcus" / "references" / "workflow-templates.yaml").unlink()
@@ -763,6 +859,17 @@ def test_cli_accepts_motion_dry_run_cleanly(tmp_path: Path, capsys) -> None:
     assert exit_code == 0
     assert "Wrote structural walk report to" in captured.out
     assert "Workflow: motion | Overall status: READY" in captured.out
+
+
+def test_cli_accepts_cluster_dry_run_cleanly(tmp_path: Path, capsys) -> None:
+    _create_minimal_repo(tmp_path, "cluster")
+
+    exit_code = structural_main(["--root", str(tmp_path), "--workflow", "cluster", "--dry-run"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Wrote structural walk report to" in captured.out
+    assert "Workflow: cluster | Overall status: READY" in captured.out
 
 
 def test_canonical_cli_default_path_omits_live_probes(tmp_path: Path) -> None:

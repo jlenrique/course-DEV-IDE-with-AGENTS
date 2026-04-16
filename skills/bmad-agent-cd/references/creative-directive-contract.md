@@ -13,6 +13,14 @@ narration_profile_controls:
   narrator_source_authority: string
   slide_content_density: string
   elaboration_budget: string
+  connective_weight: string
+  callback_frequency: string
+  visual_narration_coupling: string
+  rhetorical_richness: string
+  vocabulary_register: string
+  arc_awareness: string
+  narrative_tension: string
+  emotional_coloring: string
 creative_rationale: string
 ```
 
@@ -25,6 +33,7 @@ creative_rationale: string
 2. Each proportion must be numeric and in `[0, 1]`.
 3. Proportions must sum to `1.0` within tolerance `±0.001`.
 4. `experience_profile` maps to a profile target in `state/config/experience-profiles.yaml`.
-5. Unknown top-level keys are disallowed for v1.0.
+5. `narration_profile_controls` must include the full 11-key Wave 2B control surface with valid enum values.
+6. Unknown top-level keys are disallowed for v1.0.
 
 Machine enforcement is provided by `scripts/utilities/creative_directive_validator.py`.

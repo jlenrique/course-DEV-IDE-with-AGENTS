@@ -44,7 +44,7 @@ These specialists are guidance-only (manual-tool pattern): no API runtime, no wo
 
 | Skill | Path | Purpose | Status |
 |-------|------|---------|--------|
-| **Creative Director (CD)** | `skills/bmad-agent-cd/` | Contract-first creative directive generation scaffolding for Wave 2B (`slide_mode_proportions`, experience-profile targets, directive contract refs) | Active (in-progress story track) |
+| **Creative Director (CD)** | `skills/bmad-agent-cd/` | Contract-first creative directive generation scaffolding for Wave 2B (`slide_mode_proportions`, experience-profile targets, directive contract refs) | Active |
 | **Desmond** | `skills/bmad-agent-desmond/` | Descript finishing: assembly-handoff instructions, doc cache refresh, mandatory **Automation Advisory** (REST vs MCP vs manual); sanctum `_bmad/memory/bmad-agent-desmond/` (local) | Active |
 | **Pre-flight check** | `skills/pre-flight-check/` | MCP/API/doc-sources connectivity verification before production runs | Active |
 | **Woodshed** | `skills/woodshed/` | Exemplar-driven agent skill development — study, reproduce, compare, reflect, regress (faithful + creative modes) | Active |

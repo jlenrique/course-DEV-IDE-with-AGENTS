@@ -121,6 +121,51 @@ criteria:
     check: "Every segment with cluster_role == head has a non-empty master_behavioral_intent string"
     requires_perception: false
 
+  - id: "G1.5-15"
+    name: "Expansion compliance"
+    description: >-
+      Cluster plan respects the experience profile's cluster_expansion
+      constraints (avg_interstitials, singleton_ratio, interstitial_range).
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: >-
+      Mean interstitials per cluster is within ±0.5 of the profile's
+      avg_interstitials; singleton fraction does not exceed the profile's
+      singleton_ratio + 0.10.
+    requires_perception: false
+    config_refs:
+      - "state/config/experience-profiles.yaml"
+
+  - id: "G1.5-16"
+    name: "Cluster balance"
+    description: >-
+      No single cluster consumes more than 40% of total parent slides unless
+      the lesson has fewer than 5 parent slides.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: deterministic
+    check: >-
+      For lessons with >= 5 parent slides, max cluster size / parent_slide_count
+      <= 0.40. Lessons with < 5 parents are exempt.
+    requires_perception: false
+
+  - id: "G1.5-17"
+    name: "Runtime fit"
+    description: >-
+      Estimated total slides (parent × expansion factor) multiplied by
+      avg_slide_seconds must not exceed target_total_runtime_minutes × 60
+      by more than 5%.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    check: >-
+      estimated_total_slides × avg_slide_seconds <=
+      target_total_runtime_minutes × 60 × 1.05.
+    requires_perception: false
+    config_refs:
+      - "state/config/experience-profiles.yaml"
+
   - id: "G1.5-12"
     name: "non-clustered segments untouched"
     description: "Segments with cluster_role == null have no cluster metadata set"

@@ -32,6 +32,14 @@ narration_profile_controls:
     - narrator_source_authority
     - slide_content_density
     - elaboration_budget
+    - connective_weight
+    - callback_frequency
+    - visual_narration_coupling
+    - rhetorical_richness
+    - vocabulary_register
+    - arc_awareness
+    - narrative_tension
+    - emotional_coloring
   allowed_values:
     narrator_source_authority:
       - source-grounded
@@ -45,3 +53,35 @@ narration_profile_controls:
       - low
       - medium
       - high
+    connective_weight:
+      - light
+      - balanced
+      - heavy
+    callback_frequency:
+      - sparse
+      - moderate
+      - frequent
+    visual_narration_coupling:
+      - loose
+      - balanced
+      - tight
+    rhetorical_richness:
+      - restrained
+      - balanced
+      - expressive
+    vocabulary_register:
+      - accessible
+      - professional
+      - specialist
+    arc_awareness:
+      - low
+      - medium
+      - high
+    narrative_tension:
+      - low
+      - medium
+      - high
+    emotional_coloring:
+      - neutral
+      - warm
+      - vivid

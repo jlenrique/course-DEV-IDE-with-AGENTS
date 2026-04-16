@@ -11,6 +11,7 @@ Purpose: compact high-signal context for production operations sessions. Use thi
   - `narrated-lesson-with-video-or-animation` for motion-enabled narrated runs
 - `DOUBLE_DISPATCH` is an optional Gary-stage branch inside either workflow, not a third workflow family.
 - `CLUSTER_DENSITY` is an optional run constant; when non-`none`, enables G1.5 Cluster Plan gate and cluster dispatch sequencing.
+- `EXPERIENCE_PROFILE` is an optional run constant; when set, Marcus must resolve it through the Creative Director contract path before specialist delegation.
 - `structural_walk` is the canonical structural readiness check.
 
 ## Canonical Control Docs
@@ -38,7 +39,8 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 - Storyboard A is required after Gary dispatch and before Gate 2 approval.
 - If `DOUBLE_DISPATCH` is enabled, the workflow must collapse to a winner deck before Irene Pass 2 or motion planning.
 - If `MOTION_ENABLED` is enabled, Gate 2M and Motion Gate must both close before Irene Pass 2.
-- If `CLUSTER_DENSITY` is non-`none`, G1.5 (Cluster Plan Validation) must pass before cluster dispatch and G2.5 (Cluster Coherence Validation) must pass before Irene Pass 2.
+- If `CLUSTER_DENSITY` is non-`none`, G1.5 (Cluster Plan Validation) must pass before cluster dispatch, and G2.5 (Cluster Coherence Validation) must pass after Gary cluster dispatch (G3) and before Storyboard A / HIL Gate 2.
+- If `EXPERIENCE_PROFILE` is set, Marcus must freeze the resolved `experience_profile` in `run-constants.yaml` and carry the resolved `narration_profile_controls` forward in the Pass 2 envelope before downstream narration work.
 - Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
 
 ## Canonical Commands

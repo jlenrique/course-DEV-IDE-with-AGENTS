@@ -19,8 +19,11 @@ narration_density:
   min_words_per_slide: 25      # breathing room for visual-heavy slides
   max_words_per_slide: 220     # cap on any single segment
   cluster_narration:
-    cluster_head_word_range: [80, 140]  # head slide establishes concept + arc
-    interstitial_word_range: [25, 40]   # interstitials stay terse and visual-led
+    # NOTE: These are defaults. When an experience profile is active, the
+    # profile's cluster_expansion.head_words and interstitial_words ranges
+    # take precedence. See state/config/experience-profiles.yaml.
+    cluster_head_word_range: [80, 140]  # head slide establishes concept + arc for the full cluster
+    interstitial_word_range: [25, 40]   # interstitials stay terse, isolation-targeted, and visual-led (roughly 70/30 visual-to-narration)
 
 # ---------------------------------------------------------------------------
 # 2. slide_echo — how much narration mirrors visible slide text
@@ -93,7 +96,7 @@ pedagogical_bridging:
   bridge_frequency_scale: moderate
   within_cluster_bridge_policy:
     default: none              # suppress spoken bridges inside clusters by default
-    tension_position_override: pivot
+    tension_position_override: pivot  # reserved for tension interstitials that need a brief tonal turn ("but", "however", "yet")
   cluster_boundary_bridge_style:
     mode: synthesis_plus_forward_pull
     target_seconds: [15, 20]
@@ -214,6 +217,7 @@ runtime_variability:
       - intro
       - outro
       - both
+      - pivot
       - cluster_boundary
 
 # ---------------------------------------------------------------------------

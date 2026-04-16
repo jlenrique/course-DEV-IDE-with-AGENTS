@@ -34,6 +34,14 @@ cross_cutting:
     path: skills/bmad-agent-content-creator/scripts/manifest_visual_enrichment.py
   - component: Motion perception contract
     path: skills/bmad-agent-content-creator/scripts/perception_contract.py
+  - component: Creative directive contract
+    path: skills/bmad-agent-cd/references/creative-directive-contract.md
+  - component: Experience profiles registry
+    path: state/config/experience-profiles.yaml
+    check_mode: yaml
+  - component: Parameter registry schema
+    path: state/config/parameter-registry-schema.yaml
+    check_mode: yaml
 anti_drift:
   - name: Literal-visual payload rules in artifacts contract
     path: docs/workflow/trial-run-pass2-artifacts-contract.md
@@ -70,6 +78,11 @@ anti_drift:
       - "### 7D. Prompt 7D: Gate 2M Motion Designation"
       - "### 7F. Prompt 7F: Motion Gate"
     ordered: true
+  - name: Operations context experience-profile invariant
+    path: docs/operations-context.md
+    needles:
+      - "EXPERIENCE_PROFILE"
+      - "narration_profile_controls"
 sequence_doc_parity:
   - stage: storyboard
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md

@@ -1,7 +1,7 @@
 ---
 title: Operator Script v4.2 - Irene A/B Tuning Loop
 status: active
-updated: 2026-04-12
+updated: 2026-04-15
 ---
 
 # Operator Script v4.2 - Irene A/B Tuning Loop
@@ -42,7 +42,7 @@ Artifact naming convention for each loop:
 
 Operator to Marcus (copy/paste):
 
-`Marcus, start Prompt 5C.0 for RUN_ID [RUN_ID], LOOP_ID [LOOP_ID]. Lock canonical inputs from [BUNDLE_PATH]: irene-packet.md, source bundle artifacts, operator-directives.md, and run-constants.yaml. Confirm both A and B will use identical locked inputs except approved tuning deltas for template selection and content-signal weighting. Write a loop-lock receipt to [BUNDLE_PATH]/ab-comparison/loop-[LOOP_ID]/loop-lock-receipt.json including PROFILE_A_ID, PROFILE_B_ID, DELTA_HYPOTHESIS, MAX_LOOPS, and pass2_mode (set to "structural-coherence-check" until Epic 23 story 23-1 is implemented). Stop and wait for GO.`
+`Marcus, start Prompt 5C.0 for RUN_ID [RUN_ID], LOOP_ID [LOOP_ID]. Lock canonical inputs from [BUNDLE_PATH]: irene-packet.md, source bundle artifacts, operator-directives.md, and run-constants.yaml. Confirm both A and B will use identical locked inputs except approved tuning deltas for template selection and content-signal weighting. Write a loop-lock receipt to [BUNDLE_PATH]/ab-comparison/loop-[LOOP_ID]/loop-lock-receipt.json including PROFILE_A_ID, PROFILE_B_ID, DELTA_HYPOTHESIS, MAX_LOOPS, and pass2_mode (set to "cluster-aware-refinement" for Epic 23-capable Pass 2 runs). Stop and wait for GO.`
 
 Required write:
 - `[BUNDLE_PATH]/ab-comparison/loop-[LOOP_ID]/loop-lock-receipt.json`
@@ -103,12 +103,13 @@ Gate rule:
 
 ## Prompt 5C.4 - HIL Judgment Pass (Pass 1 Quality + Intent)
 
-> **HIL Reviewer Guidance (while pass2_mode = structural-coherence-check):**
-> Your decision must be based on **Pass 1 evidence only**: template choices, cluster plan
-> structure, narrative arc coherence, pacing rhythm, and gate receipts. If you have also
-> run the optional Pass 2 confirmation, that output is **indicative, not evaluative** —
-> do not let Pass 2 narration quality drive your PROMOTE/ITERATE decision. Pass 2 is
-> currently cluster-blind for narration and will change substantially when Epic 23 ships.
+> **HIL Reviewer Guidance (for `pass2_mode: cluster-aware-refinement`):**
+> Start with **Pass 1 evidence**: template choices, cluster plan structure, narrative arc coherence,
+> pacing rhythm, and gate receipts. If you also run the optional Pass 2 confirmation, treat it as
+> valid evaluative evidence for cluster-aware narration quality: head vs interstitial calibration,
+> within-cluster bridge suppression, tension pivots, cluster-boundary seams, behavioral-intent
+> coherence, and visual grounding. Do not let cosmetic prose preference outweigh structural or gate
+> evidence, but Pass 2 is now a legitimate refinement signal rather than a non-evaluative placeholder.
 
 Operator to Marcus (copy/paste):
 
@@ -180,24 +181,16 @@ Use this quick self-check each loop:
 
 ---
 
-## Optional Pass 2 Structural-Coherence-Check (After Winner Promotion)
+## Optional Pass 2 Cluster-Aware Confirmation (After Winner Promotion)
 
-> **SCOPE LIMITATION (remove when Epic 23 story 23-1 ships):**
-> Pass 2 operates in `structural-coherence-check` mode. Epic 23 cluster-aware narration
-> (stories 23-1, 23-2, 23-3) is NOT yet implemented. Pass 2 is cluster-blind for narration
-> generation. This means:
->
-> - Pass 2 output is **indicative of structural integrity, not narration quality**.
-> - **Do NOT let Pass 2 narration quality influence PROMOTE/ITERATE decisions** in the A/B loop.
->   The A/B winner must be selected on Pass 1 evidence only (template choices, cluster plans,
->   gate receipts, structural coherence).
-> - Pass 2 quality metrics in the evaluator scoring must be **zeroed or excluded** until 23-1 is live.
-> - All trial receipts (loop-lock, gate, closure) must include the field:
->   `pass2_mode: structural-coherence-check`
->   so these bounded-scope trials are distinguishable from future full-signal trials.
+> **Current scope:**
+> Pass 2 operates in `cluster-aware-refinement` mode. Use it to confirm that the promoted Pass 1
+> candidate also produces the right narration behavior once Irene sees the approved cluster visuals.
+> All trial receipts (loop-lock, gate, closure) should preserve:
+> `pass2_mode: cluster-aware-refinement`
+> so these runs are distinguishable from older structural-only trial history.
 
 Run this only after winner promotion from Prompt 5C.6:
 - Continue normal flow through Prompts 6-8 using the promoted Pass 1 output.
-- Pass 2 confirmation checks structural coherence only: does the handoff succeed? Does the manifest parse? Are cluster fields populated?
-- Do NOT evaluate narration word ranges, bridge cadence, or behavioral intent alignment — those checks require Epic 23.
+- Pass 2 confirmation should evaluate cluster-aware narration behavior as well as structural coherence: does the handoff succeed, does the manifest parse, are cluster fields populated, do head/interstitial word ranges hold, are within-cluster bridges suppressed except for tension pivots, do cluster seams use `cluster_boundary`, and does segment intent stay subordinate to cluster intent?
 - For structural checks, you may use `skills/bmad-agent-marcus/scripts/evaluate_cluster_template_selection.py` against prior baseline and current candidate bundles.

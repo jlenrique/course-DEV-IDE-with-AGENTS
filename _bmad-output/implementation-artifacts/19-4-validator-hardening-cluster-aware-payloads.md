@@ -1,7 +1,7 @@
 # Story 19-4: Validator Hardening for Cluster-Aware Payloads
 
 **Epic:** 19 - Cluster Schema & Manifest Foundation
-**Status:** review
+**Status:** done
 **Sprint key:** `19-4-validator-hardening-cluster-aware-payloads`
 **Added:** 2026-04-11
 **Validated:** 2026-04-11
@@ -167,7 +167,32 @@ claude-opus-4-6[1m]
 
 ## Status
 
-review
+done
+
+## Adversarial Review (BMAD) — re-review session
+
+### Blind Hunter
+- Re-checked `validate-gary-dispatch-ready.py` double-dispatch path: `expected_count_by_card` branches on `double_dispatch_eligible is False` → count 1, else 2; satisfies AC dispatch clause.
+- Re-checked `validate-irene-pass2-handoff.py`: interstitial segments require non-empty `cluster_id` and `timing_role`; interstitial slide IDs excluded from unauthorized-storyboard unknown-id set per AC.
+
+### Edge Case Hunter
+- Interstitial metadata validated even when other segment fields vary; cardinality logic does not assume all cards appear twice in double-dispatch mode.
+
+### Acceptance Auditor
+- Story ACs mapped to implementation; no additional code change required in this session.
+
+Review closed: 2026-04-15 (BMAD re-review).
+
+## BMAD tracking closure
+
+**Framework:** Per `sprint-status.yaml` — **`done`** = ACs met + agreed verification green + layered BMAD review complete (findings remediated or waived) + this sprint key set to `done`.
+
+| Check | State |
+|-------|--------|
+| Story ACs | Met (dispatch cardinality + pass2 interstitials + backward compatibility) |
+| Verification | Story test / regression evidence; full suite per project gates |
+| Formal BMAD | Complete — section **Adversarial Review (BMAD) — re-review session** above |
+| **`sprint-status.yaml`** | **`19-4-validator-hardening-cluster-aware-payloads`: `done`** (reconciled 2026-04-15) |
 
 ## Change Log
 

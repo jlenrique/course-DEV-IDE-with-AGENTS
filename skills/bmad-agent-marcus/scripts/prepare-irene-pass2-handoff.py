@@ -136,10 +136,10 @@ def _load_runtime_plan(bundle_dir: Path, irene_pass1_path: Path) -> dict[str, An
         run_constants = _load_yaml_object(run_constants_path)
 
     runtime_plan: dict[str, Any] = {
-        "locked_slide_count": run_constants.get("locked_slide_count"),
+        "parent_slide_count": run_constants.get("parent_slide_count"),
         "target_total_runtime_minutes": run_constants.get("target_total_runtime_minutes"),
-        "slide_runtime_average_seconds": run_constants.get("slide_runtime_average_seconds"),
-        "slide_runtime_variability_scale": run_constants.get("slide_runtime_variability_scale"),
+        "estimated_total_slides": run_constants.get("estimated_total_slides"),
+        "avg_slide_seconds": run_constants.get("avg_slide_seconds"),
     }
     if irene_pass1_path.is_file():
         per_slide_targets = _parse_runtime_budget_rows(irene_pass1_path)

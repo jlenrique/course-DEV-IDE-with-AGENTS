@@ -7,6 +7,9 @@ and upcoming milestones relative to the full development plan.
 Usage:
     .venv/Scripts/python -m scripts.utilities.progress_map
     .venv/Scripts/python -m scripts.utilities.progress_map --json
+
+Text reports are also written to ``reports/progress-map-latest.txt`` (gitignored
+``reports/`` folder) unless ``--no-latest-file`` is set.
 """
 
 from __future__ import annotations
@@ -29,6 +32,7 @@ from scripts.utilities.file_helpers import project_root
 # ---------------------------------------------------------------------------
 
 ROOT = project_root()
+LATEST_TEXT_REPORT = ROOT / "reports" / "progress-map-latest.txt"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
 SESSION_HANDOFF = ROOT / "SESSION-HANDOFF.md"
 NEXT_SESSION = ROOT / "next-session-start-here.md"
@@ -37,12 +41,21 @@ NEXT_SESSION = ROOT / "next-session-start-here.md"
 # Status classification
 # ---------------------------------------------------------------------------
 
-DONE_STATUSES = {"done", "review"}  # review treated as effectively done
-ACTIVE_STATUSES = {"in-progress", "ready-for-dev"}
+DONE_STATUSES = {"done"}
+REVIEW_STATUSES = {"review"}
+IN_PROGRESS_STATUSES = {"in-progress"}
+READY_STATUSES = {"ready-for-dev"}
+ACTIVE_STATUSES = IN_PROGRESS_STATUSES | READY_STATUSES | REVIEW_STATUSES
 DEFERRED_STATUSES = {"deferred"}
 BACKLOG_STATUSES = {"backlog"}
 
-ALL_KNOWN_STATUSES = DONE_STATUSES | ACTIVE_STATUSES | DEFERRED_STATUSES | BACKLOG_STATUSES
+ALL_KNOWN_STATUSES = (
+    DONE_STATUSES
+    | REVIEW_STATUSES
+    | ACTIVE_STATUSES
+    | DEFERRED_STATUSES
+    | BACKLOG_STATUSES
+)
 
 WAVE_LABELS: dict[str, str] = {
     "1": "Repository & Agent Infrastructure",
@@ -230,6 +243,22 @@ def qualify_sources() -> dict[str, Any]:
     all_findings.extend(_qualify_markdown(
         NEXT_SESSION, ["Immediate Next Action", "Key Risks / Unresolved Issues"]))
 
+    handoff_next = _extract_section(SESSION_HANDOFF, "What Is Next")
+    next_action = _extract_section(NEXT_SESSION, "Immediate Next Action")
+    if handoff_next and next_action:
+        handoff_norm = " ".join(handoff_next.split())
+        next_norm = " ".join(next_action.split())
+        if handoff_norm != next_norm:
+            all_findings.append({
+                "source": f"{SESSION_HANDOFF.name} | {NEXT_SESSION.name}",
+                "level": "warn",
+                "check": "next_step_conflict",
+                "message": (
+                    "Next-step guidance differs across handoff files; "
+                    "next-session-start-here.md should be treated as authoritative."
+                ),
+            })
+
     errors = [f for f in all_findings if f["level"] == "error"]
     warnings = [f for f in all_findings if f["level"] == "warn"]
 
@@ -295,9 +324,9 @@ def _parse_epics(data: dict[str, Any]) -> list[dict[str, Any]]:
 def _classify_epic(epic: dict[str, Any]) -> str:
     """Return a classification bucket: done / active / deferred / backlog."""
     status = epic["status"]
-    if status in DONE_STATUSES:
-        return "done"
     stories = epic["stories"]
+    if status in DONE_STATUSES and all(s in DONE_STATUSES for s in stories.values()):
+        return "done"
     if all(s in DEFERRED_STATUSES | BACKLOG_STATUSES for s in stories.values()):
         if all(s in BACKLOG_STATUSES for s in stories.values()):
             return "backlog"
@@ -306,12 +335,24 @@ def _classify_epic(epic: dict[str, Any]) -> str:
 
 
 def _story_counts(epic: dict[str, Any]) -> dict[str, int]:
-    counts: dict[str, int] = {"done": 0, "active": 0, "deferred": 0, "backlog": 0, "unknown": 0}
+    counts: dict[str, int] = {
+        "done": 0,
+        "review": 0,
+        "in_progress": 0,
+        "ready": 0,
+        "deferred": 0,
+        "backlog": 0,
+        "unknown": 0,
+    }
     for val in epic["stories"].values():
         if val in DONE_STATUSES:
             counts["done"] += 1
-        elif val in ACTIVE_STATUSES:
-            counts["active"] += 1
+        elif val in REVIEW_STATUSES:
+            counts["review"] += 1
+        elif val in IN_PROGRESS_STATUSES:
+            counts["in_progress"] += 1
+        elif val in READY_STATUSES:
+            counts["ready"] += 1
         elif val in DEFERRED_STATUSES:
             counts["deferred"] += 1
         elif val in BACKLOG_STATUSES:
@@ -341,6 +382,14 @@ def _extract_last_updated(data: dict[str, Any]) -> str:
     return str(raw).split("#")[0].strip() if raw else "unknown"
 
 
+def _file_timestamp(filepath: Path) -> str | None:
+    if not filepath.exists():
+        return None
+    return datetime.fromtimestamp(filepath.stat().st_mtime, tz=timezone.utc).replace(
+        microsecond=0
+    ).isoformat()
+
+
 # ---------------------------------------------------------------------------
 # Report assembly
 # ---------------------------------------------------------------------------
@@ -357,12 +406,15 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     # Buckets
     done_epics = [e for e in epics if _classify_epic(e) == "done"]
     active_epics = [e for e in epics if _classify_epic(e) == "active"]
-    backlog_epics = [e for e in epics if _classify_epic(e) in ("backlog", "deferred")]
+    deferred_epics = [e for e in epics if _classify_epic(e) == "deferred"]
+    backlog_epics = [e for e in epics if _classify_epic(e) == "backlog"]
 
     # Totals
     total_stories = sum(len(e["stories"]) for e in epics)
     done_stories = sum(_story_counts(e)["done"] for e in epics)
-    active_stories = sum(_story_counts(e)["active"] for e in epics)
+    review_stories = sum(_story_counts(e)["review"] for e in epics)
+    in_progress_stories = sum(_story_counts(e)["in_progress"] for e in epics)
+    ready_stories = sum(_story_counts(e)["ready"] for e in epics)
     deferred_stories = sum(_story_counts(e)["deferred"] for e in epics)
     backlog_stories = sum(_story_counts(e)["backlog"] for e in epics)
 
@@ -370,19 +422,27 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     active_detail = []
     for e in active_epics:
         counts = _story_counts(e)
+        stories_in_review = [
+            k for k, v in e["stories"].items() if v == "review"
+        ]
         stories_in_progress = [
             k for k, v in e["stories"].items() if v == "in-progress"
         ]
         stories_ready = [
             k for k, v in e["stories"].items() if v == "ready-for-dev"
         ]
+        stories_deferred = [
+            k for k, v in e["stories"].items() if v == "deferred"
+        ]
         active_detail.append({
             "epic_id": e["id"],
             "label": e["label"],
             "status": e["status"],
             "counts": counts,
+            "in_review": stories_in_review,
             "in_progress": stories_in_progress,
             "ready_for_dev": stories_ready,
+            "deferred": stories_deferred,
         })
 
     # Context from markdown files
@@ -390,19 +450,37 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     immediate_action = _extract_section(NEXT_SESSION, "Immediate Next Action")
     unresolved = _extract_section(SESSION_HANDOFF, "Unresolved Issues")
     risks = _extract_section(NEXT_SESSION, "Key Risks / Unresolved Issues")
+    next_up = immediate_action or what_is_next
 
     report = {
         "generated": datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat(),
         "sprint_status_updated": last_updated,
+        "source_files": {
+            "sprint_status": {
+                "path": str(SPRINT_STATUS),
+                "file_modified": _file_timestamp(SPRINT_STATUS),
+            },
+            "session_handoff": {
+                "path": str(SESSION_HANDOFF),
+                "file_modified": _file_timestamp(SESSION_HANDOFF),
+            },
+            "next_session": {
+                "path": str(NEXT_SESSION),
+                "file_modified": _file_timestamp(NEXT_SESSION),
+            },
+        },
         "source_health": source_health,
         "summary": {
             "total_epics": len(epics),
             "done_epics": len(done_epics),
             "active_epics": len(active_epics),
+            "deferred_epics": len(deferred_epics),
             "backlog_epics": len(backlog_epics),
             "total_stories": total_stories,
             "done_stories": done_stories,
-            "active_stories": active_stories,
+            "review_stories": review_stories,
+            "in_progress_stories": in_progress_stories,
+            "ready_stories": ready_stories,
             "deferred_stories": deferred_stories,
             "backlog_stories": backlog_stories,
             "completion_pct": round(done_stories / total_stories * 100, 1) if total_stories else 0,
@@ -411,10 +489,18 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
             "active_epics": active_detail,
             "what_is_next": what_is_next,
             "immediate_action": immediate_action,
+            "next_up": next_up,
+            "next_up_source": "next-session-start-here.md" if immediate_action else (
+                "SESSION-HANDOFF.md" if what_is_next else ""
+            ),
         },
         "completed_epics": [
             {"id": e["id"], "label": e["label"], "stories": len(e["stories"])}
             for e in done_epics
+        ],
+        "deferred_epics": [
+            {"id": e["id"], "label": e["label"], "stories": len(e["stories"])}
+            for e in deferred_epics
         ],
         "backlog_epics": [
             {"id": e["id"], "label": e["label"], "stories": len(e["stories"])}
@@ -430,12 +516,12 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _bar(done: int, active: int, remaining: int, width: int = 40) -> str:
-    total = done + active + remaining
+def _bar(done: int, near_term: int, remaining: int, width: int = 40) -> str:
+    total = done + near_term + remaining
     if total == 0:
         return "[" + " " * width + "]"
     d = round(done / total * width)
-    a = round(active / total * width)
+    a = round(near_term / total * width)
     r = width - d - a
     return "[" + "█" * d + "▓" * a + "░" * r + "]"
 
@@ -453,7 +539,7 @@ def render_text(report: dict[str, Any]) -> str:
     # Source health badge
     verdict = sh["verdict"]
     if verdict == "CLEAN":
-        lines.append("  Sources: ✓ ALL CLEAN")
+        lines.append("  Sources: ✓ STRUCTURALLY CLEAN")
     elif verdict == "DEGRADED":
         lines.append(f"  Sources: ⚠ DEGRADED ({sh['warning_count']} warning(s))")
     else:
@@ -476,14 +562,21 @@ def render_text(report: dict[str, Any]) -> str:
     lines.append("")
 
     # Overall bar
-    bar = _bar(s["done_stories"], s["active_stories"],
-               s["deferred_stories"] + s["backlog_stories"])
+    near_term_stories = s["review_stories"] + s["in_progress_stories"] + s["ready_stories"]
+    bar = _bar(
+        s["done_stories"],
+        near_term_stories,
+        s["deferred_stories"] + s["backlog_stories"],
+    )
     lines.append(f"  Overall: {bar} {s['completion_pct']}%")
-    lines.append(f"  Stories: {s['done_stories']} done / {s['active_stories']} active"
-                 f" / {s['deferred_stories']} deferred / {s['backlog_stories']} backlog"
-                 f"  (total: {s['total_stories']})")
+    lines.append(
+        f"  Stories: {s['done_stories']} done / {s['review_stories']} review / "
+        f"{s['in_progress_stories']} in progress / {s['ready_stories']} ready / "
+        f"{s['deferred_stories']} deferred / {s['backlog_stories']} backlog"
+        f"  (total: {s['total_stories']})"
+    )
     lines.append(f"  Epics:   {s['done_epics']} done / {s['active_epics']} active"
-                 f" / {s['backlog_epics']} backlog"
+                 f" / {s['deferred_epics']} deferred / {s['backlog_epics']} backlog"
                  f"  (total: {s['total_epics']})")
     lines.append("")
 
@@ -502,35 +595,40 @@ def render_text(report: dict[str, Any]) -> str:
     for ad in report["you_are_here"]["active_epics"]:
         c = ad["counts"]
         total = sum(c.values())
-        bar = _bar(c["done"], c["active"], c["deferred"] + c["backlog"], width=20)
+        near_term = c["review"] + c["in_progress"] + c["ready"]
+        bar = _bar(c["done"], near_term, c["deferred"] + c["backlog"], width=20)
         lines.append(f"  Epic {ad['epic_id']:>4s}  {ad['label']}")
         lines.append(f"         {bar}  {c['done']}/{total} stories done")
+        if ad["in_review"]:
+            lines.append(f"         ▸ Review:      {', '.join(ad['in_review'])}")
         if ad["in_progress"]:
             lines.append(f"         ▸ In progress: {', '.join(ad['in_progress'])}")
         if ad["ready_for_dev"]:
             lines.append(f"         ▸ Ready:       {', '.join(ad['ready_for_dev'])}")
+        if ad["deferred"]:
+            lines.append(f"         ▸ Deferred:    {', '.join(ad['deferred'])}")
         lines.append("")
 
     # What is next
-    what_next = report["you_are_here"].get("what_is_next", "")
-    immediate = report["you_are_here"].get("immediate_action", "")
-    if what_next or immediate:
+    next_up = report["you_are_here"].get("next_up", "")
+    next_up_source = report["you_are_here"].get("next_up_source", "")
+    if next_up:
         lines.append("─" * 68)
         lines.append("  NEXT UP")
         lines.append("─" * 68)
-        if immediate:
-            for line in immediate.splitlines()[:12]:
-                lines.append(f"  {line}")
-        elif what_next:
-            for line in what_next.splitlines()[:8]:
-                lines.append(f"  {line}")
+        if next_up_source:
+            lines.append(f"  Source: {next_up_source}")
+        for line in next_up.splitlines()[:12]:
+            lines.append(f"  {line}")
         lines.append("")
 
-    # Backlog
-    if report["backlog_epics"]:
+    # Deferred / Backlog
+    if report["deferred_epics"] or report["backlog_epics"]:
         lines.append("─" * 68)
         lines.append("  HORIZON — Backlog & Deferred")
         lines.append("─" * 68)
+        for e in report["deferred_epics"]:
+            lines.append(f"  ○ Epic {e['id']:>4s}  {e['label']:<45s} ({e['stories']} stories, deferred)")
         for e in report["backlog_epics"]:
             lines.append(f"  ○ Epic {e['id']:>4s}  {e['label']:<45s} ({e['stories']} stories)")
         lines.append("")
@@ -566,6 +664,11 @@ def main(argv: list[str] | None = None) -> None:
         "--output", "-o", type=str, default=None,
         help="Write report to this file instead of stdout.",
     )
+    parser.add_argument(
+        "--no-latest-file",
+        action="store_true",
+        help="Do not write reports/progress-map-latest.txt (text mode only).",
+    )
     args = parser.parse_args(argv)
 
     report = build_report(json_mode=args.json_mode)
@@ -574,6 +677,10 @@ def main(argv: list[str] | None = None) -> None:
         text = json.dumps(report, indent=2, default=str)
     else:
         text = render_text(report)
+
+    if not args.json_mode and not args.no_latest_file:
+        LATEST_TEXT_REPORT.parent.mkdir(parents=True, exist_ok=True)
+        LATEST_TEXT_REPORT.write_text(text, encoding="utf-8")
 
     if args.output:
         out = Path(args.output)

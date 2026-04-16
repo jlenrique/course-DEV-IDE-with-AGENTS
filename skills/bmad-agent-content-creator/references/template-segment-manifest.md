@@ -38,8 +38,8 @@ segments:
     dwell: float | null  # seconds to hold after narration ends before transition (default 0.0)
     cluster_gap: float | null  # extra inter-segment spacing at cluster boundaries (default 0.0)
     transition_buffer: float | null  # minimum transition safety buffer in seconds (default 0.0)
-    bridge_type: enum | null  # none | intro | outro | both | cluster_boundary
-    behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
+    bridge_type: enum | null  # none | intro | outro | both | pivot | cluster_boundary
+    behavioral_intent: string | null  # intended learner effect; when clustered it must serve master_behavioral_intent
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
     visual_mode: enum       # static-hold | video | text-frame | pause-beat
@@ -369,7 +369,7 @@ All cluster fields are additive and nullable. Existing manifests remain valid wi
   transition_in: none
   transition_out: cross-dissolve
 ```
-*Note: Cluster head establishes the topic; interstitials progressively disclose elements without introducing new concepts.*
+*Note: Cluster head establishes the topic; interstitials progressively disclose elements without introducing new concepts outside the head segment's instructional scope.*
 
 ---
 
@@ -421,10 +421,13 @@ Quinn-R interpretation note:
 - Produce the manifest in the same task as the narration script — they are always paired
 - Segment IDs must match `[SEGMENT: seg-XX]` markers in the narration script exactly
 - `behavioral_intent` should be concise and action-guiding, not literary. Think "credible", "urgent", "attention-reset", "reflective", not long prose.
+- In clustered runs, process segments in `cluster_id` order so the head slide establishes the frame before any interstitials elaborate it.
+- In clustered runs, `behavioral_intent` must serve `master_behavioral_intent`; interstitials may modulate intensity but must not contradict the cluster's affective direction.
 - `timing_role`, `content_density`, and `visual_detail_load` should explain why this slide deserves its runtime.
 - `duration_rationale` must reference at least two of: pedagogical purpose, concept/detail load, visual burden.
 - Use `bridge_type` sparingly but intentionally; it exists to enforce occasional connective tissue, not repetitive transition clutter.
-- In clustered runs, use `cluster_boundary` on the head slide that opens a new cluster after a prior cluster; keep within-cluster interstitials at `none` unless a tension beat earns a brief pivot.
+- In clustered runs, use `cluster_boundary` on the head slide that opens a new cluster after a prior cluster; keep within-cluster interstitials at `none` unless a tension beat earns `bridge_type: pivot`.
+- In clustered runs, interstitial narration should stay short, isolation-targeted, and bounded by the head segment's source-backed concept envelope.
 - Do not make neighboring slides different lengths just to create variety. Runtime variance should come from content burden and rhetorical function.
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment

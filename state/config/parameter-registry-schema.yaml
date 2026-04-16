@@ -379,6 +379,7 @@ entries:
       - intro
       - outro
       - both
+      - pivot
       - cluster_boundary
     status: implemented
     source: skills/bmad-agent-content-creator/references/template-segment-manifest.md

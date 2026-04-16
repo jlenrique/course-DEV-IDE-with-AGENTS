@@ -130,6 +130,69 @@ segments:
 """
 
 
+def _cluster_storyboard_b_manifest_yaml() -> str:
+    return """
+segments:
+  - id: seg-01
+    gary_slide_id: s-1
+    cluster_id: c1
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: "From confusion to clarity"
+    cluster_interstitial_count: 1
+    narration_text: "This opening narration establishes the problem, names the core misconception, and prepares the learner for the cluster transition ahead."
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: "Head segment sets the cluster frame."
+    bridge_type: cluster_boundary
+    behavioral_intent: credible
+    master_behavioral_intent: credible
+  - id: seg-02
+    gary_slide_id: s-2
+    cluster_id: c1
+    cluster_role: interstitial
+    cluster_position: develop
+    develop_type: reframe
+    parent_slide_id: s-1
+    interstitial_type: emphasis-shift
+    isolation_target: Reframed concept
+    narrative_arc: "From confusion to clarity"
+    narration_text: "This bridge sharpens attention by reframing the example and landing on a more alarming interpretation for contrast."
+    timing_role: bridge
+    content_density: high
+    visual_detail_load: medium
+    duration_rationale: "Interstitial narrows focus before the next concept."
+    bridge_type: none
+    behavioral_intent: moving
+    master_behavioral_intent: credible
+  - id: seg-03
+    gary_slide_id: s-3
+    narration_text: "Standalone recap without cluster grouping."
+    timing_role: close
+    content_density: low
+    visual_detail_load: low
+    duration_rationale: "Flat slide remains outside the cluster."
+    bridge_type: none
+    behavioral_intent: credible
+"""
+
+
+def _flat_storyboard_b_manifest_yaml() -> str:
+    return """
+segments:
+  - id: seg-01
+    gary_slide_id: m1-c1
+    narration_text: "Flat storyboard narration for a non-clustered slide."
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: "Flat storyboard regression coverage."
+    bridge_type: none
+    behavioral_intent: credible
+"""
+
+
 def _write_test_png(path: Path, *, size: tuple[int, int] = (12, 6)) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", size, color=(10, 90, 160)).save(path, format="PNG")
@@ -767,6 +830,63 @@ def test_storyboard_a_cluster_view_is_additive_and_opt_in_for_coherence_report(t
     assert 'slide-card--coherence-fail' in html
 
 
+def test_storyboard_b_cluster_view_surfaces_script_context_and_transition_metadata(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    _write_test_png(slides / "s2.png")
+    _write_test_png(slides / "s3.png")
+    payload = _clustered_payload()
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    manifest_yaml = bundle / "segment-manifest.yaml"
+    manifest_yaml.write_text(_cluster_storyboard_b_manifest_yaml(), encoding="utf-8")
+
+    storyboard_policy_meta = {
+        "script_policy": {"narration_density": {"target_wpm": 150}},
+        "voice_direction_defaults": {
+            "emotional_variability": 0.45,
+            "pace_variability": 0.05,
+        },
+    }
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+        storyboard_policy_meta=storyboard_policy_meta,
+    )
+
+    assert manifest["checkpoint_label"] == "Storyboard B"
+    assert manifest["cluster_groups"][0]["master_behavioral_intent"] == "credible"
+
+    html = mod.render_index_html(manifest)
+
+    assert 'data-role="cluster-group"' in html
+    assert "Cluster timing summary" in html
+    assert "Master credible" in html
+    assert "@150 WPM 14.4s" in html
+    assert "Intent mismatches 1" in html
+    assert "Emotional variability</dt><dd>0.45" in html
+    assert "Pace variability</dt><dd>0.05" in html
+    assert "19 words" in html
+    assert "17 words" in html
+    assert "14.4s at 150 WPM across 36 words." in html
+    assert "Cluster-boundary transition" in html
+    assert "Within-cluster transition" in html
+    assert "intent mismatch" in html
+    assert "does not serve cluster master" in html
+    assert 'script-text--cluster-head' in html
+    assert 'script-text--cluster-interstitial' in html
+    assert '.cluster-storyboard-b-summary' in html
+    assert '.transition-divider--boundary' in html
+    assert '.behavioral-intent-warning' in html
+
+
 def test_flat_storyboard_html_remains_without_cluster_controls(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
@@ -788,6 +908,51 @@ def test_flat_storyboard_html_remains_without_cluster_controls(tmp_path: Path) -
     assert '<details class="cluster-group"' not in html
     assert "Expand all clusters" not in html
     assert "Collapse all clusters" not in html
+
+
+def test_non_clustered_storyboard_b_remains_flat_without_cluster_controls(tmp_path: Path) -> None:
+    mod = _load_generate_module()
+    bundle = tmp_path / "bundle"
+    slides = bundle / "slides"
+    slides.mkdir(parents=True)
+    _write_test_png(slides / "s1.png")
+    payload = {
+        "gary_slide_output": [
+            {
+                "slide_id": "m1-c1",
+                "fidelity": "creative",
+                "card_number": 1,
+                "source_ref": "src-a",
+                "file_path": "slides/s1.png",
+            }
+        ]
+    }
+    payload_path = bundle / "dispatch.json"
+    payload_path.write_text(json.dumps(payload), encoding="utf-8")
+    manifest_yaml = bundle / "segment-manifest.yaml"
+    manifest_yaml.write_text(_flat_storyboard_b_manifest_yaml(), encoding="utf-8")
+
+    manifest = mod.build_manifest(
+        payload,
+        payload_path=payload_path,
+        storyboard_dir=bundle / "storyboard",
+        asset_base=bundle,
+        narration_by_slide_id=mod.load_narration_by_slide_id(manifest_yaml),
+        segment_manifest_path=manifest_yaml,
+    )
+
+    assert manifest["checkpoint_label"] == "Storyboard B"
+    assert manifest.get("cluster_groups", []) == []
+
+    html = mod.render_index_html(manifest)
+
+    assert "Storyboard B Review" in html
+    assert '<details class="cluster-group"' not in html
+    assert "Expand all clusters" not in html
+    assert "Collapse all clusters" not in html
+    assert "Cluster timing summary" not in html
+    assert '<div class="behavioral-intent-warning">' not in html
+    assert "Flat storyboard narration for a non-clustered slide." in html
 
 
 def test_cli_generate_strict_fails_on_missing(tmp_path: Path) -> None:

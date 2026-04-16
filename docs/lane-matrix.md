@@ -23,6 +23,7 @@ Rules:
 | Source-to-output fidelity | Vera | Omission/Invention/Alteration findings, source-ref traceability, cumulative drift signals, fidelity contract adherence | Quinn-R, Irene, producing specialists |
 | Quality standards | Quinn-R | Brand consistency, accessibility, instructional soundness, learner-effect intent fidelity, audio/composition quality | Vera, producing specialists |
 | Content accuracy (flag only) | Quinn-R | Detect potential medical accuracy concerns and escalate to human review; never adjudicate clinical correctness | All agents (adjudication) |
+| Creative frame and experience-profile authority | Creative Director (CD) | Experience profile resolution, `slide_mode_proportions` derivation, `narration_profile_controls` generation, creative directive artifact production, `creative_rationale` documentation | Marcus (execution), Irene (consumption), Gary, Vera, Quinn-R |
 | Platform deployment | Active platform specialist for the run* | Canvas/CourseArc/LMS execution details, platform-specific formatting and verification | Marcus, Irene, Vera, Quinn-R |
 | Literal-visual operator checkpoint governance | Marcus | Prompt 6B packet completeness, operator-ready confirmation, pre-dispatch confirmation before Gary side effects | Gary, Irene, Quinn-R |
 
@@ -46,6 +47,7 @@ Files that must explicitly include a `Lane Responsibility` section in this pipel
 - [x] `skills/bmad-agent-fidelity-assessor/SKILL.md`
 - [x] `skills/bmad-agent-quality-reviewer/SKILL.md`
 - [x] `skills/compositor/SKILL.md`
+- [x] `skills/bmad-agent-cd/SKILL.md`
 
 Reference files that must not leak lane ownership beyond their agent's lane:
 

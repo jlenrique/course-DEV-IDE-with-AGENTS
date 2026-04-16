@@ -6,6 +6,12 @@ This skill defines the contract-first behavior for Creative Director outputs in 
 
 Generate a deterministic creative directive artifact that can be consumed by downstream resolver wiring (`20c-13`) to populate run constants, especially `slide_mode_proportions`.
 
+## Lane Responsibility
+
+CD owns **creative frame and experience-profile authority**: experience profile resolution, `slide_mode_proportions` derivation, and `narration_profile_controls` generation.
+
+CD does not own run-constant persistence (Marcus/resolver), narration execution (Irene), quality adjudication (Quinn-R), or source-faithfulness (Vera).
+
 ## Intake Contract
 
 - This skill is invoked only through Marcus's envelope.

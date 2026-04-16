@@ -1,8 +1,8 @@
 # Parameter Directory
 
-Master reference for Wave 2B creative-control parameters.
+Master reference for creative-control parameters.
 
-This document is the canonical operator and agent-facing index for Story `20c-7` (Parameter Audit & Registry Schema). It catalogs current parameters across three families and identifies planned-but-not-yet-implemented keys needed by downstream stories (`20c-8` through `20c-14`).
+This document is the canonical operator and agent-facing index for parameter governance across the production pipeline. Originally created as part of Story `20c-7` (Parameter Audit & Registry Schema), it now reflects the complete Wave 2B parameter surface including Creative Director (CD) agent outputs, experience profiles, and the 11-key `narration_profile_controls` surface.
 
 ## How to Use This Directory
 
@@ -50,6 +50,10 @@ These parameters freeze run identity, execution mode, budget, and baseline routi
 | `schema_version` | integer | optional | implemented | `run_constants.py` |
 | `frozen_at_utc` | string | optional timestamp | implemented | `run_constants.py` |
 | `frozen_note` | string | optional | implemented | `run_constants.py` |
+| `parent_slide_count` | integer | 1-50, operator-confirmed | implemented | `slide_count_runtime_estimator.py` → `run-constants.yaml` |
+| `target_total_runtime_minutes` | float | 0.5-60, operator-confirmed | implemented | `slide_count_runtime_estimator.py` → `run-constants.yaml` |
+| `estimated_total_slides` | float | system-derived from profile | implemented | `slide_count_runtime_estimator.py` (parent × expansion factor) |
+| `avg_slide_seconds` | float | system-derived from profile | implemented | `slide_count_runtime_estimator.py` (target_runtime / estimated_total) |
 
 ## Family 2: Narration-Time (Irene + Voice Policy)
 
@@ -104,7 +108,7 @@ These parameters govern how narration and visuals are staged and synchronized in
 | `content_density` | enum/null | `light`, `medium`, `heavy` | implemented | `template-segment-manifest.md` |
 | `visual_detail_load` | enum/null | `light`, `medium`, `heavy` | implemented | `template-segment-manifest.md` |
 | `duration_rationale` | string/null | rationale text | implemented | `template-segment-manifest.md` |
-| `bridge_type` | enum/null | `none`, `intro`, `outro`, `both`, `cluster_boundary` | implemented | `template-segment-manifest.md` |
+| `bridge_type` | enum/null | `none`, `intro`, `outro`, `both`, `pivot`, `cluster_boundary` | implemented | `template-segment-manifest.md` |
 | `transition_in` | enum | `fade`, `cross-dissolve`, `cut`, `none` | implemented | `template-segment-manifest.md` |
 | `transition_out` | enum | `fade`, `cross-dissolve`, `cut`, `none` | implemented | `template-segment-manifest.md` |
 | `music` | enum/null | `duck`, `swell`, `out`, `continue`, `null` | implemented | `template-segment-manifest.md` |

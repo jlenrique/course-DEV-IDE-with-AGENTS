@@ -24,7 +24,8 @@ flowchart TD
     K --> L["G2.5 Cluster Coherence Validation (validation.yaml)"]
     L -- FAIL --> M[Interstitial Redispatch Protocol]
     M --> K
-    L -- PASS --> N[G4 Narration Script + Segment Manifest]
+    L -- PASS --> N0[HIL Gate 2 Storyboard A]
+    N0 --> N[G4 Narration Script + Segment Manifest]
     N --> O[HIL Gate 3 Storyboard B]
     O --> P[G5 Audio → G6 Composition → HIL Gate 4]
 ```
@@ -90,11 +91,10 @@ Full contract: `state/config/fidelity-contracts/g2.5-cluster-coherence.yaml`
 - **G4-11** Cluster word-range enforcement — clustered runs must satisfy cluster-specific word ranges and within-cluster bridge suppression rules
 - **G4-12** Cluster bridge-cadence — cadence prefers cluster seams (`bridge_type: cluster_boundary`); within-cluster bridges suppressed except explicit tension pivots
 
-**Planned (not yet in YAML):**
 - **G4-16** Cluster narration coherence — interstitials serve `master_behavioral_intent`
 - **G4-17** Interstitial word budget — 25–40 words; head: 80–140 words
 - **G4-18** No new concepts in interstitials — scoped to head's `source_ref`
-- **G4-19** Cluster arc integrity — establish → develop → tension → resolve progression
+- **G4-19** Cluster arc integrity — establish → tension → develop → resolve progression
 
 Source: `_bmad-output/planning-artifacts/epics-interstitial-clusters.md`
 

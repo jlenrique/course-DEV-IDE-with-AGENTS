@@ -1,13 +1,13 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-04-12 | **Project Phase:** Epics 1–14 complete; Wave 1 cluster features (Epics 19–24) complete (stories 20b-3, 22-1, 21-5 done, 158 tests green); prompt-pack family: v4.1 (standard), v4.2 (motion), v4.3 (cluster + interstitial)
+**Last Updated:** 2026-04-16 | **Project Phase:** Epics 1–14 complete; Waves 1–3 complete (Epics 19–21, 23); Wave 2B + `20c-15` estimator closed; `22-2` closed; prompt-pack family: v4.1 (standard), v4.2/v4.2f (motion + extraction guards), v4.3 (cluster + interstitial)
 
 ---
 
 ## Table of Contents
 
-> 2026-04-12 status: Epics 1–14 complete. Wave 1 cluster features (Epics 19–24) complete — cluster dispatch sequencing, cluster coherence validation, interstitial redispatch protocol, cluster prompt engineering all landed (stories 20b-3, 22-1, 21-5). The live narrated workflow family is now split three ways: `production-prompt-pack-v4.1-narrated-deck-video-export.md` (standard), `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (motion-enabled), and the v4.3 cluster+interstitial variant (in progress). G1.5 (Cluster Plan) gate added; G4-16–19 cluster criteria planned. `DOUBLE_DISPATCH` remains an inline branch inside either workflow template. New configs in `state/config/`: `prompting.yaml`, `dispatch.yaml`, `validation.yaml`, `narration-script-parameters.yaml`.
+> 2026-04-16 status: Epics 1–14, 19–21, 23 complete. Wave 2B creative control (20c-7 through 20c-14) closed. **`20c-15` done** — profile-aware slide/runtime estimator (`scripts/utilities/slide_count_runtime_estimator.py`), `parent_slide_count` naming, prompt-pack Prompt 4.5 integration. **`22-2` done** — Storyboard B cluster view with script context (`generate-storyboard.py`). Wave 4 next: **`22-3`** / **`22-4`**, Epic 24 assembly hardening, and **fresh trial runs** using prompt pack **v4.2f** (extraction completeness + per-dimension gate evidence — see `next-session-start-here.md`). New configs in `state/config/`: `experience-profiles.yaml`, `parameter-registry-schema.yaml`, `schemas/creative-directive.schema.*`. Narrated workflows: v4.1 (standard), v4.2/v4.2f (motion), v4.3 cluster+interstitial (iterate). `DOUBLE_DISPATCH` remains an inline branch inside either workflow template.
 
 1. [Architecture Overview](#architecture-overview)
 2. [Three-Layer Architecture](#three-layer-architecture)

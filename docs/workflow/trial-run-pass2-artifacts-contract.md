@@ -325,10 +325,10 @@ Required `pass2-envelope.json` fields:
 - gary_slide_output
 - expected_outputs
 - runtime_plan with:
-  - locked_slide_count
+  - parent_slide_count
   - target_total_runtime_minutes
-  - slide_runtime_average_seconds
-  - slide_runtime_variability_scale
+  - estimated_total_slides (system-derived from profile)
+  - avg_slide_seconds (system-derived from profile)
   - per_slide_targets[] when Irene Pass 1 produced the runtime budget table
 - voice_direction_defaults carrying the current recommended ElevenLabs starting settings
   - stability

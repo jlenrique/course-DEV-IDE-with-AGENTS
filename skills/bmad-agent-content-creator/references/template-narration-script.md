@@ -30,8 +30,11 @@ For each slide/segment - segment IDs must match `[SEGMENT: seg-XX]` markers exac
 - Pacing: {measured/deliberate | conversational flow | building urgency}
 - Emphasis: {key phrases to stress, marked with *asterisks*}
 - Behavioral Intent: {credible | moving | alarming | urgent | reflective | attention-reset | provocative}
+- Cluster Role: {none | head | interstitial}
+- Cluster Position: {none | establish | develop | tension | resolve}
+- Master Behavioral Intent: {nullable; when clustered, segment intent must serve this cluster-level directive}
 - Timing Rationale: {why this slide should run shorter, average, or longer than nearby slides; tie to slide purpose, content density, and/or visual burden}
-- Bridge Type: {none | intro | outro | both} — when not `none`, the **Narration** body below must include learner-heard intro/outro language that matches the configured spoken-bridge patterns in `narration-script-parameters.yaml` (see `references/spoken-bridging-language.md`).
+- Bridge Type: {none | intro | outro | both | pivot | cluster_boundary} — when not `none`, the **Narration** body below must include learner-heard connective language that matches the configured spoken-bridge patterns in `narration-script-parameters.yaml` (see `references/spoken-bridging-language.md`). `pivot` is reserved for brief tension turns inside a cluster; `cluster_boundary` is the two-sentence seam between clusters.
 
 **Visual References** (Story 13.2 - from `visual_reference_injector`):
 ```yaml
@@ -52,12 +55,15 @@ Weave `visual_references_per_slide` (default 2, +/-1 tolerance) explicit visual 
 into the narration flow. Each reference must name a specific visual element from
 perception_artifacts and include spatial context only when it helps the learner orient.
 References guide the learner's eye - they do not annotate.
+For clustered runs, head segments should carry the fuller explanation and establish the cluster frame.
+Interstitials should stay terse, visually complementary, and isolation-targeted: assume the slide carries most of the meaning and the narration supplies the missing interpretation.
+Do not introduce new concepts in an interstitial that are outside the head segment's instructional scope.
 Keep the narration audience-directed. Prefer phrasing like "Notice how...", "Here, you can see...",
 "What matters for clinicians is...", or direct role-address. Avoid production-meta phrasing such as
 "the slide title", "the panel on the right", "the box on the left", or "the approved slide" unless
 brief spatial disambiguation is genuinely necessary.
-When **Bridge Type** is `intro`, `outro`, or `both`, this block must include natural spoken
-bridging lines (section orient, handoff, or summary stitch) consistent with
+When **Bridge Type** is `intro`, `outro`, `both`, `pivot`, or `cluster_boundary`, this block must include natural spoken
+bridging lines (section orient, handoff, summary stitch, or brief tonal turn) consistent with
 `pedagogical_bridging.spoken_bridge_policy` — the manifest tag alone is not sufficient for TTS.}
 
 **Transition to next segment:**

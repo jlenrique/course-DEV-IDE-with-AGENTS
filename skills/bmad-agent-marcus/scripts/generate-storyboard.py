@@ -22,6 +22,7 @@ import html
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -36,6 +37,16 @@ logger = logging.getLogger("generate_storyboard")
 
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
 _VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".m4v"}
+WORD_RE = re.compile(r"\b\w+(?:[-']\w+)?\b")
+_BEHAVIORAL_INTENT_COMPATIBILITY: dict[str, set[str]] = {
+    "credible": {"credible", "clear-guidance", "reflective"},
+    "alarming": {"credible", "alarming", "clear-guidance"},
+    "provocative": {"credible", "provocative", "reflective"},
+    "reflective": {"credible", "reflective", "moving", "clear-guidance"},
+    "moving": {"credible", "moving", "reflective"},
+    "clear-guidance": {"credible", "alarming", "clear-guidance", "attention-reset", "reflective"},
+    "attention-reset": {"credible", "clear-guidance", "attention-reset"},
+}
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_EXPORTS_DIR = PROJECT_ROOT / "exports"
 DEFAULT_PUBLISH_SUBDIR = "assets/storyboards"
@@ -372,6 +383,45 @@ def _normalize_optional_string(value: Any) -> str | None:
     return text or None
 
 
+def _word_count(text: str) -> int:
+    return len(WORD_RE.findall(text or ""))
+
+
+def _estimate_narration_seconds(text: str, *, target_wpm: float) -> float | None:
+    if target_wpm <= 0:
+        return None
+    words = _word_count(text)
+    if words <= 0:
+        return None
+    return round(words * 60.0 / target_wpm, 1)
+
+
+def _behavioral_intent_serves_master(
+    master_behavioral_intent: str | None,
+    segment_behavioral_intent: str | None,
+) -> bool:
+    master = str(master_behavioral_intent or "").strip().lower()
+    segment = str(segment_behavioral_intent or "").strip().lower()
+    if not master or not segment:
+        return True
+    if master == segment:
+        return True
+    return segment in _BEHAVIORAL_INTENT_COMPATIBILITY.get(master, set())
+
+
+def _format_estimated_seconds(seconds: float | None) -> str:
+    if seconds is None:
+        return "n/a"
+    return f"{seconds:.1f}s"
+
+
+def _excerpt_text(text: str, *, limit: int = 160) -> str:
+    normalized = " ".join(str(text or "").split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: max(0, limit - 3)].rstrip() + "..."
+
+
 def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
     """Load segment manifest YAML; map gary_slide_id/slide_id to review attachments.
 
@@ -423,6 +473,9 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
                 "interstitial_type": _normalize_optional_string(seg.get("interstitial_type")),
                 "isolation_target": _normalize_optional_string(seg.get("isolation_target")),
                 "narrative_arc": _normalize_optional_string(seg.get("narrative_arc")),
+                "master_behavioral_intent": _normalize_optional_string(
+                    seg.get("master_behavioral_intent")
+                ),
                 "cluster_interstitial_count": seg.get("cluster_interstitial_count"),
                 "visual_references": seg.get("visual_references")
                 if isinstance(seg.get("visual_references"), list)
@@ -481,6 +534,9 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
             "interstitial_type": _coalesce_attachment_value([entry.get("interstitial_type") for entry in entries]),
             "isolation_target": _coalesce_attachment_value([entry.get("isolation_target") for entry in entries]),
             "narrative_arc": _coalesce_attachment_value([entry.get("narrative_arc") for entry in entries]),
+            "master_behavioral_intent": _coalesce_attachment_value(
+                [entry.get("master_behavioral_intent") for entry in entries]
+            ),
             "cluster_interstitial_count": _coalesce_attachment_value(
                 [entry.get("cluster_interstitial_count") for entry in entries]
             ),
@@ -592,6 +648,7 @@ def _derive_cluster_groups(
                 "head_slide_id": None,
                 "topic_label": None,
                 "narrative_arc": None,
+                "master_behavioral_intent": None,
                 "interstitial_count": 0,
                 "interstitial_types": [],
                 "estimated_runtime_seconds": None,
@@ -616,6 +673,9 @@ def _derive_cluster_groups(
                 slide.get("slide_id")
             )
             group["narrative_arc"] = _normalize_optional_string(slide.get("narrative_arc"))
+            group["master_behavioral_intent"] = _normalize_optional_string(
+                slide.get("master_behavioral_intent")
+            )
         elif group["head_row_id"] is None:
             group["head_row_id"] = slide.get("row_id")
             group["head_slide_id"] = slide.get("slide_id")
@@ -624,6 +684,10 @@ def _derive_cluster_groups(
             )
         if group["narrative_arc"] is None:
             group["narrative_arc"] = _normalize_optional_string(slide.get("narrative_arc"))
+        if group["master_behavioral_intent"] is None:
+            group["master_behavioral_intent"] = _normalize_optional_string(
+                slide.get("master_behavioral_intent")
+            )
 
         runtime_target = slide.get("runtime_target_seconds")
         if isinstance(runtime_target, (int, float)):
@@ -977,6 +1041,7 @@ def build_manifest(
         interstitial_type = _normalize_optional_string(raw.get("interstitial_type"))
         isolation_target = _normalize_optional_string(raw.get("isolation_target"))
         narrative_arc = _normalize_optional_string(raw.get("narrative_arc"))
+        master_behavioral_intent = _normalize_optional_string(raw.get("master_behavioral_intent"))
         cluster_interstitial_count = raw.get("cluster_interstitial_count")
         selected_template_id = _normalize_optional_string(raw.get("selected_template_id"))
         if narration_by_slide_id:
@@ -1020,6 +1085,10 @@ def build_manifest(
                 interstitial_type = _normalize_optional_string(matched.get("interstitial_type")) or interstitial_type
                 isolation_target = _normalize_optional_string(matched.get("isolation_target")) or isolation_target
                 narrative_arc = _normalize_optional_string(matched.get("narrative_arc")) or narrative_arc
+                master_behavioral_intent = (
+                    _normalize_optional_string(matched.get("master_behavioral_intent"))
+                    or master_behavioral_intent
+                )
                 cluster_interstitial_count = (
                     matched.get("cluster_interstitial_count")
                     if matched.get("cluster_interstitial_count") not in (None, "")
@@ -1129,6 +1198,7 @@ def build_manifest(
                 "interstitial_type": interstitial_type,
                 "isolation_target": isolation_target,
                 "narrative_arc": narrative_arc,
+                "master_behavioral_intent": master_behavioral_intent,
                 "cluster_interstitial_count": cluster_interstitial_count,
                 "selected_template_id": selected_template_id,
                 "runtime_target_seconds": runtime_target_seconds,
@@ -1568,7 +1638,13 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     storyboard_policy = (
         manifest.get("storyboard_policy") if isinstance(manifest.get("storyboard_policy"), dict) else {}
     )
+    voice_direction_defaults = (
+        storyboard_policy.get("voice_direction_defaults")
+        if isinstance(storyboard_policy.get("voice_direction_defaults"), dict)
+        else {}
+    )
     dd = manifest.get("double_dispatch") if isinstance(manifest.get("double_dispatch"), dict) else {}
+    cluster_review_target_wpm = 150.0
     actionable_issue_count = sum(
         1
         for slide in slides
@@ -1747,11 +1823,17 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
 
     checkpoint_label_raw = str(manifest.get("checkpoint_label") or "Storyboard")
     cluster_groups = manifest.get("cluster_groups") if isinstance(manifest.get("cluster_groups"), list) else []
-    grouped_storyboard_a = checkpoint_label_raw == "Storyboard A" and len(cluster_groups) > 0
+    grouped_cluster_storyboard = checkpoint_label_raw in {"Storyboard A", "Storyboard B"} and len(cluster_groups) > 0
+    storyboard_b_cluster_view = checkpoint_label_raw == "Storyboard B" and len(cluster_groups) > 0
     cluster_group_map = {
         str(group.get("cluster_id")): group
         for group in cluster_groups
         if isinstance(group, dict) and str(group.get("cluster_id") or "").strip()
+    }
+    slide_data_by_row_id = {
+        str(slide.get("row_id") or ""): slide
+        for slide in slides
+        if isinstance(slide, dict) and str(slide.get("row_id") or "").strip()
     }
 
     def _coherence_badge_markup(decision: Any, score: Any, *, label_prefix: str = "Coherence") -> str:
@@ -1765,6 +1847,73 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'{html.escape(label_prefix)} {html.escape(decision_text.upper())}{score_text}'
             "</span>"
         )
+
+    def _cluster_storyboard_b_summary(group: dict[str, Any], member_slides: list[dict[str, Any]]) -> dict[str, Any]:
+        master_intent_raw = _normalize_optional_string(group.get("master_behavioral_intent"))
+        if master_intent_raw is None:
+            for member in member_slides:
+                master_intent_raw = _normalize_optional_string(member.get("master_behavioral_intent"))
+                if master_intent_raw:
+                    break
+
+        total_words = 0
+        total_seconds = 0.0
+        has_seconds = False
+        mismatch_count = 0
+        breakdown_items: list[str] = []
+        for member in member_slides:
+            narration = str(member.get("narration_text") or "").strip()
+            words = _word_count(narration)
+            seconds = _estimate_narration_seconds(narration, target_wpm=cluster_review_target_wpm)
+            total_words += words
+            if seconds is not None:
+                total_seconds += seconds
+                has_seconds = True
+            member_intent_raw = _normalize_optional_string(member.get("behavioral_intent"))
+            if not _behavioral_intent_serves_master(master_intent_raw, member_intent_raw):
+                mismatch_count += 1
+            breakdown_items.append(
+                "<li>"
+                f"<strong>{html.escape(str(member.get('slide_id') or 'n/a'))}</strong> "
+                f"<span class=\"cluster-breakdown-meta\">"
+                f"{html.escape(str(member.get('cluster_role') or 'slide'))} | "
+                f"{html.escape(str(member.get('cluster_position') or 'n/a'))} | "
+                f"{words} words | {_format_estimated_seconds(seconds)} | "
+                f"intent {html.escape(str(member_intent_raw or 'n/a'))}"
+                "</span></li>"
+            )
+
+        total_seconds_text = _format_estimated_seconds(total_seconds if has_seconds else None)
+        mismatch_text = (
+            "No intent mismatches detected."
+            if mismatch_count == 0
+            else f"{mismatch_count} segment intent mismatch(s) flagged."
+        )
+        summary_markup = (
+            '<section class="cluster-storyboard-b-summary">'
+            '<div class="cluster-storyboard-b-panel">'
+            '<h3>Cluster timing summary</h3>'
+            f'<p><strong>Total cluster duration</strong> {html.escape(total_seconds_text)} '
+            f'at {cluster_review_target_wpm:.0f} WPM across {total_words} words.</p>'
+            '<ul class="cluster-breakdown-list">'
+            + "".join(breakdown_items)
+            + "</ul></div>"
+            '<div class="cluster-storyboard-b-panel">'
+            '<h3>Intent and voice defaults</h3>'
+            '<dl class="cluster-storyboard-b-facts">'
+            f'<div><dt>Master intent</dt><dd>{html.escape(str(master_intent_raw or "n/a"))}</dd></div>'
+            f'<div><dt>Intent review</dt><dd>{html.escape(mismatch_text)}</dd></div>'
+            f'<div><dt>Emotional variability</dt><dd>{html.escape(str(voice_direction_defaults.get("emotional_variability") or "n/a"))}</dd></div>'
+            f'<div><dt>Pace variability</dt><dd>{html.escape(str(voice_direction_defaults.get("pace_variability") or "n/a"))}</dd></div>'
+            '</dl></div></section>'
+        )
+        return {
+            "master_behavioral_intent": master_intent_raw,
+            "total_words": total_words,
+            "total_seconds_text": total_seconds_text,
+            "mismatch_count": mismatch_count,
+            "summary_markup": summary_markup,
+        }
 
     slide_cards: list[str] = []
     card_markup_by_row_id: dict[str, str] = {}
@@ -1794,11 +1943,6 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 f'<div class="script-warning">Multiple segment-manifest matches attached '
                 f'({segment_match_count}). Resolve before approval.</div>'
             )
-        script_markup = (
-            f'{segment_summary_markup}<pre class="script-text">{html.escape(narration_text)}</pre>'
-            if narration_text
-            else f'<div class="script-state">{html.escape(narration_label)}</div>'
-        )
         script_notes = str(slide.get("script_notes") or "").strip()
         script_notes_markup = (
             f'<pre class="script-notes">{html.escape(script_notes)}</pre>'
@@ -1806,6 +1950,14 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             else '<div class="script-state">No script notes attached.</div>'
         )
         cluster_role_raw = _normalize_optional_string(slide.get("cluster_role"))
+        bridge_type_raw = _normalize_optional_string(slide.get("bridge_type"))
+        behavioral_intent_raw = _normalize_optional_string(slide.get("behavioral_intent"))
+        master_behavioral_intent_raw = _normalize_optional_string(slide.get("master_behavioral_intent"))
+        segment_word_count = _word_count(narration_text)
+        segment_estimated_seconds = _estimate_narration_seconds(
+            narration_text,
+            target_wpm=cluster_review_target_wpm,
+        )
         cluster_position = html.escape(str(slide.get("cluster_position") or "n/a"))
         interstitial_type = html.escape(str(slide.get("interstitial_type") or "n/a"))
         isolation_target = html.escape(str(slide.get("isolation_target") or "n/a"))
@@ -1870,8 +2022,8 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         content_density = html.escape(str(slide.get("content_density") or "n/a"))
         visual_detail_load = html.escape(str(slide.get("visual_detail_load") or "n/a"))
         duration_rationale = html.escape(str(slide.get("duration_rationale") or "n/a"))
-        bridge_type = html.escape(str(slide.get("bridge_type") or "n/a"))
-        behavioral_intent = html.escape(str(slide.get("behavioral_intent") or "n/a"))
+        bridge_type = html.escape(str(bridge_type_raw or "n/a"))
+        behavioral_intent = html.escape(str(behavioral_intent_raw or "n/a"))
         matched_segment_ids = [
             str(item).strip()
             for item in slide.get("matched_segment_ids", [])
@@ -1909,6 +2061,70 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 '</section>'
             )
 
+        script_text_class = "script-text"
+        script_cluster_meta_markup = ""
+        script_transition_markup = ""
+        script_intent_warning_markup = ""
+        if storyboard_b_cluster_view and cluster_role_raw:
+            if cluster_role_raw == "head":
+                script_text_class += " script-text--cluster-head"
+            elif cluster_role_raw == "interstitial":
+                script_text_class += " script-text--cluster-interstitial"
+
+            serves_master = _behavioral_intent_serves_master(
+                master_behavioral_intent_raw,
+                behavioral_intent_raw,
+            )
+            intent_badge_class = "badge-intent-aligned" if serves_master else "badge-intent-mismatch"
+            intent_badge_text = "intent serves master" if serves_master else "intent mismatch"
+            script_cluster_meta_markup = (
+                '<div class="script-metadata-row">'
+                f'<span class="badge">{segment_word_count} words</span>'
+                f'<span class="badge">@{cluster_review_target_wpm:.0f} WPM {_format_estimated_seconds(segment_estimated_seconds)}</span>'
+                f'<span class="badge">{html.escape(str(cluster_role_raw))} narration</span>'
+                f'<span class="badge">timing {timing_role}</span>'
+                f'<span class="badge">density {content_density}</span>'
+                f'<span class="badge">position {cluster_position}</span>'
+                f'<span class="badge">intent {behavioral_intent}</span>'
+                f'<span class="badge {intent_badge_class}">{intent_badge_text}</span>'
+                '</div>'
+            )
+            if not serves_master:
+                script_intent_warning_markup = (
+                    '<div class="behavioral-intent-warning">'
+                    f'Segment intent <strong>{behavioral_intent}</strong> does not serve cluster master '
+                    f'<strong>{html.escape(str(master_behavioral_intent_raw or "n/a"))}</strong>.'
+                    '</div>'
+                )
+            if cluster_role_raw == "head" and bridge_type_raw == "cluster_boundary":
+                bridge_excerpt = html.escape(
+                    _excerpt_text(narration_text) or "Bridge text unavailable."
+                )
+                script_transition_markup = (
+                    '<div class="transition-divider transition-divider--boundary">'
+                    '<strong>Cluster-boundary transition</strong>'
+                    f'<span>Bridge type {bridge_type}</span>'
+                    f'<div class="transition-bridge-text">{bridge_excerpt}</div>'
+                    '</div>'
+                )
+            elif cluster_role_raw == "interstitial":
+                script_transition_markup = (
+                    '<div class="transition-divider transition-divider--within">'
+                    '<strong>Within-cluster transition</strong>'
+                    f'<span>Bridge type {bridge_type}</span>'
+                    '</div>'
+                )
+
+        script_markup = (
+            f'{segment_summary_markup}{script_transition_markup}{script_intent_warning_markup}'
+            f'{script_cluster_meta_markup}<pre class="{script_text_class}">{html.escape(narration_text)}</pre>'
+            if narration_text
+            else (
+                f'{segment_summary_markup}{script_transition_markup}{script_intent_warning_markup}'
+                f'{script_cluster_meta_markup}<div class="script-state">{html.escape(narration_label)}</div>'
+            )
+        )
+
         cluster_role_class = ""
         if cluster_role_raw == "head":
             cluster_role_class = " slide-card--cluster-head"
@@ -1938,7 +2154,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<div class="slide-card-body{" slide-card-body--motion" if motion_type != "static" else ""}">'
             '<section class="slide-preview-panel">'
             '<div class="panel-label">Approved slide</div>'
-            f'{_preview_markup(slide, size="variant" if cluster_role_raw == "interstitial" and grouped_storyboard_a else "card")}'
+            f'{_preview_markup(slide, size="variant" if cluster_role_raw == "interstitial" and grouped_cluster_storyboard else "card")}'
             f'<div class="preview-caption">Asset status: <strong>{asset_status}</strong> | Dimensions: <strong>{dimensions_markup}</strong></div>'
             f'<div class="preview-caption">Motion review: <strong>{html.escape(motion_summary)}</strong></div>'
             f'{cluster_meta_markup}'
@@ -2041,9 +2257,11 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             or "n/a"
         )
     )
+    # TODO: remove legacy fallbacks after migration from slide_runtime_average_seconds is complete
     runtime_avg_seconds = html.escape(
         str(
-            runtime_plan.get("slide_runtime_average_seconds")
+            runtime_plan.get("avg_slide_seconds")
+            or runtime_plan.get("slide_runtime_average_seconds")
             or runtime_plan.get("target_avg_slide_seconds")
             or "n/a"
         )
@@ -2105,7 +2323,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     first_slide = html.escape(str(review_meta.get("first_slide_id") or "n/a"))
     last_slide = html.escape(str(review_meta.get("last_slide_id") or "n/a"))
     cluster_controls_html = ""
-    if grouped_storyboard_a:
+    if grouped_cluster_storyboard:
         rendered_clusters: set[str] = set()
         grouped_slide_cards: list[str] = []
         for slide in slides:
@@ -2118,6 +2336,17 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 rendered_clusters.add(cluster_id)
                 group = cluster_group_map[cluster_id]
                 coherence = group.get("coherence") if isinstance(group.get("coherence"), dict) else {}
+                member_slides = [
+                    member
+                    for row_id in group.get("row_ids", [])
+                    for member in [slide_data_by_row_id.get(str(row_id))]
+                    if isinstance(member, dict)
+                ]
+                cluster_storyboard_b = (
+                    _cluster_storyboard_b_summary(group, member_slides)
+                    if storyboard_b_cluster_view
+                    else None
+                )
                 row_cards = [
                     card_markup_by_row_id.get(str(row_id), "")
                     for row_id in group.get("row_ids", [])
@@ -2126,11 +2355,28 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 interstitial_types = group.get("interstitial_types") if isinstance(group.get("interstitial_types"), list) else []
                 duration_total = group.get("estimated_runtime_seconds")
                 duration_text = f'{duration_total:.0f}s' if isinstance(duration_total, (int, float)) else "n/a"
+                if cluster_storyboard_b is not None:
+                    duration_text = str(cluster_storyboard_b["total_seconds_text"])
                 duration_balance = html.escape(str(group.get("duration_balance") or "n/a"))
                 interstitial_summary = html.escape(", ".join(str(item) for item in interstitial_types) or "none")
                 topic_label = html.escape(str(group.get("topic_label") or group.get("head_slide_id") or cluster_id))
                 narrative_arc_text = html.escape(str(group.get("narrative_arc") or "Narrative arc not provided."))
                 head_slide_id = html.escape(str(group.get("head_slide_id") or "n/a"))
+                cluster_summary_extra = ""
+                cluster_storyboard_b_summary_markup = ""
+                if cluster_storyboard_b is not None:
+                    master_behavioral_intent = html.escape(
+                        str(cluster_storyboard_b.get("master_behavioral_intent") or "n/a")
+                    )
+                    cluster_summary_extra = (
+                        f'<span class="badge">Master {master_behavioral_intent}</span>'
+                        f'<span class="badge">{html.escape(str(cluster_storyboard_b.get("total_words") or 0))} words</span>'
+                        f'<span class="badge">@{cluster_review_target_wpm:.0f} WPM {html.escape(str(cluster_storyboard_b.get("total_seconds_text") or "n/a"))}</span>'
+                        f'<span class="badge">Intent mismatches {html.escape(str(cluster_storyboard_b.get("mismatch_count") or 0))}</span>'
+                        f'<span class="badge">Emotion {html.escape(str(voice_direction_defaults.get("emotional_variability") or "n/a"))}</span>'
+                        f'<span class="badge">Pace {html.escape(str(voice_direction_defaults.get("pace_variability") or "n/a"))}</span>'
+                    )
+                    cluster_storyboard_b_summary_markup = str(cluster_storyboard_b["summary_markup"])
                 grouped_slide_cards.append(
                     '<details class="cluster-group" data-role="cluster-group">'
                     '<summary class="cluster-summary">'
@@ -2146,9 +2392,10 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                     f'<span class="badge">Types {interstitial_summary}</span>'
                     f'<span class="badge">Runtime {html.escape(duration_text)}</span>'
                     f'<span class="badge">Balance {duration_balance}</span>'
+                    f'{cluster_summary_extra}'
                     '</div>'
                     '</summary>'
-                    f'<div class="cluster-group-body">{member_cards}</div>'
+                    f'<div class="cluster-group-body">{cluster_storyboard_b_summary_markup}{member_cards}</div>'
                     '</details>'
                 )
                 continue
@@ -2242,6 +2489,17 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .cluster-arc {{ margin: 0; color: var(--muted); }}
     .cluster-summary-meta {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }}
     .cluster-group-body {{ display: grid; gap: 12px; padding: 16px; border-top: 1px solid var(--line); background: #f8fafc; }}
+    .cluster-storyboard-b-summary {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }}
+    .cluster-storyboard-b-panel {{ background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }}
+    .cluster-storyboard-b-panel h3 {{ margin: 0 0 8px 0; font-size: 0.96rem; }}
+    .cluster-storyboard-b-panel p {{ margin: 0; color: var(--ink); }}
+    .cluster-breakdown-list {{ margin: 12px 0 0 18px; padding: 0; display: grid; gap: 8px; }}
+    .cluster-breakdown-list li {{ color: var(--ink); }}
+    .cluster-breakdown-meta {{ color: var(--muted); font-size: 0.88rem; }}
+    .cluster-storyboard-b-facts {{ margin: 0; display: grid; gap: 10px; }}
+    .cluster-storyboard-b-facts div {{ padding: 10px 12px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; }}
+    .cluster-storyboard-b-facts dt {{ color: var(--muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }}
+    .cluster-storyboard-b-facts dd {{ margin: 4px 0 0; font-size: 0.95rem; overflow-wrap: anywhere; }}
     .slide-card--cluster-head .sequence-pill {{ background: #d6e8f8; }}
     .slide-card--cluster-interstitial {{ margin-left: 28px; border-left: 4px solid #c7d7e6; }}
     .slide-card--coherence-pass {{ border-left: 4px solid #16a34a; }}
@@ -2249,6 +2507,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .slide-card--coherence-fail {{ border-left: 4px solid #dc2626; }}
     .cluster-slide-meta {{ margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 0.88rem; }}
     .cluster-slide-meta span {{ display: inline-flex; gap: 4px; }}
+    .script-metadata-row {{ display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px 0; }}
+    .badge-intent-aligned {{ background: #dff6e8; color: #166534; }}
+    .badge-intent-mismatch {{ background: #fde2e2; color: #9b1c1c; }}
     .panel-grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 14px; }}
     .panel, .summary-panel, .related-card {{ min-width: 0; }}
     .panel {{ background: #fafbfd; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }}
@@ -2268,7 +2529,16 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .expand-cue {{ position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.78); color: #fff; border-radius: 999px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22); }}
     .preview-caption, .script-status, .related-stage, .related-source {{ color: var(--muted); font-size: 0.9rem; margin-top: 8px; }}
     .script-text, .script-notes {{ white-space: pre-wrap; margin: 0; font: inherit; line-height: 1.55; }}
+    .script-text--cluster-head {{ background: linear-gradient(180deg, #f8fbfd 0%, #eef5fb 100%); border: 1px solid #d6e8f8; border-radius: 14px; padding: 14px; }}
+    .script-text--cluster-interstitial {{ background: #fcfdff; border-left: 4px solid #bfd3e6; padding: 12px 14px; border-radius: 0 14px 14px 0; }}
     .script-warning {{ margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: 0.92rem; font-weight: 600; }}
+    .behavioral-intent-warning {{ margin-bottom: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid #f5c2c7; background: #fff5f5; color: #9b1c1c; font-size: 0.92rem; }}
+    .transition-divider {{ display: grid; gap: 4px; margin: 0 0 12px 0; padding: 10px 12px; border-radius: 12px; }}
+    .transition-divider strong {{ font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; }}
+    .transition-divider span {{ color: var(--muted); font-size: 0.88rem; }}
+    .transition-divider--within {{ background: #f8fafc; border: 1px dashed #cbd5e1; }}
+    .transition-divider--boundary {{ background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fdba74; }}
+    .transition-bridge-text {{ color: var(--ink); font-size: 0.92rem; }}
     .script-state, .empty-state {{ color: var(--muted); font-style: italic; }}
     .evidence-panel {{ border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }}
     .evidence-panel summary {{ cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }}
@@ -2298,6 +2568,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       .slide-card-header {{ flex-direction: column; }}
       .cluster-summary {{ grid-template-columns: 1fr; }}
       .cluster-summary-meta {{ justify-content: flex-start; }}
+      .cluster-storyboard-b-summary {{ grid-template-columns: 1fr; }}
       .slide-card--cluster-interstitial {{ margin-left: 0; }}
       .slide-card-body--motion .slide-preview-panel,
       .slide-card-body--motion .motion-preview-panel,

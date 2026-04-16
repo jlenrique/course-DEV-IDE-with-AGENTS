@@ -29,7 +29,7 @@ from scripts.utilities.skill_module_loader import (
 from scripts.validate_fidelity_contracts import validate_contract
 
 
-VALID_WORKFLOWS = ("standard", "motion")
+VALID_WORKFLOWS = ("standard", "motion", "cluster")
 MANIFEST_DIR = Path("state/config/structural-walk")
 VALID_DRY_RUN_KINDS = ("manifest", "sequence", "sequence_docs", "contracts", "aggregate", "documents")
 
@@ -738,6 +738,9 @@ def _build_dry_run_result(report: dict[str, Any], spec: WorkflowSpec, root: Path
     elif spec.key == "motion":
         sequence_content_type = "narrated-deck-video-export"
         sequence_motion_enabled = True
+    elif spec.key == "cluster":
+        sequence_content_type = "clustered-narrated-deck-video-export"
+        sequence_motion_enabled = False
     else:
         raise ValueError(f"Dry-run planning preview is not configured for workflow '{spec.key}'")
 

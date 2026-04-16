@@ -231,3 +231,27 @@ Bundle-level / proof validation must additionally demonstrate both `visual-led` 
 ## Change Log
 
 - 2026-04-14: Closed the Marcus-facing profile-intake gap, added envelope propagation and validator audit coverage, and recorded copied C1-M1 proof bundles for both profiles.
+
+## Adversarial Review (BMAD)
+
+### Blind Hunter
+- Confirmed Marcus-side envelope path: `prepare-irene-pass2-handoff.py` packs `narration_profile_controls` from `resolve_experience_profile` into the Pass 2 envelope (Marcus-owned surface per AC4).
+- **Upstream contract:** Any Creative Director directive flowing this path still depends on `validate_creative_directive`; re-review applied **schema_version** const enforcement (20c-11 remediation) so CD outputs cannot falsely pass with wrong version strings—no additional 20c-14-only code change required for that fix.
+
+### Edge Case Hunter
+- Legacy bundles without `experience_profile` remain optional; invalid profile continues to fail at run-constants boundary (aligned with AC5–6).
+
+### Acceptance Auditor
+- AC1–10 traced to prompt-pack / `conversation-mgmt.md` / CD intake / tests listed in story File List; no gap requiring new implementation in this pass.
+
+Review closed: 2026-04-15 (BMAD re-review; validator hardening consumed as shared dependency).
+
+## BMAD tracking closure
+
+**Framework:** Per `sprint-status.yaml` — **`done`** = ACs met + verification green + layered BMAD review complete + sprint key `done`.
+
+| Check | State |
+|-------|--------|
+| ACs | Met (prompt pack, conversation-mgmt, CD intake, envelope, proofs — **File List**) |
+| Verification | Commands in story / related test files; CD directive path aligned with shared validator |
+| **`sprint-status.yaml`** | **`20c-14-e2e-validation-both-profiles`: `done`** (reconciled 2026-04-15) |

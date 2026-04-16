@@ -11,6 +11,7 @@ from scripts.utilities import run_constants as rc
 
 
 PROFILES_PATH = Path("state/config/experience-profiles.yaml")
+NARRATION_PARAMS_PATH = Path("state/config/narration-script-parameters.yaml")
 EXPECTED_MODE_KEYS = {"literal-text", "literal-visual", "creative"}
 
 
@@ -20,9 +21,15 @@ def _load_profiles() -> dict[str, Any]:
     return data
 
 
+def _load_narration_params() -> dict[str, Any]:
+    data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8"))
+    assert isinstance(data, dict)
+    return data
+
+
 def test_profiles_file_has_required_top_level_shape() -> None:
     data = _load_profiles()
-    assert data["schema_version"] == "1.0"
+    assert data["schema_version"] == "1.1"
     assert isinstance(data.get("profiles"), dict)
     assert {"visual-led", "text-led"}.issubset(data["profiles"].keys())
 
@@ -45,15 +52,11 @@ def test_profile_mode_proportions_are_canonical_and_normalized() -> None:
 
 def test_profile_narration_controls_have_required_keys() -> None:
     profiles = _load_profiles()["profiles"]
-    required_controls = {
-        "narrator_source_authority",
-        "slide_content_density",
-        "elaboration_budget",
-    }
+    required_controls = set(_load_narration_params()["narration_profile_controls"].keys())
     for profile_name, profile_data in profiles.items():
         controls = profile_data.get("narration_profile_controls")
         assert isinstance(controls, dict), f"{profile_name} missing narration_profile_controls"
-        assert required_controls.issubset(controls.keys())
+        assert set(controls.keys()) == required_controls
 
 
 def test_profile_cluster_density_is_present_and_valid() -> None:

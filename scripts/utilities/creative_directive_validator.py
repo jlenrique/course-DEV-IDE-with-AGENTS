@@ -6,14 +6,17 @@ import json
 from pathlib import Path
 from typing import Any
 
+from scripts.utilities.file_helpers import project_root as default_project_root
+
 try:
     import yaml
 except ImportError:  # pragma: no cover
     yaml = None  # type: ignore[assignment]
 
 
-CREATIVE_DIRECTIVE_SCHEMA_PATH = Path("state/config/schemas/creative-directive.schema.json")
-EXPERIENCE_PROFILES_PATH = Path("state/config/experience-profiles.yaml")
+PROJECT_ROOT = default_project_root()
+CREATIVE_DIRECTIVE_SCHEMA_PATH = PROJECT_ROOT / "state" / "config" / "schemas" / "creative-directive.schema.json"
+EXPERIENCE_PROFILES_PATH = PROJECT_ROOT / "state" / "config" / "experience-profiles.yaml"
 SUM_TOLERANCE = 0.001
 
 
@@ -51,6 +54,12 @@ def validate_creative_directive(
         for field in required:
             if field not in directive:
                 errors.append(f"missing required field: {field}")
+
+    # JSON Schema const — required key presence alone is insufficient (AC3).
+    if "schema_version" in directive:
+        sv = directive["schema_version"]
+        if not isinstance(sv, str) or sv != "1.0":
+            errors.append('schema_version must be the string "1.0"')
 
     allowed_top_level = set((schema.get("properties") or {}).keys())
     extra_top_level = sorted(set(directive.keys()) - allowed_top_level)

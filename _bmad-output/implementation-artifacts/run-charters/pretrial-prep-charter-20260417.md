@@ -150,3 +150,34 @@ The following memories govern decisions within this run (read at party-mode time
 4. For the prompt-pack doc surgery — leave a "see Marcus capability PR-*" pointer at the former location, or strip cleanly? Party to decide.
 
 These are not impasses; they're scoping questions the charter can leave open for the first party round to settle.
+
+## 12. Scope-Confirmation Party Round — Results (2026-04-17)
+
+Round attendees: 🧪 Murat, 🏗️ Winston, 💻 Amelia, 📋 John, 📚 Paige. Full transcript in the session log; synthesis below.
+
+**Consensus (no impasse):**
+
+- **26-6 ratified** with scope refinement: PR-PF + PR-RC **full implementation** (they directly fix the 2026-04-17 halt — `emit-preflight-receipt.py` rejecting run-constants.yaml for UPPERCASE-flat-vs-lowercase-nested schema drift; PR-RC is the direct fix, PR-PF is the gate). PR-HC + PR-RS **stubbed** with codes registered, script skeletons, xfail tests. **All four contracts pinned in ACs** per Winston (invocation envelope, return schema, error surface).
+- **26-7 ratified** 4-1 (John dissents as opportunistic Windows-only ergonomics). Land as clean tail after 26-6 per Winston. Murat's test caveat: real encoding-boundary test (round-trip with non-ASCII), not smoke.
+- **26-8 / 26-9 / 26-5 confirmed OUT** of this run's scope.
+- **26-10 created** as follow-up backlog: promote PR-HC + PR-RS stubs to full impl after first trial restart reveals which stub gaps actually hurt.
+
+**Doc surgery (Paige's amendment adopted):**
+
+- Strip pre-prompt sections from prompt pack v4.2 doc with **redirect stubs** (not clean removal).
+- Archive the stripped content verbatim at `docs/workflow/archive/prompt-pack-preprompt-2026-04.md`.
+- Create new `docs/dev-guide/marcus-capabilities.md` as canonical PR-* reference.
+- Link from `docs/dev-guide.md` alongside `testing.md`.
+
+**Test design guardrails (Murat's red flags adopted into ACs):**
+
+- Shared parametrized summarize-state contract test (one test × 4 capabilities), not 4 bespoke tests.
+- Routing-glue tests tagged `trial_critical`.
+- Execute-mode tests assert idempotency (re-run must be safe).
+- Unit level; no E2E.
+
+**John's "what broke at Prompt 1" reconciliation:** PR-RC (run-constants author+validate) is the direct fix; PR-PF (preflight) is the gate that caught the drift. Stubbing PR-HC + PR-RS keeps scope tractable AND answers John's causal-chain challenge.
+
+**Amelia's sizing:** ~550 LOC + 5h for the trimmed 26-6 (PR-PF + PR-RC full, PR-HC + PR-RS stubs, contract pins). 26-7: ~40 LOC + 45 min.
+
+**26-5 deferral defended:** PR-* capabilities live in Marcus sanctum only, not the scaffold template; adding new capabilities to Marcus does not collide with scaffold preservation semantics. John's concrete-pouring concern does not apply here.

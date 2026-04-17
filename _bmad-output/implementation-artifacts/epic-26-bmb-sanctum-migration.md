@@ -42,12 +42,26 @@ All located at [_bmad-output/implementation-artifacts/epic-26/_shared/](./epic-2
 
 ## Stories
 
+### Agent migrations (original epic scope)
+
 | Story | Agent | Status |
 |-------|-------|--------|
-| 26-1 | Marcus | in-progress |
-| 26-2 | Irene | planned |
-| 26-3 | Dan | planned |
-| 26-4..N | Remaining agents | planned (batched by tier) |
+| 26-1 | Marcus | done (2026-04-17) |
+| 26-2 | Irene | done (2026-04-17) |
+| 26-3 | Dan | done (2026-04-17) |
+| 26-4 | BMB scaffold v0.2 (fleet-wide defect fix) | done (2026-04-17) |
+| 26-5 | BMB scaffold preservation semantics | backlog — gates batch wave |
+| 26-(later) | Remaining ~14 agents | planned (batched by tier, post-26-5) |
+
+### Companion stories (pre-trial prep run — 2026-04-17)
+
+Emerged from the pre-trial prep run that runs alongside Epic 26 on branch `dev/epic-26-pretrial-prep`. Run charter at [run-charters/pretrial-prep-charter-20260417.md](run-charters/pretrial-prep-charter-20260417.md). These are **not agent-migration** stories — they build production-readiness capabilities on the already-migrated Marcus sanctum. Tracked under 26-N numbering for continuity; closure does not count toward the epic's agent-migration-coverage success metric.
+
+| Story | Title | Status |
+|-------|-------|--------|
+| 26-6 | Marcus production-readiness capabilities (PR-PF + PR-RC full; PR-HC + PR-RS stubs) | ready-for-dev |
+| 26-7 | Texas CLI cp1252 guard (stretch) | ready-for-dev |
+| 26-10 | PR-HC + PR-RS full-impl follow-up | backlog (post-trial restart) |
 
 ## Acceptance Criteria for Epic Closure
 

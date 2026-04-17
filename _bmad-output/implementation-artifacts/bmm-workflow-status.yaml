@@ -101,7 +101,7 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Close Story 26-1 (Marcus BMB sanctum migration) after post-review remediation, then proceed to Story 26-2 (Irene) — second pilot to stress the scaffold against a different agent shape. Trial production run (APC C1-M1 Tejal) remains queued behind the migration wave per operator redirect 2026-04-17. Epic 26: BMB Sanctum Migration has its own epic + shared spine artifacts at _bmad-output/implementation-artifacts/epic-26-bmb-sanctum-migration.md + epic-26/_shared/."
+next_workflow_step: "Stories 26-1/26-2/26-3 (Marcus/Irene/Dan BMB sanctum migrations) DONE — 3-pilot wave complete 2026-04-17. Story 26-4 (scaffold v0.2 fleet-wide remediation) opened in backlog; must close before batch migration of remaining ~14 agents. Trial production run (APC C1-M1 Tejal) is NEXT per operator intent — pivoting now. Epic 26 shared artifacts at _bmad-output/implementation-artifacts/epic-26/_shared/ (AC spine, runbook, worksheet template, downstream-reference-maps for all 3 pilots, scaffold-v0.2-backlog.md)."
 
 epic_26_bmb_sanctum_migration:
   status: "in-progress"
@@ -119,4 +119,12 @@ epic_26_bmb_sanctum_migration:
       tier: "Tier-1 (specialist — highest iteration churn)"
       note: "On dev/epic-26-irene-bmb-migration. 21 capability codes preserved via 11 stubs + 10 frontmatter retrofits (IA/LO/BT/CL/CS/AA/PQ/WD/MG/CD/SB/PC/VR/MP/MC/MA/SM/IB/NA/DC/CP). 58-line specialist-tier SKILL.md. 25 migration tests (+11 Irene); 944/2/0 full suite. Layered code review clean; 4 MUST-FIX + 6 high-value SHOULD-FIX remediated (incl. orphan init.md/memory-system.md removed from BOTH Marcus + Irene, new regression tests for sidecar-path drift + stub-to-script resolution)."
     "26-3-dan-bmb-sanctum-migration":
+      status: "done"
+      closed: "2026-04-17"
+      tier: "Tier-2 (specialist — narrow-lane Creative Director)"
+      note: "60-line specialist-tier SKILL.md (at ≤60 ceiling after merging Required Output Contract into Intake Contract). 2 capability codes via frontmatter retrofit (DR + PT). 34 migration tests (+7 Dan + 2 parametrized); 949/2/3 full suite — 3 failures pre-existing structural_walk work on state/config/structural-walk/motion.yaml, unrelated to Dan (verified by stash). Layered code review complete. Scaffold fleet-wide defects (V2-1 wrong config path, V2-2 absolute Windows path in INDEX.md, V2-3 unsubstituted placeholders in copied references) DEFERRED to Story 26-4 scaffold v0.2 because they reproduce on already-merged Marcus + Irene. Per-Dan remediation: Intake Contract 'MUST pass validator' wording, first-breath urgency-first ordering, sidecar sibling banners, migration worksheet filed, story D1 amended from ≤50 to ≤60."
+    "26-4-bmb-scaffold-v0-2":
       status: "backlog"
+      opened: "2026-04-17"
+      tier: "Scaffold v0.2 — fleet-wide remediation"
+      note: "Opened by Dan pilot review. 3 fleet-wide defects reproducing identically on Marcus + Irene + Dan. Backlog at _bmad-output/implementation-artifacts/epic-26/_shared/scaffold-v0.2-backlog.md. Scope: fix V2-1/V2-2/V2-3, re-scaffold all 3 existing pilots, add regression tests. MUST close before batch migration of remaining ~14 agents."

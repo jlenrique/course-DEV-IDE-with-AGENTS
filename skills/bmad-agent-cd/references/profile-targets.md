@@ -1,3 +1,9 @@
+---
+name: profile-targets
+code: PT
+description: Initial numeric anchors for slide_mode_proportions per experience profile (visual-led, text-led) — program-validated bootstrap for directive emission
+---
+
 # Experience Profile Targets (20c-12 bootstrap)
 
 These profile anchors define initial numeric targets for `slide_mode_proportions`.

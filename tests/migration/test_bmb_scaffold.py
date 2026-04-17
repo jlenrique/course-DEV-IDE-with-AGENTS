@@ -27,6 +27,7 @@ SCAFFOLD = REPO_ROOT / "scripts" / "bmb_agent_migration" / "init_sanctum.py"
 TEXAS_SKILL = REPO_ROOT / "skills" / "bmad-agent-texas"
 MARCUS_SKILL = REPO_ROOT / "skills" / "bmad-agent-marcus"
 IRENE_SKILL = REPO_ROOT / "skills" / "bmad-agent-content-creator"
+DAN_SKILL = REPO_ROOT / "skills" / "bmad-agent-cd"
 CANONICAL_TEXAS_SANCTUM = REPO_ROOT / "_bmad" / "memory" / "bmad-agent-texas"
 
 REQUIRED_SANCTUM_FILES = {
@@ -382,7 +383,99 @@ def _collect_script_refs_from_agent(skill_dir: Path) -> list[tuple[Path, str]]:
     return hits
 
 
-@pytest.mark.parametrize("agent_dir", [MARCUS_SKILL, IRENE_SKILL], ids=["marcus", "irene"])
+def test_scaffold_dry_run_dan_smoke():
+    """Dry-run against the real Dan skill dir must exit 0 (post-migration)."""
+    if not (DAN_SKILL / "assets").exists():
+        pytest.skip("Dan migration not yet complete (no assets/ dir)")
+    result = _run_scaffold(["--skill-path", str(DAN_SKILL), "--dry-run"])
+    assert result.returncode == 0, result.stderr
+    assert "bmad-agent-cd" in result.stdout
+
+
+def test_dan_skill_md_has_bmb_frontmatter():
+    """Post-migration, Dan's SKILL.md must have valid BMB frontmatter."""
+    skill_md = DAN_SKILL / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    assert text.startswith("---\n")
+    fm_end = text.index("\n---", 4)
+    frontmatter = text[4:fm_end]
+    assert "name:" in frontmatter
+    assert "bmad-agent-cd" in frontmatter
+
+
+def test_dan_skill_md_is_bmb_conformant():
+    """Dan is specialist tier — SKILL.md ≤ 60 lines + canonical BMB blocks."""
+    skill_md = DAN_SKILL / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    if "Sacred Truth" not in text:
+        pytest.skip("Dan migration not yet complete (no Sacred Truth block)")
+    lines = text.splitlines()
+    assert len(lines) <= 60, f"SKILL.md exceeds specialist-tier ceiling: {len(lines)} lines (≤60)"
+    required_blocks = [
+        "## On Activation",
+        "## Session Close",
+        "## Lane Responsibility",
+    ]
+    for block in required_blocks:
+        assert block in text, f"missing required block: {block}"
+    assert "_bmad/memory/bmad-agent-cd" in text, \
+        "SKILL.md must name the sanctum path explicitly"
+
+
+def test_dan_skill_md_reference_links_resolve():
+    """Every ./references/<name>.(md|yaml) link in Dan's SKILL.md must resolve."""
+    skill_md = DAN_SKILL / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    if "Sacred Truth" not in text:
+        pytest.skip("Dan migration not yet complete")
+    link_pattern = re.compile(r"`\./references/([A-Za-z0-9_\-\.]+\.(?:md|yaml))`")
+    missing = []
+    for name in set(link_pattern.findall(text)):
+        target = DAN_SKILL / "references" / name
+        if not target.exists():
+            missing.append(name)
+    assert not missing, f"SKILL.md links to non-existent references: {missing}"
+
+
+def test_dan_sanctum_scaffolded():
+    """Post-migration, Dan's sanctum must exist at the canonical path."""
+    sanctum = REPO_ROOT / "_bmad" / "memory" / "bmad-agent-cd"
+    if not sanctum.exists():
+        pytest.skip("Dan sanctum not yet scaffolded")
+    for name in REQUIRED_SANCTUM_FILES:
+        assert (sanctum / name).is_file(), f"missing sanctum file: {name}"
+    assert (sanctum / "sessions").is_dir()
+    assert (sanctum / "capabilities").is_dir()
+
+
+def test_dan_legacy_sidecar_has_deprecation_banner():
+    """Post-migration, dan-sidecar/index.md must carry a deprecation pointer."""
+    sidecar_index = REPO_ROOT / "_bmad" / "memory" / "dan-sidecar" / "index.md"
+    if not sidecar_index.exists():
+        pytest.skip("dan-sidecar not present")
+    text = sidecar_index.read_text(encoding="utf-8")
+    if "DEPRECATED" not in text:
+        pytest.skip("Dan migration not yet complete")
+    assert "bmad-agent-cd" in text, \
+        "deprecation banner must point to new sanctum path"
+
+
+def test_dan_all_capability_codes_discovered():
+    """
+    Dan has 2 capability codes: DR (directive rules) + PT (profile targets).
+    Scaffold dry-run must discover both from frontmatter.
+    """
+    if not (DAN_SKILL / "assets").exists():
+        pytest.skip("Dan migration not yet complete")
+    result = _run_scaffold(["--skill-path", str(DAN_SKILL), "--dry-run"])
+    assert result.returncode == 0
+    expected_codes = {"DR", "PT"}
+    found = {code for code in expected_codes if f"[{code}]" in result.stdout}
+    missing = expected_codes - found
+    assert not missing, f"capability codes not discovered: {missing}"
+
+
+@pytest.mark.parametrize("agent_dir", [MARCUS_SKILL, IRENE_SKILL, DAN_SKILL], ids=["marcus", "irene", "dan"])
 def test_capability_stub_script_refs_resolve(agent_dir: Path):
     """
     Stubs for script-backed capabilities (e.g., Irene's PC, VR, MP, MC, MA) declare
@@ -408,9 +501,9 @@ def test_no_sanctum_path_references_in_skill_bundle_refs():
     write target. Guards against the orphan-init.md-style regression Blind
     Hunter M1 flagged.
     """
-    bad_patterns = ("marcus-sidecar", "irene-sidecar")
+    bad_patterns = ("marcus-sidecar", "irene-sidecar", "dan-sidecar")
     failures: list[tuple[str, str, str]] = []  # (agent, file, pattern)
-    for agent_dir in (MARCUS_SKILL, IRENE_SKILL):
+    for agent_dir in (MARCUS_SKILL, IRENE_SKILL, DAN_SKILL):
         if not (agent_dir / "assets").exists():
             continue  # pre-migration
         refs_dir = agent_dir / "references"

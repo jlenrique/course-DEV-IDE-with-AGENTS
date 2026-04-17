@@ -5,7 +5,9 @@
 
 ## Current State (as of 2026-04-16 late session closeout)
 
-- Active branch: `DEV/slides-redesign` (3 commits ahead of origin, not pushed)
+- Active branch: `dev/marcus-sanctum-migration` (freshly created from `master`)
+- `master` reconciled this closeout: 24-commit merge from `DEV/slides-redesign` landed cleanly (merge commit `e2be90f`); post-merge regression 567 passed; pushed to origin
+- `DEV/slides-redesign` preserved on origin as historical branch
 - Full repo regression: **567 passed, 0 failed**
 - **Texas agent (Source Wrangler) — DONE.** Built via bmb workflow. Full sanctum pattern. 33 tests passing.
 - **Progress Map evergreen hardening — DONE.** 4 fixes, 40 new tests (52 total).
@@ -62,21 +64,17 @@ High. Marcus has the most complex SKILL.md in the system (200+ lines), 10+ refer
 
 ## Branch Metadata
 
-- Repository baseline branch: `DEV/slides-redesign` (3 commits ahead, not yet pushed to origin)
-- Next working branch: `DEV/slides-redesign` (continue on this branch for Marcus migration)
+- Repository baseline branch: `master` (synced with `origin/master` at closeout — includes 24-commit consolidation merge `e2be90f` from `DEV/slides-redesign`)
+- Next working branch: `dev/marcus-sanctum-migration` (created from master, pushed to origin with upstream set)
 
 Resume commands:
 
 ```powershell
 cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
-git checkout DEV/slides-redesign
+git checkout dev/marcus-sanctum-migration
+git pull origin dev/marcus-sanctum-migration
 git status --short
 git log --oneline -5
-```
-
-If desired, push accumulated commits to origin first:
-```powershell
-git push origin DEV/slides-redesign
 ```
 
 ## Hot-Start Files

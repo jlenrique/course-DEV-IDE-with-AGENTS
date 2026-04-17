@@ -1,122 +1,125 @@
-# Session Handoff — 2026-04-17 (Texas Production Readiness + G3.5 Remediation)
+# Session Handoff — 2026-04-17 (Epic 26 Pilot Wave Closed + Trial Halted at Prompt 1 Validator Gate)
 
 ## Session Summary
 
-**Objective (as executed):** Two large pieces of work landed this session: (1) a full-cascade G3.5 remediation that reorganized all 9 fidelity contracts under the new A2 deterministic-before-agentic ordering invariant with `blocks_on:` declarative preconditions; (2) Epic 25 Story 25-1 — Texas runtime wrangling runner — which closes the runtime-wiring gap so Texas's validators actually run during a production trial.
+**Objective (as executed):** Closed the Epic 26 BMB sanctum-migration pilot wave (Marcus 26-1, Irene 26-2, Dan 26-3) with full layered code review, remediated fleet-wide scaffold defects as Story 26-4 (scaffold v0.2), wired the v4.2 prompt pack's new stages (Creative Directive + clustering) into Marcus's workflow templates, then opened the APC C1-M1 Tejal trial production run. Trial halted at Prompt 1 on a validator gate (good halt — gate rule triggered as designed), surfacing three distinct remediation-worthy defects. Runbook captures every operator/agent action from trial open through the halt.
 
-**Phase:** Implementation.
+**Branch:** `dev/epic-26-scaffold-v02`
+**Session-anchor commit:** `c9f8d1c` (prior SESSION-HANDOFF)
+**Head commit:** `5e073cf` (trial-readiness wire-up)
+**Commits this session (4):**
+- `a878b82` — feat(epic-26): Dan BMB sanctum migration (26-3) + scaffold v0.2 backlog opened
+- `cdfad84` — feat(epic-26): BMB scaffold v0.2 (26-4) — fleet-wide defect fix + batch-wave contract
+- `5e073cf` — fix(workflow): wire prompt-pack v4.2 stages into Marcus templates + tests
+- (`5ffc76b` — feat(workflow): enhance production process with Creative Directive and clustering features — authored by operator directly, landed between Dan and 26-4)
 
-**Branch:** `dev/marcus-sanctum-migration` was renamed to `dev/epic-25-texas-runner` at wrapup to honestly reflect this session's work, then merged cleanly into `master` and pushed. The next working branch is `dev/trial-run-c1m1-tejal-20260417`.
+## Major Deliverables
 
-## What Was Completed
+### Epic 26 pilot wave closed (3/3 pilots migrated to BMB sanctum pattern)
 
-### 1. G3.5 Remediation — DONE
+- **26-1 Marcus** (orchestrator-tier): 73-line BMB SKILL.md; generic reusable scaffold v0.1 shipped.
+- **26-2 Irene** (specialist-deep): 58-line specialist-tier SKILL.md; 21 capability codes preserved.
+- **26-3 Dan** (specialist-narrow, commit `a878b82`): 60-line specialist-tier SKILL.md; 2 capability codes (DR + PT); full migration-worksheet + downstream-reference-map + scaffold v0.2 backlog opened at close-out.
 
-Audra's session-open L1 baseline sweep surfaced one finding: `docs/fidelity-gate-map.md:18` listed G3.5 (PNG Export Validation) as a gate with no matching contract file. Full-cascade remediation across 11 files, driven by two rounds of party-mode consensus (Winston, Murat, Paige, Amelia, John, Dr. Quinn):
+### Story 26-4: BMB scaffold v0.2 (commit `cdfad84`)
 
-- Five new criteria G3-08..G3-12 added to `g3-generated-slides.yaml` (PNG file integrity, Gary-output completeness, dimensions envelope, not-blank entropy floor, not-stub pixel-density floor). All Pillow-only — no numpy / scipy added.
-- All 8 other contracts (g0/g1/g1.5/g2/g2.5/g4/g5/g6) reorganized to satisfy the new deterministic-before-agentic ordering invariant.
-- `blocks_on:` field added to every agentic criterion (44 total across 9 contracts) encoding short-circuit preconditions as a declarative graph rather than list-order convention.
-- Validator (`scripts/validate_fidelity_contracts.py`) extended with two new invariant checks; `state/config/fidelity-contracts/_schema.yaml` updated with the `blocks_on:` field spec.
-- 17 new tests in `tests/test_validate_fidelity_contracts.py` covering baseline schema, ordering invariant, `blocks_on:` well-formedness, and a smoke test that every repo contract passes.
-- Gate-map restructured: G3.5 row removed from the Gate Definitions table; alias sub-bullet added under G3 for historical-query discoverability.
-- Post-remediation trace report at [reports/dev-coherence/2026-04-17-0034/](reports/dev-coherence/2026-04-17-0034/).
+Fleet-wide scaffold defects surfaced in Dan's code review, fixed at the scaffold level:
+- **V2-1:** Config overlay now reads `_bmad/core/config.yaml` first (canonical `user_name` source; previously fell back to literal `"friend"`).
+- **V2-2:** `{sanctum_path}` substitutes to repo-relative POSIX path (previously leaked absolute Windows path).
+- **V2-3:** References rendered with 7-variable whitelist (foreign `{...}` tokens preserved).
+- **+5 hardening adds from layered review:** EC-A project-root ancestor guard, EC-B stale-file purge on `--force`, EC-E `document_output_language` in whitelist, EC-F no-force-skip message assertion, version string bumped v0.1 → v0.2.
+- **13 new regression tests** (10 v0.2 + 3 remediation). 48 total migration tests.
+- Marcus/Irene/Dan sanctums all re-scaffolded via `--force` post-v0.2: `Operator: Juanl`, repo-relative paths, no literal tokens.
 
-### 2. Epic 25 Story 25-1 — Texas Runtime Wrangling Runner — DONE
+### Story 26-5: Scaffold preservation semantics (backlog stub opened)
 
-Closes the long-deferred "Texas's extraction validator has not been run in a real production pipeline yet" risk from the prior session handoff. Single story, scoped by party-mode consensus (Winston, Amelia, Murat), landed with layered BMAD code review clean.
+Opens the preservation-heuristic story deferred from 26-4 consensus. MUST close before batch migration of remaining ~14 agents.
 
-Landed artifacts:
+### Prompt pack v4.2 trial-readiness (commit `5e073cf`)
 
-- [skills/bmad-agent-texas/scripts/run_wrangler.py](skills/bmad-agent-texas/scripts/run_wrangler.py) — CLI orchestrator (~600 LOC) that executes the Marcus↔Texas delegation contract end-to-end: fetch + extract + validate + cross-validate + write 6 canonical artifacts.
-- [skills/bmad-agent-texas/references/extraction-report-schema.md](skills/bmad-agent-texas/references/extraction-report-schema.md) — v1.0 canonical schema for `extraction-report.yaml`.
-- [skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py](skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py) — 18 integration tests covering happy path, tier re-derivation, tier-2 warnings, cross-validation populated + empty-list, 30-line-stub tripwire, malformed directive, duplicate ref_ids, all-supplementary rejection, supplementary-role provenance-only, `Z`-suffix timestamps, JSON mode, idempotent re-run.
-- 3 synthetic fixtures at [skills/bmad-agent-texas/scripts/tests/fixtures/wrangler-golden/](skills/bmad-agent-texas/scripts/tests/fixtures/wrangler-golden/) (primary / validation / thin).
-- Prompt pack [Prompt 3 rewritten](docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md) to invoke the runner + `--legacy-prose` fallback documented with an explicit removal-after-two-trials deprecation trigger.
-- [delegation-contract.md](skills/bmad-agent-texas/references/delegation-contract.md) — Runtime Invocation section added with CLI, exit codes, and direct-path-invocation note.
-- Test file rename to break basename collision: `test_source_wrangler_operations.py` → `test_texas_source_wrangler_operations.py` under `skills/bmad-agent-texas/scripts/tests/`.
-- `pyproject.toml` — Texas tests added to `testpaths` so default `pytest` discovery includes them.
+Wired 4 new workflow stages Juan added in commit `5ffc76b` (`creative-directive`, `cluster-prompt-engineering`, `cluster-dispatch-sequencing`, `cluster-coherence`) into Marcus's `narrated-lesson-with-video-or-animation` workflow template + test fixture stubs + motion.yaml ordering. Structural walk motion dry-run: READY, 0 critical findings. First clean pytest run this session (967/0/2).
 
-Layered BMAD code review ran all three lenses (Blind Hunter, Edge Case Hunter, Acceptance Auditor). 31 findings from Blind Hunter, exhaustive branch/boundary map from Edge Case Hunter, all 9 ACs SATISFIED per Acceptance Auditor. Triaged 7 MUST-FIX + 6 SHOULD-FIX; all remediated. 6 post-review regression tests added (override-tier, tier-2 warnings, supplementary-role, no-primary rejection, duplicate ref_ids, Z-suffix timestamps). Re-review clean.
+### Pre-trial harmonization (first operator-direct Cora invocation)
 
-## Commits Landed This Session
+Cora preferences captured in sidecar (full-repo default `/harmonize`, on-demand-only Audra baseline at WRAPUP cadence, warn-mode pre-closure). Audra L1 full-repo sweep: **CLEAN** at [reports/dev-coherence/2026-04-17-1900/harmonization-summary.md](reports/dev-coherence/2026-04-17-1900/harmonization-summary.md).
 
-- Single session commit on `dev/epic-25-texas-runner` encompassing all 27 changed files (G3.5 remediation + Epic 25 Story 25-1 + wrapup artifacts)
-- Merged cleanly into `master` at wrapup; `master` pushed to `origin/master`
-- Post-session, `origin/master` includes this session's work plus the two pre-session merge-consolidation commits (`e2be90f`, `18e726d`)
+### Trial production run opened + halted
 
-## Stories Touched
+Runbook artifact `_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md` logs every operator + Marcus action from trial open through the Prompt 1 halt. Highlights:
 
-| Story | Status change | Review outcome |
-|---|---|---|
-| `25-1-texas-runtime-wrangling-runner` | *(new)* → `done` | BMAD-clean 2026-04-17 after layered review + 13 remediations |
+- Marcus loaded via Skill tool (not registered in harness; operator waited for load).
+- DB transition: `C1-M1-PRES-20260409` cancelled (no stages had run); `C1-M1-PRES-20260415` activated fresh (tracked / production / double-dispatch / motion-enabled 125-credit pro tier / visual-led / default cluster density).
+- Source-prompting: Notion fetch blocked (integration not granted to specific page); proceeded with local-file triangle. Image roadmap routed via `OPTIONAL_CONTEXT_ASSETS` escape hatch.
+- **Texas dispatched, exit 10 = complete_with_warnings.** PDF primary extraction tier-1 (7,586 words, 24 headings — aligned with prior-run baseline). Part-1 MD cross-val strong (10/10 sections, 99% key terms). **DOCX cross-val FAILED due to Texas extractor defect**, not content divergence.
+- Prompt 1 formally issued after catch-up. Marcus bound Execution Rules (SPOC + Artifact Verification Protocol + Motion-first ordering). Cleared stale gate verdicts, reviewed operator-directives.md as still-correct, ran preflight commands.
+- **`emit-preflight-receipt.py` FAILED** validator `bundle_run_constants`: "Missing or empty required string field: run_id". **Marcus halted per gate rule — correct behavior**; surfaced proposed run-constants.yaml lowercase-nested rewrite for operator approval.
 
-Epic 25 added and flipped to `done` in the same session (single-story epic).
+## Defects Surfaced by Trial (4 backlog items + 2 runbook-logged observations)
+
+| # | Finding | Severity | Home |
+|---|---------|----------|------|
+| 1 | **Texas visual-source gap** (no image provider) + **DOCX contract-vs-code drift** (registry promises `python-docx`, code doesn't route to it) | **High** | `_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md` |
+| 2 | **Prompt pack v4.2 Run Constants schema drift** — pack displays UPPERCASE flat keys; validator requires lowercase nested `motion_budget:` block | Medium | `_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md` |
+| 3 | BMB scaffold v0.2 **preservation semantics** (deferred from 26-4) | Medium | `_bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md` |
+| 4 | **Texas `run_wrangler.py --help` cp1252 crash** on Windows default stdout (`UnicodeEncodeError` on `↔`) | Low (one-line fix: `sys.stdout.reconfigure(encoding='utf-8', errors='replace')`) | Runbook-logged |
+| 5 | **Audra L1 needs new check class: docs-vs-code schema drift** (`format-capability-lockstep`). Would have caught #1 and #2. | Low/Medium | Logged in stubs #1 and #2 |
+| 6 | **Trial halted at Prompt 1** with `run-constants.yaml` needing canonical-lowercase-schema rewrite per Marcus's proposal. **Not a defect — operator-approval-pending resume point.** | — | Runbook-logged |
+
+## Unresolved Issues / Risks Carried Forward
+
+1. **Trial halted mid-Prompt-1.** Marcus awaiting operator approval to rewrite `run-constants.yaml` to canonical lowercase nested schema (values preserved; schema compliance repair). Retry `emit-preflight-receipt.py` → expect PASS → activation receipt + GO. See next-session-start-here.md for the fast-restart plan.
+2. **Operator intent for next session:** "Remediate as much as possible and then start a fresh run. Getting back to this current point and beyond much more quickly and confidently." Sequenced remediation plan in next-session-start-here.md.
+3. **Ambient worktree state — NOT session work.** `scripts/utilities/progress_map.py` has an uncommitted mid-refactor (216 deletions, 35 insertions — wave labels hardcoded replacing epic-comment-parsing) that breaks 34 tests. Predates today's wrapup. Left untouched per Step 10a. Next session must decide: complete the refactor, revert, or park.
+4. **Story 26-5 (scaffold preservation semantics) gates the batch migration wave.** Must close before any of the ~14 remaining agents are migrated.
 
 ## Validation Summary
 
-- **Step 0a — Audra L1 harmonization sweep:** clean. 0 findings. See [reports/dev-coherence/2026-04-17-0142/harmonization-summary.md](reports/dev-coherence/2026-04-17-0142/harmonization-summary.md). L2 not invoked (L1 clean).
-- **Step 0b — Preclosure audit for story 25-1:** all 4 closure artifacts present. See [reports/dev-coherence/2026-04-17-0142/evidence/ca-25-1.md](reports/dev-coherence/2026-04-17-0142/evidence/ca-25-1.md).
-- **Full repo regression:** 919 passed, 2 skipped, 0 failed (baseline 891 → +28 net: 18 runner + 10 renamed Texas source-wrangler tests now collected via updated `testpaths`).
-- **Contract validator:** all 9 contracts valid, 79 criteria, 0 errors.
-- **Structural walks:** all 3 workflows READY with 0 critical findings.
-- **Manual smoke test** against synthetic fixture: exit 0, all 6 artifacts emitted, `Z`-suffix timestamps agree across `metadata.json` / `extraction-report.yaml` / `manifest.json`; evidence trail shows `Tier re-derived after operator-declared floor: FULL_FIDELITY`.
-- **Texas integration test against C1M1Part01.md** (pre-existing from prior session): still passing.
-
-## What Is Next
-
-**Primary (recommended):** Execute the long-deferred fresh trial production run using prompt pack v4.2g. The three blockers from the prior handoff are now closed: the 30-line-stub risk is preventable (Texas runner + tier classification + belt-and-suspenders word-count check), G3.5 is no longer a lockstep orphan (folded into G3 with concrete criteria), and validator / regression suites are green. A trial run will exercise Texas's runtime runner end-to-end for the first time in anger.
-
-**Secondary:** Marcus sanctum migration (the branch name `dev/marcus-sanctum-migration` still refers to this). The session-START party-mode design pass already produced recommendations for this work (Dan→Marcus→Irene pilot sequence, identity-extraction over First Breath, atomic cutover) — see the messages around 2026-04-17 01:10 for the full party output if resuming.
-
-**Tertiary:** Follow-up stories filed during review but not executed this session:
-- Vera-side G0 gate runner that reads `extraction-report.yaml` and emits `gates/gate-03-result.yaml` (deferred per lane-discipline consensus).
-- Explicit fallback-chain orchestration in the runner (schema language is aspirational today; DEGRADED blocks immediately).
-- Git-SHA-derived version strings (replaces hand-maintained date strings in `run_wrangler.py` and validator modules).
-- Manifest self-inclusion strategy for `result.yaml` hash provenance.
-
-## Unresolved Issues / Risks
-
-- **Everything this session is uncommitted** — the operator owns the decision on whether to commit-only, commit+merge to master, or defer until after a trial run. See Step 12 of the wrapup protocol for the default flow.
-- **Marcus sanctum migration still pending** — the original session-open intent that was superseded by the Texas readiness directive. Party-mode design work is on the record in this session's earlier messages.
-- **Texas runner has no real-trial evidence yet** — every test exercises synthetic fixtures or library functions. First real trial run will be the first time the runner faces a production source. The `--legacy-prose` fallback in v4.2g Prompt 3 is the safety net for exactly this scenario.
-- **`pyproject.toml` build-backend is broken** (Blind Hunter #24 from code review). Pre-existing, unrelated to this session's work. `pip install .` or `python -m build` will fail with `ModuleNotFoundError`. Flagging for a future hygiene story.
+- Dev-coherence sweep 0a (19:00, pre-trial, full-repo): L1 **CLEAN**. Report: `reports/dev-coherence/2026-04-17-1900/harmonization-summary.md`.
+- pytest regression at `5e073cf` head: **967 passed, 2 skipped, 0 failed** — first clean run this session.
+- pytest regression at wrapup time: **933 passed, 34 failed, 2 skipped** — **all 34 failures stem from Juan's uncommitted `progress_map.py` refactor**, not session work.
+- `scripts/validate_fidelity_contracts.py`: 9 files / 79 criteria / **0 errors**.
+- Structural walk (all 3 workflows): motion/standard/cluster all READY, 0 critical findings.
+- BMB scaffold migration tests: 48 passed (34 → 48 this session).
+- Marcus/Irene/Dan re-scaffolded via `--force` post-v0.2: BOND shows `Juanl`, INDEX paths repo-relative POSIX, no unresolved tokens.
 
 ## Key Lessons Learned
 
-- **Party-mode consensus on story scope pays off at review time.** Both the G3.5 remediation and the Texas runner story converged cleanly because the shape and boundaries were negotiated up front with Winston / Amelia / Murat. The layered code review found 31 issues, but none were structural — all were implementation-level, which is what adversarial review is designed to catch.
-- **Runner agnostic over Marcus-embedded logic.** Shape A (CLI orchestrator) gave the story clean test boundaries. A Marcus-embedded runner would have required a Marcus harness for every test and locked the wrangling contract inside an LLM prompt.
-- **Strict directive validation catches typos at the door, not deep in fetch.** The post-review move to reject unsupported providers + missing primary + duplicate ref_ids at directive-load time (exit 30) is cheaper for operators than a late blocked status at exit 20.
-- **Evidence trails must honor operator declarations.** The override-rewrite fix — both `expected_min_words` and `tier` re-derived consistently when a directive supplies a floor — prevents a subtle evidence-drift bug where the tier disagreed with the declared floor.
+- **The trial run did its job.** ~2 hours of trial surfaced: Texas visual-source gap + DOCX drift, prompt-pack Run Constants schema drift, stale-context DB-vs-bundle mismatch, stale-gate-verdict pollution risk, prompt-pack-sequence-order operator trap. Each would have cost time later; catching in trial is the cheapest discovery path.
+- **The Artifact Verification Protocol worked as designed.** Marcus halted at `emit-preflight-receipt.py` validator fail per gate rule rather than continuing past — exactly the failure mode the protocol defends against.
+- **Pack-doc-vs-code drift is a real defect class.** Both the Texas DOCX drift (registry promises `python-docx`, code doesn't deliver) and the pack Run Constants drift (doc uppercase, validator lowercase) are the same class: documentation makes promises the code doesn't keep. Audra needs a check for this.
+- **Operator's "Texas as wrangler must be savvy" principle** sharpened the Texas backlog scope meaningfully — Option C (reject images with error) was withdrawn as identity-violating. Texas must accept everything; internal routing to specialist extractors is the architecture.
+- **Scribe role + operator-driven trial was a strong shape.** Clean role separation let operator focus on production decisions without typing commands. Claude logged + expert support on demand.
 
 ## Content Creation Summary
 
-No course content was created or modified this session. The APC C1-M1 Tejal fixtures remain as the reference asset for Texas cross-validation tests.
+No course content was created this session. APC C1-M1 Tejal fresh trial was opened but halted at Prompt 1 validator gate before any content-bearing work (Irene Pass 1, Gary slides, narration, motion, audio, composition) could begin. **Source-wrangling completed successfully**: `extracted.md` in the trial bundle is a tier-1 7,586-word extraction from the canonical PDF, validated against MD Part-1 at 99% key-term coverage.
 
 ## Artifact Update Checklist
 
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — Epic 25 + story 25-1 registered + flipped to `done`
-- [x] `_bmad-output/implementation-artifacts/25-1-texas-runtime-wrangling-runner.md` — new; full Review Record populated
-- [x] `state/config/fidelity-contracts/*.yaml` — 9 files; all 9 pass validator
-- [x] `state/config/fidelity-contracts/_schema.yaml` — `blocks_on:` field documented
-- [x] `scripts/validate_fidelity_contracts.py` — ordering + blocks_on invariants added
-- [x] `tests/test_validate_fidelity_contracts.py` — new; 17 tests
-- [x] `docs/fidelity-gate-map.md` — G3.5 row removed, alias sub-bullet under G3
-- [x] `skills/bmad-agent-texas/scripts/run_wrangler.py` — new; ~600 LOC
-- [x] `skills/bmad-agent-texas/references/extraction-report-schema.md` — new; v1.0
-- [x] `skills/bmad-agent-texas/references/delegation-contract.md` — Runtime Invocation section
-- [x] `skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py` — new; 18 tests
-- [x] `skills/bmad-agent-texas/scripts/tests/test_texas_source_wrangler_operations.py` — renamed to avoid basename collision
-- [x] `skills/bmad-agent-texas/scripts/tests/fixtures/wrangler-golden/*.md` — 3 new fixtures
-- [x] `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` — Prompt 3 rewrite + `--legacy-prose` fallback
-- [x] `pyproject.toml` — Texas tests added to `testpaths`
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 26-3 done, 26-4 done, 26-5 backlog
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — stories map + `next_workflow_step` updated
+- [x] `_bmad-output/implementation-artifacts/26-3-dan-bmb-sanctum-migration.md` — full Review Record + closure
+- [x] `_bmad-output/implementation-artifacts/26-4-bmb-scaffold-v0-2.md` — full Review Record + closure
+- [x] `_bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md` — backlog stub
+- [x] `_bmad-output/implementation-artifacts/epic-26/_shared/scaffold-v0.2-backlog.md` — "shipped spec" section
+- [x] `_bmad-output/implementation-artifacts/epic-26/_shared/migration-worksheet-dan.md` — filed
+- [x] `_bmad-output/implementation-artifacts/epic-26/_shared/downstream-reference-map-cd.md` — filed
+- [x] `_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md` — runbook (committed this wrapup)
+- [x] `_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md` — committed this wrapup
+- [x] `_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md` — committed this wrapup
+- [x] `scripts/bmb_agent_migration/init_sanctum.py` — v0.1 → v0.2
+- [x] `tests/migration/test_bmb_scaffold.py` — 34 → 48 tests
+- [x] `skills/bmad-agent-marcus/references/workflow-templates.yaml` — 4 new v4.2 stages in motion template
+- [x] `state/config/structural-walk/motion.yaml` — parity + anti-drift specs reordered to Marcus-stage order
+- [x] `tests/test_structural_walk.py` — assertion counts + fixture stubs updated for v4.2
+- [x] `_bmad/memory/bmad-agent-marcus/`, `_bmad/memory/bmad-agent-content-creator/`, `_bmad/memory/bmad-agent-cd/` — re-scaffolded (local-only; gitignored)
+- [x] `_bmad/memory/cora-sidecar/index.md` + `chronology.md` — preferences + session log entries
+- [x] `reports/dev-coherence/2026-04-17-1900/harmonization-summary.md` — Cora/Audra harmonization report
+- [x] `reports/structural-walk/motion/structural-walk-motion-dry-run-20260417-*.md` — motion dry-run reports
 - [x] `SESSION-HANDOFF.md` — this file
-- [x] `next-session-start-here.md` — see next-session-start-here.md
-- [x] `docs/agent-environment.md` — updated to cite Texas runner CLI as the runtime entry point
-- [x] `reports/dev-coherence/2026-04-17-0034/` — G3.5 post-remediation audit trail
-- [x] `reports/dev-coherence/2026-04-17-0142/` — session-wrapup Step 0a/0b audit trail
+- [x] `next-session-start-here.md` — see that file
 
 ## Dev-Coherence Report Home
 
-- [reports/dev-coherence/2026-04-17-0142/harmonization-summary.md](reports/dev-coherence/2026-04-17-0142/harmonization-summary.md) — Step 0a clean
-- [reports/dev-coherence/2026-04-17-0142/evidence/ca-25-1.md](reports/dev-coherence/2026-04-17-0142/evidence/ca-25-1.md) — Step 0b clean
+- [reports/dev-coherence/2026-04-17-1900/harmonization-summary.md](reports/dev-coherence/2026-04-17-1900/harmonization-summary.md) — Step 0a full-repo CLEAN verdict
+- No Step 0b pre-closure evidence files this session (26-3 and 26-4 review records are inline in their story artifacts).

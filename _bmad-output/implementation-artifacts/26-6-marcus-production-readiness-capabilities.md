@@ -32,6 +32,7 @@ Scope split per scope-confirmation party consensus (2026-04-17):
 6. **AC-T.6** PR-HC + PR-RS xfail behavioral tests exist in `tests/marcus_capabilities/test_stubs.py` and are discovered by `pytest --collect-only`. Placeholders for 26-10 follow-up.
 7. **AC-T.7** PR-RC `execute` is idempotent: re-authoring the same constants yields byte-equal output. Unit test via hash-compare.
 8. **AC-T.8** `@pytest.mark.trial_critical` — Capability router raises `UnknownCapability` exception on typo (`PR-PFT` or empty string). Unit negative test.
+9. **AC-T.9** Registry-schema cross-reference test in `test_registry.py`: every `code:` listed in `registry.yaml` has a matching `capabilities/<slug>.md` frontmatter `code:` value AND a corresponding `schemas/<slug>.yaml` file. Catches schema-version skew and orphan registry entries at pre-commit time.
 
 **Coverage:** No `pytest --cov` gating for 26-6 (per John's "measure post-trial first" position). Coverage diagnostic-only.
 
@@ -39,6 +40,8 @@ Scope split per scope-confirmation party consensus (2026-04-17):
 
 1. **AC-D.1** Strip "Run Constants" and "Initialization Instructions" sections from `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (currently lines ~18–70). Replace with this redirect stub:
    > **Marcus capabilities moved.** Readiness/execution checks (PR-PF, PR-RC, PR-HC, PR-RS) now live in [`docs/dev-guide/marcus-capabilities.md`](../dev-guide/marcus-capabilities.md). Pack doc keeps only operator-facing prompts; capability mechanics are Marcus's concern.
+
+   **Also update**: `next-session-start-here.md` references the stripped pack-doc "Run Constants" sections at multiple points (search for "Run Constants" / "pre-prompt" / pack-doc line-number references). Redirect every such reference to `docs/dev-guide/marcus-capabilities.md` or the archive file. Grep check: `grep -n "Run Constants\|pre-prompt\|Initialization Instructions" next-session-start-here.md` should return only ambient-state notes, not live workflow pointers.
 
 2. **AC-D.2** Archive stripped content verbatim at `docs/workflow/archive/prompt-pack-preprompt-2026-04.md` with a 4-line header: source-commit-SHA + strip-date (2026-04-17) + story-ref (26-6) + pointer-to-canonical-location. Body under `## Preserved content` fence.
 3. **AC-D.3** New `docs/dev-guide/marcus-capabilities.md`. Top: 3-row (expandable-to-4) index table `| Code | Purpose | Status |`. One flat section per code with: **Purpose** (1 line) · **Invocation** (operator-ask phrasing + Marcus-offer phrasing) · **Inputs** (what Marcus needs from operator) · **Return shape** (fenced YAML) · **When offered** (trigger conditions) · **Stub note** if applicable.
@@ -82,12 +85,13 @@ Scope split per scope-confirmation party consensus (2026-04-17):
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Shared infrastructure + registry** (AC-C.1, C.2, C.4, T.5, T.8)
+- [ ] **Task 1 — Shared infrastructure + registry + capability MD files** (AC-C.1, C.2, C.4, C.5, T.5, T.8, T.9)
   - [ ] Create `scripts/marcus_capabilities/__init__.py` + `_shared.py` (landing-point dataclass, dual-mode CLI wrapper, stdout-JSON emitter, stderr logger)
-  - [ ] Create `scripts/marcus_capabilities/registry.py` with `CAPABILITY_REGISTRY: dict[str, RegistryEntry]`
-  - [ ] Create `skills/bmad-agent-marcus/capabilities/registry.yaml` — YAML canonical source
-  - [ ] Create `skills/bmad-agent-marcus/capabilities/schemas/` with 4 schema files
-  - [ ] Write `tests/marcus_capabilities/test_registry.py` (completeness: all 4 codes present, schema files readable)
+  - [ ] Create `scripts/marcus_capabilities/registry.py` with `CAPABILITY_REGISTRY: dict[str, RegistryEntry]` — loads from markdown frontmatter (authoritative) + `registry.yaml` (supplementary index)
+  - [ ] Create `skills/bmad-agent-marcus/capabilities/pr-pf.md`, `pr-rc.md`, `pr-hc.md`, `pr-rs.md` — each with frontmatter (`name`, `code`, `description`, `script_module`, `schema_path`) + body sections per `capability-authoring.md` anatomy (When to invoke / Inputs / Procedure / Outputs / Gates / Examples)
+  - [ ] Create `skills/bmad-agent-marcus/capabilities/registry.yaml` — supplementary index enumerating the 4 codes with pointers (for fast programmatic lookup; markdown frontmatter remains authoritative)
+  - [ ] Create `skills/bmad-agent-marcus/capabilities/schemas/pr_pf.yaml`, `pr_rc.yaml`, `pr_hc.yaml`, `pr_rs.yaml` — args + result shape per code
+  - [ ] Write `tests/marcus_capabilities/test_registry.py` (completeness: all 4 codes present in markdown + yaml + schemas; cross-reference AC-T.9)
   - [ ] Write `tests/marcus_capabilities/test_landing_point_contract.py` (parametrized × 4 caps; envelope shape only)
   - [ ] Write `tests/marcus_capabilities/test_router_negative.py` (AC-T.8 UnknownCapability)
 
@@ -139,12 +143,15 @@ Scope split per scope-confirmation party consensus (2026-04-17):
   - Contract/schemas → `skills/bmad-agent-marcus/capabilities/` (sanctum-owned, BMB conformance; schemas are behavior)
   - Deterministic scripts → `scripts/marcus_capabilities/` (implementation detail; imports schemas from sanctum)
 - **No exceptions cross the Marcus boundary.** All capability outcomes return an envelope. Scripts exit 0 on capability-level failure. Non-zero exit = contract violation (script bug) only.
+- **Capability code namespace clarification (from validate pass).** Marcus's existing built-in capability codes are single/short letter (`CM`, `PR`, `HC`, `MM`, `SP`, `SM`, `SB` — see `skills/bmad-agent-marcus/assets/CAPABILITIES-template.md`). This story introduces 4-character codes `PR-PF`, `PR-RC`, `PR-HC`, `PR-RS` in a distinct prefix namespace (`PR-*`). The scaffold's frontmatter scan matches `code:` values exactly — `PR-PF` does NOT collide with `PR`, and `PR-HC` does NOT collide with `HC`. **Dev agent MUST NOT touch the existing single-letter `PR` (progress-reporting) or `HC` (checkpoint-coord) rows / reference files.** Those are built-in capabilities unrelated to this story. The visual overlap is intentional (`PR-*` = Production-Readiness prefix) and documented in `docs/dev-guide/marcus-capabilities.md`. Future naming convention (MC-<category>-*) is a follow-up story; `PR-*` is grandfathered.
+- **Capability file format (from validate pass).** The existing Marcus scaffold (`skills/bmad-agent-marcus/references/capability-authoring.md`) discovers capabilities by scanning `capabilities/<slug>.md` for `name:` + `code:` frontmatter. Each PR-* capability MUST have such a markdown file with the full capability-authoring anatomy (When to invoke / Inputs / Procedure / Outputs / Gates / Examples). YAML `registry.yaml` is supplementary (fast programmatic lookup for the router) but is NOT the source of truth — the markdown frontmatter is. This matches the scaffold contract and preserves auto-discovery of new capabilities on subsequent `--force` re-scaffolds.
 
 ### Source tree (new + touched)
 
 **NEW:**
 - `scripts/marcus_capabilities/` (package: `__init__.py`, `_shared.py`, `pr_pf.py`, `pr_rc.py`, `pr_hc.py`, `pr_rs.py`, `registry.py`)
-- `skills/bmad-agent-marcus/capabilities/registry.yaml`
+- `skills/bmad-agent-marcus/capabilities/pr-pf.md`, `pr-rc.md`, `pr-hc.md`, `pr-rs.md` (markdown capability files with frontmatter — scaffold-discovered, authoritative)
+- `skills/bmad-agent-marcus/capabilities/registry.yaml` (supplementary index for fast programmatic lookup)
 - `skills/bmad-agent-marcus/capabilities/schemas/pr_pf.yaml`, `pr_rc.yaml`, `pr_hc.yaml`, `pr_rs.yaml`
 - `tests/marcus_capabilities/` (`test_pr_pf.py`, `test_pr_rc.py`, `test_stubs.py`, `test_registry.py`, `test_landing_point_contract.py`, `test_router_negative.py`, `fixtures/halt-2026-04-17-prompt1.yaml`)
 - `docs/dev-guide/marcus-capabilities.md`
@@ -154,6 +161,7 @@ Scope split per scope-confirmation party consensus (2026-04-17):
 - `skills/bmad-agent-marcus/SKILL.md` (capability-code table + new Production Readiness section)
 - `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (strip pre-prompt sections; replace with redirect stub)
 - `docs/dev-guide.md` (Testing section link block)
+- `next-session-start-here.md` (redirect stripped-pack-doc references to `docs/dev-guide/marcus-capabilities.md` or archive; see AC-D.1)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (flip `26-6-...: ready-for-dev` → `done` at closure; update `last_updated`)
 
 ### Testing standards (from Murat's green-light guardrails)

@@ -42,7 +42,7 @@
 # - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-16  # harmonized with docs + bmm-workflow-status; Epic 24 header comments
+last_updated: 2026-04-17  # 26-6 story artifact created via bmad-create-story (pretrial-prep run)
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system

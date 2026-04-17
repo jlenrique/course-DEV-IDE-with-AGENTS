@@ -1,10 +1,11 @@
 # Structural Walk
 
-The Structural Walk is the canonical sanity check for the repo's two
+The Structural Walk is the canonical sanity check for the repo's
 primary narrated production workflows:
 
 - `standard` - narrated deck video export without motion
 - `motion` - motion-enabled narrated workflow with Gate 2M and Motion Gate
+- `cluster` - cluster + interstitial narrated workflow with G1.5 and G2.5 gates
 
 It is intentionally narrower than a full end-to-end simulation. The
 default run is deterministic and local, but it uses real checks where
@@ -24,6 +25,7 @@ Workflow parity data is now declared in machine-readable manifests under:
 
 - `state/config/structural-walk/standard.yaml`
 - `state/config/structural-walk/motion.yaml`
+- `state/config/structural-walk/cluster.yaml`
 
 Those manifests define the workflow-specific cross-cutting checks and
 document-integrity checkpoints that the canonical tool evaluates.
@@ -49,6 +51,12 @@ Motion workflow:
 python -m scripts.utilities.structural_walk --workflow motion
 ```
 
+Cluster workflow:
+
+```powershell
+python -m scripts.utilities.structural_walk --workflow cluster
+```
+
 Optional explicit output path:
 
 ```powershell
@@ -67,6 +75,7 @@ Read-only dry-run planning preview:
 ```powershell
 python -m scripts.utilities.structural_walk --workflow standard --dry-run
 python -m scripts.utilities.structural_walk --workflow motion --dry-run
+python -m scripts.utilities.structural_walk --workflow cluster --dry-run
 ```
 
 Exit code rules:
@@ -80,6 +89,7 @@ Default report paths:
 
 - `reports/structural-walk/standard/structural-walk-standard-YYYYMMDD-HHMMSS.md`
 - `reports/structural-walk/motion/structural-walk-motion-YYYYMMDD-HHMMSS.md`
+- `reports/structural-walk/cluster/structural-walk-cluster-YYYYMMDD-HHMMSS.md`
 
 Historical fidelity-walk artifacts from earlier sessions are retained under:
 
@@ -87,18 +97,37 @@ Historical fidelity-walk artifacts from earlier sessions are retained under:
 
 ## What It Checks
 
-For both workflows:
+For standard, motion, and cluster workflows:
 
 - G0-G6 gate asset integrity
 - cross-cutting orchestrator and validator assets
 - literal-visual contract/operator checkpoints
 - prompt-pack document integrity markers
+- creative directive contract presence (`skills/bmad-agent-cd/references/creative-directive-contract.md`)
+- experience-profiles configuration (`state/config/experience-profiles.yaml`)
+- parameter-registry schema (`state/config/parameter-registry-schema.yaml`)
 
 For motion workflow only:
 
 - motion-planning and Kling execution assets
 - motion manifest hydration and motion perception wiring
 - Gate 2M / Motion Gate / winner-deck binding markers
+
+For cluster workflow:
+
+- G1.5 Cluster Plan gate contract (`state/config/fidelity-contracts/g1.5-cluster-plan.yaml`)
+- cluster dispatch sequencing (`skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py`)
+- cluster coherence validation (`skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py`)
+- cluster prompt engineering (`skills/bmad-agent-marcus/scripts/cluster_prompt_engineering.py`)
+- cluster template library (`skills/bmad-agent-marcus/scripts/cluster_template_library.py`)
+- cluster template planner (`skills/bmad-agent-marcus/scripts/cluster_template_planner.py`)
+- cluster template selector (`skills/bmad-agent-marcus/scripts/cluster_template_selector.py`)
+- cluster prompt engineering config (`state/config/prompting.yaml`)
+- dispatch policy config (`state/config/dispatch.yaml`)
+- validation rules config (`state/config/validation.yaml`)
+- interstitial redispatch protocol (`skills/bmad-agent-marcus/scripts/interstitial_redispatch_protocol.py`)
+- interstitial redispatch CLI (`skills/bmad-agent-marcus/scripts/run-interstitial-redispatch.py`)
+- G4-16–19 cluster-specific criteria in the G4 contract
 
 ## Manifest Contract
 
@@ -118,14 +147,14 @@ They do not, by themselves:
 
 The current dry-run slice is deliberately narrow:
 
-- supports standard and motion workflow previews
+- supports standard, motion, and cluster workflow previews
 - local and deterministic
 - read-only apart from the generated report
 - no network, no live probes, no downstream asset generation
 - `--dry-run` cannot be combined with `--live-probe`
 - standard preview includes the broader local contract/document summary steps already approved
-- motion preview currently adds only manifest resolution plus Marcus-derived motion sequence parity
-- both workflows can also verify manifest-declared Marcus stage-to-document checkpoint parity
+- motion and cluster previews currently add manifest resolution plus Marcus-derived workflow sequence parity
+- all supported workflows can also verify manifest-declared Marcus stage-to-document checkpoint parity
 
 It adds two report sections:
 

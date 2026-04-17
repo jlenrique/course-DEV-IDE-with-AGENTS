@@ -94,6 +94,7 @@ class TestNarrationGroundingProfiles:
 class TestNarrationScriptParameters:
     def test_schema_version_present(self, params: dict) -> None:
         assert "schema_version" in params
+        assert params["schema_version"] == "1.1"
 
     REQUIRED_TOP_LEVEL = [
         "narration_density",
@@ -105,6 +106,7 @@ class TestNarrationScriptParameters:
         "source_depth",
         "pronunciation_sensitivity",
         "runtime_variability",
+        "narration_profile_controls",
     ]
 
     @pytest.mark.parametrize("section", REQUIRED_TOP_LEVEL)
@@ -120,6 +122,11 @@ class TestNarrationScriptParameters:
     def test_density_min_lt_mean_lt_max(self, params: dict) -> None:
         d = params["narration_density"]
         assert d["min_words_per_slide"] < d["mean_words_per_slide"] < d["max_words_per_slide"]
+
+    def test_cluster_narration_ranges_configured(self, params: dict) -> None:
+        cluster = params["narration_density"]["cluster_narration"]
+        assert cluster["cluster_head_word_range"] == [80, 140]
+        assert cluster["interstitial_word_range"] == [25, 40]
 
     # -- slide_echo --
 
@@ -195,6 +202,17 @@ class TestNarrationScriptParameters:
         assert len(pol["intro_phrase_patterns"]) >= 1
         assert len(pol["outro_phrase_patterns"]) >= 1
 
+    def test_cluster_bridge_policy_configured(self, params: dict) -> None:
+        policy = params["pedagogical_bridging"]["within_cluster_bridge_policy"]
+        assert policy["default"] == "none"
+        assert policy["tension_position_override"] == "pivot"
+
+    def test_cluster_boundary_bridge_style_configured(self, params: dict) -> None:
+        style = params["pedagogical_bridging"]["cluster_boundary_bridge_style"]
+        assert style["mode"] == "synthesis_plus_forward_pull"
+        assert style["target_seconds"] == [15, 20]
+        assert style["target_words"] == [37, 50]
+
     # -- engagement_stance --
 
     def test_engagement_posture_valid(self, params: dict) -> None:
@@ -230,6 +248,58 @@ class TestNarrationScriptParameters:
         bridge_types = params["runtime_variability"]["bridge_cadence"]["accepted_bridge_types"]
         assert isinstance(bridge_types, list)
         assert bridge_types
+        assert "pivot" in bridge_types
+        assert "cluster_boundary" in bridge_types
+
+    def test_runtime_variability_cluster_override_enabled(self, params: dict) -> None:
+        cadence = params["runtime_variability"]["bridge_cadence"]
+        assert cadence["cluster_bridge_cadence_override"] is True
+
+    # -- narration_profile_controls --
+
+    def test_profile_controls_narrator_source_authority_valid(self, params: dict) -> None:
+        valid = {"source-grounded", "balanced", "slide-led"}
+        assert params["narration_profile_controls"]["narrator_source_authority"] in valid
+
+    def test_profile_controls_slide_content_density_valid(self, params: dict) -> None:
+        valid = {"lean", "adaptive", "dense"}
+        assert params["narration_profile_controls"]["slide_content_density"] in valid
+
+    def test_profile_controls_elaboration_budget_valid(self, params: dict) -> None:
+        valid = {"low", "medium", "high"}
+        assert params["narration_profile_controls"]["elaboration_budget"] in valid
+
+    def test_profile_controls_connective_weight_valid(self, params: dict) -> None:
+        valid = {"light", "balanced", "heavy"}
+        assert params["narration_profile_controls"]["connective_weight"] in valid
+
+    def test_profile_controls_callback_frequency_valid(self, params: dict) -> None:
+        valid = {"sparse", "moderate", "frequent"}
+        assert params["narration_profile_controls"]["callback_frequency"] in valid
+
+    def test_profile_controls_visual_narration_coupling_valid(self, params: dict) -> None:
+        valid = {"loose", "balanced", "tight"}
+        assert params["narration_profile_controls"]["visual_narration_coupling"] in valid
+
+    def test_profile_controls_rhetorical_richness_valid(self, params: dict) -> None:
+        valid = {"restrained", "balanced", "expressive"}
+        assert params["narration_profile_controls"]["rhetorical_richness"] in valid
+
+    def test_profile_controls_vocabulary_register_valid(self, params: dict) -> None:
+        valid = {"accessible", "professional", "specialist"}
+        assert params["narration_profile_controls"]["vocabulary_register"] in valid
+
+    def test_profile_controls_arc_awareness_valid(self, params: dict) -> None:
+        valid = {"low", "medium", "high"}
+        assert params["narration_profile_controls"]["arc_awareness"] in valid
+
+    def test_profile_controls_narrative_tension_valid(self, params: dict) -> None:
+        valid = {"low", "medium", "high"}
+        assert params["narration_profile_controls"]["narrative_tension"] in valid
+
+    def test_profile_controls_emotional_coloring_valid(self, params: dict) -> None:
+        valid = {"neutral", "warm", "vivid"}
+        assert params["narration_profile_controls"]["emotional_coloring"] in valid
 
 
 # ---- Cross-file consistency tests ----
@@ -313,11 +383,28 @@ class TestCrossFileConsistency:
         assert g4_12["evaluation_type"] == "agentic"
         assert g4_12["requires_perception"] is True
 
-    def test_vera_protocol_documents_g4_16_spoken_bridges(
+    def test_g4_contract_includes_cluster_criteria_16_to_19(
+        self,
+        g4_contract: dict,
+    ) -> None:
+        criteria = {c["id"]: c for c in g4_contract["criteria"]}
+        for criterion_id in ("G4-16", "G4-17", "G4-18", "G4-19"):
+            assert criterion_id in criteria, f"{criterion_id} missing in G4 contract"
+            assert criteria[criterion_id]["scope"] == "cluster"
+            assert criteria[criterion_id]["severity"] == "high"
+            assert criteria[criterion_id]["description"]
+            assert criteria[criterion_id]["check_type"]
+
+    def test_vera_protocol_documents_g4_16_to_g4_19_cluster_extensions(
         self, vera_g4_protocol_text: str
     ) -> None:
         assert "G4-16" in vera_g4_protocol_text
-        assert "spoken_bridge_policy" in vera_g4_protocol_text
+        assert "G4-17" in vera_g4_protocol_text
+        assert "G4-18" in vera_g4_protocol_text
+        assert "G4-19" in vera_g4_protocol_text
+        assert "master_behavioral_intent" in vera_g4_protocol_text
+        assert "No new concepts" in vera_g4_protocol_text
+        assert "Cluster arc integrity" in vera_g4_protocol_text
 
     def test_g4_07_only_applies_to_creative(self, g4_contract: dict) -> None:
         criteria = g4_contract["criteria"]

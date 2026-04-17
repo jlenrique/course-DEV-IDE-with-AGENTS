@@ -1,6 +1,6 @@
 # Memory System for Marcus
 
-**Memory location:** `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/`
+**Memory location:** `{project-root}/_bmad/memory/marcus-sidecar/`
 
 ## Core Principle
 
@@ -27,7 +27,7 @@ Tokens are expensive. Only remember what matters. Condense everything to its ess
 - `config/` — bootstrap content defaults (fallback only — superseded by style bible when present)
 - `state/config/` — mutable per-tool parameter preferences, course context hierarchy, run preset policies
 - `state/runtime/` — SQLite database (production runs, coordination, quality gates)
-- `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/` — own sidecar (primary)
+- `{project-root}/_bmad/memory/marcus-sidecar/` — own sidecar (primary)
 - `{project-root}/_bmad/memory/*-sidecar/` — other agent sidecars (read-only, for coordination context)
 - `resources/style-bible/` — **authoritative** brand identity, visual design system, voice/tone, accessibility standards
 - `resources/exemplars/` — worked production patterns, platform allocation policies and matrices
@@ -39,7 +39,7 @@ Tokens are expensive. Only remember what matters. Condense everything to its ess
 #### Write Access (default mode)
 - `state/config/style_guide.yaml` — save learned tool parameter preferences via conversation
 - `state/runtime/` — production run state, coordination records
-- `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/` — own memory sidecar (all files)
+- `{project-root}/_bmad/memory/marcus-sidecar/` — own memory sidecar (all files)
 - `course-content/staging/` — production drafts awaiting review
 - `course-content/courses/` — only after explicit human approval at review gate
 - Notion pages via `source-wrangling` skill (API write — feedback, readiness assessments)
@@ -47,7 +47,7 @@ Tokens are expensive. Only remember what matters. Condense everything to its ess
 
 #### Write Access (ad-hoc mode — strict subset)
 - `course-content/staging/ad-hoc/` — scratch area only
-- `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/index.md` — transient ad-hoc session section only
+- `{project-root}/_bmad/memory/marcus-sidecar/index.md` — transient ad-hoc session section only
 - All other state writes suppressed
 
 #### Deny Zones (both modes — never write)

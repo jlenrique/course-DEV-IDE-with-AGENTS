@@ -1,0 +1,9 @@
+tool: canvas
+agent: canvas-specialist
+description: Canvas LMS deployment specialist exemplars
+exemplars:
+  - name: L1-course-structure-snapshot
+    description: Course structure snapshot for L1 fidelity audit
+    type: deployment-snapshot
+    created: 2026-04-11
+    status: active

@@ -37,6 +37,12 @@ STANDARD_STEP_HEADINGS = (
     "7B) Variant Selection Gate (Double-Dispatch Only)",
     "8) Irene Pass 2 — Dual-Channel Narration with Inline Perception",
 )
+# Step 5B is a conditional cluster-only operator gate. It is documented in the
+# prompt packs and the CLUSTER_GATE_STEP_HEADING constant below, but excluded
+# from STANDARD/MOTION_STEP_HEADINGS because those tuples use positional indexing
+# to map headings to StepReport objects — inserting a conditional step would shift
+# all subsequent indices and break the mapping.
+CLUSTER_GATE_STEP_HEADING = "5B) Cluster Plan G1.5 Gate + Operator Review"
 MOTION_STEP_HEADINGS = (
     "1) Activation + Preflight Contract Gate",
     "2) Source Authority Map Before Ingestion",
@@ -70,6 +76,8 @@ class HarnessContext:
     quality_preset: str
     double_dispatch: bool
     motion_enabled: bool
+    cluster_density: str | None
+    experience_profile: str | None
     field_sources: dict[str, str]
 
 
@@ -155,17 +163,17 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
 
     field_sources: dict[str, str] = {}
     run_constants = None
+    run_constants_path = resolved_bundle / "run-constants.yaml"
 
-    try:
-        if resolved_bundle.is_dir():
-            run_constants = load_run_constants(resolved_bundle, root=root)
-    except RunConstantsError:
-        run_constants = None
+    if resolved_bundle.is_dir() and run_constants_path.is_file():
+        run_constants = load_run_constants(resolved_bundle, root=root)
 
     def choose(field: str, value: str, source: str) -> str:
         field_sources[field] = source
         return value
 
+    cluster_density = None
+    experience_profile = None
     if run_constants is not None:
         run_id = choose("run_id", run_constants.run_id, "run-constants.yaml")
         lesson_slug = choose("lesson_slug", run_constants.lesson_slug, "run-constants.yaml")
@@ -181,6 +189,10 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         field_sources["double_dispatch"] = "run-constants.yaml"
         motion_enabled = run_constants.motion_enabled
         field_sources["motion_enabled"] = "run-constants.yaml"
+        cluster_density = run_constants.cluster_density
+        field_sources["cluster_density"] = "run-constants.yaml"
+        experience_profile = run_constants.experience_profile
+        field_sources["experience_profile"] = "run-constants.yaml"
     else:
         run_id = choose("run_id", f"C1-M1-PRES-{_now_utc().strftime('%Y%m%d')}", "plausible fallback")
         lesson_slug = choose("lesson_slug", _slug_from_bundle_name(resolved_bundle), "bundle-dir name")
@@ -201,6 +213,10 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         field_sources["double_dispatch"] = "plausible fallback"
         motion_enabled = (resolved_bundle / "motion_plan.yaml").is_file()
         field_sources["motion_enabled"] = "bundle filesystem" if motion_enabled else "plausible fallback"
+        cluster_density = None
+        field_sources["cluster_density"] = "plausible fallback"
+        experience_profile = None
+        field_sources["experience_profile"] = "plausible fallback"
 
     return HarnessContext(
         run_id=run_id,
@@ -215,6 +231,8 @@ def infer_context(*, root: Path, bundle_dir: Path | None = None) -> HarnessConte
         quality_preset=quality_preset,
         double_dispatch=double_dispatch,
         motion_enabled=motion_enabled,
+        cluster_density=cluster_density,
+        experience_profile=experience_profile,
         field_sources=field_sources,
     )
 
@@ -274,7 +292,12 @@ def _prompt_pack_path(context: HarnessContext) -> Path:
 
 
 def _step_headings(context: HarnessContext) -> tuple[str, ...]:
-    return MOTION_STEP_HEADINGS if context.motion_enabled else STANDARD_STEP_HEADINGS
+    base = MOTION_STEP_HEADINGS if context.motion_enabled else STANDARD_STEP_HEADINGS
+    if context.cluster_density not in (None, "none"):
+        # Insert 5B after 5
+        index = next(i for i, h in enumerate(base) if h.startswith("5) "))
+        base = base[:index+1] + (CLUSTER_GATE_STEP_HEADING,) + base[index+1:]
+    return base
 
 
 def _artifact_run_id(path: Path) -> str | None:
@@ -469,6 +492,21 @@ def _check_step_5(bundle_dir: Path) -> StepReport:
     )
     summary = "Prompt 5 artifacts and fidelity receipt are present." if status == "PASS" else "Prompt 5 evidence is incomplete or inconsistent."
     return StepReport("5", STANDARD_STEP_HEADINGS[5], status, summary, tuple(evidence), tuple(gaps))
+
+
+def _check_step_5b(bundle_dir: Path) -> StepReport:
+    receipt = bundle_dir / "g1.5-cluster-gate-receipt.json"
+    if receipt.is_file():
+        payload = _read_json(receipt) or {}
+        status = "PASS" if payload.get("status") == "pass" else "FAIL"
+        evidence = ("g1.5-cluster-gate-receipt.json present",)
+        gaps = () if status == "PASS" else ("gate status != pass",)
+    else:
+        status = "MISSING"
+        evidence = ()
+        gaps = ("g1.5-cluster-gate-receipt.json missing",)
+    summary = "G1.5 cluster gate receipt is present and passing." if status == "PASS" else "G1.5 cluster gate evidence is incomplete or failing."
+    return StepReport("5B", CLUSTER_GATE_STEP_HEADING, status, summary, evidence, gaps)
 
 
 def _check_step_6(bundle_dir: Path, *, double_dispatch: bool) -> StepReport:
@@ -801,8 +839,14 @@ def _check_step_8(bundle_dir: Path, *, motion_enabled: bool) -> StepReport:
         envelope = _read_json(bundle_dir / "pass2-envelope.json") or {}
         motion_artifacts = envelope.get("motion_perception_artifacts")
         non_static_rows = [row for row in _motion_rows(bundle_dir) if row.get("motion_type") in {"video", "animation"}]
-        if isinstance(motion_artifacts, dict) and (motion_artifacts or not non_static_rows):
-            evidence.append(f"motion_perception_artifacts={len(motion_artifacts)}")
+        motion_artifact_count: int | None = None
+        if isinstance(motion_artifacts, dict):
+            motion_artifact_count = len(motion_artifacts)
+        elif isinstance(motion_artifacts, list):
+            motion_artifact_count = len(motion_artifacts)
+
+        if motion_artifact_count is not None and (motion_artifact_count > 0 or not non_static_rows):
+            evidence.append(f"motion_perception_artifacts={motion_artifact_count}")
         else:
             inconsistent = True
             gaps.append("pass2-envelope.json missing motion_perception_artifacts for motion-enabled run")
@@ -832,6 +876,8 @@ def build_step_reports(context: HarnessContext) -> list[StepReport]:
         _check_step_7(bundle_dir),
         _check_step_7b(bundle_dir, double_dispatch=context.double_dispatch),
     ]
+    if context.cluster_density not in (None, "none"):
+        reports.insert(5, _check_step_5b(bundle_dir))
     if context.motion_enabled:
         reports.extend(
             [
@@ -1001,6 +1047,7 @@ def render_quinn_report(
         "quality_preset",
         "double_dispatch",
         "motion_enabled",
+        "experience_profile",
     ):
         value: Any = getattr(context, field)
         if isinstance(value, tuple):

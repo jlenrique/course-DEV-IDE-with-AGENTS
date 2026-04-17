@@ -4,7 +4,7 @@ This file is loaded when Gary's memory sidecar does not yet exist or has no acti
 
 ## Initial Setup
 
-1. Create sidecar directory at `{project-root}/_bmad/memory/gamma-specialist-sidecar/` if missing
+1. Create sidecar directory at `{project-root}/_bmad/memory/gary-sidecar/` if missing
 2. Initialize `index.md` with:
    - Agent identity: Gary — Slide Architect 🎨
    - Agent path: `skills/bmad-agent-gamma/SKILL.md`

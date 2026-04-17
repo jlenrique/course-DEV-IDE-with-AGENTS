@@ -1,5 +1,7 @@
 # Adversarial review: Stories 5.1, 5.4, 6.1 (Epics 5 & 6)
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 **Scope:** Planning quality, consistency, implementability, and alignment with the current repo.  
 **Sources:** `_bmad-output/planning-artifacts/epics.md` (both Epic 5/6 sections), `_bmad-output/implementation-artifacts/sprint-status.yaml`, spot checks under `skills/`, `scripts/api_clients/`, `tests/`, `scripts/heartbeat_check.mjs`.  
 **Date:** 2026-03-30

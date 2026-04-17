@@ -1,0 +1,17 @@
+{
+  "slide_ids": ["s-1", "s-2"],
+  "authorized_slides": [
+    {
+      "slide_id": "s-1",
+      "card_number": 1,
+      "file_path": "slide-01.png",
+      "source_ref": "slide-brief.md#Slide 1"
+    },
+    {
+      "slide_id": "s-2",
+      "card_number": 2,
+      "file_path": "slide-02.png",
+      "source_ref": "slide-brief.md#Slide 2"
+    }
+  ]
+}

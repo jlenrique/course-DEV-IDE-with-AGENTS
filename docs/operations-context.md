@@ -5,10 +5,13 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 ## Current State
 
 - Project implementation is complete through Epics 1-14 plus SB.
+- Epics 19-24 (interstitial clustering) are in active development — Wave 1 complete (20b-3, 22-1, 21-5), Wave 2 (Epic 20c) in progress.
 - Active narrated workflow family has two templates:
   - `narrated-deck-video-export` for standard narrated runs
   - `narrated-lesson-with-video-or-animation` for motion-enabled narrated runs
 - `DOUBLE_DISPATCH` is an optional Gary-stage branch inside either workflow, not a third workflow family.
+- `CLUSTER_DENSITY` is an optional run constant; when non-`none`, enables G1.5 Cluster Plan gate and cluster dispatch sequencing.
+- `EXPERIENCE_PROFILE` is an optional run constant; when set, Marcus must resolve it through the Creative Director contract path before specialist delegation.
 - `structural_walk` is the canonical structural readiness check.
 
 ## Canonical Control Docs
@@ -20,6 +23,8 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 - Standard prompt pack: `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`
 - Motion prompt pack: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`
 - Descript handoff specialist (post-compositor, pre–operator handoff): `skills/bmad-agent-desmond/SKILL.md` — emits `assembly-bundle/DESMOND-OPERATOR-BRIEF.md` with **`## Automation Advisory`** (prompt **14.5** in both v4.1 and v4.2 packs)
+- Cluster workflow: `docs/workflow/cluster-workflow.md`
+- A/B tuning loop: `docs/workflow/operator-script-v4.2-irene-ab-loop.md`
 - Artifact contract: `docs/workflow/trial-run-pass2-artifacts-contract.md`
 - Gate ownership: `docs/fidelity-gate-map.md`
 - Judgment boundaries: `docs/lane-matrix.md`
@@ -34,6 +39,8 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 - Storyboard A is required after Gary dispatch and before Gate 2 approval.
 - If `DOUBLE_DISPATCH` is enabled, the workflow must collapse to a winner deck before Irene Pass 2 or motion planning.
 - If `MOTION_ENABLED` is enabled, Gate 2M and Motion Gate must both close before Irene Pass 2.
+- If `CLUSTER_DENSITY` is non-`none`, G1.5 (Cluster Plan Validation) must pass before cluster dispatch, and G2.5 (Cluster Coherence Validation) must pass after Gary cluster dispatch (G3) and before Storyboard A / HIL Gate 2.
+- If `EXPERIENCE_PROFILE` is set, Marcus must freeze the resolved `experience_profile` in `run-constants.yaml` and carry the resolved `narration_profile_controls` forward in the Pass 2 envelope before downstream narration work.
 - Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
 
 ## Canonical Commands
@@ -42,6 +49,8 @@ Purpose: compact high-signal context for production operations sessions. Use thi
   - `python -m scripts.utilities.structural_walk --workflow standard`
 - Structural walk, motion:
   - `python -m scripts.utilities.structural_walk --workflow motion`
+- Structural walk, cluster:
+  - `python -m scripts.utilities.structural_walk --workflow cluster`
 - Session readiness + preflight:
   - `.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight`
 - Tracked bundle readiness:

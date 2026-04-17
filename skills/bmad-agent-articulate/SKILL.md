@@ -26,7 +26,7 @@ Aria does not own LMS publish authority, source-fidelity adjudication, or final 
 ## On Activation
 
 - Load style/accessibility constraints and run mode context from Marcus envelope.
-- Read _bmad/memory/articulate-specialist-sidecar/index.md.
+- Read _bmad/memory/aria-sidecar/index.md.
 - Use references for Storyline/Rise specs, branching, and SCORM quality checks.
 
 ## Capabilities

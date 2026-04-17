@@ -1,5 +1,7 @@
 # Story 5.1: Expanded Tool Specialist Agents (Vyond, Midjourney, Articulate)
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 Epic: 5 - Tool Capability Expansion
 Status: done
 Sprint key: 5-1-expanded-tool-specialist-agents

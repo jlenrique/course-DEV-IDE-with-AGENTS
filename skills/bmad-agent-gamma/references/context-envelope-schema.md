@@ -60,8 +60,10 @@ governance:
 fidelity_per_slide:                          # populated by Marcus from Irene's slide brief
   - slide_number: 1
     fidelity: "creative"                     # creative | literal-text | literal-visual
+    cluster_role: null                       # null | head | interstitial
   - slide_number: 10
     fidelity: "literal-text"
+    cluster_role: "interstitial"
     fidelity_rationale: "Knowledge check teaser — exact topics from source"
 
 fidelity_guidance:                           # user's fidelity preferences from Marcus discovery
@@ -79,6 +81,11 @@ diagram_cards:                               # literal-visual slides with hosted
     preintegration_png_path: null            # optional local PNG path for tracked/default mode staging
     placement_note: "Primary visual, full-width"
     required: true
+
+clusters:                                    # clustered-run summary metadata (optional)
+  - cluster_id: "cluster-01"
+    interstitial_count: 2
+    narrative_arc: "Move from surface friction to structured innovation opportunity."
 
 site_repo_url: null                          # required when any diagram card uses local preintegration path
 
@@ -109,9 +116,10 @@ theme_selection_required: false             # true = Gary presents TP preview be
 | `parameter_overrides` | no | {} | Explicit Gamma API params; override all merge levels |
 | `run_mode` | no | `"default"` | Controls memory write behavior |
 | `governance` | yes | — | Delegation authority contract: invocation mode, gate, authority chain, decision scope, allowed outputs |
-| `fidelity_per_slide` | conditional | [] | Required for mixed-fidelity or any literal-* deck; one entry per targeted slide |
+| `fidelity_per_slide` | conditional | [] | Required for mixed-fidelity or any literal-* deck; one entry per targeted slide. Clustered runs may add `cluster_role`; interstitials inherit the head fidelity class |
 | `fidelity_guidance` | conditional | {} | Discovery-derived literal-text/literal-visual intent and source anchors |
-| `diagram_cards` | conditional | [] | Required for literal-visual cards that need explicit image handling |
+| `diagram_cards` | conditional | [] | Required for literal-visual cards that need explicit image handling; interstitial slides are excluded |
+| `clusters` | no | [] | Optional clustered-run summary metadata carried forward into Gary dispatch outputs |
 | `deck_mode` | no | `false` | When `true`, applies deck-specific parameter guidance (numCards ranges, cardSplit, deck additionalInstructions) |
 | `num_cards` | no | null | Explicit numCards override; null = Gary decides per content type guidance |
 | `card_split` | no | `"auto"` | `"auto"` (Gamma decides) or `"inputTextBreaks"` (split on `\n---\n`) |
@@ -126,6 +134,7 @@ theme_selection_required: false             # true = Gary presents TP preview be
 - If any `preintegration_png_path` is provided, `site_repo_url` must be present.
 - In tracked/default mode, Gary stages local preintegration PNGs through gamma operations before dispatch and substitutes hosted URLs automatically.
 - In ad-hoc mode, local preintegration paths fail closed; provide hosted HTTPS URLs instead.
+- Interstitial slides do not receive diagram-card payloads.
 
 ### Governance Enforcement
 
@@ -157,11 +166,19 @@ gary_slide_output:
     card_number: 1
     visual_description: "Economic overview: three-column comparison of physician practice models across decades"
     source_ref: "slide-brief.md#Slide 1"     # Provenance: traces this generated card back to its slide brief source
+    fidelity: "creative"
+    cluster_id: null
+    cluster_role: null
+    parent_slide_id: null
   - slide_id: "C1-M1-P2S1-card-02"
     file_path: "course-content/staging/C1-M1-P2S1-slides/card-02.png"
     card_number: 2
     visual_description: "Revenue gap timeline: dual-axis chart with declining solo practice revenue vs. consolidation trend"
     source_ref: "slide-brief.md#Slide 2"     # Provenance: traces this generated card back to its slide brief source
+    fidelity: "creative"
+    cluster_id: "cluster-01"
+    cluster_role: "interstitial"
+    parent_slide_id: "C1-M1-P2S1-card-01"
 
 quality_assessment:
   overall_score: 0.87
@@ -234,7 +251,7 @@ scope_violation: null                        # object when out-of-scope work is 
 | `production_run_id` | yes | Echo from inbound |
 | `status` | yes | `success`, `revision_needed`, or `failed` |
 | `artifact_paths` | yes | Empty array if failed; includes both PDF (review) and PNG per card (production) |
-| `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description, source_ref}` — one per generated card; passed to Irene Pass 2. `source_ref` traces each card to its slide brief origin. |
+| `gary_slide_output` | yes | Array of `{slide_id, file_path, card_number, visual_description, source_ref, fidelity}` — one per generated card; passed to Irene Pass 2. Clustered runs also carry `{cluster_id, cluster_role, parent_slide_id}`. |
 | `quality_assessment` | yes | Structured execution-quality scores (`layout_integrity`, `parameter_confidence`, `embellishment_risk_control`); see quality-assessment.md |
 | `generation_mode` | yes | `"text"` or `"from-template"` — which endpoint was used |
 | `template_used` | if from-template | The `gammaId` used; null for text generation |

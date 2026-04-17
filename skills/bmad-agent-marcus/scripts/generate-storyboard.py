@@ -22,6 +22,7 @@ import html
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -36,6 +37,16 @@ logger = logging.getLogger("generate_storyboard")
 
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"}
 _VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".m4v"}
+WORD_RE = re.compile(r"\b\w+(?:[-']\w+)?\b")
+_BEHAVIORAL_INTENT_COMPATIBILITY: dict[str, set[str]] = {
+    "credible": {"credible", "clear-guidance", "reflective"},
+    "alarming": {"credible", "alarming", "clear-guidance"},
+    "provocative": {"credible", "provocative", "reflective"},
+    "reflective": {"credible", "reflective", "moving", "clear-guidance"},
+    "moving": {"credible", "moving", "reflective"},
+    "clear-guidance": {"credible", "alarming", "clear-guidance", "attention-reset", "reflective"},
+    "attention-reset": {"credible", "clear-guidance", "attention-reset"},
+}
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_EXPORTS_DIR = PROJECT_ROOT / "exports"
 DEFAULT_PUBLISH_SUBDIR = "assets/storyboards"
@@ -75,6 +86,17 @@ def load_payload(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError("Payload top level must be an object")
     return data
+
+
+def _load_structured_file(path: Path) -> Any:
+    """Load JSON/YAML into a Python object without forcing a dict top level."""
+    text = path.read_text(encoding="utf-8")
+    suffix = path.suffix.lower()
+    if suffix in {".yml", ".yaml"}:
+        if yaml is None:
+            raise RuntimeError("PyYAML is required for YAML files")
+        return yaml.safe_load(text)
+    return json.loads(text)
 
 
 def _sanitize_segment(value: str) -> str:
@@ -356,6 +378,50 @@ def _coalesce_attachment_value(values: list[Any]) -> Any:
     return " | ".join(str(value) for value in unique)
 
 
+def _normalize_optional_string(value: Any) -> str | None:
+    text = str(value or "").strip()
+    return text or None
+
+
+def _word_count(text: str) -> int:
+    return len(WORD_RE.findall(text or ""))
+
+
+def _estimate_narration_seconds(text: str, *, target_wpm: float) -> float | None:
+    if target_wpm <= 0:
+        return None
+    words = _word_count(text)
+    if words <= 0:
+        return None
+    return round(words * 60.0 / target_wpm, 1)
+
+
+def _behavioral_intent_serves_master(
+    master_behavioral_intent: str | None,
+    segment_behavioral_intent: str | None,
+) -> bool:
+    master = str(master_behavioral_intent or "").strip().lower()
+    segment = str(segment_behavioral_intent or "").strip().lower()
+    if not master or not segment:
+        return True
+    if master == segment:
+        return True
+    return segment in _BEHAVIORAL_INTENT_COMPATIBILITY.get(master, set())
+
+
+def _format_estimated_seconds(seconds: float | None) -> str:
+    if seconds is None:
+        return "n/a"
+    return f"{seconds:.1f}s"
+
+
+def _excerpt_text(text: str, *, limit: int = 160) -> str:
+    normalized = " ".join(str(text or "").split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: max(0, limit - 3)].rstrip() + "..."
+
+
 def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
     """Load segment manifest YAML; map gary_slide_id/slide_id to review attachments.
 
@@ -381,14 +447,11 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
         if not isinstance(sid_raw, str) or not sid_raw.strip():
             continue
         sid = sid_raw.strip()
-        nt = seg.get("narration_text")
-        if nt is None or not str(nt).strip():
-            continue
         chunks.setdefault(sid, []).append(
             {
                 "segment_id": str(seg.get("id") or "").strip() or None,
                 "narration_ref": str(seg.get("narration_ref") or "").strip() or None,
-                "narration_text": str(nt).strip(),
+                "narration_text": str(seg.get("narration_text") or "").strip(),
                 "timing_role": str(seg.get("timing_role") or "").strip() or None,
                 "content_density": str(seg.get("content_density") or "").strip() or None,
                 "visual_detail_load": str(seg.get("visual_detail_load") or "").strip() or None,
@@ -402,6 +465,18 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
                 "motion_duration_seconds": seg.get("motion_duration_seconds"),
                 "visual_mode": str(seg.get("visual_mode") or "").strip() or None,
                 "visual_file": str(seg.get("visual_file") or "").strip() or None,
+                "cluster_id": _normalize_optional_string(seg.get("cluster_id")),
+                "cluster_role": _normalize_optional_string(seg.get("cluster_role")),
+                "cluster_position": _normalize_optional_string(seg.get("cluster_position")),
+                "parent_slide_id": _normalize_optional_string(seg.get("parent_slide_id")),
+                "develop_type": _normalize_optional_string(seg.get("develop_type")),
+                "interstitial_type": _normalize_optional_string(seg.get("interstitial_type")),
+                "isolation_target": _normalize_optional_string(seg.get("isolation_target")),
+                "narrative_arc": _normalize_optional_string(seg.get("narrative_arc")),
+                "master_behavioral_intent": _normalize_optional_string(
+                    seg.get("master_behavioral_intent")
+                ),
+                "cluster_interstitial_count": seg.get("cluster_interstitial_count"),
                 "visual_references": seg.get("visual_references")
                 if isinstance(seg.get("visual_references"), list)
                 else [],
@@ -451,10 +526,188 @@ def load_narration_by_slide_id(path: Path) -> dict[str, dict[str, Any]]:
             "duration_rationale": _coalesce_attachment_value([entry.get("duration_rationale") for entry in entries]),
             "bridge_type": _coalesce_attachment_value([entry.get("bridge_type") for entry in entries]),
             "behavioral_intent": _coalesce_attachment_value([entry.get("behavioral_intent") for entry in entries]),
+            "cluster_id": _coalesce_attachment_value([entry.get("cluster_id") for entry in entries]),
+            "cluster_role": _coalesce_attachment_value([entry.get("cluster_role") for entry in entries]),
+            "cluster_position": _coalesce_attachment_value([entry.get("cluster_position") for entry in entries]),
+            "parent_slide_id": _coalesce_attachment_value([entry.get("parent_slide_id") for entry in entries]),
+            "develop_type": _coalesce_attachment_value([entry.get("develop_type") for entry in entries]),
+            "interstitial_type": _coalesce_attachment_value([entry.get("interstitial_type") for entry in entries]),
+            "isolation_target": _coalesce_attachment_value([entry.get("isolation_target") for entry in entries]),
+            "narrative_arc": _coalesce_attachment_value([entry.get("narrative_arc") for entry in entries]),
+            "master_behavioral_intent": _coalesce_attachment_value(
+                [entry.get("master_behavioral_intent") for entry in entries]
+            ),
+            "cluster_interstitial_count": _coalesce_attachment_value(
+                [entry.get("cluster_interstitial_count") for entry in entries]
+            ),
             "visual_references": visual_references,
         }
 
     return out
+
+
+def load_cluster_coherence_by_id(path: Path) -> dict[str, dict[str, Any]]:
+    """Load optional cluster coherence report(s), normalized by cluster_id."""
+    raw = _load_structured_file(path)
+    reports: list[Any]
+    if isinstance(raw, list):
+        reports = raw
+    elif isinstance(raw, dict):
+        if isinstance(raw.get("cluster_reports"), list):
+            reports = list(raw["cluster_reports"])
+        elif isinstance(raw.get("clusters"), list):
+            reports = list(raw["clusters"])
+        elif isinstance(raw.get("reports"), list):
+            reports = list(raw["reports"])
+        else:
+            reports = [raw]
+    else:
+        raise ValueError("cluster coherence report must be a mapping or list")
+
+    out: dict[str, dict[str, Any]] = {}
+    for item in reports:
+        if not isinstance(item, dict):
+            continue
+        report_block = item.get("report") if isinstance(item.get("report"), dict) else item
+        if not isinstance(report_block, dict):
+            continue
+        cluster_id = _normalize_optional_string(item.get("cluster_id")) or _normalize_optional_string(
+            report_block.get("cluster_id")
+        )
+        if cluster_id is None:
+            continue
+
+        row_results: dict[str, dict[str, Any]] = {}
+        for key in ("slide_results", "slide_reports", "interstitial_results", "rows"):
+            entries = report_block.get(key)
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                row_key = _normalize_optional_string(entry.get("slide_id")) or _normalize_optional_string(
+                    entry.get("row_id")
+                )
+                if row_key is None:
+                    continue
+                row_results[row_key] = {
+                    "decision": _normalize_optional_string(entry.get("decision"))
+                    or _normalize_optional_string(entry.get("status")),
+                    "score": entry.get("score"),
+                    "report_hash": _normalize_optional_string(entry.get("report_hash")),
+                    "violations": entry.get("violations")
+                    if isinstance(entry.get("violations"), list)
+                    else [],
+                }
+
+        out[cluster_id] = {
+            "cluster_id": cluster_id,
+            "decision": _normalize_optional_string(report_block.get("decision"))
+            or _normalize_optional_string(report_block.get("status")),
+            "score": report_block.get("score"),
+            "report_hash": _normalize_optional_string(report_block.get("report_hash")),
+            "violations": report_block.get("violations")
+            if isinstance(report_block.get("violations"), list)
+            else [],
+            "row_results": row_results,
+        }
+    return out
+
+
+def _classify_cluster_duration_balance(total_seconds: float | None, average_seconds: float | None) -> str | None:
+    if total_seconds is None or average_seconds is None or average_seconds <= 0:
+        return None
+    ratio = total_seconds / average_seconds
+    if ratio < 0.85:
+        return "compressed"
+    if ratio > 1.15:
+        return "extended"
+    return "balanced"
+
+
+def _derive_cluster_groups(
+    slides: list[dict[str, Any]],
+    *,
+    cluster_coherence_by_id: dict[str, dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Derive additive cluster groups from flat slide rows."""
+    cluster_coherence_by_id = cluster_coherence_by_id or {}
+    groups: list[dict[str, Any]] = []
+    group_by_cluster_id: dict[str, dict[str, Any]] = {}
+    for slide in slides:
+        cluster_id = _normalize_optional_string(slide.get("cluster_id"))
+        if cluster_id is None:
+            continue
+        group = group_by_cluster_id.get(cluster_id)
+        if group is None:
+            group = {
+                "cluster_id": cluster_id,
+                "row_ids": [],
+                "slide_ids": [],
+                "head_row_id": None,
+                "head_slide_id": None,
+                "topic_label": None,
+                "narrative_arc": None,
+                "master_behavioral_intent": None,
+                "interstitial_count": 0,
+                "interstitial_types": [],
+                "estimated_runtime_seconds": None,
+                "duration_balance": None,
+                "coherence": cluster_coherence_by_id.get(cluster_id) or {},
+            }
+            groups.append(group)
+            group_by_cluster_id[cluster_id] = group
+        group["row_ids"].append(slide.get("row_id"))
+        group["slide_ids"].append(slide.get("slide_id"))
+
+        role = _normalize_optional_string(slide.get("cluster_role"))
+        if role == "interstitial":
+            group["interstitial_count"] += 1
+            interstitial_type = _normalize_optional_string(slide.get("interstitial_type"))
+            if interstitial_type and interstitial_type not in group["interstitial_types"]:
+                group["interstitial_types"].append(interstitial_type)
+        if group["head_row_id"] is None and role == "head":
+            group["head_row_id"] = slide.get("row_id")
+            group["head_slide_id"] = slide.get("slide_id")
+            group["topic_label"] = _normalize_optional_string(slide.get("display_title")) or _normalize_optional_string(
+                slide.get("slide_id")
+            )
+            group["narrative_arc"] = _normalize_optional_string(slide.get("narrative_arc"))
+            group["master_behavioral_intent"] = _normalize_optional_string(
+                slide.get("master_behavioral_intent")
+            )
+        elif group["head_row_id"] is None:
+            group["head_row_id"] = slide.get("row_id")
+            group["head_slide_id"] = slide.get("slide_id")
+            group["topic_label"] = _normalize_optional_string(slide.get("display_title")) or _normalize_optional_string(
+                slide.get("slide_id")
+            )
+        if group["narrative_arc"] is None:
+            group["narrative_arc"] = _normalize_optional_string(slide.get("narrative_arc"))
+        if group["master_behavioral_intent"] is None:
+            group["master_behavioral_intent"] = _normalize_optional_string(
+                slide.get("master_behavioral_intent")
+            )
+
+        runtime_target = slide.get("runtime_target_seconds")
+        if isinstance(runtime_target, (int, float)):
+            current_total = group.get("estimated_runtime_seconds")
+            group["estimated_runtime_seconds"] = float(current_total or 0) + float(runtime_target)
+
+    numeric_totals = [
+        float(group["estimated_runtime_seconds"])
+        for group in groups
+        if isinstance(group.get("estimated_runtime_seconds"), (int, float))
+    ]
+    average_total = (sum(numeric_totals) / len(numeric_totals)) if numeric_totals else None
+    for group in groups:
+        group["duration_balance"] = _classify_cluster_duration_balance(
+            float(group["estimated_runtime_seconds"])
+            if isinstance(group.get("estimated_runtime_seconds"), (int, float))
+            else None,
+            average_total,
+        )
+    return groups
 
 
 def _inspect_local_image_metadata(path: Path) -> dict[str, Any]:
@@ -703,6 +956,7 @@ def build_manifest(
     related_assets: list[dict[str, Any]] | None = None,
     run_id: str | None = None,
     storyboard_policy_meta: dict[str, Any] | None = None,
+    cluster_coherence_by_id: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Return manifest dict and do not write files."""
     slides_in = payload.get("gary_slide_output")
@@ -779,6 +1033,17 @@ def build_manifest(
         duration_rationale = None
         bridge_type = None
         behavioral_intent = None
+        cluster_id = _normalize_optional_string(raw.get("cluster_id"))
+        cluster_role = _normalize_optional_string(raw.get("cluster_role"))
+        cluster_position = _normalize_optional_string(raw.get("cluster_position"))
+        parent_slide_id = _normalize_optional_string(raw.get("parent_slide_id"))
+        develop_type = _normalize_optional_string(raw.get("develop_type"))
+        interstitial_type = _normalize_optional_string(raw.get("interstitial_type"))
+        isolation_target = _normalize_optional_string(raw.get("isolation_target"))
+        narrative_arc = _normalize_optional_string(raw.get("narrative_arc"))
+        master_behavioral_intent = _normalize_optional_string(raw.get("master_behavioral_intent"))
+        cluster_interstitial_count = raw.get("cluster_interstitial_count")
+        selected_template_id = _normalize_optional_string(raw.get("selected_template_id"))
         if narration_by_slide_id:
             matched = narration_by_slide_id.get(slide_id)
             if isinstance(matched, dict):
@@ -812,6 +1077,27 @@ def build_manifest(
                 duration_rationale = matched.get("duration_rationale")
                 bridge_type = matched.get("bridge_type")
                 behavioral_intent = matched.get("behavioral_intent")
+                cluster_id = _normalize_optional_string(matched.get("cluster_id")) or cluster_id
+                cluster_role = _normalize_optional_string(matched.get("cluster_role")) or cluster_role
+                cluster_position = _normalize_optional_string(matched.get("cluster_position")) or cluster_position
+                parent_slide_id = _normalize_optional_string(matched.get("parent_slide_id")) or parent_slide_id
+                develop_type = _normalize_optional_string(matched.get("develop_type")) or develop_type
+                interstitial_type = _normalize_optional_string(matched.get("interstitial_type")) or interstitial_type
+                isolation_target = _normalize_optional_string(matched.get("isolation_target")) or isolation_target
+                narrative_arc = _normalize_optional_string(matched.get("narrative_arc")) or narrative_arc
+                master_behavioral_intent = (
+                    _normalize_optional_string(matched.get("master_behavioral_intent"))
+                    or master_behavioral_intent
+                )
+                cluster_interstitial_count = (
+                    matched.get("cluster_interstitial_count")
+                    if matched.get("cluster_interstitial_count") not in (None, "")
+                    else cluster_interstitial_count
+                )
+                selected_template_id = (
+                    _normalize_optional_string(matched.get("selected_template_id"))
+                    or selected_template_id
+                )
                 if segment_match_count > 1:
                     narration_status = "multi_match"
                 elif narration_text:
@@ -904,6 +1190,17 @@ def build_manifest(
                 "duration_rationale": duration_rationale,
                 "bridge_type": bridge_type,
                 "behavioral_intent": behavioral_intent,
+                "cluster_id": cluster_id,
+                "cluster_role": cluster_role,
+                "cluster_position": cluster_position,
+                "parent_slide_id": parent_slide_id,
+                "develop_type": develop_type,
+                "interstitial_type": interstitial_type,
+                "isolation_target": isolation_target,
+                "narrative_arc": narrative_arc,
+                "master_behavioral_intent": master_behavioral_intent,
+                "cluster_interstitial_count": cluster_interstitial_count,
+                "selected_template_id": selected_template_id,
                 "runtime_target_seconds": runtime_target_seconds,
                 "script_notes": script_notes,
                 "issue_flags": issue_flags,
@@ -955,9 +1252,39 @@ def build_manifest(
         1 for s in slides_out if s.get("narration_status") == "multi_match"
     )
     with_findings = sum(1 for s in slides_out if s.get("findings"))
+    clustered_slide_count = sum(
+        1 for s in slides_out if _normalize_optional_string(s.get("cluster_id")) is not None
+    )
     fidelity_counts = dict(Counter(str(s.get("fidelity", "unknown")) for s in slides_out))
     first_slide_id = slides_out[0]["slide_id"] if slides_out else None
     last_slide_id = slides_out[-1]["slide_id"] if slides_out else None
+    cluster_groups = _derive_cluster_groups(
+        slides_out,
+        cluster_coherence_by_id=cluster_coherence_by_id,
+    )
+    if cluster_coherence_by_id:
+        for slide in slides_out:
+            cluster_id = _normalize_optional_string(slide.get("cluster_id"))
+            if cluster_id is None:
+                continue
+            coherence = cluster_coherence_by_id.get(cluster_id) or {}
+            row_results = coherence.get("row_results") if isinstance(coherence.get("row_results"), dict) else {}
+            row_key = str(slide.get("slide_id") or slide.get("row_id") or "")
+            slide_coherence = row_results.get(row_key)
+            if not isinstance(slide_coherence, dict):
+                slide_coherence = row_results.get(str(slide.get("row_id") or ""))
+            if isinstance(slide_coherence, dict):
+                slide["cluster_coherence_decision"] = slide_coherence.get("decision")
+                slide["cluster_coherence_score"] = slide_coherence.get("score")
+                slide["cluster_coherence_report_hash"] = slide_coherence.get("report_hash")
+                slide["cluster_coherence_violations"] = slide_coherence.get("violations")
+                slide["cluster_coherence_source"] = "row"
+            elif coherence:
+                slide["cluster_coherence_decision"] = coherence.get("decision")
+                slide["cluster_coherence_score"] = coherence.get("score")
+                slide["cluster_coherence_report_hash"] = coherence.get("report_hash")
+                slide["cluster_coherence_violations"] = coherence.get("violations")
+                slide["cluster_coherence_source"] = "cluster"
 
     out: dict[str, Any] = {
         "storyboard_version": 3,
@@ -1001,8 +1328,13 @@ def build_manifest(
             "fidelity_counts": fidelity_counts,
             "first_slide_id": first_slide_id,
             "last_slide_id": last_slide_id,
+            "cluster_group_count": len(cluster_groups),
+            "clustered_slide_count": clustered_slide_count,
+            "flat_slide_count": len(slides_out) - clustered_slide_count,
         },
     }
+    if cluster_groups:
+        out["cluster_groups"] = cluster_groups
 
     if pair_map:
         variant_pairs = [pair_map[k] for k in sorted(pair_map.keys(), key=lambda x: int(x) if x.isdigit() else x)]
@@ -1306,7 +1638,13 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     storyboard_policy = (
         manifest.get("storyboard_policy") if isinstance(manifest.get("storyboard_policy"), dict) else {}
     )
+    voice_direction_defaults = (
+        storyboard_policy.get("voice_direction_defaults")
+        if isinstance(storyboard_policy.get("voice_direction_defaults"), dict)
+        else {}
+    )
     dd = manifest.get("double_dispatch") if isinstance(manifest.get("double_dispatch"), dict) else {}
+    cluster_review_target_wpm = 150.0
     actionable_issue_count = sum(
         1
         for slide in slides
@@ -1483,7 +1821,102 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             + "</div></section>"
         )
 
+    checkpoint_label_raw = str(manifest.get("checkpoint_label") or "Storyboard")
+    cluster_groups = manifest.get("cluster_groups") if isinstance(manifest.get("cluster_groups"), list) else []
+    grouped_cluster_storyboard = checkpoint_label_raw in {"Storyboard A", "Storyboard B"} and len(cluster_groups) > 0
+    storyboard_b_cluster_view = checkpoint_label_raw == "Storyboard B" and len(cluster_groups) > 0
+    cluster_group_map = {
+        str(group.get("cluster_id")): group
+        for group in cluster_groups
+        if isinstance(group, dict) and str(group.get("cluster_id") or "").strip()
+    }
+    slide_data_by_row_id = {
+        str(slide.get("row_id") or ""): slide
+        for slide in slides
+        if isinstance(slide, dict) and str(slide.get("row_id") or "").strip()
+    }
+
+    def _coherence_badge_markup(decision: Any, score: Any, *, label_prefix: str = "Coherence") -> str:
+        decision_text = _normalize_optional_string(decision)
+        score_text = "" if score in (None, "") else f" {html.escape(str(score))}"
+        if decision_text is None:
+            return '<span class="badge badge-coherence badge-coherence-missing">Coherence pending</span>'
+        decision_slug = html.escape(decision_text.lower())
+        return (
+            f'<span class="badge badge-coherence badge-coherence-{decision_slug}">'
+            f'{html.escape(label_prefix)} {html.escape(decision_text.upper())}{score_text}'
+            "</span>"
+        )
+
+    def _cluster_storyboard_b_summary(group: dict[str, Any], member_slides: list[dict[str, Any]]) -> dict[str, Any]:
+        master_intent_raw = _normalize_optional_string(group.get("master_behavioral_intent"))
+        if master_intent_raw is None:
+            for member in member_slides:
+                master_intent_raw = _normalize_optional_string(member.get("master_behavioral_intent"))
+                if master_intent_raw:
+                    break
+
+        total_words = 0
+        total_seconds = 0.0
+        has_seconds = False
+        mismatch_count = 0
+        breakdown_items: list[str] = []
+        for member in member_slides:
+            narration = str(member.get("narration_text") or "").strip()
+            words = _word_count(narration)
+            seconds = _estimate_narration_seconds(narration, target_wpm=cluster_review_target_wpm)
+            total_words += words
+            if seconds is not None:
+                total_seconds += seconds
+                has_seconds = True
+            member_intent_raw = _normalize_optional_string(member.get("behavioral_intent"))
+            if not _behavioral_intent_serves_master(master_intent_raw, member_intent_raw):
+                mismatch_count += 1
+            breakdown_items.append(
+                "<li>"
+                f"<strong>{html.escape(str(member.get('slide_id') or 'n/a'))}</strong> "
+                f"<span class=\"cluster-breakdown-meta\">"
+                f"{html.escape(str(member.get('cluster_role') or 'slide'))} | "
+                f"{html.escape(str(member.get('cluster_position') or 'n/a'))} | "
+                f"{words} words | {_format_estimated_seconds(seconds)} | "
+                f"intent {html.escape(str(member_intent_raw or 'n/a'))}"
+                "</span></li>"
+            )
+
+        total_seconds_text = _format_estimated_seconds(total_seconds if has_seconds else None)
+        mismatch_text = (
+            "No intent mismatches detected."
+            if mismatch_count == 0
+            else f"{mismatch_count} segment intent mismatch(s) flagged."
+        )
+        summary_markup = (
+            '<section class="cluster-storyboard-b-summary">'
+            '<div class="cluster-storyboard-b-panel">'
+            '<h3>Cluster timing summary</h3>'
+            f'<p><strong>Total cluster duration</strong> {html.escape(total_seconds_text)} '
+            f'at {cluster_review_target_wpm:.0f} WPM across {total_words} words.</p>'
+            '<ul class="cluster-breakdown-list">'
+            + "".join(breakdown_items)
+            + "</ul></div>"
+            '<div class="cluster-storyboard-b-panel">'
+            '<h3>Intent and voice defaults</h3>'
+            '<dl class="cluster-storyboard-b-facts">'
+            f'<div><dt>Master intent</dt><dd>{html.escape(str(master_intent_raw or "n/a"))}</dd></div>'
+            f'<div><dt>Intent review</dt><dd>{html.escape(mismatch_text)}</dd></div>'
+            f'<div><dt>Emotional variability</dt><dd>{html.escape(str(voice_direction_defaults.get("emotional_variability") or "n/a"))}</dd></div>'
+            f'<div><dt>Pace variability</dt><dd>{html.escape(str(voice_direction_defaults.get("pace_variability") or "n/a"))}</dd></div>'
+            '</dl></div></section>'
+        )
+        return {
+            "master_behavioral_intent": master_intent_raw,
+            "total_words": total_words,
+            "total_seconds_text": total_seconds_text,
+            "mismatch_count": mismatch_count,
+            "summary_markup": summary_markup,
+        }
+
     slide_cards: list[str] = []
+    card_markup_by_row_id: dict[str, str] = {}
     for slide in slides:
         if not isinstance(slide, dict):
             continue
@@ -1510,17 +1943,55 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 f'<div class="script-warning">Multiple segment-manifest matches attached '
                 f'({segment_match_count}). Resolve before approval.</div>'
             )
-        script_markup = (
-            f'{segment_summary_markup}<pre class="script-text">{html.escape(narration_text)}</pre>'
-            if narration_text
-            else f'<div class="script-state">{html.escape(narration_label)}</div>'
-        )
         script_notes = str(slide.get("script_notes") or "").strip()
         script_notes_markup = (
             f'<pre class="script-notes">{html.escape(script_notes)}</pre>'
             if script_notes
             else '<div class="script-state">No script notes attached.</div>'
         )
+        cluster_role_raw = _normalize_optional_string(slide.get("cluster_role"))
+        bridge_type_raw = _normalize_optional_string(slide.get("bridge_type"))
+        behavioral_intent_raw = _normalize_optional_string(slide.get("behavioral_intent"))
+        master_behavioral_intent_raw = _normalize_optional_string(slide.get("master_behavioral_intent"))
+        segment_word_count = _word_count(narration_text)
+        segment_estimated_seconds = _estimate_narration_seconds(
+            narration_text,
+            target_wpm=cluster_review_target_wpm,
+        )
+        cluster_position = html.escape(str(slide.get("cluster_position") or "n/a"))
+        interstitial_type = html.escape(str(slide.get("interstitial_type") or "n/a"))
+        isolation_target = html.escape(str(slide.get("isolation_target") or "n/a"))
+        develop_type = html.escape(str(slide.get("develop_type") or "n/a"))
+        narrative_arc = html.escape(str(slide.get("narrative_arc") or "n/a"))
+        cluster_id_display = html.escape(str(slide.get("cluster_id") or "n/a"))
+        cluster_role_badge = (
+            f'<span class="badge badge-cluster-role">cluster {html.escape(cluster_role_raw)}</span>'
+            if cluster_role_raw
+            else ""
+        )
+        coherence_badge = ""
+        coherence_class = ""
+        if cluster_role_raw:
+            coherence_decision = _normalize_optional_string(slide.get("cluster_coherence_decision"))
+            if coherence_decision:
+                coherence_class = f" slide-card--coherence-{html.escape(coherence_decision.lower())}"
+            coherence_badge = _coherence_badge_markup(
+                slide.get("cluster_coherence_decision"),
+                slide.get("cluster_coherence_score"),
+                label_prefix="Review",
+            )
+        cluster_meta_markup = ""
+        if cluster_role_raw:
+            cluster_meta_markup = (
+                '<div class="cluster-slide-meta">'
+                f'<span><strong>Cluster</strong> {cluster_id_display}</span>'
+                f'<span><strong>Position</strong> {cluster_position}</span>'
+                f'<span><strong>Interstitial type</strong> {interstitial_type}</span>'
+                f'<span><strong>Isolation target</strong> {isolation_target}</span>'
+                f'<span><strong>Develop type</strong> {develop_type}</span>'
+                f'<span><strong>Arc</strong> {narrative_arc}</span>'
+                '</div>'
+            )
 
         fidelity = html.escape(str(slide.get("fidelity") or "unknown"))
         variant = html.escape(str(slide.get("dispatch_variant") or ""))
@@ -1551,8 +2022,8 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         content_density = html.escape(str(slide.get("content_density") or "n/a"))
         visual_detail_load = html.escape(str(slide.get("visual_detail_load") or "n/a"))
         duration_rationale = html.escape(str(slide.get("duration_rationale") or "n/a"))
-        bridge_type = html.escape(str(slide.get("bridge_type") or "n/a"))
-        behavioral_intent = html.escape(str(slide.get("behavioral_intent") or "n/a"))
+        bridge_type = html.escape(str(bridge_type_raw or "n/a"))
+        behavioral_intent = html.escape(str(behavioral_intent_raw or "n/a"))
         matched_segment_ids = [
             str(item).strip()
             for item in slide.get("matched_segment_ids", [])
@@ -1590,8 +2061,78 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 '</section>'
             )
 
+        script_text_class = "script-text"
+        script_cluster_meta_markup = ""
+        script_transition_markup = ""
+        script_intent_warning_markup = ""
+        if storyboard_b_cluster_view and cluster_role_raw:
+            if cluster_role_raw == "head":
+                script_text_class += " script-text--cluster-head"
+            elif cluster_role_raw == "interstitial":
+                script_text_class += " script-text--cluster-interstitial"
+
+            serves_master = _behavioral_intent_serves_master(
+                master_behavioral_intent_raw,
+                behavioral_intent_raw,
+            )
+            intent_badge_class = "badge-intent-aligned" if serves_master else "badge-intent-mismatch"
+            intent_badge_text = "intent serves master" if serves_master else "intent mismatch"
+            script_cluster_meta_markup = (
+                '<div class="script-metadata-row">'
+                f'<span class="badge">{segment_word_count} words</span>'
+                f'<span class="badge">@{cluster_review_target_wpm:.0f} WPM {_format_estimated_seconds(segment_estimated_seconds)}</span>'
+                f'<span class="badge">{html.escape(str(cluster_role_raw))} narration</span>'
+                f'<span class="badge">timing {timing_role}</span>'
+                f'<span class="badge">density {content_density}</span>'
+                f'<span class="badge">position {cluster_position}</span>'
+                f'<span class="badge">intent {behavioral_intent}</span>'
+                f'<span class="badge {intent_badge_class}">{intent_badge_text}</span>'
+                '</div>'
+            )
+            if not serves_master:
+                script_intent_warning_markup = (
+                    '<div class="behavioral-intent-warning">'
+                    f'Segment intent <strong>{behavioral_intent}</strong> does not serve cluster master '
+                    f'<strong>{html.escape(str(master_behavioral_intent_raw or "n/a"))}</strong>.'
+                    '</div>'
+                )
+            if cluster_role_raw == "head" and bridge_type_raw == "cluster_boundary":
+                bridge_excerpt = html.escape(
+                    _excerpt_text(narration_text) or "Bridge text unavailable."
+                )
+                script_transition_markup = (
+                    '<div class="transition-divider transition-divider--boundary">'
+                    '<strong>Cluster-boundary transition</strong>'
+                    f'<span>Bridge type {bridge_type}</span>'
+                    f'<div class="transition-bridge-text">{bridge_excerpt}</div>'
+                    '</div>'
+                )
+            elif cluster_role_raw == "interstitial":
+                script_transition_markup = (
+                    '<div class="transition-divider transition-divider--within">'
+                    '<strong>Within-cluster transition</strong>'
+                    f'<span>Bridge type {bridge_type}</span>'
+                    '</div>'
+                )
+
+        script_markup = (
+            f'{segment_summary_markup}{script_transition_markup}{script_intent_warning_markup}'
+            f'{script_cluster_meta_markup}<pre class="{script_text_class}">{html.escape(narration_text)}</pre>'
+            if narration_text
+            else (
+                f'{segment_summary_markup}{script_transition_markup}{script_intent_warning_markup}'
+                f'{script_cluster_meta_markup}<div class="script-state">{html.escape(narration_label)}</div>'
+            )
+        )
+
+        cluster_role_class = ""
+        if cluster_role_raw == "head":
+            cluster_role_class = " slide-card--cluster-head"
+        elif cluster_role_raw == "interstitial":
+            cluster_role_class = " slide-card--cluster-interstitial"
+
         slide_cards.append(
-            f'<article class="slide-card" id="{row_id}" data-role="slide-card" data-slide-id="{slide_id}" '
+            f'<article class="slide-card{cluster_role_class}{coherence_class}" id="{row_id}" data-role="slide-card" data-slide-id="{slide_id}" '
             f'data-fidelity="{fidelity}" data-orientation="{orientation}" data-issues="{issue_attr}">'
             '<header class="slide-card-header">'
             '<div class="slide-card-title-group">'
@@ -1604,6 +2145,8 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<span class="badge badge-fidelity">{fidelity}</span>'
             f'{variant_badge}'
             f'{motion_badge}'
+            f'{cluster_role_badge}'
+            f'{coherence_badge}'
             f'<span class="badge">card {card_number or "n/a"}</span>'
             f'<span class="badge">orientation {orientation}</span>'
             f'{selected_markup}{issue_badges}'
@@ -1611,9 +2154,10 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<div class="slide-card-body{" slide-card-body--motion" if motion_type != "static" else ""}">'
             '<section class="slide-preview-panel">'
             '<div class="panel-label">Approved slide</div>'
-            f'{_preview_markup(slide)}'
+            f'{_preview_markup(slide, size="variant" if cluster_role_raw == "interstitial" and grouped_cluster_storyboard else "card")}'
             f'<div class="preview-caption">Asset status: <strong>{asset_status}</strong> | Dimensions: <strong>{dimensions_markup}</strong></div>'
             f'<div class="preview-caption">Motion review: <strong>{html.escape(motion_summary)}</strong></div>'
+            f'{cluster_meta_markup}'
             '</section>'
             f'{motion_panel_markup}'
             '<section class="slide-script-panel">'
@@ -1651,6 +2195,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             f'<div><dt>Bridge type</dt><dd>{bridge_type}</dd></div>'
             f'<div><dt>Behavioral intent</dt><dd>{behavioral_intent}</dd></div>'
             f'<div><dt>Duration rationale</dt><dd>{duration_rationale}</dd></div>'
+            f'<div><dt>Cluster position</dt><dd>{cluster_position}</dd></div>'
+            f'<div><dt>Interstitial type</dt><dd>{interstitial_type}</dd></div>'
+            f'<div><dt>Isolation target</dt><dd>{isolation_target}</dd></div>'
             f'<div><dt>Quality</dt><dd>{quality_text}</dd></div>'
             '</dl>'
             '<div class="findings-block">'
@@ -1659,6 +2206,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             '</div>'
             '</details></section></div></article>'
         )
+        card_markup_by_row_id[str(slide.get("row_id") or "")] = slide_cards[-1]
 
     related_markup = ""
     if related_assets:
@@ -1709,9 +2257,11 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
             or "n/a"
         )
     )
+    # TODO: remove legacy fallbacks after migration from slide_runtime_average_seconds is complete
     runtime_avg_seconds = html.escape(
         str(
-            runtime_plan.get("slide_runtime_average_seconds")
+            runtime_plan.get("avg_slide_seconds")
+            or runtime_plan.get("slide_runtime_average_seconds")
             or runtime_plan.get("target_avg_slide_seconds")
             or "n/a"
         )
@@ -1772,7 +2322,91 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     fidelity_markup = " | ".join(f"{html.escape(str(key))}: {html.escape(str(value))}" for key, value in sorted(fidelity_counts.items())) or "No fidelity counts"
     first_slide = html.escape(str(review_meta.get("first_slide_id") or "n/a"))
     last_slide = html.escape(str(review_meta.get("last_slide_id") or "n/a"))
-    slides_markup = "\n".join(slide_cards) if slide_cards else '<div class="empty-state">No slides</div>'
+    cluster_controls_html = ""
+    if grouped_cluster_storyboard:
+        rendered_clusters: set[str] = set()
+        grouped_slide_cards: list[str] = []
+        for slide in slides:
+            if not isinstance(slide, dict):
+                continue
+            cluster_id = _normalize_optional_string(slide.get("cluster_id"))
+            if cluster_id and cluster_id in cluster_group_map:
+                if cluster_id in rendered_clusters:
+                    continue
+                rendered_clusters.add(cluster_id)
+                group = cluster_group_map[cluster_id]
+                coherence = group.get("coherence") if isinstance(group.get("coherence"), dict) else {}
+                member_slides = [
+                    member
+                    for row_id in group.get("row_ids", [])
+                    for member in [slide_data_by_row_id.get(str(row_id))]
+                    if isinstance(member, dict)
+                ]
+                cluster_storyboard_b = (
+                    _cluster_storyboard_b_summary(group, member_slides)
+                    if storyboard_b_cluster_view
+                    else None
+                )
+                row_cards = [
+                    card_markup_by_row_id.get(str(row_id), "")
+                    for row_id in group.get("row_ids", [])
+                ]
+                member_cards = "".join(card for card in row_cards if card)
+                interstitial_types = group.get("interstitial_types") if isinstance(group.get("interstitial_types"), list) else []
+                duration_total = group.get("estimated_runtime_seconds")
+                duration_text = f'{duration_total:.0f}s' if isinstance(duration_total, (int, float)) else "n/a"
+                if cluster_storyboard_b is not None:
+                    duration_text = str(cluster_storyboard_b["total_seconds_text"])
+                duration_balance = html.escape(str(group.get("duration_balance") or "n/a"))
+                interstitial_summary = html.escape(", ".join(str(item) for item in interstitial_types) or "none")
+                topic_label = html.escape(str(group.get("topic_label") or group.get("head_slide_id") or cluster_id))
+                narrative_arc_text = html.escape(str(group.get("narrative_arc") or "Narrative arc not provided."))
+                head_slide_id = html.escape(str(group.get("head_slide_id") or "n/a"))
+                cluster_summary_extra = ""
+                cluster_storyboard_b_summary_markup = ""
+                if cluster_storyboard_b is not None:
+                    master_behavioral_intent = html.escape(
+                        str(cluster_storyboard_b.get("master_behavioral_intent") or "n/a")
+                    )
+                    cluster_summary_extra = (
+                        f'<span class="badge">Master {master_behavioral_intent}</span>'
+                        f'<span class="badge">{html.escape(str(cluster_storyboard_b.get("total_words") or 0))} words</span>'
+                        f'<span class="badge">@{cluster_review_target_wpm:.0f} WPM {html.escape(str(cluster_storyboard_b.get("total_seconds_text") or "n/a"))}</span>'
+                        f'<span class="badge">Intent mismatches {html.escape(str(cluster_storyboard_b.get("mismatch_count") or 0))}</span>'
+                        f'<span class="badge">Emotion {html.escape(str(voice_direction_defaults.get("emotional_variability") or "n/a"))}</span>'
+                        f'<span class="badge">Pace {html.escape(str(voice_direction_defaults.get("pace_variability") or "n/a"))}</span>'
+                    )
+                    cluster_storyboard_b_summary_markup = str(cluster_storyboard_b["summary_markup"])
+                grouped_slide_cards.append(
+                    '<details class="cluster-group" data-role="cluster-group">'
+                    '<summary class="cluster-summary">'
+                    '<div class="cluster-summary-main">'
+                    f'<div class="cluster-kicker">Cluster {html.escape(cluster_id)}</div>'
+                    f'<h2 class="cluster-title">{topic_label}</h2>'
+                    f'<p class="cluster-arc">{narrative_arc_text}</p>'
+                    '</div>'
+                    '<div class="cluster-summary-meta">'
+                    f'{_coherence_badge_markup(coherence.get("decision"), coherence.get("score"))}'
+                    f'<span class="badge">Head {head_slide_id}</span>'
+                    f'<span class="badge">{html.escape(str(group.get("interstitial_count") or 0))} interstitials</span>'
+                    f'<span class="badge">Types {interstitial_summary}</span>'
+                    f'<span class="badge">Runtime {html.escape(duration_text)}</span>'
+                    f'<span class="badge">Balance {duration_balance}</span>'
+                    f'{cluster_summary_extra}'
+                    '</div>'
+                    '</summary>'
+                    f'<div class="cluster-group-body">{cluster_storyboard_b_summary_markup}{member_cards}</div>'
+                    '</details>'
+                )
+                continue
+            grouped_slide_cards.append(card_markup_by_row_id.get(str(slide.get("row_id") or ""), ""))
+        slides_markup = "\n".join(card for card in grouped_slide_cards if card) if grouped_slide_cards else '<div class="empty-state">No slides</div>'
+        cluster_controls_html = (
+            '<button type="button" data-role="clusters-expand">Expand all clusters</button>'
+            '<button type="button" data-role="clusters-collapse">Collapse all clusters</button>'
+        )
+    else:
+        slides_markup = "\n".join(slide_cards) if slide_cards else '<div class="empty-state">No slides</div>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1837,7 +2471,45 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .badge-motion {{ background: rgba(14, 116, 144, 0.14); color: #155e75; }}
     .badge-selected {{ background: var(--success-soft); color: #14532d; }}
     .badge-issue {{ background: var(--warning-soft); color: var(--warning); }}
+    .badge-cluster-role {{ background: rgba(20, 59, 93, 0.12); color: var(--accent); }}
+    .badge-coherence-pass {{ background: #dff6e8; color: #166534; }}
+    .badge-coherence-warn {{ background: #fff3d6; color: #8a5300; }}
+    .badge-coherence-fail {{ background: #fde2e2; color: #9b1c1c; }}
+    .badge-coherence-missing {{ background: #eef2f7; color: #475569; }}
     .slide-card-body {{ display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr); gap: 18px; padding: 18px 20px 20px; }}
+    .cluster-group {{ background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }}
+    .cluster-group + .cluster-group {{ margin-top: 28px; }}
+    .cluster-summary {{ list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 18px 20px; background: linear-gradient(135deg, #f8fbfd, #eef5fb); }}
+    .cluster-summary::-webkit-details-marker {{ display: none; }}
+    .cluster-summary::after {{ content: "[expand]"; color: var(--muted); font-size: 0.82rem; font-weight: 700; }}
+    .cluster-group[open] .cluster-summary::after {{ content: "[collapse]"; }}
+    .cluster-summary-main {{ min-width: 0; }}
+    .cluster-kicker {{ color: var(--muted); font-size: 0.84rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }}
+    .cluster-title {{ margin: 4px 0 6px; font-size: 1.12rem; }}
+    .cluster-arc {{ margin: 0; color: var(--muted); }}
+    .cluster-summary-meta {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }}
+    .cluster-group-body {{ display: grid; gap: 12px; padding: 16px; border-top: 1px solid var(--line); background: #f8fafc; }}
+    .cluster-storyboard-b-summary {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }}
+    .cluster-storyboard-b-panel {{ background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }}
+    .cluster-storyboard-b-panel h3 {{ margin: 0 0 8px 0; font-size: 0.96rem; }}
+    .cluster-storyboard-b-panel p {{ margin: 0; color: var(--ink); }}
+    .cluster-breakdown-list {{ margin: 12px 0 0 18px; padding: 0; display: grid; gap: 8px; }}
+    .cluster-breakdown-list li {{ color: var(--ink); }}
+    .cluster-breakdown-meta {{ color: var(--muted); font-size: 0.88rem; }}
+    .cluster-storyboard-b-facts {{ margin: 0; display: grid; gap: 10px; }}
+    .cluster-storyboard-b-facts div {{ padding: 10px 12px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; }}
+    .cluster-storyboard-b-facts dt {{ color: var(--muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }}
+    .cluster-storyboard-b-facts dd {{ margin: 4px 0 0; font-size: 0.95rem; overflow-wrap: anywhere; }}
+    .slide-card--cluster-head .sequence-pill {{ background: #d6e8f8; }}
+    .slide-card--cluster-interstitial {{ margin-left: 28px; border-left: 4px solid #c7d7e6; }}
+    .slide-card--coherence-pass {{ border-left: 4px solid #16a34a; }}
+    .slide-card--coherence-warn {{ border-left: 4px solid #d97706; }}
+    .slide-card--coherence-fail {{ border-left: 4px solid #dc2626; }}
+    .cluster-slide-meta {{ margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 0.88rem; }}
+    .cluster-slide-meta span {{ display: inline-flex; gap: 4px; }}
+    .script-metadata-row {{ display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px 0; }}
+    .badge-intent-aligned {{ background: #dff6e8; color: #166534; }}
+    .badge-intent-mismatch {{ background: #fde2e2; color: #9b1c1c; }}
     .panel-grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 14px; }}
     .panel, .summary-panel, .related-card {{ min-width: 0; }}
     .panel {{ background: #fafbfd; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }}
@@ -1857,7 +2529,16 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .expand-cue {{ position: absolute; top: 10px; right: 10px; background: rgba(15, 23, 42, 0.78); color: #fff; border-radius: 999px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22); }}
     .preview-caption, .script-status, .related-stage, .related-source {{ color: var(--muted); font-size: 0.9rem; margin-top: 8px; }}
     .script-text, .script-notes {{ white-space: pre-wrap; margin: 0; font: inherit; line-height: 1.55; }}
+    .script-text--cluster-head {{ background: linear-gradient(180deg, #f8fbfd 0%, #eef5fb 100%); border: 1px solid #d6e8f8; border-radius: 14px; padding: 14px; }}
+    .script-text--cluster-interstitial {{ background: #fcfdff; border-left: 4px solid #bfd3e6; padding: 12px 14px; border-radius: 0 14px 14px 0; }}
     .script-warning {{ margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: 0.92rem; font-weight: 600; }}
+    .behavioral-intent-warning {{ margin-bottom: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid #f5c2c7; background: #fff5f5; color: #9b1c1c; font-size: 0.92rem; }}
+    .transition-divider {{ display: grid; gap: 4px; margin: 0 0 12px 0; padding: 10px 12px; border-radius: 12px; }}
+    .transition-divider strong {{ font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; }}
+    .transition-divider span {{ color: var(--muted); font-size: 0.88rem; }}
+    .transition-divider--within {{ background: #f8fafc; border: 1px dashed #cbd5e1; }}
+    .transition-divider--boundary {{ background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fdba74; }}
+    .transition-bridge-text {{ color: var(--ink); font-size: 0.92rem; }}
     .script-state, .empty-state {{ color: var(--muted); font-style: italic; }}
     .evidence-panel {{ border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }}
     .evidence-panel summary {{ cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }}
@@ -1885,6 +2566,10 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     @media (max-width: 980px) {{
       .summary-grid, .slide-card-body, .panel-grid {{ grid-template-columns: 1fr; }}
       .slide-card-header {{ flex-direction: column; }}
+      .cluster-summary {{ grid-template-columns: 1fr; }}
+      .cluster-summary-meta {{ justify-content: flex-start; }}
+      .cluster-storyboard-b-summary {{ grid-template-columns: 1fr; }}
+      .slide-card--cluster-interstitial {{ margin-left: 0; }}
       .slide-card-body--motion .slide-preview-panel,
       .slide-card-body--motion .motion-preview-panel,
       .slide-card-body--motion .slide-script-panel {{ grid-column: auto; grid-row: auto; }}
@@ -1939,6 +2624,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       <button type="button" data-role="filter" data-filter="literal-visual">Literal-visual</button>
       <label class="{issue_label_class}"><input type="checkbox" id="issues-only" data-role="issues-only"{issue_checkbox_attrs} /> Show issues only</label>
       <button type="button" data-role="jump-next-issue"{issue_button_attrs}>{issue_button_label}</button>
+      {cluster_controls_html}
     </section>
 
     <section class="slides-section" aria-label="Storyboard slides">
@@ -1968,6 +2654,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       const searchBox = document.querySelector('[data-role="search"]');
       const issuesOnly = document.querySelector('[data-role="issues-only"]');
       const nextIssueBtn = document.querySelector('[data-role="jump-next-issue"]');
+      const expandClustersBtn = document.querySelector('[data-role="clusters-expand"]');
+      const collapseClustersBtn = document.querySelector('[data-role="clusters-collapse"]');
+      const clusterGroups = Array.from(document.querySelectorAll('[data-role="cluster-group"]'));
       const dialog = document.getElementById('preview-dialog');
       const dialogImage = document.getElementById('dialog-image');
       const dialogTitle = document.getElementById('dialog-title');
@@ -2002,6 +2691,12 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         issuesOnly.checked = false;
       }}
       issuesOnly?.addEventListener('change', applyFilters);
+      expandClustersBtn?.addEventListener('click', () => {{
+        clusterGroups.forEach(group => group.setAttribute('open', 'open'));
+      }});
+      collapseClustersBtn?.addEventListener('click', () => {{
+        clusterGroups.forEach(group => group.removeAttribute('open'));
+      }});
       nextIssueBtn?.addEventListener('click', () => {{
         if (actionableIssueCards.length === 0) return;
         const next = cards.find(card => !card.hidden && (card.getAttribute('data-issues') || '').trim());
@@ -2068,6 +2763,10 @@ def cmd_generate(args: argparse.Namespace) -> int:
             storyboard_dir=storyboard_dir,
             asset_base=asset_base.resolve(),
         )
+    cluster_coherence_report_path: Path | None = getattr(args, "cluster_coherence_report", None)
+    cluster_coherence_by_id: dict[str, dict[str, Any]] | None = None
+    if cluster_coherence_report_path is not None:
+        cluster_coherence_by_id = load_cluster_coherence_by_id(cluster_coherence_report_path)
 
     run_id: str | None = getattr(args, "run_id", None)
     pass2_envelope_path: Path | None = getattr(args, "pass2_envelope", None)
@@ -2086,6 +2785,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         related_assets=related_assets,
         run_id=run_id,
         storyboard_policy_meta=storyboard_policy_meta,
+        cluster_coherence_by_id=cluster_coherence_by_id,
     )
     write_bundle(manifest, storyboard_dir)
 
@@ -2269,6 +2969,15 @@ def main() -> int:
         type=str,
         default=None,
         help="Production run ID for traceability in manifest metadata and logs.",
+    )
+    gen.add_argument(
+        "--cluster-coherence-report",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSON/YAML cluster coherence report to decorate Storyboard A "
+            "cluster headers and per-slide review state."
+        ),
     )
     gen.add_argument(
         "--pass2-envelope",

@@ -23,7 +23,9 @@ WORD_RE = re.compile(r"\b\w+(?:[-']\w+)?\b")
 
 
 def _parse_vtt_timestamp(value: str) -> float:
-    match = VTT_TIMESTAMP_RE.match(value.strip())
+    # WebVTT cue timing may include trailing settings (e.g., "align:start").
+    timestamp_token = value.strip().split()[0] if value.strip() else ""
+    match = VTT_TIMESTAMP_RE.match(timestamp_token)
     if not match:
         raise ValueError(f"Invalid VTT timestamp: {value}")
     hours, minutes, seconds, milliseconds = (int(part) for part in match.groups())
@@ -42,6 +44,16 @@ def _iter_vtt_cues(vtt_text: str) -> list[tuple[float, float]]:
 
 def _word_count(text: str) -> int:
     return len(WORD_RE.findall(text or ""))
+
+
+def _coerce_non_negative_float(value: Any) -> float | None:
+    """Return parsed float for optional non-negative values, else None."""
+    if value in (None, ""):
+        return None
+    parsed = float(value)
+    if parsed < 0:
+        raise ValueError("must be >= 0")
+    return parsed
 
 
 def _normalize_path(path_value: str | None, repo_root: Path) -> Path | None:
@@ -137,6 +149,48 @@ def validate_precomposition(
         motion_asset_path = _normalize_path(segment.get("motion_asset_path"), root)
         motion_duration = segment.get("motion_duration_seconds")
         duration_estimate = segment.get("duration_estimate_seconds")
+        bridge_type = str(segment.get("bridge_type") or "none").strip().lower()
+        onset_delay = segment.get("onset_delay")
+        dwell = segment.get("dwell")
+        cluster_gap = segment.get("cluster_gap")
+        transition_buffer = segment.get("transition_buffer")
+
+        timing_values: dict[str, float | None] = {}
+        for field_name, raw_value in (
+            ("onset_delay", onset_delay),
+            ("dwell", dwell),
+            ("cluster_gap", cluster_gap),
+            ("transition_buffer", transition_buffer),
+        ):
+            try:
+                timing_values[field_name] = _coerce_non_negative_float(raw_value)
+            except (TypeError, ValueError):
+                findings.append(
+                    _make_finding(
+                        severity=_severity_for_dimension("CI"),
+                        dimension="CI",
+                        location=segment_id,
+                        description=f"{field_name} must be a non-negative number when present.",
+                        fix_suggestion=f"Set `{field_name}` to a numeric value >= 0 or remove it.",
+                        remediation_target="motion/editing decision",
+                    )
+                )
+                timing_values[field_name] = None
+
+        if timing_values["cluster_gap"] not in (None, 0.0) and bridge_type != "cluster_boundary":
+            findings.append(
+                _make_finding(
+                    severity=_severity_for_dimension("CI"),
+                    dimension="CI",
+                    location=segment_id,
+                    description=(
+                        "cluster_gap is only valid on cluster-boundary segments "
+                        "(bridge_type must be cluster_boundary)."
+                    ),
+                    fix_suggestion="Set bridge_type to cluster_boundary or reset cluster_gap to 0.",
+                    remediation_target="motion/editing decision",
+                )
+            )
 
         if narration_duration in (None, ""):
             findings.append(
@@ -151,13 +205,52 @@ def validate_precomposition(
             )
             continue
 
-        narration_duration = float(narration_duration)
+        try:
+            narration_duration = float(narration_duration)
+        except (TypeError, ValueError):
+            findings.append(
+                _make_finding(
+                    severity=_severity_for_dimension("AQ"),
+                    dimension="AQ",
+                    location=segment_id,
+                    description="narration_duration must be numeric.",
+                    fix_suggestion="Populate narration_duration with a numeric seconds value from ElevenLabs output.",
+                    remediation_target="ElevenLabs",
+                )
+            )
+            continue
+        if narration_duration <= 0:
+            findings.append(
+                _make_finding(
+                    severity=_severity_for_dimension("AQ"),
+                    dimension="AQ",
+                    location=segment_id,
+                    description="narration_duration must be greater than 0 seconds.",
+                    fix_suggestion="Re-run narration generation and write back a positive narration_duration.",
+                    remediation_target="ElevenLabs",
+                )
+            )
+            continue
         words = _word_count(narration_text)
         wpm = round(words / (narration_duration / 60.0), 2) if narration_duration > 0 else 0.0
         estimated_wpm = None
         if duration_estimate not in (None, ""):
-            duration_estimate = float(duration_estimate)
-            if duration_estimate > 0:
+            try:
+                duration_estimate = float(duration_estimate)
+            except (TypeError, ValueError):
+                findings.append(
+                    _make_finding(
+                        severity="medium",
+                        dimension="AQ",
+                        location=segment_id,
+                        description="duration_estimate_seconds must be numeric when present.",
+                        fix_suggestion="Set duration_estimate_seconds to a numeric seconds value or remove it.",
+                        remediation_target="Irene",
+                        blocking=False,
+                    )
+                )
+                duration_estimate = None
+            if duration_estimate and duration_estimate > 0:
                 estimated_wpm = round(words / (duration_estimate / 60.0), 2)
 
         if not narration_file or not narration_file.is_file():
@@ -262,7 +355,34 @@ def validate_precomposition(
                     )
                 )
             else:
-                motion_duration = float(motion_duration)
+                try:
+                    motion_duration = float(motion_duration)
+                except (TypeError, ValueError):
+                    findings.append(
+                        _make_finding(
+                            severity=_severity_for_dimension("CI"),
+                            dimension="CI",
+                            location=segment_id,
+                            description="motion_duration_seconds must be numeric for non-static segments.",
+                            fix_suggestion="Write motion_duration_seconds as a numeric seconds value.",
+                            remediation_target="motion/editing decision",
+                        )
+                    )
+                    motion_duration = None
+                if motion_duration is None:
+                    continue
+                if motion_duration <= 0:
+                    findings.append(
+                        _make_finding(
+                            severity=_severity_for_dimension("CI"),
+                            dimension="CI",
+                            location=segment_id,
+                            description="motion_duration_seconds must be greater than 0 for non-static segments.",
+                            fix_suggestion="Provide a positive motion_duration_seconds value.",
+                            remediation_target="motion/editing decision",
+                        )
+                    )
+                    continue
                 delta = round(motion_duration - narration_duration, 3)
                 if abs(delta) > motion_tolerance_seconds:
                     findings.append(
@@ -295,6 +415,10 @@ def validate_precomposition(
                 "estimated_wpm": estimated_wpm,
                 "motion_type": motion_type,
                 "motion_duration_seconds": motion_duration,
+                "onset_delay": timing_values["onset_delay"],
+                "dwell": timing_values["dwell"],
+                "cluster_gap": timing_values["cluster_gap"],
+                "transition_buffer": timing_values["transition_buffer"],
             }
         )
 

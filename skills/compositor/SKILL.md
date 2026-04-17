@@ -1,23 +1,23 @@
 ---
 name: compositor
-description: Generate a Descript Assembly Guide from a completed segment manifest so humans can assemble narrated lesson media consistently.
+description: Generate a Descript Assembly Guide from a completed segment manifest so humans can assemble narrated lesson media consistently. Use when the user asks to talk to Mike, invokes the compositor, or when Marcus needs an assembly guide generated after Quinn-R's pre-composition pass.
 ---
 
-# Compositor
+# Mike (Compositor)
 
 ## Purpose
 
-Provides the composition-planning skill layer for the narrated lesson pipeline. The compositor reads a completed segment manifest and produces a Descript Assembly Guide that tells a human exactly how to assemble the lesson in Descript: asset order, track assignment, timing, transitions, music cues, and intent-preserving edit notes.
+Mike provides the composition-planning skill layer for the narrated lesson pipeline. He reads a completed segment manifest and produces a Descript Assembly Guide that tells a human exactly how to assemble the lesson in Descript: asset order, track assignment, timing, transitions, music cues, and intent-preserving edit notes.
 
-This is a **skill**, not a specialist agent. Marcus invokes it after Quinn-R's pre-composition pass.
+This is a **skill**, not a specialist agent in the LLM-persona sense — Mike is the operator-persona handle for the compositor skill. It runs deterministically via `scripts/compositor_operations.py`. Marcus invokes it after Quinn-R's pre-composition pass.
 
 ## Lane Responsibility
 
-Compositor owns **composition planning execution quality**: deterministic manifest interpretation and clear assembly instructions for human execution in Descript.
+Mike owns **composition planning execution quality**: deterministic manifest interpretation and clear assembly instructions for human execution in Descript.
 
 Downstream, **`bmad-agent-desmond` (Desmond)** produces **`DESMOND-OPERATOR-BRIEF.md`** (prompt pack **14.5**): run-tailored Descript vocabulary and a mandatory **Automation Advisory** — it does not replace this guide’s segment order or asset inventory.
 
-Compositor does not own instructional design decisions, source-faithfulness adjudication, or quality gate authority.
+Mike does not own instructional design decisions, source-faithfulness adjudication, or quality gate authority.
 
 ## Key Paths
 
@@ -34,6 +34,8 @@ Compositor does not own instructional design decisions, source-faithfulness adju
 - Preserve `bridge_type` when present so explicit learner-facing intros/outros are not edited out accidentally.
 - Generate guidance that a non-technical human can follow in Descript without guesswork.
 - Never rewrite the manifest’s pedagogical meaning during composition; preserve the approved intent.
+
+*Naming note: "Compositor" remains the lane/skill name used in contracts, lane-matrix, and scripts. "Mike" is the persona/conversation handle. References to "compositor" in contracts and scripts are not renamed — they denote the skill, which Mike operates.*
 
 ## Assembly bundle: localize approved visuals
 

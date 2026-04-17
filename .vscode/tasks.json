@@ -54,6 +54,33 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "APP: Progress Map",
+      "type": "shell",
+      "command": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "scripts.utilities.progress_map"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "APP: Progress Map (JSON)",
+      "type": "shell",
+      "command": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "scripts.utilities.progress_map",
+        "--json"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
     }
   ]
 }

@@ -6,7 +6,7 @@ Kira's memory captures prompt effectiveness, model tradeoffs, and production out
 
 ## File Structure
 
-Sidecar location: `{project-root}/_bmad/memory/kling-specialist-sidecar/`
+Sidecar location: `{project-root}/_bmad/memory/kira-sidecar/`
 
 | File | Purpose | Write Rules |
 |------|---------|-------------|
@@ -49,15 +49,15 @@ Style bible content and course content are always re-read from disk. Memory stor
 - `course-content/courses/`
 - `skills/kling-video/`
 - project-level Kling API client (read-only for understanding available methods)
-- `{project-root}/_bmad/memory/kling-specialist-sidecar/`
+- `{project-root}/_bmad/memory/kira-sidecar/`
 - Source assets from Gary, Irene, ElevenLabs, and Marcus delegation
 
 ### Write (default mode)
-- `{project-root}/_bmad/memory/kling-specialist-sidecar/`
+- `{project-root}/_bmad/memory/kira-sidecar/`
 - `course-content/staging/`
 
 ### Write (ad-hoc mode)
-- `{project-root}/_bmad/memory/kling-specialist-sidecar/index.md` — transient section only
+- `{project-root}/_bmad/memory/kira-sidecar/index.md` — transient section only
 - `course-content/staging/ad-hoc/`
 
 ### Deny (both modes)

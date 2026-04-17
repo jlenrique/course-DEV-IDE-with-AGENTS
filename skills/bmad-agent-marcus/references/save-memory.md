@@ -1,6 +1,6 @@
 # Save Memory
 
-Immediately persist the current session context to the memory sidecar at `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/`.
+Immediately persist the current session context to the memory sidecar at `{project-root}/_bmad/memory/marcus-sidecar/`.
 
 ## Process
 

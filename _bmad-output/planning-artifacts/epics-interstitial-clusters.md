@@ -376,8 +376,173 @@ Update bridge cadence logic in `narration-script-parameters.yaml`:
 | **23: Pass 2 Narration** | 3 | Medium | Irene already writes well; cluster awareness is additive |
 | **24: Assembly & Regression** | 4 | Medium | Validator hardening is highest regression risk |
 
-**Total: 7 epics, 28 stories**
+**Total: 7 epics, 28 stories** (Epics 19-24 defined here)
 
-**MVP validation gate:** After Epic 20b + Epic 21 Story 1-2: one cluster in one presentation, human judgment on brief-to-output quality.
+**MVP validation gate:** PASSED (Storyboard A trial, 2026-04-11). All downstream unblocked.
 
-**Parallel execution window:** Epics 22 and 23 can run simultaneously after Epic 21.
+**Parallel execution window:** Epics 22 and 23 run simultaneously after Epic 21.
+
+---
+
+## Epic 20c: Cluster Intelligence + Creative Control (Iterative)
+
+Added 2026-04-12, replanned 2026-04-14 (Party Mode consensus).
+
+### Scope
+
+Iterative epic combining cluster intelligence maturity (Wave 2A) with parameter registry, Creative Director agent, experience profiles, and profile resolver (Wave 2B). A/B trials SKIPPED — replaced by experience-profile-driven trial runs. Clustering and creative control mature together through profile-driven runs against C1-M1.
+
+### SPOC Invariant: Marcus as Single Point of Contact
+
+**Architectural invariant:** An HIL operator completes an entire production run by chatting exclusively with Marcus. No direct specialist invocation, no manual YAML editing, no parameter configuration outside Marcus conversations.
+
+This invariant applies to all stories in Epic 20c. During development, a story may deliberately leave SPOC unenforced for a bounded interval when a prerequisite or complementary feature has not yet shipped. Such gaps must be:
+
+1. **Documented in the opening story** — the story that creates the gap states what is unenforced and which story closes it.
+2. **Documented in the closing story** — the story that closes the gap has an explicit acceptance criterion for SPOC enforcement.
+3. **Bounded** — no gap spans more than two stories in the critical path.
+
+**SPOC gap ledger (Epic 20c):**
+
+| Gap | Opened by | Closed by | Description |
+|-----|-----------|-----------|-------------|
+| Profile selection not in prompt packs | 20c-12 | 20c-14 | CLOSED 2026-04-14 - Marcus prompt pack + conversation flow now surface the plain-language choice and persist the mapped profile id |
+| CD has no Marcus-only intake contract | 20c-10 | 20c-14 | CLOSED 2026-04-14 - CD SKILL.md now declares Marcus-only invocation and structured return path |
+| Resolver exists but prompt packs don't trigger it | 20c-13 | 20c-14 | CLOSED 2026-04-14 - Marcus intake now drives the resolver and copied C1-M1 proof bundles validate the runtime path |
+
+### Wave 2A — Cluster Maturity
+
+Bring clustering to "good enough for profile runs" state.
+
+#### Story 20c-1: Cluster Structure Template Library
+- **Status:** In-progress (Slice 1 done: 10 templates)
+- Template library for cluster structures (head + interstitial patterns)
+- AC: At least 10 templates covering all 5 interstitial types
+
+#### Story 20c-2: Content-Aware Template Selection Logic
+- **Status:** Done
+- Selector, bridge, hydration, fail-closed, evaluator (5 slices)
+
+#### Story 20c-3: Static Density Configs
+- **Status:** Ready-for-dev
+- COMPRESSED: Two hardcoded density configs (visual-led, text-led), not full engine
+- AC: Density configs align with experience profile proportions
+
+#### Story 20c-4: Master Arc Cluster Arc Composition — DEFERRED
+#### Story 20c-5: Presentation Architect Agent (Pax) — DEFERRED
+#### Story 20c-6: Cluster Design Advisor Capability (Lens) — DEFERRED
+
+Deferred until profile-driven runs (20c-14) reveal specific gaps.
+
+### Wave 2B — Parameter Registry + Creative Director
+
+Build the parameter infrastructure and CD agent that unlocks creative control. Three parameter families: Run Constants (operational), Narration-time (Irene script controls), Assembly-time (Compositor timing).
+
+#### Story 20c-7: Parameter Audit & Registry Schema
+- **Status:** Done
+- Cataloged 3 parameter families, added `docs/parameter-directory.md`, added `state/config/parameter-registry-schema.yaml`
+- AC: Registry schema validates; parameter directory covers all implemented parameters
+- **SPOC:** No gap — parameters are system-defined, not operator-configured
+
+#### Story 20c-8: Assembly Timing Parameters
+- **Status:** Done
+- onset_delay, dwell, cluster_gap, transition_buffer wired into manifest reference, Pass 2 and precomposition validators
+- AC: Assembly timing parameters validated in handoff and precomposition paths
+- **SPOC:** No gap — assembly params flow through Irene manifest, not operator config
+
+#### Story 20c-9: Narration Parameter Expansion
+- **Status:** In-progress
+- Expanded narration_profile_controls set (11 controls) aligned across config, registry, and schema validation
+- AC: All narration profile controls have enum validation in narration-script-parameters.yaml
+- **SPOC:** No gap — narration params are system defaults consumed by Irene through delegation
+
+#### Story 20c-10: Creative Director Agent
+- **Status:** In-progress
+- Contract-first CD scaffold with `slide_mode_proportions` validation path
+- AC: CD SKILL.md exists with output contract, guardrails, and references; creative directive validator enforces schema compliance
+- **SPOC:** Gap OPENED — CD scaffold exists but has no structural "Marcus-only intake" contract. Currently enforced by prose only ("CD output is advisory input"). **Closed by 20c-14** (intake contract formalized + E2E validation proves Marcus-mediated flow)
+
+#### Story 20c-11: Creative Directive Schema
+- **Status:** In-progress
+- Schema artifacts (JSON + YAML) for creative directive validation
+- AC: Schema defines required fields (schema_version, experience_profile, slide_mode_proportions, narration_profile_controls, creative_rationale); validator rejects non-conforming directives
+- **SPOC:** No gap — schema is a validation contract, not an operator-facing surface
+
+#### Story 20c-12: Experience Profile Definitions
+- **Status:** In-progress
+- Bootstrap profile targets (visual-led, text-led) with schema validation tests
+- AC: Two profiles in `experience-profiles.yaml` with validated `slide_mode_proportions` (sum to 1.0) and `narration_profile_controls` (required keys present); creative directive validator enforces profile parity
+- **SPOC:** Gap OPENED — profiles defined but not surfaced through Marcus's conversational flow. Operator cannot select a profile through Marcus yet. **Closed by 20c-14** (prompt pack update + Marcus reference update)
+
+#### Story 20c-13: Profile Resolver Wiring
+- **Status:** Done
+- Resolve selected `experience_profile` to canonical `slide_mode_proportions` and `narration_profile_controls`. Propagate resolved `slide_mode_proportions` into `RunConstants`. Return `narration_profile_controls` for Marcus to pack into delegation envelope.
+- **Dependencies:** 20c-12 (profiles defined), 20c-3 (density configs, soft)
+- **Implementation constraints (Party Mode consensus 2026-04-14):**
+  1. Resolver is a pure function in `run_constants.py` — not a CLI, not a service
+  2. Resolver output merges into the raw dict BEFORE `parse_run_constants()` — frozen dataclass cannot be mutated after construction
+  3. `experience_profile` added as `Optional[str] = None` on `RunConstants` for traceability and backwards compatibility
+  4. `narration_profile_controls` do NOT land on `RunConstants` (wrong parameter family) — Marcus packs them into the delegation envelope for Irene
+  5. Unknown profile rejection raises `RunConstantsError` at resolve time with "unknown experience profile" error message (error locality)
+  6. Resolver reads `experience-profiles.yaml` as sole source of truth — no hardcoded values
+  7. Irene must never import or reference `experience-profiles.yaml` directly — controls arrive only via envelope
+- **Acceptance criteria:**
+  1. `resolve_experience_profile(name)` returns `slide_mode_proportions` + `narration_profile_controls` for known profiles
+  2. Unknown profile name raises `RunConstantsError`
+  3. Resolved `slide_mode_proportions` round-trips through `parse_run_constants()` without mutation
+  4. `experience_profile` field on `RunConstants`: absent defaults to `None` (backwards compat), present validates against known profiles
+  5. Contract test: every profile name in `experience-profiles.yaml` is accepted by `parse_run_constants()`
+  6. Static analysis test: no downstream agent directory contains direct references to `experience-profiles.yaml`
+  7. Integration test: profile name -> resolver -> merge into raw dict -> `parse_run_constants()` -> success
+  8. All existing tests remain green (229+ baseline)
+- **SPOC:** Gap OPENED — resolver exists but no prompt pack triggers it. Marcus can pass `experience_profile` in run-constants but isn't conversationally prompted to do so. **Closed by 20c-14.**
+
+#### Story 20c-14: E2E Validation (C1-M1, Both Profiles)
+- **Status:** Done
+- **Dependencies:** 20c-13 (resolver wired)
+- Run C1-M1 through both profiles (visual-led, text-led) with comparison. This is the integration proof and the SPOC gap closure story.
+
+#### Story 20c-15: Parent Slide Count — Profile-Aware Estimator
+- **Status:** Done
+- **Dependencies:** 20c-14 (E2E validation complete, profiles proven)
+- Rename `locked_slide_count` → `parent_slide_count`. Operator polls for only `parent_slide_count` and `target_total_runtime_minutes`. All other parameters (`estimated_total_slides`, `avg_slide_seconds`, word budgets) are system-derived from the experience profile's `cluster_expansion` block. Estimator runs a 5-condition feasibility triangle (PASS/WARN/BLOCK). Operator polling loops on BLOCK, surfaces WARN for ACK.
+- **Story file:** `_bmad-output/implementation-artifacts/20c-15-parent-slide-count-profile-aware-estimator.md`
+- **Key changes:**
+  1. `experience-profiles.yaml` schema 1.0→1.1, `cluster_expansion` blocks added
+  2. `slide_count_runtime_estimator.py` rewritten with `estimate_and_validate()`
+  3. `operator_polling.py` simplified to 2-input poll with feasibility loop
+  4. Prompt 4.5 rewritten for profile-aware workflow
+  5. G1.5 gate: 3 new criteria (expansion compliance, cluster balance, runtime fit)
+  6. G4 gate: G4-10 and G4-17 updated for profile-derived values
+  7. Field rename propagation across 8+ downstream files
+- **Acceptance criteria:**
+  1. Prompt pack updated with plain-language profile selection step during run-constants handshake (operator never sees "experience profile" terminology — Marcus asks "should the visuals lead or the text?")
+  2. Marcus conversation-management reference updated to elicit, map, and confirm profile choice
+  3. CD agent SKILL.md gains `## Intake Contract` section (modeled on Vera pattern): invoked exclusively through Marcus's envelope, receives all context from envelope, returns structured output to Marcus
+  4. C1-M1 visual-led run produces resolved run-constants with correct proportions
+  5. C1-M1 text-led run produces resolved run-constants with correct proportions
+  6. Narration profile controls arrive in Irene's delegation envelope (not from direct file read)
+  7. Storyboard HTML remains view-only with no operator-facing controls (design principle, not just implementation detail)
+  8. All SPOC gaps from 20c-10, 20c-12, and 20c-13 are closed
+  9. SPOC gap ledger in this epic definition is updated to mark all gaps as closed
+- **SPOC:** All gaps CLOSED. After this story, the full profile -> CD -> resolver -> run-constants -> Marcus -> envelope -> Irene flow is tested end-to-end at the Marcus contract level with the operator interacting exclusively through Marcus. Proof artifacts were captured under `reports/proofs/20c-14/`.
+
+### Critical Path
+
+```
+20c-7 -> 20c-8/9 (parallel) -> 20c-10 -> 20c-12 -> 20c-13 -> 20c-14
+                                  |
+                                  v
+                               20c-11
+```
+
+### Risk Summary
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Resolver bypasses `parse_run_constants()` | Critical | Constraint #2: merge before parse, not after |
+| Three-way coupling (profile YAML, validator, resolver) | High | Single source of truth: profile YAML, everything derives at runtime |
+| Irene reads profiles directly | Critical | Constraint #7 + static analysis test |
+| CD accumulates operator-facing surface | High | Intake contract (20c-14 AC #3) |
+| Prompt pack never updated | Medium | 20c-14 AC #1 makes it explicit |
+| Profile scaling beyond 4-5 choices | Low | Marcus shifts from "pick one" to "tell me what you want" (future story if needed) |

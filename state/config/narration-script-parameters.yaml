@@ -8,7 +8,7 @@
 # Consumed by: Irene Pass 2, G4 Narration Script gate, quality-reviewer agent.
 # Contract: state/config/fidelity-contracts/g4-narration-script.yaml
 
-schema_version: "1.0"
+schema_version: "1.1"
 
 # ---------------------------------------------------------------------------
 # 1. narration_density — how much to say per slide
@@ -18,6 +18,12 @@ narration_density:
   mean_words_per_slide: 95     # default ballpark across all slides
   min_words_per_slide: 25      # breathing room for visual-heavy slides
   max_words_per_slide: 220     # cap on any single segment
+  cluster_narration:
+    # NOTE: These are defaults. When an experience profile is active, the
+    # profile's cluster_expansion.head_words and interstitial_words ranges
+    # take precedence. See state/config/experience-profiles.yaml.
+    cluster_head_word_range: [80, 140]  # head slide establishes concept + arc for the full cluster
+    interstitial_word_range: [25, 40]   # interstitials stay terse, isolation-targeted, and visual-led (roughly 70/30 visual-to-narration)
 
 # ---------------------------------------------------------------------------
 # 2. slide_echo — how much narration mirrors visible slide text
@@ -88,6 +94,13 @@ terminology_treatment:
 pedagogical_bridging:
   transition_style: conceptual
   bridge_frequency_scale: moderate
+  within_cluster_bridge_policy:
+    default: none              # suppress spoken bridges inside clusters by default
+    tension_position_override: pivot  # reserved for tension interstitials that need a brief tonal turn ("but", "however", "yet")
+  cluster_boundary_bridge_style:
+    mode: synthesis_plus_forward_pull
+    target_seconds: [15, 20]
+    target_words: [37, 50]
   spoken_bridge_policy:
     # off = skip deterministic spoken-bridge cue checks
     # warn = emit warnings (promoted to errors when Pass 2 runtime_policy_strict)
@@ -146,6 +159,10 @@ runtime_variability:
     - visual_detail_load
     - duration_rationale
     - bridge_type
+    - onset_delay
+    - dwell
+    - cluster_gap
+    - transition_buffer
   allowed_timing_roles:
     - anchor
     - concept-build
@@ -195,7 +212,80 @@ runtime_variability:
     enabled: true
     require_intro_or_outro_every_minutes: 3.0
     require_intro_or_outro_every_slides: 5
+    cluster_bridge_cadence_override: true
     accepted_bridge_types:
       - intro
       - outro
       - both
+      - pivot
+      - cluster_boundary
+
+# ---------------------------------------------------------------------------
+# 10. narration_profile_controls -- high-level narration shaping knobs
+# ---------------------------------------------------------------------------
+# narrator_source_authority:
+#   source-grounded  -> prioritize extracted/source-backed claims first
+#   balanced         -> balance source grounding with slide rhetoric
+#   slide-led        -> prioritize slide-forward explanations and cues
+#
+# slide_content_density:
+#   lean     -> concise narration relative to visible slide content
+#   adaptive -> default; adapts by timing_role/content_density
+#   dense    -> richer explanatory layer beyond visible text
+#
+# elaboration_budget:
+#   low      -> prioritize brevity and directness
+#   medium   -> default explanatory depth
+#   high     -> allow expanded explanation and examples
+#
+# connective_weight:
+#   light    -> minimal connective phrasing between points
+#   balanced -> default connective pacing
+#   heavy    -> explicit connective stitching throughout
+#
+# callback_frequency:
+#   sparse   -> occasional call-backs to prior concepts
+#   moderate -> default call-back cadence
+#   frequent -> frequent call-backs for narrative continuity
+#
+# visual_narration_coupling:
+#   loose    -> visual references are occasional and selective
+#   balanced -> default coupling between spoken and visual channels
+#   tight    -> strong coupling with frequent visual anchoring
+#
+# rhetorical_richness:
+#   restrained -> plain, direct phrasing
+#   balanced   -> moderate rhetorical variety
+#   expressive -> richer rhetorical shaping
+#
+# vocabulary_register:
+#   accessible -> plain-language instructional vocabulary
+#   professional -> domain-professional tone (default)
+#   specialist -> specialist/technical register
+#
+# arc_awareness:
+#   low      -> minimal explicit arc signaling
+#   medium   -> default arc continuity signaling
+#   high     -> explicit arc markers and progression cues
+#
+# narrative_tension:
+#   low      -> low-intensity, explanatory cadence
+#   medium   -> default instructional tension
+#   high     -> stronger tension-and-release shaping
+#
+# emotional_coloring:
+#   neutral  -> objective instructional tone
+#   warm     -> supportive/encouraging emotional color
+#   vivid    -> stronger emotional coloration when appropriate
+narration_profile_controls:
+  narrator_source_authority: balanced
+  slide_content_density: adaptive
+  elaboration_budget: medium
+  connective_weight: balanced
+  callback_frequency: moderate
+  visual_narration_coupling: balanced
+  rhetorical_richness: balanced
+  vocabulary_register: professional
+  arc_awareness: medium
+  narrative_tension: medium
+  emotional_coloring: neutral

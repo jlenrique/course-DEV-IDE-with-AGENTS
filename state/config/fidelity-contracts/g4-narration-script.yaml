@@ -117,19 +117,22 @@ criteria:
     name: "Runtime plan coherence"
     description: >
       Segment-level runtime decisions must remain coherent with the approved
-      runtime plan controls (total runtime target, per-slide targets, average
-      runtime assumptions, and variance policy) so narration pacing does not
-      drift from the locked production plan.
+      runtime plan controls derived from `parent_slide_count`,
+      `target_total_runtime_minutes`, and the experience profile's
+      cluster_expansion parameters. Narration pacing must not drift from the
+      locked production plan.
     fidelity_class: [creative, literal-text, literal-visual]
     severity: high
     evaluation_type: deterministic
     check: >
       Segment durations and runtime metadata are present and reconcile against
-      runtime_plan targets (including target_total_runtime_minutes and
-      per_slide_targets) with any out-of-band variance explicitly justified.
+      runtime_plan targets (including target_total_runtime_minutes,
+      estimated_total_slides, avg_slide_seconds, and per_slide_targets) with
+      any out-of-band variance explicitly justified.
     requires_perception: false
     config_refs:
       - "state/config/narration-script-parameters.yaml"
+      - "state/config/experience-profiles.yaml"
 
   - id: "G4-11"
     name: "Timing rationale completeness"
@@ -143,7 +146,9 @@ criteria:
     check: >
       timing_role, content_density, visual_detail_load, duration_rationale,
       and bridge_type are populated and valid per runtime_variability policy;
-      weak or missing rationale is a contract failure, not an advisory note.
+      clustered runs must also satisfy cluster-specific word ranges and
+      within-cluster bridge suppression rules; weak or missing rationale is a
+      contract failure, not an advisory note.
     requires_perception: false
     config_refs:
       - "state/config/narration-script-parameters.yaml"
@@ -161,9 +166,141 @@ criteria:
     check: >
       Narration and manifest behavior align with narration-script-parameters
       policy defaults and guardrails; deviations must be intentional and
-      traceable, not accidental drift.
+      traceable, not accidental drift. When clusters are present, cadence
+      should prefer cluster seams (`bridge_type: cluster_boundary`) while
+      keeping within-cluster bridges suppressed except for explicit tension
+      pivots.
     requires_perception: true
     perception_modality: image
     config_refs:
       - "state/config/narration-grounding-profiles.yaml"
       - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-13"
+    name: "Behavioral intent validation"
+    description: >
+      For each segment with a behavioral_intent field, the stated intent must
+      be specific to the segment's content, the narration must plausibly
+      support the claimed effect, and consecutive segments must not share
+      identical behavioral_intent text.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      (1) behavioral_intent is segment-specific, not generic boilerplate
+      repeated across consecutive segments; (2) narration's instructional
+      approach plausibly supports the claimed behavioral/affective effect;
+      (3) consecutive segments sharing identical behavioral_intent text are
+      flagged as under-differentiated (medium); narration contradicting its
+      stated intent is high severity.
+    requires_perception: false
+
+  - id: "G4-14"
+    name: "Motion brief fidelity"
+    description: >
+      For each non-static segment with a motion_brief, the described visual
+      action must be consistent with the motion perception confirmation for
+      that segment's motion_asset_path.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      For each non-static segment, motion_brief's described action matches
+      the perceived clip content from motion_asset_path. A motion_brief
+      describing action not present in the perceived clip is an Invention.
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G4-15"
+    name: "Duration rationale semantic correctness"
+    description: >
+      Beyond structural completeness (G4-11), each segment's duration_rationale
+      must provide genuine, segment-specific justification referencing at least
+      two of three runtime dimensions.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: >
+      (1) duration_rationale references at least two of: purpose/timing role,
+      content density, visual detail load/burden; (2) rationale is unique
+      across consecutive segments — identical rationale on 3+ consecutive
+      segments is high severity; (3) purely formulaic rationales with no
+      segment-specific reasoning are medium severity.
+    requires_perception: false
+    config_refs:
+      - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-16"
+    name: "Cluster narration coherence"
+    description: >
+      In clustered runs, each interstitial segment's behavioral intent must
+      remain subordinate to the cluster head's master_behavioral_intent.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: behavioral-intent-subordination
+    check: >
+      For every cluster, all interstitial behavioral_intent values must serve
+      the cluster's master_behavioral_intent according to the documented
+      compatibility map.
+    requires_perception: false
+    config_refs:
+      - "skills/bmad-agent-content-creator/references/cluster-narrative-arc-schema.md"
+      - "state/config/narration-script-parameters.yaml"
+
+  - id: "G4-17"
+    name: "Cluster word budget"
+    description: >
+      Clustered narration must use the dedicated head and interstitial word
+      budgets. When an experience profile is active, the profile's
+      cluster_expansion.head_words and interstitial_words ranges take
+      precedence over narration-script-parameters defaults.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: cluster-word-budget
+    check: >
+      Cluster heads must stay within the effective head word range and
+      interstitials within the effective interstitial word range, each
+      with a ±5 word tolerance. Effective ranges come from the experience
+      profile's cluster_expansion block when present, falling back to
+      narration-script-parameters.yaml cluster_narration defaults.
+    requires_perception: false
+    config_refs:
+      - "state/config/narration-script-parameters.yaml"
+      - "state/config/experience-profiles.yaml"
+
+  - id: "G4-18"
+    name: "No new concepts in interstitials"
+    description: >
+      Interstitial narration should stay inside the concept scope established by
+      the head segment and its source-backed brief rather than introducing fresh
+      domain concepts.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: concept-scope-heuristic
+    check: >
+      Extract concept tokens from the head narration and any resolvable
+      source_ref text, then flag interstitial narration that introduces
+      concept-bearing terms outside that head scope.
+    requires_perception: false
+
+  - id: "G4-19"
+    name: "Cluster arc integrity"
+    description: >
+      Cluster position sequencing and the final resolve beat must preserve a
+      coherent cluster-level narrative arc.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: deterministic
+    scope: cluster
+    check_type: arc-integrity
+    check: >
+      Cluster positions must remain in canonical order and the resolve segment
+      must callback to establish concepts using a meaningful keyword overlap
+      heuristic.
+    requires_perception: false

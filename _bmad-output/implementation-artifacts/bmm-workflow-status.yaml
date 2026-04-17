@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-05 (Epics 12-14 complete; prompt-pack family split into standard v4.1 and motion v4.2 workflow docs)
+# Last Updated: 2026-04-16 (Harmonized: Wave 4 `22-2` + `20c-15` done; Epic 23 closed; trial-next per next-session-start-here / v4.2f.)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -23,16 +23,16 @@ workflow_artifacts:
   epics_and_stories:
     status: "completed"
     file: "_bmad-output/planning-artifacts/epics.md"
-    note: "All 14 epics complete. Epics 12-14 extend the narrated workflow with double-dispatch, visual-aware Irene Pass 2, and motion controls."
-    stories_count: 62
-    epics_count: 14
+    note: "15 legacy epics complete (1-14, SB). Epics 19-24+20c add interstitial cluster intelligence. MVP gate passed. Profile-driven runs; 19-4 and 20c-9..20c-14 tracked as BMAD-done with sprint + story artifacts; Epic 23 Wave 3 closed in sprint-status."
+    stories_count: 97
+    epics_count: 22
   ux_design:
     status: "not-applicable"
     note: "Primary interface is conversational - no traditional UX design needed"
   sprint_planning:
     status: "completed"
     file: "_bmad-output/implementation-artifacts/sprint-status.yaml"
-    note: "All 14 epics done. Total: 14 epics, 62 stories."
+    note: "22 epics tracked. See sprint-status.yaml for authoritative story keys. Cluster wave: 19-4 + 20c-9..20c-15 + 22-2 BMAD/done per tracker 2026-04-16; Epic 20c still in-progress (20c-1); Epic 24 + trial runs next per next-session-start-here.md."
   story_1_1:
     status: "done"
     file: "_bmad-output/implementation-artifacts/1-1-cursor-plugin-foundation.md"
@@ -101,4 +101,4 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Begin tracked trial runs from the clean Epic 14 baseline; keep structural walk, session readiness, and the first-tracked-run checklist as the operating gate."
+next_workflow_step: "Execute 23-2, then re-evaluate downstream sequencing after the G4 cluster gate extension is implemented and reviewed."

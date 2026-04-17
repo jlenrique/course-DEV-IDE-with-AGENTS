@@ -17,6 +17,7 @@ import argparse
 import json
 import re
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,24 @@ try:
     import yaml
 except ImportError:  # pragma: no cover - optional for yaml input
     yaml = None  # type: ignore[assignment]
+
+SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from cluster_template_planner import (
+    build_cluster_template_plan,
+    load_default_template_library,
+    load_operator_template_overrides,
+)
+from scripts.utilities.run_constants import (
+    RunConstantsError,
+    parse_run_constants,
+    resolve_experience_profile,
+)
 
 
 EXPECTED_PASS2_OUTPUTS = (
@@ -40,11 +59,21 @@ STALE_PASS2_FILES = (
 ARCHIVE_SUBDIR = Path("recovery") / "archive" / "pass2-reruns"
 DEFAULT_ENVELOPE_FILENAME = "pass2-envelope.json"
 DEFAULT_RECEIPT_FILENAME = "pass2-prep-receipt.json"
-REPO_ROOT = Path(__file__).resolve().parents[3]
 STATIC_MOTION_PATTERN = re.compile(r"slide[-_](\d{2})", re.IGNORECASE)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RUN_CONSTANTS_FILENAME = "run-constants.yaml"
 STYLE_GUIDE_PATH = PROJECT_ROOT / "state" / "config" / "style_guide.yaml"
+GARY_CLUSTER_FIELDS = (
+    "cluster_id",
+    "cluster_role",
+    "cluster_position",
+    "develop_type",
+    "interstitial_type",
+    "parent_slide_id",
+    "narrative_arc",
+    "cluster_interstitial_count",
+    "selected_template_id",
+)
 RUNTIME_ROW_RE = re.compile(
     r"^\|\s*(?P<slide>\d+)\s*\|\s*(?P<target>\d+(?:\.\d+)?)\s*\|\s*(?P<cumulative>\d+:\d{2})\s*\|$"
 )
@@ -107,10 +136,10 @@ def _load_runtime_plan(bundle_dir: Path, irene_pass1_path: Path) -> dict[str, An
         run_constants = _load_yaml_object(run_constants_path)
 
     runtime_plan: dict[str, Any] = {
-        "locked_slide_count": run_constants.get("locked_slide_count"),
+        "parent_slide_count": run_constants.get("parent_slide_count"),
         "target_total_runtime_minutes": run_constants.get("target_total_runtime_minutes"),
-        "slide_runtime_average_seconds": run_constants.get("slide_runtime_average_seconds"),
-        "slide_runtime_variability_scale": run_constants.get("slide_runtime_variability_scale"),
+        "estimated_total_slides": run_constants.get("estimated_total_slides"),
+        "avg_slide_seconds": run_constants.get("avg_slide_seconds"),
     }
     if irene_pass1_path.is_file():
         per_slide_targets = _parse_runtime_budget_rows(irene_pass1_path)
@@ -119,6 +148,37 @@ def _load_runtime_plan(bundle_dir: Path, irene_pass1_path: Path) -> dict[str, An
     if not any(value not in (None, "", []) for value in runtime_plan.values()):
         return None
     return runtime_plan
+
+
+def _load_experience_profile_payload(bundle_dir: Path) -> tuple[str | None, dict[str, Any] | None]:
+    run_constants_path = _bundle_input(bundle_dir, RUN_CONSTANTS_FILENAME)
+    if not run_constants_path.is_file():
+        return None, None
+
+    raw_run_constants = _load_yaml_object(run_constants_path)
+    raw_profile = raw_run_constants.get("experience_profile")
+    if raw_profile is None:
+        return None, None
+
+    validation_payload = {
+        "run_id": "pass2-profile-validation",
+        "lesson_slug": "pass2-profile-validation",
+        "bundle_path": str(bundle_dir),
+        "primary_source_file": "pass2-profile-validation.pdf",
+        "optional_context_assets": [],
+        "theme_selection": "pass2-profile-validation",
+        "theme_paramset_key": "pass2-profile-validation",
+        "execution_mode": "tracked/default",
+        "quality_preset": "draft",
+        **raw_run_constants,
+    }
+    parsed_run_constants = parse_run_constants(validation_payload)
+    if parsed_run_constants.experience_profile is None:
+        return None, None
+
+    normalized_profile = parsed_run_constants.experience_profile
+    resolved = resolve_experience_profile(normalized_profile)
+    return normalized_profile, resolved
 
 
 def _load_voice_direction_defaults() -> dict[str, Any]:
@@ -165,6 +225,232 @@ def _dispatch_row_lookup(dispatch_payload: dict[str, Any]) -> dict[str, dict[str
     return lookup
 
 
+def _attach_selected_template_ids_to_rows(
+    gary_slide_output: list[dict[str, Any]],
+    cluster_template_plan: dict[str, Any],
+) -> None:
+    mapping_raw = cluster_template_plan.get("selected_template_ids_by_cluster")
+    mapping: dict[str, str] = {}
+    if isinstance(mapping_raw, dict):
+        mapping = {
+            str(cluster_id): str(template_id)
+            for cluster_id, template_id in mapping_raw.items()
+            if str(cluster_id).strip() and str(template_id).strip()
+        }
+    if not mapping:
+        return
+    for row in gary_slide_output:
+        if not isinstance(row, dict):
+            continue
+        cluster_id = str(row.get("cluster_id") or "").strip()
+        if not cluster_id:
+            continue
+        selected_template_id = mapping.get(cluster_id)
+        if selected_template_id:
+            row["selected_template_id"] = selected_template_id
+
+
+def _hydrate_cluster_rows_from_template_plan(
+    gary_slide_output: list[dict[str, Any]],
+    cluster_template_plan: dict[str, Any],
+) -> list[str]:
+    warnings: list[str] = []
+    clusters = cluster_template_plan.get("clusters")
+    if not isinstance(clusters, list):
+        return warnings
+    rows_by_cluster: dict[str, list[dict[str, Any]]] = {}
+    for row in gary_slide_output:
+        if not isinstance(row, dict):
+            continue
+        cluster_id = str(row.get("cluster_id") or "").strip()
+        if not cluster_id:
+            continue
+        rows_by_cluster.setdefault(cluster_id, []).append(row)
+
+    for cluster in clusters:
+        if not isinstance(cluster, dict):
+            continue
+        cluster_id = str(cluster.get("cluster_id") or "").strip()
+        if not cluster_id:
+            continue
+        cluster_rows = rows_by_cluster.get(cluster_id, [])
+        if not cluster_rows:
+            continue
+        cluster_rows.sort(key=lambda item: int(item.get("card_number") or 10_000))
+        head_row = next(
+            (
+                row
+                for row in cluster_rows
+                if str(row.get("cluster_role") or "").strip().lower() == "head"
+            ),
+            None,
+        )
+        interstitial_rows = [
+            row
+            for row in cluster_rows
+            if str(row.get("cluster_role") or "").strip().lower() == "interstitial"
+        ]
+        if head_row is None:
+            warnings.append(f"{cluster_id}: missing head row; template hydration skipped")
+            continue
+
+        expected_sequence = (
+            cluster.get("expected_interstitial_sequence")
+            if isinstance(cluster.get("expected_interstitial_sequence"), list)
+            else []
+        )
+        expected_count = cluster.get("expected_interstitial_count")
+        if isinstance(expected_count, int) and not head_row.get("cluster_interstitial_count"):
+            head_row["cluster_interstitial_count"] = expected_count
+        elif isinstance(expected_count, int) and int(head_row.get("cluster_interstitial_count") or 0) != expected_count:
+            warnings.append(
+                f"{cluster_id}: head cluster_interstitial_count={head_row.get('cluster_interstitial_count')} "
+                f"differs from template expected_interstitial_count={expected_count}"
+            )
+
+        head_slide_id = str(head_row.get("slide_id") or "").strip()
+        for index, interstitial_row in enumerate(interstitial_rows):
+            step = expected_sequence[index] if index < len(expected_sequence) and isinstance(expected_sequence[index], dict) else {}
+            expected_position = str(step.get("position") or "").strip() or None
+            expected_type = str(step.get("interstitial_type") or "").strip() or None
+            expected_develop = str(step.get("develop_subtype") or "").strip() or None
+
+            current_position = str(interstitial_row.get("cluster_position") or "").strip() or None
+            current_type = str(interstitial_row.get("interstitial_type") or "").strip() or None
+            current_develop = str(interstitial_row.get("develop_type") or "").strip() or None
+
+            if expected_position and not current_position:
+                interstitial_row["cluster_position"] = expected_position
+            elif expected_position and current_position and current_position != expected_position:
+                warnings.append(
+                    f"{cluster_id}:{interstitial_row.get('slide_id')}: cluster_position={current_position} "
+                    f"differs from template={expected_position}"
+                )
+
+            if expected_type and not current_type:
+                interstitial_row["interstitial_type"] = expected_type
+            elif expected_type and current_type and current_type != expected_type:
+                warnings.append(
+                    f"{cluster_id}:{interstitial_row.get('slide_id')}: interstitial_type={current_type} "
+                    f"differs from template={expected_type}"
+                )
+
+            if expected_develop and not current_develop:
+                interstitial_row["develop_type"] = expected_develop
+            elif expected_develop and current_develop and current_develop != expected_develop:
+                warnings.append(
+                    f"{cluster_id}:{interstitial_row.get('slide_id')}: develop_type={current_develop} "
+                    f"differs from template={expected_develop}"
+                )
+
+            if head_slide_id and not interstitial_row.get("parent_slide_id"):
+                interstitial_row["parent_slide_id"] = head_slide_id
+
+            if interstitial_row.get("double_dispatch_eligible") is None:
+                interstitial_row["double_dispatch_eligible"] = False
+
+    return warnings
+
+
+def _validate_cluster_template_sequence_alignment(
+    gary_slide_output: list[dict[str, Any]],
+    cluster_template_plan: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    clusters = cluster_template_plan.get("clusters")
+    if not isinstance(clusters, list):
+        return errors
+
+    rows_by_cluster: dict[str, list[dict[str, Any]]] = {}
+    for row in gary_slide_output:
+        if not isinstance(row, dict):
+            continue
+        cluster_id = str(row.get("cluster_id") or "").strip()
+        if not cluster_id:
+            continue
+        rows_by_cluster.setdefault(cluster_id, []).append(row)
+
+    for cluster in clusters:
+        if not isinstance(cluster, dict):
+            continue
+        cluster_id = str(cluster.get("cluster_id") or "").strip()
+        if not cluster_id:
+            continue
+        rows = rows_by_cluster.get(cluster_id, [])
+        if not rows:
+            errors.append(f"{cluster_id}: no clustered rows found for template alignment")
+            continue
+        rows.sort(key=lambda item: int(item.get("card_number") or 10_000))
+        selected_template_id = str(cluster.get("selected_template_id") or "").strip()
+        if not selected_template_id:
+            errors.append(f"{cluster_id}: selected_template_id missing in cluster_template_plan")
+            continue
+
+        for row in rows:
+            row_selected = str(row.get("selected_template_id") or "").strip()
+            if not row_selected:
+                errors.append(f"{cluster_id}:{row.get('slide_id')}: selected_template_id missing on clustered row")
+            elif row_selected != selected_template_id:
+                errors.append(
+                    f"{cluster_id}:{row.get('slide_id')}: selected_template_id={row_selected} "
+                    f"mismatch plan={selected_template_id}"
+                )
+
+        interstitial_rows = [
+            row
+            for row in rows
+            if str(row.get("cluster_role") or "").strip().lower() == "interstitial"
+        ]
+        expected_count = cluster.get("expected_interstitial_count")
+        if isinstance(expected_count, int) and len(interstitial_rows) != expected_count:
+            errors.append(
+                f"{cluster_id}: interstitial count mismatch actual={len(interstitial_rows)} "
+                f"expected={expected_count}"
+            )
+
+        expected_sequence = (
+            cluster.get("expected_interstitial_sequence")
+            if isinstance(cluster.get("expected_interstitial_sequence"), list)
+            else []
+        )
+        if expected_sequence and len(expected_sequence) != len(interstitial_rows):
+            errors.append(
+                f"{cluster_id}: expected_interstitial_sequence length={len(expected_sequence)} "
+                f"does not match actual interstitial rows={len(interstitial_rows)}"
+            )
+
+        for index, row in enumerate(interstitial_rows):
+            if index >= len(expected_sequence):
+                break
+            step = expected_sequence[index]
+            if not isinstance(step, dict):
+                continue
+            expected_position = str(step.get("position") or "").strip()
+            expected_type = str(step.get("interstitial_type") or "").strip()
+            expected_develop = str(step.get("develop_subtype") or "").strip()
+
+            current_position = str(row.get("cluster_position") or "").strip()
+            current_type = str(row.get("interstitial_type") or "").strip()
+            current_develop = str(row.get("develop_type") or "").strip()
+
+            if expected_position and current_position != expected_position:
+                errors.append(
+                    f"{cluster_id}:{row.get('slide_id')}: cluster_position={current_position or '<missing>'} "
+                    f"mismatch expected={expected_position}"
+                )
+            if expected_type and current_type != expected_type:
+                errors.append(
+                    f"{cluster_id}:{row.get('slide_id')}: interstitial_type={current_type or '<missing>'} "
+                    f"mismatch expected={expected_type}"
+                )
+            if expected_develop and current_develop != expected_develop:
+                errors.append(
+                    f"{cluster_id}:{row.get('slide_id')}: develop_type={current_develop or '<missing>'} "
+                    f"mismatch expected={expected_develop}"
+                )
+    return errors
+
+
 def _resolve_slide_asset_path(file_path: str, *, bundle_dir: Path) -> Path:
     """Resolve slide asset paths from either bundle-local or repo-root-relative inputs."""
     candidate = Path(file_path)
@@ -197,7 +483,7 @@ def _normalize_slide_row(
     if not isinstance(card_number, int) or card_number <= 0:
         errors.append(f"{slide_id or '<missing-slide-id>'}: card_number must be a positive integer")
 
-    file_path = str(row.get("file_path") or dispatch_row.get("file_path") if dispatch_row else row.get("file_path") or "").strip()
+    file_path = str(row.get("file_path") or "").strip()
     if not file_path:
         errors.append(f"{slide_id or '<missing-slide-id>'}: file_path is required")
         resolved_file = None
@@ -208,7 +494,7 @@ def _normalize_slide_row(
         if not resolved_file.is_file():
             errors.append(f"{slide_id or '<missing-slide-id>'}: file_path does not exist on disk")
 
-    source_ref = str(row.get("source_ref") or dispatch_row.get("source_ref") if dispatch_row else row.get("source_ref") or "").strip()
+    source_ref = str(row.get("source_ref") or "").strip()
     if not source_ref:
         errors.append(f"{slide_id or '<missing-slide-id>'}: source_ref is required")
 
@@ -232,6 +518,18 @@ def _normalize_slide_row(
         if row.get("literal_visual_source") is not None
         else (dispatch_row.get("literal_visual_source") if dispatch_row else None),
     }
+
+    cluster_present = any(
+        row.get(field) is not None or (dispatch_row.get(field) if dispatch_row else None) is not None
+        for field in GARY_CLUSTER_FIELDS
+    )
+    if cluster_present:
+        for field in GARY_CLUSTER_FIELDS:
+            if row.get(field) is not None:
+                normalized[field] = row.get(field)
+            elif dispatch_row and field in dispatch_row:
+                normalized[field] = dispatch_row.get(field)
+
     return normalized, errors
 
 
@@ -481,6 +779,13 @@ def prepare_irene_pass2_handoff(
     warnings.extend(motion_warnings)
     errors.extend(motion_errors)
 
+    experience_profile: str | None = None
+    resolved_profile: dict[str, Any] | None = None
+    try:
+        experience_profile, resolved_profile = _load_experience_profile_payload(bundle)
+    except RunConstantsError as exc:
+        errors.append(str(exc))
+
     non_authoritative_motion_leftovers = _detect_non_authoritative_motion_leftovers(
         bundle_dir=bundle,
         authorized_rows=gary_slide_output,
@@ -548,6 +853,50 @@ def prepare_irene_pass2_handoff(
         envelope["runtime_plan"] = runtime_plan
     if voice_direction_defaults:
         envelope["voice_direction_defaults"] = voice_direction_defaults
+    if experience_profile is not None and resolved_profile is not None:
+        envelope["experience_profile"] = experience_profile
+        envelope["narration_profile_controls"] = resolved_profile["narration_profile_controls"]
+    try:
+        template_library = load_default_template_library()
+        overrides = load_operator_template_overrides(
+            operator_directives_path if operator_directives_path.is_file() else None
+        )
+        cluster_template_plan = build_cluster_template_plan(
+            gary_slide_output=gary_slide_output,
+            template_library=template_library,
+            operator_overrides=overrides,
+        )
+        if cluster_template_plan.get("clusters"):
+            _attach_selected_template_ids_to_rows(gary_slide_output, cluster_template_plan)
+            warnings.extend(
+                _hydrate_cluster_rows_from_template_plan(
+                    gary_slide_output,
+                    cluster_template_plan,
+                )
+            )
+            errors.extend(
+                _validate_cluster_template_sequence_alignment(
+                    gary_slide_output,
+                    cluster_template_plan,
+                )
+            )
+            envelope["cluster_template_plan"] = cluster_template_plan
+    except Exception as exc:
+        warnings.append(
+            f"cluster template selection advisory unavailable: {type(exc).__name__}: {exc}"
+        )
+    if errors:
+        receipt = {
+            "status": "fail",
+            "prepared_at_utc": ts.isoformat(),
+            "bundle_path": str(bundle),
+            "errors": errors,
+            "warnings": warnings,
+            "approved_motion_assets": approved_assets,
+            "non_authoritative_motion_leftovers": non_authoritative_motion_leftovers,
+        }
+        receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+        return receipt
     literal_visual_publish = dispatch_payload.get("literal_visual_publish")
     if isinstance(literal_visual_publish, dict):
         envelope["literal_visual_publish"] = literal_visual_publish

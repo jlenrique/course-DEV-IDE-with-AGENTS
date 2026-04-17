@@ -1,0 +1,20 @@
+[
+  {
+    "slide_id": "s-1",
+    "source_image_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/slide-01.png",
+    "visual_elements": [
+      {
+        "description": "Main Concept"
+      }
+    ]
+  },
+  {
+    "slide_id": "s-2",
+    "source_image_path": "c:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/test-artifacts/cluster-tolerance-test/cluster-bundle/slide-02.png",
+    "visual_elements": [
+      {
+        "description": "Rephrased Concept"
+      }
+    ]
+  }
+]

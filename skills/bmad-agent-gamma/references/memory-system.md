@@ -6,7 +6,7 @@ Gary's memory captures parameter effectiveness patterns and production outcomes 
 
 ## File Structure
 
-Sidecar location: `{project-root}/_bmad/memory/gamma-specialist-sidecar/`
+Sidecar location: `{project-root}/_bmad/memory/gary-sidecar/`
 
 | File | Purpose | Write Rules |
 |------|---------|-------------|
@@ -53,7 +53,7 @@ Style bible content (`resources/style-bible/`) and exemplar content (`resources/
 - Context envelope data from Marcus delegation
 
 ### Write (default mode)
-- `{project-root}/_bmad/memory/gamma-specialist-sidecar/` — own sidecar
+- `{project-root}/_bmad/memory/gary-sidecar/` — own sidecar
 - `course-content/staging/` — generated slide artifacts
 - `resources/exemplars/gamma/{id}/reproductions/` — woodshed outputs
 - `resources/exemplars/gamma/{id}/reproduction-spec.yaml` — updated reproduction specs
@@ -61,7 +61,7 @@ Style bible content (`resources/style-bible/`) and exemplar content (`resources/
 - `skills/gamma-api-mastery/references/parameter-catalog.md` — API doc refresh updates
 
 ### Write (ad-hoc mode)
-- `{project-root}/_bmad/memory/gamma-specialist-sidecar/index.md` — transient section only
+- `{project-root}/_bmad/memory/gary-sidecar/index.md` — transient section only
 - `course-content/staging/ad-hoc/` — scratch area
 - Reproduction artifacts (woodshed always records attempts)
 

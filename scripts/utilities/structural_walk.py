@@ -29,7 +29,7 @@ from scripts.utilities.skill_module_loader import (
 from scripts.validate_fidelity_contracts import validate_contract
 
 
-VALID_WORKFLOWS = ("standard", "motion")
+VALID_WORKFLOWS = ("standard", "motion", "cluster")
 MANIFEST_DIR = Path("state/config/structural-walk")
 VALID_DRY_RUN_KINDS = ("manifest", "sequence", "sequence_docs", "contracts", "aggregate", "documents")
 
@@ -107,12 +107,12 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
     GateSpec(
         gate="G0",
         name="Source Bundle",
-        producing_agent="source-wrangler",
+        producing_agent="Texas (bmad-agent-texas)",
         source_of_truth="Original SME materials",
         contract_path="state/config/fidelity-contracts/g0-source-bundle.yaml",
         assets=(
-            AssetSpec("Skill", "skills/source-wrangler/SKILL.md"),
-            AssetSpec("Script", "skills/source-wrangler/scripts/source_wrangler_operations.py"),
+            AssetSpec("Skill", "skills/bmad-agent-texas/SKILL.md"),
+            AssetSpec("Script", "skills/bmad-agent-texas/scripts/extraction_validator.py"),
             AssetSpec("Contract", "state/config/fidelity-contracts/g0-source-bundle.yaml", contract=True),
             AssetSpec("Contract Schema", "state/config/fidelity-contracts/_schema.yaml", check_mode="yaml"),
             AssetSpec("Sensory Bridge", "skills/sensory-bridges/scripts/pdf_to_agent.py"),
@@ -415,6 +415,14 @@ def _python_importable(root: Path, target: Path) -> list[str]:
             return []
         except Exception as exc:  # pragma: no cover - exercised through report assertions
             return [f"{type(exc).__name__}: {exc}"]
+
+    if relative_posix == "skills/bmad-agent-texas/scripts/extraction_validator.py":
+        # Texas extraction validator — verify it's importable Python
+        try:
+            compile(target.read_text(encoding="utf-8"), str(target), "exec")
+            return []
+        except SyntaxError as exc:
+            return [f"SyntaxError: {exc}"]
 
     if relative_posix.startswith("skills/sensory-bridges/scripts/"):
         module_name = f"skills.sensory_bridges.scripts.{target.stem}"
@@ -738,6 +746,9 @@ def _build_dry_run_result(report: dict[str, Any], spec: WorkflowSpec, root: Path
     elif spec.key == "motion":
         sequence_content_type = "narrated-deck-video-export"
         sequence_motion_enabled = True
+    elif spec.key == "cluster":
+        sequence_content_type = "clustered-narrated-deck-video-export"
+        sequence_motion_enabled = False
     else:
         raise ValueError(f"Dry-run planning preview is not configured for workflow '{spec.key}'")
 

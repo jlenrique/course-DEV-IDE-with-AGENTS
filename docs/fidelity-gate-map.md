@@ -12,6 +12,7 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 |------|----------|----------------|----------------|----------|
 | **G0** | Source Bundle (`extracted.md`) | Source Wrangler | Original SME materials | — |
 | **G1** | Lesson Plan | Irene | Source bundle + SME intent | Gate 1 |
+| **G1.5** | Cluster Plan | Irene | Lesson plan + cluster decision criteria | Operator Review |
 | **G2** | Slide Brief | Irene | Lesson plan | Gate 1 |
 | **G3** | Generated Slides (PNGs) | Gary | Slide brief | Gate 2 |
 | **G3.5** | PNG Export Validation | Gary | Slide brief + export | Gate 2 |
@@ -21,7 +22,15 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 
 L1 fidelity contracts for each gate are defined in `state/config/fidelity-contracts/g{n}-*.yaml`.
 
-For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth. G4 carries 15 criteria (5 deterministic L1 + 10 agentic L2): G4-01 through G4-12 (original), G4-13 (behavioral_intent validation), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness).
+For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth. G4 carries 19 criteria (5 deterministic L1 + 10 agentic L2 + 4 cluster-specific): G4-01 through G4-12 (original), G4-13 (behavioral_intent validation), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness), G4-16 (cluster narration coherence), G4-17 (interstitial word budget), G4-18 (no new concepts in interstitials), G4-19 (cluster arc integrity).
+
+> **✅ Contract drift resolved (2026-04-12):** G4-13, G4-14, and G4-15 are now codified in `state/config/fidelity-contracts/g4-narration-script.yaml`.
+
+> **✅ Cluster criteria codified (2026-04-15):** G4-16, G4-17, G4-18, and G4-19 are now codified in `state/config/fidelity-contracts/g4-narration-script.yaml` following Epic 23 closure (stories 23-1, 23-2, 23-3 all formally reviewed clean).
+
+G2.5 (Cluster Coherence) runs after Gary cluster dispatch, before Storyboard A and Irene Pass 2. Its L1 contract (`state/config/fidelity-contracts/g2.5-cluster-coherence.yaml`) defines 6 perception-based criteria covering typography match, background treatment, element isolation, whitespace ratio, color temperature, and aggregate coherence scoring. G2.5 is skipped when the lesson contains no clusters.
+
+G1.5 (Cluster Plan) runs after Irene Pass 1 cluster planning, before Gary dispatch. Its L1 contract (`state/config/fidelity-contracts/g1.5-cluster-plan.yaml`) defines 13 deterministic criteria covering cluster structure integrity, interstitial vocabulary, narrative arc completeness, density controls, and position metadata. All 13 criteria are evaluation_type: deterministic. G1.5 is skipped when the lesson contains no clusters.
 
 ---
 
@@ -30,7 +39,9 @@ For G4, the L1 contract must reference both Irene Pass 2 templates: the narratio
 Fidelity gates are **automated pre-checks** that run before human checkpoints. HIL gates are **human review** checkpoints.
 
 ```
-G0 → G1 → G2 → [HIL Gate 1] → G3 → [HIL Gate 2] → G4 → [HIL Gate 3] → G5 → G6 → [HIL Gate 4]
+G0 → G1 → G1.5* → G2 → [HIL Gate 1] → G3 → G2.5* → [HIL Gate 2] → G4 → [HIL Gate 3] → G5 → G6 → [HIL Gate 4]
+
+*G1.5 runs before Gary dispatch when cluster segments are present. G2.5 runs after Gary cluster dispatch, before Storyboard A / Gate 2 progression.
 ```
 
 Operational anti-drift checkpoints layered on top of the gate chain:
@@ -39,6 +50,7 @@ Operational anti-drift checkpoints layered on top of the gate chain:
 - **Storyboard A checkpoint (post-G3 generation):** visual order/content approval before Gate 2 progression. Review against the static HTML storyboard surface, with thumbnails, script status/notes, and provenance/orientation metadata visible per slide.
 - **Epic 12 winner checkpoint (post-G2 when enabled):** `variant-selection.json` plus `authorized-storyboard.json` collapse A/B variants to a canonical winner deck before any downstream narration or motion work.
 - **Epic 14 motion checkpoints (motion-enabled only):** Gate 2M and Motion Gate sit between Gate 2 and G4; both are skipped when `motion_enabled: false`.
+- **Creative directive resolution checkpoint (experience-profile runs):** When `experience_profile` is set, the Creative Director (CD) agent generates a creative directive before Irene Pass 1; Marcus resolves `slide_mode_proportions` into `run-constants.yaml` and `narration_profile_controls` into `narration-script-parameters.yaml` before any specialist delegation. The resolved directive is carried forward in the Pass 2 envelope for Irene consumption.
 - **Storyboard B checkpoint (post-G4 output):** slide+script alignment approval before downstream audio/script finalization using the same HTML review surface, now hydrated with actual narration text.
 
 Motion-enabled operational overlay:
@@ -88,7 +100,8 @@ For each assessment dimension, exactly one agent owns the judgment. No dimension
 | **Audio quality** | Quinn-R | Voice clarity, background noise, production polish |
 | **Composition integrity** | Quinn-R | Final assembly quality, transitions, sync |
 | **Tool parameter quality** | Producing Agent (self-assessment) | Execution-only self-check: layout integrity, parameter confidence, and embellishment risk control. Excludes pedagogy, quality standards, and source-faithfulness lanes. |
-| **Motion designation and gate closure** | Marcus + human checkpoint | Gate 2M presentation, motion-plan completeness, Motion Gate closure on approved/reset assets | Kira, Irene, Quinn-R |
+| **Creative directive generation** | Creative Director (CD) | Experience profile interpretation, `narration_profile_controls` generation, creative rationale documentation. CD produces the directive artifact; Marcus resolves it into run constants before specialist delegation. Consumed by Irene and assessed by Quinn-R. |
+| **Motion designation and gate closure** | Marcus + human checkpoint | Gate 2M presentation, motion-plan completeness, Motion Gate closure on approved/reset assets. Consumed by Kira, Irene, Quinn-R. |
 
 **Key boundary:** The Fidelity Assessor asks "is this *right* relative to the source?" Quinn-R asks "is this *good* against standards and learner-effect intent?" The producing agent asks "did I execute the tool *well* within my lane?"
 

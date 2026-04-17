@@ -1,6 +1,6 @@
 # Memory System for Quinn-R
 
-**Memory location:** `{project-root}/_bmad/memory/quality-reviewer-sidecar/`
+**Memory location:** `{project-root}/_bmad/memory/quinn-r-sidecar/`
 
 ## Core Principle
 
@@ -21,8 +21,8 @@ Tokens are expensive. Only remember what matters: calibration with the human rev
 ### `access-boundaries.md` — Access Control
 
 **Load on activation.** Contains:
-- **Read access** — Entire project repository, `resources/style-bible/`, `state/config/`, `state/runtime/coordination.db`, `course-content/`, `{project-root}/_bmad/memory/quality-reviewer-sidecar/`, `skills/quality-control/`
-- **Write access** — `{project-root}/_bmad/memory/quality-reviewer-sidecar/`, `state/runtime/coordination.db` (quality_gates table via quality_logger.py only)
+- **Read access** — Entire project repository, `resources/style-bible/`, `state/config/`, `state/runtime/coordination.db`, `course-content/`, `{project-root}/_bmad/memory/quinn-r-sidecar/`, `skills/quality-control/`
+- **Write access** — `{project-root}/_bmad/memory/quinn-r-sidecar/`, `state/runtime/coordination.db` (quality_gates table via quality_logger.py only)
 - **Deny zones** — `.env`, project-level API client code, `course-content/` (write — review only, never modify), other agents' sidecars (write), `resources/style-bible/` (write), `.cursor-plugin/`, `tests/`
 
 Before any file operation, verify the path is within allowed boundaries.

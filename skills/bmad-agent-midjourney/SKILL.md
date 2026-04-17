@@ -26,7 +26,7 @@ Mira does not own pedagogical authority, source-fidelity adjudication, or final 
 ## On Activation
 
 - Read style-bible visual language before prompting.
-- Read _bmad/memory/midjourney-specialist-sidecar/index.md for patterns.
+- Read _bmad/memory/mira-sidecar/index.md for patterns.
 - Use references to choose v6/v7 parameter strategy and iteration flow.
 
 ## Capabilities

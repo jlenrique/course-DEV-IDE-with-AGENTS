@@ -38,6 +38,16 @@ from gamma_operations import (  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+CLUSTER_OUTPUT_FIELDS = (
+    "cluster_id",
+    "cluster_role",
+    "parent_slide_id",
+)
+CLUSTER_AGGREGATE_FIELDS = (
+    "narrative_arc",
+    "cluster_interstitial_count",
+)
+
 
 def load_run_constants(bundle: Path) -> dict:
     """Load bundle-scoped constants when present."""
@@ -64,19 +74,122 @@ def resolve_module_lesson_part(bundle: Path, envelope: dict, run_constants: dict
     return bundle.name
 
 
+def _slide_cluster_metadata(row: dict) -> dict:
+    metadata = {
+        field: row.get(field)
+        for field in (*CLUSTER_OUTPUT_FIELDS, *CLUSTER_AGGREGATE_FIELDS)
+        if field in row
+    }
+    return metadata
+
+
+def _merge_slide_cluster_fields(target: dict, source: dict) -> None:
+    cluster_present = any(source.get(field) is not None for field in CLUSTER_OUTPUT_FIELDS)
+    if not cluster_present:
+        return
+    for field in CLUSTER_OUTPUT_FIELDS:
+        target[field] = source.get(field)
+    for field in CLUSTER_AGGREGATE_FIELDS:
+        if field in source:
+            target[field] = source.get(field)
+
+
+def _derive_clusters(slides: list[dict], envelope: dict) -> list[dict]:
+    declared = envelope.get("clusters")
+    if isinstance(declared, list) and declared:
+        normalized: list[dict] = []
+        for cluster in declared:
+            if not isinstance(cluster, dict):
+                continue
+            cluster_id = str(cluster.get("cluster_id") or "").strip()
+            if not cluster_id:
+                continue
+            entry = {
+                "cluster_id": cluster_id,
+                "interstitial_count": cluster.get("interstitial_count"),
+                "narrative_arc": cluster.get("narrative_arc"),
+            }
+            normalized.append(entry)
+        return normalized
+
+    heads = [slide for slide in slides if slide.get("cluster_role") == "head" and slide.get("cluster_id")]
+    interstitials = [slide for slide in slides if slide.get("cluster_role") == "interstitial" and slide.get("cluster_id")]
+
+    derived: list[dict] = []
+    for head in heads:
+        cluster_id = str(head.get("cluster_id"))
+        interstitial_count = head.get("cluster_interstitial_count")
+        if interstitial_count is None:
+            interstitial_count = sum(1 for slide in interstitials if slide.get("cluster_id") == cluster_id)
+        derived.append(
+            {
+                "cluster_id": cluster_id,
+                "interstitial_count": interstitial_count,
+                "narrative_arc": head.get("narrative_arc"),
+            }
+        )
+    return derived
+
+
+def _filter_interstitial_diagram_cards(
+    diagram_cards: list[dict],
+    slides: list[dict],
+) -> list[dict]:
+    role_by_card = {
+        int(slide.get("slide_number", 0)): slide.get("cluster_role")
+        for slide in slides
+        if slide.get("slide_number") is not None
+    }
+    filtered: list[dict] = []
+    skipped_cards: list[int] = []
+    for card in diagram_cards:
+        card_number = card.get("card_number")
+        if isinstance(card_number, int) and role_by_card.get(card_number) == "interstitial":
+            skipped_cards.append(card_number)
+            continue
+        filtered.append(card)
+
+    if skipped_cards:
+        logger.info(
+            "Skipping diagram cards for interstitial slides: %s",
+            sorted(skipped_cards),
+        )
+    return filtered
+
+
 def build_slides(bundle: Path) -> list[dict]:
     sc = json.loads((bundle / "gary-slide-content.json").read_text(encoding="utf-8"))
     fid_data = json.loads((bundle / "gary-fidelity-slides.json").read_text(encoding="utf-8"))
     fid_map = {s["slide_number"]: s for s in fid_data["slides"]}
+    head_fidelity_by_cluster = {}
+    for s in sc["slides"]:
+        sn = s["slide_number"]
+        fid_entry = fid_map.get(sn, {})
+        cluster_id = s.get("cluster_id")
+        cluster_role = s.get("cluster_role") or fid_entry.get("cluster_role")
+        fidelity = fid_entry.get("fidelity")
+        if cluster_role == "head" and cluster_id and isinstance(fidelity, str) and fidelity.strip():
+            head_fidelity_by_cluster[str(cluster_id)] = fidelity
+
     slides = []
     for s in sc["slides"]:
         sn = s["slide_number"]
         fid_entry = fid_map.get(sn, {})
-        slides.append({
+        cluster_id = s.get("cluster_id")
+        cluster_role = s.get("cluster_role") or fid_entry.get("cluster_role")
+        fidelity = fid_entry.get("fidelity", "creative")
+        if cluster_role == "interstitial" and cluster_id is not None:
+            fidelity = head_fidelity_by_cluster.get(str(cluster_id), fidelity)
+
+        slide = {
             "slide_number": sn,
             "content": s["content"],
             "source_ref": s["source_ref"],
-            "fidelity": fid_entry.get("fidelity", "creative"),
+            "fidelity": fidelity,
+        }
+        _merge_slide_cluster_fields(slide, {**_slide_cluster_metadata(s), "cluster_role": cluster_role})
+        slides.append({
+            **slide,
         })
     return slides
 
@@ -113,15 +226,31 @@ def assemble_outbound_contract(
     base_params: dict,
     tr: dict,
     slides: list[dict],
+    envelope: dict,
     run_id: str,
     lesson_slug: str,
     bundle: Path,
     generated_at: str,
 ) -> dict:
     slide_output = gen_result.get("gary_slide_output", [])
+    slide_contract_by_number = {
+        int(slide.get("slide_number", 0)): slide
+        for slide in slides
+        if slide.get("slide_number") is not None
+    }
 
     # Reorder to card_number 1..N
-    slide_output_sorted = sorted(slide_output, key=lambda x: x.get("card_number", 999))
+    slide_output_sorted = []
+    for row in sorted(slide_output, key=lambda x: x.get("card_number", 999)):
+        card_number = row.get("card_number")
+        contract = slide_contract_by_number.get(card_number, {})
+        merged_row = {
+            **row,
+            "fidelity": contract.get("fidelity", row.get("fidelity")),
+            "source_ref": contract.get("source_ref", row.get("source_ref")),
+        }
+        _merge_slide_cluster_fields(merged_row, contract)
+        slide_output_sorted.append(merged_row)
 
     # Build per-slide quality info
     fid_map = {s["slide_number"]: s["fidelity"] for s in slides}
@@ -183,6 +312,10 @@ def assemble_outbound_contract(
         },
     }
 
+    clusters = _derive_clusters(slides, envelope)
+    if clusters:
+        payload["clusters"] = clusters
+
     if literal_visual_publish:
         payload["literal_visual_publish"] = literal_visual_publish
 
@@ -223,6 +356,10 @@ def main() -> int:
 
     diagram_cards_data = json.loads((bundle / "gary-diagram-cards.json").read_text(encoding="utf-8"))
     diagram_cards = diagram_cards_data.get("cards", [])
+    if isinstance(diagram_cards, list):
+        diagram_cards = _filter_interstitial_diagram_cards(diagram_cards, slides)
+    else:
+        diagram_cards = []
     logger.info("Diagram cards: %s", [c.get("card_number") for c in diagram_cards])
 
     (bundle / "gamma-export").mkdir(parents=True, exist_ok=True)
@@ -259,6 +396,7 @@ def main() -> int:
         base_params=base_params,
         tr=tr,
         slides=slides,
+        envelope=envelope,
         run_id=run_id,
         lesson_slug=lesson_slug,
         bundle=bundle,

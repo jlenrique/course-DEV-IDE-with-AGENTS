@@ -57,6 +57,80 @@ _FALLBACK_OUTRO_PATTERNS = [
     "in summary",
     "that brings us",
 ]
+_FALLBACK_PIVOT_PATTERNS = [
+    "but",
+    "however",
+    "yet",
+]
+_BEHAVIORAL_INTENT_COMPATIBILITY: dict[str, set[str]] = {
+    "credible": {"credible", "clear-guidance", "reflective"},
+    "alarming": {"credible", "alarming", "clear-guidance"},
+    "provocative": {"credible", "provocative", "reflective"},
+    "reflective": {"credible", "reflective", "moving", "clear-guidance"},
+    "moving": {"credible", "moving", "reflective"},
+    "clear-guidance": {"credible", "alarming", "clear-guidance", "attention-reset", "reflective"},
+    "attention-reset": {"credible", "clear-guidance", "attention-reset"},
+}
+_CLUSTER_ARC_POSITION_ORDER = {
+    "establish": 0,
+    "tension": 1,
+    "develop": 2,
+    "resolve": 3,
+}
+_GENERIC_CONCEPT_STOPWORDS = {
+    "about",
+    "after",
+    "again",
+    "along",
+    "also",
+    "although",
+    "because",
+    "before",
+    "being",
+    "between",
+    "brief",
+    "closure",
+    "compare",
+    "comparison",
+    "concept",
+    "detail",
+    "details",
+    "during",
+    "evidence",
+    "explain",
+    "explains",
+    "explore",
+    "explains",
+    "focus",
+    "focused",
+    "guidance",
+    "guide",
+    "guided",
+    "headword",
+    "however",
+    "insight",
+    "intro",
+    "itself",
+    "learner",
+    "main",
+    "moving",
+    "next",
+    "notice",
+    "outro",
+    "pivotword",
+    "recap",
+    "resolve",
+    "section",
+    "slide",
+    "slides",
+    "story",
+    "summary",
+    "through",
+    "toward",
+    "using",
+    "via",
+    "while",
+}
 
 
 def _is_remote_http_ref(value: str) -> bool:
@@ -204,6 +278,12 @@ def _load_narration_density() -> dict[str, Any]:
     return density if isinstance(density, dict) else {}
 
 
+def _load_cluster_narration() -> dict[str, Any]:
+    density = _load_narration_density()
+    cluster_narration = density.get("cluster_narration", {})
+    return cluster_narration if isinstance(cluster_narration, dict) else {}
+
+
 def _load_runtime_variability() -> dict[str, Any]:
     if yaml is None or not NARRATION_PARAMS_PATH.is_file():
         return {}
@@ -226,6 +306,24 @@ def _load_pedagogical_bridging() -> dict[str, Any]:
     return bridging if isinstance(bridging, dict) else {}
 
 
+def _load_narration_profile_controls() -> dict[str, Any]:
+    if yaml is None or not NARRATION_PARAMS_PATH.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(NARRATION_PARAMS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    controls = data.get("narration_profile_controls", {})
+    return controls if isinstance(controls, dict) else {}
+
+
+def _active_narration_profile_controls(payload: dict[str, Any]) -> dict[str, Any]:
+    envelope_controls = payload.get("narration_profile_controls")
+    if isinstance(envelope_controls, dict):
+        return dict(envelope_controls)
+    return _load_narration_profile_controls()
+
+
 def _normalize_phrase_patterns(raw: Any) -> list[str]:
     if not isinstance(raw, list):
         return []
@@ -245,9 +343,12 @@ def _spoken_bridge_issue_message(
     *,
     intro_patterns: list[str],
     outro_patterns: list[str],
+    pivot_patterns: list[str],
 ) -> str | None:
     """Return a short machine reason if narration_text lacks required spoken cues."""
     bt = str(bridge_type or "none").strip().lower() or "none"
+    if bt == "cluster_boundary":
+        bt = "both"
     if bt == "none":
         return None
     if not str(narration_text or "").strip():
@@ -260,6 +361,10 @@ def _spoken_bridge_issue_message(
         if not _text_matches_any_phrase_pattern(narration_text, outro_patterns):
             return f"lacks outro-class cue (expected substring from {len(outro_patterns)} pattern(s))"
         return None
+    if bt == "pivot":
+        if not _text_matches_any_phrase_pattern(narration_text, pivot_patterns):
+            return f"lacks pivot-class cue (expected substring from {len(pivot_patterns)} pattern(s))"
+        return None
     if bt == "both":
         if not _text_matches_any_phrase_pattern(narration_text, intro_patterns):
             return f"lacks intro-class cue for bridge_type both (expected substring from {len(intro_patterns)} pattern(s))"
@@ -269,8 +374,149 @@ def _spoken_bridge_issue_message(
     return None
 
 
+def _behavioral_intent_serves_master(
+    master_behavioral_intent: str | None,
+    segment_behavioral_intent: str | None,
+) -> bool:
+    master = str(master_behavioral_intent or "").strip().lower()
+    segment = str(segment_behavioral_intent or "").strip().lower()
+    if not master or not segment:
+        return True
+    if master == segment:
+        return True
+    return segment in _BEHAVIORAL_INTENT_COMPATIBILITY.get(master, set())
+
+
 def _word_count(text: str) -> int:
     return len(WORD_RE.findall(text or ""))
+
+
+def _extract_concept_tokens(text: str) -> set[str]:
+    tokens: set[str] = set()
+    for raw_token in WORD_RE.findall(text or ""):
+        token = raw_token.lower()
+        normalized = token.replace("-", "").replace("'", "")
+        if len(normalized) < 4:
+            continue
+        if normalized in _GENERIC_CONCEPT_STOPWORDS:
+            continue
+        if not any(ch.isalpha() for ch in normalized):
+            continue
+        tokens.add(normalized)
+    return tokens
+
+
+def _normalize_anchor_text(value: str) -> str:
+    normalized = str(value or "").strip().lstrip("#").strip().lower()
+    return re.sub(r"\s+", " ", normalized)
+
+
+def _extract_markdown_section(text: str, anchor: str) -> str:
+    normalized_anchor = _normalize_anchor_text(anchor)
+    if not normalized_anchor:
+        return text
+    lines = text.splitlines()
+    collecting = False
+    collected: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            heading_text = stripped.lstrip("#").strip()
+            if collecting:
+                break
+            if _normalize_anchor_text(heading_text) == normalized_anchor:
+                collecting = True
+                collected.append(line)
+                continue
+        elif collecting:
+            collected.append(line)
+    return "\n".join(collected).strip() if collected else text
+
+
+def _load_source_ref_excerpt(source_ref: str, *, bundle_dir: Path | None) -> str:
+    raw = str(source_ref or "").strip()
+    if not raw:
+        return ""
+    if "#" in raw:
+        path_part, anchor = raw.split("#", 1)
+    else:
+        path_part, anchor = raw, ""
+    candidate = _resolve_existing_local_path(path_part.strip(), bundle_dir=bundle_dir)
+    if candidate is None:
+        return ""
+    try:
+        text = candidate.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        text = candidate.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    return _extract_markdown_section(text, anchor)
+
+
+def _normalize_word_range(raw: Any) -> tuple[int, int] | None:
+    if not isinstance(raw, (list, tuple)) or len(raw) != 2:
+        return None
+    try:
+        lower = int(raw[0])
+        upper = int(raw[1])
+    except (TypeError, ValueError):
+        return None
+    if lower <= 0 or upper < lower:
+        return None
+    return lower, upper
+
+
+def _is_cluster_boundary_transition(
+    previous_record: dict[str, Any] | None,
+    current_record: dict[str, Any],
+) -> bool:
+    if previous_record is None:
+        return False
+    previous_cluster_id = str(previous_record.get("cluster_id") or "").strip() or None
+    current_cluster_id = str(current_record.get("cluster_id") or "").strip() or None
+    if not previous_cluster_id or not current_cluster_id:
+        return False
+    if previous_cluster_id == current_cluster_id:
+        return False
+    return True
+
+
+def _bridge_satisfies_cadence(
+    bridge_type: str,
+    *,
+    accepted_bridge_types: set[str],
+    cluster_bridge_cadence_override: bool,
+    record_is_clustered: bool,
+    is_cluster_boundary: bool,
+    cluster_role: str | None,
+    fallback_due: bool,
+) -> bool:
+    bt = str(bridge_type or "none").strip().lower() or "none"
+    if bt == "none":
+        return False
+    if accepted_bridge_types and bt not in accepted_bridge_types:
+        return False
+    if not cluster_bridge_cadence_override or not record_is_clustered:
+        return True
+    if is_cluster_boundary:
+        return bt == "cluster_boundary"
+    if str(cluster_role or "").strip().lower() == "interstitial":
+        return False
+    return fallback_due and bt in {"intro", "outro", "both"}
+
+
+def _should_check_spoken_bridge_cues(
+    bridge_type: str,
+    *,
+    cluster_bridge_cadence_override: bool,
+    cluster_id: str | None,
+) -> bool:
+    bt = str(bridge_type or "none").strip().lower() or "none"
+    if bt in ("", "none"):
+        return False
+    if cluster_bridge_cadence_override and cluster_id:
+        return bt == "cluster_boundary"
+    return True
 
 
 def _rationale_dimension_hits(
@@ -420,7 +666,10 @@ def _build_perception_element_lookup(
                 description = str(element.get("description") or "").strip()
                 if description:
                     descriptions.add(description)
-        lookup[slide_id] = descriptions
+        if slide_id in lookup:
+            lookup[slide_id].update(descriptions)
+        else:
+            lookup[slide_id] = descriptions
     return lookup
 
 
@@ -430,6 +679,7 @@ def _validate_bundle_pass2_outputs(
     bundle_dir: Path | None,
     gary_slide_ids: list[str],
     gary_slide_path_by_id: dict[str, str],
+    gary_slide_source_ref_by_id: dict[str, str],
     perception_artifacts: list[dict[str, Any]],
     runtime_policy_strict: bool,
 ) -> dict[str, Any]:
@@ -453,16 +703,24 @@ def _validate_bundle_pass2_outputs(
         "segments_with_forbidden_meta_slide_language": [],
         "script_segments_with_forbidden_meta_slide_language": [],
         "segments_with_behavioral_intent_mismatch": [],
+        "segments_with_master_behavioral_intent_violation": [],
+        "cluster_behavioral_intent_violations_by_cluster": {},
         "segments_missing_behavioral_intent": [],
+        "cluster_new_concept_violations": [],
+        "cluster_arc_integrity_violations": [],
         "motion_segments_with_static_narration_hint": [],
         "perception_artifact_mismatches": [],
         "motion_segments_missing_perception_confirmation": [],
         "motion_segments_with_unapproved_asset_binding": [],
         "runtime_budget_warnings": [],
+        "cluster_word_range_warnings": [],
         "missing_runtime_rationale_fields": [],
         "weak_runtime_rationales": [],
         "bridge_cadence_warnings": [],
+        "within_cluster_bridge_warnings": [],
+        "cluster_boundary_warnings": [],
         "spoken_bridge_warnings": [],
+        "active_narration_profile_controls": {},
     }
 
     if bundle_dir is None:
@@ -472,6 +730,7 @@ def _validate_bundle_pass2_outputs(
     warnings: list[str] = []
     meta_guardrails = _load_meta_slide_language_guardrails()
     narration_density = _load_narration_density()
+    cluster_narration = _load_cluster_narration()
     runtime_variability = _load_runtime_variability()
     pedagogical_bridging = _load_pedagogical_bridging()
     spoken_policy_raw = pedagogical_bridging.get("spoken_bridge_policy", {})
@@ -485,6 +744,8 @@ def _validate_bundle_pass2_outputs(
         intro_patterns = list(_FALLBACK_INTRO_PATTERNS)
     if not outro_patterns:
         outro_patterns = list(_FALLBACK_OUTRO_PATTERNS)
+    pivot_patterns = list(_FALLBACK_PIVOT_PATTERNS)
+    details["active_narration_profile_controls"] = _active_narration_profile_controls(payload)
 
     narration_path = _resolve_bundle_output_path(
         payload,
@@ -574,6 +835,9 @@ def _validate_bundle_pass2_outputs(
 
     manifest_slide_ids: list[str] = []
     manifest_slide_id_set: set[str] = set()
+    interstitial_slide_ids: set[str] = set()
+    interstitials_missing_cluster_id: list[str] = []
+    interstitials_missing_timing_role: list[str] = []
     motion_segments: list[dict[str, Any]] = []
     spoken_bridge_warnings: list[str] = []
     perception_elements_by_slide = _build_perception_element_lookup(perception_artifacts)
@@ -617,8 +881,11 @@ def _validate_bundle_pass2_outputs(
     segments_missing_behavioral_intent: list[str] = []
     motion_segments_with_static_narration_hint: list[str] = []
     runtime_budget_warnings: list[str] = []
+    cluster_word_range_warnings: list[str] = []
     missing_runtime_rationale_fields: list[str] = []
     weak_runtime_rationales: list[str] = []
+    within_cluster_bridge_warnings: list[str] = []
+    cluster_records_by_id: dict[str, list[dict[str, Any]]] = {}
     runtime_targets_by_card = {
         int(entry.get("card_number")): float(entry.get("target_runtime_seconds"))
         for entry in payload.get("runtime_plan", {}).get("per_slide_targets", [])
@@ -667,11 +934,28 @@ def _validate_bundle_pass2_outputs(
     except (TypeError, ValueError):
         bridge_slides = 0
     accepted_bridge_types = {
-        str(item).strip()
+        str(item).strip().lower()
         for item in bridge_cadence.get("accepted_bridge_types", [])
         if isinstance(item, str) and str(item).strip()
     }
     allowed_bridge_types = set(accepted_bridge_types) | {"none"}
+    cluster_head_word_range = _normalize_word_range(
+        cluster_narration.get("cluster_head_word_range")
+    )
+    interstitial_word_range = _normalize_word_range(
+        cluster_narration.get("interstitial_word_range")
+    )
+    within_cluster_policy_raw = pedagogical_bridging.get("within_cluster_bridge_policy", {})
+    within_cluster_policy = (
+        within_cluster_policy_raw if isinstance(within_cluster_policy_raw, dict) else {}
+    )
+    within_cluster_default = str(within_cluster_policy.get("default") or "none").strip().lower()
+    tension_override = str(
+        within_cluster_policy.get("tension_position_override") or ""
+    ).strip().lower()
+    cluster_bridge_cadence_override = bool(
+        bridge_cadence.get("cluster_bridge_cadence_override")
+    )
     ordered_slide_records: list[dict[str, Any]] = []
     ordered_slide_index: dict[str, dict[str, Any]] = {}
     for segment in segments:
@@ -680,9 +964,21 @@ def _validate_bundle_pass2_outputs(
         seg_id = str(segment.get("id") or "<missing-id>").strip() or "<missing-id>"
         slide_id = str(segment.get("gary_slide_id") or segment.get("slide_id") or "").strip()
         card_number = segment.get("gary_card_number")
+        cluster_role = str(segment.get("cluster_role") or "").strip().lower() or None
+        cluster_id = str(segment.get("cluster_id") or "").strip() or None
+        cluster_position = str(segment.get("cluster_position") or "").strip().lower() or None
         if slide_id:
             manifest_slide_ids.append(slide_id)
             manifest_slide_id_set.add(slide_id)
+            if cluster_role == "interstitial":
+                interstitial_slide_ids.add(slide_id)
+        # Validate interstitial cluster metadata
+        if cluster_role == "interstitial":
+            if not cluster_id:
+                interstitials_missing_cluster_id.append(seg_id)
+            timing_role = str(segment.get("timing_role") or "").strip()
+            if not timing_role:
+                interstitials_missing_timing_role.append(seg_id)
         slide_key = slide_id or (str(card_number) if card_number not in (None, "") else seg_id)
         bridge_type = str(segment.get("bridge_type") or "none").strip().lower() or "none"
         duration_estimate_raw = segment.get("duration_estimate_seconds")
@@ -704,6 +1000,8 @@ def _validate_bundle_pass2_outputs(
                 "card_number": card_number,
                 "bridge_type": bridge_type,
                 "duration_estimate_seconds": duration_estimate,
+                "cluster_id": cluster_id,
+                "cluster_role": cluster_role,
             }
             ordered_slide_index[slide_key] = slide_record
             ordered_slide_records.append(slide_record)
@@ -712,24 +1010,77 @@ def _validate_bundle_pass2_outputs(
                 slide_record["bridge_type"] = bridge_type
             if not slide_record.get("duration_estimate_seconds") and duration_estimate:
                 slide_record["duration_estimate_seconds"] = duration_estimate
+            if not slide_record.get("cluster_id") and cluster_id:
+                slide_record["cluster_id"] = cluster_id
+            if not slide_record.get("cluster_role") and cluster_role:
+                slide_record["cluster_role"] = cluster_role
 
         narration_text = str(segment.get("narration_text") or "").strip()
+        words = _word_count(narration_text)
         if not narration_text:
             segments_missing_narration_text.append(seg_id)
         elif meta_guardrails["policy"] == "forbidden":
             lowered = narration_text.lower()
             if any(phrase in lowered for phrase in meta_guardrails["forbidden_phrases"]):
                 segments_with_forbidden_meta_slide_language.append(seg_id)
+        if narration_text and cluster_role == "head" and cluster_head_word_range is not None:
+            lower, upper = cluster_head_word_range
+            tolerated_lower = lower - 5
+            tolerated_upper = upper + 5
+            if words < tolerated_lower or words > tolerated_upper:
+                cluster_word_range_warnings.append(
+                    f"{seg_id}: cluster head narration word count {words} falls outside "
+                    f"cluster_head_word_range {lower}-{upper} with ±5 tolerance "
+                    f"({tolerated_lower}-{tolerated_upper})."
+                )
+        if narration_text and cluster_role == "interstitial" and interstitial_word_range is not None:
+            lower, upper = interstitial_word_range
+            tolerated_lower = lower - 5
+            tolerated_upper = upper + 5
+            if words < tolerated_lower or words > tolerated_upper:
+                cluster_word_range_warnings.append(
+                    f"{seg_id}: interstitial narration word count {words} falls outside "
+                    f"interstitial_word_range {lower}-{upper} with ±5 tolerance "
+                    f"({tolerated_lower}-{tolerated_upper})."
+                )
+        if bridge_type != "none" and within_cluster_default == "none":
+            tension_pivot_allowed = (
+                cluster_role == "interstitial"
+                and cluster_position == "tension"
+                and tension_override == "pivot"
+                and bridge_type == "pivot"
+            )
+            if not tension_pivot_allowed:
+                if cluster_role != "interstitial" and bridge_type == "pivot":
+                    within_cluster_bridge_warnings.append(
+                        f"{seg_id}: only tension interstitials may use bridge_type pivot; "
+                        f"cluster role {cluster_role or 'unknown'} is not eligible."
+                    )
+                elif cluster_role == "interstitial" and cluster_position == "tension" and tension_override == "pivot":
+                    within_cluster_bridge_warnings.append(
+                        f"{seg_id}: tension interstitials may only use bridge_type pivot; got {bridge_type}."
+                    )
+                elif cluster_role == "interstitial":
+                    within_cluster_bridge_warnings.append(
+                        f"{seg_id}: clustered interstitial at position {cluster_position or 'unknown'} "
+                        "must use bridge_type none; non-none within-cluster bridges are reserved for "
+                        "tension pivots."
+                    )
         if (
             spoken_enforcement != "off"
-            and bridge_type not in ("", "none")
             and narration_text
+            and _should_check_spoken_bridge_cues(
+                bridge_type,
+                cluster_bridge_cadence_override=cluster_bridge_cadence_override,
+                cluster_id=cluster_id,
+            )
         ):
             cue_issue = _spoken_bridge_issue_message(
                 bridge_type,
                 narration_text,
                 intro_patterns=intro_patterns,
                 outro_patterns=outro_patterns,
+                pivot_patterns=pivot_patterns,
             )
             if cue_issue:
                 msg = (
@@ -746,6 +1097,22 @@ def _validate_bundle_pass2_outputs(
             segments_with_behavioral_intent_mismatch.append(seg_id)
         if not script_intent and not manifest_intent:
             segments_missing_behavioral_intent.append(seg_id)
+        effective_intent = manifest_intent or script_intent
+        master_behavioral_intent = str(segment.get("master_behavioral_intent") or "").strip()
+        if cluster_id:
+            cluster_records_by_id.setdefault(cluster_id, []).append(
+                {
+                    "seg_id": seg_id,
+                    "slide_id": slide_id,
+                    "card_number": card_number,
+                    "cluster_role": cluster_role,
+                    "cluster_position": cluster_position,
+                    "narration_text": narration_text,
+                    "effective_intent": effective_intent,
+                    "master_behavioral_intent": master_behavioral_intent,
+                    "source_ref": gary_slide_source_ref_by_id.get(slide_id, ""),
+                }
+            )
 
         if (
             isinstance(card_number, int)
@@ -757,66 +1124,104 @@ def _validate_bundle_pass2_outputs(
             expected_words = target_seconds * target_wpm / 60.0
             lower_bound = expected_words * 0.8
             upper_bound = expected_words * 1.2
-            words = _word_count(narration_text)
             if words < lower_bound or words > upper_bound:
                 runtime_budget_warnings.append(
                     f"{seg_id}: narration word count {words} falls outside the soft runtime band "
                     f"for slide {card_number} ({target_seconds:.1f}s at {target_wpm:.0f} WPM -> "
                     f"{lower_bound:.0f}-{upper_bound:.0f} words)."
                 )
-            if required_runtime_fields:
-                field_values = {
-                    "timing_role": str(segment.get("timing_role") or "").strip(),
-                    "content_density": str(segment.get("content_density") or "").strip(),
-                    "visual_detail_load": str(segment.get("visual_detail_load") or "").strip(),
-                    "duration_rationale": str(segment.get("duration_rationale") or "").strip(),
-                    "bridge_type": str(segment.get("bridge_type") or "").strip().lower(),
-                }
-                missing_fields = [
-                    field_name
-                    for field_name in required_runtime_fields
-                    if not field_values.get(field_name)
-                ]
-                if (
-                    field_values["timing_role"]
-                    and allowed_timing_roles
-                    and field_values["timing_role"] not in allowed_timing_roles
-                ):
-                    missing_fields.append("timing_role(valid)")
-                if (
-                    field_values["content_density"]
-                    and allowed_density_levels
-                    and field_values["content_density"] not in allowed_density_levels
-                ):
-                    missing_fields.append("content_density(valid)")
-                if (
-                    field_values["visual_detail_load"]
-                    and allowed_density_levels
-                    and field_values["visual_detail_load"] not in allowed_density_levels
-                ):
-                    missing_fields.append("visual_detail_load(valid)")
-                if (
-                    field_values["bridge_type"]
-                    and allowed_bridge_types
-                    and field_values["bridge_type"] not in allowed_bridge_types
-                ):
-                    missing_fields.append("bridge_type(valid)")
-                if missing_fields:
-                    missing_runtime_rationale_fields.append(
-                        f"{seg_id}: missing or invalid runtime rationale fields: {', '.join(missing_fields)}."
-                    )
 
-                rationale = field_values["duration_rationale"]
-                if rationale and dimension_keywords:
-                    dimension_hits = _rationale_dimension_hits(
-                        rationale,
-                        dimension_keywords=dimension_keywords,
+        should_validate_runtime_fields = bool(required_runtime_fields) and (
+            (isinstance(card_number, int) and card_number in runtime_targets_by_card)
+            or any(
+                segment.get(field_name) not in (None, "")
+                for field_name in (
+                    "timing_role",
+                    "content_density",
+                    "visual_detail_load",
+                    "duration_rationale",
+                    "bridge_type",
+                    "onset_delay",
+                    "dwell",
+                    "cluster_gap",
+                    "transition_buffer",
+                )
+            )
+        )
+        if should_validate_runtime_fields:
+            field_values = {
+                "timing_role": str(segment.get("timing_role") or "").strip(),
+                "content_density": str(segment.get("content_density") or "").strip(),
+                "visual_detail_load": str(segment.get("visual_detail_load") or "").strip(),
+                "duration_rationale": str(segment.get("duration_rationale") or "").strip(),
+                "bridge_type": str(segment.get("bridge_type") or "").strip().lower(),
+                "onset_delay": segment.get("onset_delay"),
+                "dwell": segment.get("dwell"),
+                "cluster_gap": segment.get("cluster_gap"),
+                "transition_buffer": segment.get("transition_buffer"),
+            }
+            missing_fields: list[str] = []
+            for field_name in required_runtime_fields:
+                raw_value = field_values.get(field_name)
+                if field_name in {"onset_delay", "dwell", "cluster_gap", "transition_buffer"}:
+                    # Backward-compat default: absent timing buffers behave as 0.0.
+                    # We only enforce validity when an explicit value is provided.
+                    continue
+                elif not raw_value:
+                    missing_fields.append(field_name)
+            for float_field in ("onset_delay", "dwell", "cluster_gap", "transition_buffer"):
+                if float_field not in required_runtime_fields:
+                    continue
+                raw_value = field_values.get(float_field)
+                if raw_value in (None, ""):
+                    continue
+                try:
+                    parsed_value = float(raw_value)
+                except (TypeError, ValueError):
+                    missing_fields.append(f"{float_field}(float)")
+                    continue
+                if parsed_value < 0:
+                    missing_fields.append(f"{float_field}(>=0)")
+            if (
+                field_values["timing_role"]
+                and allowed_timing_roles
+                and field_values["timing_role"] not in allowed_timing_roles
+            ):
+                missing_fields.append("timing_role(valid)")
+            if (
+                field_values["content_density"]
+                and allowed_density_levels
+                and field_values["content_density"] not in allowed_density_levels
+            ):
+                missing_fields.append("content_density(valid)")
+            if (
+                field_values["visual_detail_load"]
+                and allowed_density_levels
+                and field_values["visual_detail_load"] not in allowed_density_levels
+            ):
+                missing_fields.append("visual_detail_load(valid)")
+            if (
+                field_values["bridge_type"]
+                and allowed_bridge_types
+                and field_values["bridge_type"] not in allowed_bridge_types
+            ):
+                missing_fields.append("bridge_type(valid)")
+            if missing_fields:
+                missing_runtime_rationale_fields.append(
+                    f"{seg_id}: missing or invalid runtime rationale fields: {', '.join(missing_fields)}."
+                )
+
+            rationale = field_values["duration_rationale"]
+            if rationale and dimension_keywords:
+                dimension_hits = _rationale_dimension_hits(
+                    rationale,
+                    dimension_keywords=dimension_keywords,
+                )
+                if len(dimension_hits) < 2:
+                    weak_runtime_rationales.append(
+                        f"{seg_id}: duration_rationale should reference at least two runtime dimensions "
+                        f"(purpose, density, visual burden); detected {', '.join(sorted(dimension_hits)) or 'none'}."
                     )
-                    if len(dimension_hits) < 2:
-                        weak_runtime_rationales.append(
-                            f"{seg_id}: duration_rationale should reference at least two runtime dimensions "
-                            f"(purpose, density, visual burden); detected {', '.join(sorted(dimension_hits)) or 'none'}."
-                        )
 
         refs = segment.get("visual_references", [])
         valid_visual_cue_found = False
@@ -847,7 +1252,7 @@ def _validate_bundle_pass2_outputs(
                 for ref in refs
                 if isinstance(ref, dict) and str(ref.get("narration_cue") or "").strip()
             }
-            if not trace_sources:
+            if not trace_sources or slide_id not in trace_sources:
                 segments_with_untraceable_visual_cues.append(seg_id)
 
         motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
@@ -907,7 +1312,10 @@ def _validate_bundle_pass2_outputs(
     missing_manifest_for_slide_ids = [
         slide_id for slide_id in authorized_slide_ids if slide_id not in manifest_slide_id_set
     ]
-    unknown_manifest_slide_ids = sorted(manifest_slide_id_set - set(authorized_slide_ids))
+    # Interstitial slide_ids are valid but not in the authorized storyboard — exclude from unknown check
+    unknown_manifest_slide_ids = sorted(
+        manifest_slide_id_set - set(authorized_slide_ids) - interstitial_slide_ids
+    )
 
     details["missing_manifest_for_slide_ids"] = missing_manifest_for_slide_ids
     details["unknown_manifest_slide_ids"] = unknown_manifest_slide_ids
@@ -920,6 +1328,49 @@ def _validate_bundle_pass2_outputs(
     details["segments_with_behavioral_intent_mismatch"] = sorted(
         set(segments_with_behavioral_intent_mismatch)
     )
+    segments_with_master_behavioral_intent_violation: list[str] = []
+    cluster_behavioral_intent_violations_by_cluster: dict[str, list[str]] = {}
+    for cluster_id, records in cluster_records_by_id.items():
+        head_record = next(
+            (record for record in records if record["cluster_role"] == "head"),
+            None,
+        )
+        cluster_master_behavioral_intent = ""
+        if head_record is not None:
+            cluster_master_behavioral_intent = str(
+                head_record["master_behavioral_intent"] or ""
+            ).strip()
+        if not cluster_master_behavioral_intent:
+            cluster_master_behavioral_intent = next(
+                (
+                    str(record["master_behavioral_intent"] or "").strip()
+                    for record in records
+                    if str(record["master_behavioral_intent"] or "").strip()
+                ),
+                "",
+            )
+        violations = sorted(
+            {
+                f"{record['seg_id']}({record['effective_intent']}->{cluster_master_behavioral_intent})"
+                for record in records
+                if record["cluster_role"] == "interstitial"
+                and record["effective_intent"]
+                and cluster_master_behavioral_intent
+                and not _behavioral_intent_serves_master(
+                    cluster_master_behavioral_intent,
+                    record["effective_intent"],
+                )
+            }
+        )
+        if any(record["cluster_role"] == "interstitial" for record in records) and not cluster_master_behavioral_intent:
+            violations.append(f"{cluster_id}(missing master_behavioral_intent)")
+        if violations:
+            cluster_behavioral_intent_violations_by_cluster[cluster_id] = violations
+            segments_with_master_behavioral_intent_violation.extend(violations)
+    details["segments_with_master_behavioral_intent_violation"] = sorted(
+        set(segments_with_master_behavioral_intent_violation)
+    )
+    details["cluster_behavioral_intent_violations_by_cluster"] = cluster_behavioral_intent_violations_by_cluster
     details["segments_missing_behavioral_intent"] = sorted(
         set(segments_missing_behavioral_intent)
     )
@@ -936,23 +1387,45 @@ def _validate_bundle_pass2_outputs(
         set(motion_segments_with_noncanonical_visual_file)
     )
     details["runtime_budget_warnings"] = sorted(set(runtime_budget_warnings))
+    details["cluster_word_range_warnings"] = sorted(set(cluster_word_range_warnings))
     details["missing_runtime_rationale_fields"] = sorted(set(missing_runtime_rationale_fields))
     details["weak_runtime_rationales"] = sorted(set(weak_runtime_rationales))
     bridge_cadence_warnings: list[str] = []
+    cluster_boundary_warnings: list[str] = []
     if bridge_cadence_enabled and ordered_slide_records and (bridge_minutes > 0 or bridge_slides > 0):
         slides_since_bridge = 0
         seconds_since_bridge = 0.0
+        previous_record: dict[str, Any] | None = None
         for index, record in enumerate(ordered_slide_records, start=1):
             bridge_type = str(record.get("bridge_type") or "none").strip().lower() or "none"
-            if accepted_bridge_types and bridge_type in accepted_bridge_types:
+            is_cluster_boundary = _is_cluster_boundary_transition(previous_record, record)
+            record_is_clustered = bool(str(record.get("cluster_id") or "").strip())
+            if (
+                cluster_bridge_cadence_override
+                and is_cluster_boundary
+                and bridge_type != "cluster_boundary"
+            ):
+                cluster_boundary_warnings.append(
+                    f"{record.get('seg_id')}: cluster boundary transition should use bridge_type "
+                    "cluster_boundary when cluster_bridge_cadence_override=true."
+                )
+            if index > 1:
+                slides_since_bridge += 1
+                seconds_since_bridge += float(record.get("duration_estimate_seconds") or 0.0)
+            slides_exceeded = bool(bridge_slides > 0 and slides_since_bridge >= bridge_slides)
+            minutes_exceeded = bool(bridge_minutes > 0 and seconds_since_bridge >= bridge_minutes * 60.0)
+            if _bridge_satisfies_cadence(
+                bridge_type,
+                accepted_bridge_types=accepted_bridge_types,
+                cluster_bridge_cadence_override=cluster_bridge_cadence_override,
+                record_is_clustered=record_is_clustered,
+                is_cluster_boundary=is_cluster_boundary,
+                cluster_role=str(record.get("cluster_role") or "").strip().lower() or None,
+                fallback_due=slides_exceeded or minutes_exceeded,
+            ):
                 slides_since_bridge = 0
                 seconds_since_bridge = 0.0
             else:
-                if index > 1:
-                    slides_since_bridge += 1
-                    seconds_since_bridge += float(record.get("duration_estimate_seconds") or 0.0)
-                slides_exceeded = bool(bridge_slides > 0 and slides_since_bridge >= bridge_slides)
-                minutes_exceeded = bool(bridge_minutes > 0 and seconds_since_bridge >= bridge_minutes * 60.0)
                 if slides_exceeded or minutes_exceeded:
                     bridge_cadence_warnings.append(
                         f"{record.get('seg_id')}: explicit intro/outro bridge cadence exceeded before this slide "
@@ -961,8 +1434,90 @@ def _validate_bundle_pass2_outputs(
                     )
                     slides_since_bridge = 0
                     seconds_since_bridge = 0.0
+            previous_record = record
     details["bridge_cadence_warnings"] = sorted(set(bridge_cadence_warnings))
+    details["within_cluster_bridge_warnings"] = sorted(set(within_cluster_bridge_warnings))
+    details["cluster_boundary_warnings"] = sorted(set(cluster_boundary_warnings))
     details["spoken_bridge_warnings"] = sorted(set(spoken_bridge_warnings))
+
+    cluster_new_concept_violations: list[str] = []
+    cluster_arc_integrity_violations: list[str] = []
+    for cluster_id, records in cluster_records_by_id.items():
+        ordered_records = sorted(
+            records,
+            key=lambda record: (
+                record["card_number"] if isinstance(record["card_number"], int) else 10**9,
+                record["seg_id"],
+            ),
+        )
+        head_record = next(
+            (record for record in ordered_records if record["cluster_role"] == "head"),
+            None,
+        )
+        if head_record is None:
+            cluster_arc_integrity_violations.append(
+                f"{cluster_id}: cluster is missing a head segment."
+            )
+            continue
+
+        head_concepts = _extract_concept_tokens(head_record["narration_text"])
+        head_concepts.update(
+            _extract_concept_tokens(
+                _load_source_ref_excerpt(head_record["source_ref"], bundle_dir=bundle_dir)
+            )
+        )
+        for record in ordered_records:
+            if record["cluster_role"] != "interstitial":
+                continue
+            introduced = sorted(
+                token
+                for token in _extract_concept_tokens(record["narration_text"])
+                if token not in head_concepts
+            )
+            if introduced:
+                cluster_new_concept_violations.append(
+                    f"{record['seg_id']}: new concept(s) outside head scope: {', '.join(introduced[:6])}"
+                )
+
+        positions = [
+            str(record["cluster_position"] or "").strip().lower()
+            for record in ordered_records
+            if str(record["cluster_position"] or "").strip()
+        ]
+        if positions:
+            if positions[0] != "establish":
+                cluster_arc_integrity_violations.append(
+                    f"{cluster_id}: arc integrity failure - first cluster position must be establish, got {positions[0]}."
+                )
+            for previous, current in zip(positions, positions[1:], strict=False):
+                if _CLUSTER_ARC_POSITION_ORDER.get(current, -1) < _CLUSTER_ARC_POSITION_ORDER.get(previous, -1):
+                    cluster_arc_integrity_violations.append(
+                        f"{cluster_id}: arc integrity failure - disordered cluster positions {previous} -> {current}."
+                    )
+                    break
+            resolve_index = next(
+                (index for index, position in enumerate(positions) if position == "resolve"),
+                None,
+            )
+            if resolve_index is not None:
+                prior_positions = positions[:resolve_index]
+                if not any(position in {"tension", "develop"} for position in prior_positions):
+                    cluster_arc_integrity_violations.append(
+                        f"{cluster_id}: arc integrity failure - resolve appears without a middle beat before it."
+                    )
+            resolve_record = next(
+                (record for record in reversed(ordered_records) if record["cluster_position"] == "resolve"),
+                None,
+            )
+            if resolve_record is not None:
+                establish_concepts = _extract_concept_tokens(head_record["narration_text"])
+                resolve_concepts = _extract_concept_tokens(resolve_record["narration_text"])
+                if establish_concepts and resolve_concepts and not (establish_concepts & resolve_concepts):
+                    cluster_arc_integrity_violations.append(
+                        f"{cluster_id}: arc integrity failure - resolve segment {resolve_record['seg_id']} lacks a callback to establish concepts."
+                    )
+    details["cluster_new_concept_violations"] = sorted(set(cluster_new_concept_violations))
+    details["cluster_arc_integrity_violations"] = sorted(set(cluster_arc_integrity_violations))
     envelope_artifacts_by_key = {
         _artifact_identity_key(item): _normalize_artifact_for_compare(item)
         for item in perception_artifacts
@@ -979,6 +1534,17 @@ def _validate_bundle_pass2_outputs(
         if envelope_artifacts_by_key.get(key) != standalone_artifacts_by_key.get(key)
     )
     details["perception_artifact_mismatches"] = mismatch_keys
+
+    if interstitials_missing_cluster_id:
+        errors.append(
+            "interstitial segment(s) missing required cluster_id: "
+            + ", ".join(sorted(set(interstitials_missing_cluster_id)))
+        )
+    if interstitials_missing_timing_role:
+        errors.append(
+            "interstitial segment(s) missing required timing_role: "
+            + ", ".join(sorted(set(interstitials_missing_timing_role)))
+        )
 
     if missing_manifest_for_slide_ids:
         errors.append(
@@ -1000,6 +1566,11 @@ def _validate_bundle_pass2_outputs(
             "segment-manifest.yaml has segment(s) without a non-empty visual narration_cue tied to perception and present in narration_text: "
             + ", ".join(sorted(set(segments_missing_visual_narration_cue)))
         )
+    if segments_with_untraceable_visual_cues:
+        errors.append(
+            "segment-manifest.yaml has segment(s) with visual narration cues that do not trace to the segment's own slide_id perception lineage: "
+            + ", ".join(sorted(set(segments_with_untraceable_visual_cues)))
+        )
     if segments_with_forbidden_meta_slide_language:
         errors.append(
             "segment-manifest.yaml has segment(s) using forbidden meta slide-language while audience-directed narration is required: "
@@ -1014,6 +1585,21 @@ def _validate_bundle_pass2_outputs(
         errors.append(
             "narration-script.md and segment-manifest.yaml disagree on behavioral_intent for segment(s): "
             + ", ".join(details["segments_with_behavioral_intent_mismatch"])
+        )
+    if details["segments_with_master_behavioral_intent_violation"]:
+        errors.append(
+            "clustered interstitial behavioral_intent validation failed against master_behavioral_intent: "
+            + ", ".join(details["segments_with_master_behavioral_intent_violation"])
+        )
+    if details["cluster_new_concept_violations"]:
+        errors.append(
+            "clustered interstitial narration introduces new concept(s) outside head scope: "
+            + ", ".join(details["cluster_new_concept_violations"])
+        )
+    if details["cluster_arc_integrity_violations"]:
+        errors.append(
+            "cluster arc integrity failures detected: "
+            + ", ".join(details["cluster_arc_integrity_violations"])
         )
     if details["segments_missing_behavioral_intent"]:
         warnings.append(
@@ -1051,17 +1637,23 @@ def _validate_bundle_pass2_outputs(
         )
 
     warnings.extend(details["runtime_budget_warnings"])
+    warnings.extend(details["cluster_word_range_warnings"])
     warnings.extend(details["missing_runtime_rationale_fields"])
     warnings.extend(details["weak_runtime_rationales"])
     warnings.extend(details["bridge_cadence_warnings"])
+    warnings.extend(details["within_cluster_bridge_warnings"])
+    warnings.extend(details["cluster_boundary_warnings"])
     warnings.extend(details["spoken_bridge_warnings"])
 
     if runtime_policy_strict:
         runtime_policy_violations = (
             details["runtime_budget_warnings"]
+            + details["cluster_word_range_warnings"]
             + details["missing_runtime_rationale_fields"]
             + details["weak_runtime_rationales"]
             + details["bridge_cadence_warnings"]
+            + details["within_cluster_bridge_warnings"]
+            + details["cluster_boundary_warnings"]
         )
         if spoken_enforcement == "warn":
             runtime_policy_violations += details["spoken_bridge_warnings"]
@@ -1119,6 +1711,7 @@ def validate_irene_pass2_handoff(
     missing_local_png_for: list[str] = []
     png_card_mismatch_for: list[str] = []
     gary_slide_path_by_id: dict[str, str] = {}
+    gary_slide_source_ref_by_id: dict[str, str] = {}
     bundle_dir = _bundle_dir_from_inputs(payload, envelope_path=envelope_path)
     for item in gary:
         if not isinstance(item, dict):
@@ -1156,6 +1749,8 @@ def validate_irene_pass2_handoff(
             slide_id = item.get("slide_id")
             if isinstance(slide_id, str) and slide_id.strip():
                 gary_slide_path_by_id[slide_id.strip()] = normalized_path
+                if isinstance(source_ref, str) and source_ref.strip():
+                    gary_slide_source_ref_by_id[slide_id.strip()] = source_ref.strip()
         if not isinstance(source_ref, str) or not source_ref.strip():
             missing_source_ref_for.append(slide_label)
 
@@ -1181,6 +1776,11 @@ def validate_irene_pass2_handoff(
         errors.append(
             "gary_slide_output file_path does not exist on disk for: "
             + ", ".join(missing_local_png_for)
+        )
+    if png_card_mismatch_for:
+        errors.append(
+            "gary_slide_output card_number does not match slide_XX.png filename for: "
+            + ", ".join(png_card_mismatch_for)
         )
     if missing_source_ref_for:
         errors.append(
@@ -1238,6 +1838,7 @@ def validate_irene_pass2_handoff(
         bundle_dir=bundle_dir,
         gary_slide_ids=gary_slide_ids,
         gary_slide_path_by_id=gary_slide_path_by_id,
+        gary_slide_source_ref_by_id=gary_slide_source_ref_by_id,
         perception_artifacts=[item for item in perception if isinstance(item, dict)],
         runtime_policy_strict=runtime_policy_strict,
     )

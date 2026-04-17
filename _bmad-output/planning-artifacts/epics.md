@@ -9,6 +9,9 @@ inputDocuments: [
 ]
 ---
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
+
 # course-DEV-IDE-with-AGENTS - Epic Breakdown
 
 ## Overview
@@ -2635,7 +2638,7 @@ So that a motion-enhanced lesson can be produced end-to-end through the APP.
 
 **Depends on**: At least one tracked trial run completed (hard — learning schema needs real operational evidence to validate). Epic 2A sensory bridges and Vera fidelity infrastructure (existing, satisfied). Epic 4A governance and observability hooks (existing, satisfied).
 
-**Seed document**: `_bmad-output/implementation-artifacts/app-three-layer-optimization-plans-2026-04-06.md`, Plan 3 (primary), plus `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md` Priority 0 and Priority 3.
+**Seed document**: `_bmad-output/maps/app-three-layer-optimization-plans-2026-04-06.md`, Plan 3 (primary), plus `_bmad-output/maps/app-optimization-map-and-baseline-audit-2026-04-05.md` Priority 0 and Priority 3.
 
 **Design guardrails**:
 - Only capture learning that changes future decisions
@@ -2807,7 +2810,7 @@ So that specialist agents (Quinn-R, Vera, Gary, Irene) get measurably better at 
 
 **Depends on**: Epic 15 (hard — autonomy decisions must be informed by learning data, not design theory alone). At least 3-5 tracked runs completed (recommended — enough evidence to distinguish routine from risky decisions).
 
-**Seed documents**: `_bmad-output/implementation-artifacts/app-three-layer-optimization-plans-2026-04-06.md` Plans 1 and 2, plus `_bmad-output/implementation-artifacts/app-optimization-map-and-baseline-audit-2026-04-05.md` Priorities 1, 2, and 4.
+**Seed documents**: `_bmad-output/maps/app-three-layer-optimization-plans-2026-04-06.md` Plans 1 and 2, plus `_bmad-output/maps/app-optimization-map-and-baseline-audit-2026-04-05.md` Priorities 1, 2, and 4.
 
 **Design guardrails**:
 - Autonomy is earned, not assumed — expansion is gated by evidence from tracked runs

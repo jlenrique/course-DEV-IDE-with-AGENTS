@@ -44,12 +44,14 @@ These specialists are guidance-only (manual-tool pattern): no API runtime, no wo
 
 | Skill | Path | Purpose | Status |
 |-------|------|---------|--------|
+| **Creative Director (CD)** | `skills/bmad-agent-cd/` | Contract-first creative directive generation scaffolding for Wave 2B (`slide_mode_proportions`, experience-profile targets, directive contract refs) | Active |
 | **Desmond** | `skills/bmad-agent-desmond/` | Descript finishing: assembly-handoff instructions, doc cache refresh, mandatory **Automation Advisory** (REST vs MCP vs manual); sanctum `_bmad/memory/bmad-agent-desmond/` (local) | Active |
 | **Pre-flight check** | `skills/pre-flight-check/` | MCP/API/doc-sources connectivity verification before production runs | Active |
 | **Woodshed** | `skills/woodshed/` | Exemplar-driven agent skill development — study, reproduce, compare, reflect, regress (faithful + creative modes) | Active |
 | **Production coordination** | `skills/production-coordination/` | Workflow stages, delegation, mode management, style guide | Active |
 | **Tech spec wrangler** | `skills/tech-spec-wrangler/` | Tool API doc refresh, research, validation via Ref MCP; ensures agents always have current API knowledge | Active |
-| **Source wrangler** | `skills/source-wrangler/` | Notion + Box + URL/HTML ingestion; Playwright-saved page processing; `extracted.md` bundles for specialists | Active |
+| **Texas (Source Wrangler)** | `skills/bmad-agent-texas/` | Source extraction with quality validation, cross-validation against reference assets, fallback chains, proportionality checks. Memory agent (evolvable). Replaces legacy `skills/source-wrangler/`. | Active |
+| **Source wrangler (legacy)** | `skills/source-wrangler/` | Legacy extraction scripts — being migrated to Texas. Retained for backward compatibility during transition. | Deprecated |
 | **Sensory bridges** | `skills/sensory-bridges/` | Multimodal perception: PPTX, image, audio (ElevenLabs STT), PDF, video bridges with canonical schema, confidence rubric, and universal perception protocol | Active |
 | **Fidelity Assessor (Vera)** | `skills/bmad-agent-fidelity-assessor/` | Forensic fidelity verification at G0-G5. O/I/A taxonomy, Fidelity Trace Reports, circuit breaker. Runs before Quinn-R at every gate. | Active |
 | **APP Maturity Audit** | `skills/app-maturity-audit/` | Repeatable four-pillar audit (L1 contracts, L2 evaluation, L3 memory, perception) with heat map, leaky neck, sensory horizon, and drift reports | Active |

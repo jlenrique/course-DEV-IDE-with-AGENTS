@@ -1,13 +1,13 @@
 # Developer Guide — Architecture, Execution Flow, and Extension Points
 
 **Audience:** Developers building, extending, and maintaining the collaborative intelligence platform.
-**Last Updated:** 2026-04-05 | **Project Phase:** Complete (all 14 epics done; prompt-pack family split by workflow template; Epic 13/14 runtime controls live)
+**Last Updated:** 2026-04-16 | **Project Phase:** Epics 1–14 complete; Waves 1–3 complete (Epics 19–21, 23); Wave 2B + `20c-15` estimator closed; `22-2` closed; prompt-pack family: v4.1 (standard), v4.2/v4.2f (motion + extraction guards), v4.3 (cluster + interstitial)
 
 ---
 
 ## Table of Contents
 
-> 2026-04-05 status: Epics 13 and 14 are complete. The live narrated workflow family is now split between `production-prompt-pack-v4.1-narrated-deck-video-export.md` for non-motion runs and `production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` for motion-enabled runs. `DOUBLE_DISPATCH` remains an inline branch inside either workflow template.
+> 2026-04-16 status: Epics 1–14, 19–21, 23 complete. Wave 2B creative control (20c-7 through 20c-14) closed. **`20c-15` done** — profile-aware slide/runtime estimator (`scripts/utilities/slide_count_runtime_estimator.py`), `parent_slide_count` naming, prompt-pack Prompt 4.5 integration. **`22-2` done** — Storyboard B cluster view with script context (`generate-storyboard.py`). Wave 4 next: **`22-3`** / **`22-4`**, Epic 24 assembly hardening, and **fresh trial runs** using prompt pack **v4.2f** (extraction completeness + per-dimension gate evidence — see `next-session-start-here.md`). New configs in `state/config/`: `experience-profiles.yaml`, `parameter-registry-schema.yaml`, `schemas/creative-directive.schema.*`. Narrated workflows: v4.1 (standard), v4.2/v4.2f (motion), v4.3 cluster+interstitial (iterate). `DOUBLE_DISPATCH` remains an inline branch inside either workflow template.
 
 1. [Architecture Overview](#architecture-overview)
 2. [Three-Layer Architecture](#three-layer-architecture)
@@ -124,7 +124,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 
 6. Marcus loads `./references/source-prompting.md` (SP capability)
 7. Marcus offers: *"I see Module 2 notes in Notion and some reference PDFs in Box Drive. Want me to pull those in before we start?"*
-8. If user accepts, Marcus delegates to **`source-wrangler`** (`skills/source-wrangler/`) to fetch Notion pages, Box Drive files, URLs/HTML captures, etc.
+8. If user accepts, Marcus delegates to **Texas** (`skills/bmad-agent-texas/`) to extract, validate, and deliver source material with quality checks and fallback chains.
 
 ### Phase 3: Production Planning (Marcus → CM capability)
 
@@ -218,7 +218,7 @@ Literal-visual dispatch rule:
 │  • course_context.yaml                      │  ← Evolves slowly
 │  • style_guide.yaml                         │  ← Agent-writable (learned prefs)
 │  • tool_policies.yaml                       │  ← Admin-managed (run presets)
-│  • fidelity-contracts/ (G0–G6 YAML)         │  ← L1 fidelity criteria
+│  • fidelity-contracts/ (G0–G6 + G1.5 + G2.5 YAML)  │  ← L1 fidelity criteria
 ├─────────────────────────────────────────────┤
 │  SQLite + JSON (state/runtime/)             │  ← Gitignored, ephemeral
 │  • coordination.db + tables               │  ← Production runs, coordination,
@@ -335,6 +335,17 @@ Each agent gets a memory sidecar at `_bmad/memory/{agent}-sidecar/`:
 
 The `index.md` tells the agent what else to load. This progressive disclosure pattern keeps activation fast — agents don't read their full history on every startup.
 
+### Sidecar Path vs. Delegation Key: A Namespace Split
+
+As of 2026-04-16, specialist sidecars are named after their **persona** (e.g., `_bmad/memory/gary-sidecar/`, `_bmad/memory/kim-sidecar/`), not their role slot. Delegation keys used by Marcus's routing tables and hard-coded infrastructure are still **role-style** (e.g., `gamma-specialist`, `coursearc-specialist`). This is intentional:
+
+- **Persona names** belong to a human-facing layer — they appear in sidecar paths, H1 headers, and operator-facing docs. Personas can be renamed when roles are re-cast or an agent is retired; paths follow the persona, not the slot.
+- **Role-style delegation keys** belong to the infrastructure layer — they are referenced by `scripts/agent_delegation.py`, routing YAMLs, and structural-walk checks. These keys describe the *capability slot* and should stay stable even if the persona filling the slot changes.
+
+When adding a new specialist, register both: a persona-named sidecar under `_bmad/memory/<persona>-sidecar/` for learning and memory, and a role-style key (e.g., `<tool>-specialist`) in any delegation-routing code or infrastructure YAML. Do not collapse the two namespaces.
+
+Historical note: prior to the 2026-04-16 rename, sidecar paths were role-style (e.g., `gamma-specialist-sidecar/`). Archived planning and implementation artifacts that reference the old paths now carry an inline banner pointing here.
+
 ---
 
 ## Skill Anatomy
@@ -381,7 +392,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 |-------|----------|------|
 | `pre-flight-check` | `skills/pre-flight-check/` | MCP/API/doc readiness |
 | `production-coordination` | `skills/production-coordination/` | Run/mode/baton/style-guide helpers |
-| `source-wrangler` | `skills/source-wrangler/` | Notion, Box, URL/HTML ingestion |
+| `bmad-agent-texas` | `skills/bmad-agent-texas/` | Source extraction + validation + cross-validation + fallback chains (replaces source-wrangler) |
 | `tech-spec-wrangler` | `skills/tech-spec-wrangler/` | Doc refresh via Ref MCP |
 | `gamma-api-mastery` | `skills/gamma-api-mastery/` | Gamma generate/export operations |
 | `elevenlabs-audio` | `skills/elevenlabs-audio/` | ElevenLabs TTS operations |
@@ -449,6 +460,13 @@ All API clients extend `BaseAPIClient` in `scripts/api_clients/base_client.py`.
 | **Pagination** | Link-header (Canvas-style) via `get_paginated()` |
 | **Raw responses** | `get_raw()` / `post_raw()` for binary content (audio, etc.) |
 | **JSON parsing** | Automatic with fallback for non-JSON responses |
+
+### Theme Resolution and Cluster Dispatch
+
+For cluster-aware Gary dispatch:
+- `run-constants.yaml` → `theme_selection` ("theme-a") → `gary-theme-resolution.json` → `theme_id` ("njim9kuhfnljvaa")
+- `theme_paramset_key` ("preset-a") → `gamma-style-presets.yaml` → `imageOptions.model` ("gemini-3.1-flash-image-mini")
+- Trial script `cluster_dispatch_trial.py` hardcodes canonical values for validation.
 
 ### Gamma PNG Export Handling
 
@@ -688,6 +706,17 @@ set KLING_LIVE_STRICT=1
 .venv\Scripts\python -m pytest tests/test_integration_kling.py --run-live --run-live-e2e -v
 ```
 
+### VSCode Tasks
+
+The project includes VSCode tasks for common development workflows. Access via **Terminal → Run Task** or **Ctrl+Shift+P → Tasks: Run Task**.
+
+| Task Name | Description | Command |
+|-----------|-------------|---------|
+| **APP: Progress Map** | Generate text progress report from sprint-status.yaml | `.venv\Scripts\python.exe -m scripts.utilities.progress_map` |
+| **APP: Progress Map (JSON)** | Generate JSON progress report for scripting/automation | `.venv\Scripts\python.exe -m scripts.utilities.progress_map --json` |
+
+These tasks use the project's virtual environment and provide quick access to progress visualization without manual CLI invocation.
+
 ### Ruff Lint Policy (Ratchet)
 
 The project uses a ratchet policy so delivery can continue while lint debt is reduced incrementally:
@@ -813,7 +842,6 @@ course-DEV-IDE-with-AGENTS/
 │
 ├── bmad-session-protocol-session-START.md   ← BMAD start-of-session protocol
 ├── bmad-session-protocol-session-WRAPUP.md  ← BMAD end-of-session protocol
-├── bmad-session-protocol-session-MISC.md    ← BMAD reference notes
 ├── next-session-start-here.md         ← Hot-start context for next session
 └── SESSION-HANDOFF.md                 ← Session record and handoff context
 ```
@@ -829,7 +857,7 @@ These are the authoritative sources — this guide references them rather than d
 | **Architecture** | `_bmad-output/planning-artifacts/architecture.md` | Full architectural decisions; governance + APP sections |
 | **PRD** | `_bmad-output/planning-artifacts/prd.md` | **91 FRs** (incl. FR81–FR91 governance), success criteria, journeys |
 | **Epics & Stories** | `_bmad-output/planning-artifacts/epics.md` | Current epic and story catalog, including Epic 13 visual-aware Irene and Epic 14 motion workflow |
-| **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6, Vera vs Quinn-R ordering, role matrix |
+| **Fidelity gate map** | `docs/fidelity-gate-map.md` | G0–G6 + conditional G1.5/G2.5, Vera vs Quinn-R ordering, role matrix |
 | **Lane matrix** | `docs/lane-matrix.md` | Cross-agent judgment ownership |
 | **Fidelity architecture (GOLD)** | `_bmad-output/brainstorming/party-mode-fidelity-assurance-architecture.md` | APP / three-layer / hourglass / sensory horizon |
 | **Directory Responsibilities** | `docs/directory-responsibilities.md` | Configuration hierarchy, resolution rules, anti-patterns |

@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-04-02 (Epic SB done: SB.1 storyboard run-view implemented, tested, closed)
+# last_updated: 2026-04-16 (late session: Texas agent created via bmb; progress_map hardening + run_hud HUD delivered; propagation across APP complete)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -33,13 +33,100 @@
 # - Stories can be worked in parallel if team capacity allows
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+#
+# BMAD FORMAL STORY CLOSURE ('done' in development_status):
+# - Acceptance criteria satisfied (spec met).
+# - Agreed automated verification passes (tests / validators per story or CI).
+# - bmad-code-review (layered: adversarial, edge-case, acceptance/spec) complete; findings
+#   remediated or explicitly waived with rationale; review record updated in the story artifact.
+# - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-06  # Epics 13-14 marked done. Epics 15-18 added as backlog.
+last_updated: 2026-04-16  # harmonized with docs + bmm-workflow-status; Epic 24 header comments
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
+
+# =============================================================================
+# DEVELOPMENT PLAN: Cluster Intelligence + Creative Control (Epics 19-24 + 20c)
+# =============================================================================
+# Updated: 2026-04-15 (BMAD tracking aligned for Wave 2B reviewed stories)
+# Context: MVP gate PASSED (Storyboard A trial, 2026-04-11). All downstream unblocked.
+#   REPLAN: A/B trials SKIPPED — replaced by experience-profile-driven trial runs.
+#   Creative Director agent + parameter registry added as parallel development stream.
+#   Clustering and creative control mature together through profile-driven runs.
+#
+# WAVE 1 — FOUNDATION (COMPLETE, verified 2026-04-12, 158 tests)
+#   - 20b-3  Narration Params .................. DONE (schema v1.1, cluster sections)
+#   - 22-1   Storyboard A Cluster View ......... DONE (38 tests, collapsible groups)
+#   - 21-5   Re-dispatch Protocol .............. DONE (circuit breaker, CLI guardrails)
+#   - Epic 19 (all stories) .................. DONE (epic key flipped 2026-04-15; 19-4 validator hardening BMAD-closed)
+#
+# WAVE 2A — CLUSTER MATURITY (complete template/selection before creative layer)
+#   Bring clustering to "good enough for profile runs" state.
+#   A/B trials skipped; clustering quality validated through profile-driven runs.
+#
+#   STATUS (2026-04-15):
+#   - 20c-1  Template Library .................. IN-PROGRESS (Slice 1 done: 10 templates; runtime selection integration pending)
+#   - 20c-2  Template Selection ................ DONE (Slices 1-5: selector, bridge, hydration, fail-closed, evaluator)
+#   - 20c-3  Static Density Configs ............ DONE (COMPRESSED implementation; formally reviewed clean and profile-driven via canonical registry)
+#
+# WAVE 2B — PARAMETER REGISTRY + CREATIVE DIRECTOR (parallel with 2A completion)
+#   Build the parameter infrastructure and CD agent that unlocks creative control.
+#   Three parameter families: Run Constants, Narration-time, Assembly-time.
+#
+#   - 20c-7   Parameter Audit & Registry ........ DONE (registry, directory, schema, validation tests)
+#   - 20c-8   Assembly Timing Parameters ........ DONE (timing parameters wired into contracts and validators)
+#   - 20c-9   Narration Parameter Expansion ..... DONE (BMAD done 2026-04-15; 11-key contract + validator schema_version const)
+#   - 20c-10  CD Agent Creation ................. DONE (BMAD done 2026-04-15; CD + repo-anchored validator; same const gate)
+#   - 20c-11  Creative Directive Schema ......... DONE (BMAD done 2026-04-15; JSON/YAML + runtime const "1.0" enforcement)
+#   - 20c-12  Experience Profiles (2 extremes) .. DONE (BMAD done 2026-04-15; parity targets + hardened validator)
+#   - 20c-13  Profile Resolver Wiring ........... DONE (BMAD done 2026-04-15; resolver + tests; re-reviewed)
+#   - 20c-14  E2E Validation (C1-M1, both) ..... DONE (BMAD done 2026-04-15; Marcus envelope + proofs; validator deps aligned)
+#
+#   CRITICAL PATH: 20c-7 → 20c-8/9 (parallel) → 20c-10 → 20c-12 → 20c-13 → 20c-14
+#   BOTTLENECK: 20c-10 (CD agent builder session)
+#
+#   PARAMETER DIRECTORY: Master reference doc (docs/parameter-directory.md) produced
+#   as part of 20c-7, maintained as parameters are added in 20c-8/9 and beyond.
+#   Serves as "bible" for CD, specialty agents, and HIL operators.
+#
+# WAVE 2 DEFERRED (return after profile-driven runs validate clustering)
+#   These stories deferred because profile runs will expose gaps more effectively
+#   than isolated A/B trials. Return when creative control iteration stabilizes.
+#   - 20c-4  Master Arc Composition ............ Deferred (arc composition enriches profiles later)
+#   - 20c-5  Pax Agent ........................ Deferred (when complexity justifies)
+#   - 20c-6  Lens Capability ................... Deferred (start as capability)
+#   - 20a-5  Exemplar Library .................. Ready-for-dev (unblocked; re-evaluate against deferred/reactivation choice)
+#
+#   REACTIVATION CRITERIA: After 20c-14 (E2E validation) reveals specific gaps in
+#   clustering quality, reactivate the relevant deferred story to address it.
+#   2026-04-15 decision: `23-1` reactivated as the next implementation target because it unlocks the
+#   broadest downstream path (`23-2`, `23-3`, `24-1`, `24-3`, `22-2`) with less speculation than `20c-4/5/6`.
+#   Profile runs serve as the integration test that A/B trials were designed to be.
+#
+# WAVE 3 — CODIFY (after clustering + creative control stabilize)
+#   Encode quality standards learned from profile-driven iteration into gates.
+#   - 23-2   G4 Gate Extension ................. Codify "what good looks like"
+#   - 23-3   Bridge Cadence .................... Finalize stitching rules
+#
+# WAVE 4 — DOWNSTREAM (implement once, stable infrastructure)
+#   Mechanical implementation against stabilized Irene output.
+#   - 22-2   Storyboard B + Script
+#   - 22-3   Flat-Play Preview
+#   - 22-4   Generation Script & Publish
+#   - 24-1   Assembly Contract
+#   - 24-2   Descript Guide
+#   - 24-3   ElevenLabs Short Segments
+#
+# WAVE 5 — CAPSTONE
+#   - 24-4   Regression Suite .................. Full end-to-end validation
+#
+# CRITICAL PATH: 20c-7 → 20c-10 → 20c-13 → 20c-14 → [reactivate deferred] → 23-2 → 24-4
+# PARALLEL STREAMS: Wave 2A (cluster maturity) runs alongside Wave 2B (creative control).
+#   Both converge at 20c-13 (resolver wiring) and validate together at 20c-14.
+# =============================================================================
 
 development_status:
   # === EPIC 1: Repository Environment & Agent Infrastructure ===
@@ -48,23 +135,50 @@ development_status:
   1-2-python-infrastructure: done
   1-3-state-management-infrastructure: done
   1-4-pre-flight-check-skill: done
-  1-5-testing-framework: done
-  1-6-gamma-api-integration: done
-  1-7-elevenlabs-api-integration: done
-  1-8-canvas-api-integration: done
-  1-9-qualtrics-api-integration: done
-  1-10-canva-mcp-integration: done
-  1-11-panopto-api-integration: done
+  1-5-testing-framework:
+    status: retired
+    reason: Consolidated into per-skill test suites + tests/state_management; no single 'testing framework' story survived the restructure.
+  1-6-gamma-api-integration:
+    status: retired
+    superseded_by: 3-1-gamma-specialist-agent
+    reason: Raw API integration absorbed into the Gamma specialist agent scope.
+  1-7-elevenlabs-api-integration:
+    status: retired
+    superseded_by: 3-4-elevenlabs-specialist-agent
+    reason: Raw API integration absorbed into the ElevenLabs specialist agent scope.
+  1-8-canvas-api-integration:
+    status: retired
+    superseded_by: 3-6-canvas-specialist-agent
+    reason: Raw API integration absorbed into the Canvas specialist agent scope.
+  1-9-qualtrics-api-integration:
+    status: retired
+    superseded_by: 3-7-qualtrics-specialist-agent
+    reason: Raw API integration absorbed into the Qualtrics specialist agent scope.
+  1-10-canva-mcp-integration:
+    status: retired
+    superseded_by: 3-8-canva-specialist-agent
+    reason: MCP integration folded into the Canva specialist agent scope.
+  1-11-panopto-api-integration:
+    status: retired
+    reason: Panopto retired from project scope; no successor story.
   epic-1-retrospective: done
 
   # === EPIC 2: Master Agent Architecture & Development ===
   epic-2: done
-  2-1-master-orchestrator-agent-creation: done
+  2-1-master-orchestrator-agent-creation:
+    status: retired
+    reason: Orchestrator creation absorbed into the Marcus BMAD skill; no standalone story.
   2-2-conversational-workflow-management: done
   2-3-agent-coordination-protocols: done
-  2-4-parameter-intelligence: done
-  2-5-pre-flight-check-orchestration: done
-  2-6-run-mode-management: done
+  2-4-parameter-intelligence:
+    status: retired
+    reason: Parameter intelligence became a shared skill rather than a standalone story; tracked under 20c parameter-family work.
+  2-5-pre-flight-check-orchestration:
+    status: retired
+    reason: Pre-flight check became a shared skill; no standalone story file.
+  2-6-run-mode-management:
+    status: retired
+    reason: Run-mode management subsumed into run_constants + tool_policies work; no standalone story file.
   epic-2-retrospective: done
 
   # === EPIC 2A: Fidelity Assurance & APP Intelligence Infrastructure ===
@@ -74,7 +188,9 @@ development_status:
   epic-2a: done  # ALL 9 STORIES COMPLETE — Fidelity Assurance & APP Intelligence Infrastructure — done 2026-03-28
   2a-1-fidelity-maturity-audit-l1-contracts: done  # audit baseline, L1 contracts (38 criteria), validation script, arch docs — done 2026-03-28
   2a-2-sensory-bridges-skill: done                        # 5 bridges, 34 tests, perception schema, confidence rubric, protocol, validator handoff — done 2026-03-28
-  2a-3-provenance-protocol: done                         # source_ref in 5 templates + context envelope, grammar spec, delegation protocol updated — done 2026-03-28
+  2a-3-provenance-protocol:                              # source_ref in 5 templates + context envelope, grammar spec, delegation protocol updated — done 2026-03-28
+    status: retired
+    reason: No file ever materialized; genuine ghost retained as breadcrumb.
   2a-4-fidelity-assessor-agent-foundation: done  # Vera agent, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker, Marcus integration — done 2026-03-28
   2a-5-g0-g1-fidelity-verification: done                   # source bundle completeness (G0), lesson plan faithfulness (G1) — done 2026-03-28
   2a-6-agent-perception-upgrades: done                    # Irene, Gary, Quinn-R adopt universal perception protocol — done 2026-03-28
@@ -96,7 +212,6 @@ development_status:
   3-6-canvas-specialist-agent: done  # Deployment Director + canvas-deployment skill + woodshed exemplar reproduction
   3-7-qualtrics-specialist-agent: done  # Assessment Architect + qualtrics-assessment skill + woodshed exemplar reproduction
   3-8-canva-specialist-agent: done  # Visual Designer manual-tool specialist + canva-design knowledge skill
-  3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
   3-11-mixed-fidelity-gamma-generation: done  # Mixed-fidelity system: Irene fidelity fields, Gary two-call split, Marcus discovery, Quinn-R fidelity-aware review, 12 tests — done 2026-03-28
   epic-3-retrospective: optional
@@ -228,8 +343,8 @@ development_status:
   16-1-autonomy-evidence-baseline-decision-framework: backlog
   16-2-shared-governance-enforcement-utilities: backlog
   16-3-expanded-handoff-validators-late-stage: backlog
-  16-4-contract-linting-drift-protection: backlog
   16-5-marcus-autonomous-routing-routine-decisions: backlog
+  16-4-contract-linting-drift-protection: backlog
   epic-16-retrospective: optional
 
   # === EPIC 17: Research & Reference Services (Added 2026-04-06) ===
@@ -255,3 +370,104 @@ development_status:
   18-6-discovery-instructional-diagrams-infographics: backlog
   18-7-workflow-family-implementation-framework: backlog
   epic-18-retrospective: optional
+
+  # === EPIC 19: Interstitial Slide Cluster Schema & Manifest Foundation (Added 2026-04-11) ===
+  # MVP gate PASSED (Storyboard A trial, 2026-04-11). Schema and validators production-ready.
+  # 19-4: done — BMAD closure 2026-04-15 (ACs met; validators + regression; formal re-review recorded).
+  # Epic closed: all stories done (BMAD: in-progress → done is manual in sprint-status.yaml).
+  epic-19: done
+  19-1-segment-manifest-cluster-schema-extension: done
+  19-2-gary-dispatch-contract-extensions: done
+  19-3-fidelity-gate-contract-updates: done
+  19-4-validator-hardening-cluster-aware-payloads: done  # BMAD done: dispatch + pass2 clustered payload hardening; formal re-review 2026-04-15
+  epic-19-retrospective: optional
+
+  # === EPIC 20A: Irene Cluster Intelligence - Design & Specification (Added 2026-04-11) ===
+  # Defines the editorial decision model and brief quality bar for clustered presentations.
+  epic-20a: in-progress
+  20a-1-cluster-decision-criteria: done
+  20a-2-interstitial-brief-specification-standard: done
+  20a-3-cluster-narrative-arc-schema: done
+  20a-4-operator-cluster-density-controls: done
+  20a-5-retrofit-exemplar-library: ready-for-dev  # Unblocked — MVP gate passed. Execute in Wave 2 iteration loop using trial data.
+  epic-20a-retrospective: optional
+
+  # === EPIC 20B: Irene Cluster Intelligence - Implementation (Added 2026-04-11) ===
+  # Implements Irene Pass 1 cluster planning and the structural quality gate before Gamma spend.
+  epic-20b: done
+  20b-1-irene-pass1-cluster-planning-implementation: done
+  20b-2-cluster-plan-quality-gate-g1-5: done
+  20b-3-narration-script-parameters-extension-for-clusters: done  # Wave 1 closure: narration contract + G4 cluster policy tests verified (2026-04-12, included in 158-pass consolidated run)
+  epic-20b-retrospective: optional
+
+  # === EPIC 21: Gary Cluster Dispatch - Gamma Interpretation (Added 2026-04-11) ===
+  # Translates Irene's cluster briefs into coherent Gamma output and validates intra-cluster consistency.
+  # 2026-04-12: Reconciled — stories 21-1 through 21-4 done per implementation artifacts (commit 89be200).
+  epic-21: done
+  21-1-visual-design-constraint-library: done
+  21-2-cluster-aware-prompt-engineering: done
+  21-3-cluster-dispatch-sequencing: done
+  21-4-cluster-coherence-validation: done  # Note: sprint key aligned with story file (no -g2-5 suffix)
+  21-5-interstitial-re-dispatch-protocol: done  # Wave 1 closure: bundle-local re-dispatch protocol + manual CLI guardrails implemented and tested (2026-04-12)
+  epic-21-retrospective: optional
+
+  # === EPIC 20C: Cluster Intelligence + Creative Control (Added 2026-04-12, Replanned 2026-04-14) ===
+  # ITERATIVE EPIC — expanded scope: cluster intelligence + parameter registry + CD agent + profiles.
+  # Wave 2A: mature clustering (templates + selection + static density).
+  # Wave 2B: parameter registry, CD agent, experience profiles, profile resolver.
+  # A/B trials SKIPPED — profile-driven runs replace them. Clustering and creative control
+  # mature together through extreme-profile runs against C1-M1.
+  # 20c-4/5/6 deferred until profile runs reveal specific gaps.
+  epic-20c: in-progress
+  20c-1-cluster-structure-template-library: in-progress  # Wave 2A: slice 1 done (10 templates); runtime selection integration pending
+  20c-2-content-aware-template-selection-logic: done  # Wave 2A: slices 1-5 complete (selector, bridge, hydration, fail-closed, evaluator)
+  20c-4-master-arc-cluster-arc-composition: deferred  # Deferred: return after profile runs validate clustering quality
+  20c-5-presentation-architect-agent: deferred  # Deferred: Pax — when complexity justifies
+  20c-6-cluster-design-advisor-capability: deferred  # Deferred: Lens — when complexity justifies
+  20c-7-parameter-audit-registry-schema:       # Wave 2B complete (2026-04-14): cataloged 3 parameter families, added docs/parameter-directory.md, added state/config/parameter-registry-schema.yaml, and added registry validation tests
+    status: retired
+    reason: Folded into parameter-registry-schema.yaml curation; no standalone story artifact.
+  20c-8-assembly-timing-parameters:       # Wave 2B complete (2026-04-14): onset_delay/dwell/cluster_gap/transition_buffer wired into manifest reference, Pass2 and precomposition validators, and test coverage
+    status: retired
+    reason: Consolidated into the broader 20c assembly-time parameter family work.
+  20c-9-narration-parameter-expansion: done  # BMAD done 2026-04-15: 11-key contract; validator enforces schema_version const + parity (session-aligned).
+  20c-10-creative-director-agent: done  # BMAD done 2026-04-15: CD scaffold + repo-anchored validator; same schema_version gate as 20c-11.
+  20c-11-creative-directive-schema: done  # BMAD done 2026-04-15: JSON/YAML + runtime validate_creative_directive (schema_version "1.0" const enforced).
+  20c-12-experience-profile-definitions: done  # BMAD done 2026-04-15: profile targets + parity; consumes hardened validator.
+  20c-13-profile-resolver-wiring: done  # BMAD done 2026-04-15: resolver + parse_run_constants + static guard tests; formal re-review, no further code change in session.
+  20c-14-e2e-validation-both-profiles: done  # BMAD done 2026-04-15: Marcus envelope + proofs; CD path consistent with validator hardening.
+  20c-15-parent-slide-count-profile-aware-estimator: done  # BMAD done 2026-04-15: profile-aware estimator, parent_slide_count rename, 18-file ripple propagation; code review PASS (2 patches, 8 dismissed)
+  epic-20c-retrospective: optional
+
+  # === EPIC 22: Storyboard & Review Adaptation (Added 2026-04-11) ===
+  # MVP gate passed. 22-1 + 22-2 done. Next: 22-3 / 22-4 or trial runs per next-session-start-here.md (Epic 23 complete).
+  epic-22: in-progress
+  22-1-storyboard-a-cluster-view: done  # Wave 1 closure: additive cluster view + flat-path compatibility verified (2026-04-12, test_generate_storyboard green)
+  22-2-storyboard-b-cluster-view-with-script-context: done  # BMAD done 2026-04-15: clustered Storyboard B script context implemented, reviewed clean, and closure recorded in story artifact.
+  22-3-flat-play-sequential-preview-mode: ready-for-dev  # Unblocked (22-1 done)
+  22-4-storyboard-generation-script-publish-updates: ready-for-dev  # Blocked on: 22-3
+  epic-22-retrospective: optional
+
+  # === EPIC 23: Irene Pass 2 Cluster-Aware Narration (Added 2026-04-11) ===
+  # MVP gate passed. Parallel with Epic 22. 20b-3 dependency satisfied (Wave 1 closure).
+  # 2026-04-15: 23-1 reactivated after Wave 2B closure because it is the clearest downstream unlock.
+  epic-23: done
+  23-1-cluster-aware-dual-channel-grounding: done  # Formally reviewed clean 2026-04-15 after late review-patch closure and focused validator/doc regression coverage
+  23-2-g4-gate-extension-for-clusters: done  # Formally reviewed clean 2026-04-15 after interstitial master-derivation, AC/order alignment, and AC-6 contract-test fixes
+  23-3-bridge-cadence-adaptation: done  # Formally reviewed clean 2026-04-15 after fallback/reset and aggregated-seam regression closure
+  epic-23-retrospective: optional
+
+  # === EPIC 24: Assembly, Handoff & Regression Hardening (Added 2026-04-11) ===
+  # MVP gate passed. Epic 23 complete — cluster-aware Pass 2 + G4 (19 criteria) + cadence shipped. Final downstream epic.
+  epic-24: in-progress
+  24-1-assembly-contract-hardening: ready-for-dev  # Unblocked (Epic 23 done)
+  24-2-descript-assembly-guide-enhancement: ready-for-dev  # Blocked on: 24-1
+  24-3-elevenlabs-short-segment-handling: ready-for-dev  # Unblocked (Epic 23 done)
+  24-4-regression-test-suite: ready-for-dev  # Blocked on: 24-1 + 24-3 (23-2 Epic 23 gate work complete)
+  epic-24-retrospective: optional
+  20c-3-source-to-density-intelligence:
+    status: done
+    previous_slug: 20c-3-static-density-configs
+  3-9-source-wrangler-skill:
+    status: done
+    previous_slug: 3-9-source-wrangler-notion-box

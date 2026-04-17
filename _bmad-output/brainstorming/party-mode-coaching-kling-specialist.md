@@ -1,5 +1,7 @@
 # Party Mode Coaching: Kling Specialist — Video Director
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 **Session Date:** March 27, 2026  
 **Purpose:** Pre-interview coaching for `bmad-agent-builder` six-phase discovery  
 **Team:** Winston (Architect), Mary (Analyst), John (PM), Sally (UX), Quinn (QA), Bob (SM), Caravaggio (Presentation Expert), Sophia (Storyteller), Paige (Tech Writer)  

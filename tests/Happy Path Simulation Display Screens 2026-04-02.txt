@@ -1,3 +1,5 @@
+Historical note (2026-04-16): Paths of the form <old>-specialist-sidecar/ and bmad-agent-marcus-sidecar/ were renamed to persona-named sidecars. See _bmad/memory/ for current paths.
+
 HAPPY PATH SIMULATION: Narrated Lesson — C1-M1-P2 "Macro Trends in Healthcare Innovation"
 Now I'll walk every step of the pipeline as Marcus would execute it, validating each contract handoff. Party team will weigh in at each gate.
 

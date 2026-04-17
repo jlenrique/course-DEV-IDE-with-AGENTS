@@ -1,6 +1,6 @@
 # Memory System for Irene
 
-**Memory location:** `{project-root}/_bmad/memory/content-creator-sidecar/`
+**Memory location:** `{project-root}/_bmad/memory/irene-sidecar/`
 
 ## Core Principle
 
@@ -21,8 +21,8 @@ Tokens are expensive. Only remember what matters: which writers excel at which c
 ### `access-boundaries.md` — Access Control
 
 **Load on activation.** Contains:
-- **Read access** — `state/config/`, `resources/style-bible/`, `resources/exemplars/`, `course-content/`, `{project-root}/_bmad/memory/content-creator-sidecar/`, `docs/`, `course-content/_templates/`
-- **Write access** — `{project-root}/_bmad/memory/content-creator-sidecar/`, `course-content/staging/`
+- **Read access** — `state/config/`, `resources/style-bible/`, `resources/exemplars/`, `course-content/`, `{project-root}/_bmad/memory/irene-sidecar/`, `docs/`, `course-content/_templates/`
+- **Write access** — `{project-root}/_bmad/memory/irene-sidecar/`, `course-content/staging/`
 - **Deny zones** — `.env`, project-level API client and state management code, other agents' sidecars (write), `resources/style-bible/` (write), `.cursor-plugin/`, `tests/`, `state/config/` (write)
 
 Before any file operation, verify the path is within allowed boundaries.

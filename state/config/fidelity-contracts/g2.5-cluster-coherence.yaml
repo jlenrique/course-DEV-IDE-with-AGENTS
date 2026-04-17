@@ -1,0 +1,69 @@
+gate: "G2.5"
+gate_name: "Cluster Coherence"
+producing_agent: "vera"
+hil_gate: "operator-review"
+timing: "After Gary cluster dispatch, before Storyboard A and Irene Pass 2"
+source_of_truth:
+  primary: "Gary-dispatched slide PNGs for cluster head and interstitial segments"
+  validation_script: "skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py"
+  config_ref: "state/config/validation.yaml"
+
+criteria:
+  - id: "G2.5-01"
+    name: "Typography match"
+    description: "Font family and weight hierarchy are consistent between head and interstitial slides within each cluster"
+    fidelity_class: [literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "Same font family and weight hierarchy between head and interstitials within each cluster_id"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G2.5-02"
+    name: "Background treatment consistency"
+    description: "Interstitials maintain the head slide's background treatment (full-bleed head should not produce flat-color interstitials, except pace-reset)"
+    fidelity_class: [literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "Full-bleed head → interstitials should not go flat-color (exception: interstitial_type == pace-reset)"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G2.5-03"
+    name: "Element isolation fidelity"
+    description: "The isolation_target element appears at comparable scale in each interstitial relative to its presence on the head slide"
+    fidelity_class: [literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "isolation_target appears at comparable scale on the interstitial as on the head slide"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G2.5-04"
+    name: "Whitespace ratio delta"
+    description: "Interstitials maintain whitespace ratio equal to or greater than the head slide; inverted ratio is a flag"
+    fidelity_class: [literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: "Interstitials have whitespace ratio >= head slide whitespace ratio; inverted ratio is a finding"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G2.5-05"
+    name: "Color temperature consistency"
+    description: "No warm-to-cool or cool-to-warm color temperature shift within a cluster"
+    fidelity_class: [literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: "No warm-to-cool shift within a cluster; all members maintain consistent color temperature"
+    requires_perception: true
+    perception_modality: image
+
+  - id: "G2.5-06"
+    name: "Cluster-level coherence score"
+    description: "Per-cluster aggregate coherence score derived from criteria G2.5-01 through G2.5-05, yielding pass, warn, or fail"
+    fidelity_class: [literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "Per-cluster score: all pass → pass; any medium-severity finding → warn; any high-severity finding → fail. Fail clusters require operator decision: accept, re-dispatch interstitial, or re-dispatch whole cluster"
+    requires_perception: false

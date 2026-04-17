@@ -1,0 +1,50 @@
+name: Ambient Anti-Drift Monitor
+
+# This runs automatically every time you push to ANY branch.
+# Because it runs on "push" and not "pull_request", it will never block a merge.
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  monitor-and-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch depth 2 is required to compare the pushed commit against the previous one
+          fetch-depth: 2 
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # We use continue-on-error: true on all these steps. 
+      # This ensures the GitHub Action might show a "Failed" red X in the Actions tab 
+      # so you notice it, but it has ZERO power to block your local git workflow.
+
+      - name: Run Existing Fidelity Contracts Check
+        run: |
+          if test -f "scripts/validate_fidelity_contracts.py"; then
+            python scripts/validate_fidelity_contracts.py
+          else
+            echo "validate_fidelity_contracts.py not found, skipping."
+          fi
+        continue-on-error: true
+
+      - name: Run Existing Fidelity Drift Check
+        run: |
+          if test -f "scripts/fidelity_drift_check.py"; then
+            python scripts/fidelity_drift_check.py
+          else
+            echo "fidelity_drift_check.py not found, skipping."
+          fi
+        continue-on-error: true
+
+      - name: Run Documentation Drift Monitor
+        run: python scripts/utilities/doc_drift_monitor.py
+        continue-on-error: true

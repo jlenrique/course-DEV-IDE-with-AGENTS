@@ -1,0 +1,239 @@
+schema_version: "1.0"
+templates:
+  - template_id: deep-dive
+    display_name: Deep Dive
+    purpose: Progressively unpack a complex concept from core mechanism to grounded takeaway.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: reveal
+        develop_subtype: deepen
+      - position: develop
+        interstitial_type: simplification
+        develop_subtype: exemplify
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Dense conceptual topics with multiple moving parts.
+      - Lessons where learners need staged cognitive scaffolding.
+    avoid_when:
+      - The source content already resolves the concept in one simple step.
+      - Runtime budget cannot support a three-interstitial cluster.
+    pacing_profile: measured
+    head_word_range: [95, 145]
+    interstitial_word_ranges:
+      develop: [32, 46]
+      resolve: [26, 38]
+
+  - template_id: contrast-pair
+    display_name: Contrast Pair
+    purpose: Compare competing perspectives and converge to a reasoned synthesis.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: emphasis-shift
+        develop_subtype: reframe
+      - position: tension
+        interstitial_type: reveal
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Tradeoff-heavy decisions and opposing frameworks.
+      - Content that benefits from explicit point-counterpoint framing.
+    avoid_when:
+      - Learners need linear procedural instruction rather than comparison.
+      - Source material lacks enough evidence for a true contrast.
+    pacing_profile: measured
+    head_word_range: [90, 140]
+    interstitial_word_ranges:
+      develop: [28, 42]
+      tension: [30, 44]
+      resolve: [24, 36]
+
+  - template_id: evidence-build
+    display_name: Evidence Build
+    purpose: Stack examples and proof points before landing a conclusion.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: reveal
+        develop_subtype: exemplify
+      - position: develop
+        interstitial_type: reveal
+        develop_subtype: exemplify
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Data-driven arguments and research-backed instruction.
+      - Claims requiring sequential reinforcement.
+    avoid_when:
+      - Narrative emphasis is more important than evidentiary stacking.
+      - Content has only one credible evidence point.
+    pacing_profile: tight
+    head_word_range: [90, 135]
+    interstitial_word_ranges:
+      develop: [25, 38]
+      resolve: [24, 34]
+
+  - template_id: quick-punch
+    display_name: Quick Punch
+    purpose: Deliver one high-impact interstitial to sharpen a key point.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: emphasis-shift
+        develop_subtype: reframe
+    interstitial_count: 1
+    best_for:
+      - Fast pacing sections with one critical reframing moment.
+      - Clusters where the head slide already carries most of the load.
+    avoid_when:
+      - Learners need multi-step progression to understand the idea.
+      - The section requires explicit resolution language.
+    pacing_profile: tight
+    head_word_range: [80, 130]
+    interstitial_word_ranges:
+      develop: [25, 36]
+
+  - template_id: cognitive-reset
+    display_name: Cognitive Reset
+    purpose: Insert breathing room to reduce load before the next dense segment.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: pace-reset
+        develop_subtype: reframe
+    interstitial_count: 1
+    best_for:
+      - Content blocks with high intrinsic cognitive load.
+      - Runs where prior clusters have sustained dense exposition.
+    avoid_when:
+      - The section is already sparse and momentum is fragile.
+      - Time constraints discourage reflective pauses.
+    pacing_profile: breathing-room
+    head_word_range: [80, 125]
+    interstitial_word_ranges:
+      develop: [22, 34]
+
+  - template_id: data-walkthrough
+    display_name: Data Walkthrough
+    purpose: Simplify complex data, expose key signal, then resolve implications.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: simplification
+        develop_subtype: reframe
+      - position: tension
+        interstitial_type: reveal
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Quantitative charts and metrics-heavy source bundles.
+      - Lessons where interpretation matters more than raw values.
+    avoid_when:
+      - There is no meaningful data complexity to simplify.
+      - Audience already has deep quantitative fluency for the topic.
+    pacing_profile: measured
+    head_word_range: [95, 145]
+    interstitial_word_ranges:
+      develop: [28, 40]
+      tension: [28, 42]
+      resolve: [24, 36]
+
+  - template_id: narrative-pivot
+    display_name: Narrative Pivot
+    purpose: Shift storyline direction and then resolve tension with a new frame.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: bridge-text
+        develop_subtype: reframe
+      - position: tension
+        interstitial_type: reveal
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Mid-presentation directional changes.
+      - Moments where learner assumptions must be redirected.
+    avoid_when:
+      - Topic continuity is already stable and linear.
+      - There is no meaningful pivot in source intent.
+    pacing_profile: measured
+    head_word_range: [90, 140]
+    interstitial_word_ranges:
+      develop: [26, 40]
+      tension: [30, 44]
+      resolve: [24, 36]
+
+  - template_id: zoom-and-return
+    display_name: Zoom and Return
+    purpose: Zoom into detail and then pull learners back to the big picture.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: reveal
+        develop_subtype: deepen
+      - position: tension
+        interstitial_type: reveal
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Lessons that alternate between detail and synthesis levels.
+      - Frameworks where local detail must reconnect to global intent.
+    avoid_when:
+      - Source content never leaves one abstraction level.
+      - Learner context is too shallow for detail zooming.
+    pacing_profile: measured
+    head_word_range: [90, 140]
+    interstitial_word_ranges:
+      develop: [28, 42]
+      tension: [26, 40]
+      resolve: [24, 36]
+
+  - template_id: framework-expose
+    display_name: Framework Expose
+    purpose: Simplify a framework, spotlight a critical element, and resolve application.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: simplification
+        develop_subtype: deepen
+      - position: tension
+        interstitial_type: emphasis-shift
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Multi-part models and taxonomies.
+      - Framework teaching where one component has outsized leverage.
+    avoid_when:
+      - Framework is trivial and needs no staged decomposition.
+      - The source lacks actionable application context.
+    pacing_profile: measured
+    head_word_range: [90, 140]
+    interstitial_word_ranges:
+      develop: [28, 40]
+      tension: [25, 36]
+      resolve: [24, 36]
+
+  - template_id: emotional-arc
+    display_name: Emotional Arc
+    purpose: Build a full orient-complicate-illuminate arc for narrative resonance.
+    interstitial_sequence:
+      - position: develop
+        interstitial_type: reveal
+        develop_subtype: reframe
+      - position: tension
+        interstitial_type: reveal
+      - position: resolve
+        interstitial_type: bridge-text
+    interstitial_count: 3
+    best_for:
+      - Story-first segments requiring emotional progression.
+      - Concept change journeys where learner motivation matters.
+    avoid_when:
+      - Content is purely procedural with minimal narrative surface.
+      - Time budget only allows direct instruction.
+    pacing_profile: breathing-room
+    head_word_range: [95, 145]
+    interstitial_word_ranges:
+      develop: [28, 42]
+      tension: [30, 44]
+      resolve: [25, 38]

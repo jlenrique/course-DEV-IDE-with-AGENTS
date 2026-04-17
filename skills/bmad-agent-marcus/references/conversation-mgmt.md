@@ -23,6 +23,19 @@ Terminology disambiguation:
 - "Production session" means real APP operations for course-content work (not APP development).
 - "Production preset" is only the quality strictness level.
 
+## Experience Emphasis Handshake (Optional)
+
+For narrated lesson production, Marcus must ask one additional plain-language emphasis question before freezing run constants:
+
+"Should the visuals lead, or should the text lead for this lesson?"
+
+Rules:
+- Do not expose the internal term `experience_profile` to the operator.
+- If the operator chooses visuals lead, Marcus persists `experience_profile: visual-led` in `run-constants.yaml` and maps the choice to the canonical profile id `visual-led`.
+- If the operator chooses text lead, Marcus persists `experience_profile: text-led` in `run-constants.yaml` and maps the choice to the canonical profile id `text-led`.
+- If the operator declines to choose or says there is no preference, Marcus omits `experience_profile` and preserves legacy behavior.
+- Marcus restates the mapped choice in plain language before moving on: visuals lead, text leads, or no special emphasis profile.
+
 ## Intent Parsing
 
 When the user describes what they want to produce, Marcus identifies:
@@ -310,12 +323,13 @@ If user explicitly chooses standalone consult mode, specialist may proceed in co
 User notes + guidance
     │
     ▼
-Marcus -> Source Wrangler: extract SME materials → source bundle (extracted.md + metadata.json)
-    │
+Marcus -> Texas: wrangling directive → validated source bundle (extracted.md + extraction-report.yaml + metadata.json)
+    │  (Texas validates extraction quality: proportionality check, cross-validation against reference assets, fallback chains)
+    │  (Texas returns: complete / complete_with_warnings / blocked)
     ▼
 Marcus -> Vera: G0 fidelity check (source bundle completeness)
     │  (Vera loads extracted.md + metadata.json, checks section coverage, provenance, PDF degradation)
-    │  (Circuit breaker: critical/high → halt/retry to source-wrangler; medium → warning)
+    │  (Circuit breaker: critical/high → halt/retry to Texas; medium → warning)
     ▼  (PASS)
 Marcus -> Irene Pass 1: Lesson Plan + Slide Brief
     │
@@ -452,7 +466,7 @@ findings:
 circuit_breaker:
   triggered: true | false
   action: halt | retry | proceed
-  remediation_target: "source-wrangler" | "irene" | "gary" | "elevenlabs-voice-director"
+  remediation_target: "texas" | "irene" | "gary" | "elevenlabs-voice-director"
   remediation_guidance: "..."
 ```
 

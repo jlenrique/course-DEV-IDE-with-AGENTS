@@ -1,7 +1,7 @@
 # User Guide — Course Content Production System
 
 **Audience:** Course creators and instructional designers using the system to produce educational content.
-**Last Updated:** 2026-04-05 | **Project Phase:** Complete (Epics 1-14 done; standard and motion workflow templates live)
+**Last Updated:** 2026-04-12 | **Project Phase:** Epics 1–14 complete; Wave 1 cluster features live (v4.3 prompt pack); standard, motion, and cluster workflow templates available
 
 ---
 
@@ -157,7 +157,7 @@ Marcus can pull your reference materials into the production context:
 
 - **Notion** — Course development notes, syllabi, design documents. Tell Marcus: *"Pull my Module 3 notes from Notion"*
 - **Box Drive** — Locally synced files. Tell Marcus: *"Check Box Drive for the pharmacology references"*
-- **Web exemplars** — Share a URL, or save a page with Playwright in Cursor and point Marcus at the HTML file; the **source-wrangler** skill turns captures into `extracted.md` bundles for Irene and Gary
+- **Web exemplars** — Share a URL, or save a page with Playwright in Cursor and point Marcus at the HTML file; **Texas** (source wrangler agent) extracts, validates, and delivers `extracted.md` bundles for Irene and Gary
 
 Marcus proactively offers to pull source materials before starting production tasks. Context enrichment before creation beats revision after.
 
@@ -499,7 +499,7 @@ For each ingest, report: entrypoint used, output bundle path, and provenance met
 **Prompt 3 — Wrangle primary PDF source**
 
 ```
-Marcus, ingest this PDF through source-wrangler official PDF path and write a standard source bundle:
+Marcus, delegate PDF ingestion to Texas and write a validated source bundle:
 [PDF_PATH]
 Return extracted.md + metadata.json path and page coverage confirmation.
 ```
@@ -640,7 +640,7 @@ You don't need to know how these tools work — Marcus and the specialist agents
 | **Video** | Kling | Text/image-to-video and related flows (specialist **Kira**) |
 | **LMS Management** | Canvas LMS | Course structure, modules, assignments, quizzes (API + MCP in repo; use Marcus to route through the current Canvas path for your institution) |
 | **Surveys/Assessments** | Qualtrics | Professional survey and assessment creation (availability depends on the active specialist/manual path in your environment) |
-| **Course Dev Notes** | Notion | Pull reference materials into production context (source wrangler + API) |
+| **Course Dev Notes** | Notion | Pull reference materials into production context (Texas agent + API) |
 | **Source Files** | Box Drive | Access locally synced cloud files |
 | **Design/Graphics** | Canva | Design-guidance and Canva-specific workflow support; some programmatic paths still depend on current API/MCP constraints |
 | **Composition** | Descript (manual) | Final assembly of narrated decks; compositor skill produces assembly guides and syncs stills |

@@ -121,6 +121,7 @@ JSON schema (lightweight):
     {
       "slide_number": 1,
       "fidelity": "creative",
+      "cluster_role": null,
       "fidelity_rationale": "string",
       "source_anchors": ["string"],
       "queue": "creative"
@@ -131,7 +132,9 @@ JSON schema (lightweight):
 
 Rules:
 - `fidelity` must be one of: creative, literal-text, literal-visual.
+- `cluster_role` may be `head`, `interstitial`, or `null`.
 - `queue` must be: creative for creative slides; literal for literal-text and literal-visual slides.
+- Interstitial slides inherit their head slide's fidelity classification; do not classify interstitials independently.
 - slide_number values must be unique and strictly increasing.
 
 ## 5A) gary-slide-content.json
@@ -148,7 +151,10 @@ JSON schema (lightweight):
     {
       "slide_number": 1,
       "content": "string",
-      "source_ref": "string"
+      "source_ref": "string",
+      "cluster_id": null,
+      "cluster_role": null,
+      "parent_slide_id": null
     }
   ]
 }
@@ -158,6 +164,9 @@ Rules:
 - One row per slide_number in the planned deck.
 - content must be non-empty for every slide.
 - source_ref must be non-empty for every slide.
+- `cluster_id`, `cluster_role`, and `parent_slide_id` are additive and nullable for backward compatibility.
+- `cluster_role` must be `head`, `interstitial`, or `null`.
+- `parent_slide_id` is set only for interstitial rows and references the head slide.
 - For literal-visual slides, `content` must be URL-only (HTTPS image URL or APP-staged URL); explanatory/support text on-slide is not allowed and must move to narration/script.
 - This artifact carries the generation text payload. `gary-fidelity-slides.json` carries mode/fidelity metadata and queue split.
 
@@ -186,6 +195,7 @@ JSON schema (lightweight):
 ```
 
 Rules:
+- Interstitial slides do not receive diagram cards. Any `card_number` whose slide is marked `cluster_role: interstitial` must be omitted.
 - Provide exactly one dispatch-ready image source per card:
   - **Hosted path:** `image_url` is HTTPS and content-type resolvable as image.
   - **Tracked-mode staged path:** `preintegration_png_path` points to a local source PNG that APP will publish to managed Git hosting immediately before Gary dispatch.
@@ -223,9 +233,11 @@ Required fields:
 - governance.allowed_outputs (must include gary_slide_output)
 - fidelity_per_slide (or equivalent mapped payload)
 - theme_resolution block (matching gary-theme-resolution.json)
+- optional `clusters[]` block for clustered runs, with `{cluster_id, interstitial_count, narrative_arc}`
 
 Carry-forward integrity rule:
 - `theme_resolution` and `fidelity_per_slide` values in `gary-outbound-envelope.yaml` must be carried forward unchanged from `gary-theme-resolution.json` and `gary-fidelity-slides.json`.
+- When present, `clusters[]` must agree with the clustered slide contract: one row per cluster head, interstitial count between 1 and 3, and the cluster's one-sentence `narrative_arc`.
 
 ## 8A) authorized-storyboard.json
 
@@ -313,10 +325,10 @@ Required `pass2-envelope.json` fields:
 - gary_slide_output
 - expected_outputs
 - runtime_plan with:
-  - locked_slide_count
+  - parent_slide_count
   - target_total_runtime_minutes
-  - slide_runtime_average_seconds
-  - slide_runtime_variability_scale
+  - estimated_total_slides (system-derived from profile)
+  - avg_slide_seconds (system-derived from profile)
   - per_slide_targets[] when Irene Pass 1 produced the runtime budget table
 - voice_direction_defaults carrying the current recommended ElevenLabs starting settings
   - stability

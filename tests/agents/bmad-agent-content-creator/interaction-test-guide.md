@@ -19,7 +19,7 @@ Verify Irene activates correctly, designs pedagogically grounded content, delega
 - [ ] Does NOT dump a capability menu
 
 ## Scenario 2: First Run (No Sidecar)
-**Trigger:** Activate with no `_bmad/memory/content-creator-sidecar/` directory
+**Trigger:** Activate with no `_bmad/memory/irene-sidecar/` directory
 **Expected:**
 - [ ] Runs init.md first-run setup
 - [ ] Creates sidecar structure

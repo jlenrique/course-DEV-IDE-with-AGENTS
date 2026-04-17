@@ -34,8 +34,12 @@ segments:
     content_density: enum | null  # light | medium | heavy
     visual_detail_load: enum | null  # light | medium | heavy
     duration_rationale: string | null  # concise explanation for why this slide should run shorter, average, or longer than neighbors
-    bridge_type: enum | null  # none | intro | outro | both
-    behavioral_intent: string | null  # intended learner effect: credible, alarming, moving, reflective, etc.
+    onset_delay: float | null  # seconds to wait before narration starts for this segment (default 0.0)
+    dwell: float | null  # seconds to hold after narration ends before transition (default 0.0)
+    cluster_gap: float | null  # extra inter-segment spacing at cluster boundaries (default 0.0)
+    transition_buffer: float | null  # minimum transition safety buffer in seconds (default 0.0)
+    bridge_type: enum | null  # none | intro | outro | both | pivot | cluster_boundary
+    behavioral_intent: string | null  # intended learner effect; when clustered it must serve master_behavioral_intent
     voice_id: string | null # ElevenLabs voice choice for this segment; null = use lesson default
     visual_cue: string      # Human-readable description of intended visual
     visual_mode: enum       # static-hold | video | text-frame | pause-beat
@@ -44,13 +48,26 @@ segments:
     music: enum             # duck | swell | out | continue | null
     transition_in: enum     # fade | cross-dissolve | cut | none
     transition_out: enum    # fade | cross-dissolve | cut | none
-    # ── Visual references from Irene Pass 2 (Story 13.3) ──
-    visual_references:               # list of visual elements referenced in narration
-      - element: string              # what is referenced (e.g., "comparison timeline")
-        location_on_slide: string    # spatial description (e.g., "left panel")
-        narration_cue: string        # exact narration phrase that references this element
-        perception_source: string    # slide_id from perception_artifacts
-    # ── Written back by ElevenLabs agent ──
+     # ── Visual references from Irene Pass 2 (Story 13.3) ──
+     visual_references:               # list of visual elements referenced in narration
+       - element: string              # what is referenced (e.g., "comparison timeline")
+         location_on_slide: string    # spatial description (e.g., "left panel")
+         narration_cue: string        # exact narration phrase that references this element
+         perception_source: string    # slide_id from perception_artifacts
+     # ── Cluster fields from Irene Pass 2 (Story 19.1) ──
+     cluster_id: string | null        # cluster identifier; null for non-clustered runs
+     cluster_role: enum | null        # head | interstitial
+     cluster_position: enum | null    # establish | develop | tension | resolve
+     develop_type: enum | null        # deepen | reframe | exemplify (only when cluster_position == develop)
+     parent_slide_id: string | null   # set on interstitials, references the head slide
+     interstitial_type: enum | null   # reveal | emphasis-shift | bridge-text | simplification | pace-reset
+     isolation_target: string | null  # specific element surfaced from the head slide
+      narrative_arc: string | null     # one-sentence cluster arc, set on head and inherited by cluster members
+      master_behavioral_intent: enum | null  # cluster-level behavioral directive (credible, alarming, provocative, reflective, moving, clear-guidance, attention-reset), set on head and inherited by cluster members
+     cluster_interstitial_count: int | null  # recommended count for the cluster, 1-3
+     selected_template_id: string | null     # selected cluster structure template id (e.g., deep-dive)
+     double_dispatch_eligible: boolean | null  # default true, set false for interstitials in MVP
+     # ── Written back by ElevenLabs agent ──
     narration_duration: float | null    # seconds
     narration_file: string | null       # relative path, e.g., "course-content/staging/C1-M1-L3/audio/seg-01.mp3"
     narration_vtt: string | null        # relative path, e.g., "course-content/staging/C1-M1-L3/captions/seg-01.vtt"
@@ -151,9 +168,43 @@ Default behavior remains additive and backward compatible:
 | `approved` | Motion Gate approved the asset for Irene Pass 2 |
 | `null` | Static segment, no motion lifecycle |
 
+### Cluster Fields
+
+| Field | Type | Nullability | Description |
+|-------|------|-------------|-------------|
+| `cluster_id` | string | nullable | Unique identifier for the cluster; null for non-clustered segments |
+| `cluster_role` | enum | nullable | Membership role: `head` (first in cluster) or `interstitial` (supporting slides) |
+| `cluster_position` | enum | nullable | Narrative position in cluster arc: `establish` (orient), `develop` (deepen/reframe/exemplify), `tension` (complicate), `resolve` (land meaning) |
+| `develop_type` | enum | nullable | Sub-type for `develop` position: `deepen` (unpack), `reframe` (recontextualize), `exemplify` (illustrate) |
+| `parent_slide_id` | string | nullable | For interstitials, references the head slide's `id` |
+| `interstitial_type` | enum | nullable | Visual strategy: `reveal` (zoom/isolate), `emphasis-shift` (highlight one element), `bridge-text` (key phrase), `simplification` (reduce complexity), `pace-reset` (rest visual) |
+| `isolation_target` | string | nullable | Specific element from head slide to surface (e.g., "working memory box") |
+| `narrative_arc` | string | nullable | One-sentence emotional journey (e.g., "From confusion to clarity through progressive disclosure") |
+| `master_behavioral_intent` | enum | nullable | Cluster-level behavioral directive inherited by cluster members: `credible`, `alarming`, `provocative`, `reflective`, `moving`, `clear-guidance`, or `attention-reset` |
+| `cluster_interstitial_count` | int | nullable | Planned interstitial count for cluster (1-3) |
+| `selected_template_id` | string | nullable | Selected cluster structure template for this cluster; copied to all cluster-member rows for traceability |
+| `double_dispatch_eligible` | boolean | nullable | Whether segment can use double-dispatch; defaults true, false for interstitials in MVP |
+
+Defaults: All null for non-clustered runs. `double_dispatch_eligible` defaults to true if null.
+
+### Timing Buffer Fields (Story 20c-8)
+
+| Field | Type | Nullability | Description |
+|-------|------|-------------|-------------|
+| `onset_delay` | float | nullable | Delay before narration starts for the segment. |
+| `dwell` | float | nullable | Hold duration after narration ends before transitioning. |
+| `cluster_gap` | float | nullable | Extra spacing applied when entering a new cluster boundary. |
+| `transition_buffer` | float | nullable | Minimum safety buffer around transition operations. |
+
 ---
 
-## Seven Use Case Patterns
+## Migration Notes (Story 19.1)
+
+All cluster fields are additive and nullable. Existing manifests remain valid with all cluster fields absent (null). Non-clustered runs continue to work unchanged. Cluster fields are optional workflow-specific extensions, following the precedent of motion fields (Story 14.2).
+
+---
+
+## Eight Use Case Patterns
 
 ### UC1 — Narrated Slide Deck (most common)
 ```yaml
@@ -281,6 +332,45 @@ Default behavior remains additive and backward compatible:
   transition_out: fade
 ```
 
+### UC8 — Clustered Presentation (progressive disclosure)
+```yaml
+- id: seg-cluster-1-head
+  narration_text: "Cognitive load theory explains how working memory limits learning..."
+  behavioral_intent: "credible"
+  voice_id: null
+  visual_mode: static-hold
+  visual_source: gary
+  cluster_id: "cluster-1"
+  cluster_role: "head"
+  cluster_position: "establish"
+  narrative_arc: "From overload awareness to capacity management through targeted interventions"
+  cluster_interstitial_count: 2
+  double_dispatch_eligible: true
+  sfx: null
+  music: duck
+  transition_in: fade
+  transition_out: none
+- id: seg-cluster-1-int1
+  narration_text: "The working memory box shows the core constraint..."
+  behavioral_intent: "clear-guidance"
+  voice_id: null
+  visual_mode: static-hold
+  visual_source: gary
+  cluster_id: "cluster-1"
+  cluster_role: "interstitial"
+  cluster_position: "develop"
+  develop_type: "deepen"
+  parent_slide_id: "seg-cluster-1-head"
+  interstitial_type: "emphasis-shift"
+  isolation_target: "working memory capacity box"
+  double_dispatch_eligible: false
+  sfx: null
+  music: continue
+  transition_in: none
+  transition_out: cross-dissolve
+```
+*Note: Cluster head establishes the topic; interstitials progressively disclose elements without introducing new concepts outside the head segment's instructional scope.*
+
 ---
 
 ## Downstream Consumer Notes
@@ -289,7 +379,7 @@ Default behavior remains additive and backward compatible:
 - `narration_text` per segment — text to synthesize
 - `behavioral_intent` — delivery cue for tone, pacing, and emphasis
 - `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale` — context for why the text was written at this length; use these for gentle delivery shaping, not for ad hoc copy rewriting
-- `bridge_type` — whether the segment includes an explicit intro/outro beat that should be preserved naturally rather than flattened
+- `bridge_type` — whether the segment includes an explicit intro/outro or cluster-boundary beat that should be preserved naturally rather than flattened
 - `voice_id` — per-segment voice override when present; otherwise use the lesson default from Marcus/style guide
 - `sfx` — SFX cue to generate or look up
 - `music` — music direction (swell/duck/out)
@@ -317,7 +407,7 @@ Motion-aware compositor note:
 - `visual_duration` vs `narration_duration` — validates ±0.5s tolerance
 - Segment coverage — validates all segments have narration files
 - `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale` — validates whether runtime variance was pedagogically justified rather than arbitrary
-- `bridge_type` — validates that explicit learner-facing intros/outros appear often enough to support orientation without making the lesson formulaic
+- `bridge_type` — validates that explicit learner-facing intros/outros and cluster-boundary seams appear often enough to support orientation without making the lesson formulaic
 - `behavioral_intent` — checks whether the artifact set appears to support the intended affective goal rather than fighting it
 
 Quinn-R interpretation note:
@@ -331,9 +421,13 @@ Quinn-R interpretation note:
 - Produce the manifest in the same task as the narration script — they are always paired
 - Segment IDs must match `[SEGMENT: seg-XX]` markers in the narration script exactly
 - `behavioral_intent` should be concise and action-guiding, not literary. Think "credible", "urgent", "attention-reset", "reflective", not long prose.
+- In clustered runs, process segments in `cluster_id` order so the head slide establishes the frame before any interstitials elaborate it.
+- In clustered runs, `behavioral_intent` must serve `master_behavioral_intent`; interstitials may modulate intensity but must not contradict the cluster's affective direction.
 - `timing_role`, `content_density`, and `visual_detail_load` should explain why this slide deserves its runtime.
 - `duration_rationale` must reference at least two of: pedagogical purpose, concept/detail load, visual burden.
 - Use `bridge_type` sparingly but intentionally; it exists to enforce occasional connective tissue, not repetitive transition clutter.
+- In clustered runs, use `cluster_boundary` on the head slide that opens a new cluster after a prior cluster; keep within-cluster interstitials at `none` unless a tension beat earns `bridge_type: pivot`.
+- In clustered runs, interstitial narration should stay short, isolation-targeted, and bounded by the head segment's source-backed concept envelope.
 - Do not make neighboring slides different lengths just to create variety. Runtime variance should come from content burden and rhetorical function.
 - Use `voice_id` only when the segment truly needs an override (dialogue, quoted speaker, different narrator persona). Leave it `null` for the default lesson narrator.
 - `visual_cue` should be descriptive enough for Gary or Kira to understand intent, but not so prescriptive that it overrides their judgment

@@ -1,0 +1,9 @@
+tool: qualtrics
+agent: qualtrics-specialist
+description: Qualtrics assessment specialist exemplars
+exemplars:
+  - name: L1-survey-inventory-snapshot
+    description: Survey inventory snapshot for L1 fidelity audit
+    type: assessment-snapshot
+    created: 2026-04-11
+    status: active

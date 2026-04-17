@@ -1,0 +1,9 @@
+hashing:
+  algorithm: sha256
+rules:
+  required_terms: []
+  forbidden_terms: []
+  sequencing:
+    enforce: true
+  sampling:
+    mode: full  # full | stratified

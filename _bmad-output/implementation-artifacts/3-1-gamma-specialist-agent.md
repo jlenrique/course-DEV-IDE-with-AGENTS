@@ -1,5 +1,7 @@
 # Story 3.1: Gamma Specialist Agent & Mastery Skill
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 Status: done
 
 ## Story

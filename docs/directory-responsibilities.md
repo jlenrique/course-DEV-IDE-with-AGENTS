@@ -34,6 +34,18 @@ Per-deployment, per-course configuration that evolves through orchestrator conve
 | `style_guide.yaml` | Per-tool parameter preferences only (Gamma LLM, ElevenLabs voice ID, Canvas course ID, etc.) | Read before generation; write-back learned preferences |
 | `course_context.yaml` | Course hierarchy — name, code, modules, lessons, learning objectives | Read for scope resolution; updated as curriculum planning proceeds |
 | `tool_policies.yaml` | Run presets (explore/draft/production/regulated), quality gate thresholds, retry policy, fallback strategies | Read for quality enforcement; rarely updated by agents |
+| `narration-script-parameters.yaml` | Script-level tunable knobs for Irene Pass 2 — narration density, word ranges, cluster head/interstitial word budgets, bridge cadence policy | Read by Irene + Vera G4; human-tuned |
+| `experience-profiles.yaml` | Two extreme experience profiles (visual-led, text-led) with `slide_mode_proportions` and `narration_profile_controls` target values | Read by Creative Director (CD) + profile resolver in `run_constants.py`; human-curated |
+| `parameter-registry-schema.yaml` | Master registry of all production parameters across three families (run-constants, narration-time, assembly-time) | Read by validators and the parameter-directory doc; append-only as parameters are added |
+| `prompting.yaml` | Cluster prompt engineering templates (small/large), safety clauses, token budget, hashing config | Read by cluster dispatch scripts; human-curated templates |
+| `dispatch.yaml` | Cluster dispatch sequencing policy — ordering, batch size, max concurrency, retry/backoff, hashing | Read by `skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py`; operational tuning |
+| `validation.yaml` | Cluster coherence validation rules — required/forbidden terms, sequencing enforcement, sampling mode, hashing | Read by `skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py` |
+
+**Subdirectory: `state/config/fidelity-contracts/`** — L1 fidelity contract YAML per gate. One file per gate (e.g., `g0-source-bundle.yaml`, `g1.5-cluster-plan.yaml`, `g2.5-cluster-coherence.yaml`, `g4-narration-script.yaml`). Each defines evaluation criteria with `id`, `severity`, `evaluation_type` (deterministic or agentic), and `check` specification. G1.5 and G2.5 are conditional — present only for lessons with cluster segments.
+
+**Subdirectory: `state/config/structural-walk/`** — Workflow-specific manifest files for the structural walk tool (`standard.yaml`, `motion.yaml`, `cluster.yaml`). See `docs/structural-walk.md`.
+
+**Subdirectory: `state/config/schemas/`** — Machine-readable schemas for agent-generated artifacts. Currently: `creative-directive.schema.json` and `creative-directive.schema.yaml` (CD agent output format). Validators in `scripts/utilities/creative_directive_validator.py` read from these schemas at runtime, not from hardcoded field lists.
 
 **Does NOT contain**: brand identity, colors, typography, voice/tone, or accessibility standards. Those live in `resources/style-bible/`.
 
@@ -45,6 +57,17 @@ Not git-versioned. Operational state that doesn't survive a fresh clone.
 |------|----------|
 | `coordination.db` | SQLite — production runs, agent coordination, quality gate records |
 | `backup/` | Database backup and restore scripts |
+
+### `scripts/` — Executable Code and Utilities
+
+Python scripts for API clients, state management, utilities, and CLI tools. Organized by function.
+
+| Subdirectory | Contents |
+|--------------|----------|
+| `api_clients/` | API client classes extending `BaseAPIClient` (Gamma, ElevenLabs, Canvas, etc.) |
+| `state_management/` | SQLite database operations and schema management |
+| `utilities/` | Shared utilities: run constants parsing, file helpers, logging, progress map CLI, creative directive validator, **profile-aware slide/runtime estimator** (`slide_count_runtime_estimator.py`) |
+| `tests/` | Cross-cutting test utilities and fixtures |
 
 ### `resources/style-bible/` — Authoritative Brand Reference
 
@@ -77,6 +100,20 @@ Two roles: (1) **exemplar-driven agent development** — real artifacts that spe
 
 **Doc refresh protocol**: `_shared/doc-refresh-protocol.md` defines how agents refresh their tool's API documentation before woodshed cycles. Each mastery skill maintains `references/doc-sources.yaml` with authoritative URLs, LLM-optimized endpoints (e.g., Gamma's `llms.txt`), and changelog locations. Agents use the Ref MCP (`ref_search_documentation`, `ref_read_url`) to check for changes and update their `parameter-catalog.md` accordingly.
 
+### `maintenance/` — Cross-harmonization and governance utilities
+
+| File | Contents |
+|------|----------|
+| `audit_done_bmad_coverage.py` | Optional audit: compares `sprint-status.yaml` `done` keys to formal BMAD closure markers in story artifacts; stdout or redirect to `reports/audit-done-bmad-coverage.txt` |
+| `cross-harmonization-report-*.md` | Dated session reports when docs/sprint/story alignment passes are run |
+
+### `reports/` — Operator and automation outputs
+
+| Path | Contents |
+|------|----------|
+| `reports/audit-done-bmad-coverage.txt` | (Optional) Saved output of BMAD done-story coverage audit |
+| `reports/proofs/<story-key>/...` | Frozen proof JSON bundles (e.g. `20c-14` profile propagation) — not the same as exemplar slides; see `next-session-start-here.md` and story `20c-14` |
+
 ### `resources/tool-inventory/` — Tool Capability Reference
 
 | File | Contents |
@@ -93,6 +130,26 @@ Per-agent persistent learning. Mode-aware write rules apply.
 | `access-boundaries.md` | Read/write/deny zones | Set at build time, read-only |
 | `patterns.md` | Learned workflow/parameter patterns | Default mode only (append) |
 | `chronology.md` | Session and production run history | Default mode only (append) |
+
+### `_bmad-output/` — BMAD workflow artifact tree
+
+BMAD agents (Marcus et al.) write planning, implementation, and collaboration artifacts here. Git-versioned. The tree is partitioned by artifact *kind*, not by epic:
+
+| Subdirectory | Contents | Agent Interaction |
+|--------------|----------|-------------------|
+| `planning-artifacts/` | Epic-level planning: `epics.md`, PRDs, scope charters | Read by `bmad-sprint-planning`; updated during planning |
+| `implementation-artifacts/` | **Stories only.** One markdown per sprint-status key (`<epic>-<story>-<slug>.md`), plus `sprint-status.yaml` (single canonical rollup), `bmm-workflow-status.yaml`, and evidence artifacts tightly bound to a specific story run | Agent-writable per-story; canonical status files are append-audited |
+| `specs/` | Design specs and multi-story plans that aren't a single story's acceptance criteria — `spec-*.md`, `g-*.md` governance plans, SB.1 storyboard design, runtime-refactor timing plan | Human + agent-writable; referenced from epics.md and SKILL.md roadmaps |
+| `reviews/` | Review outputs not owned by any single story: `*-adversarial-review.md`, `findings-matrix-*`, `review-*.md` (acceptance-auditor / blind-hunter / edge-case-hunter), retros, internal reviews, fidelity-audit baseline, party-mode consensus logs, review checklists | Written by review sub-agents; read by next-session orientation |
+| `maps/` | Cross-cutting planning/optimization maps: `app-optimization-map-*`, `app-three-layer-optimization-plans-*`, `deferred-work.md`, `project-doc-review-plan-*` | Read by many skills; `deferred-work.md` is the canonical "defer" sink for `bmad-quick-dev` |
+| `brainstorming/` | Free-form brainstorms and party-mode transcripts that predate formal consensus logs | Mostly human-seeded |
+| `test-artifacts/` | Simulated-run evidence and test-specific artifacts that don't belong under `tests/` | Agent-writable per run |
+
+**Naming invariant (enforced by Audra L1):** every file in `implementation-artifacts/` matches story-ID pattern `^<epic>-<story>-<slug>.md$` OR is one of the canonical status YAMLs (`sprint-status.yaml`, `bmm-workflow-status.yaml`). Non-story artifacts (specs, reviews, maps) live in the kind-bucketed siblings above.
+
+**Sprint-status round-trip invariant:** for every `development_status.<key>` in `implementation-artifacts/sprint-status.yaml`, a file `implementation-artifacts/<key>.md` exists — UNLESS the entry is a tombstone (`status: retired` with `superseded_by` or `reason`) or an epic/governance rollup (`epic-*`, `g-*`, `sb-*`). Renames carry a `previous_slug:` breadcrumb on the new key.
+
+**Skill-resolved template vars** (see `_bmad/bmm/config.yaml`): `{planning_artifacts}`, `{implementation_artifacts}`, `{specs}`, `{reviews}`, `{maps}`.
 
 ### `course-content/staging/` — Draft and bundle workspace
 

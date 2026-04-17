@@ -73,7 +73,7 @@ def test_canva_references_exist() -> None:
 
 
 def test_canva_sidecar_initialized_with_boundaries() -> None:
-    sidecar = ROOT / "_bmad" / "memory" / "canva-specialist-sidecar"
+    sidecar = ROOT / "_bmad" / "memory" / "tamara-sidecar"
     expected = ["index.md", "patterns.md", "chronology.md", "access-boundaries.md"]
 
     for name in expected:

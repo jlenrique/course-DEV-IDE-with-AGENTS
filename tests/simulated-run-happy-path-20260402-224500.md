@@ -217,8 +217,8 @@ Breakdown:
 | `skills/gamma-api-mastery/scripts/tests/test_partition_fidelity.py` | Updated for three-way fidelity split |
 | `skills/gamma-api-mastery/scripts/tests/conftest.py` | Added live_api_e2e test filtering |
 | `_bmad-output/implementation-artifacts/sprint-status.yaml` | Epic SB + SB.1 -> done |
-| `_bmad-output/implementation-artifacts/sb-1-evolving-lesson-storyboard-run-view.md` | Status -> done, dev record populated |
+| `_bmad-output/specs/sb-1-evolving-lesson-storyboard-run-view.md` | Status -> done, dev record populated |
 | `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` | Updated counts, next step, SB.1 decision |
-| `_bmad-output/implementation-artifacts/deferred-work.md` | Closed remaining item |
+| `_bmad-output/maps/deferred-work.md` | Closed remaining item |
 | `docs/token-efficiency-review-and-remediation.md` | New: token management reference |
 | `tests/simulated-run-happy-path-20260402-224500.md` | This file |

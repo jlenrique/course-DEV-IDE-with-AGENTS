@@ -193,27 +193,53 @@ class TestSQLiteDatabase:
 
 
 class TestBMadMemorySidecars:
-    SIDECARS = [
-        "master-orchestrator-sidecar",
-        "gamma-specialist-sidecar",
-        "elevenlabs-specialist-sidecar",
-        "canvas-specialist-sidecar",
-        "quality-reviewer-sidecar",
+    # All 18 persistent memory directories under _bmad/memory/.
+    # 17 follow the persona-based `<name>-sidecar/index.md` convention.
+    # `bmad-agent-desmond` uses a distinct memory-sanctum pattern with
+    # uppercase `INDEX.md`. The legacy `master-orchestrator-sidecar`
+    # redirect placeholder was removed on 2026-04-16.
+    MEMORY_ENTRIES: list[tuple[str, str]] = [
+        ("aria-sidecar", "index.md"),
+        ("audra-sidecar", "index.md"),
+        ("bmad-agent-desmond", "INDEX.md"),
+        ("canvas-specialist-sidecar", "index.md"),
+        ("cora-sidecar", "index.md"),
+        ("dan-sidecar", "index.md"),
+        ("enrique-sidecar", "index.md"),
+        ("gary-sidecar", "index.md"),
+        ("irene-sidecar", "index.md"),
+        ("kim-sidecar", "index.md"),
+        ("kira-sidecar", "index.md"),
+        ("marcus-sidecar", "index.md"),
+        ("mike-sidecar", "index.md"),
+        ("mira-sidecar", "index.md"),
+        ("quinn-r-sidecar", "index.md"),
+        ("tamara-sidecar", "index.md"),
+        ("vera-sidecar", "index.md"),
+        ("vyx-sidecar", "index.md"),
     ]
 
     def test_memory_directory_exists(self):
         assert (ROOT / "_bmad/memory").is_dir()
 
-    @pytest.mark.parametrize("sidecar", SIDECARS)
-    def test_sidecar_directory_exists(self, sidecar: str):
-        assert (ROOT / "_bmad/memory" / sidecar).is_dir()
+    @pytest.mark.parametrize("mem_dir,entry_filename", MEMORY_ENTRIES)
+    def test_memory_directory_exists_per_entry(self, mem_dir: str, entry_filename: str):
+        assert (ROOT / "_bmad/memory" / mem_dir).is_dir()
 
-    @pytest.mark.parametrize("sidecar", SIDECARS)
-    def test_sidecar_has_index_md(self, sidecar: str):
-        index = ROOT / "_bmad/memory" / sidecar / "index.md"
-        assert index.exists()
-        content = index.read_text(encoding="utf-8")
-        assert len(content) > 10, "index.md should have meaningful content"
+    @pytest.mark.parametrize("mem_dir,entry_filename", MEMORY_ENTRIES)
+    def test_memory_entry_file_present(self, mem_dir: str, entry_filename: str):
+        entry = ROOT / "_bmad/memory" / mem_dir / entry_filename
+        assert entry.exists(), f"Missing entry file: {entry}"
+        content = entry.read_text(encoding="utf-8")
+        assert len(content) > 10, f"{entry_filename} should have meaningful content"
+
+    def test_no_legacy_master_orchestrator_sidecar(self):
+        """Cascade cleanup (2026-04-16): legacy redirect placeholder must not reappear."""
+        legacy = ROOT / "_bmad/memory/master-orchestrator-sidecar"
+        assert not legacy.exists(), (
+            "Legacy master-orchestrator-sidecar directory has returned. "
+            "Active path is _bmad/memory/marcus-sidecar/."
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -16,14 +16,19 @@ cross_cutting:
   - component: Quality reviewer
     path: skills/bmad-agent-quality-reviewer/SKILL.md
   - component: Quality reviewer sidecar
-    path: _bmad/memory/quality-reviewer-sidecar
+    path: _bmad/memory/quinn-r-sidecar
   - component: Marcus sidecar
-    path: _bmad/memory/bmad-agent-marcus-sidecar
-  - component: Redirect placeholder
-    path: _bmad/memory/master-orchestrator-sidecar/index.md
-    redirect_contains: "Active sidecar: `_bmad/memory/bmad-agent-marcus-sidecar/`"
+    path: _bmad/memory/marcus-sidecar
   - component: Contract validator
     path: scripts/validate_fidelity_contracts.py
+  - component: Creative directive contract
+    path: skills/bmad-agent-cd/references/creative-directive-contract.md
+  - component: Experience profiles registry
+    path: state/config/experience-profiles.yaml
+    check_mode: yaml
+  - component: Parameter registry schema
+    path: state/config/parameter-registry-schema.yaml
+    check_mode: yaml
 anti_drift:
   - name: Literal-visual payload rules in artifacts contract
     path: docs/workflow/trial-run-pass2-artifacts-contract.md
@@ -59,6 +64,11 @@ anti_drift:
       - "Required HIL review (Storyboard A):"
       - "Required HIL review (Storyboard B, before audio/script finalization):"
     ordered: true
+  - name: Operations context experience-profile invariant
+    path: docs/operations-context.md
+    needles:
+      - "EXPERIENCE_PROFILE"
+      - "narration_profile_controls"
 sequence_doc_parity:
   - stage: storyboard
     path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md

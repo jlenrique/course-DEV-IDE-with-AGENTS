@@ -1,0 +1,15 @@
+segments:
+  - id: "seg-01"
+    gary_slide_id: "s-1"
+    gary_card_number: 1
+    narration_text: "notice the key point and explain the insight on slide 1."
+    behavioral_intent: "credible"
+    visual_file: "slide-01.png"
+    visual_references:
+      - element: "Key Point"
+        location_on_slide: "center"
+        narration_cue: "notice the key point"
+        perception_source: "s-1"
+    motion_type: "static"
+    motion_asset_path: null
+    motion_status: null

@@ -45,7 +45,7 @@ def test_coursearc_reference_guides_exist() -> None:
 
 
 def test_coursearc_sidecar_has_boundaries() -> None:
-    sidecar = ROOT / "_bmad" / "memory" / "coursearc-specialist-sidecar"
+    sidecar = ROOT / "_bmad" / "memory" / "kim-sidecar"
     boundaries = (sidecar / "access-boundaries.md").read_text(encoding="utf-8")
 
     assert "## Read" in boundaries

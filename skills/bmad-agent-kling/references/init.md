@@ -4,7 +4,7 @@ This file is loaded when Kira's memory sidecar does not yet exist or has no acti
 
 ## Initial Setup
 
-1. Create sidecar directory at `{project-root}/_bmad/memory/kling-specialist-sidecar/` if missing
+1. Create sidecar directory at `{project-root}/_bmad/memory/kira-sidecar/` if missing
 2. Initialize `index.md` with:
    - Agent identity: Kira — Video Director ??
    - Agent path: `skills/bmad-agent-kling/SKILL.md`

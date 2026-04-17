@@ -1,0 +1,116 @@
+workflow: cluster
+title: Cluster-enabled narrated workflow
+walk_type: Structural walk (cluster-enabled narrated workflow, deterministic default)
+cross_cutting:
+  - component: Marcus orchestrator
+    path: skills/bmad-agent-marcus/SKILL.md
+  - component: Marcus production-plan generator
+    path: skills/bmad-agent-marcus/scripts/generate-production-plan.py
+  - component: Marcus workflow template registry
+    path: skills/bmad-agent-marcus/references/workflow-templates.yaml
+    check_mode: yaml
+  - component: Production coordination
+    path: skills/production-coordination/scripts/manage_baton.py
+  - component: Fidelity assessor
+    path: skills/bmad-agent-fidelity-assessor/SKILL.md
+  - component: Quality reviewer
+    path: skills/bmad-agent-quality-reviewer/SKILL.md
+  - component: Quality reviewer sidecar
+    path: _bmad/memory/quinn-r-sidecar
+  - component: Marcus sidecar
+    path: _bmad/memory/marcus-sidecar
+  - component: Contract validator
+    path: scripts/validate_fidelity_contracts.py
+  - component: Cluster template library
+    path: skills/bmad-agent-marcus/scripts/cluster_template_library.py
+  - component: Cluster template planner
+    path: skills/bmad-agent-marcus/scripts/cluster_template_planner.py
+  - component: Cluster template selector
+    path: skills/bmad-agent-marcus/scripts/cluster_template_selector.py
+  - component: Cluster coherence validation
+    path: skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py
+  - component: Cluster dispatch sequencing
+    path: skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py
+  - component: Cluster prompt engineering
+    path: skills/bmad-agent-marcus/scripts/cluster_prompt_engineering.py
+  - component: Evaluate cluster template selection
+    path: skills/bmad-agent-marcus/scripts/evaluate_cluster_template_selection.py
+  - component: Interstitial redispatch protocol
+    path: skills/bmad-agent-marcus/scripts/interstitial_redispatch_protocol.py
+  - component: Validate cluster plan
+    path: skills/bmad-agent-marcus/scripts/validate-cluster-plan.py
+  - component: Interstitial redispatch CLI
+    path: skills/bmad-agent-marcus/scripts/run-interstitial-redispatch.py
+  - component: G1.5 cluster plan gate runner
+    path: skills/bmad-agent-marcus/scripts/run-g1.5-cluster-gate.py
+  - component: G1.5 fidelity contract
+    path: state/config/fidelity-contracts/g1.5-cluster-plan.yaml
+    check_mode: yaml
+  - component: G2.5 fidelity contract
+    path: state/config/fidelity-contracts/g2.5-cluster-coherence.yaml
+    check_mode: yaml
+  - component: Creative directive contract
+    path: skills/bmad-agent-cd/references/creative-directive-contract.md
+  - component: Experience profiles registry
+    path: state/config/experience-profiles.yaml
+    check_mode: yaml
+  - component: Parameter registry schema
+    path: state/config/parameter-registry-schema.yaml
+    check_mode: yaml
+anti_drift:
+  - name: Cluster plan gate in fidelity gate map
+    path: docs/fidelity-gate-map.md
+    needles:
+      - "G1.5"
+      - "Cluster Plan"
+  - name: Cluster coherence gate in fidelity gate map
+    path: docs/fidelity-gate-map.md
+    needles:
+      - "G2.5"
+      - "Cluster Coherence"
+  - name: Cluster workflow documentation
+    path: docs/workflow/cluster-workflow.md
+    needles:
+      - "cluster_template_planner"
+      - "cluster_coherence_validation"
+  - name: Lane matrix cluster gates
+    path: docs/lane-matrix.md
+    needles:
+      - "G1.5"
+      - "G2.5"
+    ordered: false
+  - name: Operations context cluster invariants
+    path: docs/operations-context.md
+    needles:
+      - "CLUSTER_DENSITY"
+      - "G1.5"
+      - "G2.5"
+  - name: Operations context experience-profile invariant
+    path: docs/operations-context.md
+    needles:
+      - "EXPERIENCE_PROFILE"
+      - "narration_profile_controls"
+sequence_doc_parity:
+  - stage: cluster-plan
+    path: docs/workflow/cluster-workflow.md
+    needle: "G1.5"
+  - stage: cluster-coherence
+    path: docs/workflow/cluster-workflow.md
+    needle: "G2.5"
+dry_run:
+  steps:
+    - key: manifest-resolution
+      label: Manifest resolution and shape check
+      scope: cluster
+      input: state/config/structural-walk/cluster.yaml
+      kind: manifest
+    - key: sequence-preview
+      label: Marcus workflow sequence preview
+      scope: cluster
+      input: skills/bmad-agent-marcus/references/workflow-templates.yaml:clustered-narrated-deck-video-export
+      kind: sequence
+    - key: sequence-doc-parity
+      label: Marcus sequence-to-document parity
+      scope: cluster
+      input: state/config/structural-walk/cluster.yaml:sequence_doc_parity
+      kind: sequence_docs

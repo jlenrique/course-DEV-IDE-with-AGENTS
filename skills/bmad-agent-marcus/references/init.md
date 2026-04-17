@@ -4,7 +4,7 @@ Welcome! Setting up the production orchestrator workspace.
 
 ## Memory Location
 
-Creating `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/` for persistent memory.
+Creating `{project-root}/_bmad/memory/marcus-sidecar/` for persistent memory.
 
 ## Initial Discovery
 

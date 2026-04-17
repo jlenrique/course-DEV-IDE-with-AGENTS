@@ -2,6 +2,14 @@
 
 Companion to `bmad-session-protocol-session-WRAPUP.md`. Together these two files guarantee reliable context transfer between sessions.
 
+## Canonical Session Protocol Set
+
+The canonical BMAD session protocol is this pair:
+- `bmad-session-protocol-session-START.md`
+- `bmad-session-protocol-session-WRAPUP.md`
+
+If a user or older note refers to a literal "session xyz" document and no such file exists, treat that as a stale label and use this start/wrapup pair instead. Record the assumption in session notes if it affects execution.
+
 ## §0: Project Purpose TL;DR (For Unfamiliar Agents)
 
 **Purpose**: Build a persistent collaborative intelligence infrastructure for systematically scaling creative expertise in online course content production. A custom master orchestrator agent (Marcus) coordinates specialist agents that manipulate professional media tools through skills backed by Python scripts for API calls, while systematically capturing creative decision-making patterns in BMad memory sidecars for iterative refinement and reuse.
@@ -25,13 +33,14 @@ The startup protocol **reads** certain files; the wrapup protocol **writes** the
 
 | File | Startup reads | Wrapup writes | Role |
 |------|:---:|:---:|------|
-| `next-session-start-here.md` | Step 1 | Step 7 | **Forward-looking hot-start** — next actions, branch, risks, gotchas |
+| `next-session-start-here.md` | Step 1 | Draft 0c, finalize 7 | **Forward-looking hot-start** — next actions, branch, risks, gotchas |
 | `docs/project-context.md` | Step 1 | Step 5 | Current state, key decisions, architecture summary |
 | `docs/agent-environment.md` | Step 1 | Step 5 | MCP/API/tool/skill inventory for agents |
 | `bmm-workflow-status.yaml` | Step 5 | Step 3 | BMAD phase and workflow transitions |
 | `sprint-status.yaml` | Step 5 | Step 4a | Epic/story Kanban state |
-| `SESSION-HANDOFF.md` | — | Step 8 | **Backward-looking record** — lessons, decisions, validation (permanent archive; startup does not read) |
+| `SESSION-HANDOFF.md` | — | Draft 0c, finalize 8 | **Backward-looking record** — lessons, decisions, validation (permanent archive; startup does not read) |
 | Guides (user/admin/dev) | Step 5 on-demand | Step 9a | Large stable docs — updated only when content changes |
+| `reports/dev-coherence/<ts>/` | — | Step 0a | **Audit trail** — Audra L1/L2 evidence files; linked from SESSION-HANDOFF |
 
 > **Key principle:** `next-session-start-here.md` is the sole ramp-up document for the next session. Any risk, blocker, or unresolved issue that affects the next session MUST appear there, not only in SESSION-HANDOFF.
 
@@ -69,6 +78,21 @@ Open and read:
 - `docs/project-context.md`
 - **Course content context**: `docs/agent-environment.md` (MCP, API, platform guidance)
 
+### 1a. Outstanding-findings gate (Cora-orchestrated)
+
+Before picking an implementation target, ask Cora to run her Session-START (SS) protocol and scan `next-session-start-here.md` (and `SESSION-HANDOFF.md` if referenced) for the *Unresolved issues or blockers* block. Any entry that cites a deferred Audra L1/L2 finding from the prior session's Wrapup Step 0a, or an acknowledged-but-not-remediated pre-closure gap from Wrapup Step 0b, must be surfaced before any work begins.
+
+Cora presents the list with three choices:
+- **Remediate first** — make the findings today's opening anchor; defer the originally-intended anchor
+- **Run `/harmonize` full-repo now** — re-verify against whole-repo invariants plus the full change window since the handoff anchor; recommended when the prior session's audit trail is incomplete
+- **Proceed with original anchor, carrying findings forward** — findings remain in the queue and must reappear in this session's Wrapup Step 7 if still unremediated
+
+If `next-session-start-here.md` lists findings but no Step 0a report exists under `reports/dev-coherence/` for the prior session's timestamp, Cora treats that as missing-audit-trail and recommends option 2. Do not silently bypass this gate.
+
+Cora also performs a tripwire pre-check here: if the most recent wrapup entry in her `chronology.md` recorded a skipped Step 0a, any `/harmonize` invoked during this session (mid-session on operator request, or at this session's Wrapup Step 0a) will auto-promote default scope from since-handoff to full-repo. Cora surfaces this at the moment of invocation, not preemptively.
+
+Skip condition: no unresolved findings from the prior session and no missing-audit-trail condition. Cora logs the clean gate in her `chronology.md` regardless.
+
 ### 1.5: APP Agent Team & Skills Catalog (For Coding Agents)
 
 **Master Orchestrator**: Marcus (`skills/bmad-agent-marcus/SKILL.md`) — Creative Production Orchestrator. Coordinates all APP runs. Consult for production workflows.
@@ -76,18 +100,18 @@ Open and read:
 **Core APP Agents** (Top 12, see `_bmad/_config/agent-manifest.csv` for full 16):
 | Agent | Role | Path |
 |-------|------|------|
-| Marcus 🎬 | Production orchestrator | `skills/bmad-agent-marcus/` |
-| Irene 📝 | Content creator (lesson plans, scripts) | `skills/bmad-agent-content-creator/` |
-| Gary 🎨 | Slide generation (Gamma API) | `skills/bmad-agent-gamma/` |
-| ElevenLabs 🎤 | Voice synthesis | `skills/bmad-agent-elevenlabs/` |
-| Canvas 📚 | LMS deployment | `skills/bmad-agent-canvas/` |
-| Kira 🎥 | Video generation (Kling) | `skills/bmad-agent-kling/` |
-| Quinn-R 🧪 | Quality review | `skills/bmad-agent-quality-reviewer/` |
-| Vera 🔍 | Fidelity assessment | `skills/bmad-agent-fidelity-assessor/` |
-| Source Wrangler 📄 | External content ingestion | `skills/source-wrangler/` |
-| Tech Spec Wrangler 🔧 | Tool documentation refresh | `skills/tech-spec-wrangler/` |
-| Compositor 🎬 | Video assembly | `skills/compositor/` |
-| Woodshed 🏋️ | Exemplar mastery training | `skills/woodshed/` |
+| Marcus | Production orchestrator | `skills/bmad-agent-marcus/` |
+| Irene | Content creator (lesson plans, scripts) | `skills/bmad-agent-content-creator/` |
+| Gary | Slide generation (Gamma API) | `skills/bmad-agent-gamma/` |
+| ElevenLabs | Voice synthesis | `skills/bmad-agent-elevenlabs/` |
+| Canvas | LMS deployment | `skills/bmad-agent-canvas/` |
+| Kira | Video generation (Kling) | `skills/bmad-agent-kling/` |
+| Quinn-R | Quality review | `skills/bmad-agent-quality-reviewer/` |
+| Vera | Fidelity assessment | `skills/bmad-agent-fidelity-assessor/` |
+| Texas | Source wrangling + extraction validation | `skills/bmad-agent-texas/` |
+| Tech Spec Wrangler | Tool documentation refresh | `skills/tech-spec-wrangler/` |
+| Compositor | Video assembly | `skills/compositor/` |
+| Woodshed | Exemplar mastery training | `skills/woodshed/` |
 
 **Shared Skills** (available to all agents):
 - `pre-flight-check` — System readiness verification
@@ -102,10 +126,29 @@ Open and read:
 Check the current Git branch and compare it with the branch instructions recorded in `next-session-start-here.md`.
 
 - If `next-session-start-here.md` includes both a repository baseline branch and a next working branch, use the **next working branch** as the implementation target.
-- If the current branch differs from the recorded target, checkout the recorded target (or create it from baseline if instructed).
+- If the current branch differs from the recorded target, do **not** assume the current branch is wrong. First determine whether a legitimate post-wrapup event occurred after the handoff was written (for example: the user created the next branch, a docs-only closeout follow-up commit landed, or the branch was advanced intentionally outside the prior session's wrapup flow).
+- If the current branch is a plausible successor to the recorded target and the repo state is otherwise coherent, treat the current branch as authoritative and reconcile `next-session-start-here.md` at the next wrapup instead of force-checking out the older branch.
+- Only checkout the recorded target immediately when the current branch is clearly unrelated to the intended next work.
 - If there is an unexplained mismatch, treat `next-session-start-here.md` as stale and record a reconciliation note for wrap-up Step 7 before ending the session.
 
 > **Post-merge convention:** If your team merges to `master` at session end, the next session may open on `master` first. In that case, use the startup commands in `next-session-start-here.md` to checkout/create the next working branch.
+
+### 2b. Dirty-worktree scope fence
+
+Run:
+- `git status --short`
+
+Classify changes before doing any work:
+- **Session-owned changes**: files this session is expected to touch
+- **Pre-existing unrelated changes**: modified or untracked files outside the session scope
+- **Collaborative in-scope changes**: changes made during the same session by the user or by other active agents/browser contexts working on the same objective
+
+Rules:
+- Do not revert, normalize, or silently absorb unrelated changes into the session.
+- Do not misclassify same-session collaborative changes as unrelated just because this agent did not author them.
+- If another browser, terminal, or agent has been working on the same session objective, treat those changes as in-scope until evidence shows otherwise.
+- If unrelated changes could interfere with the session objective, record the conflict immediately and plan around it.
+- If you proceed with unrelated changes still present, carry that forward into wrap-up notes so closeout does not falsely imply a clean tree.
 
 ### 2a. Worktree and IDE alignment guard (mandatory)
 
@@ -146,13 +189,13 @@ Some subsequent steps are implementation-only; skip those steps in earlier phase
 
 | Term | Meaning |
 |------|---------|
-| **BMAD Phases** | 1-analysis → 2-planning → 3-solutioning → 4-implementation |
+| **BMAD Phases** | 1-analysis -> 2-planning -> 3-solutioning -> 4-implementation |
 | **Artifacts** | Deliverables: PRD (requirements), architecture (design), epics/stories (work breakdown), sprint-status.yaml (progress) |
 | **Agents** | Custom AI assistants created via `bmad-agent-builder` (e.g., Marcus orchestrator) |
 | **Skills** | Reusable capabilities (SKILL.md + scripts/) for tool mastery |
 | **Memory Sidecars** | `_bmad/memory/{agent}-sidecar/` for learning/persistence |
 | **Party Mode** | Multi-agent discussions via `bmad-party-mode` skill |
-| **Woodshed** | Exemplar-driven skill training (study → reproduce → compare) |
+| **Woodshed** | Exemplar-driven skill training (study -> reproduce -> compare) |
 
 ### 5. Review BMAD status artifacts
 
@@ -250,4 +293,3 @@ Invoke the `bmad-help` skill (`.cursor/skills/bmad-help/SKILL.md`) with your obj
 Follow only the routed workflow or agent for the current phase or story.
 
 ---
-

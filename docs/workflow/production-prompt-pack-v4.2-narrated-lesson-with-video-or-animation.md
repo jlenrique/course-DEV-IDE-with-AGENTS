@@ -2,71 +2,40 @@
 
 ---
 
-## Pre-Run Checklist (Visual-Led Profile)
+## Pre-Prompt Readiness (moved into Marcus — 2026-04-17)
 
-> **Audience: OPERATOR.** Complete this checklist before issuing Prompt 1 to Marcus.
+> **Marcus capabilities moved.** The readiness/execution checks previously in
+> "Pre-Run Checklist", "Run Constants", and "Initialization Instructions"
+> sections of this pack are now Marcus capabilities — **PR-PF, PR-RC, PR-HC,
+> PR-RS** — invoked from conversation via the verbose landing-point posture
+> (ask → default/prior → recommend → proceed?). This pack now keeps only
+> operator-facing *prompts*; readiness mechanics are Marcus's concern.
+>
+> - **Canonical reference:** [`docs/dev-guide/marcus-capabilities.md`](../dev-guide/marcus-capabilities.md)
+> - **Historical archive** (the pre-2026-04-17 content, verbatim): [`docs/workflow/archive/prompt-pack-preprompt-2026-04.md`](archive/prompt-pack-preprompt-2026-04.md)
+> - **Story of record:** 26-6 — Marcus Production-Readiness Capabilities
+>
+> **What this means for operators:** before firing Prompt 1, simply ask
+> Marcus to prepare the run ("Marcus, run preflight" / "Marcus, author the
+> run constants for this bundle"). Marcus will ask, show defaults, recommend,
+> and proceed on your approval — closing the doc-vs-code schema drift that
+> halted the 2026-04-17 trial.
 
-Before starting a visual-led production run:
-- [ ] Set `EXPERIENCE_PROFILE: visual-led` in run-constants.yaml
-- [ ] Confirm `MOTION_ENABLED: true` and budget set
-- [ ] Verify run-constants.yaml `slide_mode_proportions` match the canonical visual-led profile: `creative: 0.60`, `literal-visual: 0.25`, `literal-text: 0.15`
-- [ ] Verify `CLUSTER_DENSITY` matches the canonical experience profile (`default` for visual-led, `rich` for text-led)
-- [ ] Verify Irene packet carries the same proportions forward
-- [ ] HIL: Favor creative slides for visual impact, literal-visual for direct anchoring
-- [ ] Post-run: Document profile impact on quality gates
+## Experience-Profile Routing (Operator Rule)
 
-## Run Constants (set once)
+> **Audience: MARCUS (agent).** Production workflow doctrine for PR-RC and
+> downstream specialists — this stays in the pack because it governs how
+> Marcus ASKS the operator, not how the YAML is formatted.
 
-> **Audience: OPERATOR.** Persist these values as `run-constants.yaml` in the bundle root before the first prompt.
-
-- RUN_ID: C1-M1-PRES-20260415
-- LESSON_SLUG: apc-c1m1-tejal
-- BUNDLE_PATH: course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260415
-- PRIMARY_SOURCE_FILE: course-content/courses/APC C1-M1 Tejal 2026-03-29.pdf
-- OPTIONAL_CONTEXT_ASSETS: course-content/courses/APC Content Roadmap.jpg
-- THEME_SELECTION: hil-2026-apc-nejal-A
-- THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
-- EXECUTION_MODE: tracked/default
-- QUALITY_PRESET: production
-- REQUESTED_CONTENT_TYPE: narrated-lesson-with-video-or-animation
-- MOTION_ENABLED: true
-- MOTION_BUDGET_MAX_CREDITS: 125
-- MOTION_BUDGET_MODEL_PREFERENCE: pro
-- DOUBLE_DISPATCH: true
-- EXPERIENCE_PROFILE: visual-led
-- CLUSTER_DENSITY: default
-
-Operator rule:
-- Do not change run constants mid-run.
-- `MOTION_ENABLED: true` requires an explicit positive budget.
-- `DOUBLE_DISPATCH` changes only the Gary selection branch, not the rest of the workflow.
 - Marcus must ask the operator in plain language: "Should the visuals lead, or should the text lead for this lesson?"
 - Do not ask the operator to choose an `experience_profile` by name.
 - Mapping rule for persisted run constants:
   - visuals lead → `experience_profile: visual-led`
   - text lead → `experience_profile: text-led`
   - no preference stated → omit `experience_profile` and preserve legacy behavior
-
-## Initialization Instructions
-
-> **Audience: OPERATOR.** Create the bundle and verify paths before issuing Prompt 1.
-
-Before starting the production run:
-1. Create bundle directory:
-   ```powershell
-   mkdir course-content\staging\tracked\source-bundles\apc-c1m1-tejal-20260415
-   ```
-2. Create `run-constants.yaml` in the bundle root with the Run Constants values above. Use a prior run's file as a template if helpful (e.g. `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409/run-constants.yaml`).
-3. Set `experience_profile: visual-led` and populate `slide_mode_proportions` from the canonical visual-led profile in `state/config/experience-profiles.yaml`:
-   ```yaml
-   experience_profile: visual-led
-   slide_mode_proportions:
-     creative: 0.60
-     literal-visual: 0.25
-     literal-text: 0.15
-   ```
-4. Verify all paths resolve — primary source PDF and context assets exist at the declared locations.
-5. Confirm `CLUSTER_DENSITY: default` matches the canonical visual-led profile in `state/config/experience-profiles.yaml`. This activates G1.5 cluster planning (Prompt 5B) and G4-16..19 cluster narration governance.
+- `MOTION_ENABLED: true` requires an explicit positive budget.
+- `DOUBLE_DISPATCH` changes only the Gary selection branch, not the rest of the workflow.
+- Do not change run constants mid-run.
 
 ## Execution Rules (Marcus)
 

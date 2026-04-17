@@ -15,6 +15,17 @@ Last session closed the Epic 26 pilot wave (Marcus 26-1, Irene 26-2, Dan 26-3 al
 
 ## Sequenced Remediation Plan for This Session
 
+> **Status update (2026-04-17 pretrial-prep run, `dev/epic-26-pretrial-prep`):**
+>
+> - **Step 1 (progress_map.py remediation):** DONE via commit `1572819` (Juan's refactor) + session-1 baseline repair (commit `a944189`).
+> - **Step 2 (pack-doc Run Constants schema repair):** SUPERSEDED by **Story 26-6 — Marcus Production-Readiness Capabilities**. Instead of rewriting the pack's "Run Constants" section to show canonical lowercase YAML, the section was stripped and moved into Marcus as capabilities **PR-PF (Preflight)** and **PR-RC (Run-Constants author+validate)**. The canonical reference is now [`docs/dev-guide/marcus-capabilities.md`](docs/dev-guide/marcus-capabilities.md); the archived pack-doc content lives at [`docs/workflow/archive/prompt-pack-preprompt-2026-04.md`](docs/workflow/archive/prompt-pack-preprompt-2026-04.md). Marcus now authors the YAML directly — no more hand-transcription from the pack.
+> - **Step 3 (Texas wrangler intake expansion):** DEFERRED per scope-confirmation party-mode consensus (2026-04-17). Not in pretrial-prep run scope; revisit post first clean trial restart.
+> - **Step 4 (Texas CLI cp1252 guard):** IN-SCOPE as **Story 26-7** (stretch) on the same pretrial-prep run.
+> - **Step 5 (Audra L1-W docs-vs-code lockstep check):** THIN VERSION SHIPPED in session-1 commit `a944189` — `tests/contracts/test_pack_doc_matches_schema.py`. Fuller L1-W impl deferred.
+> - **Step 6 (Trial restart):** pending completion of pretrial-prep run (26-6 + 26-7 + merge to master).
+>
+> Read the below as historical plan-of-record. The active work is tracked in the run charter at [`_bmad-output/implementation-artifacts/run-charters/pretrial-prep-charter-20260417.md`](_bmad-output/implementation-artifacts/run-charters/pretrial-prep-charter-20260417.md) and Story 26-6 at [`_bmad-output/implementation-artifacts/26-6-marcus-production-readiness-capabilities.md`](_bmad-output/implementation-artifacts/26-6-marcus-production-readiness-capabilities.md).
+
 Before touching the trial, close as many of these 4 defects as possible. Order is ROI-descending: each unblocks a chunk of the restart path.
 
 ### Step 1 — Remediate ambient worktree state (Juan's `progress_map.py`)

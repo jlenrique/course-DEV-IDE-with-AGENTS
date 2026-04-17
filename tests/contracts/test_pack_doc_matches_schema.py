@@ -1,30 +1,36 @@
-"""Contract test: prompt-pack Run Constants section must match the validator.
+"""Contract test: docs-vs-code run-constants schema lockstep.
 
-Thin first version of the Audra L1-W docs-vs-code schema lockstep check.
-When the run-constants validator at ``scripts/utilities/run_constants.py``
-adds or removes a required field, the prompt-pack doc must be updated in
-the same commit. This test catches the drift class that halted the
-2026-04-17 APC C1-M1 Tejal trial at Prompt 1.
+Thin Audra L1-W check. Story 26-6 moved run-constants authoring OUT of the
+prompt-pack doc and INTO Marcus's PR-RC capability. The canonical schema
+reference now lives at ``skills/bmad-agent-marcus/capabilities/pr-rc.md``
+(operator-facing) alongside the validator at
+``scripts/utilities/run_constants.py`` (code-level enforcement).
 
-Defect class guarded: pack doc advertises a schema the validator rejects,
-or validator requires a field the pack doesn't mention — either way, the
-operator authors a ``run-constants.yaml`` from the pack and hits
-``emit-preflight-receipt`` failures on fields they didn't know about.
+This test asserts both locations stay in lockstep with the validator: every
+required field the validator enforces must be advertised somewhere the
+downstream operator or dev agent can find it.
+
+Defect class guarded: validator adds a required field but the doctrine doc
+doesn't mention it — Marcus's PR-RC capability would author an incomplete
+yaml and operators would get cryptic failures. Same class that halted the
+2026-04-17 APC C1-M1 Tejal trial at Prompt 1, now guarded at the new
+doctrine home.
 """
 
 from __future__ import annotations
-
-from pathlib import Path
 
 import pytest
 
 from scripts.utilities.file_helpers import project_root
 
-PACK_DOC = (
+# Post-26-6: run-constants doctrine lives in the PR-RC capability markdown.
+# Pack doc now contains only the redirect stub + workflow prompts.
+PR_RC_DOCTRINE = (
     project_root()
-    / "docs"
-    / "workflow"
-    / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md"
+    / "skills"
+    / "bmad-agent-marcus"
+    / "capabilities"
+    / "pr-rc.md"
 )
 
 REQUIRED_RUN_CONSTANTS_FIELDS = [
@@ -39,18 +45,22 @@ REQUIRED_RUN_CONSTANTS_FIELDS = [
 ]
 
 
-def _pack_text_lower() -> str:
-    return PACK_DOC.read_text(encoding="utf-8").lower()
+def _doctrine_text_lower() -> str:
+    return PR_RC_DOCTRINE.read_text(encoding="utf-8").lower()
 
 
 @pytest.mark.trial_critical
-def test_pack_advertises_every_required_field() -> None:
-    text = _pack_text_lower()
+def test_pr_rc_doctrine_advertises_every_required_field() -> None:
+    """Post-26-6: canonical doctrine lives in the PR-RC capability markdown,
+    not the prompt pack. Every required validator field must be mentioned
+    there so Marcus can author a complete run-constants.yaml."""
+    text = _doctrine_text_lower()
     missing = [f for f in REQUIRED_RUN_CONSTANTS_FIELDS if f not in text]
     assert not missing, (
-        "Prompt pack doc does not advertise these required validator fields: "
-        f"{missing}. Every required field must appear in the pack so the "
-        "operator can author a valid run-constants.yaml from the pack alone."
+        "PR-RC capability doctrine does not advertise these required "
+        f"validator fields: {missing}. Every required field must appear in "
+        "pr-rc.md so Marcus (and any developer reading the doctrine) knows "
+        "what the authored yaml must contain."
     )
 
 

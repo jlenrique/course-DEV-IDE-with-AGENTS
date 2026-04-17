@@ -145,4 +145,32 @@ BMAD agents (Marcus et al.) write planning, implementation, and collaboration ar
 | `brainstorming/` | Free-form brainstorms and party-mode transcripts that predate formal consensus logs | Mostly human-seeded |
 | `test-artifacts/` | Simulated-run evidence and test-specific artifacts that don't belong under `tests/` | Agent-writable per run |
 
-**Naming invariant (enforced by Audra L1):** every file in `implementation-artifacts/` m
+**Naming invariant (enforced by Audra L1):** every file in `implementation-artifacts/` matches story-ID pattern `^<epic>-<story>-<slug>.md$` OR is one of the canonical status YAMLs (`sprint-status.yaml`, `bmm-workflow-status.yaml`). Non-story artifacts (specs, reviews, maps) live in the kind-bucketed siblings above.
+
+**Sprint-status round-trip invariant:** for every `development_status.<key>` in `implementation-artifacts/sprint-status.yaml`, a file `implementation-artifacts/<key>.md` exists — UNLESS the entry is a tombstone (`status: retired` with `superseded_by` or `reason`) or an epic/governance rollup (`epic-*`, `g-*`, `sb-*`). Renames carry a `previous_slug:` breadcrumb on the new key.
+
+**Skill-resolved template vars** (see `_bmad/bmm/config.yaml`): `{planning_artifacts}`, `{implementation_artifacts}`, `{specs}`, `{reviews}`, `{maps}`.
+
+### `course-content/staging/` — Draft and bundle workspace
+
+Gitignored in full-tree workflows; agents write drafts and **source bundles** here. For **tracked** production runs, a bundle folder may include **`run-constants.yaml`** at its root: frozen `RUN_ID`, repo-relative `bundle_path`, absolute primary source path, theme keys, execution mode, and quality preset. That file is the machine-readable twin of the v4 prompt pack “Run Constants” block; validate with `scripts.utilities.run_constants` (see `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B).
+
+## Resolution Rules
+
+When an agent needs brand, style, or parameter information:
+
+1. **Brand colors, typography, imagery, voice/tone** → `resources/style-bible/` (always)
+2. **Tool parameters** (voice IDs, LLM choices, format preferences) → `state/config/style_guide.yaml`
+3. **Course hierarchy and learning objectives** → `state/config/course_context.yaml`
+4. **Run presets, quality thresholds, retry policy** → `state/config/tool_policies.yaml`
+5. **Platform allocation decisions** → `resources/exemplars/` (reference patterns)
+6. **Accessibility standards** → `resources/style-bible/` (detailed); fallback to `config/content-standards.yaml` if no style bible exists
+7. **Learned preferences and patterns** → `_bmad/memory/{agent}-sidecar/patterns.md`
+
+## Anti-Patterns
+
+- Never store brand identity in `state/config/style_guide.yaml` — that's for tool dial settings only
+- Never treat `config/content-standards.yaml` as authoritative when a style bible exists
+- Never cache style bible content in agent memory — always re-read from disk
+- Never write to `config/` or `resources/` from agent logic — these are human-curated
+- Never confuse `state/config/tool_policies.yaml` (operational policy) with `resources/exemplars/policies/` (domain knowledge patterns)

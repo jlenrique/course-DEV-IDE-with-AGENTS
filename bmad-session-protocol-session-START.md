@@ -33,13 +33,14 @@ The startup protocol **reads** certain files; the wrapup protocol **writes** the
 
 | File | Startup reads | Wrapup writes | Role |
 |------|:---:|:---:|------|
-| `next-session-start-here.md` | Step 1 | Step 7 | **Forward-looking hot-start** — next actions, branch, risks, gotchas |
+| `next-session-start-here.md` | Step 1 | Draft 0c, finalize 7 | **Forward-looking hot-start** — next actions, branch, risks, gotchas |
 | `docs/project-context.md` | Step 1 | Step 5 | Current state, key decisions, architecture summary |
 | `docs/agent-environment.md` | Step 1 | Step 5 | MCP/API/tool/skill inventory for agents |
 | `bmm-workflow-status.yaml` | Step 5 | Step 3 | BMAD phase and workflow transitions |
 | `sprint-status.yaml` | Step 5 | Step 4a | Epic/story Kanban state |
-| `SESSION-HANDOFF.md` | — | Step 8 | **Backward-looking record** — lessons, decisions, validation (permanent archive; startup does not read) |
+| `SESSION-HANDOFF.md` | — | Draft 0c, finalize 8 | **Backward-looking record** — lessons, decisions, validation (permanent archive; startup does not read) |
 | Guides (user/admin/dev) | Step 5 on-demand | Step 9a | Large stable docs — updated only when content changes |
+| `reports/dev-coherence/<ts>/` | — | Step 0a | **Audit trail** — Audra L1/L2 evidence files; linked from SESSION-HANDOFF |
 
 > **Key principle:** `next-session-start-here.md` is the sole ramp-up document for the next session. Any risk, blocker, or unresolved issue that affects the next session MUST appear there, not only in SESSION-HANDOFF.
 
@@ -77,6 +78,21 @@ Open and read:
 - `docs/project-context.md`
 - **Course content context**: `docs/agent-environment.md` (MCP, API, platform guidance)
 
+### 1a. Outstanding-findings gate (Cora-orchestrated)
+
+Before picking an implementation target, ask Cora to run her Session-START (SS) protocol and scan `next-session-start-here.md` (and `SESSION-HANDOFF.md` if referenced) for the *Unresolved issues or blockers* block. Any entry that cites a deferred Audra L1/L2 finding from the prior session's Wrapup Step 0a, or an acknowledged-but-not-remediated pre-closure gap from Wrapup Step 0b, must be surfaced before any work begins.
+
+Cora presents the list with three choices:
+- **Remediate first** — make the findings today's opening anchor; defer the originally-intended anchor
+- **Run `/harmonize` full-repo now** — re-verify against whole-repo invariants plus the full change window since the handoff anchor; recommended when the prior session's audit trail is incomplete
+- **Proceed with original anchor, carrying findings forward** — findings remain in the queue and must reappear in this session's Wrapup Step 7 if still unremediated
+
+If `next-session-start-here.md` lists findings but no Step 0a report exists under `reports/dev-coherence/` for the prior session's timestamp, Cora treats that as missing-audit-trail and recommends option 2. Do not silently bypass this gate.
+
+Cora also performs a tripwire pre-check here: if the most recent wrapup entry in her `chronology.md` recorded a skipped Step 0a, any `/harmonize` invoked during this session (mid-session on operator request, or at this session's Wrapup Step 0a) will auto-promote default scope from since-handoff to full-repo. Cora surfaces this at the moment of invocation, not preemptively.
+
+Skip condition: no unresolved findings from the prior session and no missing-audit-trail condition. Cora logs the clean gate in her `chronology.md` regardless.
+
 ### 1.5: APP Agent Team & Skills Catalog (For Coding Agents)
 
 **Master Orchestrator**: Marcus (`skills/bmad-agent-marcus/SKILL.md`) — Creative Production Orchestrator. Coordinates all APP runs. Consult for production workflows.
@@ -84,18 +100,18 @@ Open and read:
 **Core APP Agents** (Top 12, see `_bmad/_config/agent-manifest.csv` for full 16):
 | Agent | Role | Path |
 |-------|------|------|
-| Marcus 🎬 | Production orchestrator | `skills/bmad-agent-marcus/` |
-| Irene 📝 | Content creator (lesson plans, scripts) | `skills/bmad-agent-content-creator/` |
-| Gary 🎨 | Slide generation (Gamma API) | `skills/bmad-agent-gamma/` |
-| ElevenLabs 🎤 | Voice synthesis | `skills/bmad-agent-elevenlabs/` |
-| Canvas 📚 | LMS deployment | `skills/bmad-agent-canvas/` |
-| Kira 🎥 | Video generation (Kling) | `skills/bmad-agent-kling/` |
-| Quinn-R 🧪 | Quality review | `skills/bmad-agent-quality-reviewer/` |
-| Vera 🔍 | Fidelity assessment | `skills/bmad-agent-fidelity-assessor/` |
-| Source Wrangler 📄 | External content ingestion | `skills/source-wrangler/` |
-| Tech Spec Wrangler 🔧 | Tool documentation refresh | `skills/tech-spec-wrangler/` |
-| Compositor 🎬 | Video assembly | `skills/compositor/` |
-| Woodshed 🏋️ | Exemplar mastery training | `skills/woodshed/` |
+| Marcus | Production orchestrator | `skills/bmad-agent-marcus/` |
+| Irene | Content creator (lesson plans, scripts) | `skills/bmad-agent-content-creator/` |
+| Gary | Slide generation (Gamma API) | `skills/bmad-agent-gamma/` |
+| ElevenLabs | Voice synthesis | `skills/bmad-agent-elevenlabs/` |
+| Canvas | LMS deployment | `skills/bmad-agent-canvas/` |
+| Kira | Video generation (Kling) | `skills/bmad-agent-kling/` |
+| Quinn-R | Quality review | `skills/bmad-agent-quality-reviewer/` |
+| Vera | Fidelity assessment | `skills/bmad-agent-fidelity-assessor/` |
+| Texas | Source wrangling + extraction validation | `skills/bmad-agent-texas/` |
+| Tech Spec Wrangler | Tool documentation refresh | `skills/tech-spec-wrangler/` |
+| Compositor | Video assembly | `skills/compositor/` |
+| Woodshed | Exemplar mastery training | `skills/woodshed/` |
 
 **Shared Skills** (available to all agents):
 - `pre-flight-check` — System readiness verification
@@ -173,13 +189,13 @@ Some subsequent steps are implementation-only; skip those steps in earlier phase
 
 | Term | Meaning |
 |------|---------|
-| **BMAD Phases** | 1-analysis → 2-planning → 3-solutioning → 4-implementation |
+| **BMAD Phases** | 1-analysis -> 2-planning -> 3-solutioning -> 4-implementation |
 | **Artifacts** | Deliverables: PRD (requirements), architecture (design), epics/stories (work breakdown), sprint-status.yaml (progress) |
 | **Agents** | Custom AI assistants created via `bmad-agent-builder` (e.g., Marcus orchestrator) |
 | **Skills** | Reusable capabilities (SKILL.md + scripts/) for tool mastery |
 | **Memory Sidecars** | `_bmad/memory/{agent}-sidecar/` for learning/persistence |
 | **Party Mode** | Multi-agent discussions via `bmad-party-mode` skill |
-| **Woodshed** | Exemplar-driven skill training (study → reproduce → compare) |
+| **Woodshed** | Exemplar-driven skill training (study -> reproduce -> compare) |
 
 ### 5. Review BMAD status artifacts
 
@@ -277,4 +293,3 @@ Invoke the `bmad-help` skill (`.cursor/skills/bmad-help/SKILL.md`) with your obj
 Follow only the routed workflow or agent for the current phase or story.
 
 ---
-

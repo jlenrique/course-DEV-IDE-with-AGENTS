@@ -176,7 +176,7 @@ The operator will provide directives in three categories. For each, record exact
 If the operator has no special directives, record: "No operator directives — process all source content at default authority levels."
 
 Governance rules:
-- Operator directives bind Source Wrangler during ingestion and Irene during planning.
+- Operator directives bind Texas (Source Wrangler agent) during ingestion and Irene during planning.
 - Exclusion directives are provenance records: Vera G0 must not flag excluded content as an omission if the exclusion is recorded here.
 - Focus directives are emphasis signals, not exclusion of unmentioned content. The entire source must still be extracted; focus directives control downstream emphasis, not ingestion scope.
 - Special treatment directives override default fidelity classification for the specified content only.
@@ -198,7 +198,7 @@ Stop and wait for operator confirmation.
 
 ## 3) Ingestion Execution + Evidence Log
 
-Marcus, execute ingestion for RUN_ID [RUN_ID] using Source Wrangler official pathways only.
+Marcus, delegate ingestion for RUN_ID [RUN_ID] to Texas (Source Wrangler agent) using the wrangling directive contract.
 
 Inputs:
 - source authority map

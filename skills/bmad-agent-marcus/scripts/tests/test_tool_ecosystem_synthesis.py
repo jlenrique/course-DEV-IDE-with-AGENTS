@@ -50,7 +50,7 @@ class TestToolEcosystemSynthesis(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            patterns = root / "_bmad" / "memory" / "gamma-specialist-sidecar" / "patterns.md"
+            patterns = root / "_bmad" / "memory" / "gary-sidecar" / "patterns.md"
             patterns.parent.mkdir(parents=True, exist_ok=True)
             patterns.write_text(
                 "# Patterns\n\n"
@@ -59,7 +59,7 @@ class TestToolEcosystemSynthesis(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            empty_patterns = root / "_bmad" / "memory" / "quality-reviewer-sidecar" / "patterns.md"
+            empty_patterns = root / "_bmad" / "memory" / "quinn-r-sidecar" / "patterns.md"
             empty_patterns.parent.mkdir(parents=True, exist_ok=True)
             empty_patterns.write_text("# Patterns\n", encoding="utf-8")
 

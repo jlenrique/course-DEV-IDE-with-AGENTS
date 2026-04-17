@@ -2,6 +2,9 @@
 ## Narrated Lesson: C1-M1-P2 "Macro Trends in Healthcare Innovation"
 ### 2026-04-03 | Workflow Template Registry Edition
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
+
 **Simulation scope:** Full narrated-lesson happy path, Stage 0 (session open) through Descript handoff package (Stage 23 / gate-4). Consultant commentary from the BMAD party-mode team at each critical gate and specialist handoff.
 
 **Supersedes:** `tests/Happy Path Simulation Display Screens 2026-04-02.txt`

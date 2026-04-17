@@ -16,12 +16,9 @@ cross_cutting:
   - component: Quality reviewer
     path: skills/bmad-agent-quality-reviewer/SKILL.md
   - component: Quality reviewer sidecar
-    path: _bmad/memory/quality-reviewer-sidecar
+    path: _bmad/memory/quinn-r-sidecar
   - component: Marcus sidecar
-    path: _bmad/memory/bmad-agent-marcus-sidecar
-  - component: Redirect placeholder
-    path: _bmad/memory/master-orchestrator-sidecar/index.md
-    redirect_contains: "Active sidecar: `_bmad/memory/bmad-agent-marcus-sidecar/`"
+    path: _bmad/memory/marcus-sidecar
   - component: Contract validator
     path: scripts/validate_fidelity_contracts.py
   - component: Creative directive contract

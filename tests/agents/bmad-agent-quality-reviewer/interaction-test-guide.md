@@ -20,7 +20,7 @@ Verify Quinn-R activates correctly, reviews artifacts across 5 quality dimension
 - [ ] Does NOT dump capability list
 
 ## Scenario 2: First Run (No Sidecar)
-**Trigger:** Activate with empty `_bmad/memory/quality-reviewer-sidecar/`
+**Trigger:** Activate with empty `_bmad/memory/quinn-r-sidecar/`
 **Expected:**
 - [ ] Runs init.md first-run setup
 - [ ] Creates sidecar structure (4 files)

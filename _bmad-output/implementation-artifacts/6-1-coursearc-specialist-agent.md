@@ -1,5 +1,7 @@
 # Story 6.1: CourseArc Specialist Agent & LTI Integration
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 Epic: 6 - LMS Platform Integration & Delivery
 Status: done
 Sprint key: 6-1-coursearc-specialist-agent

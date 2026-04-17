@@ -323,12 +323,13 @@ If user explicitly chooses standalone consult mode, specialist may proceed in co
 User notes + guidance
     │
     ▼
-Marcus -> Source Wrangler: extract SME materials → source bundle (extracted.md + metadata.json)
-    │
+Marcus -> Texas: wrangling directive → validated source bundle (extracted.md + extraction-report.yaml + metadata.json)
+    │  (Texas validates extraction quality: proportionality check, cross-validation against reference assets, fallback chains)
+    │  (Texas returns: complete / complete_with_warnings / blocked)
     ▼
 Marcus -> Vera: G0 fidelity check (source bundle completeness)
     │  (Vera loads extracted.md + metadata.json, checks section coverage, provenance, PDF degradation)
-    │  (Circuit breaker: critical/high → halt/retry to source-wrangler; medium → warning)
+    │  (Circuit breaker: critical/high → halt/retry to Texas; medium → warning)
     ▼  (PASS)
 Marcus -> Irene Pass 1: Lesson Plan + Slide Brief
     │
@@ -465,7 +466,7 @@ findings:
 circuit_breaker:
   triggered: true | false
   action: halt | retry | proceed
-  remediation_target: "source-wrangler" | "irene" | "gary" | "elevenlabs-voice-director"
+  remediation_target: "texas" | "irene" | "gary" | "elevenlabs-voice-director"
   remediation_guidance: "..."
 ```
 

@@ -4,7 +4,7 @@ Welcome! Setting up the Instructional Architect workspace.
 
 ## Memory Location
 
-Creating `{project-root}/_bmad/memory/content-creator-sidecar/` for persistent memory.
+Creating `{project-root}/_bmad/memory/irene-sidecar/` for persistent memory.
 
 ## Initial Structure
 

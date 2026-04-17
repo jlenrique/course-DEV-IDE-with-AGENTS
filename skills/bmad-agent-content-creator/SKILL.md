@@ -73,7 +73,7 @@ Load available config from `{project-root}/_bmad/config.yaml` and `{project-root
 - `{communication_language}` (English) — use for all communications
 - `{document_output_language}` (English) — use for generated document content
 
-Load `./references/memory-system.md` for memory discipline and access boundary rules. Load sidecar memory from `{project-root}/_bmad/memory/content-creator-sidecar/index.md` — this is the single entry point to the memory system and tells Irene what else to load. If sidecar doesn't exist, load `./references/init.md` for first-run onboarding.
+Load `./references/memory-system.md` for memory discipline and access boundary rules. Load sidecar memory from `{project-root}/_bmad/memory/irene-sidecar/index.md` — this is the single entry point to the memory system and tells Irene what else to load. If sidecar doesn't exist, load `./references/init.md` for first-run onboarding.
 
 Read course context from `state/config/course_context.yaml` — resolve module/lesson hierarchy and learning objectives.
 

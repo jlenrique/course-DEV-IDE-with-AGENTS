@@ -124,7 +124,7 @@ Here's what happens step-by-step when a user says: **"Marcus, create a presentat
 
 6. Marcus loads `./references/source-prompting.md` (SP capability)
 7. Marcus offers: *"I see Module 2 notes in Notion and some reference PDFs in Box Drive. Want me to pull those in before we start?"*
-8. If user accepts, Marcus delegates to **`source-wrangler`** (`skills/source-wrangler/`) to fetch Notion pages, Box Drive files, URLs/HTML captures, etc.
+8. If user accepts, Marcus delegates to **Texas** (`skills/bmad-agent-texas/`) to extract, validate, and deliver source material with quality checks and fallback chains.
 
 ### Phase 3: Production Planning (Marcus → CM capability)
 
@@ -335,6 +335,17 @@ Each agent gets a memory sidecar at `_bmad/memory/{agent}-sidecar/`:
 
 The `index.md` tells the agent what else to load. This progressive disclosure pattern keeps activation fast — agents don't read their full history on every startup.
 
+### Sidecar Path vs. Delegation Key: A Namespace Split
+
+As of 2026-04-16, specialist sidecars are named after their **persona** (e.g., `_bmad/memory/gary-sidecar/`, `_bmad/memory/kim-sidecar/`), not their role slot. Delegation keys used by Marcus's routing tables and hard-coded infrastructure are still **role-style** (e.g., `gamma-specialist`, `coursearc-specialist`). This is intentional:
+
+- **Persona names** belong to a human-facing layer — they appear in sidecar paths, H1 headers, and operator-facing docs. Personas can be renamed when roles are re-cast or an agent is retired; paths follow the persona, not the slot.
+- **Role-style delegation keys** belong to the infrastructure layer — they are referenced by `scripts/agent_delegation.py`, routing YAMLs, and structural-walk checks. These keys describe the *capability slot* and should stay stable even if the persona filling the slot changes.
+
+When adding a new specialist, register both: a persona-named sidecar under `_bmad/memory/<persona>-sidecar/` for learning and memory, and a role-style key (e.g., `<tool>-specialist`) in any delegation-routing code or infrastructure YAML. Do not collapse the two namespaces.
+
+Historical note: prior to the 2026-04-16 rename, sidecar paths were role-style (e.g., `gamma-specialist-sidecar/`). Archived planning and implementation artifacts that reference the old paths now carry an inline banner pointing here.
+
 ---
 
 ## Skill Anatomy
@@ -381,7 +392,7 @@ This keeps context windows manageable — agents don't load 50 pages of referenc
 |-------|----------|------|
 | `pre-flight-check` | `skills/pre-flight-check/` | MCP/API/doc readiness |
 | `production-coordination` | `skills/production-coordination/` | Run/mode/baton/style-guide helpers |
-| `source-wrangler` | `skills/source-wrangler/` | Notion, Box, URL/HTML ingestion |
+| `bmad-agent-texas` | `skills/bmad-agent-texas/` | Source extraction + validation + cross-validation + fallback chains (replaces source-wrangler) |
 | `tech-spec-wrangler` | `skills/tech-spec-wrangler/` | Doc refresh via Ref MCP |
 | `gamma-api-mastery` | `skills/gamma-api-mastery/` | Gamma generate/export operations |
 | `elevenlabs-audio` | `skills/elevenlabs-audio/` | ElevenLabs TTS operations |

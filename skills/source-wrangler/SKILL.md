@@ -3,7 +3,12 @@ name: source-wrangler
 description: Pull course sources from Notion and Box Drive, fetch or ingest web and Playwright-captured HTML, extract text from local PDFs, and emit agent-ready source bundles (extracted.md + metadata) for Marcus and specialists.
 ---
 
-# Source Wrangler
+# Source Wrangler (DEPRECATED)
+
+> **DEPRECATED:** This skill has been superseded by **Texas** (`skills/bmad-agent-texas/`),
+> a full memory agent with extraction validation, cross-validation, fallback chains,
+> and a Marcus delegation contract. The scripts in this directory are retained for
+> backward compatibility but will be removed once all callers are migrated to Texas.
 
 ## Purpose
 

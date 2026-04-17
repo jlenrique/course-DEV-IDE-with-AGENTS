@@ -1,5 +1,7 @@
 # Story 3.7: Qualtrics Specialist Agent & Mastery Skill
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 Epic: 3 - Core Tool Specialist Agents & Mastery Skills
 Status: done
 Sprint key: 3-7-qualtrics-specialist-agent

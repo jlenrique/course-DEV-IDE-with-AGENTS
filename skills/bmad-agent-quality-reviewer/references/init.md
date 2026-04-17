@@ -4,7 +4,7 @@ Welcome! Setting up the Quality Guardian workspace.
 
 ## Memory Location
 
-Creating `{project-root}/_bmad/memory/quality-reviewer-sidecar/` for persistent memory.
+Creating `{project-root}/_bmad/memory/quinn-r-sidecar/` for persistent memory.
 
 ## Initial Structure
 

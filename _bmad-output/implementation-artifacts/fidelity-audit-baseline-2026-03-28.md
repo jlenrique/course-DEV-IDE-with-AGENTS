@@ -1,5 +1,7 @@
 # APP Fidelity Maturity Audit — Baseline Report
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 **Date:** 2026-03-28
 **Auditor:** Dev agent (Story 2A-1)
 **Scope:** All 7 production gates (G0–G6), evaluated against 4 pillars

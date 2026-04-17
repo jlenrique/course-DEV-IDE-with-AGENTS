@@ -22,7 +22,7 @@ DEFAULT_MATRIX_PATH = (
 )
 DEFAULT_COURSE_CONTEXT_PATH = project_root() / "state" / "config" / "course_context.yaml"
 DEFAULT_PATTERNS_PATH = (
-    project_root() / "_bmad" / "memory" / "bmad-agent-marcus-sidecar" / "patterns.md"
+    project_root() / "_bmad" / "memory" / "marcus-sidecar" / "patterns.md"
 )
 
 

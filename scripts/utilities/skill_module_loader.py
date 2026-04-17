@@ -51,7 +51,8 @@ def load_sensory_bridge_utils(repo_root: Path):
 
 
 def load_source_wrangler_operations(repo_root: Path):
-    return load_module_from_path(
-        "source_wrangler_operations",
-        repo_root / "skills" / "source-wrangler" / "scripts" / "source_wrangler_operations.py",
-    )
+    # Texas (bmad-agent-texas) is the canonical home; fall back to legacy skill path
+    texas_path = repo_root / "skills" / "bmad-agent-texas" / "scripts" / "source_wrangler_operations.py"
+    legacy_path = repo_root / "skills" / "source-wrangler" / "scripts" / "source_wrangler_operations.py"
+    script_path = texas_path if texas_path.exists() else legacy_path
+    return load_module_from_path("source_wrangler_operations", script_path)

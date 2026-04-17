@@ -1,0 +1,37 @@
+# Gate Result Sidecar Schema v1.0
+# Each production run gate writes one of these to {bundle}/gates/
+# Filename convention: gate-{step_id}-result.yaml (e.g., gate-03-result.yaml)
+
+schema_version: "1.0"
+
+# --- Universal fields (required for all gates) ---
+step_id: ""           # Pipeline step ID matching prompt pack (e.g., "01", "05B", "7C")
+step_name: ""         # Human-readable name (e.g., "Activation + Preflight Contract Gate")
+run_id: ""            # From run-constants.yaml RUN_ID
+timestamp: ""         # ISO 8601 (e.g., "2026-04-16T14:32:00Z")
+result: ""            # pass | conditional-pass | fail | skip | pending
+operator: ""          # Who executed: "Marcus", "operator", agent name
+
+# --- Optional universal fields ---
+duration_seconds: 0   # Wall-clock time for the gate
+summary: ""           # One-sentence human-readable outcome
+conditions: []        # Non-blocking issues (for conditional-pass)
+blockers: []          # Blocking issues (for fail)
+
+# --- Artifact tracking ---
+inputs: []            # Files the gate inspected
+  # - path: "extracted.md"
+  #   description: "Source extraction output"
+outputs: []           # Files the gate produced
+  # - path: "reports/g1-fidelity-trace.md"
+  #   description: "G1 fidelity trace report"
+
+# --- Metrics (gate-specific) ---
+metrics: {}           # Free-form key-value pairs
+  # word_count: 6240
+  # word_floor: 3000
+  # dimensions_passed: 5
+  # dimensions_total: 5
+
+# --- Evidence (gate-specific) ---
+evidence: ""          # Multi-line evidence text from the gate

@@ -1,5 +1,7 @@
 # Story 3.2: Content Creator Agent & Quality Reviewer Agent
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 Status: done
 
 ## Story

@@ -8,7 +8,7 @@ This guide provides scenario-based interaction tests for validating Vera's behav
 
 - Vera's SKILL.md is loaded and activated
 - L1 contracts exist at `state/config/fidelity-contracts/g0-source-bundle.yaml`, `g1-lesson-plan.yaml`, `g2-slide-brief.yaml`, and `g3-generated-slides.yaml`
-- Memory sidecar initialized at `_bmad/memory/fidelity-assessor-sidecar/`
+- Memory sidecar initialized at `_bmad/memory/vera-sidecar/`
 - Source wrangler bundle format reference at `skills/source-wrangler/references/bundle-format.md`
 - Lesson plan template at `skills/bmad-agent-content-creator/references/template-lesson-plan.md`
 

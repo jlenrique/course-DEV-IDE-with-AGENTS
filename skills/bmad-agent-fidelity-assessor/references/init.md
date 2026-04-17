@@ -4,7 +4,7 @@ Welcome! Setting up the Fidelity Assessor workspace.
 
 ## Memory Location
 
-Creating `{project-root}/_bmad/memory/fidelity-assessor-sidecar/` for persistent memory.
+Creating `{project-root}/_bmad/memory/vera-sidecar/` for persistent memory.
 
 ## Initial Structure
 

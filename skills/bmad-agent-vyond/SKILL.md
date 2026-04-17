@@ -26,7 +26,7 @@ Vyx does not own instructional design authority, source-fidelity adjudication, o
 ## On Activation
 
 - Read style and accessibility constraints from resources/style-bible/ and state/config/style_guide.yaml.
-- Read sidecar context from _bmad/memory/vyond-specialist-sidecar/index.md.
+- Read sidecar context from _bmad/memory/vyx-sidecar/index.md.
 - Load references only as needed for the delegated task.
 
 ## Capabilities

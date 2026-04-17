@@ -16,7 +16,7 @@ SPECIALISTS = {
     "vyond": {
         "identifier": "vyond-specialist",
         "skill": ROOT / "skills" / "bmad-agent-vyond" / "SKILL.md",
-        "sidecar": ROOT / "_bmad" / "memory" / "vyond-specialist-sidecar",
+        "sidecar": ROOT / "_bmad" / "memory" / "vyx-sidecar",
         "interaction_guide": ROOT
         / "tests"
         / "agents"
@@ -41,7 +41,7 @@ SPECIALISTS = {
     "midjourney": {
         "identifier": "midjourney-specialist",
         "skill": ROOT / "skills" / "bmad-agent-midjourney" / "SKILL.md",
-        "sidecar": ROOT / "_bmad" / "memory" / "midjourney-specialist-sidecar",
+        "sidecar": ROOT / "_bmad" / "memory" / "mira-sidecar",
         "interaction_guide": ROOT
         / "tests"
         / "agents"
@@ -66,7 +66,7 @@ SPECIALISTS = {
     "articulate": {
         "identifier": "articulate-specialist",
         "skill": ROOT / "skills" / "bmad-agent-articulate" / "SKILL.md",
-        "sidecar": ROOT / "_bmad" / "memory" / "articulate-specialist-sidecar",
+        "sidecar": ROOT / "_bmad" / "memory" / "aria-sidecar",
         "interaction_guide": ROOT
         / "tests"
         / "agents"
@@ -317,14 +317,14 @@ def test_midjourney_parameter_depth_and_iteration_schema() -> None:
         ROOT
         / "_bmad"
         / "memory"
-        / "midjourney-specialist-sidecar"
+        / "mira-sidecar"
         / "patterns.md"
     ).read_text(encoding="utf-8")
     sidecar_chronology = (
         ROOT
         / "_bmad"
         / "memory"
-        / "midjourney-specialist-sidecar"
+        / "mira-sidecar"
         / "chronology.md"
     ).read_text(encoding="utf-8")
 

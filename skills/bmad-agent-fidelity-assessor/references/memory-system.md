@@ -1,6 +1,6 @@
 # Memory System for Vera (Fidelity Assessor)
 
-**Memory location:** `{project-root}/_bmad/memory/fidelity-assessor-sidecar/`
+**Memory location:** `{project-root}/_bmad/memory/vera-sidecar/`
 
 ## Core Principle
 
@@ -21,8 +21,8 @@ Tokens are expensive. Only remember what matters: gate-specific fidelity pattern
 ### `access-boundaries.md` — Access Control
 
 **Load on activation.** Contains:
-- **Read access** — Entire project repository, `state/config/fidelity-contracts/`, `skills/sensory-bridges/`, `course-content/`, all artifact paths received in context envelopes, `docs/fidelity-gate-map.md`, `docs/source-ref-grammar.md`, `docs/app-design-principles.md`, `{project-root}/_bmad/memory/fidelity-assessor-sidecar/`
-- **Write access** — `{project-root}/_bmad/memory/fidelity-assessor-sidecar/` only
+- **Read access** — Entire project repository, `state/config/fidelity-contracts/`, `skills/sensory-bridges/`, `course-content/`, all artifact paths received in context envelopes, `docs/fidelity-gate-map.md`, `docs/source-ref-grammar.md`, `docs/app-design-principles.md`, `{project-root}/_bmad/memory/vera-sidecar/`
+- **Write access** — `{project-root}/_bmad/memory/vera-sidecar/` only
 - **Deny zones** — `.env`, project-level API client code, `course-content/` (write — verify only, never modify), other agents' sidecars (write), `resources/style-bible/` (write), `.cursor-plugin/`, `tests/` (write), `state/config/fidelity-contracts/` (write — contracts are human-authored)
 
 Before any file operation, verify the path is within allowed boundaries.

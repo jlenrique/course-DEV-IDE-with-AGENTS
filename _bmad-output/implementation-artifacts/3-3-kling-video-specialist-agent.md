@@ -1,5 +1,7 @@
 # Story 3.3: Kling Video Specialist Agent & API Client
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 Status: done
 
 ## Story

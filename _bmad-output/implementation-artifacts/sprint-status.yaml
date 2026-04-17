@@ -135,23 +135,50 @@ development_status:
   1-2-python-infrastructure: done
   1-3-state-management-infrastructure: done
   1-4-pre-flight-check-skill: done
-  1-5-testing-framework: done
-  1-6-gamma-api-integration: done
-  1-7-elevenlabs-api-integration: done
-  1-8-canvas-api-integration: done
-  1-9-qualtrics-api-integration: done
-  1-10-canva-mcp-integration: done
-  1-11-panopto-api-integration: done
+  1-5-testing-framework:
+    status: retired
+    reason: Consolidated into per-skill test suites + tests/state_management; no single 'testing framework' story survived the restructure.
+  1-6-gamma-api-integration:
+    status: retired
+    superseded_by: 3-1-gamma-specialist-agent
+    reason: Raw API integration absorbed into the Gamma specialist agent scope.
+  1-7-elevenlabs-api-integration:
+    status: retired
+    superseded_by: 3-4-elevenlabs-specialist-agent
+    reason: Raw API integration absorbed into the ElevenLabs specialist agent scope.
+  1-8-canvas-api-integration:
+    status: retired
+    superseded_by: 3-6-canvas-specialist-agent
+    reason: Raw API integration absorbed into the Canvas specialist agent scope.
+  1-9-qualtrics-api-integration:
+    status: retired
+    superseded_by: 3-7-qualtrics-specialist-agent
+    reason: Raw API integration absorbed into the Qualtrics specialist agent scope.
+  1-10-canva-mcp-integration:
+    status: retired
+    superseded_by: 3-8-canva-specialist-agent
+    reason: MCP integration folded into the Canva specialist agent scope.
+  1-11-panopto-api-integration:
+    status: retired
+    reason: Panopto retired from project scope; no successor story.
   epic-1-retrospective: done
 
   # === EPIC 2: Master Agent Architecture & Development ===
   epic-2: done
-  2-1-master-orchestrator-agent-creation: done
+  2-1-master-orchestrator-agent-creation:
+    status: retired
+    reason: Orchestrator creation absorbed into the Marcus BMAD skill; no standalone story.
   2-2-conversational-workflow-management: done
   2-3-agent-coordination-protocols: done
-  2-4-parameter-intelligence: done
-  2-5-pre-flight-check-orchestration: done
-  2-6-run-mode-management: done
+  2-4-parameter-intelligence:
+    status: retired
+    reason: Parameter intelligence became a shared skill rather than a standalone story; tracked under 20c parameter-family work.
+  2-5-pre-flight-check-orchestration:
+    status: retired
+    reason: Pre-flight check became a shared skill; no standalone story file.
+  2-6-run-mode-management:
+    status: retired
+    reason: Run-mode management subsumed into run_constants + tool_policies work; no standalone story file.
   epic-2-retrospective: done
 
   # === EPIC 2A: Fidelity Assurance & APP Intelligence Infrastructure ===
@@ -161,7 +188,9 @@ development_status:
   epic-2a: done  # ALL 9 STORIES COMPLETE — Fidelity Assurance & APP Intelligence Infrastructure — done 2026-03-28
   2a-1-fidelity-maturity-audit-l1-contracts: done  # audit baseline, L1 contracts (38 criteria), validation script, arch docs — done 2026-03-28
   2a-2-sensory-bridges-skill: done                        # 5 bridges, 34 tests, perception schema, confidence rubric, protocol, validator handoff — done 2026-03-28
-  2a-3-provenance-protocol: done                         # source_ref in 5 templates + context envelope, grammar spec, delegation protocol updated — done 2026-03-28
+  2a-3-provenance-protocol:                              # source_ref in 5 templates + context envelope, grammar spec, delegation protocol updated — done 2026-03-28
+    status: retired
+    reason: No file ever materialized; genuine ghost retained as breadcrumb.
   2a-4-fidelity-assessor-agent-foundation: done  # Vera agent, G2-G3 coverage, Fidelity Trace Report (O/I/A), circuit breaker, Marcus integration — done 2026-03-28
   2a-5-g0-g1-fidelity-verification: done                   # source bundle completeness (G0), lesson plan faithfulness (G1) — done 2026-03-28
   2a-6-agent-perception-upgrades: done                    # Irene, Gary, Quinn-R adopt universal perception protocol — done 2026-03-28
@@ -183,7 +212,6 @@ development_status:
   3-6-canvas-specialist-agent: done  # Deployment Director + canvas-deployment skill + woodshed exemplar reproduction
   3-7-qualtrics-specialist-agent: done  # Assessment Architect + qualtrics-assessment skill + woodshed exemplar reproduction
   3-8-canva-specialist-agent: done  # Visual Designer manual-tool specialist + canva-design knowledge skill
-  3-9-source-wrangler-notion-box: done  # NotionClient, source-wrangler skill, URL/HTML/Box bundles, Playwright path — 2026-03-28
   3-10-tech-spec-wrangler-skill: done  # shared doc-refresh skill, doc-sources coverage, proof report, sidecar logging
   3-11-mixed-fidelity-gamma-generation: done  # Mixed-fidelity system: Irene fidelity fields, Gary two-call split, Marcus discovery, Quinn-R fidelity-aware review, 12 tests — done 2026-03-28
   epic-3-retrospective: optional
@@ -316,6 +344,7 @@ development_status:
   16-2-shared-governance-enforcement-utilities: backlog
   16-3-expanded-handoff-validators-late-stage: backlog
   16-5-marcus-autonomous-routing-routine-decisions: backlog
+  16-4-contract-linting-drift-protection: backlog
   epic-16-retrospective: optional
 
   # === EPIC 17: Research & Reference Services (Added 2026-04-06) ===
@@ -392,12 +421,15 @@ development_status:
   epic-20c: in-progress
   20c-1-cluster-structure-template-library: in-progress  # Wave 2A: slice 1 done (10 templates); runtime selection integration pending
   20c-2-content-aware-template-selection-logic: done  # Wave 2A: slices 1-5 complete (selector, bridge, hydration, fail-closed, evaluator)
-  20c-3-static-density-configs: done  # Wave 2A COMPRESSED: profile-resolved static density mapping is implemented, reviewed cleanly, and validated in the full test suite
   20c-4-master-arc-cluster-arc-composition: deferred  # Deferred: return after profile runs validate clustering quality
   20c-5-presentation-architect-agent: deferred  # Deferred: Pax — when complexity justifies
   20c-6-cluster-design-advisor-capability: deferred  # Deferred: Lens — when complexity justifies
-  20c-7-parameter-audit-registry-schema: done  # Wave 2B complete (2026-04-14): cataloged 3 parameter families, added docs/parameter-directory.md, added state/config/parameter-registry-schema.yaml, and added registry validation tests
-  20c-8-assembly-timing-parameters: done  # Wave 2B complete (2026-04-14): onset_delay/dwell/cluster_gap/transition_buffer wired into manifest reference, Pass2 and precomposition validators, and test coverage
+  20c-7-parameter-audit-registry-schema:       # Wave 2B complete (2026-04-14): cataloged 3 parameter families, added docs/parameter-directory.md, added state/config/parameter-registry-schema.yaml, and added registry validation tests
+    status: retired
+    reason: Folded into parameter-registry-schema.yaml curation; no standalone story artifact.
+  20c-8-assembly-timing-parameters:       # Wave 2B complete (2026-04-14): onset_delay/dwell/cluster_gap/transition_buffer wired into manifest reference, Pass2 and precomposition validators, and test coverage
+    status: retired
+    reason: Consolidated into the broader 20c assembly-time parameter family work.
   20c-9-narration-parameter-expansion: done  # BMAD done 2026-04-15: 11-key contract; validator enforces schema_version const + parity (session-aligned).
   20c-10-creative-director-agent: done  # BMAD done 2026-04-15: CD scaffold + repo-anchored validator; same schema_version gate as 20c-11.
   20c-11-creative-directive-schema: done  # BMAD done 2026-04-15: JSON/YAML + runtime validate_creative_directive (schema_version "1.0" const enforced).
@@ -433,3 +465,9 @@ development_status:
   24-3-elevenlabs-short-segment-handling: ready-for-dev  # Unblocked (Epic 23 done)
   24-4-regression-test-suite: ready-for-dev  # Blocked on: 24-1 + 24-3 (23-2 Epic 23 gate work complete)
   epic-24-retrospective: optional
+  20c-3-source-to-density-intelligence:
+    status: done
+    previous_slug: 20c-3-static-density-configs
+  3-9-source-wrangler-skill:
+    status: done
+    previous_slug: 3-9-source-wrangler-notion-box

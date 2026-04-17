@@ -39,21 +39,39 @@ def main() -> int:
             print(f"  MISSING: state/config/{cfg}")
 
     memory_dir = root / "_bmad" / "memory"
-    sidecars = [
-        "master-orchestrator-sidecar",
-        "gamma-specialist-sidecar",
-        "elevenlabs-specialist-sidecar",
-        "canvas-specialist-sidecar",
-        "quality-reviewer-sidecar",
+    # All persistent memory directories under _bmad/memory/.
+    # 17 follow the persona-based `<name>-sidecar/index.md` convention;
+    # `bmad-agent-desmond` uses a distinct memory-sanctum pattern (`INDEX.md`).
+    # Total: 18 memory directories. The legacy `master-orchestrator-sidecar`
+    # redirect placeholder was removed on 2026-04-16 as part of the
+    # persona-naming cascade cleanup.
+    memory_entries: list[tuple[str, str]] = [
+        ("aria-sidecar", "index.md"),
+        ("audra-sidecar", "index.md"),
+        ("bmad-agent-desmond", "INDEX.md"),
+        ("canvas-specialist-sidecar", "index.md"),
+        ("cora-sidecar", "index.md"),
+        ("dan-sidecar", "index.md"),
+        ("enrique-sidecar", "index.md"),
+        ("gary-sidecar", "index.md"),
+        ("irene-sidecar", "index.md"),
+        ("kim-sidecar", "index.md"),
+        ("kira-sidecar", "index.md"),
+        ("marcus-sidecar", "index.md"),
+        ("mike-sidecar", "index.md"),
+        ("mira-sidecar", "index.md"),
+        ("quinn-r-sidecar", "index.md"),
+        ("tamara-sidecar", "index.md"),
+        ("vera-sidecar", "index.md"),
+        ("vyx-sidecar", "index.md"),
     ]
-    for sidecar in sidecars:
-        sidecar_dir = memory_dir / sidecar
-        index_file = sidecar_dir / "index.md"
-        if index_file.exists():
-            print(f"  Verified sidecar: _bmad/memory/{sidecar}/")
+    for mem_dir, entry_filename in memory_entries:
+        entry_file = memory_dir / mem_dir / entry_filename
+        if entry_file.exists():
+            print(f"  Verified memory dir: _bmad/memory/{mem_dir}/")
         else:
-            errors.append(f"Missing sidecar index: {index_file}")
-            print(f"  MISSING: _bmad/memory/{sidecar}/index.md")
+            errors.append(f"Missing memory entry: {entry_file}")
+            print(f"  MISSING: _bmad/memory/{mem_dir}/{entry_filename}")
 
     if errors:
         print(f"\n  {len(errors)} issue(s) found. Run story tasks to resolve.")

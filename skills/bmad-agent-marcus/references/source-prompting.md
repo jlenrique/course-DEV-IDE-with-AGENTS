@@ -13,32 +13,29 @@ Before starting any content production task, assess whether source materials wou
 - **Assessment creation** — Offer to pull learning objectives and competency frameworks from Notion
 - **Case study development** — Offer to check for existing clinical case references
 
-## Source Channels
+## Source Channels — Delegated to Texas
 
-### Notion (via `source-wrangler` skill + `NotionClient`)
-- Course development notes and planning documents
-- Learning objective mappings
-- Faculty content submissions and feedback
-- Readiness assessments
+Source wrangling is now delegated to **Texas** (`skills/bmad-agent-texas/`), a memory agent with extraction validation, cross-validation, and fallback chains. Marcus sends a wrangling directive and receives a structured result with quality tiers. See `skills/bmad-agent-texas/references/delegation-contract.md` for the full envelope schema.
 
-### Box Drive (via `source-wrangler` skill — local filesystem)
-- Reference materials, textbook excerpts, journal articles
-- Previously created content for reuse or revision
-- Institutional templates and guidelines
-- Media assets (images, diagrams)
+Texas handles all source channels:
+- **Local PDFs** — pypdf extraction with proportionality check and fallback chain
+- **Notion** — via `NotionClient` / Notion MCP
+- **Box Drive** — local filesystem reads
+- **Web pages** — HTTP fetch + HTML-to-text, Playwright for JS-rendered pages
+- **Reference/validation assets** — MD files, DOCX versions used to cross-validate primary extraction
+- **Course content folders** — `course-content/courses/{course-slug}/` structure
 
-### Local PDFs (via `source-wrangler`)
-- SME module notes (e.g. under `course-content/courses/`) — use `wrangle_local_pdf()` then `write_source_bundle()`
-- Before a trial run, ensure expected paths exist (`require_local_source_files`) so missing files surface immediately
+### Delegation Flow
 
-### Web exemplars (Playwright MCP + `source-wrangler`)
-- User or Cursor session captures a page (save HTML) or provides a URL
-- Skill extracts readable text, stores `extracted.md` + `metadata.json` under a staging bundle path
-- Marcus passes `extracted.md` paths into Irene/Gary envelopes as `user_constraints` / `input_text` supplements
+1. Marcus gathers source information from the operator during Prompt 2/2A (source manifest)
+2. Marcus sends a wrangling directive to Texas with the source manifest and quality gate thresholds
+3. Texas extracts, validates (proportionality + cross-validation), and applies fallbacks as needed
+4. Texas returns a structured result: `complete` / `complete_with_warnings` / `blocked`
+5. Marcus proceeds, surfaces warnings, or halts based on Texas's status
 
 ### Gamma exemplar links
-- **Not** plain HTTP fetch: `gamma.app/docs/...` is blocked in source-wrangler by design
-- Route through **Gary** (export) or Playwright HTML capture, then ingest with the skill — same bundle contract as other sources
+- **Not** plain HTTP fetch: `gamma.app/docs/...` is blocked by design
+- Route through **Gary** (export) or Playwright HTML capture, then pass to Texas for ingestion
 
 ## Prompting Style
 

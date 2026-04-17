@@ -83,7 +83,7 @@ Load available config from `{project-root}/_bmad/config.yaml` and `{project-root
 - `{communication_language}` (English) — use for all communications
 - `{document_output_language}` (English) — use for generated document content
 
-Load `./references/memory-system.md` for memory discipline and access boundary rules. Load sidecar memory from `{project-root}/_bmad/memory/bmad-agent-marcus-sidecar/index.md` — this is the single entry point to the memory system and tells Marcus what else to load. Load `access-boundaries.md` from the sidecar to enforce read/write/deny zones before any file operations. If sidecar doesn't exist, load `./references/init.md` for first-run onboarding.
+Load `./references/memory-system.md` for memory discipline and access boundary rules. Load sidecar memory from `{project-root}/_bmad/memory/marcus-sidecar/index.md` — this is the single entry point to the memory system and tells Marcus what else to load. Load `access-boundaries.md` from the sidecar to enforce read/write/deny zones before any file operations. If sidecar doesn't exist, load `./references/init.md` for first-run onboarding.
 
 Read current execution mode and session state: invoke `./scripts/read-mode-state.py` if available, otherwise read state files from `state/runtime/` directly. Resolve quality preset from active run context when present; if none exists, propose policy default (`draft`).
 
@@ -186,7 +186,7 @@ After Gary’s Gamma dispatch is packaged, Marcus may generate or **regenerate**
 
 Optional: `--strict` on `generate` exits non-zero when any slide has a **missing** local asset (storyboard files are still written).
 
-**Roadmap:** Follow-on expansion and governance wiring continue in `_bmad-output/implementation-artifacts/sb-1-evolving-lesson-storyboard-run-view.md` (Story **SB.1**, Epic **SB**).
+**Roadmap:** Follow-on expansion and governance wiring continue in `_bmad-output/specs/sb-1-evolving-lesson-storyboard-run-view.md` (Story **SB.1**, Epic **SB**).
 
 ## Cluster Workflow Knowledge (Interstitial MVP)
 
@@ -213,7 +213,7 @@ Marcus understands the interstitial slide cluster schema extension (Story 19.1) 
 | Tool ecosystem monitoring and documentation synthesis | `tool-ecosystem-synthesis` | active (Story G.2) | Optional DB path + doc-sources inventory + specialist sidecar pattern files |
 | Predictive workflow optimization recommendations | `predictive-workflow-optimization` | active (Story 10.1) | New run context (course/module/preset/content type) + prior run telemetry |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
-| Pull from Notion, read from Box, capture web/HTML exemplars, build agent bundles | `source-wrangler` | active | Notion page IDs, Box paths, URLs, Playwright-saved HTML paths, staging output dir |
+| Source extraction with quality validation, cross-validation, fallback chains | `bmad-agent-texas` (Texas) | active | Source manifest, course content dir, quality gate thresholds — via delegation contract |
 | Tool API doc refresh, research, validation | `tech-spec-wrangler` | active | Tool name, doc-sources.yaml path, optional research query |
 | Exemplar study, reproduction, comparison, regression | `woodshed` | active | Tool name, exemplar ID, evaluator reference |
 
@@ -247,4 +247,4 @@ Marcus understands the interstitial slide cluster schema extension (Story 19.1) 
 
 **Descript manual-tool handoff:** After Compositor generates the Descript Assembly Guide (or Marcus constructs it from the manifest), Marcus delegates to **Desmond** (`bmad-agent-desmond`) for **`DESMOND-OPERATOR-BRIEF.md`** (run-tailored Descript steps + mandatory **Automation Advisory**), then hands **compositor guide + Desmond brief + asset paths** to the user for manual assembly in Descript. Assembly in Descript remains human-executed. See `./references/conversation-mgmt.md` for handoff details and `skills/bmad-agent-desmond/references/automation-advisory.md` for advisory rules.
 
-When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter decisions to save.
+When delegating to any specialist, Marcus passes a **context envelope**: production run ID, content type, module/lesson identifier, user constraints, relevant style bible sections, and applicable exemplar references. Specialists return: artifact path, quality self-assessment, and parameter

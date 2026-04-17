@@ -330,7 +330,7 @@ def _capture_learning_insights(report: dict[str, Any], run_mode: str) -> dict[st
         return {"captured": False, "code": guard["code"], "reason": guard["reason"]}
 
     patterns_path = (
-        project_root() / "_bmad" / "memory" / "bmad-agent-marcus-sidecar" / "patterns.md"
+        project_root() / "_bmad" / "memory" / "marcus-sidecar" / "patterns.md"
     )
     patterns_path.parent.mkdir(parents=True, exist_ok=True)
 

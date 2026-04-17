@@ -1,5 +1,7 @@
 # Story G.1: Platform Allocation Intelligence
 
+> **Historical note (2026-04-16):** Paths of the form `<old>-specialist-sidecar/` and `bmad-agent-marcus-sidecar/` were renamed to persona-named sidecars. See `_bmad/memory/` for current paths.
+
 **Epic:** G — Governance Synthesis & Intelligence Optimization  
 **Status:** done  
 **Sprint key:** g-1-platform-allocation-intelligence  

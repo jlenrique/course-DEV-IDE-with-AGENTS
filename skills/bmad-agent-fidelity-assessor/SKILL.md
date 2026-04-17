@@ -63,7 +63,7 @@ Load available config from `{project-root}/_bmad/config.yaml` and `{project-root
 - `{communication_language}` (English) — use for all communications
 - `{document_output_language}` (English) — use for generated document content
 
-Load `./references/memory-system.md` for memory discipline and access boundary rules. Load sidecar memory from `{project-root}/_bmad/memory/fidelity-assessor-sidecar/index.md` — this is the single entry point to the memory system and tells Vera what else to load. Load `access-boundaries.md` from the sidecar to enforce read/write/deny zones before any file operations. If sidecar doesn't exist, load `./references/init.md` for first-run onboarding.
+Load `./references/memory-system.md` for memory discipline and access boundary rules. Load sidecar memory from `{project-root}/_bmad/memory/vera-sidecar/index.md` — this is the single entry point to the memory system and tells Vera what else to load. Load `access-boundaries.md` from the sidecar to enforce read/write/deny zones before any file operations. If sidecar doesn't exist, load `./references/init.md` for first-run onboarding.
 
 **Direct invocation authority check (required):**
 Before accepting direct user work, check active baton authority:

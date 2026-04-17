@@ -1,0 +1,48 @@
+# Pre-commit hooks for course-DEV-IDE-with-AGENTS.
+#
+# Per 2026-04-17 party-mode consensus (Murat + Winston + Amelia + John + Paige):
+# mechanical enforcement of regression-proof test discipline. Social review does
+# not scale at team size 1-operator + agents.
+#
+# Install once per clone:
+#   .venv/Scripts/python -m pip install pre-commit
+#   .venv/Scripts/pre-commit install
+#
+# What runs (fast path, <5s target):
+#   1. ruff (lint + format check)
+#   2. Orphan-reference detector — catches the 2026-04-17 `1572819` defect class
+#   3. Co-commit invariant — skills/ or scripts/ .py changed -> tests/ must be touched
+#
+# See docs/dev-guide/testing.md for the full regimen, cadence, and rationale.
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (lint)
+        entry: .venv/Scripts/ruff check
+        language: system
+        types: [python]
+        pass_filenames: true
+
+      - id: orphan-check
+        name: orphan-reference detector (test files)
+        entry: .venv/Scripts/python scripts/dev/check_orphans.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        description: >
+          Parse test-file ASTs and verify every project-module attribute
+          access (e.g. `pm.foo`) resolves on the target module. Catches the
+          case where a refactor deleted a symbol test files still reference.
+
+      - id: co-commit
+        name: co-commit invariant (source -> tests)
+        entry: .venv/Scripts/python scripts/dev/check_co_commit.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        description: >
+          Commits touching skills/**/*.py or scripts/**/*.py must also touch
+          at least one test file. Behavior changes ship with their test update
+          or not at all.

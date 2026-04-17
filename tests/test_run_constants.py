@@ -1,4 +1,8 @@
-"""Tests for frozen bundle run-constants.yaml loading (production wiring)."""
+"""Tests for frozen bundle run-constants.yaml loading (production wiring).
+
+Marked ``trial_critical`` — on the pre-Prompt-1 trial path. Must pass before
+firing any trial production run. See ``docs/dev-guide/testing.md``.
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,8 @@ import pytest
 import yaml
 
 from scripts.utilities import run_constants as rc
+
+pytestmark = pytest.mark.trial_critical
 
 
 def _write_valid_constants(bundle: Path, root: Path, *, bundle_rel: str | None = None) -> None:

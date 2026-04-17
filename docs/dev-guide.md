@@ -646,6 +646,12 @@ See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full 
 
 ## Testing
 
+> **Canonical regimen + cadence + enforcement:** see [docs/dev-guide/testing.md](dev-guide/testing.md).
+> That doc is the single source of truth for how we test here — what co-ships
+> with code, the `trial_critical` marker, orphan-reference detection, co-commit
+> invariant, and the three tiers (dev-cycle / trial-gate / real-run validators).
+> This section documents test *layout* only.
+
 ### Test layout
 
 **Root integration suite** — `tests/` (API clients, state, pre-flight, fidelity helpers, Notion, etc.).

@@ -215,8 +215,7 @@ class TestCollectHudData:
         from scripts.utilities import progress_map as pm
         with patch.object(pm, "SPRINT_STATUS", sprint), \
              patch.object(pm, "SESSION_HANDOFF", handoff), \
-             patch.object(pm, "NEXT_SESSION", nxt), \
-             patch.object(pm, "BMM_WORKFLOW", tmp_path / "bmm.yaml"):
+             patch.object(pm, "NEXT_SESSION", nxt):
             data = hud.collect_hud_data(bundle_dir=bundle)
 
         assert data["dev_report"] is not None

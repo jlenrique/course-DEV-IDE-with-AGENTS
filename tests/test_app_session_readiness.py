@@ -1,4 +1,8 @@
-"""Tests for APP session readiness service (Story G.3)."""
+"""Tests for APP session readiness service (Story G.3).
+
+Marked ``trial_critical`` — on the pre-Prompt-1 trial path. Must pass before
+firing any trial production run. See ``docs/dev-guide/testing.md``.
+"""
 
 from __future__ import annotations
 
@@ -12,6 +16,8 @@ import yaml
 
 from scripts.state_management.db_init import init_database
 from scripts.utilities import app_session_readiness as readiness
+
+pytestmark = pytest.mark.trial_critical
 
 
 def _write_support_modules(root: Path) -> None:

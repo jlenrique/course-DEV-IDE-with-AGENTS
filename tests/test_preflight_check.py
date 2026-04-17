@@ -2,6 +2,9 @@
 
 Verifies skill structure, MCP config parsing, heartbeat output parsing,
 readiness report classification, and resolution guidance.
+
+Marked ``trial_critical`` — on the pre-Prompt-1 trial path. Must pass before
+firing any trial production run. See ``docs/dev-guide/testing.md``.
 """
 
 from __future__ import annotations
@@ -10,7 +13,11 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scripts.utilities.file_helpers import project_root
+
+pytestmark = pytest.mark.trial_critical
 
 ROOT = project_root()
 

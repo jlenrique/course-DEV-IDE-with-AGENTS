@@ -368,11 +368,18 @@ def _story_counts(epic: dict[str, Any]) -> dict[str, int]:
 
 
 def _extract_section(filepath: Path, heading: str) -> str:
-    """Extract the text under a markdown heading (## level)."""
+    """Extract the text under a markdown heading (## level).
+
+    Uses prefix matching: ``_extract_section(f, "Unresolved Issues")`` matches
+    ``## Unresolved Issues`` and ``## Unresolved Issues / Risks Carried Forward``.
+    Necessary because load-bearing handoff files (SESSION-HANDOFF.md,
+    next-session-start-here.md) evolve their heading text session-to-session;
+    exact-match would silently drop content when a heading gets a suffix.
+    """
     if not filepath.exists():
         return ""
     text = filepath.read_text(encoding="utf-8")
-    pattern = rf"^##\s+{re.escape(heading)}\s*$(.*?)(?=^##\s|\Z)"
+    pattern = rf"^##\s+{re.escape(heading)}(?:[ \t][^\n]*)?$(.*?)(?=^##\s|\Z)"
     match = re.search(pattern, text, re.MULTILINE | re.DOTALL)
     return match.group(1).strip() if match else ""
 

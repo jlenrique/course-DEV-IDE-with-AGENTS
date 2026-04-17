@@ -26,6 +26,7 @@ dev = [
     "pytest-asyncio>=0.23,<1",
     "pytest-timeout>=2.3,<3",
     "ruff>=0.4,<1",
+    "pre-commit>=3.7,<5",
 ]
 
 [tool.ruff]
@@ -49,6 +50,7 @@ asyncio_mode = "auto"
 markers = [
     "live_api: tests that call live third-party APIs; excluded by default unless --run-live is provided",
     "live_api_e2e: slower/flakier live end-to-end API tests; excluded by default unless --run-live-e2e is provided",
+    "trial_critical: dev-side tests guarding the pre-Prompt-1 trial path (run_constants validator, preflight receipt, pack-doc schema lockstep). Run before firing any trial production run via `pytest -m trial_critical`. Not a runtime gate — a dev confidence check.",
 ]
 
 [build-system]

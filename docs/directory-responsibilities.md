@@ -131,26 +131,18 @@ Per-agent persistent learning. Mode-aware write rules apply.
 | `patterns.md` | Learned workflow/parameter patterns | Default mode only (append) |
 | `chronology.md` | Session and production run history | Default mode only (append) |
 
-### `course-content/staging/` — Draft and bundle workspace
+### `_bmad-output/` — BMAD workflow artifact tree
 
-Gitignored in full-tree workflows; agents write drafts and **source bundles** here. For **tracked** production runs, a bundle folder may include **`run-constants.yaml`** at its root: frozen `RUN_ID`, repo-relative `bundle_path`, absolute primary source path, theme keys, execution mode, and quality preset. That file is the machine-readable twin of the v4 prompt pack “Run Constants” block; validate with `scripts.utilities.run_constants` (see `docs/workflow/trial-run-pass2-artifacts-contract.md` §1B).
+BMAD agents (Marcus et al.) write planning, implementation, and collaboration artifacts here. Git-versioned. The tree is partitioned by artifact *kind*, not by epic:
 
-## Resolution Rules
+| Subdirectory | Contents | Agent Interaction |
+|--------------|----------|-------------------|
+| `planning-artifacts/` | Epic-level planning: `epics.md`, PRDs, scope charters | Read by `bmad-sprint-planning`; updated during planning |
+| `implementation-artifacts/` | **Stories only.** One markdown per sprint-status key (`<epic>-<story>-<slug>.md`), plus `sprint-status.yaml` (single canonical rollup), `bmm-workflow-status.yaml`, and evidence artifacts tightly bound to a specific story run | Agent-writable per-story; canonical status files are append-audited |
+| `specs/` | Design specs and multi-story plans that aren't a single story's acceptance criteria — `spec-*.md`, `g-*.md` governance plans, SB.1 storyboard design, runtime-refactor timing plan | Human + agent-writable; referenced from epics.md and SKILL.md roadmaps |
+| `reviews/` | Review outputs not owned by any single story: `*-adversarial-review.md`, `findings-matrix-*`, `review-*.md` (acceptance-auditor / blind-hunter / edge-case-hunter), retros, internal reviews, fidelity-audit baseline, party-mode consensus logs, review checklists | Written by review sub-agents; read by next-session orientation |
+| `maps/` | Cross-cutting planning/optimization maps: `app-optimization-map-*`, `app-three-layer-optimization-plans-*`, `deferred-work.md`, `project-doc-review-plan-*` | Read by many skills; `deferred-work.md` is the canonical "defer" sink for `bmad-quick-dev` |
+| `brainstorming/` | Free-form brainstorms and party-mode transcripts that predate formal consensus logs | Mostly human-seeded |
+| `test-artifacts/` | Simulated-run evidence and test-specific artifacts that don't belong under `tests/` | Agent-writable per run |
 
-When an agent needs brand, style, or parameter information:
-
-1. **Brand colors, typography, imagery, voice/tone** → `resources/style-bible/` (always)
-2. **Tool parameters** (voice IDs, LLM choices, format preferences) → `state/config/style_guide.yaml`
-3. **Course hierarchy and learning objectives** → `state/config/course_context.yaml`
-4. **Run presets, quality thresholds, retry policy** → `state/config/tool_policies.yaml`
-5. **Platform allocation decisions** → `resources/exemplars/` (reference patterns)
-6. **Accessibility standards** → `resources/style-bible/` (detailed); fallback to `config/content-standards.yaml` if no style bible exists
-7. **Learned preferences and patterns** → `_bmad/memory/{agent}-sidecar/patterns.md`
-
-## Anti-Patterns
-
-- Never store brand identity in `state/config/style_guide.yaml` — that's for tool dial settings only
-- Never treat `config/content-standards.yaml` as authoritative when a style bible exists
-- Never cache style bible content in agent memory — always re-read from disk
-- Never write to `config/` or `resources/` from agent logic — these are human-curated
-- Never confuse `state/config/tool_policies.yaml` (operational policy) with `resources/exemplars/policies/` (domain knowledge patterns)
+**Naming invariant (enforced by Audra L1):** every file in `implementation-artifacts/` m

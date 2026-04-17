@@ -244,14 +244,13 @@ def _author(invocation: Invocation, normalized: dict[str, Any]) -> ReturnEnvelop
             telemetry={"mode": "execute", "mode_sub": "author"},
         )
 
-    target.parent.mkdir(parents=True, exist_ok=True)
-    document = _render_yaml(normalized)
-    target.write_text(document, encoding="utf-8")
-
-    sha256 = hashlib.sha256(document.encode("utf-8")).hexdigest()
-
-    # Round-trip through the validator to confirm on-disk validity.
+    # Filesystem + validator round-trip. All failure modes must land in the
+    # envelope — no exceptions cross the Marcus boundary (AC-C.3).
     try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        document = _render_yaml(normalized)
+        target.write_text(document, encoding="utf-8")
+        sha256 = hashlib.sha256(document.encode("utf-8")).hexdigest()
         parsed = rc.parse_run_constants(normalized)
     except rc.RunConstantsError as exc:
         return ReturnEnvelope(
@@ -266,7 +265,32 @@ def _author(invocation: Invocation, normalized: dict[str, Any]) -> ReturnEnvelop
                 )
             ],
             result={"mode": "execute", "mode_sub": "author", "written_path": str(target)},
-            landing_point=LandingPoint(bundle_path=ctx.bundle_path if ctx else None, sha256=sha256),
+            telemetry={"mode": "execute", "mode_sub": "author"},
+        )
+    except Exception as exc:  # noqa: BLE001 — envelope contract requires catching all
+        # AC-C.3: scripts exit 0 on capability-level failure; Python exceptions
+        # MUST NOT cross the Marcus boundary. Filesystem errors, unexpected
+        # validator-library bugs, OS permission denials — all get wrapped.
+        return ReturnEnvelope(
+            status="error",
+            capability_code=CAPABILITY_CODE,
+            run_id=ctx.run_id if ctx else None,
+            errors=[
+                CapabilityError(
+                    code="PR_RC_UNEXPECTED_FAILURE",
+                    message=f"{type(exc).__name__}: {exc}",
+                    remediation=(
+                        "Check target_path permissions / disk space / validator "
+                        "library integrity. If the issue persists, surface to "
+                        "operator for manual diagnosis."
+                    ),
+                )
+            ],
+            result={
+                "mode": "execute",
+                "mode_sub": "author",
+                "target_path": str(target),
+            },
             telemetry={"mode": "execute", "mode_sub": "author"},
         )
 

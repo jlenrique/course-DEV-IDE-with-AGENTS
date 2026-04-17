@@ -160,7 +160,14 @@ def test_pr_rc_normalizes_halt_fixture(tmp_path: Path) -> None:
 
 
 def test_author_is_idempotent(tmp_path: Path) -> None:
-    """AC-T.7: calling author twice with same values yields byte-equal sha256."""
+    """AC-T.7: calling author twice with same values yields byte-equal sha256.
+
+    Invariant this test pins: the authored yaml MUST NOT contain any
+    non-deterministic fields (timestamps, run-generated ids, process pids).
+    If a future field leaks ``datetime.now()`` or similar into the rendered
+    document, this test will flake immediately — and that's the correct
+    signal. The 26-6 canonical shape is intentionally timestamp-free.
+    """
     bundle = tmp_path / "bundle"
     bundle.mkdir()
     values = _fully_populated_variant()
@@ -169,6 +176,34 @@ def test_author_is_idempotent(tmp_path: Path) -> None:
     env2 = pr_rc.execute(_invoke("execute", {"values": values}, bundle_path=str(bundle)))
     assert env1.status == "ok" and env2.status == "ok"
     assert env1.landing_point.sha256 == env2.landing_point.sha256
+
+
+def test_author_wraps_unexpected_exceptions(tmp_path: Path, monkeypatch) -> None:
+    """Murat's green-light ask: non-RunConstantsError exceptions in PR-RC
+    author MUST land in the envelope, not cross the Marcus boundary.
+
+    Guards the defect class where a future validator-library bug (say, an
+    unhandled KeyError inside parse_run_constants) would have leaked as a
+    traceback instead of a clean halt envelope.
+    """
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+
+    def _boom(_data):
+        raise ValueError("simulated validator-library bug")
+
+    monkeypatch.setattr(rc, "parse_run_constants", _boom)
+
+    env = pr_rc.execute(
+        _invoke("execute", {"values": _base_values()}, bundle_path=str(bundle))
+    )
+    assert env.status == "error"
+    assert env.capability_code == "PR-RC"
+    assert len(env.errors) == 1
+    err = env.errors[0]
+    assert err.code == "PR_RC_UNEXPECTED_FAILURE"
+    assert "ValueError" in err.message
+    assert "simulated" in err.message
 
 
 # ---------------------------------------------------------------------------

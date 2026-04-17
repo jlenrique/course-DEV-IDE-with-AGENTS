@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-16 (Harmonized: Wave 4 `22-2` + `20c-15` done; Epic 23 closed; trial-next per next-session-start-here / v4.2f.)
+# Last Updated: 2026-04-17 (Epic 25 / Story 25-1 Texas runtime wrangling runner closed BMAD-clean after layered review. G3.5 remediation folded into G3-08..G3-12. Trial run is the primary next step.)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -101,4 +101,4 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Execute 23-2, then re-evaluate downstream sequencing after the G4 cluster gate extension is implemented and reviewed."
+next_workflow_step: "Execute a fresh trial production run using v4.2g prompt pack against the APC C1-M1 Tejal source; this will be the first real-world exercise of Texas's run_wrangler.py orchestrator (Epic 25 Story 25-1, closed 2026-04-17). Secondary: Marcus sanctum migration (deferred from session-open in favor of Texas production-readiness). Follow-ups filed post-review: Vera-side G0 runner consuming extraction-report.yaml, fallback-chain orchestration, git-SHA-derived version strings, manifest self-inclusion for result.yaml."

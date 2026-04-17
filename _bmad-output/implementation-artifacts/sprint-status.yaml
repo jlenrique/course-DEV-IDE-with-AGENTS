@@ -465,6 +465,19 @@ development_status:
   24-3-elevenlabs-short-segment-handling: ready-for-dev  # Unblocked (Epic 23 done)
   24-4-regression-test-suite: ready-for-dev  # Blocked on: 24-1 + 24-3 (23-2 Epic 23 gate work complete)
   epic-24-retrospective: optional
+
+  # === EPIC 25: Texas Production Integration (Added 2026-04-17) ===
+  # Close the Texas runtime-wiring gap surfaced in prior session handoff: Texas's
+  # validators exist as library functions but no runtime runner invokes them during
+  # a production trial. Single story scopes the runner CLI + schema + tests +
+  # prompt-pack update so the next trial run exercises Texas end-to-end.
+  # Gate-03 (G0 sidecar) emission is deferred to a follow-up (Vera-owned).
+  # 25-1 closed BMAD-clean 2026-04-17 after layered review (Blind/Edge/Acceptance);
+  # all 7 MUST-FIX + 6 SHOULD-FIX remediated; 919 passed, 2 skipped, 0 failed.
+  epic-25: done
+  25-1-texas-runtime-wrangling-runner: done  # BMAD done 2026-04-17: runner CLI + extraction-report-schema + 18 tests + prompt-pack integration; layered code review clean
+  epic-25-retrospective: optional
+
   20c-3-source-to-density-intelligence:
     status: done
     previous_slug: 20c-3-static-density-configs

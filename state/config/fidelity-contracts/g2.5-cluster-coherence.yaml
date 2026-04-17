@@ -5,10 +5,29 @@ hil_gate: "operator-review"
 timing: "After Gary cluster dispatch, before Storyboard A and Irene Pass 2"
 source_of_truth:
   primary: "Gary-dispatched slide PNGs for cluster head and interstitial segments"
+  schema_ref: "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
   validation_script: "skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py"
   config_ref: "state/config/validation.yaml"
 
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# Deterministic before agentic; every agentic criterion declares blocks_on: with
+# at least one deterministic sibling id. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/.
+
 criteria:
+  # ==== Deterministic group ====
+
+  - id: "G2.5-06"
+    name: "Cluster-level coherence score"
+    description: "Per-cluster aggregate coherence score derived from criteria G2.5-01 through G2.5-05, yielding pass, warn, or fail"
+    fidelity_class: [literal-visual]
+    severity: critical
+    evaluation_type: deterministic
+    check: "Per-cluster score: all pass → pass; any medium-severity finding → warn; any high-severity finding → fail. Fail clusters require operator decision: accept, re-dispatch interstitial, or re-dispatch whole cluster"
+    requires_perception: false
+
+  # ==== Agentic group ====
+
   - id: "G2.5-01"
     name: "Typography match"
     description: "Font family and weight hierarchy are consistent between head and interstitial slides within each cluster"
@@ -18,6 +37,7 @@ criteria:
     check: "Same font family and weight hierarchy between head and interstitials within each cluster_id"
     requires_perception: true
     perception_modality: image
+    blocks_on: ["G2.5-06"]
 
   - id: "G2.5-02"
     name: "Background treatment consistency"
@@ -28,6 +48,7 @@ criteria:
     check: "Full-bleed head → interstitials should not go flat-color (exception: interstitial_type == pace-reset)"
     requires_perception: true
     perception_modality: image
+    blocks_on: ["G2.5-06"]
 
   - id: "G2.5-03"
     name: "Element isolation fidelity"
@@ -38,6 +59,7 @@ criteria:
     check: "isolation_target appears at comparable scale on the interstitial as on the head slide"
     requires_perception: true
     perception_modality: image
+    blocks_on: ["G2.5-06"]
 
   - id: "G2.5-04"
     name: "Whitespace ratio delta"
@@ -48,6 +70,7 @@ criteria:
     check: "Interstitials have whitespace ratio >= head slide whitespace ratio; inverted ratio is a finding"
     requires_perception: true
     perception_modality: image
+    blocks_on: ["G2.5-06"]
 
   - id: "G2.5-05"
     name: "Color temperature consistency"
@@ -58,12 +81,4 @@ criteria:
     check: "No warm-to-cool shift within a cluster; all members maintain consistent color temperature"
     requires_perception: true
     perception_modality: image
-
-  - id: "G2.5-06"
-    name: "Cluster-level coherence score"
-    description: "Per-cluster aggregate coherence score derived from criteria G2.5-01 through G2.5-05, yielding pass, warn, or fail"
-    fidelity_class: [literal-visual]
-    severity: critical
-    evaluation_type: deterministic
-    check: "Per-cluster score: all pass → pass; any medium-severity finding → warn; any high-severity finding → fail. Fail clusters require operator decision: accept, re-dispatch interstitial, or re-dispatch whole cluster"
-    requires_perception: false
+    blocks_on: ["G2.5-06"]

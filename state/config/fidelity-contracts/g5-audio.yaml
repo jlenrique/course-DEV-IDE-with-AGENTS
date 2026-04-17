@@ -6,16 +6,13 @@ source_of_truth:
   primary: "Narration script (exact text, pronunciation guides, timing estimates)"
   schema_ref: "skills/bmad-agent-content-creator/references/template-narration-script.md"
 
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# Deterministic before agentic; every agentic criterion declares blocks_on: with
+# at least one deterministic sibling id. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/.
+
 criteria:
-  - id: "G5-01"
-    name: "Script accuracy"
-    description: "Spoken words match narration script text — verified via audio sensory bridge (STT transcription)"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "STT transcript word sequence matches narration script text with word-error-rate < 5%"
-    requires_perception: true
-    perception_modality: audio
+  # ==== Deterministic group ====
 
   - id: "G5-02"
     name: "WPM compliance"
@@ -24,26 +21,6 @@ criteria:
     severity: medium
     evaluation_type: deterministic
     check: "audio_bridge.wpm is between 130 and 170 WPM"
-    requires_perception: true
-    perception_modality: audio
-
-  - id: "G5-03"
-    name: "Pronunciation accuracy"
-    description: "Medical/clinical terms match pronunciation guide in the narration script"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: "Terms listed in the pronunciation guide are spoken correctly per STT transcript — phonetic mismatches flagged"
-    requires_perception: true
-    perception_modality: audio
-
-  - id: "G5-04"
-    name: "No audio invention"
-    description: "No spoken words that are not in the narration script (hallucinated audio)"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "STT transcript contains no words, phrases, or sentences absent from the narration script"
     requires_perception: true
     perception_modality: audio
 
@@ -56,3 +33,38 @@ criteria:
     check: "audio_bridge.total_duration_ms is within ±15% of narration_script.estimated_duration"
     requires_perception: true
     perception_modality: audio
+
+  # ==== Agentic group ====
+
+  - id: "G5-01"
+    name: "Script accuracy"
+    description: "Spoken words match narration script text — verified via audio sensory bridge (STT transcription)"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "STT transcript word sequence matches narration script text with word-error-rate < 5%"
+    requires_perception: true
+    perception_modality: audio
+    blocks_on: ["G5-05"]
+
+  - id: "G5-03"
+    name: "Pronunciation accuracy"
+    description: "Medical/clinical terms match pronunciation guide in the narration script"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "Terms listed in the pronunciation guide are spoken correctly per STT transcript — phonetic mismatches flagged"
+    requires_perception: true
+    perception_modality: audio
+    blocks_on: ["G5-05"]
+
+  - id: "G5-04"
+    name: "No audio invention"
+    description: "No spoken words that are not in the narration script (hallucinated audio)"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "STT transcript contains no words, phrases, or sentences absent from the narration script"
+    requires_perception: true
+    perception_modality: audio
+    blocks_on: ["G5-05"]

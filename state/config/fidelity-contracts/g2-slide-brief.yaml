@@ -6,7 +6,14 @@ source_of_truth:
   primary: "Lesson plan (LOs, content structure, assessment hooks)"
   schema_ref: "skills/bmad-agent-content-creator/references/template-slide-brief.md"
 
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# Deterministic before agentic; every agentic criterion declares blocks_on: with
+# at least one deterministic sibling id. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/.
+
 criteria:
+  # ==== Deterministic group ====
+
   - id: "G2-01"
     name: "LO traceability"
     description: "Every renderable slide's Learning Purpose traces to a lesson plan LO; interstitial slides inherit LO coverage from their cluster head"
@@ -25,15 +32,6 @@ criteria:
     check: "Every slide section contains non-empty Content, Visual Guidance (with Layout, Hero Element, Visual Density), and Learning Purpose"
     requires_perception: false
 
-  - id: "G2-03"
-    name: "Fidelity classification accuracy"
-    description: "Fidelity tags are applied correctly: literal-text only for exact-match content (assessment items, statistics, accreditation terms); literal-visual only when SME image exists and the slide is planned as full-slide image-only; creative is default and over-tagging literal is a violation. Interstitial slides inherit the head slide's fidelity classification."
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: "For cluster_role null or head slides: literal-text slides contain verifiable exact-match content from source; literal-visual slides reference an existing SME image; creative slides have no content requiring verbatim preservation. cluster_role interstitial slides are exempt because they inherit fidelity classification from their cluster head"
-    requires_perception: false
-
   - id: "G2-04"
     name: "Downstream parameter coherence"
     description: "textMode and imageOptions.source values are consistent with fidelity classification"
@@ -41,15 +39,6 @@ criteria:
     severity: critical
     evaluation_type: deterministic
     check: "literal-text slides specify textMode: preserve; literal-visual slides specify textMode: preserve + imageOptions.source: noImages or user-provided with full-slide image-only intent (no supporting prose payload); creative slides may use any textMode"
-    requires_perception: false
-
-  - id: "G2-05"
-    name: "No content loss from lesson plan"
-    description: "All content blocks from the lesson plan are represented in at least one slide"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: "For each content block in the lesson plan, at least one slide's Content addresses that block's material"
     requires_perception: false
 
   - id: "G2-06"
@@ -60,3 +49,25 @@ criteria:
     evaluation_type: deterministic
     check: "Literal slides specify text_treatment, image_treatment, layout_constraint, content_scope from the finite vocabulary and additionalInstructions is empty or absent for literal slides"
     requires_perception: false
+
+  # ==== Agentic group ====
+
+  - id: "G2-03"
+    name: "Fidelity classification accuracy"
+    description: "Fidelity tags are applied correctly: literal-text only for exact-match content (assessment items, statistics, accreditation terms); literal-visual only when SME image exists and the slide is planned as full-slide image-only; creative is default and over-tagging literal is a violation. Interstitial slides inherit the head slide's fidelity classification."
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "For cluster_role null or head slides: literal-text slides contain verifiable exact-match content from source; literal-visual slides reference an existing SME image; creative slides have no content requiring verbatim preservation. cluster_role interstitial slides are exempt because they inherit fidelity classification from their cluster head"
+    requires_perception: false
+    blocks_on: ["G2-01", "G2-02"]
+
+  - id: "G2-05"
+    name: "No content loss from lesson plan"
+    description: "All content blocks from the lesson plan are represented in at least one slide"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "For each content block in the lesson plan, at least one slide's Content addresses that block's material"
+    requires_perception: false
+    blocks_on: ["G2-01", "G2-02"]

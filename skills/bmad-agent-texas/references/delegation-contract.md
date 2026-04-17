@@ -4,6 +4,27 @@
 
 Marcus delegates source wrangling to Texas via a structured directive. Texas returns a structured result. Marcus mediates all downstream delivery — Texas never delivers directly to Irene, Gary, Vera, or other consuming agents.
 
+## Runtime Invocation
+
+Marcus invokes Texas via the runtime wrangling runner:
+
+```
+.\.venv\Scripts\python.exe skills/bmad-agent-texas/scripts/run_wrangler.py --directive <path-to-directive.yaml> --bundle-dir <bundle-directory> [--json]
+```
+
+Exit codes:
+
+| Code | Meaning | Marcus Action |
+|---|---|---|
+| `0` | complete | Proceed with production run |
+| `10` | complete_with_warnings | Proceed, surface warnings to operator from `result.yaml` |
+| `20` | blocked | Halt run, present `blocking_issues[]` from `result.yaml` to operator |
+| `30` | directive/IO error | Fix the directive YAML (shape or locator) and re-invoke |
+
+The runner writes all six canonical bundle artifacts (see "Bundle Directory Structure" below) and emits a structured result envelope to `<bundle-dir>/result.yaml` (always) and to stdout (YAML by default, JSON with `--json`). Marcus reads `result.yaml` into the production envelope.
+
+**Direct-path invocation note:** The hyphenated directory name `bmad-agent-texas` is not a valid Python package name, so `python -m skills.bmad-agent-texas.scripts.run_wrangler` is unavailable. Use direct-path invocation as shown above; this matches the existing prompt-pack convention for `skills/bmad-agent-marcus/scripts/*.py` scripts.
+
 ## Marcus → Texas: Wrangling Directive
 
 ```yaml

@@ -115,9 +115,11 @@ def test_coursearc_references_include_evidence_expectations() -> None:
 
 
 def test_marcus_lists_coursearc_as_active() -> None:
-    marcus = (ROOT / "skills" / "bmad-agent-marcus" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
+    # Epic 26 migration: table moved to external-specialist-registry.md.
+    registry = (
+        ROOT / "skills" / "bmad-agent-marcus" / "references"
+        / "external-specialist-registry.md"
+    ).read_text(encoding="utf-8")
 
-    assert "coursearc-specialist" in marcus
-    assert "active (Story 6.1)" in marcus
+    assert "coursearc-specialist" in registry
+    assert "active (Story 6.1)" in registry

@@ -1,3 +1,9 @@
+---
+name: source-prompting
+code: SP
+description: Proactive source-material prompting (Notion / Box Drive retrieval before production)
+---
+
 # Source Material Prompting
 
 ## Purpose

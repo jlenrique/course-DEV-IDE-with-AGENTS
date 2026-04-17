@@ -563,7 +563,7 @@ This is where you come in. The three-layer architecture means there are three di
 2. Create `SKILL.md` with frontmatter (`name`, `description` with trigger phrases)
 3. Create `references/` with detailed capability docs (loaded on demand)
 4. Create `scripts/` with Python execution code (imports from `scripts/api_clients/`)
-5. If the skill serves Marcus: add it to Marcus's External Skills routing table in `skills/bmad-agent-marcus/SKILL.md`
+5. If the skill serves Marcus: add it to Marcus's External Skills routing table in `skills/bmad-agent-marcus/references/external-specialist-registry.md`
 6. Follow PEP 723 for script dependency declarations
 
 **Template:** Use `skills/pre-flight-check/` as the canonical example — it demonstrates the full SKILL.md + references/ + scripts/ pattern with clear invocation instructions.

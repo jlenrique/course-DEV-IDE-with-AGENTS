@@ -478,6 +478,19 @@ development_status:
   25-1-texas-runtime-wrangling-runner: done  # BMAD done 2026-04-17: runner CLI + extraction-report-schema + 18 tests + prompt-pack integration; layered code review clean
   epic-25-retrospective: optional
 
+  # === EPIC 26: BMB Sanctum Migration (Added 2026-04-17) ===
+  # Migrate 15 old-pattern agents from the legacy Anthropic/Claude sidecar shape
+  # to the BMAD Module Builder (March 2026) sanctum shape as used by Texas.
+  # Pilot: 26-1 Marcus. Shared AC spine + runbook + worksheet template live at
+  # _bmad-output/implementation-artifacts/epic-26/_shared/.
+  # Party-mode consensus captured 2026-04-17 (Winston, Amelia, Murat, John, Paige).
+  # Epic file: _bmad-output/implementation-artifacts/epic-26-bmb-sanctum-migration.md
+  epic-26: in-progress
+  26-1-marcus-bmb-sanctum-migration: done  # BMAD done 2026-04-17: BMB-conformant SKILL.md (73 lines), sanctum scaffolded, generic reusable scaffold, 14 migration tests, 933/2/0 full suite, 0 contract errors, layered code review clean (10 MUST-FIX + 9 high-value SHOULD-FIX remediated; remaining items logged as follow-ups)
+  26-2-irene-bmb-sanctum-migration: backlog
+  26-3-dan-bmb-sanctum-migration: backlog
+  epic-26-retrospective: optional
+
   20c-3-source-to-density-intelligence:
     status: done
     previous_slug: 20c-3-static-density-configs

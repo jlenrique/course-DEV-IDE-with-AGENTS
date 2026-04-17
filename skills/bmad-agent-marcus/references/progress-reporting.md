@@ -1,3 +1,9 @@
+---
+name: progress-reporting
+code: PR
+description: Progress reporting, status summaries, and error handling
+---
+
 # Progress Reporting & Error Handling
 
 ## Purpose

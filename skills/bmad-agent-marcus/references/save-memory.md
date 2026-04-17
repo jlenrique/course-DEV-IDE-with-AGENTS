@@ -1,3 +1,9 @@
+---
+name: save-memory
+code: SM
+description: Immediate session-context persistence to the Marcus sanctum
+---
+
 # Save Memory
 
 Immediately persist the current session context to the memory sidecar at `{project-root}/_bmad/memory/marcus-sidecar/`.

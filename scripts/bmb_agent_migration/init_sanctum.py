@@ -8,7 +8,7 @@ BMB conformance pattern (Texas-style): `assets/*-template.md`,
 `scripts/*.py`. Epic 26 canonical scaffold — all per-agent `init-sanctum.py`
 files are thin forwarders to this script.
 
-Version: 0.1 (2026-04-17). Frozen API contract during Marcus pilot.
+Version: 0.2 (2026-04-17). Post-pilot fleet-wide fix cycle (Story 26-4).
 
 Usage:
     python scripts/bmb_agent_migration/init_sanctum.py --skill-path <path> [--dry-run]
@@ -22,11 +22,25 @@ Arguments:
 
 Behavior:
     1. Validates the skill directory shape (assets/ + references/ present).
-    2. Discovers `assets/*-template.md` and renders each to the sanctum with {var} substitution.
-    3. Copies `references/*.md` into `<sanctum>/references/` except `SKILL_ONLY_FILES`.
-    4. Copies `scripts/*.py` into `<sanctum>/scripts/` except `init-sanctum.py`.
-    5. Auto-generates `CAPABILITIES.md` by scanning references frontmatter for `code:` + `name:`.
-    6. Creates `sessions/` and `capabilities/` subdirectories.
+    2. Loads config from (in priority order, later overrides earlier):
+         - `_bmad/core/config.yaml`  (BMB core config — canonical user_name source)
+         - `_bmad/config.yaml`       (repo-level override, optional)
+         - `_bmad/config.user.yaml`  (user-level override, optional)
+    3. Discovers `assets/*-template.md` and renders each to the sanctum with {var} substitution.
+    4. Renders `references/*.md` into `<sanctum>/references/` with the same known-variable
+       whitelist (unknown `{...}` tokens survive unchanged). Excludes SKILL_ONLY_FILES.
+    5. Copies `scripts/*.py` into `<sanctum>/scripts/` except `init-sanctum.py`.
+    6. Auto-generates `CAPABILITIES.md` by scanning references frontmatter for `code:` + `name:`.
+    7. Creates `sessions/` and `capabilities/` subdirectories.
+
+Variable substitution (whitelist — foreign `{...}` tokens preserved):
+    {user_name}                — from config overlay, default "friend"
+    {communication_language}   — from config overlay, default "English"
+    {document_output_language} — from config overlay, default "English"
+    {birth_date}               — today's date (YYYY-MM-DD)
+    {project_root}             — absolute path to repo root
+    {sanctum_path}             — POSIX-relative `_bmad/memory/<skill-name>` (portable)
+    {skill_name}               — basename of --skill-path
 """
 from __future__ import annotations
 
@@ -37,7 +51,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-SCAFFOLD_VERSION = "0.1"
+SCAFFOLD_VERSION = "0.2"
 
 # Files that stay in the skill bundle (used during First Breath, not migrated to sanctum).
 # Additional skill-only files can be added via `.bmb-scaffold-config.yaml` in the skill dir
@@ -357,15 +371,46 @@ def execute_plan(plan: dict, skill_path: Path, force: bool) -> int:
     (sanctum_path / "sessions").mkdir(exist_ok=True)
     (sanctum_path / "capabilities").mkdir(exist_ok=True)
 
+    # EC-B fix: on --force re-render of an existing sanctum, purge stale files
+    # that no longer correspond to a skill-bundle source. Covers:
+    # - Top-level *.md that aren't in plan["sanctum_files"] + CAPABILITIES.md
+    #   (e.g., a PERSONA-template.md renamed in assets/ would otherwise leave
+    #   an orphan PERSONA.md alongside the new name).
+    # - references/*.md that aren't in plan["references_copied"] (upstream deletion drift).
+    # - scripts/*.py that aren't in plan["scripts_copied"] (upstream deletion drift).
+    # Never touches sessions/ or capabilities/ (operator-authored content).
+    if force:
+        expected_top = set(plan["sanctum_files"]) | {"CAPABILITIES.md"}
+        for p in sanctum_path.glob("*.md"):
+            if p.name not in expected_top:
+                p.unlink()
+        expected_refs = set(plan["references_copied"])
+        refs_dir = sanctum_path / "references"
+        if refs_dir.exists():
+            for p in refs_dir.glob("*.md"):
+                if p.name not in expected_refs:
+                    p.unlink()
+        expected_scripts = set(plan["scripts_copied"])
+        scripts_sanctum_dir = sanctum_path / "scripts"
+        if scripts_sanctum_dir.exists():
+            for p in scripts_sanctum_dir.glob("*.py"):
+                if p.name not in expected_scripts:
+                    p.unlink()
+
     assets_dir = skill_path / "assets"
     references_dir = skill_path / "references"
     scripts_dir = skill_path / "scripts"
 
-    # Copy references (selective)
+    # Render references (V2-3 fix: substitute known variables so {sanctum_path} etc.
+    # don't survive as literal curly-brace text in sanctum refs. Because substitute_vars
+    # only replaces the 6 known-key tokens, any foreign {...} token survives unchanged —
+    # so activation-time templates authored by the agent's references are preserved.)
     sanctum_refs = sanctum_path / "references"
     sanctum_refs.mkdir(exist_ok=True)
     for name in plan["references_copied"]:
-        shutil.copy2(references_dir / name, sanctum_refs / name)
+        src = references_dir / name
+        rendered = substitute_vars(src.read_text(encoding="utf-8"), plan["variables"])
+        (sanctum_refs / name).write_text(rendered, encoding="utf-8")
 
     # Copy scripts (selective)
     sanctum_scripts = sanctum_path / "scripts"
@@ -429,18 +474,47 @@ def main(argv: list[str] | None = None) -> int:
     skill_name = skill_path.name
     sanctum_path = memory_dir / skill_name
 
-    # Load config
+    # EC-A guard: refuse to scaffold into a workspace that isn't an ancestor of
+    # the skill. Prevents typo-level --project-root mistakes from polluting a
+    # foreign workspace (e.g., `--project-root C:/Windows` silently mkdir-ing
+    # into system directories). Uses string-prefix on resolved paths because
+    # Path.is_relative_to is Py3.9+ — be explicit for clarity.
+    try:
+        skill_path.relative_to(project_root)
+    except ValueError:
+        print(
+            f"ERROR: --skill-path ({skill_path}) is not inside --project-root ({project_root}).\n"
+            "  The scaffold would mkdir into an unrelated workspace. Refusing.",
+            file=sys.stderr,
+        )
+        return 2
+
+    # Load config (V2-1 fix: read _bmad/core/config.yaml as the BMB-canonical base).
+    # Overlay order (later overrides earlier):
+    #   _bmad/core/config.yaml   — canonical user_name / communication_language source
+    #   _bmad/config.yaml        — repo-level override (if present)
+    #   _bmad/config.user.yaml   — user-level override (if present)
     config: dict = {}
-    for cfg in (bmad_dir / "config.yaml", bmad_dir / "config.user.yaml"):
+    for cfg in (
+        bmad_dir / "core" / "config.yaml",
+        bmad_dir / "config.yaml",
+        bmad_dir / "config.user.yaml",
+    ):
         config.update(parse_yaml_config(cfg))
+
+    # V2-2 fix: sanctum_path must substitute to a repo-relative POSIX path
+    # (portable across OSes; previously absolute — Windows drive letters leaked
+    # into committed sanctum files).
+    sanctum_relative = sanctum_path.relative_to(project_root).as_posix()
 
     today = date.today().isoformat()
     variables = {
         "user_name": config.get("user_name", "friend"),
         "communication_language": config.get("communication_language", "English"),
+        "document_output_language": config.get("document_output_language", "English"),
         "birth_date": today,
         "project_root": str(project_root),
-        "sanctum_path": str(sanctum_path),
+        "sanctum_path": sanctum_relative,
         "skill_name": skill_name,
     }
 

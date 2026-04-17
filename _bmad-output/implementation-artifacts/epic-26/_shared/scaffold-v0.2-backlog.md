@@ -1,10 +1,24 @@
-# BMB Scaffold v0.2 Backlog
+# BMB Scaffold v0.2 — Shipped Spec
 
 **Opened:** 2026-04-17 (Story 26-3 code review)
-**Scaffold:** `scripts/bmb_agent_migration/init_sanctum.py` — currently v0.1
-**Lock policy:** v0.1 is frozen through Epic 26 pilot wave (Marcus 26-1, Irene 26-2, Dan 26-3). Defects surfaced during pilots are logged here and remediated in a dedicated v0.2 story, NOT patched inline in per-agent migrations.
+**Shipped:** 2026-04-17 (Story 26-4 closed BMAD-clean)
+**Scaffold:** `scripts/bmb_agent_migration/init_sanctum.py` — now v0.2
+**Lock policy:** v0.1 was frozen through Epic 26 pilot wave (Marcus 26-1, Irene 26-2, Dan 26-3). Post-pilot, the 3 fleet-wide defects below were remediated in Story 26-4 as a dedicated scaffold-hardening cycle before the batch migration of the remaining ~14 agents.
 
-## Fleet-wide defects (reproduce on all 3 pilots)
+## v0.2 Contract (what the batch wave inherits)
+
+The scaffold v0.2 guarantees:
+
+1. **Config source-of-truth:** Reads `_bmad/core/config.yaml` as the BMB-canonical base. Overlay order (later overrides earlier): `_bmad/core/config.yaml` → `_bmad/config.yaml` → `_bmad/config.user.yaml`. `user_name` and `communication_language` are pulled from the merged config; fallback to `"friend"` / `"English"` only when unset everywhere.
+2. **`{sanctum_path}` is repo-relative POSIX:** `_bmad/memory/<skill_name>` (forward slashes even on Windows). Guarantees portability across machines and CI; no author-local absolute paths leak into committed artifacts. Cross-OS test: `test_sanctum_path_uses_posix_separators`.
+3. **References are rendered, not copied:** `references/*.md` go through the same whitelist substitution as `assets/*-template.md`. The whitelist is 7 documented variables (`user_name`, `communication_language`, `document_output_language`, `birth_date`, `project_root`, `sanctum_path`, `skill_name`). Foreign `{...}` tokens — template literals authored by the agent for activation-time interpretation — survive unchanged. Test: `test_v2_3_reference_render_preserves_unknown_braces`.
+4. **`--force` is the canonical re-render primitive:** Without `--force`, an existing sanctum (detected by `INDEX.md` presence) is preserved and the scaffold exits 0 with a skip notice. With `--force`, files are overwritten AND stale top-level/references/scripts files (no longer corresponding to a skill-bundle source) are purged to prevent drift across migrations. Preservation-of-operator-edits semantics will ship in Story 26-5 before operator edits accumulate at scale.
+5. **`--project-root` validation:** Scaffold refuses to mkdir into a workspace where `--skill-path` is not inside `--project-root` (exit code 2). Prevents typo-level mistakes from polluting foreign directories.
+6. **Version string:** `SCAFFOLD_VERSION = "0.2"` appears in dry-run + real-run banners for provenance.
+
+Tests that enforce this contract live in `tests/migration/test_bmb_scaffold.py` under the `Story 26-4: scaffold v0.2 regression tests` block. Any attempt to regress the contract will fail one of the 10 v0.2 tests.
+
+## Fleet-wide defects remediated in v0.2 (were reproducing on all 3 pilots)
 
 ### V2-1 — Config path is wrong
 
@@ -66,8 +80,8 @@ Recommendation: **(b)** — simplest, matches the canonical Texas pattern (Texas
 - Dan first-breath.md urgency/discovery ordering (Blind Hunter S3) — fixed in Dan's first-breath.md
 - Dan sidecar sibling files lack banner (EH-2) — fixed in Dan's dan-sidecar
 
-## Story placeholder
+## Story history
 
-A dedicated **Story 26-4: BMB Scaffold v0.2** will be opened after Dan's pilot is merged. Scope: fix V2-1, V2-2, V2-3; re-scaffold Marcus/Irene/Dan sanctums for consistency; add regression tests against each defect.
-
-**Not blocking Dan:** The 3 v0.2 triggers above reproduce identically on already-merged Marcus and Irene. Dan is not worse than its predecessors; the defects are fleet-wide and deserve a dedicated fix cycle rather than inline patching that would leave Dan inconsistent with Marcus/Irene.
+- **2026-04-17 (Story 26-3 close-out):** Opened as a backlog after Dan pilot review surfaced the 3 fleet-wide defects. Deferred from 26-3 because fixing inline would leave Dan inconsistent with already-merged Marcus + Irene.
+- **2026-04-17 (Story 26-4 close-out):** Shipped as v0.2. All 3 defects remediated; 10 new regression tests added; Marcus/Irene/Dan sanctums re-scaffolded with `--force`; all 3 pilots verified clean (Operator: Juanl, repo-relative sanctum paths, rendered references).
+- **Story 26-5 (preservation semantics):** Open in backlog. Scope: add file-level preservation heuristic so `--force` doesn't clobber operator edits. Target: before the batch migration of the remaining ~14 agents — operator edits start accumulating once agents go through First Breath with real runs.

@@ -1,3 +1,9 @@
+---
+name: save-memory
+code: SM
+description: Immediate session-context persistence to Irene's sanctum
+---
+
 # Save Memory
 
 Immediately persist the current session context to memory.

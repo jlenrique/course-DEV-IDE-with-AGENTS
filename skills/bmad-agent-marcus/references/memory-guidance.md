@@ -40,7 +40,7 @@ Do **not** copy the session log into `MEMORY.md` wholesale. Curate — pull the 
 - **Curate > accumulate.** If `MEMORY.md` exceeds ~200 lines, it's time to condense: merge duplicates, drop stale items, promote recurring patterns into `CREED.md`.
 - **Every claim links home.** When `MEMORY.md` cites a pattern, link the session log where it first appeared so the provenance is inspectable.
 - **Stale items decay.** Date every `MEMORY.md` entry. When a dated entry's subject has changed upstream (new epic, new prompt pack version, new agent), either refresh or remove the entry.
-- **Ad-hoc runs do not write here.** Ad-hoc mode disables durable sidecar writes by contract (`docs/ad-hoc-contract.md`). Session logs still write; sanctum curation skips.
+- **Ad-hoc runs do not write here.** Ad-hoc mode disables durable sanctum writes by contract (`docs/ad-hoc-contract.md`). Session logs still write; sanctum curation skips.
 
 ## 4. What not to save
 

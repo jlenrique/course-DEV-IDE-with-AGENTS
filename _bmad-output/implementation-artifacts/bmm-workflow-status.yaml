@@ -106,6 +106,17 @@ next_workflow_step: "Close Story 26-1 (Marcus BMB sanctum migration) after post-
 epic_26_bmb_sanctum_migration:
   status: "in-progress"
   file: "_bmad-output/implementation-artifacts/epic-26-bmb-sanctum-migration.md"
-  pilot_story: "26-1-marcus-bmb-sanctum-migration"
-  pilot_status: "review"
-  note: "Pilot for 12-17 agent migrations from legacy Anthropic/Claude pattern to BMB sanctum pattern. Shared AC spine, runbook, worksheet template, generic scaffold (scripts/bmb_agent_migration/init_sanctum.py v0.1). Marcus pilot drives precedent; shape locks for downstream per party-mode consensus 2026-04-17."
+  note: "BMB sanctum migration for 14+ remaining agents. Shared AC spine, runbook, worksheet template, generic scaffold v0.1 frozen for pilot wave. Party-mode consensus 2026-04-17."
+  stories:
+    "26-1-marcus-bmb-sanctum-migration":
+      status: "done"
+      closed: "2026-04-17"
+      tier: "Pilot (orchestrator)"
+      note: "Commit b70ff82 on dev/epic-26-marcus-pilot; 10 MUST-FIX + 9 high-value SHOULD-FIX remediated; 932/2/0 baseline."
+    "26-2-irene-bmb-sanctum-migration":
+      status: "done"
+      closed: "2026-04-17"
+      tier: "Tier-1 (specialist — highest iteration churn)"
+      note: "On dev/epic-26-irene-bmb-migration. 21 capability codes preserved via 11 stubs + 10 frontmatter retrofits (IA/LO/BT/CL/CS/AA/PQ/WD/MG/CD/SB/PC/VR/MP/MC/MA/SM/IB/NA/DC/CP). 58-line specialist-tier SKILL.md. 25 migration tests (+11 Irene); 944/2/0 full suite. Layered code review clean; 4 MUST-FIX + 6 high-value SHOULD-FIX remediated (incl. orphan init.md/memory-system.md removed from BOTH Marcus + Irene, new regression tests for sidecar-path drift + stub-to-script resolution)."
+    "26-3-dan-bmb-sanctum-migration":
+      status: "backlog"

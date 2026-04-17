@@ -487,7 +487,7 @@ development_status:
   # Epic file: _bmad-output/implementation-artifacts/epic-26-bmb-sanctum-migration.md
   epic-26: in-progress
   26-1-marcus-bmb-sanctum-migration: done  # BMAD done 2026-04-17: BMB-conformant SKILL.md (73 lines), sanctum scaffolded, generic reusable scaffold, 14 migration tests, 933/2/0 full suite, 0 contract errors, layered code review clean (10 MUST-FIX + 9 high-value SHOULD-FIX remediated; remaining items logged as follow-ups)
-  26-2-irene-bmb-sanctum-migration: backlog
+  26-2-irene-bmb-sanctum-migration: done  # BMAD done 2026-04-17: BMB-conformant SKILL.md (58 lines, specialist tier), sanctum scaffolded, 21 capability codes preserved (via 11 stubs + 10 frontmatter retrofits, including CP umbrella), 11 new migration tests (25 total), 944/2/0 full suite, 0 contract errors, layered code review clean (4 MUST-FIX + 6 high-value SHOULD-FIX remediated). Orphan init.md/memory-system.md deleted from BOTH Marcus and Irene skill bundles; regression tests added to prevent future drift.
   26-3-dan-bmb-sanctum-migration: backlog
   epic-26-retrospective: optional
 

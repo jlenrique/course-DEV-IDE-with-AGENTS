@@ -26,6 +26,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCAFFOLD = REPO_ROOT / "scripts" / "bmb_agent_migration" / "init_sanctum.py"
 TEXAS_SKILL = REPO_ROOT / "skills" / "bmad-agent-texas"
 MARCUS_SKILL = REPO_ROOT / "skills" / "bmad-agent-marcus"
+IRENE_SKILL = REPO_ROOT / "skills" / "bmad-agent-content-creator"
 CANONICAL_TEXAS_SANCTUM = REPO_ROOT / "_bmad" / "memory" / "bmad-agent-texas"
 
 REQUIRED_SANCTUM_FILES = {
@@ -267,6 +268,180 @@ def test_marcus_legacy_sidecar_has_deprecation_banner():
         pytest.skip("Marcus migration not yet complete (no deprecation banner)")
     assert "bmad-agent-marcus" in text, \
         "deprecation banner must point to new sanctum path"
+
+
+def test_scaffold_dry_run_irene_smoke():
+    """Dry-run against the real Irene skill dir must exit 0 (post-migration)."""
+    if not (IRENE_SKILL / "assets").exists():
+        pytest.skip("Irene migration not yet complete (no assets/ dir)")
+    result = _run_scaffold(["--skill-path", str(IRENE_SKILL), "--dry-run"])
+    assert result.returncode == 0, result.stderr
+    assert "bmad-agent-content-creator" in result.stdout
+
+
+def test_irene_skill_md_has_bmb_frontmatter():
+    """Post-migration, Irene's SKILL.md must have valid BMB frontmatter."""
+    skill_md = IRENE_SKILL / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    assert text.startswith("---\n")
+    fm_end = text.index("\n---", 4)
+    frontmatter = text[4:fm_end]
+    assert "name:" in frontmatter
+    assert "bmad-agent-content-creator" in frontmatter
+
+
+def test_irene_skill_md_is_bmb_conformant():
+    """Irene is specialist tier — SKILL.md ≤ 60 lines + canonical BMB blocks."""
+    skill_md = IRENE_SKILL / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    if "Sacred Truth" not in text:
+        pytest.skip("Irene migration not yet complete (no Sacred Truth block)")
+    lines = text.splitlines()
+    assert len(lines) <= 60, f"SKILL.md exceeds specialist-tier ceiling: {len(lines)} lines (≤60)"
+    required_blocks = [
+        "## On Activation",
+        "## Session Close",
+        "## Lane Responsibility",
+    ]
+    for block in required_blocks:
+        assert block in text, f"missing required block: {block}"
+    assert "_bmad/memory/bmad-agent-content-creator" in text, \
+        "SKILL.md must name the sanctum path explicitly"
+
+
+def test_irene_skill_md_reference_links_resolve():
+    """Every ./references/<name>.(md|yaml) link in Irene's SKILL.md must resolve."""
+    skill_md = IRENE_SKILL / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    if "Sacred Truth" not in text:
+        pytest.skip("Irene migration not yet complete")
+    link_pattern = re.compile(r"`\./references/([A-Za-z0-9_\-\.]+\.(?:md|yaml))`")
+    missing = []
+    for name in set(link_pattern.findall(text)):
+        target = IRENE_SKILL / "references" / name
+        if not target.exists():
+            missing.append(name)
+    assert not missing, f"SKILL.md links to non-existent references: {missing}"
+
+
+def test_irene_sanctum_scaffolded():
+    """Post-migration, Irene's sanctum must exist at the canonical path."""
+    sanctum = REPO_ROOT / "_bmad" / "memory" / "bmad-agent-content-creator"
+    if not sanctum.exists():
+        pytest.skip("Irene sanctum not yet scaffolded")
+    for name in REQUIRED_SANCTUM_FILES:
+        assert (sanctum / name).is_file(), f"missing sanctum file: {name}"
+    assert (sanctum / "sessions").is_dir()
+    assert (sanctum / "capabilities").is_dir()
+
+
+def test_irene_scripts_still_import():
+    """Activation smoke: every Irene script module must be importable."""
+    scripts_dir = IRENE_SKILL / "scripts"
+    if not scripts_dir.exists():
+        pytest.skip("Irene scripts dir missing")
+    failures = []
+    for py in scripts_dir.glob("*.py"):
+        if py.name in {"init-sanctum.py", "__init__.py"}:
+            continue
+        spec = importlib.util.spec_from_file_location(f"irene_{py.stem}", py)
+        if spec is None or spec.loader is None:
+            failures.append((py.name, "no spec"))
+            continue
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except Exception as exc:  # noqa: BLE001 — smoke test
+            failures.append((py.name, repr(exc)))
+    assert not failures, f"import failures: {failures}"
+
+
+def test_irene_legacy_sidecar_has_deprecation_banner():
+    """Post-migration, irene-sidecar/index.md must carry a deprecation pointer."""
+    sidecar_index = REPO_ROOT / "_bmad" / "memory" / "irene-sidecar" / "index.md"
+    if not sidecar_index.exists():
+        pytest.skip("irene-sidecar not present")
+    text = sidecar_index.read_text(encoding="utf-8")
+    if "DEPRECATED" not in text:
+        pytest.skip("Irene migration not yet complete")
+    assert "bmad-agent-content-creator" in text, \
+        "deprecation banner must point to new sanctum path"
+
+
+def _collect_script_refs_from_agent(skill_dir: Path) -> list[tuple[Path, str]]:
+    """Scan all references in a skill bundle for `./scripts/<file>.py` mentions."""
+    refs_dir = skill_dir / "references"
+    if not refs_dir.exists():
+        return []
+    pattern = re.compile(r"`\./scripts/([A-Za-z0-9_\-]+\.py)`")
+    hits: list[tuple[Path, str]] = []
+    for md in refs_dir.glob("*.md"):
+        text = md.read_text(encoding="utf-8")
+        for match in pattern.findall(text):
+            hits.append((md, match))
+    return hits
+
+
+@pytest.mark.parametrize("agent_dir", [MARCUS_SKILL, IRENE_SKILL], ids=["marcus", "irene"])
+def test_capability_stub_script_refs_resolve(agent_dir: Path):
+    """
+    Stubs for script-backed capabilities (e.g., Irene's PC, VR, MP, MC, MA) declare
+    `./scripts/<name>.py` targets. This test guards against silent rot when scripts
+    are renamed or reorganized — every such reference must resolve to an actual
+    file in the same skill bundle. Covers Blind-Hunter-M2-style regressions.
+    """
+    if not (agent_dir / "assets").exists():
+        pytest.skip(f"{agent_dir.name} migration not yet complete")
+    hits = _collect_script_refs_from_agent(agent_dir)
+    missing = [
+        (md.name, target)
+        for md, target in hits
+        if not (agent_dir / "scripts" / target).exists()
+    ]
+    assert not missing, f"references in {agent_dir.name} cite non-existent scripts: {missing}"
+
+
+def test_no_sanctum_path_references_in_skill_bundle_refs():
+    """
+    Post-migration, no reference file in a migrated skill bundle may name the
+    legacy sidecar path (e.g., 'marcus-sidecar' or 'irene-sidecar') as a
+    write target. Guards against the orphan-init.md-style regression Blind
+    Hunter M1 flagged.
+    """
+    bad_patterns = ("marcus-sidecar", "irene-sidecar")
+    failures: list[tuple[str, str, str]] = []  # (agent, file, pattern)
+    for agent_dir in (MARCUS_SKILL, IRENE_SKILL):
+        if not (agent_dir / "assets").exists():
+            continue  # pre-migration
+        refs_dir = agent_dir / "references"
+        if not refs_dir.exists():
+            continue
+        for md in refs_dir.glob("*.md"):
+            text = md.read_text(encoding="utf-8")
+            for pat in bad_patterns:
+                if pat in text:
+                    failures.append((agent_dir.name, md.name, pat))
+    assert not failures, (
+        f"migrated skill bundles still reference legacy sidecar paths "
+        f"(orphan init.md / memory-system.md regression): {failures}"
+    )
+
+
+def test_irene_all_capability_codes_discovered():
+    """
+    Irene has 20 documented capability codes. Scaffold dry-run must discover
+    all of them (IA, LO, BT, CL, CS, AA, PQ, WD, MG, CD, SB, PC, VR, MP, MC, MA,
+    SM, IB, NA, DC). CP is umbrella — not frontmatter-discovered.
+    """
+    if not (IRENE_SKILL / "assets").exists():
+        pytest.skip("Irene migration not yet complete")
+    result = _run_scaffold(["--skill-path", str(IRENE_SKILL), "--dry-run"])
+    assert result.returncode == 0
+    expected_codes = {"IA", "LO", "BT", "CL", "CS", "AA", "PQ", "WD", "MG",
+                      "CD", "SB", "PC", "VR", "MP", "MC", "MA", "SM", "IB", "NA", "DC", "CP"}
+    found = {code for code in expected_codes if f"[{code}]" in result.stdout}
+    missing = expected_codes - found
+    assert not missing, f"capability codes not discovered: {missing}"
 
 
 def test_negative_case_missing_sanctum_routes_to_first_breath():

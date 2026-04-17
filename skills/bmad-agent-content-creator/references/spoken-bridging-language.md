@@ -1,3 +1,9 @@
+---
+name: spoken-bridging-language
+code: SB
+description: Spoken pedagogical bridging — align manifest bridge_type with learner-heard intro/outro language per cadence + frequency scale
+---
+
 # Spoken Bridging Language (Irene Pass 2)
 
 **Purpose:** Ensure learner-facing **audio** includes explicit connective tissue when the segment manifest marks `bridge_type` as `intro`, `outro`, `both`, or `cluster_boundary`. Metadata alone is not sufficient: ElevenLabs and learners only experience what appears in `narration_text` / the narration script body.

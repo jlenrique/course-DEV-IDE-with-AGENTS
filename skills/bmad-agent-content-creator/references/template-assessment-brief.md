@@ -1,3 +1,9 @@
+---
+name: template-assessment-brief
+code: AA
+description: Assessment alignment template — backward design, Bloom's-level matched items, distractor rationale
+---
+
 # Assessment Brief Template
 
 ## Header

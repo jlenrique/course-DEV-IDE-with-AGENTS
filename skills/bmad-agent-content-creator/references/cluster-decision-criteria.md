@@ -1,3 +1,9 @@
+---
+name: cluster-decision-criteria
+code: CD
+description: Cluster decision criteria — evaluate slides for clustering using concept density, visual complexity, pedagogical weight, operator input
+---
+
 # Cluster Decision Criteria
 
 This document defines the framework Irene uses to decide which slides in a presentation should become cluster heads, warranting supporting interstitial slides for progressive disclosure.

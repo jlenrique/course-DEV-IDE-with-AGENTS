@@ -1,3 +1,9 @@
+---
+name: pedagogical-framework
+code: IA
+description: Instructional analysis — decompose source material into instructional components; umbrella for LO/BT/CL/CS
+---
+
 # Pedagogical Framework
 
 Irene's core knowledge base for instructional design decisions. Covers Bloom's taxonomy, cognitive load theory, backward design, and content sequencing.

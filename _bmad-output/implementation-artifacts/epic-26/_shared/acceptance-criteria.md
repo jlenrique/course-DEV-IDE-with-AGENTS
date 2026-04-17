@@ -53,6 +53,10 @@ Required blocks:
 
 **B4 — No broken external refs.** `grep -r "skills/<agent>/" docs/ scripts/ tests/ _bmad-output/` shows zero newly-broken paths. Verify with the downstream-reference map (pre-work for tier-A agents, optional for Tier-3 batch).
 
+**B5 — No legacy sidecar path references inside the migrated skill bundle.** `grep -r "<agent>-sidecar\|marcus-sidecar\|irene-sidecar" skills/<agent>/` returns zero hits. Pre-existing legacy refs like `init.md` or `memory-system.md` that still name the deprecated sidecar path must be deleted or rewritten — they are superseded by `first-breath.md` + `memory-guidance.md`. Enforced by `test_no_sanctum_path_references_in_skill_bundle_refs`.
+
+**B6 — Script-backed capability refs resolve.** Every `./scripts/<file>.py` mention inside a reference file must resolve to an existing script in the same skill bundle. Guards against stub rot when scripts are renamed. Enforced by `test_capability_stub_script_refs_resolve` (parametrized per migrated agent).
+
 ## Tier-C: Content Migration (agents with ≥200-line legacy SKILL.md)
 
 **C1 — Chunk inventory.** The migration worksheet lists every non-frontmatter chunk from the legacy SKILL.md with its destination (`sanctum/PERSONA.md`, `sanctum/CREED.md`, `references/<newfile>.md`, `references/examples/<file>.md`, or "deleted — restated by BMB template").

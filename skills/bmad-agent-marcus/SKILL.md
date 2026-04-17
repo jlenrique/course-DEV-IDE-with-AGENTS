@@ -46,7 +46,9 @@ Greeting variants (active run, no run, pre-flight issue detected) live in `./ref
 
 ## Capabilities (Router)
 
-Built-in capability prompts with full procedures live in `./references/`. Codes are canonical.
+Built-in capability prompts with full procedures live in `./references/`. Production-readiness capabilities live in `./capabilities/` (markdown frontmatter; auto-discovered by the scaffold). Codes are canonical.
+
+### Built-in (conversational / orchestration)
 
 | Code | Reference | Purpose |
 |------|-----------|---------|
@@ -57,6 +59,19 @@ Built-in capability prompts with full procedures live in `./references/`. Codes 
 | SP | `./references/source-prompting.md` | Notion / Box Drive retrieval |
 | SM | `./references/save-memory.md` | Sanctum persistence |
 | SB | `./references/storyboard-procedure.md` | Gary slide storyboard review surface |
+
+### Production Readiness (deterministic-script backed)
+
+Added in Story 26-6 (pre-trial prep). Each capability has a markdown prompt in `./capabilities/` plus a deterministic script under `scripts/marcus_capabilities/`. Verbose landing-point posture (ask → default/prior → recommend → proceed?) applies at every invocation. See [`docs/dev-guide/marcus-capabilities.md`](../../docs/dev-guide/marcus-capabilities.md) for the operator-facing reference.
+
+| Code | Capability | Status | Script |
+|------|-----------|--------|--------|
+| PR-PF | `./capabilities/pr-pf.md` — Preflight | full | `python -m scripts.marcus_capabilities.pr_pf` |
+| PR-RC | `./capabilities/pr-rc.md` — Run-Constants author + validate | full | `python -m scripts.marcus_capabilities.pr_rc` |
+| PR-HC | `./capabilities/pr-hc.md` — Health Check | stub (26-10) | `python -m scripts.marcus_capabilities.pr_hc` |
+| PR-RS | `./capabilities/pr-rs.md` — Run Selection | stub (26-10) | `python -m scripts.marcus_capabilities.pr_rs` |
+
+PR-* codes are a distinct 4-character prefix namespace, unrelated to the single-letter `PR` (progress-reporting) built-in. Dev agents must not conflate them. Full contract envelopes and invocation shape are pinned in `./capabilities/registry.yaml` and the `./capabilities/schemas/` files.
 
 Delegation routing + context envelopes: `./references/external-specialist-registry.md`. Cluster schema: `./references/cluster-workflow-knowledge.md`. Path lookup: `./references/specialist-registry.yaml`. Workflow templates: `./references/workflow-templates.yaml`.
 

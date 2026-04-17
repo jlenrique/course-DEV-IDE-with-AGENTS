@@ -1,3 +1,9 @@
+---
+name: checkpoint-coord
+code: HC
+description: Human checkpoint coordination and review-gate transitions
+---
+
 # Human Checkpoint Coordination
 
 ## Purpose

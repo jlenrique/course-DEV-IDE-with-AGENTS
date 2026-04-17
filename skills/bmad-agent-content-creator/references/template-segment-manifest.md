@@ -1,3 +1,9 @@
+---
+name: template-segment-manifest
+code: MG
+description: Segment manifest generation — machine-readable production contract binding narration to visuals, SFX, music, composition metadata
+---
+
 # Segment Manifest Template (MG Capability)
 
 The segment manifest is the **machine-readable production contract** for a lesson's multimedia assembly. It is produced in Pass 2 (after Gary's slides exist and the user has approved them at HIL Gate 2). It binds narration text to visual assets, SFX cues, music direction, and composition metadata. Downstream agents write back to it as they complete work.

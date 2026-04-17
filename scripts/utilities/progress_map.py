@@ -34,8 +34,6 @@ from scripts.utilities.file_helpers import project_root
 ROOT = project_root()
 LATEST_TEXT_REPORT = ROOT / "reports" / "progress-map-latest.txt"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
-BMM_WORKFLOW = ROOT / "_bmad-output" / "implementation-artifacts" / "bmm-workflow-status.yaml"
-STORY_ARTIFACTS_DIR = ROOT / "_bmad-output" / "implementation-artifacts"
 SESSION_HANDOFF = ROOT / "SESSION-HANDOFF.md"
 NEXT_SESSION = ROOT / "next-session-start-here.md"
 
@@ -59,33 +57,35 @@ ALL_KNOWN_STATUSES = (
     | BACKLOG_STATUSES
 )
 
-# ---------------------------------------------------------------------------
-# Epic label extraction from sprint-status.yaml comments
-# ---------------------------------------------------------------------------
-# Sprint-status.yaml contains structured comments like:
-#   # === EPIC 20C: Cluster Intelligence + Creative Control (Added ...) ===
-# We parse these to derive labels dynamically, eliminating hardcoded dicts.
-
-_EPIC_COMMENT_RE = re.compile(
-    r"#\s*===\s*EPIC\s+([^:]+?):\s*(.+?)\s*(?:\([^)]*\)\s*)?===",
-    re.IGNORECASE,
-)
-
-
-def _parse_epic_labels_from_comments(filepath: Path) -> dict[str, str]:
-    """Parse epic labels from ``# === EPIC {ID}: {LABEL} ===`` comments.
-
-    Returns a dict mapping normalised epic id (lowercase, no spaces) to label.
-    """
-    labels: dict[str, str] = {}
-    if not filepath.exists():
-        return labels
-    text = filepath.read_text(encoding="utf-8")
-    for match in _EPIC_COMMENT_RE.finditer(text):
-        raw_id = match.group(1).strip().lower()
-        label = match.group(2).strip()
-        labels[raw_id] = label
-    return labels
+WAVE_LABELS: dict[str, str] = {
+    "1": "Repository & Agent Infrastructure",
+    "2": "Master Agent & Fidelity Assurance",
+    "2a": "Fidelity Assurance & APP Intel",
+    "3": "Tool Specialist Agents",
+    "4a": "Governance & Quality",
+    "4": "Workflow Coordination",
+    "5": "Tool Expansion",
+    "6": "LMS Integration",
+    "g": "Governance Synthesis",
+    "10": "Strategic Production",
+    "11": "Trial Remediation",
+    "sb": "Storyboard Run View",
+    "12": "Double-Dispatch",
+    "13": "Visual-Aware Irene Pass 2",
+    "14": "Motion-Enhanced Workflow",
+    "15": "Learning & Compound Intel",
+    "16": "Autonomy Expansion",
+    "17": "Research & Reference",
+    "18": "Additional Asset Families",
+    "19": "Cluster Schema & Manifest",
+    "20a": "Cluster Decision & Planning",
+    "20b": "Cluster Implementation",
+    "20c": "Cluster Intel + Creative Control",
+    "21": "Cluster Visual Design",
+    "22": "Storyboard Phase 2",
+    "23": "Cluster-Aware Narration",
+    "24": "Assembly & Regression",
+}
 
 # ---------------------------------------------------------------------------
 # Source qualification
@@ -233,156 +233,6 @@ def _qualify_markdown(filepath: Path, expected_headings: list[str]) -> list[dict
     return findings
 
 
-# Story-ID pattern: e.g. 23-2, 20c-15, 4a-6, sb-1
-_STORY_ID_RE = re.compile(r"\b(\d+[a-z]?-\d+|[a-z]+-\d+)\b", re.IGNORECASE)
-
-
-def _qualify_bmm_workflow(
-    sprint_status_path: Path,
-    bmm_path: Path | None = None,
-) -> list[dict[str, Any]]:
-    """Cross-check bmm-workflow-status.yaml next_workflow_step against sprint status.
-
-    If the next_workflow_step mentions story IDs that are already 'done' in
-    sprint-status.yaml, flag the field as stale.
-
-    *bmm_path* defaults to the module-level ``BMM_WORKFLOW`` constant when
-    not provided explicitly.
-    """
-    bmm = bmm_path if bmm_path is not None else BMM_WORKFLOW
-    findings: list[dict[str, Any]] = []
-    src = str(bmm)
-
-    if not bmm.exists():
-        findings.append({"source": src, "level": "warn",
-                         "check": "bmm_exists",
-                         "message": "bmm-workflow-status.yaml not found"})
-        return findings
-
-    try:
-        with bmm.open(encoding="utf-8") as f:
-            bmm_data = yaml.safe_load(f)
-    except yaml.YAMLError:
-        findings.append({"source": src, "level": "warn",
-                         "check": "bmm_parse",
-                         "message": "bmm-workflow-status.yaml YAML parse error"})
-        return findings
-
-    if not isinstance(bmm_data, dict):
-        return findings
-
-    next_step = bmm_data.get("next_workflow_step", "")
-    if not next_step:
-        findings.append({"source": src, "level": "ok",
-                         "check": "bmm_next_step",
-                         "message": "No next_workflow_step field"})
-        return findings
-
-    # Load sprint status to check story statuses
-    if not sprint_status_path.exists():
-        return findings
-
-    try:
-        with sprint_status_path.open(encoding="utf-8") as f:
-            sprint_data = yaml.safe_load(f)
-    except yaml.YAMLError:
-        return findings
-
-    dev = sprint_data.get("development_status", {}) if isinstance(sprint_data, dict) else {}
-
-    # Extract story IDs mentioned in next_workflow_step
-    mentioned = _STORY_ID_RE.findall(str(next_step))
-    stale_ids = []
-    for sid in mentioned:
-        # Normalise: sprint keys use hyphens and lowercase
-        normalised = sid.lower()
-        # Look for any key containing this story id
-        for key, val in dev.items():
-            if key.startswith(normalised) and str(val) in DONE_STATUSES:
-                stale_ids.append(sid)
-                break
-
-    if stale_ids:
-        findings.append({
-            "source": src,
-            "level": "warn",
-            "check": "bmm_next_step_stale",
-            "message": (
-                f"next_workflow_step references completed story(s): "
-                f"{', '.join(stale_ids)}. Field may be stale."
-            ),
-        })
-    else:
-        findings.append({"source": src, "level": "ok",
-                         "check": "bmm_next_step",
-                         "message": "next_workflow_step references are current"})
-
-    return findings
-
-
-# Statuses that should have a corresponding story artifact file
-_ARTIFACT_EXPECTED_STATUSES = DONE_STATUSES | IN_PROGRESS_STATUSES | REVIEW_STATUSES
-
-
-def _spot_check_story_artifacts(
-    data: dict[str, Any],
-    artifacts_dir: Path | None = None,
-) -> list[dict[str, Any]]:
-    """Check that non-backlog stories have corresponding artifact files.
-
-    Looks for ``{story-key}*.md`` in the artifacts directory.
-    Stories in backlog or deferred status are not expected to have artifacts.
-    """
-    adir = artifacts_dir if artifacts_dir is not None else STORY_ARTIFACTS_DIR
-    findings: list[dict[str, Any]] = []
-
-    if not adir.exists():
-        findings.append({
-            "source": str(adir),
-            "level": "warn",
-            "check": "artifacts_dir_exists",
-            "message": "Story artifacts directory not found",
-        })
-        return findings
-
-    dev = data.get("development_status", {})
-    missing: list[str] = []
-
-    for key, val in dev.items():
-        # Skip epic-level keys and retrospectives
-        if key.startswith("epic-") or key.endswith("-retrospective"):
-            continue
-        status = str(val)
-        if status not in _ARTIFACT_EXPECTED_STATUSES:
-            continue
-        # Check for any .md file starting with the story key
-        matches = list(adir.glob(f"{key}*.md"))
-        if not matches:
-            missing.append(key)
-
-    if missing:
-        sample = ", ".join(missing[:5])
-        suffix = f" (+{len(missing) - 5} more)" if len(missing) > 5 else ""
-        findings.append({
-            "source": str(adir),
-            "level": "warn",
-            "check": "story_artifact_missing",
-            "message": (
-                f"{len(missing)} story(s) with status done/in-progress/review "
-                f"have no artifact file: {sample}{suffix}"
-            ),
-        })
-    else:
-        findings.append({
-            "source": str(adir),
-            "level": "ok",
-            "check": "story_artifacts",
-            "message": "All non-backlog stories have artifact files",
-        })
-
-    return findings
-
-
 def qualify_sources() -> dict[str, Any]:
     """Run all source qualification checks. Returns structured results."""
     all_findings: list[dict[str, Any]] = []
@@ -392,18 +242,6 @@ def qualify_sources() -> dict[str, Any]:
         SESSION_HANDOFF, ["What Is Next", "Unresolved Issues"]))
     all_findings.extend(_qualify_markdown(
         NEXT_SESSION, ["Immediate Next Action", "Key Risks / Unresolved Issues"]))
-
-    all_findings.extend(_qualify_bmm_workflow(SPRINT_STATUS))
-
-    # Story artifact spot-check (only if sprint-status loaded successfully)
-    if SPRINT_STATUS.exists():
-        try:
-            with SPRINT_STATUS.open(encoding="utf-8") as _f:
-                _sprint_data = yaml.safe_load(_f)
-            if isinstance(_sprint_data, dict):
-                all_findings.extend(_spot_check_story_artifacts(_sprint_data))
-        except yaml.YAMLError:
-            pass  # already flagged by _qualify_sprint_status
 
     handoff_next = _extract_section(SESSION_HANDOFF, "What Is Next")
     next_action = _extract_section(NEXT_SESSION, "Immediate Next Action")
@@ -452,22 +290,11 @@ def _load_sprint_status() -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
-def _parse_epics(
-    data: dict[str, Any],
-    *,
-    comment_labels: dict[str, str] | None = None,
-) -> list[dict[str, Any]]:
-    """Extract per-epic status summaries from development_status block.
-
-    *comment_labels* is an optional dict of epic-id → label parsed from
-    sprint-status.yaml comments.  When provided these take precedence over
-    the generic ``"Epic {id}"`` fallback.
-    """
+def _parse_epics(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract per-epic status summaries from development_status block."""
     dev = data.get("development_status", {})
     if not dev:
         return []
-
-    labels = comment_labels or {}
 
     epics: list[dict[str, Any]] = []
     current_epic: dict[str, Any] | None = None
@@ -478,7 +305,7 @@ def _parse_epics(
             if current_epic:
                 epics.append(current_epic)
             epic_id = key.removeprefix("epic-")
-            label = labels.get(epic_id, f"Epic {epic_id}")
+            label = WAVE_LABELS.get(epic_id, f"Epic {epic_id}")
             current_epic = {
                 "id": epic_id,
                 "label": label,
@@ -541,18 +368,11 @@ def _story_counts(epic: dict[str, Any]) -> dict[str, int]:
 
 
 def _extract_section(filepath: Path, heading: str) -> str:
-    """Extract the text under a markdown heading (## level).
-
-    Uses prefix matching so ``"Unresolved Issues"`` matches both
-    ``## Unresolved Issues`` and ``## Unresolved Issues / Risks``.
-
-    Prefix match is safe because our target headings are semantically
-    distinct.  If new headings are added, ensure they don't prefix-collide.
-    """
+    """Extract the text under a markdown heading (## level)."""
     if not filepath.exists():
         return ""
     text = filepath.read_text(encoding="utf-8")
-    pattern = rf"^##\s+{re.escape(heading)}[^\n]*(.*?)(?=^##\s|\Z)"
+    pattern = rf"^##\s+{re.escape(heading)}\s*$(.*?)(?=^##\s|\Z)"
     match = re.search(pattern, text, re.MULTILINE | re.DOTALL)
     return match.group(1).strip() if match else ""
 
@@ -580,8 +400,7 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     source_health = qualify_sources()
 
     data = _load_sprint_status()
-    comment_labels = _parse_epic_labels_from_comments(SPRINT_STATUS)
-    epics = _parse_epics(data, comment_labels=comment_labels)
+    epics = _parse_epics(data)
     last_updated = _extract_last_updated(data)
 
     # Buckets

@@ -2646,6 +2646,13 @@ So that a motion-enhanced lesson can be produced end-to-end through the APP.
 - Do not let memory become a dumping ground — periodic condensation is mandatory
 - Preserve specialist intelligence; do not flatten judgment into brittle automation
 
+**Operator note (2026-04-17):** Parking a set of Gamma/Gary capability-learning threads for Epic 15 scope. These surfaced during the "how do we add know-how to Gary / who owns Gamma capability knowledge" discussion:
+- **Preset bake-off / recommender harness** — run candidate Gamma style presets against the same brief and score outputs before committing credits.
+- **Pattern-driven pre-flight recommender** — rank candidate presets/parameters from `patterns.md` + content type + fidelity class before generation.
+- **Preset library expansion cadence** — grow `state/config/gamma-style-presets.yaml` beyond the current Nejal A/B pair; define a review cadence.
+- **Doc-refresh automation** — make the tech-spec-wrangler Gamma doc refresh cycle scheduled/recurring (not ad-hoc).
+- **Capability-summary contract** — if Epic 15 introduces cross-agent capability awareness, create a narrow Gary → Dan/Marcus summary contract instead of leaking the full parameter catalog upstream.
+
 ### Story 15.1: Learning Event Schema & Capture Infrastructure
 
 As a system architect,

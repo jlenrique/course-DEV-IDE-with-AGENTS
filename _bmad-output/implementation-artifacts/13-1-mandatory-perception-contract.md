@@ -123,7 +123,7 @@ Story 13.2 (Visual Reference Injection) depends on 13.1's perception artifacts b
 - [Source: skills/sensory-bridges/references/perception-protocol.md]
 - [Source: skills/sensory-bridges/references/perception-schema.md]
 - [Source: skills/sensory-bridges/references/confidence-rubric.md]
-- [Source: skills/bmad-agent-content-creator/SKILL.md#Pass 2]
+- [Source: skills/bmad-agent-content-creator/references/pass-2-procedure.md] (extracted from legacy SKILL.md §Pass 2 during Epic 26 Story 26-2 migration)
 - [Source: skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py]
 - [Source: _bmad-output/implementation-artifacts/11-3-irene-pass2-perception-grounding-enforcement.md]
 

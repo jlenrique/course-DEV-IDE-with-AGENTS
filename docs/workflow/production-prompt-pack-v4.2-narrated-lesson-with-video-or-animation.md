@@ -76,12 +76,22 @@ Execution convention:
 - Use the repo-local interpreter for every repo command in this prompt pack: `.\.venv\Scripts\python.exe`
 - Do not rely on global `python`, `py`, or bare `pytest` during production operations.
 
+SPOC rule (non-negotiable):
+- Marcus is the **single point of contact** for the operator during the run.
+- All specialist actions (Texas, CD, Irene, Gary, Vera, Quinn-R, ElevenLabs, Kling, Compositor, Desmond) are **mediated and reported through Marcus**. No direct specialist-to-operator exchanges.
+- If a specialist must ask for clarification, route the question back to Marcus for operator review.
+
 Artifact verification protocol (hard requirement):
 - After every prompt that declares a "Required write" or "Required artifacts", Marcus must run a deterministic file-count verification before reporting success.
 - Verification command: `Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count`
 - The expected cumulative file count after each checkpoint is listed in the prompt. If the actual count is less than expected, Marcus must halt, list the missing files, and attempt remediation before proceeding.
 - Verbal confirmation of file writes is insufficient. Only the deterministic count is authoritative.
 - This protocol exists because Act-mode agents have a proven failure pattern of confirming file writes that did not execute.
+
+Motion-first ordering note:
+- This prompt pack intentionally routes motion generation **before** Irene Pass 2 so narration can align to the approved motion assets.
+- Marcus’s generic pipeline reference shows the narration-first order for non-motion runs; this document is the motion-led override.
+- If you must invert the order, stop and explicitly re-plan the run rather than silently swapping steps.
 
 ---
 
@@ -99,6 +109,7 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 6. Motion + double-dispatch readiness summary.
 
 Required commands:
+- `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight`
 - `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
 - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `DOUBLE_DISPATCH: true`, also require double-dispatch compatibility confirmation from preflight runner before proceeding.
@@ -275,7 +286,9 @@ Expected files after Prompt 3 completes: `run-constants.yaml`, `preflight-result
 
 ### 3.g) Legacy prose-only fallback (deprecated — removal after two clean runner trials)
 
-If the runner fails unexpectedly mid-pipeline (runner-specific infra issue, not a source problem), Marcus may revert to the pre-Epic-25 prose-only path:
+**Deprecated / Sunset:** Use this path only if the runner fails unexpectedly mid-pipeline (runner-specific infra issue, not a source problem) **and** you have NOT yet logged two clean runner trials. If two clean trials are already recorded, skip this section entirely.
+
+If the fallback is explicitly authorized, Marcus may revert to the pre-Epic-25 prose-only path:
 
 1. Hand-execute fetch + extract using the helpers in `skills/bmad-agent-texas/scripts/source_wrangler_operations.py`
 2. Write `extracted.md`, `metadata.json`, `ingestion-evidence.md` by hand
@@ -342,6 +355,43 @@ Required locking:
   - `avg_slide_seconds` (system-derived, informational)
 
 Stop and wait for operator lock confirmation.
+
+---
+
+## 4.75) Creative Directive Resolution (CD)
+
+**Conditional:** Run this step only when `EXPERIENCE_PROFILE` is set. If no experience profile is set, skip to Prompt 5.
+
+Marcus, delegate Creative Directive resolution to the Creative Director (CD) and resolve the directive into run constants.
+
+Inputs:
+- operator emphasis answer (visuals lead vs text lead)
+- `run-constants.yaml`
+- style-bible signals (visual tone, voice/tone constraints)
+- `state/config/experience-profiles.yaml`
+
+Required outputs:
+- `[BUNDLE_PATH]/creative-directive.yaml` (must follow `skills/bmad-agent-cd/references/creative-directive-contract.md`)
+
+Required resolution actions (Marcus-owned, not CD-owned):
+- Update `run-constants.yaml` to match the directive’s `slide_mode_proportions`
+- Persist the directive’s `narration_profile_controls` into `state/config/narration-script-parameters.yaml`
+- Carry both resolved values forward in the Irene Pass 1 envelope and the later Pass 2 envelope
+
+Validation rule:
+- Validate the directive against `scripts/utilities/creative_directive_validator.py`. If validation errors exist, halt and re-run CD.
+
+Validation command (example):
+```powershell
+.\.venv\Scripts\python.exe -c "import yaml,sys; from scripts.utilities.creative_directive_validator import validate_creative_directive; payload=yaml.safe_load(open(r'[BUNDLE_PATH]\\creative-directive.yaml')); errors=validate_creative_directive(payload); print(errors); sys.exit(1 if errors else 0)"
+```
+
+Artifact verification (deterministic — expected file count: **8**):
+- Run: `Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count`
+- Expected files: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`, `extracted.md`, `metadata.json`, `ingestion-evidence.md`, `irene-packet.md`, `creative-directive.yaml`
+- If count < 8, halt and remediate before proceeding.
+
+Stop and wait for operator confirmation.
 
 ---
 
@@ -416,6 +466,9 @@ Do not auto-advance. Explicit operator approval is required before Gary dispatch
 
 ---
 
+> **Optional A/B Loop:** If you are running an Irene Pass 1 tuning loop, pause here and follow
+> `docs/workflow/operator-script-v4.2-irene-ab-loop.md`. Resume at Prompt 6 once a winner is promoted.
+
 ## 6) Gate 1 Approved -> Pre-Dispatch Package Build (No Send)
 
 Marcus, after Gate 1 approval, build Gary's pre-dispatch package and stop before dispatch.
@@ -434,6 +487,40 @@ Double-dispatch behavior:
 - Variant B artifacts use `-B` suffix where applicable.
 
 Stop if any artifact fails contract rules.
+
+---
+
+## 6.2) Cluster Prompt Engineering (Conditional)
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
+
+Marcus, render cluster-aware prompts using the G1.5-approved cluster plan.
+
+Required command (capture stdout to file):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_prompt_engineering.py --cluster [BUNDLE_PATH]/clusters.json --config state/config/prompting.yaml > [BUNDLE_PATH]/cluster-prompts.json`
+
+Required write:
+- `[BUNDLE_PATH]/cluster-prompts.json` (contains prompt_id, audit metadata, and prompt text per cluster)
+
+Gate rule:
+- Halt if prompt engineering fails or `cluster-prompts.json` is empty.
+
+---
+
+## 6.3) Cluster Dispatch Sequencing (Conditional)
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
+
+Marcus, build a deterministic cluster dispatch plan.
+
+Required command (capture stdout to file):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py --clusters [BUNDLE_PATH]/clusters-list.json --config state/config/dispatch.yaml > [BUNDLE_PATH]/cluster-dispatch-plan.json`
+
+Required write:
+- `[BUNDLE_PATH]/cluster-dispatch-plan.json` (includes `plan_hash`, batch schedule, retry policy)
+
+Gate rule:
+- Halt if dispatch sequencing fails or `plan_hash` is missing.
 
 ---
 
@@ -481,6 +568,28 @@ Required write:
 - If `DOUBLE_DISPATCH: true`: `[BUNDLE_PATH]/gary-dispatch-validation-result-B.json`
 
 Stop on any validator or G3 failure.
+
+---
+
+## 7.5) Cluster Coherence G2.5 Gate (Conditional)
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
+
+Marcus, run G2.5 cluster coherence validation on the generated cluster outputs **before** Storyboard A.
+
+Required command (capture stdout to file):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py --manifest [CLUSTER_MANIFEST_PATH] --outputs [CLUSTER_OUTPUTS_PATH] --config state/config/validation.yaml > [BUNDLE_PATH]/cluster-coherence-report.json`
+
+Inputs guidance:
+- `CLUSTER_MANIFEST_PATH` should reference the cluster-aware manifest used for dispatch ordering (cluster plan + slide ids).
+- `CLUSTER_OUTPUTS_PATH` should reference the generated cluster outputs from Gary (or the merged outputs list for double-dispatch).
+
+Required write:
+- `[BUNDLE_PATH]/cluster-coherence-report.json`
+
+Gate rule:
+- If coherence fails, run the interstitial redispatch protocol (`skills/bmad-agent-marcus/scripts/run-interstitial-redispatch.py`) and re-run this gate.
+- Do not proceed to Prompt 7B/7C until G2.5 passes or the operator explicitly accepts the violations.
 
 ---
 
@@ -681,6 +790,7 @@ Inputs:
 - operator directives
 - Irene Pass 1
 - refreshed `[BUNDLE_PATH]/pass2-envelope.json`
+- `state/config/narration-script-parameters.yaml` (resolved `narration_profile_controls`)
 - if `DOUBLE_DISPATCH: true`, `[BUNDLE_PATH]/variant-selection.json`
 - if `MOTION_ENABLED: true`, `[BUNDLE_PATH]/motion_plan.yaml`
 
@@ -1254,6 +1364,7 @@ Primary contract references:
 ## Changelog
 
 - **v4.2g (2026-04-16)** — Prompt 1: added `--bundle-dir [BUNDLE_PATH]` to preflight command (was identified as a blocker in the 2026-04-15 trial run — preflight skipped bundle-specific run-constants.yaml validation without it).
+- **v4.2h (2026-04-17)** — Added Prompt 4.75 Creative Directive resolution (CD), including `creative-directive.yaml` validation and `narration_profile_controls` persistence; added cluster prompt engineering (6.2), dispatch sequencing (6.3), and G2.5 coherence gate (7.5) for cluster-enabled runs; added Prompt 1 `app_session_readiness --with-preflight`; added `narration-script-parameters.yaml` to Pass 2 inputs; linked Irene A/B loop guidance; clarified motion-first ordering.
 - **v4.2f (2026-04-15)** — Preamble reordered: Pre-Run Checklist → Run Constants → Initialization → Execution Rules → Prompts. Added audience tags (OPERATOR vs MARCUS). Prompt 2 gains greenfield vs. resume guidance. Prompt 2A rewritten with concrete directive examples, governance rules (focus=emphasis, exclusion=provenance, special treatment=override), and resume-run re-confirmation. Prompt 3 adds ingestion scope rule (extract ALL content), extraction completeness validation (word-count floor check, HALT threshold), and cross-validation hint for Notion-exported PDFs. Prompt 4 now requires per-dimension evidence sentences (bare PASS/FAIL rejected). Source Wrangler agent vision document created (`_bmad-output/planning-artifacts/source-wrangler-agent-vision.md`). Design principles, lineage, and changelog moved to appendix.
 - **v4.2e (2026-04-15)** — Story 20c-15: profile-aware slide count estimator integrated into Prompt 4.5, 2-input operator poll (parent_slide_count + target_total_runtime_minutes), experience-profile-driven feasibility triangle, run-constants locking.
 - **v4.2d (2026-04-15)** — Pre-Run Checklist added for visual-led profile. Run Constants updated with concrete C1-M1-PRES-20260415 values, experience profile mapping rule, and CLUSTER_DENSITY. Initialization Instructions expanded with step-by-step bundle setup. Artifact verification protocol added to Execution Rules.

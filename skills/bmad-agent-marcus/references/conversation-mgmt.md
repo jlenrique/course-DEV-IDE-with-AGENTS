@@ -1,3 +1,9 @@
+---
+name: conversation-mgmt
+code: CM
+description: Conversation management, intent parsing, production planning, workflow orchestration
+---
+
 # Conversation Management, Intent Parsing & Production Planning
 
 ## Purpose

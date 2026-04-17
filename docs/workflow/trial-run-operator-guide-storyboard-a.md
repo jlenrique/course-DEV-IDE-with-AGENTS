@@ -7,6 +7,8 @@ updated: 2026-04-11
 ## Purpose
 Concise, operator-facing steps to run a Storyboard A trial production using the v4.3 pipeline (prompting, dispatch, coherence validation) and C1M1 source materials. Prompt numbering aligns with the v4.2 prompt pack where possible to preserve operator context.
 
+**SPOC rule:** Marcus remains the single point of contact for the operator; specialist execution details route through Marcus.
+
 ## Inputs
 - Primary: `course-content/courses/APC C1-M1 Tejal 2026-03-29.pdf`
 - Secondary: `course-content/courses/APC Content Roadmap.jpg`
@@ -42,7 +44,7 @@ requested_content_type: "narrated-lesson-with-video-or-animation"
    `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_prompt_engineering.py --cluster course-content/staging/storyboard-a-trial/clusters.json`
 4) Prompt 6.3 — Dispatch plan (cluster sequencing)
    `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py --clusters course-content/staging/storyboard-a-trial/clusters-list.json`
-5) Prompt 6.4 — Coherence validation (cluster-aware)  
+5) Prompt 7.5 — Coherence validation (cluster-aware, G2.5)  
    `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py --manifest course-content/staging/storyboard-a-trial/segment-manifest.yaml --outputs course-content/staging/storyboard-a-trial/outputs.yaml`
 
 ## Operator Prompts to Marcus (copy/paste; real bundle)
@@ -59,9 +61,9 @@ Use the canonical bundle from the last full run:
    “Marcus, build the dispatch plan with `state/config/dispatch.yaml` (priority_size_id, batch_size=2, max_concurrency=4); return plan_hash and batch schedule.”
 5) Prompt 7 — Generation (reuse existing assets if present):  
    “Marcus, if assets already exist in the bundle, reference them; otherwise execute Gamma generation per dispatch plan, applying interstitial visual constraints and cluster metadata.”
-6) Prompt 7.1 — Cluster Coherence Validation:  
+6) Prompt 7.5 — Cluster Coherence Validation (G2.5):  
    “Marcus, run cluster coherence validation with `state/config/validation.yaml`; report decision, report_hash, and any violations.”
-7) Prompt 7.2 — HIL Packet:  
+7) Prompt 7.6 — HIL Packet:  
    “Marcus, assemble the HIL packet for Storyboard A with outputs, validations, and operator checklist; await my approval.”
 
 ## HIL Checklist

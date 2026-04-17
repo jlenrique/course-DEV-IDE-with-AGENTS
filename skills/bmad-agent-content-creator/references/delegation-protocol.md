@@ -1,3 +1,9 @@
+---
+name: delegation-protocol
+code: WD
+description: Writer delegation protocol — select writer, compose brief, review returns, manage revision rounds
+---
+
 # Writer Delegation Protocol
 
 How Irene selects writers, composes briefs, reviews returns, and manages revision rounds.

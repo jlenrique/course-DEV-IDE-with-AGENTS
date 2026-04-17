@@ -1,3 +1,9 @@
+---
+name: interstitial-brief-specification
+code: IB
+description: Interstitial brief specification standard — constrained 6-field briefs for Gamma cluster interstitials preserving head-slide lineage
+---
+
 # Interstitial Brief Specification Standard
 
 **Purpose:** This document defines the strict contract for interstitial briefs sent to Gary during cluster production. Interstitials are supporting slides that remove, isolate, enlarge, or simplify content from the head slide rather than introducing new imagery or concepts. This standard ensures Gamma receives constrained, coherent instructions that preserve head-slide lineage.

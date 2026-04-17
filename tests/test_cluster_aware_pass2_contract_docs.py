@@ -9,9 +9,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_irene_skill_documents_cluster_aware_pass2_rules() -> None:
-    content = (ROOT / "skills" / "bmad-agent-content-creator" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
+    # Epic 26 Story 26-2 migration: cluster-aware Pass 2 rules moved from SKILL.md
+    # to the dedicated pass-2-procedure.md reference.
+    content = (
+        ROOT
+        / "skills"
+        / "bmad-agent-content-creator"
+        / "references"
+        / "pass-2-procedure.md"
+    ).read_text(encoding="utf-8")
 
     assert "process them cluster-by-cluster in manifest order" in content
     assert "must not introduce new concepts outside the head segment's instructional scope" in content

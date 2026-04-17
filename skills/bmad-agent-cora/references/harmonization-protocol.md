@@ -25,6 +25,13 @@ This protocol is a six-gap-closed evolution of `maintenance/doc review prompt 20
    - Untracked: `git ls-files --others --exclude-standard`
    The union is the file set passed to Audra as the `changed_files_window`. Untracked files are included deliberately — a new doc introduced but not yet committed can drift just as easily as a modified one.
 
+   **HUD scope union (mandatory for every harmonization sweep).** After building the union above, Cora adds the following paths if they are not already present — including for **directory-scoped** sweeps:
+   - `scripts/utilities/run_hud.py` — Run HUD generator (production pipeline + bundle state + source freshness)
+   - `scripts/utilities/progress_map.py` — dev-cycle panel (sprint/epic rollup consumed by the HUD)
+   - `tests/test_run_hud.py` — HUD regression coverage
+
+   Rationale: git-narrow windows often skip tooling that must stay in lockstep with `sprint-status.yaml`, prompt-pack pipeline ordering, and bundle gate sidecars. The HUD surfaces **production-run** truth (latest bundle, `run-constants.yaml`, gate results) and **dev-session** truth (`build_progress_report` / sprint state) in separate panels; coherence work must verify those code paths whenever internal artifacts move.
+
 5. **Report home.** Create `{project-root}/reports/dev-coherence/YYYY-MM-DD-HHMM/`. This is the only valid output location; never write harmonization reports elsewhere.
 
 6. **Invoke Audra L1 deterministic sweep.** Context envelope: `{anchor, scope, workflow, report_home, changed_files_window}`. Wait for structured result. If exit code \!= 0, halt the pipeline — report L1 findings to operator; do not run L2 until L1 is clean. Note: Audra's whole-repo invariant checks (L1-3 parameter-directory <-> schema lockstep, L1-4 gate-contract lockstep, L1-5 lane-matrix coverage) run regardless of scope; only the file-window checks (L1-2, L1-7) respect the change window.

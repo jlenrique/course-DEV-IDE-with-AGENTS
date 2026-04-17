@@ -1,3 +1,9 @@
+---
+name: cluster-narrative-arc-schema
+code: NA
+description: Cluster narrative arc schema — narrative_arc field rules, master_behavioral_intent subordination, develop sub-type assignment
+---
+
 # Cluster Narrative Arc Schema
 
 This document defines the schema for cluster-level narrative arcs and behavioral intent in interstitial slide clusters. It establishes the value rules for the `narrative_arc`, `master_behavioral_intent`, and `develop_type` fields used by downstream cluster work.

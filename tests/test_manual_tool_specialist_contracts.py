@@ -349,10 +349,12 @@ def test_midjourney_parameter_depth_and_iteration_schema() -> None:
 
 
 def test_marcus_registry_lists_story_5_1_specialists() -> None:
-    marcus = (ROOT / "skills" / "bmad-agent-marcus" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
+    # Epic 26 migration: table moved to external-specialist-registry.md.
+    registry = (
+        ROOT / "skills" / "bmad-agent-marcus" / "references"
+        / "external-specialist-registry.md"
+    ).read_text(encoding="utf-8")
 
-    assert "vyond-specialist" in marcus
-    assert "midjourney-specialist" in marcus
-    assert "articulate-specialist" in marcus
+    assert "vyond-specialist" in registry
+    assert "midjourney-specialist" in registry
+    assert "articulate-specialist" in registry

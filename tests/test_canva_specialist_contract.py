@@ -86,12 +86,15 @@ def test_canva_sidecar_initialized_with_boundaries() -> None:
 
 
 def test_marcus_lists_canva_specialist_as_active() -> None:
-    marcus = (ROOT / "skills" / "bmad-agent-marcus" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
+    # Epic 26 migration: the External Specialist Agents table moved from
+    # Marcus's SKILL.md to references/external-specialist-registry.md.
+    registry = (
+        ROOT / "skills" / "bmad-agent-marcus" / "references"
+        / "external-specialist-registry.md"
+    ).read_text(encoding="utf-8")
 
-    assert "canva-specialist" in marcus
-    assert "active (Story 3.8)" in marcus
+    assert "canva-specialist" in registry
+    assert "active (Story 3.8)" in registry
 
 
 def test_canva_specialist_registry_mapping_exists() -> None:

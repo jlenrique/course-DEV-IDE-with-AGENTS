@@ -105,6 +105,10 @@ Marcus now routes narrated production through two explicit workflow templates:
 
 `DOUBLE_DISPATCH` is an optional branch inside either workflow. It does not create a third workflow family.
 
+**Experience profiles + clusters (v4.2+):**
+- If `EXPERIENCE_PROFILE` is set, Marcus runs a **Creative Directive** step (Prompt 4.75) before Irene Pass 1 and persists `narration_profile_controls`.
+- If `CLUSTER_DENSITY` is enabled, Marcus adds cluster prompt engineering (6.2), dispatch sequencing (6.3), and the G2.5 coherence gate before Storyboard A.
+
 ### Narrated Workflow Templates
 
 Marcus selects between two narrated workflow templates:

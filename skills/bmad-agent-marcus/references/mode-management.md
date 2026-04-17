@@ -1,3 +1,9 @@
+---
+name: mode-management
+code: MM
+description: Execution mode management (tracked/default vs ad-hoc) and mode-boundary enforcement
+---
+
 # Run Mode Management
 
 ## Purpose

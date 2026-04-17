@@ -1,3 +1,9 @@
+---
+name: cluster-density-controls
+code: DC
+description: Cluster density controls — CLUSTER_DENSITY run constant, per-slide overrides, interstitial count assignment
+---
+
 # Cluster Density Controls
 
 This document defines the operator controls for Irene's cluster density behavior, allowing controlled tuning of clustering intensity per production run.

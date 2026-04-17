@@ -150,6 +150,8 @@ Mandatory anti-drift confirmations for this session:
 - Prompt 6B literal-visual operator checkpoint is required before Prompt 7 dispatch.
 - Storyboard A is required after Gary dispatch and before Gate 2 approval.
 - Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
+- If `EXPERIENCE_PROFILE` is set, **Prompt 4.75 Creative Directive** must run before Irene Pass 1 and persist `narration_profile_controls`.
+- If `CLUSTER_DENSITY` is not `none`, enforce cluster prompt engineering (6.2), dispatch sequencing (6.3), and G2.5 coherence before Storyboard A.
 - Motion-enabled shifts should use the canonical Marcus helpers rather than ad hoc file edits:
   - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py --bundle <bundle-dir>`
   - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py --bundle <bundle-dir>`

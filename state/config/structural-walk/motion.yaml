@@ -57,6 +57,34 @@ anti_drift:
       - "### 6B. Prompt 6B"
       - "Confirm `literal-visual-operator-packet.md` exists and is complete for every literal-visual slide."
     ordered: true
+  # Ordered by prompt-pack numeric sequence (4.75 < 6.2 < 6.3 < 7.5 < 7C < 7D < 7F)
+  # so test-fixture doc builders and the real prompt-pack doc both satisfy
+  # the sequence_doc_parity monotonic-position check below.
+  - name: Creative directive resolution step
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 4.75) Creative Directive Resolution (CD)"
+      - "creative-directive.yaml"
+      - "narration_profile_controls"
+    ordered: true
+  - name: Cluster prompt engineering step
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 6.2) Cluster Prompt Engineering (Conditional)"
+      - "cluster_prompt_engineering.py"
+    ordered: true
+  - name: Cluster dispatch sequencing step
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 6.3) Cluster Dispatch Sequencing (Conditional)"
+      - "cluster_dispatch_sequencing.py"
+    ordered: true
+  - name: Cluster coherence gate in motion prompt pack
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 7.5) Cluster Coherence G2.5 Gate (Conditional)"
+      - "cluster_coherence_validation.py"
+    ordered: true
   - name: Motion prompt-pack workflow sequence
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
@@ -81,6 +109,21 @@ anti_drift:
       - "EXPERIENCE_PROFILE"
       - "narration_profile_controls"
 sequence_doc_parity:
+  # Listed in Marcus-stage order so the structural_walk validator's sort-by-stage
+  # aligns with doc-position sort (and the test fixture's naive doc-builder
+  # produces a doc where needles are in the right order by construction).
+  - stage: creative-directive
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 4.75) Creative Directive Resolution (CD)"
+  - stage: cluster-prompt-engineering
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 6.2) Cluster Prompt Engineering (Conditional)"
+  - stage: cluster-dispatch-sequencing
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 6.3) Cluster Dispatch Sequencing (Conditional)"
+  - stage: cluster-coherence
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 7.5) Cluster Coherence G2.5 Gate (Conditional)"
   - stage: storyboard
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needle: "## 7C) Storyboard A + Gate 2 Approval + Winner Authorization"

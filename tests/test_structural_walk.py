@@ -95,13 +95,17 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             '            "aliases": [],\n'
             '            "stages": [\n'
             '                {"stage": "source-wrangling"},\n'
+            '                {"stage": "creative-directive"},\n'
             '                {"stage": "lesson-plan-and-slide-brief"},\n'
             '                {"stage": "fidelity-g1"},\n'
             '                {"stage": "fidelity-g2"},\n'
             '                {"stage": "quality-g2"},\n'
             '                {"stage": "gate-1"},\n'
             '                {"stage": "imagine-handoff"},\n'
+            '                {"stage": "cluster-prompt-engineering"},\n'
+            '                {"stage": "cluster-dispatch-sequencing"},\n'
             '                {"stage": "slide-generation"},\n'
+            '                {"stage": "cluster-coherence"},\n'
             '                {"stage": "storyboard"},\n'
             '                {"stage": "fidelity-g3"},\n'
             '                {"stage": "quality-g3"},\n'
@@ -194,13 +198,17 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             "    aliases: []\n"
             "    stages:\n"
             "      - stage: source-wrangling\n"
+            "      - stage: creative-directive\n"
             "      - stage: lesson-plan-and-slide-brief\n"
             "      - stage: fidelity-g1\n"
             "      - stage: fidelity-g2\n"
             "      - stage: quality-g2\n"
             "      - stage: gate-1\n"
             "      - stage: imagine-handoff\n"
+            "      - stage: cluster-prompt-engineering\n"
+            "      - stage: cluster-dispatch-sequencing\n"
             "      - stage: slide-generation\n"
+            "      - stage: cluster-coherence\n"
             "      - stage: storyboard\n"
             "      - stage: fidelity-g3\n"
             "      - stage: quality-g3\n"
@@ -390,7 +398,11 @@ def test_manifest_loader_reads_repo_manifest_contract(tmp_path: Path) -> None:
     assert spec.dry_run_steps[0].kind == "manifest"
     assert spec.dry_run_steps[1].kind == "sequence"
     assert spec.dry_run_steps[2].kind == "sequence_docs"
-    assert len(spec.sequence_doc_parity_specs) == 6
+    # 10 parity specs after v4.2 workflow enhancements (commit 5ffc76b):
+    # storyboard, creative-directive, cluster-prompt-engineering,
+    # cluster-dispatch-sequencing, cluster-coherence, gate-2m (x2 — prompt-pack
+    # + operator-card), motion-gate (x2), narration-and-manifest.
+    assert len(spec.sequence_doc_parity_specs) == 10
 
 
 def test_manifest_loader_reads_cluster_manifest_contract(tmp_path: Path) -> None:
@@ -778,7 +790,11 @@ def test_motion_dry_run_preview_adds_marcus_motion_sequence(tmp_path: Path) -> N
         row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
     )
     assert parity_row["result"] == "Pass"
-    assert "Validated 6 sequence-doc checkpoint(s)" in parity_row["evidence"]
+    # 10 parity checkpoints after v4.2 workflow enhancements (commit 5ffc76b):
+    # storyboard, creative-directive, cluster-prompt-engineering,
+    # cluster-dispatch-sequencing, cluster-coherence, gate-2m (x2), motion-gate (x2),
+    # narration-and-manifest.
+    assert "Validated 10 sequence-doc checkpoint(s)" in parity_row["evidence"]
 
 
 def test_cluster_dry_run_preview_adds_cluster_sequence(tmp_path: Path) -> None:

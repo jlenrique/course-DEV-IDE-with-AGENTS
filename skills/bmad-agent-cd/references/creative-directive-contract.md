@@ -1,3 +1,9 @@
+---
+name: creative-directive-contract
+code: DR
+description: Creative directive schema v1.0 — mode key enum, numeric constraints (sum-to-1.0 ±0.001), 11-key narration_profile_controls surface, validator-enforced on emission
+---
+
 # Creative Directive Contract (20c-10)
 
 ## Schema

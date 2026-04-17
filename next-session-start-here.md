@@ -1,98 +1,161 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> Current objective: Execute the long-deferred fresh trial production run against the APC C1-M1 Tejal source, now that Texas's runtime runner is live and the G3.5 lockstep gap is closed.
+> **Current objective:** Remediate the 4 defects the 2026-04-17 trial surfaced, then restart the APC C1-M1 Tejal trial production run with a clean slate — reaching last session's halt-point in minutes, not hours.
 
-## Current State (as of 2026-04-17 wrapup)
+## Immediate Next Action (pick-up point)
 
-- Active branch: `dev/marcus-sanctum-migration` (name retained; Marcus migration deferred in favor of Texas production-readiness this session)
-- Working tree has ~25 files of uncommitted changes from this session — operator owns the commit decision (see Step 12 of the wrapup protocol)
-- Full repo regression: **919 passed, 2 skipped, 0 failed**
-- Contract validator: **9 contracts, 79 criteria, 0 errors**
-- Structural walks: **3/3 READY**
-- **Epic 25 / Story 25-1 — DONE.** Texas runtime wrangling runner shipped with layered BMAD code review clean (3 lenses, 13 MUST-FIX+SHOULD-FIX remediations, 18 tests).
-- **G3.5 remediation — DONE** earlier this session. All 9 fidelity contracts reorganized; G3.5 row removed from gate-map; new `blocks_on:` declarative precondition field added.
+**Run BMAD Session Protocol Session START**, then pivot directly into the remediation batch described below.
 
-## Immediate Next Action
+The session START will load Cora for a since-handoff harmonization check, verify branch state, and summarize what's changed since this handoff anchor — expected fast because session WRAPUP already ran a full-repo L1 CLEAN sweep.
 
-**Execute a fresh trial production run using prompt pack v4.2g.** The three blockers that prevented trial runs through the prior session are now closed:
+## Hot-Start Summary
 
-1. **30-line-stub risk is preventable** — Texas's extraction_validator (4-tier classification) now runs via `run_wrangler.py`, and the prompt pack's Prompt 3 retains the hard word-count check as a belt-and-suspenders assertion.
-2. **G3.5 lockstep gap is closed** — G3.5 row removed from `docs/fidelity-gate-map.md`; its checks now live as deterministic sub-criteria G3-08..G3-12 in `state/config/fidelity-contracts/g3-generated-slides.yaml`. Validator enforces the new ordering invariant.
-3. **Texas is wired at runtime** — Prompt 3 invokes `python skills/bmad-agent-texas/scripts/run_wrangler.py --directive ... --bundle-dir ...` directly. Exit codes 0/10/20/30 drive Marcus's halt-vs-proceed decision. The `--legacy-prose` fallback is documented as a safety net if the runner surprises anyone mid-pipeline.
+Last session closed the Epic 26 pilot wave (Marcus 26-1, Irene 26-2, Dan 26-3 all BMB-migrated + scaffold v0.2 shipped as 26-4), wired the v4.2 prompt pack's new stages (Creative Directive + clustering) into Marcus's workflow templates, and opened the APC C1-M1 Tejal trial production run. **Trial halted at Prompt 1 on the `emit-preflight-receipt.py` validator** — a good halt that exposed a pack-doc-vs-code schema drift plus three other defect classes. Operator chose to end session, remediate, and restart fresh.
 
-### Trial Run Playbook
+## Sequenced Remediation Plan for This Session
 
-- Source: `course-content/courses/tejal-APC-C1/APC_C1-M1_Tejal_2026-03-29.pdf`
-- Cross-validation asset: `course-content/courses/tejal-APC-C1/C1M1Part01.md`
-- Invoke Marcus per v4.2g prompt pack, Prompt 1 onward. Prompt 3 is the Texas integration point — pay attention to `extraction-report.yaml` output for tier classification + cross-validation results.
-- Monitor via the run HUD (`python scripts/utilities/run_hud.py --open`) — three tabs (System Health, Production Run, Dev Cycle).
+Before touching the trial, close as many of these 4 defects as possible. Order is ROI-descending: each unblocks a chunk of the restart path.
 
-### Key Risks for the Trial Run
+### Step 1 — Remediate ambient worktree state (Juan's `progress_map.py`)
 
-- **Texas runner has zero real-trial evidence.** Every test used synthetic fixtures. First real trial is the first time the runner faces a production PDF. The `--legacy-prose` fallback is the escape hatch.
-- **First cross-validation run against real content.** `cross_validator.py` was unit-tested against real content in a prior session but has never been invoked from the runner with a real Notion-exported MD cross-referenced against a PDF extraction.
-- **Expected tier-1 path** for the APC C1-M1 source (~24 pages, ~6000 expected words). If the tier comes out DEGRADED or FAILED, the runner will exit 20 and halt the run — consult `blocking_issues[]` in `result.yaml`.
+**Unblocks:** green pytest baseline.
 
-## Alternative Paths
+Juan has an uncommitted mid-refactor of `scripts/utilities/progress_map.py` (216 deletions, 35 insertions — replaced `_parse_epic_labels_from_comments` with hardcoded `WAVE_LABELS` dict) that breaks 34 tests. Must decide:
 
-**If deferring the trial run:**
-- **Marcus sanctum migration** — the session-START party-mode team produced a full design pass before the Texas pivot. John proposed Epic 25 originally (now used by Texas) → new epic would be needed; Winston recommended identity-extraction over First Breath; Murat recommended Dan→Marcus→Irene pilot sequence with a Marcus golden-path test BEFORE migration. Amelia estimated per-agent effort. All of this is in the 2026-04-17 session transcript.
-- **Follow-up stories filed during Texas review** (none blocking):
-  - Vera-side G0 gate runner that consumes `extraction-report.yaml` and emits `gates/gate-03-result.yaml`
-  - Explicit fallback-chain orchestration inside the runner
-  - Git-SHA-derived version strings replacing hand-maintained `@2026-04-17` dates
-  - Manifest self-inclusion strategy for `result.yaml` hash provenance
+- **Option A (complete):** finish the refactor, update the 34 tests to expect the new WAVE_LABELS form, commit.
+- **Option B (revert):** `git checkout scripts/utilities/progress_map.py` if the refactor direction was later reconsidered.
+- **Option C (park):** stash and park in a feature branch for later.
+
+Recommend A or B before remediating anything else. Session-owned work on top of a broken-baseline is noise. `git diff scripts/utilities/progress_map.py` for the full picture.
+
+### Step 2 — Open Story 26-X (prompt-pack Run Constants schema repair) → fix the pack doc
+
+**Unblocks:** operators setting up new runs from the pack alone hit PASS on first `emit-preflight-receipt.py`.
+
+Backlog stub: [_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md](_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md)
+
+Action: Paige tech-writer story. Rewrite pack Run Constants section (`docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` lines ~22-37) to show canonical **lowercase nested YAML** (`run_id:`, nested `motion_budget:` block, etc.) instead of UPPERCASE flat display. Validator (`scripts/utilities/run_constants.py:96-99`) unchanged. Acceptance: a fresh operator authoring `run-constants.yaml` from the pack alone → `emit-preflight-receipt.py` passes first try.
+
+### Step 3 — Open Story 26-Y (Texas wrangler intake-surface expansion) → party-mode consensus + implement
+
+**Unblocks:** Images and DOCX become first-class source types. This is the bigger story of the four.
+
+Backlog stub: [_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md](_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md) (severity: High after DOCX drift surfaced)
+
+Action sequence:
+1. **Party-mode consensus** on A (extend runner) vs B (sibling wrangler Texas orchestrates). Invite Winston (runner architecture) + Amelia (implementation cost) + Murat (test boundary) + Paige (transform-registry doc SSOT).
+2. Per operator scope direction: **"Texas as wrangler must be savvy at finding and handling anything and everything"** → Option C (reject) withdrawn. Texas accepts all; routes deliberately.
+3. Close both defects in one story: (a) wire `python-docx` into `.docx` branch of `local_file` handler (registry already promises it), (b) add image provider routed through sensory-bridges.
+4. New G0 fidelity criteria for visual sources; new contract roles (`visual-primary`, `visual-supplementary`).
+5. Transform registry becomes the binding contract — any format advertised must have a working extractor OR be marked `planned`.
+
+### Step 4 — Open Story 26-Z (Texas CLI cp1252 guard) → one-line fix + test
+
+**Unblocks:** `run_wrangler.py --help` runs cleanly on Windows without `PYTHONIOENCODING=utf-8`.
+
+Tiny story — add the pattern we used in scaffold v0.2:
+```python
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except AttributeError:
+        pass
+```
+Add one test asserting `--help` returns exit 0 on Windows with cp1252 default stdout (or that the guard is present).
+
+### Step 5 — Open Story 26-W (Audra L1 docs-vs-code schema-lockstep check) → design + implement
+
+**Unblocks:** future drift between docs (pack Run Constants, Texas transform-registry, other) and code (validators, runners) gets caught at L1 sweep rather than surfaced during trial execution.
+
+New check class: `format-capability-lockstep`. Compiles schema claims from load-bearing docs, diffs against validator/runner schemas. Would have caught BOTH Step 2 (pack doc schema drift) AND Step 3 (Texas DOCX promise-vs-code drift) before they reached the trial.
+
+### Step 6 — Restart the trial on a clean slate
+
+**Pick-up conditions:** Steps 1-4 done; Step 5 optional. The fresh restart should breeze through the points that cost us time last session:
+
+1. **Fresh branch from master** after merging the remediation commits. Branch name suggestion: `dev/trial-run-c1m1-tejal-20260418` or similar.
+2. **Create fresh source bundle** `apc-c1m1-tejal-<YYYYMMDD>-motion/` — do NOT reuse `20260415` (has stale artifacts from this session's halted run — trial-run-c1m1-tejal-20260417.md runbook + Texas extracted.md etc. still live there). Fresh bundle directory gives a clean slate.
+3. **Author `run-constants.yaml` using Step 2's corrected pack-doc** — canonical lowercase nested YAML. Expect `emit-preflight-receipt.py` to PASS first try.
+4. **Issue the 4-Execution-Rules binding + Prompt 1** as a single consolidated message to Marcus (re-use the one logged in last session's runbook at `trial-run-c1m1-tejal-20260417.md` under "Catch-up message composed for Marcus"). Adjust only the bundle path.
+5. **Texas source-wrangling** should now work cleanly including the DOCX cross-val (post-Step-3 remediation) AND the roadmap image (if Step 3's image provider landed).
+6. **Proceed through Prompt 2+** — territory we never reached. This is where the real trial-production validation starts.
+
+Estimated time to reach "back to where we halted": **~15 minutes** if Steps 1-4 complete cleanly. Previous attempt took ~2 hours largely due to surprise defects; now pre-mediated.
 
 ## Branch Metadata
 
-- Repository baseline branch: `master` (synced with `origin/master` at 2026-04-17 wrapup — includes this session's merge of `dev/epic-25-texas-runner`)
-- Next working branch: `dev/trial-run-c1m1-tejal-20260417` (created from updated `master` and pushed to origin with upstream set; intended for the fresh trial run)
-- Closed-out working branch (archived on origin): `dev/epic-25-texas-runner` (contains Epic 25 Story 25-1 + G3.5 remediation; merged cleanly into `master` this session)
+- **Current branch (end of 2026-04-17 session):** `dev/epic-26-scaffold-v02` with 3 session commits (`a878b82`, `cdfad84`, `5e073cf`) + operator commit (`5ffc76b`) on top of handoff anchor `c9f8d1c`.
+- **Repository baseline branch after closeout:** `master` (merge NOT performed this session — see "Git Closeout Exception" below).
+- **Intended next working branch:** `dev/trial-run-c1m1-tejal-20260418` (or similar), branched from `master` after the remediation merge lands.
 
-Resume commands (PowerShell):
+## Git Closeout Exception (2026-04-17)
+
+**Merge-to-master was skipped this session** because `scripts/utilities/progress_map.py` carries an uncommitted mid-refactor (Juan-authored, not session work) that breaks 34 tests. Per Session WRAPUP Protocol Step 12: "Do not perform the merge-to-master flow when any of the following are true: unrelated pre-existing worktree changes remain."
+
+**Resume path:** Step 1 above (remediate `progress_map.py`) → green pytest baseline → then merge `dev/epic-26-scaffold-v02` to `master` → branch `dev/trial-run-c1m1-tejal-20260418` from fresh `master`.
+
+## Startup Commands
 
 ```powershell
-cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
-git checkout dev/trial-run-c1m1-tejal-20260417
-git pull origin dev/trial-run-c1m1-tejal-20260417
+# 1. Verify branch state
 git status --short
-git log --oneline -5
+git log --oneline -6
+
+# 2. Run the session START protocol (Cora-orchestrated)
+# Cora will re-read SESSION-HANDOFF.md + this file + git log since anchor
+# and summarize what's ready to resume.
+
+# 3. Before touching remediation, decide on progress_map.py
+git diff scripts/utilities/progress_map.py
+# → pick Option A (complete), B (revert), or C (park)
+
+# 4. Once baseline is green, open Story 26-X (Paige tech-writer):
+# pack-doc Run Constants schema repair
+# Then 26-Y (Texas wrangler expansion, party-mode)
+# Then 26-Z (Texas CLI cp1252 guard)
+# Then 26-W (Audra docs-vs-code schema-lockstep check — optional)
+
+# 5. Trial restart — fresh bundle, fresh branch
+mkdir course-content\staging\tracked\source-bundles\apc-c1m1-tejal-20260418-motion
+# Author run-constants.yaml from the (now-corrected) pack doc.
+# Reuse the catch-up-message-to-Marcus from the prior runbook, adjust bundle path.
 ```
-
-## Unresolved Issues / Risks
-
-- **Uncommitted worktree** as of wrapup — operator owns the commit decision.
-- **Branch name is misleading** — `dev/marcus-sanctum-migration` but work was Texas-focused. Rename or create a new branch before the trial run if clarity matters.
-- **`pyproject.toml` build-backend is broken** (`setuptools.backends._legacy:_Backend` is not a real module). Pre-existing. Fix is a one-liner change to `setuptools.build_meta`, but unrelated to this session's scope.
-- **First-trial-run-under-Texas risk** — runner has library-level confidence but zero runtime confidence against real production input. Plan accordingly.
-- **Marcus sanctum migration still pending** — branch name says so but session deferred the work.
-- **No Audra findings carried forward from Step 0a** — session wrapup sweep was clean.
 
 ## Hot-Start Files
 
-- `SESSION-HANDOFF.md` — backward-looking record of this session
-- `_bmad-output/implementation-artifacts/25-1-texas-runtime-wrangling-runner.md` — story 25-1 artifact (done, with Review Record)
-- `skills/bmad-agent-texas/scripts/run_wrangler.py` — the runner CLI
-- `skills/bmad-agent-texas/references/extraction-report-schema.md` — v1.0 schema
-- `skills/bmad-agent-texas/references/delegation-contract.md` — Marcus↔Texas contract with Runtime Invocation section
-- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` — Prompt 3 now invokes runner; `--legacy-prose` fallback documented
-- `scripts/validate_fidelity_contracts.py` — enforces the new A2 ordering + `blocks_on:` invariants
-- `state/config/fidelity-contracts/g3-generated-slides.yaml` — G3-08..G3-12 criteria (formerly G3.5)
-- `state/config/fidelity-contracts/_schema.yaml` — schema doc with `blocks_on:` spec
-- `tests/test_validate_fidelity_contracts.py` — 17 tests for validator invariants
-- `skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py` — 18 runner tests
-- `reports/dev-coherence/2026-04-17-0034/` — G3.5 remediation audit trail
-- `reports/dev-coherence/2026-04-17-0142/` — session-wrapup audit trail
-- `course-content/courses/tejal-APC-C1/` — source for the trial run
+- [SESSION-HANDOFF.md](SESSION-HANDOFF.md) — backward-looking record of this session
+- [_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md](_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md) — runbook with every trial action + halt point detail
+- [_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md](_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md) — Step 3 source material
+- [_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md](_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md) — Step 2 source material
+- [_bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md](_bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md) — the one scaffold-v0.2-adjacent story still open in backlog; gates the batch-wave of ~14 remaining agent migrations
+- [reports/dev-coherence/2026-04-17-1900/harmonization-summary.md](reports/dev-coherence/2026-04-17-1900/harmonization-summary.md) — pre-trial L1 CLEAN sweep (reuse as baseline unless something material changed since)
+- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` — the canonical pack (Step 2's target for line ~22-37 rewrite)
+
+## Key Gotchas Discovered This Session
+
+- **Pack-doc-vs-code drift** is a real defect class. Check for it in any load-bearing doc that displays YAML/config schemas. Audra gets a story for this (Step 5).
+- **`_bmad/memory/` is fully gitignored** — re-scaffolded sanctums are local-only. Fresh clone won't have them until the scaffold runs. Not a blocker; just awareness.
+- **Stale bundle gates** (`gate-01-result.yaml`, `gate-04-result.yaml` with FAIL verdicts) can linger across runs in a reused bundle directory. Always clear before a fresh run. Use a new `<YYYYMMDD>-motion` bundle dir to sidestep.
+- **Marcus via Skill tool**: not registered in the default harness. Operator had to wait for Skill-tool-native load. Once loaded, performed correctly. Unknown whether this is fixable at the harness level or is by-design.
+- **Coordination DB is canonical**; bundle + DB + pack must all agree on active run_id. A stale DB is confusing. Marcus flagged this at trial open and corrected it (cancelled 20260409, activated 20260415).
 
 ## Run HUD
 
-```
-.venv/Scripts/python -m scripts.utilities.run_hud --open
+```powershell
+.venv\Scripts\python -m scripts.utilities.run_hud --open
 ```
 
 Three tabs: System Health / Production Run / Dev Cycle. Auto-refreshes every 10 seconds.
+
+**Caveat:** run_hud currently depends on `progress_map.py` which is in a broken-mid-refactor state. The HUD may not render correctly until Step 1 completes.
+
+## Ambient Worktree State at Handoff
+
+Expect these at session open — NOT this session's work:
+
+- `scripts/utilities/progress_map.py` — uncommitted refactor, breaks 34 tests. See Step 1.
 
 ## Protocol Status
 

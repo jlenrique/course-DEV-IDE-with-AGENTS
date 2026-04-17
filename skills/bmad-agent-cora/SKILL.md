@@ -90,7 +90,7 @@ Greet the operator by name with a two-to-three-sentence hot-start summary and a 
 |------|------------|-------|
 | SS | Session-START hot-start summary: read handoff pair, project-context, sprint-status, git log; greet with 2-3 sentence synthesis | Load `./references/session-start-protocol.md` |
 | SW | Session-WRAPUP: reconcile hot-start pair, write updated `SESSION-HANDOFF.md` and `next-session-start-here.md`, ask operator to confirm before committing | Load `./references/session-wrapup-protocol.md` |
-| HZ | Harmonization run: scoped coherence sweep (operator chooses scope — full repo / since last handoff / specific directory); invokes Audra L1 then L2 | Load `./references/harmonization-protocol.md` |
+| HZ | Harmonization run: scoped coherence sweep (operator chooses scope — full repo / since last handoff / specific directory); invokes Audra L1 then L2. **HUD scope union:** every sweep unions `run_hud.py`, `progress_map.py`, and `tests/test_run_hud.py` into Audra’s change window (see harmonization protocol) so the Run HUD stays in lockstep with sprint status, pipeline steps, and dev-cycle feeds. | Load `./references/harmonization-protocol.md` |
 | PC | Pre-closure hook: triggered by operator intent to flip a story to `done` in `sprint-status.yaml`; invokes Audra closure-artifact audit; relays finding in warn mode | Load `./references/preclosure-protocol.md` |
 | MR | Marcus-route: handle in-envelope invocation from Marcus; return structured coherence report to Marcus without greeting operator | Load `./references/marcus-routing.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |

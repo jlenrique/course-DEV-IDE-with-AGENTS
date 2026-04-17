@@ -48,6 +48,7 @@ Operator rule:
 - `DOUBLE_DISPATCH` stays inside the selected prompt pack; it does not select a separate workflow template.
 - For tracked-bundle shifts, treat the `--bundle-dir` readiness check as required, not optional.
 - `MOTION_ENABLED` selects the motion prompt pack and adds Gate 2M plus Motion Gate obligations before Irene Pass 2.
+- If `EXPERIENCE_PROFILE` is set, a Creative Directive (CD) step is mandatory before Irene Pass 1.
 
 Fast path:
 - For the condensed operator flow, use `docs/workflow/first-tracked-run-quickstart.md`.
@@ -58,10 +59,11 @@ Fast path:
 
 ### 1. Prompt 1: Preflight
 - Run:
-  - `.\.venv\Scripts\python.exe -m scripts.utilities.app_session_readiness --with-preflight --format json`
+  - `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
   - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `MOTION_ENABLED: true`, require motion-capable readiness path:
-  - `.\.venv\Scripts\python.exe -m scripts.utilities.app_session_readiness --with-preflight --motion-enabled --json-only`
+  - `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight --motion-enabled`
   - `.\.venv\Scripts\python.exe skills/pre-flight-check/scripts/preflight_runner.py --motion-enabled`
 - Require all invoked checks to return `overall_status = pass`.
 - Write `preflight-results.json`.
@@ -93,12 +95,22 @@ Fast path:
 - Run/record G0 receipt.
 - Go/no-go: no go if any fail.
 
+### 4.75. Prompt 4.75: Creative Directive Resolution (CD)
+- **Skip if `EXPERIENCE_PROFILE` is not set.**
+- Confirm `creative-directive.yaml` is written and validated.
+- Confirm `run-constants.yaml` slide mode proportions match the directive.
+- Confirm `state/config/narration-script-parameters.yaml` is updated with `narration_profile_controls`.
+- Go/no-go: no go until the directive is validated and resolved.
+
 ### 5. Prompt 5: Irene Pass 1 + G1/G2
 - Confirm one mode per slide.
 - Confirm literal-visual spec cards are complete.
 - Confirm operator directives are reflected in slide plan.
 - Run/record G1 and G2 receipts.
 - Go/no-go: no go until Gate 1 approval.
+
+> **Optional A/B Loop:** If running Irene Pass 1 tuning, pause here and follow
+> `docs/workflow/operator-script-v4.2-irene-ab-loop.md`. Resume at Prompt 6 once a winner is promoted.
 
 ### 6. Prompt 6: Pre-dispatch package
 - Confirm required machine artifacts exist:
@@ -110,6 +122,16 @@ Fast path:
   - `gary-outbound-envelope.yaml`
   - `pre-dispatch-package-gary.md`
 - Go/no-go: no go until approved.
+
+### 6.2. Prompt 6.2: Cluster Prompt Engineering (conditional)
+- **Skip if `CLUSTER_DENSITY` is none.**
+- Confirm `cluster-prompts.json` is written from `clusters.json` using `state/config/prompting.yaml`.
+- Go/no-go: no go if prompt engineering fails or file is empty.
+
+### 6.3. Prompt 6.3: Cluster Dispatch Sequencing (conditional)
+- **Skip if `CLUSTER_DENSITY` is none.**
+- Confirm `cluster-dispatch-plan.json` is written from `clusters-list.json` using `state/config/dispatch.yaml`.
+- Go/no-go: no go if `plan_hash` is missing or sequencing fails.
 
 ### 6B. Prompt 6B: Literal-visual operator checkpoint
 - Confirm `literal-visual-operator-packet.md` exists and is complete for every literal-visual slide.
@@ -140,6 +162,12 @@ Fast path:
   - use the HTML review page for human review; treat JSON as the machine manifest
 - Go/no-go: no go if validator `status=fail` or G3 fail.
 - Then explicit Gate 2 approval.
+
+### 7.5. Prompt 7.5: Cluster Coherence (G2.5) (conditional)
+- **Skip if `CLUSTER_DENSITY` is none.**
+- Confirm `cluster-coherence-report.json` exists.
+- If coherence fails, run interstitial redispatch protocol and re-run G2.5.
+- Go/no-go: no go until G2.5 passes or operator explicitly accepts violations.
 
 ### 7B. Prompt 7B: Variant Selection (double-dispatch only)
 - **Skip if `DOUBLE_DISPATCH` is false.**
@@ -235,10 +263,12 @@ Collect and keep:
 - `operator-directives.md`
 - `ingestion-evidence.md`
 - fidelity receipts (G0-G4)
+- `creative-directive.yaml` (if `EXPERIENCE_PROFILE` is set)
 - `gary-dispatch-validation-result.json`
 - `literal-visual-operator-packet.md` (if literal-visual slides exist)
 - `authorized-storyboard.json`
 - `variant-selection.json` (if `DOUBLE_DISPATCH: true`)
+- `cluster-prompts.json`, `cluster-dispatch-plan.json`, `cluster-coherence-report.json` (if clustering enabled)
 - `motion-designations.json` and `motion_plan.yaml` (if `MOTION_ENABLED: true`)
 - `pass2-prep-receipt.json` and inspection-pack receipt (if Irene Pass 2 prep occurred)
 - Pass 2 handoff validator output
@@ -251,6 +281,7 @@ Collect and keep:
 Run is considered successful up to Pass 2 when:
 - Gate 1 approved
 - Gate 2 approved
+- If `EXPERIENCE_PROFILE` is set, Creative Directive resolved
 - If `DOUBLE_DISPATCH: true`, winner selection is recorded and authorized
 - If `MOTION_ENABLED: true`, Gate 2M and Motion Gate both passed
 - Gary dispatch validator passes

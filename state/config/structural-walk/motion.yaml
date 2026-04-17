@@ -65,6 +65,31 @@ anti_drift:
       - "## 7F) Motion Gate"
       - "Regenerate Storyboard B with script context before downstream audio finalization."
     ordered: true
+  - name: Creative directive resolution step
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 4.75) Creative Directive Resolution (CD)"
+      - "creative-directive.yaml"
+      - "narration_profile_controls"
+    ordered: true
+  - name: Cluster prompt engineering step
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 6.2) Cluster Prompt Engineering (Conditional)"
+      - "cluster_prompt_engineering.py"
+    ordered: true
+  - name: Cluster dispatch sequencing step
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 6.3) Cluster Dispatch Sequencing (Conditional)"
+      - "cluster_dispatch_sequencing.py"
+    ordered: true
+  - name: Cluster coherence gate in motion prompt pack
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needles:
+      - "## 7.5) Cluster Coherence G2.5 Gate (Conditional)"
+      - "cluster_coherence_validation.py"
+    ordered: true
   - name: Motion prompt-pack winner-deck binding
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
@@ -84,6 +109,18 @@ sequence_doc_parity:
   - stage: storyboard
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needle: "## 7C) Storyboard A + Gate 2 Approval + Winner Authorization"
+  - stage: creative-directive
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 4.75) Creative Directive Resolution (CD)"
+  - stage: cluster-prompt-engineering
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 6.2) Cluster Prompt Engineering (Conditional)"
+  - stage: cluster-dispatch-sequencing
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 6.3) Cluster Dispatch Sequencing (Conditional)"
+  - stage: cluster-coherence
+    path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
+    needle: "## 7.5) Cluster Coherence G2.5 Gate (Conditional)"
   - stage: gate-2m
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needle: "## 7D) Gate 2M Motion Designation"

@@ -103,8 +103,20 @@ Whole-repo invariant checks that do NOT respect the change window (they always r
 - L1-4: Gate-Contract Lockstep
 - L1-6: Closure-Artifact Audit (sweep mode — spot mode is single-story by definition)
 - L1-8: Hot-Start-Pair Freshness
+- L1-10: Run HUD Lockstep
 
 On full-repo scope, every check is whole-repo regardless of the classification above. On directory scope, the change window is constrained to files under the named directory.
+
+### L1-10: Run HUD Lockstep
+
+Whole-repo invariant (always runs regardless of change window). The Run HUD (`python -m scripts.utilities.run_hud`) is the operator’s live view of production-run position plus dev-cycle progress; it must stay aligned with canonical repo paths and the prompt-pack pipeline definition.
+
+1. **Presence:** Confirm `scripts/utilities/run_hud.py`, `scripts/utilities/progress_map.py`, and `tests/test_run_hud.py` exist.
+2. **Sprint tracker path:** In `run_hud.py`, confirm `SPRINT_STATUS` resolves to the canonical `_bmad-output/implementation-artifacts/sprint-status.yaml` (same file the rest of BMAD uses).
+3. **Pipeline manifest comment:** Confirm the `SYNC-WITH:` line above `PIPELINE_STEPS` references an existing file (today: `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`). If the prompt pack is renamed or versioned, either update the comment and `PIPELINE_STEPS` together or record an L1 finding, type: `alteration`, severity: `high`, check: `hud-pipeline-lockstep`.
+4. **Feed integrity:** Confirm `run_hud.py` imports `build_progress_report` from `progress_map` and that import path exists.
+
+Any failure -> L1 finding with the appropriate type/severity above. This check is **not** a substitute for Murat’s behavioral tests; it ensures internal-artifact and routing descriptions the HUD displays do not silently drift from repo SSOT.
 
 ## Exit Code Contract
 

@@ -7,7 +7,14 @@ source_of_truth:
   schema_ref: "skills/bmad-agent-content-creator/references/template-narration-script.md"
   schema_ref_secondary: "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
 
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# Deterministic before agentic; every agentic criterion declares blocks_on: with
+# at least one deterministic sibling id. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/.
+
 criteria:
+  # ==== Deterministic group ====
+
   - id: "G4-01"
     name: "Slide correspondence"
     description: "Each narration segment references an existing slide by number"
@@ -15,43 +22,6 @@ criteria:
     severity: critical
     evaluation_type: deterministic
     check: "Every segment's [Gary Slide: {id}] reference maps to a valid slide in gary_slide_output[]"
-    requires_perception: false
-
-  - id: "G4-02"
-    name: "Visual accuracy"
-    description: "Narration describes content actually visible on the referenced slide, verified against sensory bridge perception artifact"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "For each narration segment, the described visual elements match the perception_artifact[] extracted text and layout for that slide number"
-    requires_perception: true
-    perception_modality: image
-
-  - id: "G4-03"
-    name: "Assessment reference exactness"
-    description: "Any assessment items mentioned in narration match the lesson plan's assessment hooks verbatim"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "Knowledge check topics, assessment questions, or testable items mentioned in narration appear verbatim in the lesson plan assessment hooks table"
-    requires_perception: false
-
-  - id: "G4-04"
-    name: "Terminology consistency"
-    description: "Medical/clinical terms in narration match those used on slides and in the lesson plan"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: "Clinical terms (drug names, procedure names, condition names) are spelled and used identically across narration, slides, and lesson plan"
-    requires_perception: false
-
-  - id: "G4-05"
-    name: "No narration invention"
-    description: "Narration does not introduce clinical claims, data, or assertions not present in the lesson plan or slides"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "Domain-specific factual assertions in narration can be traced to the lesson plan or generated slide content"
     requires_perception: false
 
   - id: "G4-06"
@@ -62,24 +32,6 @@ criteria:
     evaluation_type: deterministic
     check: "count(narration_segments) == count(manifest_segments) and narration_ref linkages are valid"
     requires_perception: false
-
-  - id: "G4-07"
-    name: "Source depth utilization"
-    description: >
-      For creative-fidelity slides, narration must incorporate substantive
-      content from the source_ref anchors, not merely describe the visual.
-    fidelity_class: [creative]
-    severity: high
-    evaluation_type: agentic
-    check: >
-      For each creative slide, at least one substantive claim from the
-      extraction source_ref appears in the narration segment beyond
-      what is visible on the slide PNG.
-    requires_perception: true
-    perception_modality: image
-    config_refs:
-      - "state/config/narration-grounding-profiles.yaml"
-      - "state/config/narration-script-parameters.yaml"
 
   - id: "G4-08"
     name: "Perception lineage binding"
@@ -93,25 +45,6 @@ criteria:
       For each slide_id, perception_artifacts.source_image_path equals
       gary_slide_output.file_path and the target is a local .png path.
     requires_perception: false
-
-  - id: "G4-09"
-    name: "Audience-directed visual grounding"
-    description: >
-      Narration must stay visually grounded while remaining audience-directed,
-      avoiding slide-tour or production-meta phrasing when the configuration
-      forbids it.
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: >
-      Narration guides learner attention using visual cues traceable to
-      perception_artifacts, but does not rely on forbidden meta slide-language
-      defined in narration-script-parameters.yaml.
-    requires_perception: true
-    perception_modality: image
-    config_refs:
-      - "state/config/narration-grounding-profiles.yaml"
-      - "state/config/narration-script-parameters.yaml"
 
   - id: "G4-10"
     name: "Runtime plan coherence"
@@ -149,83 +82,6 @@ criteria:
       clustered runs must also satisfy cluster-specific word ranges and
       within-cluster bridge suppression rules; weak or missing rationale is a
       contract failure, not an advisory note.
-    requires_perception: false
-    config_refs:
-      - "state/config/narration-script-parameters.yaml"
-
-  - id: "G4-12"
-    name: "Script-parameter policy adherence"
-    description: >
-      Narration must follow configured script-level controls for pacing and
-      audience guidance (density, visual reference behavior, bridge cadence,
-      and meta-language policy) so delivery intent remains consistent with the
-      approved narration strategy.
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: medium
-    evaluation_type: agentic
-    check: >
-      Narration and manifest behavior align with narration-script-parameters
-      policy defaults and guardrails; deviations must be intentional and
-      traceable, not accidental drift. When clusters are present, cadence
-      should prefer cluster seams (`bridge_type: cluster_boundary`) while
-      keeping within-cluster bridges suppressed except for explicit tension
-      pivots.
-    requires_perception: true
-    perception_modality: image
-    config_refs:
-      - "state/config/narration-grounding-profiles.yaml"
-      - "state/config/narration-script-parameters.yaml"
-
-  - id: "G4-13"
-    name: "Behavioral intent validation"
-    description: >
-      For each segment with a behavioral_intent field, the stated intent must
-      be specific to the segment's content, the narration must plausibly
-      support the claimed effect, and consecutive segments must not share
-      identical behavioral_intent text.
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: >
-      (1) behavioral_intent is segment-specific, not generic boilerplate
-      repeated across consecutive segments; (2) narration's instructional
-      approach plausibly supports the claimed behavioral/affective effect;
-      (3) consecutive segments sharing identical behavioral_intent text are
-      flagged as under-differentiated (medium); narration contradicting its
-      stated intent is high severity.
-    requires_perception: false
-
-  - id: "G4-14"
-    name: "Motion brief fidelity"
-    description: >
-      For each non-static segment with a motion_brief, the described visual
-      action must be consistent with the motion perception confirmation for
-      that segment's motion_asset_path.
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: high
-    evaluation_type: agentic
-    check: >
-      For each non-static segment, motion_brief's described action matches
-      the perceived clip content from motion_asset_path. A motion_brief
-      describing action not present in the perceived clip is an Invention.
-    requires_perception: true
-    perception_modality: image
-
-  - id: "G4-15"
-    name: "Duration rationale semantic correctness"
-    description: >
-      Beyond structural completeness (G4-11), each segment's duration_rationale
-      must provide genuine, segment-specific justification referencing at least
-      two of three runtime dimensions.
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: medium
-    evaluation_type: agentic
-    check: >
-      (1) duration_rationale references at least two of: purpose/timing role,
-      content density, visual detail load/burden; (2) rationale is unique
-      across consecutive segments — identical rationale on 3+ consecutive
-      segments is high severity; (3) purely formulaic rationales with no
-      segment-specific reasoning are medium severity.
     requires_perception: false
     config_refs:
       - "state/config/narration-script-parameters.yaml"
@@ -304,3 +160,166 @@ criteria:
       must callback to establish concepts using a meaningful keyword overlap
       heuristic.
     requires_perception: false
+
+  # ==== Agentic group ====
+
+  - id: "G4-02"
+    name: "Visual accuracy"
+    description: "Narration describes content actually visible on the referenced slide, verified against sensory bridge perception artifact"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each narration segment, the described visual elements match the perception_artifact[] extracted text and layout for that slide number"
+    requires_perception: true
+    perception_modality: image
+    blocks_on: ["G4-01", "G4-06", "G4-08"]
+
+  - id: "G4-03"
+    name: "Assessment reference exactness"
+    description: "Any assessment items mentioned in narration match the lesson plan's assessment hooks verbatim"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Knowledge check topics, assessment questions, or testable items mentioned in narration appear verbatim in the lesson plan assessment hooks table"
+    requires_perception: false
+    blocks_on: ["G4-01", "G4-06"]
+
+  - id: "G4-04"
+    name: "Terminology consistency"
+    description: "Medical/clinical terms in narration match those used on slides and in the lesson plan"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: "Clinical terms (drug names, procedure names, condition names) are spelled and used identically across narration, slides, and lesson plan"
+    requires_perception: false
+    blocks_on: ["G4-01", "G4-06"]
+
+  - id: "G4-05"
+    name: "No narration invention"
+    description: "Narration does not introduce clinical claims, data, or assertions not present in the lesson plan or slides"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Domain-specific factual assertions in narration can be traced to the lesson plan or generated slide content"
+    requires_perception: false
+    blocks_on: ["G4-01", "G4-06"]
+
+  - id: "G4-07"
+    name: "Source depth utilization"
+    description: >
+      For creative-fidelity slides, narration must incorporate substantive
+      content from the source_ref anchors, not merely describe the visual.
+    fidelity_class: [creative]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      For each creative slide, at least one substantive claim from the
+      extraction source_ref appears in the narration segment beyond
+      what is visible on the slide PNG.
+    requires_perception: true
+    perception_modality: image
+    config_refs:
+      - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"
+    blocks_on: ["G4-01", "G4-06", "G4-08"]
+
+  - id: "G4-09"
+    name: "Audience-directed visual grounding"
+    description: >
+      Narration must stay visually grounded while remaining audience-directed,
+      avoiding slide-tour or production-meta phrasing when the configuration
+      forbids it.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      Narration guides learner attention using visual cues traceable to
+      perception_artifacts, but does not rely on forbidden meta slide-language
+      defined in narration-script-parameters.yaml.
+    requires_perception: true
+    perception_modality: image
+    config_refs:
+      - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"
+    blocks_on: ["G4-01", "G4-06", "G4-08"]
+
+  - id: "G4-12"
+    name: "Script-parameter policy adherence"
+    description: >
+      Narration must follow configured script-level controls for pacing and
+      audience guidance (density, visual reference behavior, bridge cadence,
+      and meta-language policy) so delivery intent remains consistent with the
+      approved narration strategy.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: >
+      Narration and manifest behavior align with narration-script-parameters
+      policy defaults and guardrails; deviations must be intentional and
+      traceable, not accidental drift. When clusters are present, cadence
+      should prefer cluster seams (`bridge_type: cluster_boundary`) while
+      keeping within-cluster bridges suppressed except for explicit tension
+      pivots.
+    requires_perception: true
+    perception_modality: image
+    config_refs:
+      - "state/config/narration-grounding-profiles.yaml"
+      - "state/config/narration-script-parameters.yaml"
+    blocks_on: ["G4-06", "G4-11"]
+
+  - id: "G4-13"
+    name: "Behavioral intent validation"
+    description: >
+      For each segment with a behavioral_intent field, the stated intent must
+      be specific to the segment's content, the narration must plausibly
+      support the claimed effect, and consecutive segments must not share
+      identical behavioral_intent text.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      (1) behavioral_intent is segment-specific, not generic boilerplate
+      repeated across consecutive segments; (2) narration's instructional
+      approach plausibly supports the claimed behavioral/affective effect;
+      (3) consecutive segments sharing identical behavioral_intent text are
+      flagged as under-differentiated (medium); narration contradicting its
+      stated intent is high severity.
+    requires_perception: false
+    blocks_on: ["G4-01", "G4-06"]
+
+  - id: "G4-14"
+    name: "Motion brief fidelity"
+    description: >
+      For each non-static segment with a motion_brief, the described visual
+      action must be consistent with the motion perception confirmation for
+      that segment's motion_asset_path.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: high
+    evaluation_type: agentic
+    check: >
+      For each non-static segment, motion_brief's described action matches
+      the perceived clip content from motion_asset_path. A motion_brief
+      describing action not present in the perceived clip is an Invention.
+    requires_perception: true
+    perception_modality: image
+    blocks_on: ["G4-06", "G4-08"]
+
+  - id: "G4-15"
+    name: "Duration rationale semantic correctness"
+    description: >
+      Beyond structural completeness (G4-11), each segment's duration_rationale
+      must provide genuine, segment-specific justification referencing at least
+      two of three runtime dimensions.
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: medium
+    evaluation_type: agentic
+    check: >
+      (1) duration_rationale references at least two of: purpose/timing role,
+      content density, visual detail load/burden; (2) rationale is unique
+      across consecutive segments — identical rationale on 3+ consecutive
+      segments is high severity; (3) purely formulaic rationales with no
+      segment-specific reasoning are medium severity.
+    requires_perception: false
+    config_refs:
+      - "state/config/narration-script-parameters.yaml"
+    blocks_on: ["G4-06", "G4-11"]

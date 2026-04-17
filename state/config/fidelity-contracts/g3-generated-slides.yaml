@@ -6,7 +6,19 @@ source_of_truth:
   primary: "Slide brief (content items, fidelity tags, visual specs)"
   schema_ref: "skills/bmad-agent-content-creator/references/template-slide-brief.md"
 
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# All evaluation_type: deterministic criteria MUST appear before any agentic
+# criterion in this list. Every agentic criterion MUST declare blocks_on: with
+# at least one deterministic sibling id. Rationale: deterministic failures
+# short-circuit expensive perceptual evaluation. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/ (Blocker A consensus: A2 + blocks_on).
+#
+# G3.5 (PNG Export Validation) is folded into this contract as criteria
+# G3-08..G3-12 (formerly tracked as G3.5 in docs/fidelity-gate-map.md).
+
 criteria:
+  # ==== Deterministic group (run first; agentic criteria block on failures here) ====
+
   - id: "G3-01"
     name: "Slide count match"
     description: "Number of generated slides equals the effective renderable count implied by the slide brief: flat slides plus cluster heads plus each head's declared interstitial expansions"
@@ -15,46 +27,6 @@ criteria:
     evaluation_type: deterministic
     check: "count(generated_slides) == count(slide_brief.slides where cluster_role in (null, head)) + sum(cluster_interstitial_count for each cluster head)"
     requires_perception: false
-
-  - id: "G3-02"
-    name: "Literal text preservation"
-    description: "For literal-text slides, all content_items from the slide brief appear verbatim in the generated slide"
-    fidelity_class: [literal-text]
-    severity: critical
-    evaluation_type: agentic
-    check: "For each content_item in slide_brief.slides[fidelity=literal-text].content: item text appears verbatim in the PPTX extracted text (via pptx sensory bridge; fallback to image bridge if PPTX unavailable)"
-    requires_perception: true
-    perception_modality: pptx
-
-  - id: "G3-03"
-    name: "Literal visual placement"
-    description: "For literal-visual slides, the specified SME image is present and surrounding text is preserved"
-    fidelity_class: [literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "Image sensory bridge confirms: (1) an image is present on the slide, (2) surrounding text matches slide brief content"
-    requires_perception: true
-    perception_modality: image
-
-  - id: "G3-04"
-    name: "Creative content coverage"
-    description: "For creative slides, all content_items themes from the slide brief are semantically represented even if creatively enhanced"
-    fidelity_class: [creative]
-    severity: high
-    evaluation_type: agentic
-    check: "For each content_item in slide_brief.slides[fidelity=creative].content: the theme/concept is semantically present in the PPTX extracted text — creative reframing is acceptable, theme omission is not (fallback to image bridge if PPTX unavailable)"
-    requires_perception: true
-    perception_modality: pptx
-
-  - id: "G3-05"
-    name: "No harmful invention"
-    description: "Generated slides do not contain clinical claims, statistics, or assessment items not present in the slide brief"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "PPTX extracted text does not contain domain-specific factual assertions (drug names, dosages, statistics, clinical recommendations) absent from the slide brief (fallback to image bridge if PPTX unavailable)"
-    requires_perception: true
-    perception_modality: pptx
 
   - id: "G3-06"
     name: "Provenance manifest completeness"
@@ -80,3 +52,112 @@ criteria:
       card N appears in literal_visual_publish.substituted_cards, and
       provenance[N].generation_id is a Gamma generation ID (not "preintegration-bypass").
     requires_perception: false
+
+  # ---- export_integrity group (formerly G3.5 PNG Export Validation) ----
+  # Deterministic PNG-level checks. Must pass before any perceptual criterion
+  # (G3-02..G3-05) runs. If any export_integrity criterion fails, agentic
+  # criteria are reported as BLOCKED (not FAIL) to disambiguate export rot
+  # from content drift for operator playbook routing.
+
+  - id: "G3-08"
+    name: "PNG file integrity"
+    description: "Each gary_slide_output entry's file_path exists, is non-zero bytes, and begins with the PNG magic signature (89 50 4E 47 0D 0A 1A 0A). Catches truncated writes, stub placeholders, and wrong-format files masquerading as PNG."
+    fidelity_class: [literal-visual, creative, literal-text]
+    severity: critical
+    evaluation_type: deterministic
+    check: "For each entry in gary_slide_output[]: os.path.exists(entry.file_path) AND os.path.getsize(entry.file_path) > 0 AND open(entry.file_path,'rb').read(8) == b'\\x89PNG\\r\\n\\x1a\\n'"
+    requires_perception: false
+
+  - id: "G3-09"
+    name: "Gary slide output completeness"
+    description: "Every slide declared in the slide brief has a matching gary_slide_output[] entry, and every gary_slide_output entry resolves to a real file. No orphans in either direction."
+    fidelity_class: [literal-visual, creative, literal-text]
+    severity: critical
+    evaluation_type: deterministic
+    check: "set(s.slide_id for s in slide_brief.slides where cluster_role in (null, head)) is covered by set(g.slide_id for g in gary_slide_output[]) AND all(os.path.exists(g.file_path) for g in gary_slide_output[])"
+    requires_perception: false
+
+  - id: "G3-10"
+    name: "PNG dimensions envelope"
+    description: "Decoded PNG width/height for each gary_slide_output entry fall within the expected envelope for the slide aspect ratio declared in slide_brief.visual_specs. Catches renderer misconfiguration producing thumbnail-sized or oversized exports."
+    fidelity_class: [literal-visual, creative, literal-text]
+    severity: high
+    evaluation_type: deterministic
+    check: "For each entry in gary_slide_output[]: (w,h) = PIL.Image.open(entry.file_path).size; expected_ratio = slide_brief.visual_specs.aspect_ratio; assert min_w <= w <= max_w AND min_h <= h <= max_h AND abs((w/h) - expected_ratio) < 0.02"
+    requires_perception: false
+
+  - id: "G3-11"
+    name: "Not-blank entropy floor"
+    description: "Shannon entropy of the decoded PNG's 256-bin luminance histogram exceeds a minimum floor. Catches all-white, all-black, and solid-fill exports that would pass file-integrity but contain no content. Pillow-only (no numpy/scipy). Threshold is TBD pending first-50-green-export calibration; placeholder value is a conservative floor."
+    fidelity_class: [literal-visual, creative, literal-text]
+    severity: critical
+    evaluation_type: deterministic
+    check: >
+      For each entry in gary_slide_output[]:
+      h = PIL.Image.open(entry.file_path).convert('L').histogram();
+      N = sum(h);
+      entropy = -sum((c/N) * math.log2(c/N) for c in h if c > 0);
+      assert entropy >= entropy_floor.
+      # TBD (placeholder 2.5 bits) — calibrated by Gary after first 50 green exports.
+    requires_perception: false
+
+  - id: "G3-12"
+    name: "Not-stub pixel-density floor"
+    description: "Fraction of non-modal-color pixels (pixels not equal to the single most common RGB value) exceeds a minimum floor. Catches near-empty exports with only a logo/watermark on a flat background — the 30-line-stub failure class. Pillow + stdlib Counter (no numpy/scipy). Threshold is TBD pending first-50-green-export calibration."
+    fidelity_class: [literal-visual, creative, literal-text]
+    severity: high
+    evaluation_type: deterministic
+    check: >
+      For each entry in gary_slide_output[]:
+      px = list(PIL.Image.open(entry.file_path).convert('RGB').getdata());
+      modal_count = collections.Counter(px).most_common(1)[0][1];
+      non_modal_fraction = 1 - (modal_count / len(px));
+      assert non_modal_fraction >= density_floor.
+      # TBD (placeholder 0.08) — calibrated by Gary after first 50 green exports.
+    requires_perception: false
+
+  # ==== Agentic group (perception-based; each blocks on relevant deterministic siblings) ====
+
+  - id: "G3-02"
+    name: "Literal text preservation"
+    description: "For literal-text slides, all content_items from the slide brief appear verbatim in the generated slide"
+    fidelity_class: [literal-text]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each content_item in slide_brief.slides[fidelity=literal-text].content: item text appears verbatim in the PPTX extracted text (via pptx sensory bridge; fallback to image bridge if PPTX unavailable)"
+    requires_perception: true
+    perception_modality: pptx
+    blocks_on: ["G3-01", "G3-08", "G3-09", "G3-11"]
+
+  - id: "G3-03"
+    name: "Literal visual placement"
+    description: "For literal-visual slides, the specified SME image is present and surrounding text is preserved"
+    fidelity_class: [literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Image sensory bridge confirms: (1) an image is present on the slide, (2) surrounding text matches slide brief content"
+    requires_perception: true
+    perception_modality: image
+    blocks_on: ["G3-01", "G3-07", "G3-08", "G3-09", "G3-11"]
+
+  - id: "G3-04"
+    name: "Creative content coverage"
+    description: "For creative slides, all content_items themes from the slide brief are semantically represented even if creatively enhanced"
+    fidelity_class: [creative]
+    severity: high
+    evaluation_type: agentic
+    check: "For each content_item in slide_brief.slides[fidelity=creative].content: the theme/concept is semantically present in the PPTX extracted text — creative reframing is acceptable, theme omission is not (fallback to image bridge if PPTX unavailable)"
+    requires_perception: true
+    perception_modality: pptx
+    blocks_on: ["G3-01", "G3-08", "G3-09", "G3-11"]
+
+  - id: "G3-05"
+    name: "No harmful invention"
+    description: "Generated slides do not contain clinical claims, statistics, or assessment items not present in the slide brief"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "PPTX extracted text does not contain domain-specific factual assertions (drug names, dosages, statistics, clinical recommendations) absent from the slide brief (fallback to image bridge if PPTX unavailable)"
+    requires_perception: true
+    perception_modality: pptx
+    blocks_on: ["G3-01", "G3-08", "G3-09"]

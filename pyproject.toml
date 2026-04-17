@@ -41,6 +41,7 @@ testpaths = [
     "skills/source-wrangler/scripts/tests",
     "skills/compositor/scripts/tests",
     "skills/bmad-agent-marcus/scripts/tests",
+    "skills/bmad-agent-texas/scripts/tests",
     "skills/kling-video/scripts/tests",
 ]
 pythonpath = ["."]

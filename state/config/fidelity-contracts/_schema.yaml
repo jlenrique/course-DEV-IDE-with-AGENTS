@@ -30,6 +30,15 @@ schema_version: "1.0"
 #     check: "{human-readable test}"    # The assertion to evaluate
 #     requires_perception: false        # true if a sensory bridge is needed to evaluate
 #     perception_modality: null         # image | audio | pdf | pptx | video (if requires_perception)
+#     blocks_on: ["G{n}-{nn}", ...]     # REQUIRED on agentic criteria; optional on deterministic.
+#       # Lists deterministic sibling ids whose failure blocks this criterion.
+#       # Encodes short-circuit preconditions as declarative graph rather than
+#       # list-order convention. Agentic criteria missing blocks_on fail validation.
+#       # Enforced by scripts/validate_fidelity_contracts.py (party-mode decision record
+#       # reports/dev-coherence/2026-04-16-2350/ — Blocker-A consensus A2).
+#
+# Ordering invariant: all evaluation_type: deterministic criteria must appear
+# before any agentic criterion in the criteria[] list. Enforced by the validator.
 
 required_fields:
   gate: true
@@ -48,3 +57,4 @@ required_criterion_fields:
   check: true
   requires_perception: true
   perception_modality: false
+  blocks_on: false  # required on agentic criteria (conditional, enforced by validator); optional on deterministic

@@ -28,6 +28,13 @@ VALID_EVAL_TYPES = {"deterministic", "agentic"}
 VALID_FIDELITY_CLASSES = {"creative", "literal-text", "literal-visual"}
 VALID_MODALITIES = {"image", "audio", "pdf", "pptx", "video", None}
 
+# Short-circuit precondition enforcement (A2 from party-mode Blocker-A consensus,
+# 2026-04-17 reports/dev-coherence/2026-04-16-2350/). Deterministic criteria
+# must precede agentic criteria in criteria[] list order, and every agentic
+# criterion must declare blocks_on: [<deterministic_sibling_id>, ...] with at
+# least one real sibling id. This encodes the short-circuit dependency as a
+# static invariant that survives list reordering.
+
 G4_SECONDARY_SCHEMA = "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
 
 
@@ -71,6 +78,9 @@ def validate_contract(filepath: Path) -> list[str]:
         errors.append("criteria list is empty — at least one criterion required")
 
     seen_ids: set[str] = set()
+    deterministic_ids: set[str] = set()
+    first_agentic_index: int | None = None
+
     for i, criterion in enumerate(criteria):
         prefix = f"criteria[{i}]"
         if not isinstance(criterion, dict):
@@ -94,6 +104,19 @@ def validate_contract(filepath: Path) -> list[str]:
         if eval_type and eval_type not in VALID_EVAL_TYPES:
             errors.append(f"{prefix}: invalid evaluation_type '{eval_type}' (must be one of {VALID_EVAL_TYPES})")
 
+        # Track ordering for the deterministic-before-agentic invariant.
+        if eval_type == "deterministic":
+            if cid:
+                deterministic_ids.add(cid)
+            if first_agentic_index is not None:
+                errors.append(
+                    f"{prefix}: deterministic criterion '{cid}' appears after agentic criterion "
+                    f"at criteria[{first_agentic_index}] — deterministic criteria must precede "
+                    "agentic criteria so short-circuit preconditions fire before perception spend"
+                )
+        elif eval_type == "agentic" and first_agentic_index is None:
+            first_agentic_index = i
+
         fc = criterion.get("fidelity_class", [])
         if isinstance(fc, list):
             for cls in fc:
@@ -104,6 +127,48 @@ def validate_contract(filepath: Path) -> list[str]:
 
         if criterion.get("requires_perception") and criterion.get("perception_modality") not in VALID_MODALITIES:
             errors.append(f"{prefix}: requires_perception is true but perception_modality is missing or invalid")
+
+    # blocks_on well-formedness: every agentic criterion must declare blocks_on with
+    # at least one real deterministic sibling id. Deterministic criteria may declare
+    # blocks_on but are not required to.
+    for i, criterion in enumerate(criteria):
+        if not isinstance(criterion, dict):
+            continue
+        prefix = f"criteria[{i}]"
+        cid = criterion.get("id", "")
+        eval_type = criterion.get("evaluation_type")
+        blocks_on = criterion.get("blocks_on")
+
+        if eval_type == "agentic":
+            if blocks_on is None:
+                errors.append(
+                    f"{prefix}: agentic criterion '{cid}' missing required blocks_on field — "
+                    "every agentic criterion must list at least one deterministic sibling id "
+                    "so short-circuit preconditions are declarative, not positional"
+                )
+                continue
+            if not isinstance(blocks_on, list) or not blocks_on:
+                errors.append(
+                    f"{prefix}: agentic criterion '{cid}' blocks_on must be a non-empty list"
+                )
+                continue
+            for ref in blocks_on:
+                if ref not in deterministic_ids:
+                    errors.append(
+                        f"{prefix}: agentic criterion '{cid}' blocks_on references '{ref}' "
+                        "which is not a deterministic sibling id in this contract"
+                    )
+        elif blocks_on is not None:
+            # Deterministic criteria MAY have blocks_on (e.g., G3-12 may block on G3-08).
+            if not isinstance(blocks_on, list):
+                errors.append(f"{prefix}: blocks_on must be a list when present")
+            else:
+                for ref in blocks_on:
+                    if ref not in deterministic_ids and ref != cid:
+                        errors.append(
+                            f"{prefix}: blocks_on references '{ref}' which is not a "
+                            "deterministic sibling id in this contract"
+                        )
 
     return errors
 

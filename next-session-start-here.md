@@ -1,96 +1,99 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> Current objective: Migrate Marcus from sidecar pattern to bmb sanctum pattern (re-establish Marcus as model agent).
+> Current objective: Execute the long-deferred fresh trial production run against the APC C1-M1 Tejal source, now that Texas's runtime runner is live and the G3.5 lockstep gap is closed.
 
-## Current State (as of 2026-04-16 late session closeout)
+## Current State (as of 2026-04-17 wrapup)
 
-- Active branch: `dev/marcus-sanctum-migration` (freshly created from `master`)
-- `master` reconciled this closeout: 24-commit merge from `DEV/slides-redesign` landed cleanly (merge commit `e2be90f`); post-merge regression 567 passed; pushed to origin
-- `DEV/slides-redesign` preserved on origin as historical branch
-- Full repo regression: **567 passed, 0 failed**
-- **Texas agent (Source Wrangler) — DONE.** Built via bmb workflow. Full sanctum pattern. 33 tests passing.
-- **Progress Map evergreen hardening — DONE.** 4 fixes, 40 new tests (52 total).
-- **Run HUD v2 — DONE.** Self-refreshing HTML dashboard with 3 tabs (System Health / Production Run / Dev Cycle), two-column layout, freshness meter, collapsible right panel. 38 tests passing.
-- **Propagation complete**: Texas registered in agent-environment.md, session protocol, Marcus references, v4.2 prompt pack, dev-guide, user-guide, structural_walk.py, skill_module_loader.py.
+- Active branch: `dev/marcus-sanctum-migration` (name retained; Marcus migration deferred in favor of Texas production-readiness this session)
+- Working tree has ~25 files of uncommitted changes from this session — operator owns the commit decision (see Step 12 of the wrapup protocol)
+- Full repo regression: **919 passed, 2 skipped, 0 failed**
+- Contract validator: **9 contracts, 79 criteria, 0 errors**
+- Structural walks: **3/3 READY**
+- **Epic 25 / Story 25-1 — DONE.** Texas runtime wrangling runner shipped with layered BMAD code review clean (3 lenses, 13 MUST-FIX+SHOULD-FIX remediations, 18 tests).
+- **G3.5 remediation — DONE** earlier this session. All 9 fidelity contracts reorganized; G3.5 row removed from gate-map; new `blocks_on:` declarative precondition field added.
 
 ## Immediate Next Action
 
-**Migrate Marcus to the bmb sanctum pattern** — use `bmad-quick-dev` skill to restructure Marcus from monolithic SKILL.md + sidecar (4 files) to lean bootloader SKILL.md + full sanctum (6 files + sessions/ + references/ + capabilities/).
+**Execute a fresh trial production run using prompt pack v4.2g.** The three blockers that prevented trial runs through the prior session are now closed:
 
-Rationale: Marcus was the first agent built, created via bmm workflow. The framework has since advanced to bmb. Texas is now on the current pattern — Marcus should be the model agent again. He's the linchpin of every production run; he deserves the latest architecture.
+1. **30-line-stub risk is preventable** — Texas's extraction_validator (4-tier classification) now runs via `run_wrangler.py`, and the prompt pack's Prompt 3 retains the hard word-count check as a belt-and-suspenders assertion.
+2. **G3.5 lockstep gap is closed** — G3.5 row removed from `docs/fidelity-gate-map.md`; its checks now live as deterministic sub-criteria G3-08..G3-12 in `state/config/fidelity-contracts/g3-generated-slides.yaml`. Validator enforces the new ordering invariant.
+3. **Texas is wired at runtime** — Prompt 3 invokes `python skills/bmad-agent-texas/scripts/run_wrangler.py --directive ... --bundle-dir ...` directly. Exit codes 0/10/20/30 drive Marcus's halt-vs-proceed decision. The `--legacy-prose` fallback is documented as a safety net if the runner surprises anyone mid-pipeline.
 
-### Migration Scope
+### Trial Run Playbook
 
-1. **Extract** current Marcus identity, personality, communication style, principles from `skills/bmad-agent-marcus/SKILL.md` into sanctum templates (PERSONA, CREED, BOND)
-2. **Migrate** sidecar content (`_bmad/memory/marcus-sidecar/index.md`, `patterns.md`, `chronology.md`, `access-boundaries.md`) into sanctum structure (INDEX, MEMORY, CREED Dominion section, sessions/)
-3. **Preserve** all scripts and references unchanged — they don't need migration, only the identity layer
-4. **Update** `scripts/utilities/ad_hoc_persistence_guard.py` to recognize sanctum paths in addition to sidecar paths
-5. **Update** `tests/test_state_management.py` MEMORY_ENTRIES list (Marcus row changes from `marcus-sidecar/index.md` to `bmad-agent-marcus/INDEX.md`)
-6. **Update** cross-agent memory reading pattern in Marcus's references (sidecar paths → check both sidecar and sanctum)
-7. **Run** full regression; ensure no production pipeline regressions
-8. **Party Mode review + BMAD code review** before marking done
+- Source: `course-content/courses/tejal-APC-C1/APC_C1-M1_Tejal_2026-03-29.pdf`
+- Cross-validation asset: `course-content/courses/tejal-APC-C1/C1M1Part01.md`
+- Invoke Marcus per v4.2g prompt pack, Prompt 1 onward. Prompt 3 is the Texas integration point — pay attention to `extraction-report.yaml` output for tier classification + cross-validation results.
+- Monitor via the run HUD (`python scripts/utilities/run_hud.py --open`) — three tabs (System Health, Production Run, Dev Cycle).
 
-### Estimated Complexity
+### Key Risks for the Trial Run
 
-High. Marcus has the most complex SKILL.md in the system (200+ lines), 10+ reference files, 10+ scripts. The sanctum migration is primarily about **identity extraction** — scripts and references don't change.
+- **Texas runner has zero real-trial evidence.** Every test used synthetic fixtures. First real trial is the first time the runner faces a production PDF. The `--legacy-prose` fallback is the escape hatch.
+- **First cross-validation run against real content.** `cross_validator.py` was unit-tested against real content in a prior session but has never been invoked from the runner with a real Notion-exported MD cross-referenced against a PDF extraction.
+- **Expected tier-1 path** for the APC C1-M1 source (~24 pages, ~6000 expected words). If the tier comes out DEGRADED or FAILED, the runner will exit 20 and halt the run — consult `blocking_issues[]` in `result.yaml`.
 
-## Key Risks / Unresolved Issues
+## Alternative Paths
 
-- **Marcus migration is a linchpin change**: if anything breaks the production pipeline, the next trial run is blocked. Recommend full regression + party mode sign-off before merge.
-- **Sidecar ecosystem coupling**: 16 other agents still use sidecar pattern. After Marcus, queue these for migration under Epic 15 (Learning & Compound Intelligence). See memory note `project_sanctum_migration.md`.
-- **Trial run still pending**: the fresh trial run using prompt pack v4.2f (original objective at session start) was deferred in favor of Texas creation + HUD + progress map work. The 30-line stub disaster is now preventable (Texas extraction validator), but a fresh trial run is still needed to validate the end-to-end pipeline.
-- **v4.2g preflight --bundle-dir**: still required on next trial run.
-
-## Texas Agent Quick Reference
-
-- **Location**: `skills/bmad-agent-texas/`
-- **Sanctum**: `_bmad/memory/bmad-agent-texas/` (initialized via `init-sanctum.py`)
-- **Core scripts**: `extraction_validator.py` (4-tier quality classification), `cross_validator.py` (section + key term matching against reference assets)
-- **Capabilities**: Source Interview (SI), Extract & Validate (EV), Fallback Resolution (FR)
-- **Delegation contract**: `skills/bmad-agent-texas/references/delegation-contract.md`
-- **Key use case**: Use `course-content/courses/tejal-APC-C1/C1M1Part01.md` as validation asset to cross-check PDF extraction from `APC C1-M1 Tejal 2026-03-29.pdf`
-
-## Run HUD Quick Reference
-
-- **Generator**: `.venv/Scripts/python -m scripts.utilities.run_hud --open`
-- **Output**: `reports/run-hud.html` (self-refreshing every 10s)
-- **Three tabs**: System Health (preflight + MCP health) / Production Run (pipeline steps + gates) / Dev Cycle (epics/stories from progress_map)
-- **Gate sidecar schema**: `state/config/schemas/gate-result-schema.yaml` — YAML files written to `{bundle}/gates/gate-{step_id}-result.yaml`
-
-## Protocol Status
-
-- Follows the canonical BMAD session protocol pair (`bmad-session-protocol-session-START.md` / `bmad-session-protocol-session-WRAPUP.md`).
+**If deferring the trial run:**
+- **Marcus sanctum migration** — the session-START party-mode team produced a full design pass before the Texas pivot. John proposed Epic 25 originally (now used by Texas) → new epic would be needed; Winston recommended identity-extraction over First Breath; Murat recommended Dan→Marcus→Irene pilot sequence with a Marcus golden-path test BEFORE migration. Amelia estimated per-agent effort. All of this is in the 2026-04-17 session transcript.
+- **Follow-up stories filed during Texas review** (none blocking):
+  - Vera-side G0 gate runner that consumes `extraction-report.yaml` and emits `gates/gate-03-result.yaml`
+  - Explicit fallback-chain orchestration inside the runner
+  - Git-SHA-derived version strings replacing hand-maintained `@2026-04-17` dates
+  - Manifest self-inclusion strategy for `result.yaml` hash provenance
 
 ## Branch Metadata
 
-- Repository baseline branch: `master` (synced with `origin/master` at closeout — includes 24-commit consolidation merge `e2be90f` from `DEV/slides-redesign`)
-- Next working branch: `dev/marcus-sanctum-migration` (created from master, pushed to origin with upstream set)
+- Repository baseline branch: `master` (synced with `origin/master` at 2026-04-17 wrapup — includes this session's merge of `dev/epic-25-texas-runner`)
+- Next working branch: `dev/trial-run-c1m1-tejal-20260417` (created from updated `master` and pushed to origin with upstream set; intended for the fresh trial run)
+- Closed-out working branch (archived on origin): `dev/epic-25-texas-runner` (contains Epic 25 Story 25-1 + G3.5 remediation; merged cleanly into `master` this session)
 
-Resume commands:
+Resume commands (PowerShell):
 
 ```powershell
 cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
-git checkout dev/marcus-sanctum-migration
-git pull origin dev/marcus-sanctum-migration
+git checkout dev/trial-run-c1m1-tejal-20260417
+git pull origin dev/trial-run-c1m1-tejal-20260417
 git status --short
 git log --oneline -5
 ```
 
+## Unresolved Issues / Risks
+
+- **Uncommitted worktree** as of wrapup — operator owns the commit decision.
+- **Branch name is misleading** — `dev/marcus-sanctum-migration` but work was Texas-focused. Rename or create a new branch before the trial run if clarity matters.
+- **`pyproject.toml` build-backend is broken** (`setuptools.backends._legacy:_Backend` is not a real module). Pre-existing. Fix is a one-liner change to `setuptools.build_meta`, but unrelated to this session's scope.
+- **First-trial-run-under-Texas risk** — runner has library-level confidence but zero runtime confidence against real production input. Plan accordingly.
+- **Marcus sanctum migration still pending** — branch name says so but session deferred the work.
+- **No Audra findings carried forward from Step 0a** — session wrapup sweep was clean.
+
 ## Hot-Start Files
 
 - `SESSION-HANDOFF.md` — backward-looking record of this session
-- `skills/bmad-agent-marcus/SKILL.md` — migration source
-- `skills/bmad-agent-texas/SKILL.md` — model sanctum agent (reference architecture)
-- `skills/bmad-agent-desmond/` — other sanctum agent (reference)
-- `.claude/skills/bmad-agent-builder/references/build-process.md` — bmb workflow reference
-- `_bmad/memory/marcus-sidecar/` — source material for sanctum migration
-- `_bmad-output/planning-artifacts/source-wrangler-agent-vision.md` — historical (Texas supersedes)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
-- `scripts/utilities/progress_map.py` — evergreen-hardened (Fix 1-4 applied)
-- `scripts/utilities/run_hud.py` — HUD generator
-- `reports/run-hud.html` — live HUD (open in browser)
-- `tests/test_progress_map.py` — 52 tests (40 new this session)
-- `tests/test_run_hud.py` — 38 tests
-- `tests/agents/bmad-agent-texas/` — 33 tests
+- `_bmad-output/implementation-artifacts/25-1-texas-runtime-wrangling-runner.md` — story 25-1 artifact (done, with Review Record)
+- `skills/bmad-agent-texas/scripts/run_wrangler.py` — the runner CLI
+- `skills/bmad-agent-texas/references/extraction-report-schema.md` — v1.0 schema
+- `skills/bmad-agent-texas/references/delegation-contract.md` — Marcus↔Texas contract with Runtime Invocation section
+- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` — Prompt 3 now invokes runner; `--legacy-prose` fallback documented
+- `scripts/validate_fidelity_contracts.py` — enforces the new A2 ordering + `blocks_on:` invariants
+- `state/config/fidelity-contracts/g3-generated-slides.yaml` — G3-08..G3-12 criteria (formerly G3.5)
+- `state/config/fidelity-contracts/_schema.yaml` — schema doc with `blocks_on:` spec
+- `tests/test_validate_fidelity_contracts.py` — 17 tests for validator invariants
+- `skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py` — 18 runner tests
+- `reports/dev-coherence/2026-04-17-0034/` — G3.5 remediation audit trail
+- `reports/dev-coherence/2026-04-17-0142/` — session-wrapup audit trail
+- `course-content/courses/tejal-APC-C1/` — source for the trial run
+
+## Run HUD
+
+```
+.venv/Scripts/python -m scripts.utilities.run_hud --open
+```
+
+Three tabs: System Health / Production Run / Dev Cycle. Auto-refreshes every 10 seconds.
+
+## Protocol Status
+
+Follows the canonical BMAD session protocol pair ([bmad-session-protocol-session-START.md](bmad-session-protocol-session-START.md) / [bmad-session-protocol-session-WRAPUP.md](bmad-session-protocol-session-WRAPUP.md)).

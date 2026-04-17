@@ -15,12 +15,15 @@ This document defines the seven fidelity gates (G0–G6), their relationship to 
 | **G1.5** | Cluster Plan | Irene | Lesson plan + cluster decision criteria | Operator Review |
 | **G2** | Slide Brief | Irene | Lesson plan | Gate 1 |
 | **G3** | Generated Slides (PNGs) | Gary | Slide brief | Gate 2 |
-| **G3.5** | PNG Export Validation | Gary | Slide brief + export | Gate 2 |
 | **G4** | Narration Script + Segment Manifest | Irene (Pass 2) | Lesson plan + actual slides (PNGs) | Gate 3 |
 | **G5** | Audio (MP3/WAV) | ElevenLabs Voice Director | Narration script | — |
 | **G6** | Composed Video | Compositor + Human (Descript) | Segment manifest | Gate 4 |
 
 L1 fidelity contracts for each gate are defined in `state/config/fidelity-contracts/g{n}-*.yaml`.
+
+Every contract observes a short-circuit-precondition invariant enforced by `scripts/validate_fidelity_contracts.py`: deterministic criteria are listed before agentic criteria, and every agentic criterion declares `blocks_on:` with at least one deterministic sibling id. Failures in the deterministic block short-circuit agentic evaluation so the operator sees export rot as BLOCKED rather than as a false content-drift signal. See the party-mode decision record at `reports/dev-coherence/2026-04-16-2350/` (Blocker-A consensus A2 + Winston's `blocks_on:` refinement).
+
+G3 also validates PNG export integrity via criteria `G3-08` through `G3-12` in `state/config/fidelity-contracts/g3-generated-slides.yaml` (formerly tracked as G3.5 in prior revisions of this document — the checks now live as deterministic sub-criteria in the G3 contract, following the party-mode decision to collapse the G3.5 row into G3 rather than maintain it as a peer gate). These cover PNG file integrity, Gary-output completeness, dimensions envelope, not-blank entropy floor, and not-stub pixel-density floor — all Pillow-only so the runner keeps its dependency surface boring.
 
 For G4, the L1 contract must reference both Irene Pass 2 templates: the narration script template and the segment manifest template. Treat either template drifting out of the G4 contract as a contract defect, because G6 consumes the manifest as its source of truth. G4 carries 19 criteria (5 deterministic L1 + 10 agentic L2 + 4 cluster-specific): G4-01 through G4-12 (original), G4-13 (behavioral_intent validation), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness), G4-16 (cluster narration coherence), G4-17 (interstitial word budget), G4-18 (no new concepts in interstitials), G4-19 (cluster arc integrity).
 

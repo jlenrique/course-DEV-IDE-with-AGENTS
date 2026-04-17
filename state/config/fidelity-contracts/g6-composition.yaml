@@ -6,26 +6,13 @@ source_of_truth:
   primary: "Segment manifest (assembly order, timing, sync points, asset paths)"
   schema_ref: "skills/bmad-agent-content-creator/references/template-segment-manifest.md"
 
-criteria:
-  - id: "G6-01"
-    name: "Segment order"
-    description: "Segments in the composed video follow the order specified by the segment manifest"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "Video frame analysis confirms segment sequence matches manifest segment order"
-    requires_perception: true
-    perception_modality: video
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# Deterministic before agentic; every agentic criterion declares blocks_on: with
+# at least one deterministic sibling id. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/.
 
-  - id: "G6-02"
-    name: "Audio-visual sync"
-    description: "Each audio segment is paired with its correct visual (slide PNG or video clip)"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "For each segment: audio transcript matches expected narration AND visual matches expected slide/clip from manifest"
-    requires_perception: true
-    perception_modality: video
+criteria:
+  # ==== Deterministic group ====
 
   - id: "G6-03"
     name: "Assembly completeness"
@@ -46,3 +33,27 @@ criteria:
     check: "Each video segment duration is within ±20% of manifest.segments[].narration_duration"
     requires_perception: true
     perception_modality: video
+
+  # ==== Agentic group ====
+
+  - id: "G6-01"
+    name: "Segment order"
+    description: "Segments in the composed video follow the order specified by the segment manifest"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "Video frame analysis confirms segment sequence matches manifest segment order"
+    requires_perception: true
+    perception_modality: video
+    blocks_on: ["G6-03"]
+
+  - id: "G6-02"
+    name: "Audio-visual sync"
+    description: "Each audio segment is paired with its correct visual (slide PNG or video clip)"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each segment: audio transcript matches expected narration AND visual matches expected slide/clip from manifest"
+    requires_perception: true
+    perception_modality: video
+    blocks_on: ["G6-03", "G6-04"]

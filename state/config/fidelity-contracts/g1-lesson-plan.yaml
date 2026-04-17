@@ -6,15 +6,13 @@ source_of_truth:
   primary: "Source bundle (extracted.md) + SME learning intent"
   schema_ref: "skills/bmad-agent-content-creator/references/template-lesson-plan.md"
 
+# Criterion ordering contract (enforced by scripts/validate_fidelity_contracts.py):
+# Deterministic before agentic; every agentic criterion declares blocks_on: with
+# at least one deterministic sibling id. See party-mode decision record
+# reports/dev-coherence/2026-04-16-2350/.
+
 criteria:
-  - id: "G1-01"
-    name: "Source theme coverage"
-    description: "Every major theme in the source bundle is represented by at least one learning objective"
-    fidelity_class: [creative, literal-text, literal-visual]
-    severity: critical
-    evaluation_type: agentic
-    check: "For each major section/theme in extracted.md, at least one LO addresses that theme (source_ref linkage when available)"
-    requires_perception: false
+  # ==== Deterministic group ====
 
   - id: "G1-02"
     name: "LO structure completeness"
@@ -52,6 +50,18 @@ criteria:
     check: "Every content block's Objective Served field references a valid LO from the lesson plan header"
     requires_perception: false
 
+  # ==== Agentic group ====
+
+  - id: "G1-01"
+    name: "Source theme coverage"
+    description: "Every major theme in the source bundle is represented by at least one learning objective"
+    fidelity_class: [creative, literal-text, literal-visual]
+    severity: critical
+    evaluation_type: agentic
+    check: "For each major section/theme in extracted.md, at least one LO addresses that theme (source_ref linkage when available)"
+    requires_perception: false
+    blocks_on: ["G1-02", "G1-03"]
+
   - id: "G1-06"
     name: "No content invention"
     description: "Lesson plan does not introduce clinical claims, statistics, or domain assertions not present in the source bundle"
@@ -60,3 +70,4 @@ criteria:
     evaluation_type: agentic
     check: "Domain-specific factual assertions in the lesson plan can be traced to corresponding content in extracted.md"
     requires_perception: false
+    blocks_on: ["G1-02", "G1-03"]

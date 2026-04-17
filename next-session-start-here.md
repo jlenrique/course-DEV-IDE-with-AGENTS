@@ -1,41 +1,60 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> Current objective: Run a fresh trial production run using updated prompt pack v4.2f with extraction completeness validation.
+> Current objective: Migrate Marcus from sidecar pattern to bmb sanctum pattern (re-establish Marcus as model agent).
 
-## Current State (as of 2026-04-16 closeout)
+## Current State (as of 2026-04-16 late session closeout)
 
-- Active branch: `DEV/slides-redesign`
-- Story 20c-15: DONE (profile-aware estimator, 96 tests GREEN, code review PASS)
-- Story 22-2: DONE (storyboard B cluster view with script context)
-- Trial run C1-M1-PRES-20260415: PAUSED after Prompt 4 — extracted.md was a stub (~30 lines from 24-page PDF). Not resumable.
-- Prompt pack v4.2f: Updated with extraction completeness validation, per-dimension evidence requirements, directive governance rules, Notion cross-validation hint, and preamble reorder.
-- Source Wrangler agent vision: Captured in `_bmad-output/planning-artifacts/source-wrangler-agent-vision.md` (future epic, not scheduled).
+- Active branch: `DEV/slides-redesign` (3 commits ahead of origin, not pushed)
+- Full repo regression: **567 passed, 0 failed**
+- **Texas agent (Source Wrangler) — DONE.** Built via bmb workflow. Full sanctum pattern. 33 tests passing.
+- **Progress Map evergreen hardening — DONE.** 4 fixes, 40 new tests (52 total).
+- **Run HUD v2 — DONE.** Self-refreshing HTML dashboard with 3 tabs (System Health / Production Run / Dev Cycle), two-column layout, freshness meter, collapsible right panel. 38 tests passing.
+- **Propagation complete**: Texas registered in agent-environment.md, session protocol, Marcus references, v4.2 prompt pack, dev-guide, user-guide, structural_walk.py, skill_module_loader.py.
 
 ## Immediate Next Action
 
-1. **Start a fresh trial run** using the updated prompt pack v4.2f.
-2. Either delete/rename the old bundle at `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260415/` or create a new dated bundle folder.
-3. Follow the Pre-Run Checklist and Initialization Instructions in the prompt pack.
-4. **Key attention areas during the trial:**
-   - Prompt 3: Extraction completeness validation — the word-count floor check should catch a repeat of the 30-line stub. Expected: 24 pages × 250 = 6000 word floor, HALT if < 3000.
-   - Prompt 3: Consider Notion cross-validation — the C1-M1 Tejal PDF is a Notion export; pulling from Notion directly provides an independent completeness check.
-   - Prompt 4: Per-dimension evidence — each quality gate dimension must include a specific evidence sentence (not bare PASS/FAIL).
-   - Prompt 1: Preflight should run with `--bundle-dir` flag.
+**Migrate Marcus to the bmb sanctum pattern** — use `bmad-quick-dev` skill to restructure Marcus from monolithic SKILL.md + sidecar (4 files) to lean bootloader SKILL.md + full sanctum (6 files + sessions/ + references/ + capabilities/).
 
-## Key Architecture Decisions (Party Mode 2026-04-14)
+Rationale: Marcus was the first agent built, created via bmm workflow. The framework has since advanced to bmb. Texas is now on the current pattern — Marcus should be the model agent again. He's the linchpin of every production run; he deserves the latest architecture.
 
-- Three parameter families: Run Constants (operational switches/budgets), Narration-time (how Irene writes scripts), Assembly-time (how Compositor arranges timing)
-- Creative Director agent: LLM agent (not deterministic resolver) - second pillar alongside Marcus.
-- Two extreme profiles as proof of concept: Visual-Led and Text-Led.
-- Parameter directory document: `docs/parameter-directory.md` - master reference for CD, specialists, and HIL operators.
+### Migration Scope
+
+1. **Extract** current Marcus identity, personality, communication style, principles from `skills/bmad-agent-marcus/SKILL.md` into sanctum templates (PERSONA, CREED, BOND)
+2. **Migrate** sidecar content (`_bmad/memory/marcus-sidecar/index.md`, `patterns.md`, `chronology.md`, `access-boundaries.md`) into sanctum structure (INDEX, MEMORY, CREED Dominion section, sessions/)
+3. **Preserve** all scripts and references unchanged — they don't need migration, only the identity layer
+4. **Update** `scripts/utilities/ad_hoc_persistence_guard.py` to recognize sanctum paths in addition to sidecar paths
+5. **Update** `tests/test_state_management.py` MEMORY_ENTRIES list (Marcus row changes from `marcus-sidecar/index.md` to `bmad-agent-marcus/INDEX.md`)
+6. **Update** cross-agent memory reading pattern in Marcus's references (sidecar paths → check both sidecar and sanctum)
+7. **Run** full regression; ensure no production pipeline regressions
+8. **Party Mode review + BMAD code review** before marking done
+
+### Estimated Complexity
+
+High. Marcus has the most complex SKILL.md in the system (200+ lines), 10+ reference files, 10+ scripts. The sanctum migration is primarily about **identity extraction** — scripts and references don't change.
 
 ## Key Risks / Unresolved Issues
 
-- **Extraction completeness:** v4.2f adds a prompt-level word-count guard, but a proper script-level extraction validator would be more robust. Track as candidate for Source Wrangler agent evolution.
-- **Notion cross-validation** depends on operator declaring the PDF is a Notion export. Future: Source Wrangler agent should detect this automatically.
-- **Preflight --bundle-dir:** Confirm the preflight command in Prompt 1 includes `--bundle-dir` on the next trial.
-- `20c-4/5/6`: remain deferred unless trial run exposes a concrete composition/design gap.
+- **Marcus migration is a linchpin change**: if anything breaks the production pipeline, the next trial run is blocked. Recommend full regression + party mode sign-off before merge.
+- **Sidecar ecosystem coupling**: 16 other agents still use sidecar pattern. After Marcus, queue these for migration under Epic 15 (Learning & Compound Intelligence). See memory note `project_sanctum_migration.md`.
+- **Trial run still pending**: the fresh trial run using prompt pack v4.2f (original objective at session start) was deferred in favor of Texas creation + HUD + progress map work. The 30-line stub disaster is now preventable (Texas extraction validator), but a fresh trial run is still needed to validate the end-to-end pipeline.
+- **v4.2g preflight --bundle-dir**: still required on next trial run.
+
+## Texas Agent Quick Reference
+
+- **Location**: `skills/bmad-agent-texas/`
+- **Sanctum**: `_bmad/memory/bmad-agent-texas/` (initialized via `init-sanctum.py`)
+- **Core scripts**: `extraction_validator.py` (4-tier quality classification), `cross_validator.py` (section + key term matching against reference assets)
+- **Capabilities**: Source Interview (SI), Extract & Validate (EV), Fallback Resolution (FR)
+- **Delegation contract**: `skills/bmad-agent-texas/references/delegation-contract.md`
+- **Key use case**: Use `course-content/courses/tejal-APC-C1/C1M1Part01.md` as validation asset to cross-check PDF extraction from `APC C1-M1 Tejal 2026-03-29.pdf`
+
+## Run HUD Quick Reference
+
+- **Generator**: `.venv/Scripts/python -m scripts.utilities.run_hud --open`
+- **Output**: `reports/run-hud.html` (self-refreshing every 10s)
+- **Three tabs**: System Health (preflight + MCP health) / Production Run (pipeline steps + gates) / Dev Cycle (epics/stories from progress_map)
+- **Gate sidecar schema**: `state/config/schemas/gate-result-schema.yaml` — YAML files written to `{bundle}/gates/gate-{step_id}-result.yaml`
 
 ## Protocol Status
 
@@ -43,8 +62,8 @@
 
 ## Branch Metadata
 
-- Repository baseline branch: `DEV/slides-redesign`
-- Next working branch: `DEV/slides-redesign`
+- Repository baseline branch: `DEV/slides-redesign` (3 commits ahead, not yet pushed to origin)
+- Next working branch: `DEV/slides-redesign` (continue on this branch for Marcus migration)
 
 Resume commands:
 
@@ -52,20 +71,28 @@ Resume commands:
 cd c:\Users\juanl\Documents\GitHub\course-DEV-IDE-with-AGENTS
 git checkout DEV/slides-redesign
 git status --short
+git log --oneline -5
+```
+
+If desired, push accumulated commits to origin first:
+```powershell
+git push origin DEV/slides-redesign
 ```
 
 ## Hot-Start Files
 
 - `SESSION-HANDOFF.md` — backward-looking record of this session
-- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` — the updated prompt pack
-- `_bmad-output/planning-artifacts/source-wrangler-agent-vision.md` — future evolution plan
-- `run-records/run-record-2026-04-15T20-56-55.md` — last trial run record
-- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260415/` — old bundle (stub extraction)
+- `skills/bmad-agent-marcus/SKILL.md` — migration source
+- `skills/bmad-agent-texas/SKILL.md` — model sanctum agent (reference architecture)
+- `skills/bmad-agent-desmond/` — other sanctum agent (reference)
+- `.claude/skills/bmad-agent-builder/references/build-process.md` — bmb workflow reference
+- `_bmad/memory/marcus-sidecar/` — source material for sanctum migration
+- `_bmad-output/planning-artifacts/source-wrangler-agent-vision.md` — historical (Texas supersedes)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml`
-- `scripts/utilities/slide_count_runtime_estimator.py` — new estimator from 20c-15
-- `skills/source-wrangler/SKILL.md` — current wrangler skill (future agent candidate)
-- `skills/bmad-agent-marcus/scripts/tests/test_prepare_irene_pass2_handoff.py`
-- `skills/bmad-agent-marcus/scripts/tests/test_validate_irene_pass2_handoff.py`
-- `tests/test_sprint_status_yaml.py`
-- `_bmad-output/implementation-artifacts/23-3-bridge-cadence-adaptation.md`
+- `scripts/utilities/progress_map.py` — evergreen-hardened (Fix 1-4 applied)
+- `scripts/utilities/run_hud.py` — HUD generator
+- `reports/run-hud.html` — live HUD (open in browser)
+- `tests/test_progress_map.py` — 52 tests (40 new this session)
+- `tests/test_run_hud.py` — 38 tests
+- `tests/agents/bmad-agent-texas/` — 33 tests

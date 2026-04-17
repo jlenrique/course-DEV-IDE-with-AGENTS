@@ -1,86 +1,143 @@
-# Session Handoff — 2026-04-15/16 (Closeout)
+# Session Handoff — 2026-04-16 (Late Session Closeout)
 
 ## Session Summary
 
-**Objective:** Complete Story 20c-15 (profile-aware estimator), run a trial production run using prompt pack v4.2, review trial findings with BMAD team, and apply comprehensive prompt pack improvements before tomorrow's fresh trial.
+**Objective (revised mid-session):** Session opened with intent to run a fresh trial production run using prompt pack v4.2f. Objective was redirected three times as deeper infrastructure needs surfaced:
+1. First redirect: harden progress_map.py to be evergreen (self-maintaining)
+2. Second redirect: build a heads-up display (HUD) for real-time run visibility
+3. Third redirect: build Texas, the Source Wrangler Agent, to prevent the 30-line stub disaster
 
-**Phase:** Implementation (story closure + production workflow hardening).
+**Phase:** Implementation + Agent Creation (Texas = new custom agent built via bmb workflow)
 
 **What was completed:**
 
-1. **Story 20c-15: Profile-Aware Slide Count Estimator — DONE**
-   - Full rewrite of `scripts/utilities/slide_count_runtime_estimator.py` with experience-profile-driven feasibility triangle.
-   - 2-input operator poll pattern (parent_slide_count + target_total_runtime_minutes).
-   - 31 new tests GREEN, 96 total tests GREEN across 4 test files.
-   - BMAD code review: 10 findings, 2 patched (CLI flag fix, TODO comment), 8 dismissed. PASS verdict.
+### 1. Progress Map Evergreen Hardening — DONE
 
-2. **Trial Run C1-M1-PRES-20260415 (Prompts 1–4)**
-   - Executed Prompts 1–4 of v4.2 prompt pack with visual-led profile.
-   - Bundle created at `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260415/` (7 files).
-   - **Critical finding:** `extracted.md` is a ~30-line stub from a 24-page PDF. The quality gate rubber-stamped it with bare PASS labels and no evidence.
-   - Run paused after Prompt 4; not resumable (extraction too thin to produce valid downstream estimates).
+Four fixes to `scripts/utilities/progress_map.py` to make the tool self-maintaining as the project evolves:
 
-3. **BMAD Party Mode Review of Trial Run**
-   - 4 agents (Winston, Caravaggio, Murat, Amelia) convened to triage 14 issues from the trial run.
-   - Consensus: 2 blockers (thin extraction, skipped preflight --bundle-dir), 8+ items parked for future.
-   - Decision: restart from Prompt 1 with improved prompt pack.
+- **Fix 1**: Eliminated hardcoded `WAVE_LABELS` dict (27 entries) — epic labels now parsed dynamically from `# === EPIC {ID}: {LABEL} ===` comments in sprint-status.yaml
+- **Fix 2**: Prefix-based heading extraction — `## Unresolved Issues / Risks` now matches when searching for `"Unresolved Issues"` (fixed latent bug)
+- **Fix 3**: BMM workflow staleness detection — cross-references `next_workflow_step` against sprint status, flags stale story IDs
+- **Fix 4**: Story artifact existence spot-check — flags done/in-progress/review stories with no corresponding artifact file
 
-4. **Production Prompt Pack v4.2f Improvements**
-   - **Preamble reorder:** Pre-Run Checklist → Run Constants → Initialization → Execution Rules → Prompts. Audience tags added (OPERATOR vs MARCUS).
-   - **Prompt 2:** Greenfield vs. resume guidance added.
-   - **Prompt 2A:** Rewritten with concrete directive examples, governance rules (focus=emphasis not exclusion, exclusion=provenance records, special treatment=override), resume-run re-confirmation path.
-   - **Prompt 3:** Ingestion scope rule (extract ALL content), extraction completeness validation (word-count floor check: page_count × 250, HALT if < 50%), cross-validation hint for Notion-exported PDFs.
-   - **Prompt 4:** Per-dimension evidence requirement — each quality dimension must carry a specific evidence sentence citing extracted content, not bare PASS/FAIL.
-   - **Appendix:** Why Separate, Design Principles, Changelog moved from preamble to end-of-file appendix.
-   - **Changelog entry:** v4.2f documenting all improvements.
+Tests: 12 → **52 tests** (40 new). Party mode review at each step. All fixes approved with remediation applied.
 
-5. **Source Wrangler Agent Vision**
-   - Created `_bmad-output/planning-artifacts/source-wrangler-agent-vision.md` capturing the strategic vision for transforming the current skill into a trainable agent with transformation matrix, MCP integrations, and multi-pathway extraction.
-   - Concrete example: C1-M1 Tejal PDF is a Notion export — agent should cross-validate by pulling from Notion directly.
+### 2. Run HUD (Heads-Up Display) — DONE
+
+New `scripts/utilities/run_hud.py` generates a self-refreshing HTML dashboard for real-time visibility during dev and production runs.
+
+**v1 delivery:**
+- Two tabs (Production Run + Dev Cycle)
+- 10-second auto-refresh with scroll/tab/details state preservation
+- Dark theme, colorblind-safe status icons
+- Pipeline view with 26 steps, gate results, metrics, evidence
+- Dev panel integrates `progress_map.build_report()` for epic/story progress
+
+**v2 enhancements (user feedback pass):**
+- Added System Health tab (first tab; preflight results, MCP health, readiness badge)
+- Freshness meter bar at top (per-source data age with color coding)
+- Two-column layout with CSS Grid (main content + sticky right panel)
+- Collapsible Run Context panel (X button to hide, "< Context" button to restore)
+- Fixed tab persistence bug (script moved to end-of-body with DOMContentLoaded)
+- Fixed panel width constraint (table-layout: fixed + word-break)
+
+**Gate sidecar schema**: `state/config/schemas/gate-result-schema.yaml` — YAML files written to `{bundle}/gates/gate-{step_id}-result.yaml`.
+
+Tests: 0 → **38 tests**. Party mode review + BMAD code review complete.
+
+### 3. Texas — Source Wrangler Agent — DONE
+
+Full BMAD agent creation via bmb workflow. Replaces the legacy `skills/source-wrangler/` skill with a memory agent featuring evolvable capabilities.
+
+**Why:** The 30-line stub extraction from a 24-page PDF (2026-04-15 trial run disaster) must never happen again. Texas provides script-level extraction validation with proportionality checks, cross-validation against reference assets, and deterministic fallback chains.
+
+**Agent structure** (`skills/bmad-agent-texas/`):
+- Lean bootloader SKILL.md (Three Laws, Sacred Truth, activation routing)
+- 4 capability prompts: Source Interview (SI), Extract & Validate (EV), Fallback Resolution (FR), Cross-Validation
+- 2 core scripts: `extraction_validator.py` (4-tier quality classification), `cross_validator.py` (section + key term matching)
+- Transform registry, delegation contract, First Breath, memory guidance, capability authoring
+- 6 seeded sanctum templates (CREED, BOND, PERSONA, INDEX, MEMORY, CAPABILITIES)
+- `init-sanctum.py` for First Breath scaffolding
+
+**Sanctum initialized** at `_bmad/memory/bmad-agent-texas/` with all 6 core files + 7 references + 3 scripts.
+
+**Tests**: 33 passing (15 extraction validator + 15 cross-validator + 3 structural fidelity). Real-data integration test against C1M1 course content passes.
+
+**Party mode review**: APPROVE WITH CONDITIONS — all 6 conditions remediated (html.escape() stdlib, exception guard, artifact cap, tightened assertions, medium/low fidelity tests, acronym coverage).
+
+### 4. Texas Propagation Across APP — DONE
+
+Updated every implicated artifact:
+
+| Artifact | Change |
+|---|---|
+| `scripts/utilities/skill_module_loader.py` | Texas path first, legacy fallback |
+| `scripts/utilities/structural_walk.py` | G0 gate spec points to Texas |
+| `docs/agent-environment.md` | Texas registered, source-wrangler marked deprecated |
+| `bmad-session-protocol-session-START.md` | Agent catalog updated |
+| `skills/bmad-agent-marcus/SKILL.md` | Delegation table updated |
+| `skills/bmad-agent-marcus/references/source-prompting.md` | Full rewrite for Texas delegation |
+| `skills/bmad-agent-marcus/references/conversation-mgmt.md` | Pipeline flow + remediation targets |
+| `docs/workflow/production-prompt-pack-v4.2-*.md` | "Source Wrangler" → "Texas" |
+| `docs/dev-guide.md` | Agent table + workflow description |
+| `docs/user-guide.md` | Source channels, ingestion prompts, tool table |
+| `skills/source-wrangler/SKILL.md` | Deprecation notice added |
+| `skills/bmad-agent-texas/scripts/source_wrangler_operations.py` | Moved from legacy path |
+
+### 5. Memory Capture
+
+Added `project_sanctum_migration.md` to auto-memory — 17 sidecar-pattern agents need bmb sanctum migration; folded into Epic 15 unless pressing sooner.
 
 ## What Is Next
 
-1. Stay on `DEV/slides-redesign`.
-2. **Immediate:** Start a fresh trial run using updated prompt pack v4.2f. Delete or rename the old `apc-c1m1-tejal-20260415` bundle and create a fresh one.
-3. Key attention on trial: extraction completeness validation in Prompt 3 (word-count check, Notion cross-validation).
-4. `22-2` is already done. Next scheduled story work per sprint plan after trial validation.
-5. Source Wrangler agent evolution is a future epic — vision doc captured but not yet scheduled.
+**Primary**: Migrate Marcus from sidecar to bmb sanctum pattern. He was first, he's the linchpin, he should be the model agent on the current framework. See `next-session-start-here.md` for migration scope.
+
+**Secondary**: Fresh trial production run using prompt pack v4.2f (original session-open objective, deferred).
+
+**Tertiary**: Queue the remaining 15 agents for sanctum migration under Epic 15 (Learning & Compound Intelligence).
 
 ## Unresolved Issues / Risks
 
-- **Extraction completeness:** The v4.2f prompt pack now has a word-count floor check and HALT threshold, but this is a prompt-level guard, not a script-level validator. A proper extraction completeness validator script would be more reliable.
-- **Notion cross-validation:** The hint in Prompt 3 suggests pulling from Notion as a cross-check, but this depends on the operator knowing the source is a Notion export. The Source Wrangler agent vision would automate this.
-- **Preflight --bundle-dir:** The trial run skipped the `--bundle-dir` flag for preflight. The prompt pack's preflight command should include this flag.
+- **Fresh trial run still pending** — deferred three times during this session; 30-line stub problem is now preventable (Texas) but end-to-end pipeline validation hasn't happened yet.
+- **3 commits ahead of origin, not pushed** — `DEV/slides-redesign` has uncommitted session-closeout work that needs to be pushed to origin when appropriate.
+- **Marcus migration is high-risk** — he's the production linchpin. Party mode sign-off + full regression required before merge.
+- **Sidecar/sanctum duality persists** — 17 agents still on sidecar pattern. Cross-agent reading pattern in Marcus needs to be dual-mode during transition.
+- **v4.2g preflight --bundle-dir** — still required on next trial run.
+- **Texas's extraction validator has not been run in a real production pipeline yet** — tests pass, but real-world integration via Marcus delegation is not yet wired at runtime. Marcus references describe the contract but no runtime enforcement exists yet.
 
 ## Key Lessons Learned
 
-- Act-mode agents will rubber-stamp quality gates with "PASS (0.95)" and no evidence if the prompt doesn't explicitly require evidence sentences.
-- Extraction completeness must be validated independently (word count vs. expected) — the quality gate alone is insufficient.
-- When a PDF is a Notion export, the Notion API provides a richer extraction pathway and a natural cross-validation target.
-- Preamble organization matters: operator-facing setup instructions must come before agent-facing execution rules, which must come before prompts.
+- **Pipeline manifest is the right pattern for evergreen** — parsing structured data from canonical docs (YAML comments, prompt pack headings) eliminates sync problems. Applied successfully in progress_map (Fix 1) and pattern-established for future pipeline steps.
+- **HUD feedback loop compresses iteration** — the v1 → v2 HUD iteration took ~45 minutes because feedback was specific and the scripts were already structured for change.
+- **bmb workflow vs hand-craft**: building Texas hand-first then retrofitting to bmb wasted effort. When creating a new agent, start with the bmb workflow (agent builder) from the first line. Hand-crafting should be reserved for skills (not agents).
+- **Party mode remediation loops** work reliably when conditions are concrete and prioritized. All 4 progress map fixes + Texas agent had approve-with-conditions outcomes that were closed same-session.
+- **Sanctum vs sidecar** is architecturally meaningful, not cosmetic. The sanctum pattern unlocks identity evolution and evolvable capabilities that the sidecar simply can't express.
 
 ## Validation Summary
 
-- Story 20c-15: 31 new tests GREEN, 96 total across 4 test files, code review PASS.
-- Prompt pack v4.2f: documentation-only changes (no code), no test regressions expected.
-- Source Wrangler vision: planning artifact only, no code changes.
+- **Final regression**: 567 passed, 0 failed (20 seconds runtime)
+- **Sprint-status yaml guard**: 2 passed
+- **Texas integration test**: C1M1Part01.md real data cross-validation passes
+- **Quality gate**: PASSED (no L1 findings)
+
+## Content Creation Summary
+
+No course content was created or modified this session. `course-content/courses/tejal-APC-C1/C1M1Part01.md` was used as read-only validation asset for Texas cross-validator testing.
 
 ## Artifact Update Checklist
 
-- [x] `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (v4.2f improvements)
-- [x] `_bmad-output/planning-artifacts/source-wrangler-agent-vision.md` (new)
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` (20c-15 done, 22-2 done)
-- [x] `SESSION-HANDOFF.md` (this file)
-- [x] `next-session-start-here.md` (updated for fresh trial)
-- [x] `tests/test_marcus_prompt_harness.py`
-- [x] `tests/test_progress_map.py`
-- [x] `.vscode/tasks.json`
-- [x] `docs/dev-guide.md`
-- [x] `docs/directory-responsibilities.md`
-- [x] `_bmad-output/planning-artifacts/prd.md`
-- [x] `maintenance/doc review prompt 2026-04-12.txt`
-- [x] `maintenance/progress-map-job-aid.md`
-- [x] `next-session-start-here.md`
-- [x] `SESSION-HANDOFF.md`
-- [x] `docs/project-context.md`
-- [ ] `docs/agent-environment.md` (no MCP/API environment change; new skill paths are discoverable in repo)
+- [x] `sprint-status.yaml` — last_updated reflects late-session work
+- [x] `bmm-workflow-status.yaml` — no phase change needed (still 4-implementation)
+- [x] `docs/project-context.md` — not updated (architecture unchanged; new agent registered in agent-environment.md)
+- [x] `docs/agent-environment.md` — Texas registered, source-wrangler deprecated
+- [x] `docs/dev-guide.md` — Texas replaces source-wrangler in agent table + workflow description
+- [x] `docs/user-guide.md` — Texas replaces source-wrangler in source channels + tool table
+- [x] `bmad-session-protocol-session-START.md` — agent catalog updated
+- [x] `docs/workflow/production-prompt-pack-v4.2-*.md` — Texas delegation language
+- [x] `next-session-start-here.md` — Marcus migration as immediate next action
+- [x] `SESSION-HANDOFF.md` — this file
+- [x] `.claude/projects/.../memory/MEMORY.md` — sanctum migration note added
+
+## Commits in This Session
+
+All session work was committed incrementally during the session. Current HEAD is `c74d285`, 3 commits ahead of `origin/DEV/slides-redesign`. Worktree is clean.

@@ -1,0 +1,31 @@
+# PR-RC argument + result schema.
+#
+# Validates Invocation.args shape and ReturnEnvelope.result shape for the
+# run-constants author+validate capability. The authored YAML is then
+# parsed by scripts.utilities.run_constants.parse_run_constants — that
+# module carries the full RunConstants field schema.
+
+code: PR-RC
+schema_version: "1.0"
+
+args:
+  values:
+    type: dict
+    required: true
+    description: Canonical lowercase-nested run-constants values to author.
+  target_path:
+    type: str
+    default: null
+    description: Override write location; defaults to {bundle_path}/run-constants.yaml.
+  mode_sub:
+    type: str
+    enum: [author, validate]
+    default: author
+
+result:
+  written_path:
+    type: str
+    description: Absolute path to the authored or validated file.
+  validation:
+    type: dict
+    description: Parsed RunConstants or error detail from parse_run_constants.

@@ -1,0 +1,40 @@
+# Marcus capability registry — supplementary programmatic index.
+#
+# Markdown frontmatter at capabilities/<slug>.md is AUTHORITATIVE. This YAML
+# file is a fast-lookup companion used by scripts.marcus_capabilities.registry
+# for cross-reference audit (AC-T.9 from story 26-6) and by tooling that needs
+# to enumerate codes without parsing markdown.
+#
+# When the two disagree, markdown frontmatter wins. The cross_reference_audit()
+# function surfaces any skew.
+
+capabilities:
+  PR-PF:
+    name: production-readiness-preflight
+    full_or_stub: full
+    script_module: scripts.marcus_capabilities.pr_pf
+    markdown: capabilities/pr-pf.md
+    schema: capabilities/schemas/pr_pf.yaml
+
+  PR-RC:
+    name: production-readiness-run-constants
+    full_or_stub: full
+    script_module: scripts.marcus_capabilities.pr_rc
+    markdown: capabilities/pr-rc.md
+    schema: capabilities/schemas/pr_rc.yaml
+
+  PR-HC:
+    name: production-readiness-health-check
+    full_or_stub: stub
+    script_module: scripts.marcus_capabilities.pr_hc
+    markdown: capabilities/pr-hc.md
+    schema: capabilities/schemas/pr_hc.yaml
+    follow_up_story: 26-10
+
+  PR-RS:
+    name: production-readiness-run-selection
+    full_or_stub: stub
+    script_module: scripts.marcus_capabilities.pr_rs
+    markdown: capabilities/pr-rs.md
+    schema: capabilities/schemas/pr_rs.yaml
+    follow_up_story: 26-10

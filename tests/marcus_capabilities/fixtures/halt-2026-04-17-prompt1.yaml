@@ -1,0 +1,30 @@
+# 2026-04-17 APC C1-M1 Tejal trial halt fixture — PR-RC regression test.
+#
+# This is the UPPERCASE-flat form the operator transcribed from the prompt
+# pack's "Run Constants" display section at trial open. The run_constants
+# validator enforces lowercase snake_case with NESTED motion_budget and
+# slide_mode_proportions blocks — so parse_run_constants(raw_values) MUST
+# fail on this input, and PR-RC.author MUST transform it into the canonical
+# shape that validates clean.
+#
+# PR-RC summarize on this input surfaces the drift before any disk write.
+# PR-RC execute/author accepts the values verbatim, normalizes to the
+# canonical shape, writes the file, round-trips through parse_run_constants
+# → PASS.
+
+RUN_ID: C1-M1-PRES-20260415
+LESSON_SLUG: apc-c1m1-tejal
+BUNDLE_PATH: course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260415
+PRIMARY_SOURCE_FILE: course-content/courses/APC C1-M1 Tejal 2026-03-29.pdf
+OPTIONAL_CONTEXT_ASSETS: course-content/courses/APC Content Roadmap.jpg
+THEME_SELECTION: hil-2026-apc-nejal-A
+THEME_PARAMSET_KEY: hil-2026-apc-nejal-A
+EXECUTION_MODE: tracked/default
+QUALITY_PRESET: production
+REQUESTED_CONTENT_TYPE: narrated-lesson-with-video-or-animation
+MOTION_ENABLED: true
+MOTION_BUDGET_MAX_CREDITS: 125
+MOTION_BUDGET_MODEL_PREFERENCE: pro
+DOUBLE_DISPATCH: true
+EXPERIENCE_PROFILE: visual-led
+CLUSTER_DENSITY: default

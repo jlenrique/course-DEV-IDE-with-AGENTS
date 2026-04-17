@@ -1,0 +1,25 @@
+# PR-PF argument + result schema.
+#
+# Validates Invocation.args shape and ReturnEnvelope.result shape for the
+# preflight capability.
+
+code: PR-PF
+schema_version: "1.0"
+
+args:
+  with_preflight:
+    type: bool
+    default: true
+    description: If true, run the preflight suite in addition to readiness.
+  json_only:
+    type: bool
+    default: true
+    description: Ask the underlying runner for JSON output.
+
+result:
+  readiness:
+    type: dict
+    description: Parsed JSON payload from app_session_readiness.
+  preflight_passed:
+    type: bool
+    description: True if the preflight subsystem reported clean.

@@ -7,7 +7,7 @@ sections in Story 26-6. See also Marcus's built-in conversational capabilities
 [`skills/bmad-agent-marcus/references/`](../../skills/bmad-agent-marcus/references/).
 
 Every PR-* capability follows the **verbose landing-point posture** (see
-[memory/feedback_landing_point_posture.md](../../memory/feedback_landing_point_posture.md)):
+operator-local auto-memory `memory/feedback_landing_point_posture.md`):
 
 1. Marcus **asks** when options are present.
 2. Marcus **displays** the default or current-run's prior value.
@@ -202,6 +202,6 @@ target, structured run-state inventory, proposed reconciliation plan.
 
 - [`docs/dev-guide/testing.md`](testing.md) — the regimen (regression-proof
   discipline, `trial_critical` marker, co-commit invariant, orphan detection)
-- [`memory/feedback_landing_point_posture.md`](../../memory/feedback_landing_point_posture.md) — verbose posture
-- [`memory/project_production_run_speed_target.md`](../../memory/project_production_run_speed_target.md) — 15-min target for real runs, not trials
+- `memory/feedback_landing_point_posture.md` — verbose posture (operator-local auto-memory)
+- `memory/project_production_run_speed_target.md` — 15-min target for real runs, not trials (operator-local auto-memory)
 - [`docs/workflow/archive/prompt-pack-preprompt-2026-04.md`](../workflow/archive/prompt-pack-preprompt-2026-04.md) — historical verbatim of the stripped pack sections

@@ -246,12 +246,18 @@ def _author(invocation: Invocation, normalized: dict[str, Any]) -> ReturnEnvelop
 
     # Filesystem + validator round-trip. All failure modes must land in the
     # envelope — no exceptions cross the Marcus boundary (AC-C.3).
+    #
+    # Order matters: render + validate + hash BEFORE touching disk, so a
+    # rejected input never overwrites a pre-existing good file. write_bytes
+    # (not write_text) avoids Windows newline translation so the on-disk
+    # sha256 matches the envelope's landing_point.sha256.
     try:
-        target.parent.mkdir(parents=True, exist_ok=True)
         document = _render_yaml(normalized)
-        target.write_text(document, encoding="utf-8")
-        sha256 = hashlib.sha256(document.encode("utf-8")).hexdigest()
+        document_bytes = document.encode("utf-8")
+        sha256 = hashlib.sha256(document_bytes).hexdigest()
         parsed = rc.parse_run_constants(normalized)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(document_bytes)
     except rc.RunConstantsError as exc:
         return ReturnEnvelope(
             status="error",
@@ -264,7 +270,12 @@ def _author(invocation: Invocation, normalized: dict[str, Any]) -> ReturnEnvelop
                     remediation="Correct args.values and re-author.",
                 )
             ],
-            result={"mode": "execute", "mode_sub": "author", "written_path": str(target)},
+            result={
+                "mode": "execute",
+                "mode_sub": "author",
+                "target_path": str(target),
+                "written": False,
+            },
             telemetry={"mode": "execute", "mode_sub": "author"},
         )
     except Exception as exc:  # noqa: BLE001 — envelope contract requires catching all
@@ -303,7 +314,7 @@ def _author(invocation: Invocation, normalized: dict[str, Any]) -> ReturnEnvelop
             "mode_sub": "author",
             "written_path": str(target),
             "run_id_written": parsed.run_id,
-            "bytes_written": len(document.encode("utf-8")),
+            "bytes_written": len(document_bytes),
         },
         landing_point=LandingPoint(
             bundle_path=ctx.bundle_path if ctx else None,

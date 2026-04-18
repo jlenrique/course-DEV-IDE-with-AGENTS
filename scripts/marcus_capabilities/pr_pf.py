@@ -32,6 +32,12 @@ CAPABILITY_CODE = "PR-PF"
 # Subprocess entrypoint. Injectable for testing (patch at import site).
 _READINESS_ENTRYPOINT = "scripts.utilities.app_session_readiness"
 
+# Upper bound on how long the readiness subprocess may run before we abort
+# and surface PREFLIGHT_TIMEOUT into the envelope. 120s is generous for a
+# preflight check (typically ~1-3s) while preventing an indefinite hang of
+# Marcus's turn when the runner stalls on I/O.
+_SUBPROCESS_TIMEOUT_SEC = 120
+
 
 def summarize(invocation: Invocation) -> ReturnEnvelope:
     """Report the plan without touching disk or running subprocesses."""
@@ -78,18 +84,29 @@ def _build_cmd(args: dict[str, Any], bundle_path: str | None) -> list[str]:
 
 
 def _run_subprocess(cmd: list[str]) -> tuple[int, str, str]:
-    """Invoke the readiness runner. Split out for mockability in tests."""
+    """Invoke the readiness runner. Split out for mockability in tests.
+
+    Bounded by ``_SUBPROCESS_TIMEOUT_SEC`` so a stalled runner cannot hang
+    Marcus's turn indefinitely. ``subprocess.TimeoutExpired`` bubbles up to
+    ``execute`` for envelope surfacing.
+    """
     completed = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
         check=False,
+        timeout=_SUBPROCESS_TIMEOUT_SEC,
     )
     return completed.returncode, completed.stdout, completed.stderr
 
 
 def execute(invocation: Invocation) -> ReturnEnvelope:
-    """Actually run the preflight subprocess and assemble the envelope."""
+    """Actually run the preflight subprocess and assemble the envelope.
+
+    All exception paths land in the envelope. No Python traceback crosses
+    the Marcus boundary (AC-C.3) — parity with the PR-RC wrap added in
+    commit 5548a3a.
+    """
     ctx = invocation.context
     bundle_path = ctx.bundle_path if ctx else None
     cmd = _build_cmd(invocation.args, bundle_path)
@@ -113,17 +130,60 @@ def execute(invocation: Invocation) -> ReturnEnvelope:
             ],
             telemetry={"cmd": cmd},
         )
+    except subprocess.TimeoutExpired:
+        return ReturnEnvelope(
+            status="error",
+            capability_code=CAPABILITY_CODE,
+            run_id=ctx.run_id if ctx else None,
+            errors=[
+                CapabilityError(
+                    code="PREFLIGHT_TIMEOUT",
+                    message=(
+                        f"Readiness runner exceeded {_SUBPROCESS_TIMEOUT_SEC}s "
+                        f"timeout. cmd={cmd}"
+                    ),
+                    remediation=(
+                        "Investigate the readiness runner for stalled I/O or "
+                        "hung sub-processes. Re-invoke PR-PF after remediation."
+                    ),
+                )
+            ],
+            telemetry={"cmd": cmd, "timeout_sec": _SUBPROCESS_TIMEOUT_SEC},
+        )
+    except Exception as exc:  # noqa: BLE001 — envelope contract requires catching all
+        # AC-C.3: scripts exit 0 on capability-level failure; Python exceptions
+        # MUST NOT cross the Marcus boundary. PermissionError, OSError, and
+        # unforeseen failure modes all get wrapped.
+        return ReturnEnvelope(
+            status="error",
+            capability_code=CAPABILITY_CODE,
+            run_id=ctx.run_id if ctx else None,
+            errors=[
+                CapabilityError(
+                    code="PR_PF_UNEXPECTED_FAILURE",
+                    message=f"{type(exc).__name__}: {exc}",
+                    remediation=(
+                        "Investigate the readiness subprocess environment. "
+                        "If the issue persists, surface to operator for "
+                        "manual diagnosis."
+                    ),
+                )
+            ],
+            telemetry={"cmd": cmd},
+        )
 
     parsed: dict[str, Any] | None = None
+    parse_failed = False
     if stdout:
         try:
             parsed = json.loads(stdout)
         except json.JSONDecodeError:
             parsed = None
+            parse_failed = True
 
-    status = "ok" if returncode == 0 else "error"
     errors: list[CapabilityError] = []
     if returncode != 0:
+        status = "error"
         errors.append(
             CapabilityError(
                 code="PREFLIGHT_FAILED",
@@ -137,6 +197,28 @@ def execute(invocation: Invocation) -> ReturnEnvelope:
                 ),
             )
         )
+    elif parse_failed:
+        # Exit 0 + unparseable stdout = can't confirm PASS. Reporting
+        # preflight_passed=True without a parsed verdict would silently
+        # mask a downstream contract violation.
+        status = "partial"
+        errors.append(
+            CapabilityError(
+                code="PREFLIGHT_STDOUT_UNPARSEABLE",
+                message=(
+                    "Readiness runner exited 0 but stdout is not valid JSON — "
+                    "cannot confirm PASS verdict."
+                ),
+                remediation=(
+                    "Check the runner emits pure JSON on stdout (no trailing "
+                    "log lines). Re-invoke PR-PF after remediation."
+                ),
+            )
+        )
+    else:
+        status = "ok"
+
+    preflight_passed = returncode == 0 and not parse_failed
 
     return ReturnEnvelope(
         status=status,
@@ -145,8 +227,8 @@ def execute(invocation: Invocation) -> ReturnEnvelope:
         result={
             "mode": "execute",
             "returncode": returncode,
-            "readiness": parsed or {"raw_stdout": stdout},
-            "preflight_passed": returncode == 0,
+            "readiness": parsed if parsed is not None else {"raw_stdout": stdout},
+            "preflight_passed": preflight_passed,
         },
         landing_point=LandingPoint(bundle_path=bundle_path),
         errors=errors,

@@ -14,6 +14,7 @@ Prompt 1. Asserts that:
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -176,6 +177,50 @@ def test_author_is_idempotent(tmp_path: Path) -> None:
     env2 = pr_rc.execute(_invoke("execute", {"values": values}, bundle_path=str(bundle)))
     assert env1.status == "ok" and env2.status == "ok"
     assert env1.landing_point.sha256 == env2.landing_point.sha256
+
+
+def test_author_does_not_overwrite_good_file_on_validation_failure(
+    tmp_path: Path,
+) -> None:
+    """Code-review MUST-FIX: a validator rejection must NOT overwrite a
+    pre-existing good run-constants.yaml. Order is render + validate BEFORE
+    touching disk."""
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    # Author a good file first.
+    good = pr_rc.execute(_invoke("execute", {"values": _base_values()}, bundle_path=str(bundle)))
+    assert good.status == "ok"
+    target = bundle / "run-constants.yaml"
+    good_bytes = target.read_bytes()
+
+    # Now attempt to author with invalid values (empty run_id).
+    bad_values = _base_values()
+    bad_values["run_id"] = ""
+    bad = pr_rc.execute(_invoke("execute", {"values": bad_values}, bundle_path=str(bundle)))
+    assert bad.status == "error"
+    assert bad.errors[0].code == "RUN_CONSTANTS_INVALID"
+    # Critical invariant: pre-existing good file must be untouched.
+    assert target.read_bytes() == good_bytes, (
+        "Validator failure overwrote the prior good file — destructive partial write."
+    )
+    assert bad.result.get("written") is False
+
+
+def test_author_envelope_sha_matches_on_disk_bytes(tmp_path: Path) -> None:
+    """Code-review MUST-FIX: landing_point.sha256 must equal sha256 of
+    the on-disk bytes. Windows `write_text` performs LF->CRLF translation;
+    hashing the pre-write string produced a sha that diverged from the
+    actual file. Binary write + binary hash closes the drift."""
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    env = pr_rc.execute(_invoke("execute", {"values": _base_values()}, bundle_path=str(bundle)))
+    assert env.status == "ok"
+    target = bundle / "run-constants.yaml"
+    on_disk_sha = hashlib.sha256(target.read_bytes()).hexdigest()
+    assert env.landing_point.sha256 == on_disk_sha, (
+        "Envelope sha256 does not match on-disk bytes — newline translation "
+        "or write-order drift."
+    )
 
 
 def test_author_wraps_unexpected_exceptions(tmp_path: Path, monkeypatch) -> None:

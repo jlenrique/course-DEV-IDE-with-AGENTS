@@ -1,6 +1,6 @@
 # Story 26.6: Marcus Production-Readiness Capabilities
 
-**Status:** ready-for-dev
+**Status:** done
 **Created:** 2026-04-17 (via pretrial-prep run charter + two party-mode rounds)
 **Epic:** 26 (BMB Sanctum Migration — Companion Stories)
 **Branch:** `dev/epic-26-pretrial-prep`
@@ -219,14 +219,39 @@ _(filled by dev-story at implementation time)_
 
 ### Review Record
 
-_(filled after bmad-code-review adversarial pass)_
+**bmad-code-review adversarial pass — 2026-04-17** (3 layers: Blind Hunter + Edge Case Hunter + Acceptance Auditor)
 
-**Layered review results:**
-- Blind Hunter findings: _(tbd)_
-- Edge Case Hunter findings: _(tbd)_
-- Acceptance Auditor findings: _(tbd)_
-- MUST-FIX remediated: _(tbd)_
-- SHOULD-FIX remediated / deferred: _(tbd)_
+**MUST-FIX — remediated in this review cycle:**
+- [ ] [Review][Patch] PR-RC destructive partial-write on validator failure — file written before validation; bad input overwrote prior good file [scripts/marcus_capabilities/pr_rc.py:249-254]. Fix: render + validate before write.
+- [ ] [Review][Patch] PR-RC sha256 mismatch vs on-disk bytes on Windows — `write_text` translated LF→CRLF while sha256 hashed the pre-write string; AC-T.7 idempotency held only in-memory [scripts/marcus_capabilities/pr_rc.py ~252]. Fix: `write_bytes(document.encode("utf-8"))`.
+- [ ] [Review][Patch] PR-PF no subprocess timeout — `subprocess.run` could hang Marcus indefinitely [scripts/marcus_capabilities/pr_pf.py _run_subprocess]. Fix: pass `timeout=` and map `TimeoutExpired` to `PREFLIGHT_TIMEOUT`.
+- [ ] [Review][Patch] PR-PF only catches `FileNotFoundError`; other exceptions leak past Marcus boundary — the 5548a3a fix was applied only to PR-RC [scripts/marcus_capabilities/pr_pf.py:97-115]. Fix: broad `Exception` wrap into `PR_PF_UNEXPECTED_FAILURE`.
+- [ ] [Review][Patch] PR-PF exit=0 + unparseable stdout silently reports `preflight_passed=True` — masks real failures [scripts/marcus_capabilities/pr_pf.py:141-150]. Fix: require parsed verdict; otherwise status=partial + STDOUT_UNPARSEABLE warning.
+- [ ] [Review][Patch] AC-B.4 MISSING — added `tests/marcus_capabilities/test_preflight_receipt_contract.py` pinning receipt keys `{overall_status, checks, root, timestamp}` so PR-PF<->Prompt-2 schema parity breaks at test time.
+- [ ] [Review][Patch] AC-D.5 MISSING — added `tests/contracts/test_markdown_links_intact.py` that resolves all relative markdown links in the three touched files (pack-doc, archive, marcus-capabilities).
+
+**SHOULD-FIX — logged as action items for follow-up story 26-10+ (deferred; out of 26-6 trial-restart critical path):**
+- [ ] [Review][Defer] PR-RC unknown `mode_sub` silently dispatches to author — accept typos without error.
+- [ ] [Review][Defer] PR-RC flat `MOTION_BUDGET_*` silently overrides nested `motion_budget.{max_credits,model_preference}` — no collision detection.
+- [ ] [Review][Defer] PR-RC mixed-case keys (`Run_Id`) not normalized — `.isupper()` gate skips them; validator then fails with unhelpful "missing required field".
+- [ ] [Review][Defer] PR-RC int/float sha drift — `125` vs `125.0` serializes to different bytes; AC-T.7 only resilient if same Python type fed twice.
+- [ ] [Review][Defer] PR-PF truthy check on `with_preflight` bool args — string `"false"` evaluates truthy.
+- [ ] [Review][Defer] PR-PF stderr truncated to 500 chars on failure path; warnings on success discarded.
+- [ ] [Review][Defer] Registry silent `YAMLError` swallowing on both `registry.yaml` and capability `.md` frontmatter.
+- [ ] [Review][Defer] Registry duplicate `code:` values across two .md files silently last-wins.
+- [ ] [Review][Defer] Registry frontmatter regex blind to UTF-8 BOM — caps silently dropped from registry.
+- [ ] [Review][Defer] `run_cli` + `main` entry points have zero direct test coverage — CLI argv parsing, `--args` JSON decoding, exit-code contract untested.
+- [ ] [Review][Defer] AC-B.1 / B.2 thin — no end-to-end subprocess test invoking `emit-preflight-receipt.py` on a PR-RC-authored file; only validator accepts.
+- [ ] [Review][Defer] AC-C.3 thin — no external test asserts `run_cli` exits 1 only on envelope-contract violation.
+- [ ] [Review][Defer] AC-C.4 thin — registry.yaml field names diverge from AC spec (`schema` vs `schema_path`; no `description` field).
+- [ ] [Review][Defer] AC-D.6 thin — SKILL.md integrates PR-* rows inline rather than under a dedicated `## Production Readiness Capabilities` section header (compressed to respect 80-line A1 ceiling; acceptable tradeoff).
+
+**Dismissed as noise (NIT):** 8 items — `TypeError` test breadth, telemetry mutable default, whitespace in keys, unknown-UPPERCASE silent-lowercase, validator landing_point sha, stub landing_point, idempotency docstring overstatement, etc. Low-impact polish; do not block closure.
+
+**Layered review summary:**
+- Blind Hunter: 15 findings (5 MUST-FIX, 7 SHOULD-FIX, 3 NIT)
+- Edge Case Hunter: 20 findings (3 MUST-FIX, 10 SHOULD-FIX, 7 NIT)
+- Acceptance Auditor: 23 ACs audited — 16 SATISFIED, 5 THIN, 2 MISSING (AC-B.4 + AC-D.5, both now patched)
 
 **BMAD closure criteria (per `feedback_bmad_workflow_discipline.md`):**
 - [ ] All AC-B.*, AC-T.*, AC-D.*, AC-C.* checkboxes green

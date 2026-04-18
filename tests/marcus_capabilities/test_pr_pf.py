@@ -9,6 +9,7 @@ downstream script.
 from __future__ import annotations
 
 import json
+import subprocess
 from unittest.mock import patch
 
 from scripts.marcus_capabilities import pr_pf
@@ -68,12 +69,16 @@ def test_execute_propagates_nonzero_exit() -> None:
 
 
 def test_execute_handles_non_json_stdout() -> None:
-    """If the readiness runner emits non-JSON (contract violation by downstream),
-    we keep going — raw stdout lands in result, no exception crosses the boundary."""
+    """Code-review MUST-FIX: exit=0 + unparseable stdout must NOT silently
+    report preflight_passed=True. Return status=partial with a
+    STDOUT_UNPARSEABLE warning so Marcus can challenge the verdict."""
     with patch.object(pr_pf, "_run_subprocess", return_value=(0, "not json", "")):
         envelope = pr_pf.execute(_invoke("execute"))
-    assert envelope.status == "ok"
+    assert envelope.status == "partial"
     assert envelope.result["readiness"] == {"raw_stdout": "not json"}
+    assert envelope.result["preflight_passed"] is False
+    assert len(envelope.errors) == 1
+    assert envelope.errors[0].code == "PREFLIGHT_STDOUT_UNPARSEABLE"
 
 
 def test_execute_handles_missing_runner() -> None:
@@ -82,6 +87,31 @@ def test_execute_handles_missing_runner() -> None:
         envelope = pr_pf.execute(_invoke("execute"))
     assert envelope.status == "error"
     assert envelope.errors[0].code == "PREFLIGHT_EXEC_UNAVAILABLE"
+
+
+def test_execute_handles_subprocess_timeout() -> None:
+    """Code-review MUST-FIX: a hung readiness runner must surface as
+    PREFLIGHT_TIMEOUT in the envelope — never hang Marcus's turn."""
+    timeout_exc = subprocess.TimeoutExpired(cmd=["python"], timeout=120)
+    with patch.object(pr_pf, "_run_subprocess", side_effect=timeout_exc):
+        envelope = pr_pf.execute(_invoke("execute"))
+    assert envelope.status == "error"
+    assert envelope.errors[0].code == "PREFLIGHT_TIMEOUT"
+    assert envelope.telemetry["timeout_sec"] == pr_pf._SUBPROCESS_TIMEOUT_SEC
+
+
+def test_execute_wraps_unexpected_exceptions() -> None:
+    """Code-review MUST-FIX: parity with PR-RC — non-FileNotFoundError
+    exceptions (PermissionError, OSError, library bugs) must land in the
+    envelope as PR_PF_UNEXPECTED_FAILURE, not leak as tracebacks."""
+    with patch.object(
+        pr_pf, "_run_subprocess", side_effect=PermissionError("denied")
+    ):
+        envelope = pr_pf.execute(_invoke("execute"))
+    assert envelope.status == "error"
+    assert envelope.errors[0].code == "PR_PF_UNEXPECTED_FAILURE"
+    assert "PermissionError" in envelope.errors[0].message
+    assert "denied" in envelope.errors[0].message
 
 
 def test_build_cmd_respects_args() -> None:

@@ -1,0 +1,286 @@
+# Tracy's Controlled Vocabulary — Source of Truth
+#
+# This file is the authoritative source for Tracy's controlled vocabulary:
+# intent_class values, authority_tier values, fit_score scale, editorial_note
+# constraints, and provider_metadata schemas.
+#
+# Generated human-readable doc: vocabulary.md (produced at commit time from this file)
+# L1 lockstep check: tests/contracts/test_tracy_vocab_lockstep.py
+#
+# Authoring discipline: values added here must have (a) a code handler in
+# Tracy's scripts/ and (b) at least one test fixture exercising them.
+# Check fails commit on divergence.
+
+version: 0.1
+effective_date: 2026-04-17
+epic: 28
+authored_during: ratification  # author tonight per Paige; code implementation in 28-1
+
+# ─── intent_class ──────────────────────────────────────────────────────────
+# Controlled vocabulary for "why this resource was surfaced."
+# Every suggested-resources.yaml row MUST use one of these values.
+# Expansion requires vocabulary.yaml bump + code handler + test fixture.
+
+intent_class:
+  description: >
+    Controlled vocabulary for the editorial-purpose of a Tracy-surfaced
+    resource. Paired with free-form intent_detail for specifics.
+
+  day_1_values:
+    narration_citation:
+      definition: >
+        The resource is the empirical source for a specific claim in Irene's
+        narration — the "studies show..." underpinning.
+      scite_signal: >
+        Supporting-context citation matches narration phrasing.
+        Elevated supporting_count desirable.
+      pilot: true
+
+    supporting_evidence:
+      definition: >
+        The resource is the empirical source for a visual claim on the slide
+        (chart, bullet, diagram) — not narrated verbatim but undergirding the
+        visualization.
+      scite_signal: Supporting-context citation count; high fit_score to the visual claim.
+      pilot: true
+
+    counter_example:
+      definition: >
+        The resource contradicts a claim made on the slide or in narration.
+        Used for "note that some studies dispute..." framing or for contrastive
+        pedagogical purpose.
+      scite_signal: Contradicting-context citation. Scite's differentiating signal.
+      pilot: true
+
+    reserved:
+      definition: >
+        Sentinel for intents not yet in the day-1 enum. Operator and
+        editorial_note MUST explain why reserved was used. Lint surfaces all
+        reserved rows for review and promotion candidacy.
+      pilot: true
+
+  deferred_values:
+    # Graduate from reserved → enum once pilot evidence supports them.
+    background_primary:
+      definition: >
+        Foundational / seminal work that grounds the topic. Not a specific
+        claim citation; a canonical reference.
+      rationale_for_deferral: >
+        Requires Tracy to judge "seminal-ness" which scite's signal alone
+        does not cleanly support. Promote after pilot evidence confirms
+        Tracy can consistently flag these without false positives.
+
+
+# ─── authority_tier ────────────────────────────────────────────────────────
+# Ranked tiers plus one orthogonal tier (practitioner).
+# Default mapping for scite.ai provider in authority-tier-mapping.md.
+
+authority_tier:
+  description: >
+    Quality-of-source rank. Three ranked tiers + one orthogonal tier.
+    Ranked tiers reflect the primary/secondary/tertiary academic hierarchy.
+    Practitioner is orthogonal — NOT ranked against the three — and is used
+    when practitioner voice IS the editorial value.
+
+  values:
+    primary:
+      definition: >
+        Original peer-reviewed research, primary empirical source,
+        first-hand account.
+      examples: >
+        Original research paper, primary dataset, author's own words,
+        interview transcript, peer-reviewed conference proceedings.
+      ranked: true
+      rank: 1
+
+    secondary:
+      definition: >
+        Synthesis of primary sources. Peer-reviewed analysis,
+        review articles, meta-analyses, academic textbooks.
+      examples: >
+        Review article, meta-analysis, academic textbook, book chapter
+        from academic press, dissertation, preprint (not yet peer-reviewed).
+      ranked: true
+      rank: 2
+
+    tertiary:
+      definition: >
+        Aggregation or summary of secondary sources. Commentary, popularization.
+      examples: >
+        Encyclopedia entry, curated review article, blog post by credentialed
+        researcher (even when the researcher is primary-source author, blog
+        itself is commentary form).
+      ranked: true
+      rank: 3
+
+    practitioner:
+      definition: >
+        Working professional's published artifact. Used when practitioner
+        perspective IS the editorial value — NOT when practitioner source
+        happens to be cited.
+      examples: >
+        Industry blog, conference talk, trade publication, whitepaper,
+        practitioner report, field notes.
+      ranked: false  # ORTHOGONAL — not ranked against the three above
+      orthogonal: true
+
+  override_rule: >
+    Default mapping applies unless editorial_note explicitly justifies an
+    override. An override without justification fails lint
+    (tracy-authority-tier-override-requires-rationale check).
+
+
+# ─── fit_score ─────────────────────────────────────────────────────────────
+# Tracy's confidence that this resource fits the requested intent.
+
+fit_score:
+  description: Tracy's confidence in resource-to-intent fit.
+  scale:
+    type: float
+    min: 0.0
+    max: 1.0
+
+  interpretation:
+    "0.90 - 1.00":
+      label: excellent
+      operator_action_default: auto_adopt
+      description: >
+        Tracy is highly confident. Defaults to auto-adopt in the review UI.
+        Operator can one-click demote.
+    "0.70 - 0.89":
+      label: strong
+      operator_action_default: surface_for_review
+      description: >
+        Strong match, minor caveats expected in editorial_note.
+        Surfaced for review, not auto-adopted.
+    "0.50 - 0.69":
+      label: acceptable
+      operator_action_default: surface_for_review
+      description: >
+        Acceptable match, significant caveats required in editorial_note.
+        Surfaced for review; operator likely needs to weigh alternatives.
+    "0.00 - 0.49":
+      label: weak
+      operator_action_default: auto_reject
+      description: >
+        Weak fit. Should not be surfaced unless no alternatives exist.
+        Auto-rejected in review UI; operator can one-click promote.
+
+
+# ─── editorial_note ────────────────────────────────────────────────────────
+# Free-form operator-facing justification per resource row.
+
+editorial_note:
+  description: >
+    Tracy's one-line (to one-paragraph) editorial judgment. This is the field
+    that distinguishes Tracy from a search wrapper. Vacuous notes fail lint.
+
+  constraints:
+    min_length: 40        # characters
+    max_length: 500
+
+    must_reference_at_least_one_of:
+      - A specific slide, claim, cluster, or beat
+      - A provider-specific signal (scite supporting_count, etc.)
+      - An authority-tier rationale
+
+    anti_pattern_test: >
+      "Could this editorial_note be copy-pasted onto a different resource
+      row and still make sense?" If yes, it's vacuous. Vacuous notes surface
+      as WARN in lint review; promote to error after pilot evidence confirms
+      the heuristic is reliable.
+
+  good_note_heuristic: >
+    Every good note names a specific reason and/or a specific trade-off.
+    Verbs of judgment required: "trades," "beats," "pairs with," "undercuts,"
+    "only source that," "anchors the claim," "complements," etc.
+
+
+# ─── provider_metadata ─────────────────────────────────────────────────────
+# Provider-specific sub-object per manifest row.
+# Empty {} allowed for providers without extra metadata.
+
+provider_metadata:
+  description: >
+    Provider-specific payload attached to each row. Lives as a sub-object
+    to prevent provider-specific fields from polluting the universal row
+    schema. Extensibility-first: new providers add their own sub-schema
+    without schema churn.
+
+  schemas:
+    scite:
+      description: scite.ai smart-citation payload.
+      fields:
+        doi:
+          type: string
+          required: true
+        title:
+          type: string
+          required: true
+        authors:
+          type: list[string]
+          required: true
+        year:
+          type: integer
+          required: true
+        venue:
+          type: string
+          required: false
+        supporting_count:
+          type: integer
+          description: >
+            scite's count of supporting citations for this paper.
+        contradicting_count:
+          type: integer
+          description: scite's count of contradicting citations.
+        mentioning_count:
+          type: integer
+          description: >
+            scite's count of neutral-mention citations
+            (neither supporting nor contradicting).
+        citation_context_snippet:
+          type: string
+          description: >
+            One representative context-snippet from the supporting or
+            contradicting citations, quoted verbatim.
+        scite_report_url:
+          type: string
+          description: URL to the scite.ai report page for this paper.
+
+    # Future providers (notion, box, youtube, playwright_mcp) add schemas here
+    # as Epic 27 stories land and Tracy's provider surface expands in Epic 29+.
+
+
+# ─── fit_slot ──────────────────────────────────────────────────────────────
+# Where in Irene's lesson does this resource land.
+
+fit_slot:
+  description: Coupling between Tracy's resource and Irene's lesson structure.
+  fields:
+    fit_slot_path:
+      type: string
+      description: >
+        Canonical machine-parseable path. Format: "cluster-<N>/beat-<M>"
+        or "cluster-<N>" when the resource applies cluster-wide.
+      example: "cluster-3/beat-2"
+
+    fit_slot_label:
+      type: string
+      description: >
+        Human-readable label for the UI. Operator sees this, not the path.
+      example: "Cluster 3, Beat 2: The Reveal"
+
+
+# ─── alternatives_considered ───────────────────────────────────────────────
+# Trust-signal field.
+
+alternatives_considered:
+  description: >
+    Count of candidates Tracy evaluated that did NOT make the cut.
+    High count with high fit_score = Tracy chose from many; trust signal.
+    Low count with high fit_score = thin candidate pool; operator may want
+    to consider whether the gap requires a different query.
+  type: integer
+  lint_rule: >
+    alternatives_considered == 0 on a surfaced resource is a WARN (implies
+    Tracy didn't triangulate). Hard-fail promotion evaluated post-pilot.

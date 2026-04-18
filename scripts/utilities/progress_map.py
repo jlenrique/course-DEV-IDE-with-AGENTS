@@ -19,7 +19,7 @@ import json
 import re
 import sys
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -44,10 +44,11 @@ NEXT_SESSION = ROOT / "next-session-start-here.md"
 DONE_STATUSES = {"done"}
 REVIEW_STATUSES = {"review"}
 IN_PROGRESS_STATUSES = {"in-progress"}
-READY_STATUSES = {"ready-for-dev"}
+READY_STATUSES = {"ready-for-dev", "ratified-stub"}
 ACTIVE_STATUSES = IN_PROGRESS_STATUSES | READY_STATUSES | REVIEW_STATUSES
 DEFERRED_STATUSES = {"deferred"}
 BACKLOG_STATUSES = {"backlog"}
+RETIRED_STATUSES = {"retired"}
 
 ALL_KNOWN_STATUSES = (
     DONE_STATUSES
@@ -55,7 +56,71 @@ ALL_KNOWN_STATUSES = (
     | ACTIVE_STATUSES
     | DEFERRED_STATUSES
     | BACKLOG_STATUSES
+    | RETIRED_STATUSES
 )
+
+
+MISSING_STATUS_SENTINEL = "<missing-status>"
+
+
+def _partition_dev_keys(
+    dev: dict[Any, Any],
+) -> tuple[list[str], list[str], list[str]]:
+    """Partition ``development_status`` keys into (epic_ids, story_keys, orphans).
+
+    Epic IDs are returned sorted by length desc so callers can do
+    longest-prefix matching. Story keys include only those that map to a
+    known epic via ``<epic_id>-`` prefix; orphans are collected separately.
+    Retrospective keys are filtered out entirely. All keys are coerced to
+    strings so a YAML accident (unquoted ``25:`` parses as ``int``) doesn't
+    crash downstream ``.startswith`` calls.
+
+    Centralising this logic guarantees the parser and the source-health
+    qualifier agree on which keys are stories, which are epics, and which
+    are orphans — they cannot drift apart.
+    """
+    epic_ids: list[str] = []
+    candidate_stories: list[str] = []
+    for raw_key in dev:
+        key = str(raw_key)
+        if key.endswith("-retrospective"):
+            continue
+        if key.startswith("epic-"):
+            epic_ids.append(key.removeprefix("epic-"))
+        else:
+            candidate_stories.append(key)
+    epic_ids.sort(key=len, reverse=True)
+
+    story_keys: list[str] = []
+    orphans: list[str] = []
+    for key in candidate_stories:
+        if any(key.startswith(f"{eid}-") for eid in epic_ids):
+            story_keys.append(key)
+        else:
+            orphans.append(key)
+    return epic_ids, story_keys, orphans
+
+
+def _extract_status(val: Any) -> str:
+    """Coerce a YAML story/epic value into its status string.
+
+    Stories are written two ways in sprint-status.yaml:
+    1. Scalar: ``1-1-story: done``
+    2. Mapping with metadata: ``1-5-story: {status: retired, reason: ...}``
+       or ``20c-3-story: {status: done, previous_slug: ...}``
+
+    Treat the mapping's ``status`` field as authoritative so retired stories
+    and renamed stories classify correctly instead of stringifying to an
+    unknown value. A mapping without a ``status`` key returns the sentinel
+    ``<missing-status>`` so the source-health warning surfaces the shape
+    problem clearly instead of showing ``key=`` with a silent empty value.
+    """
+    if isinstance(val, dict):
+        raw = val.get("status")
+        if raw is None:
+            return MISSING_STATUS_SENTINEL
+        return str(raw).strip()
+    return str(val).strip()
 
 WAVE_LABELS: dict[str, str] = {
     "1": "Repository & Agent Infrastructure",
@@ -85,6 +150,10 @@ WAVE_LABELS: dict[str, str] = {
     "22": "Storyboard Phase 2",
     "23": "Cluster-Aware Narration",
     "24": "Assembly & Regression",
+    "25": "Texas Production Integration",
+    "26": "BMB Sanctum Migration",
+    "27": "Texas Intake Surface Expansion",
+    "28": "Tracy the Detective",
 }
 
 # ---------------------------------------------------------------------------
@@ -134,24 +203,27 @@ def _qualify_sprint_status() -> list[dict[str, Any]]:
                          "check": "dev_status_key",
                          "message": f"development_status contains {len(dev)} entries"})
 
+        epic_ids, story_keys, orphan_keys = _partition_dev_keys(dev)
+
         # 4. At least one epic
-        epic_keys = [k for k in dev if k.startswith("epic-") and not k.endswith("-retrospective")]
-        if not epic_keys:
+        if not epic_ids:
             findings.append({"source": src, "level": "error",
                              "check": "epic_presence",
                              "message": "No epic-* keys found in development_status"})
         else:
             findings.append({"source": src, "level": "ok",
                              "check": "epic_presence",
-                             "message": f"{len(epic_keys)} epics found"})
+                             "message": f"{len(epic_ids)} epics found"})
 
-        # 5. Unknown status values
+        # 5. Unknown status values — use ``_extract_status`` so nested-dict
+        # shapes (``{status: retired, ...}``) classify against the authoritative
+        # status field, matching the vocabulary the parser uses downstream.
         known = ALL_KNOWN_STATUSES | {"optional"}  # retrospective uses 'optional'
-        non_epic_keys = [k for k in dev if not k.startswith("epic-") and not k.endswith("-retrospective")]
-        unknown_pairs = [(k, str(v)) for k, v in dev.items()
-                         if not k.startswith("epic-")
-                         and not k.endswith("-retrospective")
-                         and str(v) not in known]
+        unknown_pairs = [
+            (k, _extract_status(dev[k]))
+            for k in story_keys
+            if _extract_status(dev[k]) not in known
+        ]
         if unknown_pairs:
             samples = ", ".join(f"{k}={v}" for k, v in unknown_pairs[:5])
             findings.append({"source": src, "level": "warn",
@@ -162,6 +234,26 @@ def _qualify_sprint_status() -> list[dict[str, Any]]:
                              "check": "status_vocab",
                              "message": "All status values recognized"})
 
+        # 5b. Orphan story keys — keys that don't match any epic-* block.
+        # Surfaces the "story lives under the wrong epic" class of error that
+        # a position-based parser would hide. Skip the check entirely when no
+        # epic headers exist; the epic-presence error above already covers it.
+        if not epic_ids:
+            pass
+        elif orphan_keys:
+            sample = ", ".join(orphan_keys[:5])
+            msg = (
+                f"{len(orphan_keys)} story key(s) do not match any epic "
+                f"prefix: {sample}"
+            )
+            findings.append({"source": src, "level": "warn",
+                             "check": "orphan_stories",
+                             "message": msg})
+        else:
+            findings.append({"source": src, "level": "ok",
+                             "check": "orphan_stories",
+                             "message": "All story keys map to an epic"})
+
     # 6. last_updated freshness
     raw_date = str(data.get("last_updated", "")).split("#")[0].strip()
     if not raw_date:
@@ -170,12 +262,16 @@ def _qualify_sprint_status() -> list[dict[str, Any]]:
                          "message": "No last_updated field"})
     else:
         try:
-            updated_date = datetime.strptime(raw_date[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
-            age_days = (datetime.now(tz=timezone.utc) - updated_date).days
+            updated_date = datetime.strptime(raw_date[:10], "%Y-%m-%d").replace(tzinfo=UTC)
+            age_days = (datetime.now(tz=UTC) - updated_date).days
             if age_days > _STALENESS_DAYS:
+                stale_msg = (
+                    f"last_updated is {age_days} days old "
+                    f"(threshold: {_STALENESS_DAYS})"
+                )
                 findings.append({"source": src, "level": "warn",
                                  "check": "staleness",
-                                 "message": f"last_updated is {age_days} days old (threshold: {_STALENESS_DAYS})"})
+                                 "message": stale_msg})
             else:
                 findings.append({"source": src, "level": "ok",
                                  "check": "staleness",
@@ -210,16 +306,23 @@ def _qualify_markdown(filepath: Path, expected_headings: list[str]) -> list[dict
         return findings
 
     if len(text.strip()) < _MIN_MARKDOWN_CHARS:
+        size_msg = (
+            f"Content too small ({len(text.strip())} chars, "
+            f"min {_MIN_MARKDOWN_CHARS})"
+        )
         findings.append({"source": src, "level": "warn",
                          "check": "content_size",
-                         "message": f"Content too small ({len(text.strip())} chars, min {_MIN_MARKDOWN_CHARS})"})
+                         "message": size_msg})
     else:
         findings.append({"source": src, "level": "ok",
                          "check": "content_size",
                          "message": f"{len(text.strip())} chars"})
 
     # 3. Expected headings
-    found = [h for h in expected_headings if re.search(rf"^##\s+{re.escape(h)}", text, re.MULTILINE)]
+    found = [
+        h for h in expected_headings
+        if re.search(rf"^##\s+{re.escape(h)}", text, re.MULTILINE)
+    ]
     missing = [h for h in expected_headings if h not in found]
     if missing:
         findings.append({"source": src, "level": "warn",
@@ -290,45 +393,96 @@ def _load_sprint_status() -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
-def _parse_epics(data: dict[str, Any]) -> list[dict[str, Any]]:
-    """Extract per-epic status summaries from development_status block."""
+def _parse_epics(
+    data: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Extract per-epic status summaries from development_status block.
+
+    Assigns stories to epics by **key-prefix lookup** (longest wins), not YAML
+    position. A key like ``20c-3-source-to-density-intelligence`` belongs to
+    epic ``20c`` wherever it appears in the file. This guards against the
+    failure mode where trailing keys after the last ``epic-*:`` header
+    silently get absorbed into the wrong epic, inflating its story count and
+    hiding the real owner's work.
+
+    Orphan keys that match no epic ID are returned separately so callers can
+    surface them as a data-quality signal. Epic order in the returned list
+    matches YAML insertion order (first-seen-first) so the report renders
+    epics in the order the author wrote them.
+    """
     dev = data.get("development_status", {})
     if not dev:
-        return []
+        return [], []
 
-    epics: list[dict[str, Any]] = []
-    current_epic: dict[str, Any] | None = None
+    epic_ids, story_keys, orphans = _partition_dev_keys(dev)
 
-    for key, val in dev.items():
+    # Build epics in YAML insertion order (not length-sorted), so the rendered
+    # report lists them in the order the author wrote them.
+    epics_by_id: OrderedDict[str, dict[str, Any]] = OrderedDict()
+    for raw_key in dev:
+        key = str(raw_key)
         if key.startswith("epic-") and not key.endswith("-retrospective"):
-            # Flush previous epic
-            if current_epic:
-                epics.append(current_epic)
             epic_id = key.removeprefix("epic-")
             label = WAVE_LABELS.get(epic_id, f"Epic {epic_id}")
-            current_epic = {
+            epics_by_id[epic_id] = {
                 "id": epic_id,
                 "label": label,
-                "status": str(val),
+                "status": _extract_status(dev[raw_key]),
                 "stories": OrderedDict(),
             }
-        elif current_epic and not key.endswith("-retrospective"):
-            current_epic["stories"][key] = str(val)
 
-    if current_epic:
-        epics.append(current_epic)
+    # Route stories via the pre-computed longest-prefix list from the partition.
+    for key in story_keys:
+        owner_id = next(
+            (eid for eid in epic_ids if key.startswith(f"{eid}-")),
+            None,
+        )
+        if owner_id is None:  # defensive — partition already excluded these
+            continue
+        # Preserve the original (possibly non-string) key for the value lookup
+        # but store under the string form for downstream consistency.
+        raw_val = dev.get(key)
+        if raw_val is None:
+            for dev_key in dev:
+                if str(dev_key) == key:
+                    raw_val = dev[dev_key]
+                    break
+        epics_by_id[owner_id]["stories"][key] = _extract_status(raw_val)
 
-    return epics
+    return list(epics_by_id.values()), orphans
 
 
 def _classify_epic(epic: dict[str, Any]) -> str:
-    """Return a classification bucket: done / active / deferred / backlog."""
+    """Return a classification bucket: done / active / deferred / backlog / retired.
+
+    Retired stories are transparent to story-level classification — an epic
+    with only done + retired stories still counts as done. A retired **epic**
+    (header ``status: retired``) gets its own bucket so it doesn't appear in
+    the YOU-ARE-HERE active rollup.
+
+    When ``live`` (non-retired stories) is empty, fall back to the epic's own
+    declared status rather than letting ``all(... for s in [])`` vacuously
+    match every bucket. This guards against the failure mode where a freshly
+    opened in-progress epic or an all-retired legacy epic silently lands in
+    ``backlog`` purely because the empty-list predicate is vacuously True.
+    """
     status = epic["status"]
+    if status in RETIRED_STATUSES:
+        return "retired"
     stories = epic["stories"]
-    if status in DONE_STATUSES and all(s in DONE_STATUSES for s in stories.values()):
+    live = [s for s in stories.values() if s not in RETIRED_STATUSES]
+    if not live:
+        if status in DONE_STATUSES:
+            return "done"
+        if status in DEFERRED_STATUSES:
+            return "deferred"
+        if status in BACKLOG_STATUSES:
+            return "backlog"
+        return "active"
+    if status in DONE_STATUSES and all(s in DONE_STATUSES for s in live):
         return "done"
-    if all(s in DEFERRED_STATUSES | BACKLOG_STATUSES for s in stories.values()):
-        if all(s in BACKLOG_STATUSES for s in stories.values()):
+    if all(s in DEFERRED_STATUSES | BACKLOG_STATUSES for s in live):
+        if all(s in BACKLOG_STATUSES for s in live):
             return "backlog"
         return "deferred"
     return "active"
@@ -342,6 +496,7 @@ def _story_counts(epic: dict[str, Any]) -> dict[str, int]:
         "ready": 0,
         "deferred": 0,
         "backlog": 0,
+        "retired": 0,
         "unknown": 0,
     }
     for val in epic["stories"].values():
@@ -357,9 +512,27 @@ def _story_counts(epic: dict[str, Any]) -> dict[str, int]:
             counts["deferred"] += 1
         elif val in BACKLOG_STATUSES:
             counts["backlog"] += 1
+        elif val in RETIRED_STATUSES:
+            counts["retired"] += 1
         else:
             counts["unknown"] += 1
     return counts
+
+
+OUT_OF_PLAN_BUCKETS = frozenset({"retired", "unknown"})
+
+
+def _live_story_total(epic: dict[str, Any]) -> int:
+    """Total stories excluding retired and unknown-status entries.
+
+    Retired stories are explicitly out-of-plan (superseded / consolidated).
+    Unknown-status entries are excluded from the denominator because they
+    signal a data-quality problem (typo, new vocabulary not yet recognized)
+    already surfaced as a source-health warning — counting them silently
+    deflates ``completion_pct`` in ways the operator cannot attribute.
+    """
+    counts = _story_counts(epic)
+    return sum(v for k, v in counts.items() if k not in OUT_OF_PLAN_BUCKETS)
 
 
 # ---------------------------------------------------------------------------
@@ -392,7 +565,7 @@ def _extract_last_updated(data: dict[str, Any]) -> str:
 def _file_timestamp(filepath: Path) -> str | None:
     if not filepath.exists():
         return None
-    return datetime.fromtimestamp(filepath.stat().st_mtime, tz=timezone.utc).replace(
+    return datetime.fromtimestamp(filepath.stat().st_mtime, tz=UTC).replace(
         microsecond=0
     ).isoformat()
 
@@ -407,7 +580,7 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     source_health = qualify_sources()
 
     data = _load_sprint_status()
-    epics = _parse_epics(data)
+    epics, orphans = _parse_epics(data)
     last_updated = _extract_last_updated(data)
 
     # Buckets
@@ -416,14 +589,18 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     deferred_epics = [e for e in epics if _classify_epic(e) == "deferred"]
     backlog_epics = [e for e in epics if _classify_epic(e) == "backlog"]
 
-    # Totals
-    total_stories = sum(len(e["stories"]) for e in epics)
+    # Totals — retired stories are excluded from the denominator because they
+    # are out-of-plan (superseded / consolidated). Counting them would deflate
+    # completion % against a phantom scope.
+    total_stories = sum(_live_story_total(e) for e in epics)
     done_stories = sum(_story_counts(e)["done"] for e in epics)
     review_stories = sum(_story_counts(e)["review"] for e in epics)
     in_progress_stories = sum(_story_counts(e)["in_progress"] for e in epics)
     ready_stories = sum(_story_counts(e)["ready"] for e in epics)
     deferred_stories = sum(_story_counts(e)["deferred"] for e in epics)
     backlog_stories = sum(_story_counts(e)["backlog"] for e in epics)
+    retired_stories = sum(_story_counts(e)["retired"] for e in epics)
+    unknown_stories = sum(_story_counts(e)["unknown"] for e in epics)
 
     # Active detail
     active_detail = []
@@ -460,7 +637,7 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
     next_up = immediate_action or what_is_next
 
     report = {
-        "generated": datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat(),
+        "generated": datetime.now(tz=UTC).replace(microsecond=0).isoformat(),
         "sprint_status_updated": last_updated,
         "source_files": {
             "sprint_status": {
@@ -490,8 +667,12 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
             "ready_stories": ready_stories,
             "deferred_stories": deferred_stories,
             "backlog_stories": backlog_stories,
+            "retired_stories": retired_stories,
+            "unknown_stories": unknown_stories,
+            "orphan_stories": len(orphans),
             "completion_pct": round(done_stories / total_stories * 100, 1) if total_stories else 0,
         },
+        "orphan_stories": orphans,
         "you_are_here": {
             "active_epics": active_detail,
             "what_is_next": what_is_next,
@@ -502,15 +683,15 @@ def build_report(*, json_mode: bool = False) -> dict[str, Any]:
             ),
         },
         "completed_epics": [
-            {"id": e["id"], "label": e["label"], "stories": len(e["stories"])}
+            {"id": e["id"], "label": e["label"], "stories": _live_story_total(e)}
             for e in done_epics
         ],
         "deferred_epics": [
-            {"id": e["id"], "label": e["label"], "stories": len(e["stories"])}
+            {"id": e["id"], "label": e["label"], "stories": _live_story_total(e)}
             for e in deferred_epics
         ],
         "backlog_epics": [
-            {"id": e["id"], "label": e["label"], "stories": len(e["stories"])}
+            {"id": e["id"], "label": e["label"], "stories": _live_story_total(e)}
             for e in backlog_epics
         ],
         "risks": risks or unresolved,
@@ -550,7 +731,10 @@ def render_text(report: dict[str, Any]) -> str:
     elif verdict == "DEGRADED":
         lines.append(f"  Sources: ⚠ DEGRADED ({sh['warning_count']} warning(s))")
     else:
-        lines.append(f"  Sources: ✖ FAIL ({sh['error_count']} error(s), {sh['warning_count']} warning(s))")
+        lines.append(
+            f"  Sources: ✖ FAIL ({sh['error_count']} error(s), "
+            f"{sh['warning_count']} warning(s))"
+        )
 
     lines.append("=" * 68)
 
@@ -601,7 +785,9 @@ def render_text(report: dict[str, Any]) -> str:
     lines.append("─" * 68)
     for ad in report["you_are_here"]["active_epics"]:
         c = ad["counts"]
-        total = sum(c.values())
+        # Exclude retired + unknown from the denominator so the per-epic ratio
+        # matches the global completion % (both treat these as out-of-plan).
+        total = sum(v for k, v in c.items() if k not in OUT_OF_PLAN_BUCKETS)
         near_term = c["review"] + c["in_progress"] + c["ready"]
         bar = _bar(c["done"], near_term, c["deferred"] + c["backlog"], width=20)
         lines.append(f"  Epic {ad['epic_id']:>4s}  {ad['label']}")
@@ -635,9 +821,26 @@ def render_text(report: dict[str, Any]) -> str:
         lines.append("  HORIZON — Backlog & Deferred")
         lines.append("─" * 68)
         for e in report["deferred_epics"]:
-            lines.append(f"  ○ Epic {e['id']:>4s}  {e['label']:<45s} ({e['stories']} stories, deferred)")
+            lines.append(
+                f"  ○ Epic {e['id']:>4s}  {e['label']:<45s} "
+                f"({e['stories']} stories, deferred)"
+            )
         for e in report["backlog_epics"]:
             lines.append(f"  ○ Epic {e['id']:>4s}  {e['label']:<45s} ({e['stories']} stories)")
+        lines.append("")
+
+    # Orphan stories — keys that matched no epic prefix (data quality signal).
+    # Shown even when only a few exist because they indicate the parser could
+    # not attribute a story to any epic, which rolls up into wrong totals.
+    orphans = report.get("orphan_stories", [])
+    if orphans:
+        lines.append("─" * 68)
+        lines.append("  ⚠ ORPHAN STORIES (no matching epic prefix)")
+        lines.append("─" * 68)
+        for key in orphans[:10]:
+            lines.append(f"  • {key}")
+        if len(orphans) > 10:
+            lines.append(f"  … and {len(orphans) - 10} more")
         lines.append("")
 
     # Risks
@@ -680,10 +883,11 @@ def main(argv: list[str] | None = None) -> None:
 
     report = build_report(json_mode=args.json_mode)
 
-    if args.json_mode:
-        text = json.dumps(report, indent=2, default=str)
-    else:
-        text = render_text(report)
+    text = (
+        json.dumps(report, indent=2, default=str)
+        if args.json_mode
+        else render_text(report)
+    )
 
     if not args.json_mode and not args.no_latest_file:
         LATEST_TEXT_REPORT.parent.mkdir(parents=True, exist_ok=True)

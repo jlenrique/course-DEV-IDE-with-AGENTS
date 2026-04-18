@@ -39,29 +39,44 @@ Previously tracked as "texas-visual-source-gap-backlog" stub at [`_bmad-output/i
 
 | Story | Title | Points | Order | Status |
 |-------|-------|--------|-------|--------|
-| **27-1** | DOCX provider wiring (contract drift fix) | 2 | 1st — unblocks Tejal trial restart | ratified-stub |
-| **27-2** | scite.ai provider | 5 | 2nd — **blocks Epic 28** | ratified-stub |
-| **27-3** | Image provider (sensory-bridges integration) | 3 | parallel after 27-2 | ratified-stub |
-| **27-4** | YouTube provider (video + audio + transcript) | 5 | parallel after 27-2 | ratified-stub |
-| **27-5** | Notion MCP provider | 3 | parallel after 27-2 | ratified-stub |
-| **27-6** | Box provider | 2 | parallel after 27-2 | ratified-stub |
-| **27-7** | Playwright MCP provider | 3 | parallel after 27-2 | ratified-stub |
+| **27-0** | **Retrieval Foundation — Shape 3-Disciplined contract + dispatcher + cross-validation merger** | 5 | **1st — blocks 27-2, 27-2.5, 27-3, 27-4, 28-1** | ratified-stub (opened 2026-04-17 post-Round-3 party consensus) |
+| **27-1** | DOCX provider wiring (contract drift fix) | 2 | done — **locator-shape provider; does NOT depend on 27-0** | **done** (closed 2026-04-17 — python-docx 1.2.0 wired; Tejal cross-val 100% key-term coverage; AC-S6 pilot lockstep test landed) |
+| **27-2** | scite.ai adapter (retrieval-shape; first consumer of 27-0) | 5 | 2nd retrieval-shape story; **blocks Epic 28 Tracy pilot** | **blocked on 27-0** (ratified-stub reshaping after foundation lands) |
+| **27-2.5** | Consensus adapter (retrieval-shape; cross-validation partner to scite) | 3 | parallel after 27-2 — enables scite+Consensus cross-validation | ratified-stub (opened 2026-04-17 — operator directive: "once scite working, duplicate with Consensus so we can use one service's findings to confirm or supplement another's") |
+| **27-3** | Image provider (retrieval-shape via sensory-bridges) | 3 | parallel after 27-0 + sensory-bridge integration | ratified-stub (reshapes to retrieval-shape per 27-0 contract) |
+| **27-4** | YouTube provider (retrieval-shape; video + audio + transcript tri-output) | 5 | parallel after 27-0 | ratified-stub (reshapes to retrieval-shape per 27-0 contract) |
+| **27-5** | Notion MCP provider | 3 | parallel after 27-0 | ratified-stub (**locator-shape** — keeps existing directive shape; no foundation dependency at CLI level, but routes through dispatcher internally) |
+| **27-6** | Box provider | 2 | parallel after 27-0 | ratified-stub (**locator-shape**) |
+| **27-7** | Playwright MCP provider | 3 | parallel after 27-0 | ratified-stub (**locator-shape**) |
 
-**Total: 23 points.** Critical path: **27-1 → 27-2**. Remaining stories fan out.
+**Total: 31 points.** Critical path: **27-1 (done) → 27-0 (foundation) → 27-2 (scite) → 27-2.5 (Consensus) → unblocks Epic 28.**
 
-## Dependency Graph
+**Shape classification per Round 3 consensus** (see [27-0-retrieval-foundation.md](./27-0-retrieval-foundation.md) for full detail):
+- **Retrieval-shape** (intent + acceptance-criteria + provider_hints): 27-2 scite, 27-2.5 Consensus, 27-3 image, 27-4 YouTube.
+- **Locator-shape** (operator provides exact locator; Tracy doesn't formulate queries): 27-1 DOCX (done, legacy), 27-5 Notion, 27-6 Box, 27-7 Playwright.
+
+Both shapes internally route through 27-0's dispatcher (Shape 3-Disciplined AC-B.7 — operator-direct becomes degenerate case of the contract). CLI-level UX unchanged for locator-shape providers; retrieval-shape providers are Tracy-dispatched via intent+AC+provider_hints.
+
+## Dependency Graph (post-Round-3 reshape, 2026-04-17)
 
 ```
-27-1 DOCX ────────────► (unblocks Tejal trial restart — mechanical drift fix)
-                     │
-27-2 scite.ai provider ────► BLOCKS Epic 28 pilot (28-1, 28-2)
-                     │
-27-3 image  ─────────┤
-27-4 youtube ────────┤  (all parallel, none blocks Epic 28)
-27-5 notion-mcp ─────┤
-27-6 box ────────────┤
-27-7 playwright-mcp ─┘
+27-1 DOCX (done) ──► unblocks Tejal trial restart (mechanical drift fix; locator-shape; no 27-0 dependency)
+
+27-0 Retrieval Foundation ──┬──► 27-2 scite adapter ──► 27-2.5 Consensus adapter ──► UNBLOCKS Epic 28 (28-1 Tracy pilot)
+(Shape 3-Disciplined        │                            (cross-validation partner)
+ contract + dispatcher +    │
+ cross-validation merger)   ├──► 27-3 image (retrieval-shape; parallel)
+                            ├──► 27-4 YouTube (retrieval-shape; parallel)
+                            │
+                            ├──► 27-5 Notion MCP (locator-shape; routes through dispatcher via degenerate case)
+                            ├──► 27-6 Box (locator-shape)
+                            └──► 27-7 Playwright MCP (locator-shape)
+
+28-1 Tracy pilot ──► reshapes to emit intent + AC + provider_hints (not scite-specific queries)
+                     per 27-0's Shape 3-Disciplined contract
 ```
+
+**Critical path for Epic 28 unblock**: 27-1 (done) → **27-0 (foundation)** → **27-2 (scite)** → **27-2.5 (Consensus)** → 28-1.
 
 ## AC Spine — Cross-Cutting Acceptance Criteria
 

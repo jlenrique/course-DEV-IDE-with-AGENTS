@@ -104,12 +104,25 @@ _STATUS_TO_EXIT = {
 }
 
 # extractor_used string per provider, for provenance clarity in the report.
+# Used as the fallback when the SourceRecord.kind from _fetch_source does not
+# match _EXTRACTOR_LABELS_BY_KIND (below).
 _EXTRACTOR_LABELS: dict[str, str] = {
     "local_file": "local_text_read",
     "pdf": "pypdf",
     "url": "requests+html_to_text",
     "notion": "notion_client",
     "playwright_html": "playwright_file",
+}
+
+# extractor_used string per SourceRecord.kind — preferred lookup because it
+# distinguishes extractors within a single provider (e.g., local_file splits
+# into local_text_read / local_pdf / local_docx based on file suffix).
+_EXTRACTOR_LABELS_BY_KIND: dict[str, str] = {
+    "local_file": "local_text_read",
+    "local_pdf": "pypdf",
+    "local_docx": "python-docx",
+    "notion_page": "notion_client",
+    "playwright_saved_html": "playwright_file",
 }
 
 # Provider -> default source_type passed into the validator's expected-words heuristic.
@@ -244,6 +257,15 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
         if suffix == ".pdf" or provider == "pdf":
             title, body, rec = _source_ops.wrangle_local_pdf(path)
             return title, body, rec
+        # Story 27-1: DOCX wired via python-docx before the text-read fall-through.
+        # Branch raises python-docx PackageNotFoundError on malformed DOCX; the
+        # adapter (_wrangle_source → _classify_fetch_error) maps that to
+        # error_kind="docx_extraction_failed" with known_losses=["docx_open_failed"]
+        # so the text-read fall-through below is NOT re-entered after failure
+        # (which would re-introduce the binary-garbage defect 27-1 exists to fix).
+        if suffix == ".docx":
+            title, body, rec = _source_ops.wrangle_local_docx(path)
+            return title, body, rec
         # Local .md / .txt / other text — read directly.
         body = _source_ops.read_text_file(path)
         rec = _source_ops.SourceRecord(
@@ -314,7 +336,7 @@ def _wrangle_source(src: dict[str, Any], now: str) -> SourceOutcome:
     extractor_label = _EXTRACTOR_LABELS.get(provider, "unknown")
 
     try:
-        title, body, _rec = _fetch_source(src)
+        title, body, rec = _fetch_source(src)
     except Exception as exc:
         # Fetch-layer failure (network, file not found, PDF parse error,
         # Notion auth, unicode decode, or unsupported-provider fallback).
@@ -332,7 +354,7 @@ def _wrangle_source(src: dict[str, Any], now: str) -> SourceOutcome:
             completeness_ratio=0.0,
             structural_fidelity="none",
             evidence=[f"Fetch failed for ref_id={ref_id}: {detail}"],
-            known_losses=[f"Source not fetchable: {detail}"],
+            known_losses=_fetch_error_known_losses(error_kind, detail),
             recommendations=_fetch_error_recommendations(error_kind, provider),
         )
         return SourceOutcome(
@@ -349,6 +371,12 @@ def _wrangle_source(src: dict[str, Any], now: str) -> SourceOutcome:
             error_kind=error_kind,
             error_detail=detail,
         )
+
+    # Prefer per-kind extractor label (distinguishes local_text_read / local_pdf /
+    # local_docx inside the shared "local_file" provider).
+    kind_label = _EXTRACTOR_LABELS_BY_KIND.get(rec.kind) if rec else None
+    if kind_label:
+        extractor_label = kind_label
 
     meta = _expected_pages_for_source(src, body)
     report = _extraction_validator.validate_extraction(body, meta)
@@ -411,6 +439,18 @@ def _classify_fetch_error(exc: BaseException) -> str:
     message = str(exc)
     if isinstance(exc, ValueError) and "Unsupported provider" in message:
         return "unsupported_provider"
+    # Story 27-1: python-docx PackageNotFoundError surfaces for malformed-ZIP /
+    # non-DOCX input. Classify by exception class name + module prefix to avoid
+    # a hard import of docx into run_wrangler's module-load path (docx is
+    # imported by source_wrangler_operations). Module qualification guards
+    # against foreign PackageNotFoundError classes (e.g., importlib.metadata,
+    # pkg_resources) that share the name but signal unrelated failures —
+    # code-review finding (Blind+Edge Hunter, 2026-04-17).
+    if (
+        type(exc).__name__ == "PackageNotFoundError"
+        and type(exc).__module__.startswith("docx.")
+    ):
+        return "docx_extraction_failed"
     # Missing file is a common shape — surface cleanly.
     if isinstance(exc, FileNotFoundError):
         return "fetch_failed"
@@ -418,6 +458,23 @@ def _classify_fetch_error(exc: BaseException) -> str:
     if isinstance(exc, UnicodeDecodeError):
         return "fetch_failed"
     return "fetch_failed"
+
+
+# Story 27-1 AC-B.3: error-kind → known_losses sentinel mapping for the
+# FAILED outcome's ExtractionReport. DOCX gets a distinct "docx_open_failed"
+# token so cross-validation and operator routing can tell "the file was
+# there but unreadable as DOCX" apart from "generic fetch failed."
+_ERROR_KIND_TO_KNOWN_LOSSES: dict[str, list[str]] = {
+    "docx_extraction_failed": ["docx_open_failed"],
+}
+
+
+def _fetch_error_known_losses(error_kind: str, detail: str) -> list[str]:
+    """Return the known_losses list for an error_kind, with per-kind overrides."""
+    sentinel = _ERROR_KIND_TO_KNOWN_LOSSES.get(error_kind)
+    if sentinel is not None:
+        return list(sentinel)
+    return [f"Source not fetchable: {detail}"]
 
 
 def _fetch_error_recommendations(error_kind: str, provider: str) -> list[str]:

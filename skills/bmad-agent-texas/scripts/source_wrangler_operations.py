@@ -1,4 +1,4 @@
-"""Source bundle construction for agents: URLs, local files, Notion, Box, Playwright HTML, PDF."""
+"""Source bundle construction: URLs, local files, Notion, Box, Playwright HTML, PDF, DOCX."""
 
 from __future__ import annotations
 
@@ -6,13 +6,17 @@ import json
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import requests
+from docx import Document as _DocxDocument
+from docx.oxml.ns import qn as _docx_qn
+from docx.table import Table as _DocxTable
+from docx.text.paragraph import Paragraph as _DocxParagraph
 
 from scripts.api_clients.notion_client import NotionClient
 
@@ -224,7 +228,7 @@ class SourceRecord:
     ref: str
     note: str = ""
     fetched_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
 
     def to_dict(self) -> dict[str, Any]:
@@ -256,6 +260,173 @@ def wrangle_local_pdf(
         f"{' truncated' if meta.get('truncated') else ''}"
     )
     rec = SourceRecord(kind="local_pdf", ref=str(p), note=note)
+    return title, body, rec
+
+
+# ---------------------------------------------------------------------------
+# Story 27-1: DOCX provider wiring
+#
+# Mirrors wrangle_local_pdf signature. Uses body-order iteration over
+# doc.element.body so tables and paragraphs interleave correctly in output
+# (Murat's AC-T.1 iteration-order guard). Heading 1..6 styles render as
+# markdown `#`..`######`. Tables render as pipe-separated rows. Known losses
+# per transform-registry.md: style/formatting beyond headings, cell-merge /
+# vertical-align on tables, inline images, footnotes, comments, tracked
+# changes. Malformed DOCX raises python-docx's PackageNotFoundError which
+# run_wrangler._wrangle_source() catches and maps to FAILED SourceOutcome
+# with error_kind="docx_extraction_failed" (AC-B.3 / AC-T.2b).
+# ---------------------------------------------------------------------------
+
+
+_HEADING_STYLE_RE = re.compile(r"^Heading (\d+)$")
+
+
+def extract_docx_text(
+    path: str | Path,
+    *,
+    max_chars: int | None = 600_000,
+) -> tuple[str, dict[str, Any]]:
+    """Extract markdown body + structural counts from a DOCX via python-docx.
+
+    Returns (body, meta). meta keys: paragraphs, headings, tables, truncated.
+
+    Body-order iteration walks doc.element.body so tables appear inline at
+    their document position instead of clustered. Each rendered block
+    (heading / paragraph / table) is separated by a blank line so the
+    output matches markdown paragraph convention (which extraction_validator
+    _assess_structural_fidelity relies on via `\\n\\n` detection).
+    Heading-styled paragraphs (style name "Heading 1".."Heading 6") render
+    as markdown `#`..`######`. Tables render as `| cell | cell |` rows,
+    one line per row. Character budget (`max_chars`) truncates at item
+    boundaries; the trailing `[...truncated]` marker is appended when the
+    cap fires.
+
+    Raises docx.opc.exceptions.PackageNotFoundError on malformed-ZIP / non-DOCX
+    input — caller is responsible for catching + FAILED-outcome synthesis
+    (run_wrangler._wrangle_source handles this).
+    """
+    doc = _DocxDocument(str(path))
+    blocks: list[str] = []  # Each element is a rendered block; joined with "\n\n".
+    counts = {"paragraphs": 0, "headings": 0, "tables": 0}
+    truncated = False
+    running_chars = 0
+    # Note: doc.element.body + python-docx qname constants are community-
+    # canonical workarounds for python-docx's split paragraphs/tables
+    # surfaces (the library's public API exposes these as two flat
+    # collections, which would lose body-order). Validated against
+    # python-docx 1.1-1.2; the `<2` upper pin in pyproject guards against
+    # an unannounced 2.x rename of these internals.
+    p_tag = _docx_qn("w:p")
+    tbl_tag = _docx_qn("w:tbl")
+
+    def _append_block(block: str) -> bool:
+        """Append block respecting max_chars; return False when truncated."""
+        nonlocal running_chars
+        add_len = len(block) + 2  # account for "\n\n" separator
+        if max_chars is not None and running_chars + add_len > max_chars:
+            return False
+        blocks.append(block)
+        running_chars += add_len
+        return True
+
+    for child in doc.element.body.iterchildren():
+        tag = child.tag
+        if tag == p_tag:
+            para = _DocxParagraph(child, doc)
+            text = (para.text or "").rstrip()
+            style_name = para.style.name if para.style is not None else ""
+            m = _HEADING_STYLE_RE.match(style_name or "")
+            # Counter semantics (code-review Blind+Auditor, 2026-04-17): count
+            # only content that is actually rendered to the body, so rec.note
+            # counts match what a reader of extracted.md sees — not the raw
+            # python-docx element count (which inflates on layout-spacer
+            # empty paragraphs and would-be-empty headings).
+            if m:
+                if not text:
+                    continue  # empty heading — skip, do not count
+                level = min(int(m.group(1)), 6)
+                rendered = f"{'#' * level} {text}".rstrip()
+                counts["headings"] += 1
+                counts["paragraphs"] += 1
+                if not _append_block(rendered):
+                    truncated = True
+                    break
+            else:
+                if not text:
+                    continue  # empty paragraph (layout spacer) — skip, do not count
+                counts["paragraphs"] += 1
+                if not _append_block(text):
+                    truncated = True
+                    break
+        elif tag == tbl_tag:
+            table = _DocxTable(child, doc)
+            counts["tables"] += 1
+            table_rows: list[str] = []
+            for row in table.rows:
+                # De-duplicate consecutive _tc references per row: python-docx's
+                # row.cells returns the SAME _Cell object for each logical grid
+                # position a horizontally-merged cell spans, producing duplicate
+                # text in pipe-rows (code-review Blind+Edge Hunter, 2026-04-17).
+                # Track the underlying <w:tc> element identity to render each
+                # physical cell exactly once.
+                unique_cells: list[str] = []
+                seen_tc_ids: set[int] = set()
+                for cell in row.cells:
+                    tc_id = id(cell._tc)
+                    if tc_id in seen_tc_ids:
+                        continue
+                    seen_tc_ids.add(tc_id)
+                    unique_cells.append(cell.text.replace("\n", " ").strip())
+                table_rows.append("| " + " | ".join(unique_cells) + " |")
+            rendered = "\n".join(table_rows)
+            if not _append_block(rendered):
+                truncated = True
+                break
+
+    body = "\n\n".join(blocks).strip()
+    if body:
+        body = body + "\n"
+    if truncated:
+        body = (body + "[...truncated]\n") if body else "[...truncated]\n"
+
+    meta: dict[str, Any] = {**counts, "truncated": truncated}
+    return body, meta
+
+
+def wrangle_local_docx(
+    path: str | Path,
+    *,
+    max_chars: int | None = 600_000,
+) -> tuple[str, str, SourceRecord]:
+    """Read a local DOCX; return (title_guess, extracted_text, provenance).
+
+    Signature + return shape mirror wrangle_local_pdf. Title derives from
+    Path(path).stem with underscores → spaces (Winston's PDF-parity note).
+    `rec.kind == "local_docx"` (distinct from "local_file" for .md/.txt
+    text reads). `rec.note` reports paragraph/heading/table counts.
+
+    Raises FileNotFoundError if path is missing; ValueError on wrong suffix;
+    python-docx PackageNotFoundError on malformed-ZIP / invalid-DOCX input
+    (surfaces the library exception for adapter-layer classification —
+    AC-B.3 / AC-T.2a).
+    """
+    p = Path(path).resolve()
+    if not p.is_file():
+        raise FileNotFoundError(f"DOCX not found: {p}")
+    if p.suffix.lower() != ".docx":
+        raise ValueError(f"Expected a .docx file, got: {p}")
+
+    body, meta = extract_docx_text(p, max_chars=max_chars)
+    title = p.stem.replace("_", " ")
+    note_parts = [
+        f"python-docx paragraphs={meta['paragraphs']}",
+        f"headings={meta['headings']}",
+        f"tables={meta['tables']}",
+    ]
+    if meta.get("truncated"):
+        note_parts.append("truncated")
+    note = " ".join(note_parts)
+    rec = SourceRecord(kind="local_docx", ref=str(p), note=note)
     return title, body, rec
 
 
@@ -296,7 +467,7 @@ def write_source_bundle(
     (out / "extracted.md").write_text(extracted_md, encoding="utf-8")
     meta = {
         "title": title,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "provenance": [p.to_dict() for p in provenance],
         "primary_consumption_path": str(out / "extracted.md"),
     }

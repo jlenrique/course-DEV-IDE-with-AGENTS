@@ -23,7 +23,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 # Load the runner by path — the hyphenated directory prevents plain import.
 _THIS_DIR = Path(__file__).resolve().parent
 _RUNNER_PATH = _THIS_DIR.parent / "run_wrangler.py"
@@ -744,3 +743,107 @@ def test_json_flag_emits_valid_json(capsys: pytest.CaptureFixture[str], tmp_path
     payload = json.loads(out)
     assert payload["status"] in ("complete", "complete_with_warnings", "blocked")
     assert payload["run_id"] == "TEST-JSON-001"
+
+
+# ---------------------------------------------------------------------------
+# Story 27-1 — AC-T.5 DOCX integration scenario
+# ---------------------------------------------------------------------------
+
+
+def _build_docx_fixture(path: Path) -> None:
+    """Generate a modest synthetic DOCX (~300 words, varied paragraphs)
+    suitable for a full run_wrangler integration pass. Each paragraph
+    carries distinct content so the validator's line-repetition heuristic
+    does not flag the fixture. Generated in-test; no binary in repo."""
+    from docx import Document as _DocxDocument
+
+    doc = _DocxDocument()
+    doc.add_heading("Integration Fixture: DOCX End-to-End", level=1)
+    varied_paragraphs = [
+        "This document exercises the full run_wrangler pipeline against a DOCX primary source. "
+        "The extractor must open the file via python-docx and produce usable markdown output.",
+        "Body-order iteration walks doc.element.body so tables and paragraphs interleave in the "
+        "exact sequence authors specified, preserving reading order across extraction.",
+        "Heading-style paragraphs become markdown pound-prefix headings. Plain paragraphs "
+        "render without prefix, and tables flatten to pipe-separated rows.",
+        "The validator inspects the extracted markdown for structural signals such as headings, "
+        "paragraph breaks, and content richness before assigning a quality tier.",
+        "Fixture diversity matters: if every paragraph repeats, the line-repetition heuristic "
+        "in extraction_validator will correctly flag low information density as a known loss.",
+    ]
+    for para in varied_paragraphs:
+        doc.add_paragraph(para)
+    doc.add_heading("Subsection Heading", level=2)
+    doc.add_paragraph(
+        "Additional narrative under the second heading exercises the H2 rendering path and "
+        "ensures paragraphs after a heading survive body-order iteration without drift."
+    )
+    tbl = doc.add_table(rows=1, cols=2)
+    tbl.rows[0].cells[0].text = "Key"
+    tbl.rows[0].cells[1].text = "Value"
+    doc.save(str(path))
+
+
+def test_docx_integration_scenario(tmp_path: Path) -> None:
+    """AC-T.5: Directive with a single local_file DOCX source runs end-to-end.
+
+    Asserts: exit code == EXIT_COMPLETE, all 6 artifacts present, extracted.md
+    contains DOCX-rendered markdown (heading + pipe-row table), metadata.json
+    provenance records kind=local_docx.
+    """
+    docx_path = tmp_path / "integration_fixture.docx"
+    _build_docx_fixture(docx_path)
+
+    bundle = tmp_path / "bundle"
+    directive = _write_directive(
+        tmp_path,
+        {
+            "run_id": "TEST-DOCX-INT-001",
+            "sources": [
+                {
+                    "ref_id": "docx-primary",
+                    "provider": "local_file",
+                    "locator": str(docx_path),
+                    "role": "primary",
+                    "description": "DOCX integration fixture",
+                    "expected_min_words": 150,
+                }
+            ],
+        },
+    )
+
+    exit_code = _runner.main(
+        ["--directive", str(directive), "--bundle-dir", str(bundle)]
+    )
+    assert exit_code == _runner.EXIT_COMPLETE
+
+    artifacts = _assert_all_six_artifacts(bundle)
+
+    # extracted.md should contain the rendered heading + table pipe-row,
+    # proving python-docx (not read_text_file) produced the output.
+    extracted = artifacts["extracted.md"].read_text(encoding="utf-8")
+    assert "# Integration Fixture: DOCX End-to-End" in extracted
+    assert "## Subsection Heading" in extracted
+    assert "| Key | Value |" in extracted
+    # Anti-regression: if this text appears, we fell back to read_text_file()
+    # and got raw XML/ZIP noise — the bug 27-1 exists to fix.
+    assert "PK\x03\x04" not in extracted  # ZIP signature bytes
+
+    # metadata.json provenance records the DOCX-specific extractor label.
+    # Note: provenance.kind surfaces the dispatch-level provider ("local_file"),
+    # not the SourceRecord.kind. The DOCX-vs-text distinction is carried in
+    # provenance.extractor_used, which is populated via _EXTRACTOR_LABELS_BY_KIND
+    # when _fetch_source returns a rec with kind "local_docx".
+    metadata = json.loads(artifacts["metadata.json"].read_text(encoding="utf-8"))
+    provenance = metadata["provenance"]
+    assert len(provenance) == 1
+    assert provenance[0]["kind"] == "local_file"  # dispatch-level provider
+    assert provenance[0]["extractor_used"] == "python-docx"  # extractor-level label
+    assert provenance[0]["ref"] == str(docx_path)
+
+    # result.yaml envelope sanity: status=complete, quality_tier=FULL_FIDELITY
+    envelope = yaml.safe_load(artifacts["result.yaml"].read_text(encoding="utf-8"))
+    assert envelope["status"] == "complete"
+    assert envelope["run_id"] == "TEST-DOCX-INT-001"
+    assert len(envelope["materials"]) == 1
+    assert envelope["materials"][0]["quality_tier"] == 1  # FULL_FIDELITY

@@ -18,9 +18,11 @@ Extraction method hierarchy per source type. For each format, methods are listed
 
 | Priority | Method | When to Use | Known Limitations |
 |----------|--------|-------------|-------------------|
-| 1 | `python-docx` text extraction | Default | Loses complex formatting; tables become flat text |
-| 2 | LibreOffice CLI → plain text | Fallback for complex layouts | Requires LibreOffice installed |
-| 3 | Read as ZIP + extract XML | Last resort for corrupted files | Produces raw XML, needs cleanup |
+| 1 | `python-docx` text extraction | Default | Style/formatting loss beyond headings H1-H6 — bold, italic, colors, fonts, paragraph spacing not preserved; table-layout loss — cells flattened to pipe-rows, no cell-merge or vertical-align preservation; inline images ignored; footnotes, comments, and tracked-changes not extracted |
+| 2 | LibreOffice CLI → plain text | Fallback for complex layouts | Requires LibreOffice installed; currently not wired (Priority-1 failure produces FAILED `SourceOutcome`; operator reroutes) |
+| 3 | Read as ZIP + extract XML | Last resort for corrupted files | Produces raw XML, needs cleanup; currently not wired |
+
+> **Implementation cross-reference** (Story 27-1): Priority-1 method is wired via `wrangle_local_docx()` in `skills/bmad-agent-texas/scripts/source_wrangler_operations.py` and the `.docx` branch inside `run_wrangler._fetch_source()`. Malformed-DOCX inputs surface `python-docx` `PackageNotFoundError`, which `_classify_fetch_error()` maps to `error_kind="docx_extraction_failed"` with `known_losses=["docx_open_failed"]` — no fall-through to `read_text_file()` (which would re-introduce the binary-garbage defect 27-1 fixes). This footnote is human-facing documentation only; the `test_transform_registry_lockstep` contract test encodes the method→extractor mapping as Python constants in the test file, not by parsing this prose.
 
 ## Markdown (.md)
 

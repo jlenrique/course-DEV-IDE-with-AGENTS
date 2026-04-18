@@ -1,12 +1,50 @@
 # Story 28-1: Tracy Pilot (scite.ai End-to-End)
 
 **Epic:** 28 — Tracy the Detective
-**Status:** ratified-stub (promoted to full spec)
+**Status:** ratified-stub — **RESHAPE PENDING per Round 3 party consensus (2026-04-17)**
 **Sprint key:** `28-1-tracy-pilot-scite-ai`
 **Added:** 2026-04-17
-**Points:** 9
-**Depends on:** Epic 27 Story 27-2 (scite.ai provider in Texas) — **hard dependency; 28-1 cannot merge until 27-2 merges**. Story drafting and sanctum scaffolding may proceed against a stubbed scite client in parallel.
+**Points:** ~7 estimate after Round-3 reshape (down from 9; Tracy's scite-query work relocates to 27-2's scite adapter against 27-0 foundation contract)
+**Depends on:**
+- **Epic 27 Story 27-0** (Retrieval Foundation — RetrievalIntent + AcceptanceCriteria + RetrievalAdapter ABC + dispatcher + cross-validation merger) — **new hard dependency from Round 3 consensus**.
+- **Epic 27 Story 27-2** (scite.ai adapter against 27-0 contract) — hard dependency; 28-1 cannot merge until 27-2 merges. Story drafting and sanctum scaffolding may proceed in parallel.
+- **Epic 27 Story 27-2.5** (Consensus adapter) — **soft dependency** if 28-1 exercises cross-validation (`cross_validate: true`) in the pilot; can defer to 28-v2 if scope-squeezed.
 **Blocks:** 28-2 (gate hardening).
+
+## 🔄 Round 3 Reshape Notice (2026-04-17 — UNRESOLVED; full reshape at `bmad-create-story` run)
+
+Three-round party-mode convergence on **Shape 3-Disciplined** reshapes Tracy's output contract. Under the previous (pre-Round-3) spec below, Tracy's `search_scite.py` formulated scite-specific queries. **Under the Round 3 ratified architecture, Tracy emits a provider-agnostic contract**:
+
+```yaml
+# Tracy's new output (suggested-resources.yaml rows)
+intent: "studies on differential diagnosis heuristics in primary care, last 5 years"
+provider_hints: ["scite", "consensus"]           # REQUIRED v1 — no discovery
+kind: "query"                                     # polymorphic discriminator
+acceptance_criteria:
+  mechanical:
+    date_range: {after: 2020-01-01}
+    min_results: 3
+  provider_scored:
+    authority_tier_min: 2
+    supporting_citations_min: 2
+  semantic_deferred: "heuristic decision-making, not clinical diagnosis algorithms"
+iteration_budget: 3
+convergence_required: true
+cross_validate: true                              # NEW v1 — fan-out across provider_hints + merge by identity
+intent_class: "supporting_evidence"               # Tracy's vocabulary (unchanged)
+editorial_note: "..."                             # Tracy's editorial metadata (unchanged)
+```
+
+**Tracy's job reshapes:**
+- **REMOVED from Tracy's scope:** scite-specific query formulation (`search_scite.py`), scite-DSL knowledge, authority_tier mapping for scite (moves to scite adapter in 27-2), scite cassette ownership.
+- **KEPT in Tracy's scope:** intent authoring (her editorial voice), acceptance-criteria authoring (what makes a hit), provider_hints selection (editorial choice of which providers to query), scoring/fit_score/editorial_note generation (on Texas-returned results, not raw scite responses), approval-manifest emission, post-fetch semantic filtering (`semantic_deferred` evaluation).
+- **ADDED to Tracy's scope:** cross-validation interpretation (when `cross_validate: true` surfaces convergence signals, Tracy weighs them editorially).
+
+**Scope delta:** Tracy loses ~2 pts of scite-specific query/DSL/cassette work (now in 27-2); gains ~0.5 pt of cross-validation-signal interpretation. Net estimate drops 9 → ~7 pts.
+
+**Sections below are PRE-RESHAPE and will be re-authored via `bmad-create-story` AFTER 27-0 and 27-2 close.** They're preserved as the ratification record until the reshape lands.
+
+---
 
 ## Story
 

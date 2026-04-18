@@ -1,136 +1,116 @@
-# Session Handoff — 2026-04-17 (Epic 27 + Epic 28 Ratified: Texas Intake Surface Expansion + Tracy the Detective)
+# Session Handoff — 2026-04-17 Evening (27-1 DOCX closed + Shape 3-Disciplined ratified + 27-0 Retrieval Foundation green-lit)
 
-## Session Summary
+**Session window:** 2026-04-17 ~20:43 (start anchor `07523e0`) → 2026-04-17 ~23:20 (wrapup).
+**Branch:** `dev/epic-27-texas-intake`.
+**Operator:** Juanl.
 
-**Objective (as executed):** Ratify two new epics via BMAD party-mode consensus — Epic 27 (Texas Intake Surface Expansion; technician-capability upgrade) and Epic 28 (Tracy the Detective; new production-tier research-specialist born-sanctum). Four rounds of structured party consultation + one dispatch-vs-artifact architecture ratification landed: shape, scope, story spines, AC cross-cuts, v2 backlog capture, and sequencing. Progress-map routine hardened alongside (WAVE_LABELS coverage + `ratified-stub` vocabulary + incidental ruff cleanup). Commit + branch push + merge-to-master + master push all completed cleanly through pre-commit hooks.
+## What Was Completed
 
-**Branch:** `dev/epic-26-pretrial-prep` — merged to master via `90f19eb` (`--no-ff`).
-**Session-anchor commit (prior handoff):** `8b76729`
-**Head after session:** `90f19eb` (merge commit on master).
-**Commits this session (1 net, on feature branch):**
-- `8dd7d51` — feat(epics-27-28): ratify Texas intake expansion + Tracy the Detective (18 files, +2411/-52)
-- `90f19eb` — Merge dev/epic-26-pretrial-prep into master (--no-ff)
+### 1. Story 27-1 DOCX Provider Wiring — BMAD-closed
 
-## Major Deliverables
+- **Dependency & implementation:** `python-docx>=1.1,<2` pinned in `pyproject.toml` + `requirements.txt` (installed 1.2.0). New `wrangle_local_docx()` + `extract_docx_text()` in `source_wrangler_operations.py`; `.docx` dispatch branch in `run_wrangler._fetch_source()`; `_EXTRACTOR_LABELS_BY_KIND` added; `_classify_fetch_error()` extended with module-qualified `docx.PackageNotFoundError` matching; `_fetch_error_known_losses` helper.
+- **New AC-S6 pilot contract test:** `tests/contracts/test_transform_registry_lockstep.py` with assertion-encoded `LOCKSTEP_EXEMPTIONS` dict (per Murat + Paige green-light patch) — registry lockstep now DOCX + PDF + Notion (3 formats); HTML/URL + Markdown + Future-Placeholder exempted with rationale.
+- **Test delta:** +9 collecting tests (5 unit T.1/T.2a/T.2b/T.3/T.4 + 1 integration T.5 + 3 contract atomic split of T.6). Baseline 1023 → 1036 passed / 2 skipped / 2 xfailed. Zero new xfails/skips/live_api/trial_critical markers.
+- **Tejal manual validation (T8):** PDF↔DOCX cross-validation on halted-trial bundle → `word_count_ratio: 1.04`, **100% key-term coverage, 69/69 sections matched, verdict passed: true**. Original trial-halt defect closed.
+- **Gates passed:** party-mode green-light (Winston + Amelia + Murat + Paige) → party-mode implementation review (3 SHOULD-FIX patches applied) → `bmad-code-review` layered (Blind Hunter + Edge Case Hunter + Acceptance Auditor). Code-review triage: **0 MUST-FIX, 8 patches applied, 4 deferred to follow-on, 6 dismissed**.
+- **Deferred from 27-1 code review** (captured in `_bmad-output/maps/deferred-work.md`): sibling Office-ZIP suffixes (.docm/.dotx/.dotm), `<w:sdt>` / `<w:altChunk>` content drops, docstring exception completeness, Windows short-path test flakiness, negative-control Tejal fixture, `_EXTRACTOR_LABELS` dual-lookup collapse.
 
-### Epic 27 — Texas Intake Surface Expansion (ratified-draft; 7 stories, 23 pts)
+### 2. Three-Round Shape Partitioning Debate — Shape 3-Disciplined adopted
 
-Technician-capability upgrade. Epic artifact at [epic-27-texas-intake-expansion.md](_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md). Stories:
+- **Round 1**: Path A (synthetic cassettes) unanimous for scite-over-API.
+- **Round 2**: Shape 1 (IDE-only MCP, Tracy materializes) vs Shape 2 (Texas Python MCP client). 3-1 Shape 1 majority; John dissent for Shape 2.
+- **Round 3** (triggered by operator lane-discipline pushback — "doesn't that violate 'Texas handles technical fetching'?"): four agents + Dr. Quinn as fresh systems-thinking voice. Dr. Quinn reframed the question from "where's the boundary?" to **"what knowledge does each act require, and where does that knowledge live most naturally?"** Partitioning by knowledge-locality (not role-tradition) produced **Shape 3-Disciplined**: Tracy owns editorial (intent + acceptance criteria + provider choice); per-provider adapters own mechanical query translation + fetch + filter + normalize; thin Texas dispatcher owns routing + iteration + cross-validation merger.
+- **Round 4** (operator update — "scite and Consensus both available in Cursor MCP already; duplicate scite with Consensus for cross-validation"): cross-validation promoted from v2 to **v1 first-class**; `cross_validate: true` fans out to every provider in `provider_hints`, merges by identity key, annotates rows with `convergence_signal`.
 
-- **27-1 DOCX provider wiring (2 pts, full spec):** contract-drift fix — wire `python-docx` into `.docx` branch of `local_file` handler. Blocks Tejal trial restart. Includes initial lockstep check (AC-S6 of the spine) that would have caught the drift pre-trial.
-- **27-2 scite.ai provider (5 pts, full spec):** scholarly citation retrieval with smart-citation-context metadata. **Blocks Epic 28.** Introduces `--tracy-approved-resources` flag, `source_origin` tag, `tracy_row_ref` tag, and atomic-write artifact hygiene.
-- **27-3..27-7 (ratified stubs):** image / YouTube / Notion-MCP / Box / Playwright-MCP providers. Parallel fan-out after 27-2 merges.
-- **AC-S spine (8 cross-cutting ACs):** provider-contract compliance, fidelity-manifest compatibility, structured-manifest-not-blob-dump (John's Round-1 Tracy-anticipation), failure-mode coverage, per-provider test floor, **transform-registry lockstep check** (Audra-style), CP1252 guard sanity (inherit 26-7 pattern), documentation currency.
+**Ratified architecture**:
+- `RetrievalIntent` = natural-language intent + `provider_hints` (required v1) + kind discriminator + three-tier acceptance criteria (mechanical / provider_scored / semantic_deferred) + iteration_budget + convergence_required + cross_validate.
+- `AcceptanceCriteria` three-tier schema — mechanical (Texas evaluates deterministically), provider_scored (Texas via provider-native signals), semantic_deferred (Texas does NOT evaluate; Tracy post-fetch pass).
+- `RetrievalAdapter` ABC with 8 methods: formulate_query / execute / apply_mechanical / apply_provider_scored / normalize / refine / quality_delta / declare_honored_criteria.
+- Iteration Model A (adapter-internal loop, budget-bounded, abort-on-non-improvement) resolved Murat's test-flakiness dissent via deterministic sequence fixtures (NOT stateful mocks).
+- Operator-locator providers (27-1 DOCX, 27-5 Notion, 27-6 Box, 27-7 Playwright) keep existing directive shape at CLI; internally route through new dispatcher via degenerate-case transform. No retrofit.
 
-### Epic 28 — Tracy the Detective (ratified-draft; 2 pilot stories + 2 v2 stubs, 12 pts)
+### 3. Story 27-0 Retrieval Foundation — opened, green-lit, ready-for-dev
 
-New production-tier specialist. Epic artifact at [epic-28-tracy-detective.md](_bmad-output/implementation-artifacts/epic-28-tracy-detective.md) + shared spine at [epic-28/_shared/](_bmad-output/implementation-artifacts/epic-28/_shared/).
+- **Ratified-stub** authored post-Round-3 party consensus; expanded via `bmad-create-story` to 400+ line full BMAD spec with TL;DR + 7 AC-B + 8 AC-T + 11 AC-C + Pre-Dev Gate + 10 anti-pattern warnings + source tree + Previous-Story Intelligence (from 27-1 closeout) + Test Plan table + Risks table + Non-goals + Dev Agent Record template.
+- **Green-light gate**: Winston + Amelia + Murat + Paige panel. **UNANIMOUS Option Y for Python MCP client library** — hand-rolled JSON-RPC-over-HTTP using existing `requests` dep, NOT `mcp` PyPI pre-1.0. Rationale: pre-1.0 breaking-change probability ~60-70% over 6-month epic window vs. JSON-RPC 2.0 frozen since 2010 (<5% drift). Verdicts: Winston GREEN with 7 MUST-FIX, Amelia YELLOW→GREEN with 5 blockers resolved, Murat GREEN with 3 strengthening asks + 3 test adds + CI flake-detection gate, Paige GREEN with 5 authoring-time asks.
+- **Green-Light Patches Applied** section captures all 28 consensus patches (contract additions, test expansions, doc patches, scope adjustments).
+- **Target suite delta: +30 collecting tests** (1036 → 1066). 5-pt estimate holds IF dev-guide.md authoring deferred to 27-2.
+- Status: `ready-for-dev` awaiting fresh-session `bmad-dev-story 27-0-retrieval-foundation`.
 
-**Operator framing (authoritative):** Texas is the technician, Tracy is the Detective. Tracy partners with Texas to source high-value supplementary research for lessons under development. Tracy dispatched by Irene (via Marcus) when the lesson plan reveals enrichment gaps. HIL operator remains primary indicator of source material; Tracy finds supplementary.
+### 4. Epic 27 Roster Reshape
 
-- **28-1 Tracy pilot (9 pts, full spec + 12 ACs):** Tracy born-sanctum under scaffold v0.2. Pilot provider scite.ai. End-to-end: Irene→Marcus→Tracy dispatch → `suggested-resources.yaml` with `editorial_note` + scoring → operator-approval redlineable manifest → Marcus dispatches Texas second-pass → pre-Pass-2 hard gate → Irene Pass 2 ingestion.
-- **28-2 Tracy gate hardening (3 pts, stub):** Gate family (absent / stale / tampered receipt) + cross-agent asset-intent registry orphan detector + e2e gate-refusal test.
-- **28-v2-a Coherence gate (backlog stub, Dr. Quinn Round 2):** Correctness concern — Tracy's additions register-coherent with primary material. Promote post-pilot if evidence warrants.
-- **28-v2-b Dispatch budget (backlog stub, Dr. Quinn Round 2):** Loop-B mitigation — soft cap on Tracy-dispatches-per-run + approval-queue throttling. Promote if pilot evidence shows reflexive flagging.
+- **Critical path reshaped**: 27-1 (done) → **27-0 (foundation)** → **27-2 (scite adapter)** → **27-2.5 (Consensus adapter)** → unblocks Epic 28.
+- **27-2 scite.ai provider** — reshaped from direct provider to scite **adapter** against 27-0 contract. Previous 382-line Pre-Dev Gate expansion preserved; now has reshape banner. Status: `blocked`.
+- **27-2.5 Consensus adapter** — new story opened as ratified-stub per operator directive. Cross-validation partner to scite; first real `cross_validate: true` exercise. 3 pts. Status: `ratified-stub`.
+- **27-3 image / 27-4 YouTube** — reshape to retrieval-shape per 27-0 contract.
+- **27-5 Notion / 27-6 Box / 27-7 Playwright** — stay locator-shape; no retrofit; CLI unchanged.
+- **Shape classification**: retrieval-shape (scite/Consensus/YouTube/image) vs locator-shape (DOCX done, Notion/Box/Playwright). Both shapes internally route through 27-0's dispatcher; operator-locator = degenerate case of Shape 3 contract.
+- **Epic total: 9 stories, ~31 pts** (up from 7 stories, 23 pts pre-Round-3).
 
-**Shared spine artifacts** (all at [epic-28/_shared/](_bmad-output/implementation-artifacts/epic-28/_shared/)):
-- `ac-spine.md` — 8 cross-cutting ACs (dispatch-vs-artifact rule, atomic writes, hard pre-Pass-2 gate, manifest schema compliance, vocabulary SSOT, editorial_note required, test coverage floor, dispatch audit trail)
-- `runbook.md` — 14-step Tracy dispatch procedure with failure-mode resolution (complete / empty / failed) + invariants + rollback
-- `worksheet-template.md` — per-story worksheet (mirrors Epic 26 pattern)
+### 5. Story 28-1 Tracy Pilot Reshape Banner
 
-### Tracy sanctum bundle — breadcrumb for 28-1 implementation
+Added reshape notice at top of 28-1 spec. Tracy's output contract simplifies from scite-specific queries to provider-agnostic intent + AC + provider_hints. Scite-DSL knowledge relocates to 27-2 scite adapter. Pts drop 9 → ~7 estimate. Full re-expansion via `bmad-create-story` after 27-0 + 27-2 close. Status: `blocked`.
 
-- [skills/bmad-agent-tracy/README.md](skills/bmad-agent-tracy/README.md) — what lives here, what gets built in 28-1
-- [skills/bmad-agent-tracy/references/vocabulary.yaml](skills/bmad-agent-tracy/references/vocabulary.yaml) v0.1 — **SSOT** for `intent_class`, `authority_tier`, `fit_score` scale, `editorial_note` constraints, `provider_metadata.scite` schema. Authored tonight per Paige's Round-2 doc-contract discipline.
+### 6. Notion MCP Dual-Config Research (stashed for 27-5)
 
-### Governing architecture principle (Winston ratification)
-
-**Specialists never dispatch specialists at runtime. Artifact handoff via filesystem is NOT a rule violation. Marcus owns every dispatch edge.** Captured as AC-S1 of Epic 28's shared spine. Applies to Tracy↔Texas AND as general principle for all future specialist-to-specialist data exchange. Winston added two hygiene edge cases: atomic artifact writes (temp + rename) and Marcus's freshness-check at dispatch time.
-
-### progress_map.py hardening
-
-Incremental additions on top of the April correctness hardening:
-- Epic 27 + Epic 28 added to `WAVE_LABELS` so they render with proper names.
-- `ratified-stub` added to `READY_STATUSES` so newly-scoped stubs don't flag as `unknown-status`.
-- Incidental ruff cleanup: E501 line wraps, UP017 (`timezone.utc` → `datetime.UTC`), UP037 (remove forward-ref quotes), SIM108 (ternary for json/text dispatch). "Clearing the warehouse as we go" per the 26-7 commit's regression-proof-tests discipline.
+Cursor loads two Notion MCP servers in parallel (user-scope hosted HTTP at `https://mcp.notion.com/mcp` vs. project-scope local stdio via `run_mcp_from_env.cjs` → `@notionhq/notion-mcp-server`). They serve different consumers. Recommendation for Story 27-5: Texas's headless Notion adapter uses project-scope stdio; Tracy's IDE-session research uses user-scope hosted. Captured in [_bmad-output/maps/deferred-work.md](_bmad-output/maps/deferred-work.md) + memory.
 
 ## What Is Next
 
-**Immediate:** Epic 27 + Epic 28 are ratified and ready for dev. Implementation sequencing:
+**Story 27-0 dev-story** in a fresh session. Operator explicitly chose pause-for-fresh-session (option a from three-way choice) over push-through (b) or scoped-partial (c), given the foundation scope (~2000 lines, 20+ files, 30 tests) deserves a clean-context session.
 
-1. **27-1 DOCX drift fix** (2 pts) — unblocks the pending APC C1-M1 Tejal trial restart
-2. **27-2 scite.ai provider** (5 pts) — blocks Epic 28; critical path
-3. **28-1 Tracy pilot** (9 pts) — born-sanctum specialist end-to-end with scite.ai
-4. **28-2 Tracy gate hardening** (3 pts) — rounds out the gate family
+After 27-0 closes: 27-2 (scite adapter re-expanded via `bmad-create-story`) → 27-2.5 (Consensus adapter) → 28-1 (Tracy pilot re-expanded). Then asset-generation stories (Irene Pass 2 consumption of retrieval results) open.
 
-Fan-out 27-3/4/5/6/7 (image, YouTube, Notion MCP, Box, Playwright MCP) parallel after 27-2 merges.
+## Unresolved Issues or Risks
 
-Per John's Round-3 branch hygiene, implementation opens per-epic branches (`dev/epic-27-texas-intake`, `dev/epic-28-tracy-pilot`) cut from master, NOT layered on the merged `dev/epic-26-pretrial-prep`. See next-session-start-here.md for startup commands.
-
-**Tejal trial restart** still blocked by 27-1 at minimum. Full unblock after 27-2 if scite.ai referenced in prior trial brief.
-
-## Unresolved Issues / Risks Carried Forward
-
-1. **Repo-wide ruff debt:** 377 errors repo-wide (77 auto-fixable). Session-owned files are clean; the debt is pre-existing warehouse clutter the 26-7 commit began chipping at. Not a blocker. Strategy per 26-7 commit message: "clearing the warehouse as we go per regression-proof-tests discipline." Each new story that touches an affected file should pre-commit-clean it. No story solely for cleanup opened.
-
-2. **Tejal trial restart still pending.** Unblocked once 27-1 (DOCX fix) ships. Full robustness pending 27-2 (scite.ai if referenced in trial brief). Trial runbook at [trial-run-c1m1-tejal-20260417.md](_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md) still describes the halt point; restart with the remediation.
-
-3. **Story 26-5 (scaffold preservation semantics)** remains backlog. Gates the batch migration wave of the remaining ~14 agents per `project_sanctum_migration` memory. Not blocking Epic 27/28 work (Tracy is born-sanctum, no migration required).
-
-4. **Tracy's scoring rubric is v1 naive by design** (AC-28-1 explicit). Expect iteration post-pilot. John Round-3 red flag: first run is evidence-gathering, not rubric validation.
-
-5. **Dr. Quinn's adversarial scenarios** (coherence drift across downstream assets; Loops A/B/C/D on dispatch/vocabulary/calibration/approval-fatigue) are captured as 28-v2-a / 28-v2-b backlog stubs + cited in Epic 28 risk register. Post-pilot retrospective owns the re-litigation.
-
-6. **No course content was created this session.** Pure ratification + planning work.
+- **27-0 pre-dev checks deferred to dev-story start** (Amelia R1-R3):
+  - R1 scite MCP auth shape — assume HTTP Basic; library-agnostic public surface mitigates.
+  - R2 refinement registry shape — start flat with `drop_filters_in_order`.
+  - R3 FakeProvider fixtures — enumerate during T4.
+- **27-0 is session-scale work** — fresh context needed; don't bundle other stories in the same session.
+- **Deferred 27-1 code review items** (6 non-blocking follow-ups captured in `deferred-work.md`): sibling Office-ZIP suffixes, SDT/altChunk content drops, docstring completeness, Windows short-path flakiness, negative-control Tejal fixture, `_EXTRACTOR_LABELS` dual-lookup collapse. Batched for future "Texas intake robustness" story.
+- **Repo-wide ruff debt** (~377 errors, 77 auto-fixable) — pre-existing warehouse clutter, incremental cleanup strategy holds.
+- **28-1 Tracy pre-Pass-2 gate** (Epic 28 AC-S3) still backlog.
+- **3x flake-detection CI gate** (Murat green-light ask) — needs CI config update; not blocking for 27-0.
 
 ## Key Lessons Learned
 
-- **Party-mode discipline pays compounding dividends.** Three rounds + one ratification spawn (9 distinct agent voices across the session) produced convergent story spines, well-named failure modes, and explicit v1-vs-v2 boundaries. The dispatch-vs-artifact distinction — load-bearing for all future specialist pairs — emerged only after Murat flagged Marcus-hop contract-test cost, and was clarified by operator during mid-round-2. Would have been missed by any single voice.
-- **Doc-contract-first authoring** (Paige's insistence) — authoring `vocabulary.yaml` as SSOT tonight even though implementation is tomorrow removes a circular dependency. Future stories can't drift from a non-existent contract.
-- **Operator non-negotiables over-ride consensus when given.** John's "wait for Tejal evidence" and Dr. Quinn's "flip to operator-pulled" were both defensible positions that the operator overruled for pilot scope. Consensus is a tool for clarity, not a veto on operator intent.
-- **Ratification vs implementation boundary is load-bearing.** Tonight shipped epics + story specs + shared spine + ONE doc-contract artifact (vocabulary.yaml). All code implementation deferred. This matches Epic 26's pattern and prevents scope-creep into overnight sessions.
-- **Incidental cleanup discipline** — the 26-7 commit's "clearing the warehouse as we go" philosophy carried through. 77 ruff auto-fixes applied in-flight on progress_map.py without expanding session scope.
+1. **"Where's the partition?" is the wrong first question.** Dr. Quinn's reframing — "what knowledge does each act require, and where does that knowledge live most naturally?" — unlocked Shape 3-Disciplined. When roles are contested, derive from knowledge-locality, not role-tradition.
+2. **Multi-round party-mode debates are valuable**, not wasteful. Round 3's Shape 3-Disciplined wouldn't have emerged without the Round 1 + Round 2 groundwork that made the team see the limits of Shapes 1 and 2.
+3. **Test-flakiness is often a partitioning symptom.** Murat's Model-A dissent traced back to "stateful sequence mocks are brittle" — the resolution (deterministic sequence fixtures) came from partitioning the test state space differently, not from changing the runtime model.
+4. **Operator judgment beats team consensus when it surfaces fresh framing.** The 4-0 Shape 1 consensus was about to merge when operator asked "doesn't that violate Texas's technician role?" — which cracked open the right-question rethink.
+5. **Library-agnostic public surfaces are the escape hatch for pre-1.0 library decisions.** Option Y (hand-rolled) can migrate to Option X (`mcp` PyPI) as a single-file swap when the ecosystem matures. Don't take library bets when contracts are the priority.
+6. **"Cross-validation is first-class v1" forced architecture clarity.** The moment operator said "one service's findings confirm or supplement another's," provider_hints-as-list + convergence_signal stopped being hypothetical — the contract had to be designed for it from day one.
 
 ## Validation Summary
 
-- **Step 0a (harmonization):** not formally run through Cora (Cora-skill invocation deferred this session); change window = single session commit `8dd7d51` + merge `90f19eb`, both self-contained doc + code changes. No known drift.
-- **Step 0b (pre-closure audit):** no stories flipped to `done` this session — all new (ratified-stub or ready-for-dev). Skip per protocol.
-- **Step 1 quality gate:** `ruff check` on session-owned files (`progress_map.py`, `test_progress_map.py`, `_bmad-output/.../epic-27`, `_bmad-output/.../epic-28/`, `skills/bmad-agent-tracy/`) → **all checks passed**. Repo-wide remains at 377 (pre-existing debt).
-- **Step 4a sprint-status regression:** `tests/test_sprint_status_yaml.py` → **2 passed**.
-- **Full pytest suite:** **688 passed, 2 xfailed, 0 failed** (prior baseline 622; growth from session's +20 regression tests + parallel 26-6/26-7 test additions).
-- **progress_map regression suite:** **40/40 green** after WAVE_LABELS + ratified-stub additions.
-- **Pre-commit hooks:** all passed on commit `8dd7d51` — ruff (lint), orphan-reference detector, co-commit invariant.
-- **`bmad-code-review` on session work:** not re-run this session; the code-review cycle for progress_map hardening was completed in the earlier thread + remediated (Claude Code Opus 4.7 adversarial Blind Hunter + Edge Case Hunter + Acceptance Auditor triad). Tonight's ratification is doc-only; no code-review required.
-
-## Content Creation Summary
-
-No course content created, reviewed, or moved to staging/courses this session. Pure epic/story planning + sanctum breadcrumb.
+- **Step 0a harmonization sweep (Cora-orchestrated)**: CLEAN. L1 catalog 10/10; L2 1 non-blocking observation (new `retrieval/` package placeholder — expected per ratified green-light). Report: [reports/dev-coherence/2026-04-17-2318/harmonization-summary.md](reports/dev-coherence/2026-04-17-2318/harmonization-summary.md). Tripwire cleared for next session.
+- **Step 0b pre-closure audit**: Skipped — no stories flipping to done at wrapup (27-1 was flipped to done earlier in session and audited as part of its code-review closure gate).
+- **Step 1 quality gate**: ruff clean on changed files (Texas scripts/tests, contract test, new retrieval package). Sprint-status yaml test 2/2 passed. 27-1 DOCX tests 6/6 passed (regression-proof).
+- **Full pytest suite**: last ran at 1036/2/0 post-27-1 code-review remediation. Not re-run at wrapup (no production code touched post-27-1 closure).
+- **Git tree at wrapup**: 14 modified + 3 untracked files, all session-owned; clean after commit.
 
 ## Artifact Update Checklist
 
-- [x] [_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md](_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md) — new epic artifact
-- [x] [_bmad-output/implementation-artifacts/epic-28-tracy-detective.md](_bmad-output/implementation-artifacts/epic-28-tracy-detective.md) — new epic artifact
-- [x] [_bmad-output/implementation-artifacts/epic-28/_shared/ac-spine.md](_bmad-output/implementation-artifacts/epic-28/_shared/ac-spine.md) — 8 cross-cutting ACs
-- [x] [_bmad-output/implementation-artifacts/epic-28/_shared/runbook.md](_bmad-output/implementation-artifacts/epic-28/_shared/runbook.md) — 14-step dispatch
-- [x] [_bmad-output/implementation-artifacts/epic-28/_shared/worksheet-template.md](_bmad-output/implementation-artifacts/epic-28/_shared/worksheet-template.md) — per-story template
-- [x] [_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md](_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md) — full spec
-- [x] [_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md](_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md) — full spec
-- [x] [_bmad-output/implementation-artifacts/27-3-image-provider.md](_bmad-output/implementation-artifacts/27-3-image-provider.md) — stub
-- [x] [_bmad-output/implementation-artifacts/27-4-youtube-provider.md](_bmad-output/implementation-artifacts/27-4-youtube-provider.md) — stub
-- [x] [_bmad-output/implementation-artifacts/27-5-notion-mcp-provider.md](_bmad-output/implementation-artifacts/27-5-notion-mcp-provider.md) — stub
-- [x] [_bmad-output/implementation-artifacts/27-6-box-provider.md](_bmad-output/implementation-artifacts/27-6-box-provider.md) — stub
-- [x] [_bmad-output/implementation-artifacts/27-7-playwright-mcp-provider.md](_bmad-output/implementation-artifacts/27-7-playwright-mcp-provider.md) — stub
-- [x] [_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md](_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md) — full spec
-- [x] [_bmad-output/implementation-artifacts/28-2-tracy-gate-hardening.md](_bmad-output/implementation-artifacts/28-2-tracy-gate-hardening.md) — stub
-- [x] [skills/bmad-agent-tracy/README.md](skills/bmad-agent-tracy/README.md) — Tracy sanctum breadcrumb
-- [x] [skills/bmad-agent-tracy/references/vocabulary.yaml](skills/bmad-agent-tracy/references/vocabulary.yaml) — v0.1 SSOT
-- [x] [_bmad-output/implementation-artifacts/sprint-status.yaml](_bmad-output/implementation-artifacts/sprint-status.yaml) — Epic 27 + 28 blocks (committed in `8fc2121` alongside 26-7 co-evolution)
-- [x] [_bmad-output/implementation-artifacts/bmm-workflow-status.yaml](_bmad-output/implementation-artifacts/bmm-workflow-status.yaml) — `next_workflow_step` updated; Epic 27 + 28 blocks added
-- [x] [scripts/utilities/progress_map.py](scripts/utilities/progress_map.py) — WAVE_LABELS 27/28 + ratified-stub + ruff cleanup
-- [x] [tests/test_progress_map.py](tests/test_progress_map.py) — +20 regression tests
-- [x] [SESSION-HANDOFF.md](SESSION-HANDOFF.md) — this file
-- [x] [next-session-start-here.md](next-session-start-here.md) — rewritten for Epic 27/28 implementation kickoff
+- [x] `_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md` — BMAD closure record with Review Record
+- [x] `_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md` — Pre-Round-3 expansion preserved; reshape banner; `blocked`
+- [x] `_bmad-output/implementation-artifacts/27-0-retrieval-foundation.md` — NEW; 400-line full BMAD spec + green-light patches; `ready-for-dev`
+- [x] `_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md` — reshape notice banner; `blocked`
+- [x] `_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md` — roster + dependency graph post-Round-3
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 27-0 + 27-2.5 added; 27-1 `done`; 27-2 + 28-1 `blocked`
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — Epic 27 note reshaped; 27-0 + 27-2.5 entries added
+- [x] `_bmad-output/maps/deferred-work.md` — 27-1 code-review deferred items + Notion 27-5 stash
+- [x] `pyproject.toml` + `requirements.txt` — `python-docx>=1.1,<2` for 27-1
+- [x] `skills/bmad-agent-texas/references/transform-registry.md` — DOCX section cross-reference
+- [x] `skills/bmad-agent-texas/scripts/run_wrangler.py` — 27-1 dispatch + classifier + known_losses helper
+- [x] `skills/bmad-agent-texas/scripts/source_wrangler_operations.py` — `extract_docx_text` + `wrangle_local_docx`
+- [x] `skills/bmad-agent-texas/scripts/tests/test_texas_source_wrangler_operations.py` — 27-1 unit tests
+- [x] `skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py` — 27-1 integration test
+- [x] `skills/bmad-agent-texas/scripts/retrieval/__init__.py` — NEW package placeholder (namespace only)
+- [x] `tests/contracts/test_transform_registry_lockstep.py` — NEW; AC-S6 pilot
+- [x] `next-session-start-here.md` — regenerated for next session's 27-0 dev-story
+- [x] `SESSION-HANDOFF.md` — this file
+- [x] `_bmad/memory/cora-sidecar/chronology.md` — wrapup entry appended
+- [x] `reports/dev-coherence/2026-04-17-2318/` — Cora harmonization report
 
-## Dev-Coherence Report Home
-
-No formal Step 0a report home created this session (Cora skill invocation deferred; doc-only ratification change set self-audits clean). Full-repo harmonization recommended at the start of next session (per the tripwire clause in the wrapup protocol: one skip is absorbed by the next session, two consecutive skips force a full sweep).
+Link to Step 0a audit trail: [reports/dev-coherence/2026-04-17-2318/harmonization-summary.md](reports/dev-coherence/2026-04-17-2318/harmonization-summary.md).

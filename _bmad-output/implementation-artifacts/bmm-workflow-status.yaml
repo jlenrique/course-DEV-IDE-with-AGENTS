@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-17 (Epic 27 + Epic 28 ratified via 3-round + 1-dispatch-clarification party-mode consensus. Epic 27 = Texas Intake Surface Expansion (7 stories, 23 pts; 27-1 DOCX + 27-2 scite.ai full-specced, 27-3..27-7 stubs). Epic 28 = Tracy the Detective (2 pilot stories + 2 v2 stubs, 12 pts; 28-1 full-specced with 12 ACs, 28-2 stub). Tracy sanctum breadcrumb landed (README + vocabulary.yaml SSOT). Winston ratification: specialists never dispatch specialists; artifact handoff via filesystem is not a rule violation. Prior: Epic 26 pilot wave + scaffold v0.2 closed; 26-6 Marcus production-readiness closed BMAD-clean; 26-7 Texas cp1252 guard closed.)
+# Last Updated: 2026-04-17 (Epic 27 RESHAPED via three-round party-mode convergence on Shape 3-Disciplined retrieval architecture. Dr. Quinn knowledge-locality partitioning: editorial with Tracy, provider-DSL with per-provider adapters, dispatch+iteration with thin Texas shell. 27-0 Retrieval Foundation opened as ratified-stub — BLOCKS 27-2/27-2.5/27-3/27-4/28-1. 27-2 reshaped from direct scite provider to scite adapter against 27-0 contract. 27-2.5 Consensus adapter opened per operator directive on cross-service verification. 28-1 Tracy reshape pending — Tracy emits intent+AC+provider_hints contract (not scite-specific queries). Epic 27: 9 stories, ~31 pts. Critical path: 27-1 (done) → 27-0 → 27-2 → 27-2.5 → unblocks Epic 28. Iteration Model A (deterministic sequence fixtures resolving test-flakiness). Three Dr. Quinn guardrails: provider_hints required, mechanical-only AC in v1, convergence signal for abort-on-non-improvement. Prior: 27-1 DOCX closed BMAD-clean (1036/2/0 suite; Tejal cross-val 100%). Prior: Epic 26 pilot wave + scaffold v0.2 + 26-6 + 26-7 closed BMAD-clean.)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -106,16 +106,28 @@ next_workflow_step: "Epic 27 (Texas Intake Surface Expansion) + Epic 28 (Tracy t
 epic_27_texas_intake_surface_expansion:
   status: "ready-for-dev"
   file: "_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md"
-  note: "Technician-capability upgrade epic. 7 stories, 23 pts. Critical path 27-1 → 27-2. Parallel fan-out 27-3/4/5/6/7. AC-S spine includes transform-registry lockstep check (would have caught DOCX drift pre-trial). Ratified via Round 1+2+3 party-mode consensus 2026-04-17."
+  note: "Technician-capability upgrade epic RESHAPED 2026-04-17 via three-round party-mode convergence on Shape 3-Disciplined retrieval architecture (Dr. Quinn partitioning: editorial with Tracy, provider-DSL with per-provider adapters, dispatch+iteration with thin Texas shell). 9 stories, ~31 pts. Critical path: 27-1 (done) → 27-0 (foundation) → 27-2 (scite adapter) → 27-2.5 (Consensus adapter) → unblocks Epic 28. Shape classification: retrieval-shape (27-2 scite / 27-2.5 Consensus / 27-3 image / 27-4 YouTube) vs locator-shape (27-1 DOCX done / 27-5 Notion / 27-6 Box / 27-7 Playwright). Iteration Model A (adapter-internal loop with deterministic sequence fixtures). Three Dr. Quinn guardrails baked in: provider_hints required, mechanical-only AC in v1, convergence signal for abort-on-non-improvement."
   stories:
+    "27-0-retrieval-foundation":
+      status: "ratified-stub"
+      opened: "2026-04-17"
+      tier: "Foundation — Shape 3-Disciplined contract + dispatcher + cross-validation merger"
+      note: "RetrievalIntent + AcceptanceCriteria contracts + RetrievalAdapter ABC + multi-provider dispatcher + cross-validation merger + Python MCP client utility + canonical TexasRow normalization + repo-level scite/Consensus MCP registration + schema v1.1. BLOCKS 27-2, 27-2.5, 27-3, 27-4, 28-1. ~5 pts estimate. Model A iteration (test-flakiness resolved via deterministic sequence fixtures). Ratified-stub at _bmad-output/implementation-artifacts/27-0-retrieval-foundation.md — bmad-create-story to follow."
     "27-1-docx-provider-wiring":
-      status: "ready-for-dev"
-      tier: "Drift fix — contract-vs-code"
-      note: "Wire python-docx into .docx branch of local_file handler. Blocks Tejal trial restart. 2 pts. Full spec with 7 ACs + lockstep-check stub."
+      status: "done"
+      closed: "2026-04-17"
+      tier: "Drift fix — contract-vs-code (LOCATOR-SHAPE — no 27-0 dependency)"
+      note: "python-docx 1.2.0 wired via wrangle_local_docx + .docx dispatch branch + AC-S6 pilot lockstep contract test. +9 collecting tests (5 unit + 1 integration + 3 contract). Tejal manual validation 100% key-term coverage / 69 of 69 sections. Full suite 1036/2/0. BMAD-closed after party-mode green-light + implementation review + bmad-code-review layered (0 MUST-FIX, 8 patches applied, 4 deferred). Unblocks APC C1-M1 Tejal trial restart."
     "27-2-scite-ai-provider":
-      status: "ready-for-dev"
-      tier: "New provider — blocks Epic 28"
-      note: "scite.ai scholarly-citation fetch. Introduces --tracy-approved-resources flag + source_origin tag + atomic-write artifact hygiene. 5 pts. Full spec with 9 ACs."
+      status: "blocked"
+      blocked_on: "27-0-retrieval-foundation"
+      tier: "Retrieval-shape adapter — first consumer of 27-0 contract"
+      note: "RESHAPED from direct scite provider to scite ADAPTER against 27-0's RetrievalAdapter ABC. Round-3 party consensus 2026-04-17. Previous 382-line spec with Pre-Dev Gate superseded. New scope: formulate_query + execute + apply_mechanical + apply_provider_scored + normalize + refine methods implementing the ABC. Re-scoped to ~4-5 pts. Will be re-expanded via bmad-create-story AFTER 27-0 closes. BLOCKS Epic 28 Tracy pilot."
+    "27-2.5-consensus-adapter":
+      status: "ratified-stub"
+      opened: "2026-04-17"
+      tier: "Retrieval-shape adapter — cross-validation partner to scite"
+      note: "Opened per operator directive: 'Consensus is already available and authorized in Cursor. Once we get scite.ai working, we'll duplicate that with Consensus so we can extend Texas's toolset and use one service's findings to confirm or supplement another's.' Second retrieval-shape adapter against 27-0 contract; first real cross_validate: true exercise (scite + Consensus fan-out + merge with convergence_signal). ~3 pts. BLOCKED on 27-0 and 27-2."
     "27-3-image-provider":
       status: "ratified-stub"
       tier: "New provider — sensory-bridges integration"
@@ -145,9 +157,10 @@ epic_28_tracy_detective:
   note: "New production-tier specialist — the Detective partners with Texas (the Technician). Pilot provider scite.ai. 2 stories + 2 v2 backlog stubs, 12 pts. Shared AC spine, 14-step dispatch runbook, per-story worksheet template. Tracy sanctum breadcrumb (README + vocabulary.yaml v0.1 SSOT) landed at ratification time per Paige's doc-contract discipline. Governing architecture principle ratified: specialists never dispatch specialists at runtime; artifact handoff via filesystem is not a rule violation; Marcus owns every dispatch edge."
   stories:
     "28-1-tracy-pilot-scite-ai":
-      status: "ready-for-dev"
-      tier: "Pilot end-to-end"
-      note: "Tracy born: sanctum bundle + Irene→Marcus→Tracy dispatch + editorial-note-bearing manifest + operator approval + Texas second-pass + pre-Pass-2 hard gate + Irene Pass 2 ingestion. 9 pts. 12 ACs. Hard dependency: Epic 27 Story 27-2."
+      status: "blocked"
+      blocked_on: ["27-0-retrieval-foundation", "27-2-scite-ai-provider"]
+      tier: "Pilot end-to-end (RESHAPE PENDING per Round-3 consensus)"
+      note: "RESHAPE PENDING: under Round-3 Shape 3-Disciplined, Tracy emits provider-agnostic intent+AC+provider_hints contract (not scite-specific queries). Scite-DSL knowledge relocates to 27-2 scite adapter against 27-0 foundation. Scope drops 9 → ~7 pts. Pre-reshape spec preserved with reshape-notice banner at top; full re-expansion via bmad-create-story after 27-0 + 27-2 close. Hard dependencies: 27-0 + 27-2. Soft dependency on 27-2.5 (Consensus) if pilot exercises cross_validate: true."
     "28-2-tracy-gate-hardening":
       status: "ratified-stub"
       tier: "Regression hardening"

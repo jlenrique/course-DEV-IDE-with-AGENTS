@@ -154,6 +154,10 @@ WAVE_LABELS: dict[str, str] = {
     "26": "BMB Sanctum Migration",
     "27": "Texas Intake Surface Expansion",
     "28": "Tracy the Detective",
+    "29": "Irene Diagnostics & Fit-Report Validator",
+    "30": "Marcus Duality Split + Plan-Lock Fanout",
+    "31": "Tri-phasic Contract Primitives + Gates",
+    "32": "Envelope Audit + Coverage Manifest",
 }
 
 # ---------------------------------------------------------------------------

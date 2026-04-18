@@ -7,6 +7,98 @@ Per semver-for-schemas:
 - **Minor (1.X)** — additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
 - **Patch (1.0.X)** — docs / clarifications / typo fixes; no machine-readable change.
 
+## Lesson Plan Log v1.0 — 2026-04-18 — Story 31-2 Lesson Plan Log
+
+**Type:** Initial shape (no predecessor log file exists).
+
+**Reason for introduction:** 31-2 ships the write-path on top of the 31-1
+shape foundation. Surfaces the append-only JSONL log + single-writer
+enforcement + monotonic-revision gate (plan.locked only, per R2 M-2) +
+staleness detector + `pre_packet_snapshot` payload shape (Winston R1
+amendment on 30-4).
+
+**Shapes pinned (live in `marcus/lesson_plan/log.py`):**
+
+- `LessonPlanLog`: write API (`append_event(envelope, writer_identity)`),
+  read API (`read_events(since_revision, event_types)`), helpers
+  (`latest_plan_revision`, `latest_plan_digest`), property (`path`).
+- `WriterIdentity`: `Literal["marcus-orchestrator", "marcus-intake"]`
+  (closed set per AC-C.5; widening requires ruling amendment + major
+  schema bump).
+- `WRITER_EVENT_MATRIX`: `dict[str, frozenset[WriterIdentity]]` — AC-B.3
+  single-writer enforcement matrix. Only the `pre_packet_snapshot` row
+  permits `marcus-intake`; the other five rows are
+  Marcus-Orchestrator-only per R1 ruling amendment 13.
+- `NAMED_MANDATORY_EVENTS`: alias of
+  `event_type_registry.RESERVED_LOG_EVENT_TYPES` (single source of truth,
+  two naming surfaces). Frozenset — M-3 immutability asserted via
+  `.add()` raising `AttributeError`.
+- `SourceRef`: `source_id`, `path` (Optional), `content_digest`.
+- `PrePacketSnapshotPayload`: `sme_refs` (list[SourceRef]),
+  `ingestion_digest`, `pre_packet_artifact_path`,
+  `step_03_extraction_checksum` — the four fields 30-4 needs to
+  reconstruct Intake-era context from the log alone (Winston R1).
+- `PlanLockedPayload`: `lesson_plan_digest` — the digest field
+  `latest_plan_digest()` reads.
+- `StalePlanRefError`: new exception (subclass of `ValueError`) raised by
+  `assert_plan_fresh` when envelope revision and/or digest mismatches
+  log. R2 M-1 axis-named message format: `"StalePlanRefError: revision
+  mismatch (envelope=N, log=M); digest mismatch (envelope='x', log='y')"`.
+- `UnauthorizedWriterError`: new exception (subclass of
+  `PermissionError`) raised by `append_event` on writer/event-type mismatch.
+- `assert_plan_fresh`: module-level staleness detector; duck-typed on
+  `lesson_plan_revision` + `lesson_plan_digest` attributes. Called by
+  every envelope 05→13 before downstream processing; 32-2 coverage
+  manifest audits call-site coverage.
+- `LOG_PATH`: `Path("state/runtime/lesson_plan_log.jsonl")` — module
+  constant; tests override via fixture or explicit `path=` kwarg.
+
+**Semantics pinned:**
+
+- Append-only JSONL — one canonical-JSON line per event + newline.
+  `open("a") + write + flush + fsync`. Atomic on POSIX for writes <
+  `PIPE_BUF`; single-process single-writer assumption bridges the
+  Windows NTFS gap (see W-R1 future-hardening note below).
+- Monotonic revision on `plan.locked` ONLY (R2 M-2). Non-`plan.locked`
+  events at stale revision are LEGAL (interleave semantics).
+- Re-read-after-write consistency (R2 M-5 / AC-T.11): immediate
+  `read_events()` after `append_event()` MUST yield the just-appended
+  event.
+- No dedup on `event_id`; no compaction; no rotation; no multi-process
+  writer coordination (all explicitly out-of-scope per AC-C.7).
+
+**Anti-patterns locked down:**
+
+- No direct `open(LOG_PATH, "a")` in downstream code; `bmad-code-review`
+  Blind Hunter layer scans for bypasses (AC-C.8).
+- No writer_identity spoofing (Q-R2-R1 R2 rider): modules pass only
+  their own writer identity; grep-detectable in code review.
+- `NAMED_MANDATORY_EVENTS.add()` raises `AttributeError` (M-3 frozenset
+  immutability).
+- Unknown event_types are REJECTED at write time (governance artifact,
+  not extensibility surface) — AC-B.2 (b) / AC-T.7.
+
+**R2 party-mode GREEN with 7 riders (2026-04-18):**
+
+- W-R1 — Windows atomic-write future-hardening caveat (docstring only).
+- Q-R2-R1 — writer_identity anti-pattern discipline (Dev Notes +
+  code-review grep).
+- M-1 — AC-T.4 2×2 staleness matrix + axis-named error message.
+- M-2 — Monotonic gate ONLY on plan.locked (non-plan.locked stale
+  ACCEPTED).
+- M-3 — `NAMED_MANDATORY_EVENTS` frozenset immutability test.
+- M-4 — Baseline rebase to commit `15f68b1` HEAD (1023 `--run-live` /
+  1001 default).
+- M-5 — AC-T.11 re-read-after-write consistency + K floor 15 → 17.
+
+**Migration:** N/A (initial shape; no predecessor log file exists —
+`state/runtime/lesson_plan_log.jsonl` is created by first `append_event`
+call).
+
+**Consumer compatibility:** 30-1 / 30-4 / 32-2 consume via the public
+`LessonPlanLog.read_events` API. Direct `open(LOG_PATH)` reads in
+consumer code are a code-review block (AC-C.8).
+
 ## Lesson Plan v1.0 — 2026-04-18 — Story 31-1 Lesson Plan Schema Foundation
 
 **Type:** Initial shape (no predecessor).

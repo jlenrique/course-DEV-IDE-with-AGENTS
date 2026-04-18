@@ -83,3 +83,18 @@ Dated 2026-04-18. Twelve SHOULD-FIX findings deferred from G5 party-mode + G6 la
 - [SHOULD-FIX][Auditor][#4] ScopeDecisionTransition JSON Schema parity — spec says out-of-scope; declare in spec rather than test
 - [NIT-grouped][multiple] 23 NITs from Blind/Edge/Auditor — cosmetic (naming, DRY, imports, duplicate regex constants); not worth separate patch but list by file in commit message
 - [SHOULD-FIX][Auditor][Coverage] "Post-`model_dump(by_alias=True, exclude={...})` literal path not tested — spirit satisfied via to_audit_dump() but letter remains NIT"
+
+## 31-2 G5+G6 deferred findings
+
+Dated 2026-04-18. Ten SHOULD-FIX findings deferred from G5 party-mode + G6 layered code review (Blind Hunter / Edge Case Hunter / Acceptance Auditor) on Story 31-2 Lesson Plan Log. Real but non-blocking; surfaced here for future stories in Epic 31/30/29 touching the log module.
+
+- [SHOULD-FIX][Blind][#5][Edge][#5] mkdir on every append — minor perf; move to LessonPlanLog.__init__ or accept as idempotent-cheap
+- [SHOULD-FIX][Blind][#8] read_events iterator leak on partial consumption — document iterator-drain contract (close file handle on GC relied upon)
+- [SHOULD-FIX][Edge][#7] read_events iterator-across-append undefined — document snapshot semantics (iterator yields events present at open-time; subsequent appends not guaranteed visible)
+- [SHOULD-FIX][Blind][#14-NIT] PIPE_BUF docstring citation technical error — docstring mentions PIPE_BUF atomicity guarantee which applies to pipes, not regular-file writes; edit docstring for precision
+- [SHOULD-FIX][Blind][#15-NIT] canonical_json duplicated in log.py + digest.py — extract shared helper in a future refactor story (no behavioral drift observed)
+- [NIT-grouped][Blind+Edge+Auditor] ~20 NITs — cosmetic (naming, imports, DRY, docstring style); listed in G6 output, not persisted
+- [SHOULD-FIX][Edge][#13] text-mode "\n" vs Windows CRLF translation — consider binary-mode writes for deterministic on-disk bytes (currently text-mode; newline translation could affect byte-level diffing)
+- [SHOULD-FIX][Blind][#15] WRITER_EVENT_MATRIX outer dict mutable — wrap with types.MappingProxyType in a future hardening pass (inner frozensets already immutable)
+- [SHOULD-FIX][Auditor][#2] AC-T.4 Cell 2 digest substring — partial dup with SF-AA-2 which was applied; Cell 2 tightening retained here for later review
+- [SHOULD-FIX][Auditor][#5] AC-T.3 REJECT post-condition loose — tighten to strict file-does-not-exist assertion for REJECT cases in the single-writer matrix test (current uses exists() || empty)

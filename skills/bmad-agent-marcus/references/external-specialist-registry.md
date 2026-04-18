@@ -18,7 +18,7 @@ Canonical list of specialist agents Marcus delegates to, with the style-bible an
 | Tool ecosystem monitoring and documentation synthesis | `tool-ecosystem-synthesis` | active (Story G.2) | Optional DB path + doc-sources inventory + specialist sidecar pattern files |
 | Predictive workflow optimization recommendations | `predictive-workflow-optimization` | active (Story 10.1) | New run context (course/module/preset/content type) + prior run telemetry |
 | Style guide reading/writing, parameter elicitation | `parameter-intelligence` | active | Style bible path, parameter context — via `manage_style_guide.py` |
-| Source extraction with quality validation, cross-validation, fallback chains | `bmad-agent-texas` (Texas) | active | Source manifest, course content dir, quality gate thresholds — via delegation contract |
+| Source extraction with quality validation, cross-validation, fallback chains | `bmad-agent-texas` (Texas) | active — retrieval foundation landed 2026-04-18 (Story 27-0); scite + Consensus retrieval-shape adapters pending 27-2 / 27-2.5. Current capabilities surfaced via `python skills/bmad-agent-texas/scripts/run_wrangler.py --list-providers`. | Source manifest, course content dir, quality gate thresholds — via delegation contract |
 | Tool API doc refresh, research, validation | `tech-spec-wrangler` | active | Tool name, doc-sources.yaml path, optional research query |
 | Exemplar study, reproduction, comparison, regression | `woodshed` | active | Tool name, exemplar ID, evaluator reference |
 

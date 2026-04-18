@@ -1,0 +1,15 @@
+{
+  "source_id": "doi:10.1234/canonical",
+  "title": "Canonical Row Fixture",
+  "body": "This row exists so providers can conform TO it via the fungibility contract test (AC-T.5).",
+  "authors": ["Jane Doe", "John Smith"],
+  "date": "2024-03-15",
+  "provider": "fake",
+  "provider_metadata": {"citation_count": 42, "peer_reviewed": true},
+  "source_origin": "operator-named",
+  "tracy_row_ref": null,
+  "convergence_signal": null,
+  "authority_tier": "peer-reviewed",
+  "completeness_ratio": 0.95,
+  "structural_fidelity": 0.9
+}

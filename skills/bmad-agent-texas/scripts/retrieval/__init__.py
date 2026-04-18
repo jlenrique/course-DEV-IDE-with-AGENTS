@@ -16,4 +16,90 @@ The retrieval subsystem partitions source-fetch work by knowledge-locality:
 No real provider ships in 27-0. `FakeProvider` is the reference adapter
 for contract-validation tests. Real providers land in follow-on stories:
 scite (27-2), Consensus (27-2.5), image-sources (27-3), YouTube (27-4).
+
+A unified `provider_directory` surfaces every retrieval-shape adapter AND
+every locator-shape handler Texas can invoke (AC-B.8 operator amendment,
+2026-04-18). Use `provider_directory.list_providers()` for the canonical
+roster; `run_wrangler.py --list-providers` for CLI.
 """
+
+from .base import RetrievalAdapter
+from .contracts import (
+    SCHEMA_VERSION,
+    AcceptanceCriteria,
+    ConvergenceSignal,
+    ProviderHint,
+    ProviderInfo,
+    ProviderResult,
+    ProviderShape,
+    ProviderStatus,
+    RefinementLogEntry,
+    RetrievalIntent,
+    RetrievalKind,
+    SourceOrigin,
+    TexasRow,
+)
+from .dispatcher import AdapterFactory, DispatchError, dispatch
+from .mcp_client import (
+    MCPAuthError,
+    MCPClient,
+    MCPClientError,
+    MCPFetchError,
+    MCPProtocolError,
+    MCPRateLimitError,
+    MCPServerConfig,
+)
+from .normalize import build_texas_row, coerce_authors
+from .provider_directory import (
+    get_provider,
+    get_registered_adapter_class,
+    list_providers,
+    register_adapter,
+    reset_adapter_registry,
+)
+from .refinement_registry import (
+    RefinementStrategy,
+    drop_filters_in_order,
+    get_strategy,
+    list_strategies,
+    register_strategy,
+)
+
+__all__ = [
+    "AcceptanceCriteria",
+    "AdapterFactory",
+    "ConvergenceSignal",
+    "DispatchError",
+    "MCPAuthError",
+    "MCPClient",
+    "MCPClientError",
+    "MCPFetchError",
+    "MCPProtocolError",
+    "MCPRateLimitError",
+    "MCPServerConfig",
+    "ProviderHint",
+    "ProviderInfo",
+    "ProviderResult",
+    "ProviderShape",
+    "ProviderStatus",
+    "RefinementLogEntry",
+    "RefinementStrategy",
+    "RetrievalAdapter",
+    "RetrievalIntent",
+    "RetrievalKind",
+    "SCHEMA_VERSION",
+    "SourceOrigin",
+    "TexasRow",
+    "build_texas_row",
+    "coerce_authors",
+    "dispatch",
+    "drop_filters_in_order",
+    "get_provider",
+    "get_registered_adapter_class",
+    "get_strategy",
+    "list_providers",
+    "list_strategies",
+    "register_adapter",
+    "register_strategy",
+    "reset_adapter_registry",
+]

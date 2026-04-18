@@ -27,4 +27,5 @@ python-docx>=1.1,<2
 pytest>=8.0,<9
 pytest-asyncio>=0.23,<1
 pytest-timeout>=2.3,<3
+responses>=0.25,<1  # HTTP mocking for retrieval/mcp_client tests — Story 27-0
 ruff>=0.4,<1

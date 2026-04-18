@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "note": "Legacy baseline — the retrieval contracts did NOT exist in schema v1.0. This snapshot is the empty set so AC-T.1 dual-version test can assert `no v1.0 retrieval-contract fields existed; every v1.1 field is additive`.",
+  "fields": {},
+  "extra": "forbid"
+}

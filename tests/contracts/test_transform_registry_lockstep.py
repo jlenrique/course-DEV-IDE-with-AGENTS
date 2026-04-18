@@ -78,6 +78,37 @@ REGISTRY_METHOD_TO_EXTRACTOR: dict[str, tuple[str, str]] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Shape classification (Story 27-0 AC-C.5 + cross-reference)
+# ---------------------------------------------------------------------------
+#
+# The retrieval-shape / locator-shape distinction introduced in Story 27-0
+# lives in the sibling `test_provider_directory_locator_lockstep.py` contract
+# test. That test is the bidirectional lockstep enforcer against
+# `retrieval/provider_directory.py::_LOCATOR_SHAPE_DIRECTORY`.
+#
+# This module (transform-registry lockstep) is the original locator-shape
+# drift-guard from Story 27-1 — it enforces that `transform-registry.md`
+# format sections map to concrete extractor functions. The two tests serve
+# different purposes:
+#
+#   - This test: "every format promised by transform-registry.md has a
+#     working extractor wired into run_wrangler._fetch_source"
+#   - Sibling: "every provider listed in the runtime directory matches the
+#     RETRIEVAL_SHAPE_PROVIDERS / LOCATOR_SHAPE_PROVIDERS classification"
+#
+# The AC-C.5 meta-principle bears repeating here per Paige's green-light
+# prose ask (Story 27-0): "A retrieval-shape exemption is a registry row
+# whose extraction output originates from a remote provider call and is
+# shaped by a `RetrievalIntent`; a locator-shape exemption is a registry row
+# whose extraction output originates from a local filesystem locator and is
+# shaped by a path/selector. The distinction lives in the input-origin axis,
+# not the extractor axis."
+#
+# See: tests/contracts/test_provider_directory_locator_lockstep.py
+# for the canonical RETRIEVAL_SHAPE_PROVIDERS / LOCATOR_SHAPE_PROVIDERS dicts.
+
+
 LOCKSTEP_EXEMPTIONS: dict[str, str] = {
     # Lowercased format-name -> exemption rationale.
     # Exemption rule: a registry row whose Priority-1 method does not map to a

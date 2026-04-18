@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.1",
+  "fields": {
+    "intent": {"type": "str", "required": true, "constraints": {"min_length": 1}},
+    "provider_hints": {"type": "list[ProviderHint]", "required": true, "constraints": {"min_length": 1}},
+    "kind": {"type": "Literal['query','direct_ref','render']", "required": false, "default": "query"},
+    "acceptance_criteria": {"type": "AcceptanceCriteria", "required": false, "default": "AcceptanceCriteria()"},
+    "iteration_budget": {"type": "int", "required": false, "default": 3, "constraints": {"ge": 1, "le": 20}},
+    "convergence_required": {"type": "bool", "required": false, "default": true},
+    "cross_validate": {"type": "bool", "required": false, "default": false}
+  },
+  "extra": "forbid"
+}

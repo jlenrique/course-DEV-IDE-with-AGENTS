@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.1",
+  "fields": {
+    "source_id": {"type": "str", "required": true, "constraints": {"min_length": 1}},
+    "title": {"type": "str", "required": false, "default": ""},
+    "body": {"type": "str", "required": false, "default": ""},
+    "authors": {"type": "list[str]", "required": false, "default": "[]"},
+    "date": {"type": "str | None", "required": false, "default": null},
+    "provider": {"type": "str", "required": true, "constraints": {"min_length": 1}},
+    "provider_metadata": {"type": "dict[str, Any]", "required": false, "default": "{}"},
+    "source_origin": {"type": "Literal['operator-named','tracy-suggested']", "required": false, "default": "operator-named"},
+    "tracy_row_ref": {"type": "str | None", "required": false, "default": null},
+    "convergence_signal": {"type": "ConvergenceSignal | None", "required": false, "default": null},
+    "authority_tier": {"type": "str | None", "required": false, "default": null},
+    "completeness_ratio": {"type": "float | None", "required": false, "default": null, "constraints": {"ge": 0.0, "le": 1.0}},
+    "structural_fidelity": {"type": "float | None", "required": false, "default": null, "constraints": {"ge": 0.0, "le": 1.0}}
+  },
+  "extra": "forbid"
+}

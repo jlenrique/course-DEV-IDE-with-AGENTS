@@ -1,0 +1,8 @@
+{
+  "description": "Empty-result fixture for budget-exhaustion tests. Every iteration returns empty or stays flat.",
+  "rows_by_query": {
+    "initial:unknown topic": [],
+    "refined(1):unknown topic": [],
+    "refined(2):unknown topic": []
+  }
+}

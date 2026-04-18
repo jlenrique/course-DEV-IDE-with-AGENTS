@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.1",
+  "fields": {
+    "mechanical": {"type": "dict[str, Any]", "required": false, "default": "{}"},
+    "provider_scored": {"type": "dict[str, Any]", "required": false, "default": "{}"},
+    "semantic_deferred": {"type": "str | None", "required": false, "default": null}
+  },
+  "extra": "forbid"
+}

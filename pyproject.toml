@@ -26,6 +26,7 @@ dev = [
     "pytest>=8.0,<9",
     "pytest-asyncio>=0.23,<1",
     "pytest-timeout>=2.3,<3",
+    "responses>=0.25,<1",
     "ruff>=0.4,<1",
     "pre-commit>=3.7,<5",
 ]
@@ -46,7 +47,7 @@ testpaths = [
     "skills/bmad-agent-texas/scripts/tests",
     "skills/kling-video/scripts/tests",
 ]
-pythonpath = ["."]
+pythonpath = [".", "skills/bmad-agent-texas/scripts"]  # retrieval/ package (Story 27-0)
 asyncio_mode = "auto"
 markers = [
     "live_api: tests that call live third-party APIs; excluded by default unless --run-live is provided",

@@ -104,9 +104,9 @@ def pytest_collection_modifyitems(
     run_live_e2e = config.getoption("--run-live-e2e")
 
     for item in items:
-        if "live_api" in item.keywords and not run_live:
-            deselected.append(item)
-        elif "live_api_e2e" in item.keywords and not run_live_e2e:
+        is_live = "live_api" in item.keywords and not run_live
+        is_live_e2e = "live_api_e2e" in item.keywords and not run_live_e2e
+        if is_live or is_live_e2e:
             deselected.append(item)
         else:
             selected.append(item)
@@ -148,3 +148,42 @@ for pkg_name, pkg_path in _SKILL_SCRIPTS:
                 mod = importlib.util.module_from_spec(spec)
                 sys.modules[mod_name] = mod
                 spec.loader.exec_module(mod)
+
+
+# ---------------------------------------------------------------------------
+# Retrieval registry isolation (Story 27-0)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _retrieval_registry_snapshot():
+    """Snapshot + restore the retrieval adapter registry + refinement
+    strategies around every test.
+
+    Tests that call `reset_adapter_registry()` or define inline
+    `RetrievalAdapter` subclasses with collision-prone PROVIDER_INFO ids can
+    otherwise leak state across tests. SHOULD-FIX bh-h2 (code-review
+    2026-04-18): the refinement-registry `_STRATEGIES` module global is a
+    sibling mutable dict — same leak shape — so this fixture snapshots +
+    restores it too. Both restores live in the same finally block so
+    per-test isolation is a single unit.
+
+    Cheap no-op when the `retrieval` package isn't importable (e.g., pre-27-0
+    test runs).
+    """
+    try:
+        from retrieval import (  # type: ignore[import-not-found]
+            provider_directory,
+            refinement_registry,
+        )
+    except ImportError:
+        yield
+        return
+    adapter_snapshot = dict(provider_directory._RETRIEVAL_ADAPTER_REGISTRY)
+    strategy_snapshot = dict(refinement_registry._STRATEGIES)
+    try:
+        yield
+    finally:
+        provider_directory._RETRIEVAL_ADAPTER_REGISTRY.clear()
+        provider_directory._RETRIEVAL_ADAPTER_REGISTRY.update(adapter_snapshot)
+        refinement_registry._STRATEGIES.clear()
+        refinement_registry._STRATEGIES.update(strategy_snapshot)

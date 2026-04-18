@@ -12,15 +12,34 @@ code: ERS
 
 This schema is the single source of truth. The runner writes against it, tests validate against it, and any downstream consumer (Vera, HUD, trace-report tooling) keys off it.
 
+## Changelog
+
+### v1.1 (Story 27-0 — 2026-04-18) — ADDITIVE, BACKWARDS-COMPATIBLE
+
+New per-source optional fields surfacing retrieval-shape provenance:
+
+- `retrieval_intent` — the `RetrievalIntent.intent` string that originated this source (null for legacy operator-locator directives).
+- `provider_hints` — the `list[ProviderHint]` supplied; present when the source came through the Shape 3 dispatcher.
+- `cross_validate` — bool; when true the source participated in a cross-validation fan-out.
+- `convergence_signal` — `ConvergenceSignal` sub-object (`providers_agreeing`, `providers_disagreeing`, `single_source_only`); populated only for rows emitted by cross-validated retrieval-shape providers.
+- `source_origin` — `operator-named` (default, legacy shape) or `tracy-suggested` (Tracy's Epic 28 output).
+- `tracy_row_ref` — string pointer back to Tracy's worksheet row when `source_origin == "tracy-suggested"`.
+
+**Why minor bump, not major:** Every new field is optional with a v1.0-compatible default (null / empty list / false). A v1.0 consumer reading v1.1 output remains correct — the new fields are simply invisible. A v1.1 consumer reading v1.0 output defaults every absent field. Zero breaking schema changes; the minor bump signals "this has grown" without invalidating anything. Per semver-for-schemas: breaking changes require major bump; additive changes require minor; documentation-only require patch. This is additive.
+
+### v1.0 (pre-27-0 baseline)
+
+The legacy shape emitted by pre-Shape-3 `run_wrangler.py` runs. Continues to be emitted verbatim when the dispatcher is invoked via the legacy operator-locator directive path (AC-B.7 degenerate-case transform).
+
 ## Schema Version
 
-`schema_version: "1.0"` — bump on any breaking field change.
+`schema_version: "1.1"` — bump on any breaking field change. See Changelog above for v1.0 → v1.1 migration notes.
 
 ## Top-Level Fields
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `schema_version` | string | yes | Literal `"1.0"` for this version |
+| `schema_version` | string | yes | Literal `"1.0"` or `"1.1"` (dispatcher-emitted output pins `"1.1"`; legacy-path output pins `"1.0"`) |
 | `run_id` | string | yes | From the wrangling directive; matches `run-constants.yaml` RUN_ID |
 | `generated_at` | string (ISO 8601) | yes | UTC timestamp when the report was written |
 | `overall_status` | string | yes | One of: `complete`, `complete_with_warnings`, `blocked` |
@@ -53,6 +72,12 @@ Each element of `sources[]`:
 | `evidence` | list[string] | yes | Carried from `ExtractionReport.evidence`; the line beginning `"Expected minimum:"` is rewritten by the runner when the directive supplies an operator-declared floor so the trail does not lie about what was checked |
 | `known_losses` | list[string] | yes | Carried from `ExtractionReport.known_losses`; empty list when none |
 | `recommendations` | list[string] | yes | Per-source recommendations; empty list when none |
+| `retrieval_intent` | string \| null | no (v1.1+) | Intent string from `RetrievalIntent.intent` when routed through the Shape 3 dispatcher; `null` for legacy operator-locator directives |
+| `provider_hints` | list[ProviderHint] | no (v1.1+) | Dispatched provider hints (`{provider, params}` per element); empty or absent for legacy paths |
+| `cross_validate` | boolean | no (v1.1+) | True when this source participated in a cross-validation fan-out; false/absent otherwise |
+| `convergence_signal` | ConvergenceSignal \| null | no (v1.1+) | Structural convergence annotation (`providers_agreeing`, `providers_disagreeing`, `single_source_only`); null for non-cross-validated rows |
+| `source_origin` | string | no (v1.1+) | `operator-named` (default, legacy) or `tracy-suggested` (Tracy's Epic 28 output) |
+| `tracy_row_ref` | string \| null | no (v1.1+) | Pointer back to Tracy's worksheet row when `source_origin == "tracy-suggested"`; null otherwise |
 
 ### Counts (sub-object)
 

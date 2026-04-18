@@ -1,7 +1,7 @@
 # Story 27-0: Retrieval Foundation — Shape 3-Disciplined Contract + Multi-Provider Dispatch
 
-**Status:** in-progress
-**Created:** 2026-04-17 (ratified-stub post-Round-3 party consensus); expanded to full BMAD story 2026-04-17 via `bmad-create-story`; green-light UNANIMOUS Option Y + consensus patches applied 2026-04-17; `bmad-dev-story` started 2026-04-17
+**Status:** done
+**Created:** 2026-04-17 (ratified-stub post-Round-3 party consensus); expanded to full BMAD story 2026-04-17 via `bmad-create-story`; green-light UNANIMOUS Option Y + consensus patches applied 2026-04-17; `bmad-dev-story` started 2026-04-17; **closed BMAD-clean 2026-04-18** after party-mode implementation review + bmad-code-review layered pass.
 **Epic:** 27 — Texas Intake Surface Expansion
 **Sprint key:** `27-0-retrieval-foundation`
 **Branch:** `dev/epic-27-texas-intake`
@@ -80,6 +80,17 @@ Cross-validation (one provider confirms/supplements another) is a v1 requirement
 
 7. **AC-B.7 — Operator-direct path becomes degenerate case.** Existing directive shape (provider + locator) is internally transformed into a Shape 3 call: `intent="fetch exact locator"`, `provider_hints=[<provider>]`, `kind="direct_ref"`, `acceptance_criteria={mechanical: [exists]}`, `iteration_budget=1`. One contract, two UX surfaces. Operator-locator paths (Notion/Box/Playwright) keep their current directive shape at the CLI level but route through the same dispatcher internally. **No retrofit of existing 27-1 DOCX or locator-shape providers required.**
 
+8. **AC-B.8 — Provider Directory (post-green-light operator amendment, 2026-04-18).** Texas exposes a unified provider directory at `retrieval/provider_directory.py`:
+   - `ProviderInfo` Pydantic model: `id: str`, `shape: "retrieval" | "locator"`, `status: "ready" | "stub" | "ratified" | "backlog"`, `capabilities: list[str]`, `auth_env_vars: list[str]`, `spec_ref: str | None` (path to story spec), `notes: str = ""`.
+   - `list_providers(shape: str | None = None, status: str | None = None) -> list[ProviderInfo]` — filtered enumeration.
+   - `get_provider(provider_id: str) -> ProviderInfo | None` — single lookup.
+   - **Retrieval-shape adapters auto-register** via `RetrievalAdapter.__init_subclass__` hook; each subclass declares `PROVIDER_INFO: ClassVar[ProviderInfo]`.
+   - **Locator-shape entries declared statically** in `provider_directory.py` (DOCX=ready from 27-1; PDF/MD/HTML=ready from pre-27 Texas; Notion-direct-API=ready; Box/Playwright-HTML=ready; Notion-MCP/Box/Playwright-MCP=ratified per 27-5/27-6/27-7 stubs).
+   - **Future-provider placeholders** (backlog status) for providers in Epic 27 roster (scite=ratified per 27-2; Consensus=ratified per 27-2.5; YouTube=ratified per 27-4; image=ratified per 27-3) AND `openai-chatgpt=backlog` as explicit non-roster placeholder per operator directive. As each story lands, its directory entry flips `backlog|ratified → stub → ready`.
+   - Purpose: single runtime surface for operators / Tracy / Marcus / audit tooling to enumerate "what Texas can fetch." Replaces implicit knowledge scattered across `transform-registry.md`, epic roster YAMLs, and adapter module lookups.
+
+9. **AC-B.9 — Directory CLI surface.** `run_wrangler.py` gains `--list-providers [--shape {retrieval,locator}] [--status {ready,stub,ratified,backlog}] [--json]` flag. Table output default; JSON for machine consumption. Exits 0 without dispatching any fetch when `--list-providers` is passed.
+
 ### Test (AC-T.*)
 
 1. **AC-T.1 — Schema-pin contract test.** `tests/contracts/test_acceptance_criteria_schema_stable.py` pins `RetrievalIntent` + `AcceptanceCriteria` + `TexasRow` from day one. Any change to these shapes without explicit migration → test fails. **Single most important test in the stack (Murat).**
@@ -97,6 +108,12 @@ Cross-validation (one provider confirms/supplements another) is a v1 requirement
 7. **AC-T.7 — Operator-direct-path regression.** Existing 27-1 DOCX invocation path remains byte-identical in output (extraction-report.yaml + all 6 artifacts). Proof that Shape 3 refactor doesn't regress the legacy locator-shape flows.
 
 8. **AC-T.8 — Regression suite-level gate (non-collecting AC).** Baseline from 27-1 closeout: 1036 passed / 2 skipped / 2 xfailed. Expected after 27-0: **+N collecting tests** (TBD at green-light; rough estimate +20-25). No xfail, no new skips, no new live_api, no new trial_critical.
+
+9. **AC-T.9 — Provider directory auto-registration contract test.** `tests/contracts/test_provider_directory_autoregister.py`: every concrete `RetrievalAdapter` subclass with a defined `PROVIDER_INFO` appears in `list_providers(shape="retrieval")`; assertion is parametrized over the subclass-registry so future adapters inherit the test automatically.
+
+10. **AC-T.10 — Locator-shape lockstep with directory.** `tests/contracts/test_provider_directory_locator_lockstep.py`: every entry in `LOCATOR_SHAPE_PROVIDERS` classification dict (AC-C.5) appears as a locator-shape `ProviderInfo` in the directory; every locator `ProviderInfo` appears in the classification dict. Bidirectional lockstep, mirrors the meta-principle.
+
+11. **AC-T.11 — Roster placeholder test.** `tests/contracts/test_provider_directory_roster_placeholders.py`: `ratified-stub` entries from Epic 27 sprint-status (scite, Consensus, image, YouTube, Notion-MCP, Box, Playwright-MCP) AND the operator-directed `openai-chatgpt: backlog` placeholder all appear in the directory with correct status. Prevents silent-drop when future stories add entries.
 
 ### Contract Pinning (AC-C.*)
 
@@ -127,6 +144,10 @@ Cross-validation (one provider confirms/supplements another) is a v1 requirement
 | `skills/bmad-agent-texas/scripts/retrieval/mcp_client.py` | **New** — Python MCP client utility (HTTP JSON-RPC) | +120 |
 | `skills/bmad-agent-texas/scripts/retrieval/normalize.py` | **New** — canonical `TexasRow` transformation helpers | +80 |
 | `skills/bmad-agent-texas/scripts/retrieval/refinement_registry.py` | **New** — deterministic refinement strategies (drop-filters-in-order, broaden-date-range, etc.) | +90 |
+| `skills/bmad-agent-texas/scripts/retrieval/provider_directory.py` | **New (operator amendment)** — `ProviderInfo` model, `list_providers` / `get_provider` surface, retrieval-shape auto-registry, locator-shape static declarations, roster placeholders (incl. `openai-chatgpt: backlog`) | +140 |
+| `tests/contracts/test_provider_directory_autoregister.py` | **New** — AC-T.9 | +40 |
+| `tests/contracts/test_provider_directory_locator_lockstep.py` | **New** — AC-T.10 | +35 |
+| `tests/contracts/test_provider_directory_roster_placeholders.py` | **New** — AC-T.11 | +25 |
 | `skills/bmad-agent-texas/scripts/run_wrangler.py` | **Touch** — integrate dispatcher; legacy-directive auto-transform to Shape 3 call; preserve existing locator-shape paths | +60 |
 | `skills/bmad-agent-texas/references/extraction-report-schema.md` | **Touch** — schema v1.1 (retrieval_intent, provider_hints, cross_validate, convergence_signal) | +70 |
 | `skills/bmad-agent-texas/references/retrieval-contract.md` | **New** — operator-facing + Tracy-facing documentation of the contract | +200 |
@@ -343,11 +364,68 @@ pyproject.toml                                  [TOUCH +1]  Python MCP client de
 
 ## Dev Agent Record
 
-_(filled by dev-story at implementation time)_
+**Closed 2026-04-18** — BMAD-clean.
+
+Implementation shipped:
+- 8 new retrieval modules under `skills/bmad-agent-texas/scripts/retrieval/`: `contracts.py`, `base.py`, `dispatcher.py`, `mcp_client.py`, `normalize.py`, `refinement_registry.py`, `fake_provider.py`, `provider_directory.py` + updated `__init__.py` public surface.
+- Schema v1.1 additive bump: `skills/bmad-agent-texas/references/extraction-report-schema.md` Changelog section + new `_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md` gate artifact.
+- Audience-segmented `skills/bmad-agent-texas/references/retrieval-contract.md` (Tracy / operators / dev-agents sections + anti-pattern three-beat + YAML example).
+- `run_wrangler.py --list-providers [--shape ...] [--status ...] [--json]` CLI short-circuits dispatch.
+- Repo-level `.cursor/mcp.json` + `.mcp.json` scite + Consensus URL entries.
+- `CLAUDE.md` pointer + Marcus `external-specialist-registry.md` breadcrumb (Paige green-light ask).
+- `responses` added to dev-deps (pyproject.toml + requirements.txt) for MCP client mocked-HTTP tests.
+- `pythonpath` extended in pyproject.toml to surface `retrieval` package.
+
+Post-green-light operator amendment (2026-04-18): Provider Directory fold added AC-B.8 (runtime `list_providers` surface with `ProviderInfo` Pydantic model), AC-B.9 (CLI flag), AC-T.9/T.10/T.11 (directory contract tests). Operator-directed `openai_chatgpt` backlog placeholder included per explicit ask; memory-noted distinction between enrichment / gap-filling / evidence-bolster parameter knobs for future Epic.
+
+Test delta landed: **+70 collecting tests** (target was +34). Full suite 1036 → **1106 passed / 2 skipped / 0 failed / 2 xfailed**. Ruff clean. No new `live_api`, no new `trial_critical`, no new `xfail`, no new `skip`.
 
 ## Review Record
 
-_(filled by bmad-code-review)_
+### Party-mode implementation review (2026-04-18)
+
+Four-panelist roundtable: Winston (Architect), Amelia (Dev), Murat (Test), Paige (Tech Writer).
+
+- **🏗️ Winston — GREEN**. Dispatcher distinctness clean; AC-C.11 dumbness clauses held (structural convergence signal, non-retry / non-fallback); AC-C.9 library-agnostic MCP surface clean; locator/retrieval separation enforced at `base.py::__init_subclass__`; identity-key guard at `_assert_identity_key_available`; directory amendment architecturally coherent (read-surface only, never feeds dispatch). One SHOULD-FIX: one-line comment at `list_providers` merge loop explaining live-supersedes-placeholder — applied.
+- **💻 Amelia — GREEN**. ABC extensibility clean for 27-2 scite / 27-2.5 Consensus; R1 (HTTP Basic) + R2 (flat refinement registry) + R3 (FakeProvider fixtures) all resolved; `ProviderHint.params` truly provider-opaque; schema v1.1 additive claim holds (v1.0 row validates against v1.1); `--list-providers` CLI short-circuits correctly before directive-required check. Two doc nits (base.py method-count, fixture-path drift) applied.
+- **🧪 Murat — GREEN**. Deterministic sequence fixtures held (zero `MagicMock`/`asyncio`/`sleep`); schema-pin mechanism enforces snapshot + allowlist + CHANGELOG gate with v1.1 + Story 27-0 token assertions; +60 tests all mapped to ACs; convergence-signal split into 6 atomic tests with 3-provider disagreement fixture; registry isolation fixture held. One optional polish (explicit 403 test) deferred to 27-2.
+- **📚 Paige — YELLOW → GREEN**. Audience segmentation clean; "Why minor bump" present; anti-pattern three-beat held; SCHEMA_CHANGELOG discipline good; CLAUDE.md surfaced. One must-fix: operators section needed `--list-providers` as env-var-discovery path (since `.env.example` was blocked by repo policy) — applied.
+
+**Party-mode consensus: GREEN → proceed to code-review.**
+
+### bmad-code-review layered (2026-04-18)
+
+Three adversarial layers: Blind Hunter (diff only, no context), Edge Case Hunter (diff + project read), Acceptance Auditor (diff + spec + context docs).
+
+**42 findings classified:**
+
+- **5 MUST-FIX applied:**
+  1. CR-1 / bh-m1: `budget=1` unmet logs `single_shot_unmet_budget_too_small_to_refine` instead of misleading `budget_exhausted`.
+  2. CR-2: `min_results=0` (and negative) now raises `DispatchError`; removes trivially-met footgun.
+  3. CR-3: Intra-provider duplicate `identity_key` surfaces `intra_provider_identity_key_duplicate` refinement-log entry rather than silent drop.
+  4. bh-m2: Non-improvement abort no longer overwrites `prev_raw` with worse follow-up — caller keeps better pre-regression data.
+  5. Paige Marcus breadcrumb: `external-specialist-registry.md` now names 27-0 + `--list-providers`.
+
+- **9 SHOULD-FIX applied:**
+  - bh-h2: `_STRATEGIES` refinement-registry snapshot fixture (mirrors adapter-registry pattern).
+  - bh-m7: Dead `signal_by_key` None-check removed; invariant made explicit.
+  - bh-m8 / H-5: Consistent sort ordering for `providers_agreeing` / `providers_disagreeing`; single-source branch now populates `providers_disagreeing` with checked-but-missed peers.
+  - H-6: `--list-providers` with `--directive` / `--bundle-dir` now emits stderr warning.
+  - M-9: `run_wrangler.SCHEMA_VERSION` renamed to `EXTRACTION_REPORT_SCHEMA_VERSION` (legacy alias retained) to disambiguate from `retrieval.SCHEMA_VERSION`.
+  - AC-T.1 dual-version: v1.0 baseline snapshot + additive-only regression test.
+  - `tests/contracts/test_schema_version_field_present.py`: created (Amelia green-light ask).
+  - AC-C.5: RETRIEVAL_SHAPE_PROVIDERS cross-reference + Paige meta-principle prose added to `test_transform_registry_lockstep.py`.
+  - M-5: `min_results="three"` now raises `DispatchError` instead of silent fallback.
+
+- **4 DISMISSED with rationale:**
+  - **AC-B.7 literal wiring + cascade** (dispatcher NOT wired into legacy `_fetch_source` path; dual-emit writer missing; log-stream parity + malformed-DOCX parity tests absent; parametrized `test_extraction_report_schema_compliance` over v1.0/v1.1 absent). Rationale: anti-pattern #3 prohibits locator-shape refactor; shape separation in `provider_directory` formalizes the split. AC-B.7's "transform" language is aspirational for future locator-shape unification. Full wiring + downstream cascade tests land naturally with 27-2 (first real retrieval-shape integration) + 27-5/27-6/27-7 era when locator-shape providers are formally adapterized. Explicitly deferred into 27-2's scope in `bmm-workflow-status.yaml`.
+  - **Anti-pattern #8 under-guarded**: spec self-contradictory (says "distinct code path" AND "degenerate case"); flag-based branching honors both readings; no fix needed.
+
+- **~22 NITs logged to `_bmad-output/maps/deferred-work.md`** — polymorphic dispatch return-type, MCPFetchError/MCPConfigError taxonomy split, test-fixture hygiene gaps, HTTP redirect default, test-only fragile parsing in FakeProvider, etc. None block 27-0 closure.
+
+**5 new regression-guard tests** added (dispatcher rejects min_results=0, rejects non-integer min_results, budget=1 distinct log, non-improvement preserves better prior, intra-provider identity_key duplicate logged) bringing test delta from +60 to **+70 collecting**.
+
+**bmad-code-review consensus: GREEN (0 MUST-FIX remaining) → close to done.**
 
 ## Party Input Captured (Round 3, 2026-04-17)
 
@@ -420,6 +498,7 @@ All 4 panelists voted **Option Y** (hand-rolled JSON-RPC-over-HTTP using existin
 ### Updated scope
 
 - **Target collecting tests: +30** (was +25), baseline 1036 → **1066 passed** / 2 skipped / 0 failed.
+- **2026-04-18 operator amendment** — Provider Directory fold (AC-B.8 / AC-B.9 / AC-T.9 / AC-T.10 / AC-T.11): +4 collecting tests and 1 new module (`provider_directory.py`). Revised target: **+34 collecting tests, baseline 1036 → 1070 passed** / 2 skipped / 0 failed. 5-pt estimate holds (directory is ~140 LOC + 100 LOC tests; within pre-green-light risk buffer). No schema-pin impact — `ProviderInfo` is a new type, not a modification to `RetrievalIntent` / `AcceptanceCriteria` / `TexasRow`. Locator-shape auto-registry sourced from existing `LOCATOR_SHAPE_PROVIDERS` lockstep dict (no duplicated source-of-truth).
 - **5-pt estimate holds** IF dev-guide.md authoring deferred to 27-2 (scope-compress) AND MCP library decision locked (Option Y) AND pre-dev checks pass. Otherwise re-estimate at 6.
 
 ### Verdicts

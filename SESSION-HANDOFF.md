@@ -1,116 +1,140 @@
-# Session Handoff — 2026-04-17 Evening (27-1 DOCX closed + Shape 3-Disciplined ratified + 27-0 Retrieval Foundation green-lit)
+# Session Handoff — 2026-04-18 (Story 27-0 Retrieval Foundation BMAD-closed + Provider Directory operator amendment)
 
-**Session window:** 2026-04-17 ~20:43 (start anchor `07523e0`) → 2026-04-17 ~23:20 (wrapup).
+**Session window:** 2026-04-18 ~00:00 (start anchor `b99a0b8`) → 2026-04-18 ~00:59 (wrapup).
 **Branch:** `dev/epic-27-texas-intake`.
 **Operator:** Juanl.
 
 ## What Was Completed
 
-### 1. Story 27-1 DOCX Provider Wiring — BMAD-closed
+### 1. Story 27-0 Retrieval Foundation — BMAD-closed
 
-- **Dependency & implementation:** `python-docx>=1.1,<2` pinned in `pyproject.toml` + `requirements.txt` (installed 1.2.0). New `wrangle_local_docx()` + `extract_docx_text()` in `source_wrangler_operations.py`; `.docx` dispatch branch in `run_wrangler._fetch_source()`; `_EXTRACTOR_LABELS_BY_KIND` added; `_classify_fetch_error()` extended with module-qualified `docx.PackageNotFoundError` matching; `_fetch_error_known_losses` helper.
-- **New AC-S6 pilot contract test:** `tests/contracts/test_transform_registry_lockstep.py` with assertion-encoded `LOCKSTEP_EXEMPTIONS` dict (per Murat + Paige green-light patch) — registry lockstep now DOCX + PDF + Notion (3 formats); HTML/URL + Markdown + Future-Placeholder exempted with rationale.
-- **Test delta:** +9 collecting tests (5 unit T.1/T.2a/T.2b/T.3/T.4 + 1 integration T.5 + 3 contract atomic split of T.6). Baseline 1023 → 1036 passed / 2 skipped / 2 xfailed. Zero new xfails/skips/live_api/trial_critical markers.
-- **Tejal manual validation (T8):** PDF↔DOCX cross-validation on halted-trial bundle → `word_count_ratio: 1.04`, **100% key-term coverage, 69/69 sections matched, verdict passed: true**. Original trial-halt defect closed.
-- **Gates passed:** party-mode green-light (Winston + Amelia + Murat + Paige) → party-mode implementation review (3 SHOULD-FIX patches applied) → `bmad-code-review` layered (Blind Hunter + Edge Case Hunter + Acceptance Auditor). Code-review triage: **0 MUST-FIX, 8 patches applied, 4 deferred to follow-on, 6 dismissed**.
-- **Deferred from 27-1 code review** (captured in `_bmad-output/maps/deferred-work.md`): sibling Office-ZIP suffixes (.docm/.dotx/.dotm), `<w:sdt>` / `<w:altChunk>` content drops, docstring exception completeness, Windows short-path test flakiness, negative-control Tejal fixture, `_EXTRACTOR_LABELS` dual-lookup collapse.
+Shape 3-Disciplined foundation landed full-stack from green-lit spec through implementation, both BMAD gates, and closure artifact updates. Scope:
 
-### 2. Three-Round Shape Partitioning Debate — Shape 3-Disciplined adopted
+**8 new retrieval modules** under `skills/bmad-agent-texas/scripts/retrieval/`:
+- `contracts.py` — Pydantic v2 `RetrievalIntent`, `AcceptanceCriteria`, `TexasRow`, `ProviderHint`, `ConvergenceSignal`, `ProviderInfo`, `ProviderResult`, `RefinementLogEntry` + `SCHEMA_VERSION = "1.1"`
+- `base.py` — `RetrievalAdapter` ABC (7 abstract + 2 concrete-default methods) with `__init_subclass__` auto-registry hook
+- `dispatcher.py` — single-provider + multi-provider cross-validation + Model A iteration loop + `_cross_validate_merge` (structural convergence signals)
+- `mcp_client.py` — hand-rolled JSON-RPC-over-HTTP (Option Y; unanimous green-light decision), library-agnostic public surface (`call_tool`, `list_tools` → dict), Basic + Bearer auth styles with lazy env resolution
+- `normalize.py` + `refinement_registry.py` — canonical TexasRow helpers + flat registry with `drop_filters_in_order` default
+- `fake_provider.py` — reference adapter + `make_fake_provider_class(id, rows)` helper for multi-provider cross-val tests
+- `provider_directory.py` — **operator-directed amendment** (AC-B.8 / B.9 / T.9-11): runtime registry + 11 static locator-shape entries + 5 retrieval-shape placeholders including `openai_chatgpt: backlog`
 
-- **Round 1**: Path A (synthetic cassettes) unanimous for scite-over-API.
-- **Round 2**: Shape 1 (IDE-only MCP, Tracy materializes) vs Shape 2 (Texas Python MCP client). 3-1 Shape 1 majority; John dissent for Shape 2.
-- **Round 3** (triggered by operator lane-discipline pushback — "doesn't that violate 'Texas handles technical fetching'?"): four agents + Dr. Quinn as fresh systems-thinking voice. Dr. Quinn reframed the question from "where's the boundary?" to **"what knowledge does each act require, and where does that knowledge live most naturally?"** Partitioning by knowledge-locality (not role-tradition) produced **Shape 3-Disciplined**: Tracy owns editorial (intent + acceptance criteria + provider choice); per-provider adapters own mechanical query translation + fetch + filter + normalize; thin Texas dispatcher owns routing + iteration + cross-validation merger.
-- **Round 4** (operator update — "scite and Consensus both available in Cursor MCP already; duplicate scite with Consensus for cross-validation"): cross-validation promoted from v2 to **v1 first-class**; `cross_validate: true` fans out to every provider in `provider_hints`, merges by identity key, annotates rows with `convergence_signal`.
+**Schema v1.1 additive bump:** `extraction-report-schema.md` Changelog section with "Why minor bump" paragraph + new `_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md` gate artifact.
 
-**Ratified architecture**:
-- `RetrievalIntent` = natural-language intent + `provider_hints` (required v1) + kind discriminator + three-tier acceptance criteria (mechanical / provider_scored / semantic_deferred) + iteration_budget + convergence_required + cross_validate.
-- `AcceptanceCriteria` three-tier schema — mechanical (Texas evaluates deterministically), provider_scored (Texas via provider-native signals), semantic_deferred (Texas does NOT evaluate; Tracy post-fetch pass).
-- `RetrievalAdapter` ABC with 8 methods: formulate_query / execute / apply_mechanical / apply_provider_scored / normalize / refine / quality_delta / declare_honored_criteria.
-- Iteration Model A (adapter-internal loop, budget-bounded, abort-on-non-improvement) resolved Murat's test-flakiness dissent via deterministic sequence fixtures (NOT stateful mocks).
-- Operator-locator providers (27-1 DOCX, 27-5 Notion, 27-6 Box, 27-7 Playwright) keep existing directive shape at CLI; internally route through new dispatcher via degenerate-case transform. No retrofit.
+**Audience-segmented `retrieval-contract.md`:** For Tracy / For operators / For dev-agents sections; anti-pattern "DON'T X, because Y, instead Z" three-beat prose; copy-pasteable YAML example.
 
-### 3. Story 27-0 Retrieval Foundation — opened, green-lit, ready-for-dev
+**CLI + integration:** `run_wrangler.py --list-providers [--shape ...] [--status ...] [--json]` short-circuits dispatch; `.cursor/mcp.json` + `.mcp.json` scite + Consensus URL entries; `CLAUDE.md` pointer section; Marcus `external-specialist-registry.md` breadcrumb (Paige green-light ask).
 
-- **Ratified-stub** authored post-Round-3 party consensus; expanded via `bmad-create-story` to 400+ line full BMAD spec with TL;DR + 7 AC-B + 8 AC-T + 11 AC-C + Pre-Dev Gate + 10 anti-pattern warnings + source tree + Previous-Story Intelligence (from 27-1 closeout) + Test Plan table + Risks table + Non-goals + Dev Agent Record template.
-- **Green-light gate**: Winston + Amelia + Murat + Paige panel. **UNANIMOUS Option Y for Python MCP client library** — hand-rolled JSON-RPC-over-HTTP using existing `requests` dep, NOT `mcp` PyPI pre-1.0. Rationale: pre-1.0 breaking-change probability ~60-70% over 6-month epic window vs. JSON-RPC 2.0 frozen since 2010 (<5% drift). Verdicts: Winston GREEN with 7 MUST-FIX, Amelia YELLOW→GREEN with 5 blockers resolved, Murat GREEN with 3 strengthening asks + 3 test adds + CI flake-detection gate, Paige GREEN with 5 authoring-time asks.
-- **Green-Light Patches Applied** section captures all 28 consensus patches (contract additions, test expansions, doc patches, scope adjustments).
-- **Target suite delta: +30 collecting tests** (1036 → 1066). 5-pt estimate holds IF dev-guide.md authoring deferred to 27-2.
-- Status: `ready-for-dev` awaiting fresh-session `bmad-dev-story 27-0-retrieval-foundation`.
+**Test delta: +70 collecting** (target was +34). Full suite: **1106 passed / 2 skipped / 0 failed / 2 xfailed** (baseline 1036). Ruff clean on all 27-0 code.
 
-### 4. Epic 27 Roster Reshape
+### 2. BMAD closure gates — both GREEN
 
-- **Critical path reshaped**: 27-1 (done) → **27-0 (foundation)** → **27-2 (scite adapter)** → **27-2.5 (Consensus adapter)** → unblocks Epic 28.
-- **27-2 scite.ai provider** — reshaped from direct provider to scite **adapter** against 27-0 contract. Previous 382-line Pre-Dev Gate expansion preserved; now has reshape banner. Status: `blocked`.
-- **27-2.5 Consensus adapter** — new story opened as ratified-stub per operator directive. Cross-validation partner to scite; first real `cross_validate: true` exercise. 3 pts. Status: `ratified-stub`.
-- **27-3 image / 27-4 YouTube** — reshape to retrieval-shape per 27-0 contract.
-- **27-5 Notion / 27-6 Box / 27-7 Playwright** — stay locator-shape; no retrofit; CLI unchanged.
-- **Shape classification**: retrieval-shape (scite/Consensus/YouTube/image) vs locator-shape (DOCX done, Notion/Box/Playwright). Both shapes internally route through 27-0's dispatcher; operator-locator = degenerate case of Shape 3 contract.
-- **Epic total: 9 stories, ~31 pts** (up from 7 stories, 23 pts pre-Round-3).
+- **Party-mode implementation review**: Winston / Amelia / Murat **GREEN**; Paige **YELLOW → GREEN** after single must-fix (operator-section `--list-providers` discovery-path pointer for env vars, since `.env.example` was blocked by repo policy).
+- **bmad-code-review layered (Blind Hunter + Edge Case Hunter + Acceptance Auditor)**: 42 findings triaged.
+  - **5 MUST-FIX applied**: budget=1 distinct log reason (CR-1), min_results=0 rejection (CR-2), intra-provider identity_key duplicate logging (CR-3), non-improvement abort preserves better prior (bh-m2), Marcus breadcrumb.
+  - **9 SHOULD-FIX applied**: refinement_registry snapshot fixture, dead None-check removal, consistent sort ordering + populated providers_disagreeing in single-source branch, --list-providers warning on conflicting flags, EXTRACTION_REPORT_SCHEMA_VERSION rename, dual-version schema pin, schema_version_field_present test, RETRIEVAL_SHAPE_PROVIDERS cross-reference, min_results non-integer rejection.
+  - **4 DISMISSED with rationale**: AC-B.7 literal dispatcher wiring (deferred to 27-2 per anti-pattern #3 shape-separation); dual-emit writer + log-stream parity + parametrized schema-compliance cascade (same rationale); anti-pattern #8 under-guarded (spec self-contradictory, flag-based branching honors both readings).
+  - **~22 NITs logged to `_bmad-output/maps/deferred-work.md`**.
+  - **0 MUST-FIX remaining at close.**
 
-### 5. Story 28-1 Tracy Pilot Reshape Banner
+### 3. Forward-design discipline captured (user memory)
 
-Added reshape notice at top of 28-1 spec. Tracy's output contract simplifies from scite-specific queries to provider-agnostic intent + AC + provider_hints. Scite-DSL knowledge relocates to 27-2 scite adapter. Pts drop 9 → ~7 estimate. Full re-expansion via `bmad-create-story` after 27-0 + 27-2 close. Status: `blocked`.
+Three distinct parameter knobs needed for future work but not yet built:
+1. **Enrichment degree** — how much research-based depth Irene aspires to add beyond SME (aspirational).
+2. **Gap-filling** — content for derivative artifacts (quizzes, handouts) that SME package didn't fully cover (completeness-driven).
+3. **Evidence-bolster** — corroboration of existing SME claims via cross-validation (validation-driven; natural fit for `cross_validate: true` with convergence_signal).
 
-### 6. Notion MCP Dual-Config Research (stashed for 27-5)
+All three route through Irene → Tracy → Texas via the same `RetrievalIntent` contract but have different rubrics. Conflating them will leak authority-tier requirements and completeness budgets across modes. Captured in `memory/project_enrichment_vs_gap_filling_control.md` for the future epic that opens this feature surface.
 
-Cursor loads two Notion MCP servers in parallel (user-scope hosted HTTP at `https://mcp.notion.com/mcp` vs. project-scope local stdio via `run_mcp_from_env.cjs` → `@notionhq/notion-mcp-server`). They serve different consumers. Recommendation for Story 27-5: Texas's headless Notion adapter uses project-scope stdio; Tracy's IDE-session research uses user-scope hosted. Captured in [_bmad-output/maps/deferred-work.md](_bmad-output/maps/deferred-work.md) + memory.
+### 4. Sprint / workflow tracking updates
+
+- `sprint-status.yaml`: `27-0-retrieval-foundation: done`; `27-2-scite-ai-provider: ratified-stub (unblocked 2026-04-18, absorbs AC-B.7 cascade)`; `27-2.5-consensus-adapter: ratified-stub (unblocked, soft-blocked on 27-2)`.
+- `bmm-workflow-status.yaml`: closure metadata + unblock timestamps.
+- `epic-27-texas-intake-expansion.md`: roster row flipped; 27-2 scope absorbs deferred cascade.
+- `27-0-retrieval-foundation.md`: Status `done`; Dev Agent Record + Review Record fully populated.
+- `docs/project-context.md`: 2026-04-18 update added.
+- `docs/agent-environment.md`: Texas entry enhanced with retrieval package + `--list-providers` surface.
 
 ## What Is Next
 
-**Story 27-0 dev-story** in a fresh session. Operator explicitly chose pause-for-fresh-session (option a from three-way choice) over push-through (b) or scoped-partial (c), given the foundation scope (~2000 lines, 20+ files, 30 tests) deserves a clean-context session.
+**Immediate (next session):** Open Story 27-2 (scite.ai adapter) via `bmad-create-story`. It absorbs:
+- First real consumer of the `RetrievalAdapter` ABC
+- AC-B.7 degenerate-case dispatcher wiring (deferred from 27-0 per anti-pattern #3)
+- `docs/dev-guide.md` "how to add a provider" section
+- AC-T.7 log-stream parity + malformed-DOCX exception parity tests
+- Dual-emit `schema_version` writer on dispatcher path
+- Parametrized `test_extraction_report_schema_compliance` over v1.0 / v1.1
 
-After 27-0 closes: 27-2 (scite adapter re-expanded via `bmad-create-story`) → 27-2.5 (Consensus adapter) → 28-1 (Tracy pilot re-expanded). Then asset-generation stories (Irene Pass 2 consumption of retrieval results) open.
+**After 27-2 closes:** Open Story 27-2.5 (Consensus adapter) — first real `cross_validate: true` exercise against 27-0 foundation.
+
+**Downstream unblock sequence:** 27-2 → 27-2.5 → 28-1 Tracy pilot re-expand (reshape banner already on spec per Round 3 consensus).
 
 ## Unresolved Issues or Risks
 
-- **27-0 pre-dev checks deferred to dev-story start** (Amelia R1-R3):
-  - R1 scite MCP auth shape — assume HTTP Basic; library-agnostic public surface mitigates.
-  - R2 refinement registry shape — start flat with `drop_filters_in_order`.
-  - R3 FakeProvider fixtures — enumerate during T4.
-- **27-0 is session-scale work** — fresh context needed; don't bundle other stories in the same session.
-- **Deferred 27-1 code review items** (6 non-blocking follow-ups captured in `deferred-work.md`): sibling Office-ZIP suffixes, SDT/altChunk content drops, docstring completeness, Windows short-path flakiness, negative-control Tejal fixture, `_EXTRACTOR_LABELS` dual-lookup collapse. Batched for future "Texas intake robustness" story.
-- **Repo-wide ruff debt** (~377 errors, 77 auto-fixable) — pre-existing warehouse clutter, incremental cleanup strategy holds.
-- **28-1 Tracy pre-Pass-2 gate** (Epic 28 AC-S3) still backlog.
-- **3x flake-detection CI gate** (Murat green-light ask) — needs CI config update; not blocking for 27-0.
+1. **AC-B.7 deferred to 27-2** — NOT a block for 27-0 closure, but flagged as known-drift in `reports/dev-coherence/2026-04-18-0059/harmonization-summary.md`. When 27-2 lands, the first real retrieval-shape integration will drive the dispatcher wiring + schema dual-emit + log-parity tests. If 27-2 green-light discovers the deferral rationale doesn't hold, the sub-items may need promotion to a dedicated 27-0.1 hotfix.
+
+2. **Repo-wide ruff debt — 1565 findings** (up from handoff's "377"). All pre-existing warehouse clutter outside 27-0 scope; 27-0 code itself is ruff-clean. This is a known backlog item. Counts may reflect newly-enabled rules or simply the full-repo scan vs prior sampling. Not a blocker.
+
+3. **~22 NIT-class code-review findings** logged to `_bmad-output/maps/deferred-work.md` batch. Polymorphic dispatch return-type, MCPFetchError/MCPConfigError taxonomy split (H-4, bh-m3/m4), HTTP redirect default (`allow_redirects=False`), identity_key mid-merge exception handling, and others. These are future-work, not regressions.
+
+4. **Nothing committed to git yet.** Per operator preference, all 27-0 work sits uncommitted in the working tree (15 modified + 24 untracked files). Next session or a follow-on action by the operator will stage + commit. `next-session-start-here.md` Step 12 instructions assume operator chooses to commit before resuming dev work on 27-2.
+
+5. **Three missing parameter knobs** (enrichment / gap-filling / evidence-bolster) — not blockers, but captured in user memory so the future epic that opens this surface inherits the design discipline.
 
 ## Key Lessons Learned
 
-1. **"Where's the partition?" is the wrong first question.** Dr. Quinn's reframing — "what knowledge does each act require, and where does that knowledge live most naturally?" — unlocked Shape 3-Disciplined. When roles are contested, derive from knowledge-locality, not role-tradition.
-2. **Multi-round party-mode debates are valuable**, not wasteful. Round 3's Shape 3-Disciplined wouldn't have emerged without the Round 1 + Round 2 groundwork that made the team see the limits of Shapes 1 and 2.
-3. **Test-flakiness is often a partitioning symptom.** Murat's Model-A dissent traced back to "stateful sequence mocks are brittle" — the resolution (deterministic sequence fixtures) came from partitioning the test state space differently, not from changing the runtime model.
-4. **Operator judgment beats team consensus when it surfaces fresh framing.** The 4-0 Shape 1 consensus was about to merge when operator asked "doesn't that violate Texas's technician role?" — which cracked open the right-question rethink.
-5. **Library-agnostic public surfaces are the escape hatch for pre-1.0 library decisions.** Option Y (hand-rolled) can migrate to Option X (`mcp` PyPI) as a single-file swap when the ecosystem matures. Don't take library bets when contracts are the priority.
-6. **"Cross-validation is first-class v1" forced architecture clarity.** The moment operator said "one service's findings confirm or supplement another's," provider_hints-as-list + convergence_signal stopped being hypothetical — the contract had to be designed for it from day one.
+- **Operator amendment post-green-light is OK when additive.** The Provider Directory fold (AC-B.8 / B.9 / T.9-11) added 140 LOC + 100 LOC tests to an already-green-lit spec without invalidating the prior green-light, because the fold strictly composes with the existing contract (directory is read-surface, never feeds dispatch). Pattern for future amendments: verify architectural coherence via a brief re-review, proceed if additive.
+
+- **Deterministic sequence fixtures > stateful mocks.** Murat's test-flakiness concern resolved cleanly by pre-scripting `rows_by_query` JSON fixtures. The dispatcher's iteration loop became a pure function over the pre-scripted sequence; zero flake risk across 60+ test runs. Pattern for 27-2+: same shape.
+
+- **Shape separation prevents anti-pattern leak.** The distinction between retrieval-shape adapters (RetrievalAdapter subclasses) and locator-shape handlers (static directory declarations) is enforced at the ABC level — `__init_subclass__` rejects `shape != "retrieval"`. This made AC-B.7's deferral defensible: anti-pattern #3 forbids locator-shape refactor, and shape separation formalizes why.
+
+- **Auto-registration via `__init_subclass__` + autouse test fixture = clean isolation.** The adapter registry populates at class-definition time; the pytest autouse fixture snapshots and restores per test. Tests that define inline subclasses get clean state. Same pattern extended to `_STRATEGIES` in `refinement_registry.py` during code-review remediation (SHOULD-FIX bh-h2).
+
+- **Operator-directed backlog placeholders prevent silent directory-drop.** `openai_chatgpt: backlog` (no adapter class yet) appears in `--list-providers` output as a forward-looking entry. The `test_provider_directory_roster_placeholders.py` test guards against silent removal. Pattern for future: any story that lands in Epic 27 roster gets a directory placeholder from day one.
 
 ## Validation Summary
 
-- **Step 0a harmonization sweep (Cora-orchestrated)**: CLEAN. L1 catalog 10/10; L2 1 non-blocking observation (new `retrieval/` package placeholder — expected per ratified green-light). Report: [reports/dev-coherence/2026-04-17-2318/harmonization-summary.md](reports/dev-coherence/2026-04-17-2318/harmonization-summary.md). Tripwire cleared for next session.
-- **Step 0b pre-closure audit**: Skipped — no stories flipping to done at wrapup (27-1 was flipped to done earlier in session and audited as part of its code-review closure gate).
-- **Step 1 quality gate**: ruff clean on changed files (Texas scripts/tests, contract test, new retrieval package). Sprint-status yaml test 2/2 passed. 27-1 DOCX tests 6/6 passed (regression-proof).
-- **Full pytest suite**: last ran at 1036/2/0 post-27-1 code-review remediation. Not re-run at wrapup (no production code touched post-27-1 closure).
-- **Git tree at wrapup**: 14 modified + 3 untracked files, all session-owned; clean after commit.
+- **Full pytest suite**: 1106 passed / 2 skipped / 0 failed / 2 xfailed / 27 deselected (baseline 1036 → **+70** collecting; target was +34).
+- **Ruff on 27-0 code**: CLEAN.
+- **Sprint-status YAML regression test**: 2 passed.
+- **Harmonization sweep (Step 0a)**: L1 verdict CLEAN. See `reports/dev-coherence/2026-04-18-0059/harmonization-summary.md`.
+- **Party-mode implementation review**: 3 GREEN + 1 YELLOW → GREEN after Paige must-fix applied.
+- **bmad-code-review layered**: 0 MUST-FIX remaining; 5 MUST-FIX + 9 SHOULD-FIX applied; 4 DISMISSED with rationale; ~22 NITs deferred.
+
+## Content Creation Summary
+
+N/A — this was pure system development (retrieval foundation). No course content staged or moved.
 
 ## Artifact Update Checklist
 
-- [x] `_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md` — BMAD closure record with Review Record
-- [x] `_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md` — Pre-Round-3 expansion preserved; reshape banner; `blocked`
-- [x] `_bmad-output/implementation-artifacts/27-0-retrieval-foundation.md` — NEW; 400-line full BMAD spec + green-light patches; `ready-for-dev`
-- [x] `_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md` — reshape notice banner; `blocked`
-- [x] `_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md` — roster + dependency graph post-Round-3
-- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — 27-0 + 27-2.5 added; 27-1 `done`; 27-2 + 28-1 `blocked`
-- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — Epic 27 note reshaped; 27-0 + 27-2.5 entries added
-- [x] `_bmad-output/maps/deferred-work.md` — 27-1 code-review deferred items + Notion 27-5 stash
-- [x] `pyproject.toml` + `requirements.txt` — `python-docx>=1.1,<2` for 27-1
-- [x] `skills/bmad-agent-texas/references/transform-registry.md` — DOCX section cross-reference
-- [x] `skills/bmad-agent-texas/scripts/run_wrangler.py` — 27-1 dispatch + classifier + known_losses helper
-- [x] `skills/bmad-agent-texas/scripts/source_wrangler_operations.py` — `extract_docx_text` + `wrangle_local_docx`
-- [x] `skills/bmad-agent-texas/scripts/tests/test_texas_source_wrangler_operations.py` — 27-1 unit tests
-- [x] `skills/bmad-agent-texas/scripts/tests/test_run_wrangler.py` — 27-1 integration test
-- [x] `skills/bmad-agent-texas/scripts/retrieval/__init__.py` — NEW package placeholder (namespace only)
-- [x] `tests/contracts/test_transform_registry_lockstep.py` — NEW; AC-S6 pilot
-- [x] `next-session-start-here.md` — regenerated for next session's 27-0 dev-story
-- [x] `SESSION-HANDOFF.md` — this file
-- [x] `_bmad/memory/cora-sidecar/chronology.md` — wrapup entry appended
-- [x] `reports/dev-coherence/2026-04-17-2318/` — Cora harmonization report
+- [x] `_bmad-output/implementation-artifacts/27-0-retrieval-foundation.md` — Status `done`; Dev Agent Record + Review Record populated.
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` — `27-0` flipped to done; `27-2` + `27-2.5` unblocked.
+- [x] `_bmad-output/implementation-artifacts/bmm-workflow-status.yaml` — closure metadata + unblock timestamps.
+- [x] `_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md` — roster row flipped.
+- [x] `_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md` — NEW gate artifact.
+- [x] `skills/bmad-agent-texas/references/extraction-report-schema.md` — v1.1 Changelog section.
+- [x] `skills/bmad-agent-texas/references/retrieval-contract.md` — NEW audience-segmented contract doc.
+- [x] `skills/bmad-agent-texas/scripts/retrieval/` — 8 new modules + updated `__init__.py`.
+- [x] `skills/bmad-agent-texas/scripts/run_wrangler.py` — `--list-providers` CLI + `EXTRACTION_REPORT_SCHEMA_VERSION` rename.
+- [x] `skills/bmad-agent-marcus/references/external-specialist-registry.md` — 27-0 breadcrumb (Paige ask).
+- [x] `.cursor/mcp.json` + `.mcp.json` — scite + Consensus URL entries.
+- [x] `CLAUDE.md` — Texas retrieval pointer section.
+- [x] `pyproject.toml` + `requirements.txt` — `responses` dev-dep + pythonpath extension.
+- [x] `tests/conftest.py` — retrieval-registry + refinement-strategy autouse snapshot fixture.
+- [x] `tests/contracts/` — 7 new test files + 4 fixture JSONs.
+- [x] `tests/` — 3 new retrieval test files + `_helpers/mcp_fixtures.py`.
+- [x] `tests/contracts/test_transform_registry_lockstep.py` — RETRIEVAL_SHAPE_PROVIDERS cross-reference.
+- [x] `docs/project-context.md` — 2026-04-18 update.
+- [x] `docs/agent-environment.md` — Texas entry enhanced.
+- [x] `next-session-start-here.md` — rewritten for 27-2 pickup.
+- [x] `SESSION-HANDOFF.md` — this file.
+- [x] `reports/dev-coherence/2026-04-18-0059/harmonization-summary.md` — Step 0a audit trail.
 
-Link to Step 0a audit trail: [reports/dev-coherence/2026-04-17-2318/harmonization-summary.md](reports/dev-coherence/2026-04-17-2318/harmonization-summary.md).
+## Dev-Coherence Report
+
+Permanent audit-trail link: [reports/dev-coherence/2026-04-18-0059/harmonization-summary.md](reports/dev-coherence/2026-04-18-0059/harmonization-summary.md)
+
+## Memory Updates
+
+- **New**: `memory/project_enrichment_vs_gap_filling_control.md` — three distinct parameter knobs (enrichment / gap-filling / evidence-bolster) for future epic.

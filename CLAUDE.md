@@ -12,3 +12,7 @@ This repository uses BMAD methodology. For sprint-style runs, follow the **BMAD 
 6. **Impasse** means: relevant voices in party mode have had at least one full round, the disagreement is stated explicitly, and no consensus option remains acceptable to all; it does not mean routine questions or a single agent’s uncertainty.
 
 Related skills: `bmad-help`, `bmad-party-mode`, `bmad-code-review`, `bmad-quick-dev`, `bmad-sprint-run-charter`.
+
+## Texas retrieval
+
+Shape 3-Disciplined retrieval contract lives at [`skills/bmad-agent-texas/references/retrieval-contract.md`](skills/bmad-agent-texas/references/retrieval-contract.md). The provider directory (`run_wrangler.py --list-providers`, or `retrieval.list_providers()`) is authoritative for "what Texas can fetch." Schema v1.1 changelog at [`_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md`](_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md).

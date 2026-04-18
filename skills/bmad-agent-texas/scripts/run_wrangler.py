@@ -85,7 +85,13 @@ _cli_encoding.ensure_utf8_stdout()
 
 VALIDATOR_VERSION = "extraction_validator.py@2026-04-17"
 RUNNER_VERSION = "run_wrangler.py@2026-04-17"
-SCHEMA_VERSION = "1.0"
+# Extraction-report envelope schema (distinct from retrieval.SCHEMA_VERSION
+# which pins the RetrievalIntent / AcceptanceCriteria / TexasRow contracts).
+# Rename eliminates the cross-module name collision flagged by code-review
+# 2026-04-18 (finding M-9). Legacy alias `SCHEMA_VERSION` retained below for
+# internal callers — future cleanup can drop it when call-sites migrate.
+EXTRACTION_REPORT_SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = EXTRACTION_REPORT_SCHEMA_VERSION
 
 
 # ---------------------------------------------------------------------------
@@ -1060,6 +1066,67 @@ def run(directive_path: Path, bundle_dir: Path) -> dict[str, Any]:
     return yaml.safe_load(result_path.read_text(encoding="utf-8"))
 
 
+def _list_providers_cli(
+    *,
+    shape: str | None,
+    status: str | None,
+    as_json: bool,
+) -> int:
+    """CLI handler for ``--list-providers`` (Story 27-0 AC-B.9).
+
+    Imports the retrieval directory lazily so the rest of run_wrangler's
+    boot path is unaffected on installations that haven't built the
+    package yet (future rollback safety).
+    """
+    try:
+        from retrieval.provider_directory import list_providers
+    except ImportError as exc:
+        sys.stderr.write(
+            f"[run_wrangler] retrieval package unavailable: {exc}\n"
+            "[run_wrangler] --list-providers requires the Story 27-0 "
+            "retrieval foundation\n"
+        )
+        return EXIT_DIRECTIVE_OR_IO_ERROR
+
+    providers = list_providers(shape=shape, status=status)
+
+    if as_json:
+        sys.stdout.write(
+            json.dumps(
+                [p.model_dump() for p in providers],
+                indent=2,
+            )
+            + "\n"
+        )
+        return EXIT_COMPLETE
+
+    # Human-readable table.
+    sys.stdout.write(
+        f"\nTexas provider directory ({len(providers)} entries)\n"
+    )
+    if shape or status:
+        filters = []
+        if shape:
+            filters.append(f"shape={shape}")
+        if status:
+            filters.append(f"status={status}")
+        sys.stdout.write(f"Filters: {', '.join(filters)}\n")
+    sys.stdout.write(
+        f"  {'ID':22} {'SHAPE':10} {'STATUS':10} {'CAPABILITIES':40} AUTH\n"
+    )
+    sys.stdout.write(f"  {'-' * 22} {'-' * 10} {'-' * 10} {'-' * 40} {'-' * 20}\n")
+    for p in providers:
+        caps = ", ".join(p.capabilities[:3])
+        if len(p.capabilities) > 3:
+            caps += f", +{len(p.capabilities) - 3}"
+        auth = ", ".join(p.auth_env_vars) or "-"
+        sys.stdout.write(
+            f"  {p.id:22} {p.shape:10} {p.status:10} {caps[:40]:40} {auth}\n"
+        )
+    sys.stdout.write("\n")
+    return EXIT_COMPLETE
+
+
 def main(argv: list[str] | None = None) -> int:
     # Story 26-7 AC-C.2: force UTF-8 stdout/stderr before any print so a
     # Windows cp1252 terminal does not crash on non-ASCII source titles.
@@ -1074,13 +1141,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--directive",
         type=Path,
-        required=True,
+        required=False,
         help="Path to the wrangling directive YAML.",
     )
     parser.add_argument(
         "--bundle-dir",
         type=Path,
-        required=True,
+        required=False,
         help="Bundle directory where artifacts are written.",
     )
     parser.add_argument(
@@ -1088,8 +1155,49 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Emit the result envelope as JSON to stdout (default: YAML).",
     )
+    parser.add_argument(
+        "--list-providers",
+        action="store_true",
+        help=(
+            "Print the Texas provider directory (what sources Texas can "
+            "fetch from) and exit. Skips dispatch entirely; --directive / "
+            "--bundle-dir not required."
+        ),
+    )
+    parser.add_argument(
+        "--shape",
+        choices=["retrieval", "locator"],
+        default=None,
+        help="Filter --list-providers output by provider shape.",
+    )
+    parser.add_argument(
+        "--status",
+        choices=["ready", "stub", "ratified", "backlog"],
+        default=None,
+        help="Filter --list-providers output by status.",
+    )
 
     args = parser.parse_args(argv)
+
+    # Story 27-0 AC-B.9: --list-providers short-circuits dispatch.
+    if args.list_providers:
+        # SHOULD-FIX H-6 (code-review 2026-04-18): warn if --directive /
+        # --bundle-dir were ALSO supplied — they'll be silently ignored.
+        if args.directive is not None or args.bundle_dir is not None:
+            sys.stderr.write(
+                "[run_wrangler] --list-providers short-circuits dispatch; "
+                "--directive / --bundle-dir were supplied but will be ignored\n"
+            )
+        return _list_providers_cli(
+            shape=args.shape, status=args.status, as_json=args.json
+        )
+
+    if args.directive is None or args.bundle_dir is None:
+        sys.stderr.write(
+            "[run_wrangler] --directive and --bundle-dir are required unless "
+            "--list-providers is passed\n"
+        )
+        return EXIT_DIRECTIVE_OR_IO_ERROR
 
     try:
         envelope = run(args.directive, args.bundle_dir)

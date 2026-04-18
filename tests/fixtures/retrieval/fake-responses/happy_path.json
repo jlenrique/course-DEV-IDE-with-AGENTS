@@ -1,0 +1,17 @@
+{
+  "description": "Happy-path fixture for dispatcher iteration tests. Initial query returns 3 rows; refinement round 1 adds 2 more.",
+  "rows_by_query": {
+    "initial:sleep hygiene studies": [
+      {"source_id": "doi:10.1/a", "title": "Study A", "authority_tier": "peer-reviewed", "date": "2022-05-01"},
+      {"source_id": "doi:10.1/b", "title": "Study B", "authority_tier": "peer-reviewed", "date": "2023-02-14"},
+      {"source_id": "doi:10.1/c", "title": "Study C", "authority_tier": "preprint",      "date": "2024-06-30"}
+    ],
+    "refined(1):sleep hygiene studies": [
+      {"source_id": "doi:10.1/a", "title": "Study A", "authority_tier": "peer-reviewed", "date": "2022-05-01"},
+      {"source_id": "doi:10.1/b", "title": "Study B", "authority_tier": "peer-reviewed", "date": "2023-02-14"},
+      {"source_id": "doi:10.1/c", "title": "Study C", "authority_tier": "preprint",      "date": "2024-06-30"},
+      {"source_id": "doi:10.1/d", "title": "Study D", "authority_tier": "peer-reviewed", "date": "2021-11-20"},
+      {"source_id": "doi:10.1/e", "title": "Study E", "authority_tier": "peer-reviewed", "date": "2020-08-09"}
+    ]
+  }
+}

@@ -14,9 +14,9 @@ Usage:
     skill-path:   Path to the skill directory (where SKILL.md, references/, assets/ live)
 """
 
-import sys
 import re
 import shutil
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -171,7 +171,10 @@ def generate_capabilities_md(capabilities: list[dict], evolvable: bool) -> str:
         "",
         "| Script | Purpose |",
         "|--------|---------|",
-        "| `./scripts/extraction_validator.py` | Proportionality checks, quality tier classification |",
+        (
+            "| `./scripts/extraction_validator.py` | "
+            "Proportionality checks, quality tier classification |"
+        ),
         "| `./scripts/cross_validator.py` | Compare extraction against reference assets |",
         "",
         "### User-Provided Tools",
@@ -190,6 +193,20 @@ def substitute_vars(content: str, variables: dict) -> str:
 
 
 def main():
+    # Story 26-7 AC-C.2: force UTF-8 stdout/stderr before any print so a
+    # Windows cp1252 terminal does not crash on non-ASCII paths or messages.
+    # Sibling import via importlib.util.spec_from_file_location — avoids
+    # permanent sys.path pollution that would compound as Epic 27 adds
+    # 7 providers inheriting this pattern.
+    import importlib.util  # noqa: PLC0415 — deferred; keeps module import lightweight
+
+    _helper_path = Path(__file__).resolve().parent / "_cli_encoding.py"
+    _spec = importlib.util.spec_from_file_location("texas_cli_encoding", _helper_path)
+    assert _spec is not None and _spec.loader is not None
+    _cli_encoding = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_cli_encoding)
+    _cli_encoding.ensure_utf8_stdout()
+
     if len(sys.argv) < 3:
         print("Usage: python3 init-sanctum.py <project-root> <skill-path>")
         sys.exit(1)

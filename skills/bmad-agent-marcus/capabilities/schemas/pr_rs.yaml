@@ -1,0 +1,21 @@
+# PR-RS (stub) argument + result schema. Full impl in story 26-10.
+
+code: PR-RS
+schema_version: "1.0-stub"
+full_or_stub: stub
+
+args:
+  action:
+    type: str
+    enum: [inspect, start_new, continue, cancel_orphans]
+    default: inspect
+    description: (Planned) What run-selection action to take.
+  run_id:
+    type: str
+    default: null
+    description: (Planned) Target run when action != inspect.
+
+result:
+  stub:
+    type: bool
+    description: Always true until 26-10 promotes this capability.

@@ -652,6 +652,11 @@ See `skills/woodshed/SKILL.md` → "Evaluator Design Requirements" for the full 
 > invariant, and the three tiers (dev-cycle / trial-gate / real-run validators).
 > This section documents test *layout* only.
 
+> **Marcus production-readiness capabilities:** see [docs/dev-guide/marcus-capabilities.md](dev-guide/marcus-capabilities.md)
+> for the PR-* capability reference (PR-PF, PR-RC full; PR-HC, PR-RS stubs).
+> Added in Story 26-6 as the operator-facing doc replacing the stripped
+> prompt-pack "Run Constants" and "Initialization Instructions" sections.
+
 ### Test layout
 
 **Root integration suite** — `tests/` (API clients, state, pre-flight, fidelity helpers, Notion, etc.).

@@ -42,7 +42,7 @@
 # - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-16  # harmonized with docs + bmm-workflow-status; Epic 24 header comments
+last_updated: 2026-04-17  # Epic 27 + Epic 28 ratified (9 new stories seeded as ready-for-dev or ratified-stub) following Round 1+2+3 party-mode consensus on Tracy the Detective + Texas intake surface expansion; Tracy vocabulary.yaml v0.1 authored as SSOT. Prior update: 26-6 closed BMAD-clean after layered code review (5 MUST-FIX code patches + 2 MISSING-AC patches remediated); full suite 1023/2/0, trial_critical 155/0, pre-commit green
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -491,7 +491,46 @@ development_status:
   26-3-dan-bmb-sanctum-migration: done  # BMAD done 2026-04-17: BMB-conformant SKILL.md (60 lines, specialist-tier at ceiling), sanctum scaffolded, 2 capability codes via frontmatter retrofit (DR + PT), 34 migration tests (+7 Dan tests + 2 parametrized), 949/2/3 full suite (3 failures pre-existing structural_walk work unrelated to Dan), layered code review complete — scaffold fleet-wide defects (wrong config path, absolute sanctum_path, unsubstituted refs) DEFERRED to Story 26-4 scaffold v0.2 because they reproduce on already-merged Marcus + Irene; per-Dan items remediated (Intake Contract "MUST pass" wording, first-breath urgency-first ordering, sidecar sibling banners, migration worksheet filed, story D1 amended from ≤50 to ≤60).
   26-4-bmb-scaffold-v0-2: done  # BMAD done 2026-04-17: scaffold v0.2 shipped with 3 defect fixes (V2-1 config overlay reads _bmad/core/config.yaml first; V2-2 {sanctum_path} is repo-relative POSIX; V2-3 references rendered with variable whitelist). 13 new regression tests (10 v0.2 + 3 remediation). Marcus/Irene/Dan re-scaffolded via --force. Layered code review complete: EC-A (project-root guard) + EC-B (stale-file purge on --force) + EC-E (document_output_language in whitelist) + EC-F (test assertion pinned) remediated. 48 migration tests, 964 full-suite (3 pre-existing structural_walk failures unrelated). Scaffold v0.2 contract paragraph shipped as spec for ~14-agent batch wave inheritance.
   26-5-bmb-scaffold-preservation: backlog  # Opened 2026-04-17 by 26-4 close-out. Preservation semantics so --force doesn't clobber operator edits. MUST close before batch migration wave begins (once agents go through real First Breaths, operator edits accumulate and --force becomes dangerous). Story at _bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md.
+  26-6-marcus-production-readiness-capabilities: done  # BMAD done 2026-04-17: PR-PF + PR-RC full; PR-HC + PR-RS stubbed with pinned contracts + xfail tests; pack pre-prompt sections stripped and archived; new docs/dev-guide/marcus-capabilities.md; Marcus SKILL.md integrated (77 lines under A1 ceiling); layered code review clean (5 MUST-FIX + 2 MISSING-AC remediated — validate-before-write, binary write for Windows sha parity, PR-PF subprocess timeout, PR-PF broad exception wrap, PR-PF unparseable-stdout partial verdict, AC-B.4 receipt-contract test, AC-D.5 markdown-link-check test); 14 SHOULD-FIX logged as action items for 26-10+; full suite 1023/2/0, trial_critical 155/0. Direct fix for 2026-04-17 trial halt at Prompt 1.
+  26-7-texas-cli-cp1252-guard: done  # BMAD done 2026-04-17: shared _cli_encoding helper (ensure_utf8_stdout) + run_wrangler.py and init-sanctum.py wiring + 4 encoding-boundary tests (AC-T.1 trial_critical, real round-trip via BytesIO/TextIOWrapper — not smoke). Guard fires at both module-top and inside main() for defense-in-depth. Layered code review clean (1 MUST-FIX docstring/payload + 3 SHOULD-FIX remediated — module-top guard firing, importlib-based sibling import in init-sanctum avoiding sys.path pollution, bytes-on-wire assertions in idempotency/no-op tests). Epic 27 AC-S7 provider inheritance pattern now established. Full suite 1027/2/0, trial_critical 159/0.
+  26-10-marcus-production-readiness-full-impl-follow-up: backlog  # Opened 2026-04-17 via pretrial-prep run charter. Promote PR-HC + PR-RS stubs (from 26-6) to full implementation. Stubs have pinned contracts + xfail tests; full impl completes the capability set. Schedule after first successful trial restart reveals which stub gaps actually hurt.
   epic-26-retrospective: optional
+
+  # === EPIC 27: Texas Intake Surface Expansion (Added 2026-04-17) ===
+  # Close the DOCX contract drift from the 2026-04-17 APC C1-M1 trial AND expand
+  # Texas's intake surface to new provider types the HIL operator + Tracy will
+  # dispatch against. Technician-capability upgrade epic — separate from Epic 28
+  # (Tracy the Detective) which is a new-specialist-birth epic.
+  # Epic file: _bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md
+  # Ratified via Round 1 + 2 + 3 party-mode consensus 2026-04-17 (Winston, John,
+  # Amelia, Paige, Murat, Sally, Mary, Dr. Quinn).
+  epic-27: ready-for-dev
+  27-1-docx-provider-wiring: ready-for-dev  # Ratified 2026-04-17. Contract drift fix — wire python-docx into .docx branch of local_file handler. Blocks Tejal trial restart. 2 pts. Full spec at _bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md
+  27-2-scite-ai-provider: ready-for-dev  # Ratified 2026-04-17. scite.ai provider — scholarly citation retrieval with smart-citation-context metadata. BLOCKS Epic 28 Tracy pilot. 5 pts. Also introduces --tracy-approved-resources flag + source_origin tag + atomic-write artifact hygiene. Full spec at _bmad-output/implementation-artifacts/27-2-scite-ai-provider.md
+  27-3-image-provider: ratified-stub  # Ratified 2026-04-17. Image provider via sensory-bridges. Closes half of visual-source-gap backlog. 3 pts. Stub at _bmad-output/implementation-artifacts/27-3-image-provider.md
+  27-4-youtube-provider: ratified-stub  # Ratified 2026-04-17. YouTube provider — video + audio + transcript three-asset output. 5 pts. Stub at _bmad-output/implementation-artifacts/27-4-youtube-provider.md
+  27-5-notion-mcp-provider: ratified-stub  # Ratified 2026-04-17. Notion MCP provider (distinct from legacy notion direct-API). 3 pts. Stub at _bmad-output/implementation-artifacts/27-5-notion-mcp-provider.md
+  27-6-box-provider: ratified-stub  # Ratified 2026-04-17. Box provider — fetch layer, extraction delegated to existing format handlers. 2 pts. Stub at _bmad-output/implementation-artifacts/27-6-box-provider.md
+  27-7-playwright-mcp-provider: ratified-stub  # Ratified 2026-04-17. Playwright MCP provider — dynamic-rendering sibling to existing playwright_html. 3 pts. Stub at _bmad-output/implementation-artifacts/27-7-playwright-mcp-provider.md
+  epic-27-retrospective: optional
+
+  # === EPIC 28: Tracy the Detective (Added 2026-04-17) ===
+  # Introduce a new production-tier specialist — Tracy — who partners with Texas
+  # to source high-value supplementary research for lessons under development,
+  # dispatched by Irene via Marcus when the lesson plan reveals enrichment gaps.
+  # Tracy's output lands in Pass 2, informing script finalization and downstream
+  # asset creation. Pilot provider: scite.ai (via Epic 27 Story 27-2).
+  # Epic file: _bmad-output/implementation-artifacts/epic-28-tracy-detective.md
+  # Shared spine: _bmad-output/implementation-artifacts/epic-28/_shared/
+  # Tracy sanctum bundle (under construction): skills/bmad-agent-tracy/
+  # Dispatch-vs-artifact ratification Winston 2026-04-17: Marcus owns every dispatch edge;
+  # artifact handoff via filesystem is not a rule violation; atomic writes required.
+  epic-28: ready-for-dev
+  28-1-tracy-pilot-scite-ai: ready-for-dev  # Ratified 2026-04-17. Tracy pilot end-to-end: sanctum born, Irene→Marcus→Tracy dispatch, scite.ai search + scoring, operator approval via redlineable manifest, Texas second-pass extraction, pre-Pass-2 gate, Irene Pass 2 ingestion. Hard dependency on Epic 27 Story 27-2. 9 pts. Full spec at _bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md
+  28-2-tracy-gate-hardening: ratified-stub  # Ratified 2026-04-17. Gate family (absent/stale/tampered receipt) + asset-intent cross-agent registry test + e2e gate-refusal. 3 pts. Stub at _bmad-output/implementation-artifacts/28-2-tracy-gate-hardening.md
+  28-v2-a-coherence-gate: backlog  # Dr. Quinn Round 2 adversarial scenario. Coherence check between Tracy-added material and primary-source register before Pass 2 ingestion. Correctness concern (not optimization). Stub — promote to full spec post-pilot if evidence confirms drift.
+  28-v2-b-dispatch-budget: backlog  # Dr. Quinn Round 2 Loop B mitigation. Soft cap on Tracy-dispatches-per-run + approval-queue throttling. Promote if pilot evidence shows Irene flagging more gaps reflexively once Tracy is reliable.
+  epic-28-retrospective: optional
 
   20c-3-source-to-density-intelligence:
     status: done

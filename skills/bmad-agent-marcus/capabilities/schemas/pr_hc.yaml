@@ -1,0 +1,17 @@
+# PR-HC (stub) argument + result schema. Full impl in story 26-10.
+
+code: PR-HC
+schema_version: "1.0-stub"
+full_or_stub: stub
+
+args:
+  scope:
+    type: str
+    enum: [session, workspace, fleet]
+    default: session
+    description: (Planned) What surface to check.
+
+result:
+  stub:
+    type: bool
+    description: Always true until 26-10 promotes this capability.

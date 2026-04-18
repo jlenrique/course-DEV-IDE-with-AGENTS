@@ -1,172 +1,180 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> **Current objective:** Remediate the 4 defects the 2026-04-17 trial surfaced, then restart the APC C1-M1 Tejal trial production run with a clean slate — reaching last session's halt-point in minutes, not hours.
+> **Current objective:** Begin implementation of the newly-ratified Epic 27 + Epic 28. Story 27-1 (DOCX drift fix) is the cheapest, highest-severity work and unblocks the pending Tejal trial restart.
 
 ## Immediate Next Action (pick-up point)
 
-**Run BMAD Session Protocol Session START**, then pivot directly into the remediation batch described below.
+**Run BMAD Session Protocol Session START**, then pivot directly into Story 27-1 implementation via `bmad-create-story` → `bmad-dev-story`.
 
-The session START will load Cora for a since-handoff harmonization check, verify branch state, and summarize what's changed since this handoff anchor — expected fast because session WRAPUP already ran a full-repo L1 CLEAN sweep.
+Session START will: load Cora for a since-handoff harmonization check (tripwire promotes this to **full-repo** scope because last session's 0a was deferred), verify branch state, and summarize what's changed since the handoff anchor.
 
 ## Hot-Start Summary
 
-Last session closed the Epic 26 pilot wave (Marcus 26-1, Irene 26-2, Dan 26-3 all BMB-migrated + scaffold v0.2 shipped as 26-4), wired the v4.2 prompt pack's new stages (Creative Directive + clustering) into Marcus's workflow templates, and opened the APC C1-M1 Tejal trial production run. **Trial halted at Prompt 1 on the `emit-preflight-receipt.py` validator** — a good halt that exposed a pack-doc-vs-code schema drift plus three other defect classes. Operator chose to end session, remediate, and restart fresh.
+Last session ratified **two new epics** via party-mode consensus and merged them to master:
 
-## Sequenced Remediation Plan for This Session
+- **Epic 27 — Texas Intake Surface Expansion** (7 stories, 23 pts): DOCX drift fix + scite.ai + image + YouTube + Notion MCP + Box + Playwright MCP providers. Technician-capability upgrade.
+- **Epic 28 — Tracy the Detective** (2 pilot stories + 2 v2 stubs, 12 pts): new production-tier research-specialist born-sanctum, partners with Texas, dispatched by Irene via Marcus, pilot provider scite.ai.
 
-> **Status update (2026-04-17 pretrial-prep run, `dev/epic-26-pretrial-prep`):**
->
-> - **Step 1 (progress_map.py remediation):** DONE via commit `1572819` (Juan's refactor) + session-1 baseline repair (commit `a944189`).
-> - **Step 2 (pack-doc Run Constants schema repair):** SUPERSEDED by **Story 26-6 — Marcus Production-Readiness Capabilities**. Instead of rewriting the pack's "Run Constants" section to show canonical lowercase YAML, the section was stripped and moved into Marcus as capabilities **PR-PF (Preflight)** and **PR-RC (Run-Constants author+validate)**. The canonical reference is now [`docs/dev-guide/marcus-capabilities.md`](docs/dev-guide/marcus-capabilities.md); the archived pack-doc content lives at [`docs/workflow/archive/prompt-pack-preprompt-2026-04.md`](docs/workflow/archive/prompt-pack-preprompt-2026-04.md). Marcus now authors the YAML directly — no more hand-transcription from the pack.
-> - **Step 3 (Texas wrangler intake expansion):** DEFERRED per scope-confirmation party-mode consensus (2026-04-17). Not in pretrial-prep run scope; revisit post first clean trial restart.
-> - **Step 4 (Texas CLI cp1252 guard):** IN-SCOPE as **Story 26-7** (stretch) on the same pretrial-prep run.
-> - **Step 5 (Audra L1-W docs-vs-code lockstep check):** THIN VERSION SHIPPED in session-1 commit `a944189` — `tests/contracts/test_pack_doc_matches_schema.py`. Fuller L1-W impl deferred.
-> - **Step 6 (Trial restart):** pending completion of pretrial-prep run (26-6 + 26-7 + merge to master).
->
-> Read the below as historical plan-of-record. The active work is tracked in the run charter at [`_bmad-output/implementation-artifacts/run-charters/pretrial-prep-charter-20260417.md`](_bmad-output/implementation-artifacts/run-charters/pretrial-prep-charter-20260417.md) and Story 26-6 at [`_bmad-output/implementation-artifacts/26-6-marcus-production-readiness-capabilities.md`](_bmad-output/implementation-artifacts/26-6-marcus-production-readiness-capabilities.md).
+Critical path: **27-1 → 27-2 → 28-1 → 28-2**. Fan-out 27-3/4/5/6/7 parallel after 27-2 merges.
 
-Before touching the trial, close as many of these 4 defects as possible. Order is ROI-descending: each unblocks a chunk of the restart path.
+Master now at `90f19eb` (merge commit). Previous branch `dev/epic-26-pretrial-prep` preserved in origin for historical traceability.
 
-### Step 1 — Remediate ambient worktree state (Juan's `progress_map.py`)
+## Sequenced Implementation Plan for This Session
 
-**Unblocks:** green pytest baseline.
+### Step 1 — Harmonization sweep (full-repo scope, tripwire-promoted)
 
-Juan has an uncommitted mid-refactor of `scripts/utilities/progress_map.py` (216 deletions, 35 insertions — replaced `_parse_epic_labels_from_comments` with hardcoded `WAVE_LABELS` dict) that breaks 34 tests. Must decide:
+`/harmonize` full-repo. Expected L1 findings: 377 ruff errors repo-wide (pre-existing warehouse debt, documented in last session's handoff). Session-owned files from last commit are clean. Acknowledge and proceed — this is cleared incrementally per the 26-7 commit's "clearing the warehouse as we go" philosophy.
 
-- **Option A (complete):** finish the refactor, update the 34 tests to expect the new WAVE_LABELS form, commit.
-- **Option B (revert):** `git checkout scripts/utilities/progress_map.py` if the refactor direction was later reconsidered.
-- **Option C (park):** stash and park in a feature branch for later.
+### Step 2 — Cut new working branch for Epic 27 implementation
 
-Recommend A or B before remediating anything else. Session-owned work on top of a broken-baseline is noise. `git diff scripts/utilities/progress_map.py` for the full picture.
-
-### Step 2 — Open Story 26-X (prompt-pack Run Constants schema repair) → fix the pack doc
-
-**Unblocks:** operators setting up new runs from the pack alone hit PASS on first `emit-preflight-receipt.py`.
-
-Backlog stub: [_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md](_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md)
-
-Action: Paige tech-writer story. Rewrite pack Run Constants section (`docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` lines ~22-37) to show canonical **lowercase nested YAML** (`run_id:`, nested `motion_budget:` block, etc.) instead of UPPERCASE flat display. Validator (`scripts/utilities/run_constants.py:96-99`) unchanged. Acceptance: a fresh operator authoring `run-constants.yaml` from the pack alone → `emit-preflight-receipt.py` passes first try.
-
-### Step 3 — Open Story 26-Y (Texas wrangler intake-surface expansion) → party-mode consensus + implement
-
-**Unblocks:** Images and DOCX become first-class source types. This is the bigger story of the four.
-
-Backlog stub: [_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md](_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md) (severity: High after DOCX drift surfaced)
-
-Action sequence:
-1. **Party-mode consensus** on A (extend runner) vs B (sibling wrangler Texas orchestrates). Invite Winston (runner architecture) + Amelia (implementation cost) + Murat (test boundary) + Paige (transform-registry doc SSOT).
-2. Per operator scope direction: **"Texas as wrangler must be savvy at finding and handling anything and everything"** → Option C (reject) withdrawn. Texas accepts all; routes deliberately.
-3. Close both defects in one story: (a) wire `python-docx` into `.docx` branch of `local_file` handler (registry already promises it), (b) add image provider routed through sensory-bridges.
-4. New G0 fidelity criteria for visual sources; new contract roles (`visual-primary`, `visual-supplementary`).
-5. Transform registry becomes the binding contract — any format advertised must have a working extractor OR be marked `planned`.
-
-### Step 4 — Open Story 26-Z (Texas CLI cp1252 guard) → one-line fix + test
-
-**Unblocks:** `run_wrangler.py --help` runs cleanly on Windows without `PYTHONIOENCODING=utf-8`.
-
-Tiny story — add the pattern we used in scaffold v0.2:
-```python
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except AttributeError:
-        pass
+```bash
+git checkout master
+git pull origin master
+git checkout -b dev/epic-27-texas-intake
+git push -u origin dev/epic-27-texas-intake
 ```
-Add one test asserting `--help` returns exit 0 on Windows with cp1252 default stdout (or that the guard is present).
 
-### Step 5 — Open Story 26-W (Audra L1 docs-vs-code schema-lockstep check) → design + implement
+Per John Round-3 branch hygiene: implementation opens per-epic branches, NOT layered on the merged `dev/epic-26-pretrial-prep`.
 
-**Unblocks:** future drift between docs (pack Run Constants, Texas transform-registry, other) and code (validators, runners) gets caught at L1 sweep rather than surfaced during trial execution.
+### Step 3 — Story 27-1 — DOCX provider wiring (cheapest, highest-severity)
 
-New check class: `format-capability-lockstep`. Compiles schema claims from load-bearing docs, diffs against validator/runner schemas. Would have caught BOTH Step 2 (pack doc schema drift) AND Step 3 (Texas DOCX promise-vs-code drift) before they reached the trial.
+**Unblocks:** the halted APC C1-M1 Tejal trial restart (DOCX cross-validation was the failure mode at halt).
 
-### Step 6 — Restart the trial on a clean slate
+Spec: [_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md](_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md) — 2 pts, 7 ACs, file-impact enumerated.
 
-**Pick-up conditions:** Steps 1-4 done; Step 5 optional. The fresh restart should breeze through the points that cost us time last session:
+Flow per BMAD sprint run charter:
+1. `bmad-create-story 27-1` — expand ratified-stub spec into full implementation-ready story.
+2. `bmad-party-mode` green-light (Winston + Amelia + Murat + Paige; operator invokes).
+3. `bmad-dev-story 27-1` — execute.
+4. `bmad-party-mode` implementation review (Winston + Amelia + Murat).
+5. `bmad-code-review` (Blind Hunter + Edge Case Hunter + Acceptance Auditor).
+6. Remediate MUST-FIX. Close story in sprint-status.yaml.
 
-1. **Fresh branch from master** after merging the remediation commits. Branch name suggestion: `dev/trial-run-c1m1-tejal-20260418` or similar.
-2. **Create fresh source bundle** `apc-c1m1-tejal-<YYYYMMDD>-motion/` — do NOT reuse `20260415` (has stale artifacts from this session's halted run — trial-run-c1m1-tejal-20260417.md runbook + Texas extracted.md etc. still live there). Fresh bundle directory gives a clean slate.
-3. **Author `run-constants.yaml` using Step 2's corrected pack-doc** — canonical lowercase nested YAML. Expect `emit-preflight-receipt.py` to PASS first try.
-4. **Issue the 4-Execution-Rules binding + Prompt 1** as a single consolidated message to Marcus (re-use the one logged in last session's runbook at `trial-run-c1m1-tejal-20260417.md` under "Catch-up message composed for Marcus"). Adjust only the bundle path.
-5. **Texas source-wrangling** should now work cleanly including the DOCX cross-val (post-Step-3 remediation) AND the roadmap image (if Step 3's image provider landed).
-6. **Proceed through Prompt 2+** — territory we never reached. This is where the real trial-production validation starts.
+### Step 4 — Story 27-2 — scite.ai provider
 
-Estimated time to reach "back to where we halted": **~15 minutes** if Steps 1-4 complete cleanly. Previous attempt took ~2 hours largely due to surprise defects; now pre-mediated.
+**Blocks:** Epic 28's Tracy pilot.
+
+Spec: [_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md](_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md) — 5 pts, 9 ACs, introduces `--tracy-approved-resources` flag + `source_origin` tag + atomic-write hygiene.
+
+Prereq: scite.ai API token. Store in local `.env` (see `.env.example` after T1 lands). No API token → story scaffolds but tests mark `xfail` until token available.
+
+### Step 5 — Merge 27-1 + 27-2 to master, then cut Epic 28 branch
+
+After both 27-1 and 27-2 close `done`:
+
+```bash
+# Close 27-1 + 27-2 on dev/epic-27-texas-intake branch
+git checkout master
+git merge --no-ff dev/epic-27-texas-intake
+git push origin master
+
+# Cut Epic 28 branch
+git checkout -b dev/epic-28-tracy-pilot
+git push -u origin dev/epic-28-tracy-pilot
+```
+
+### Step 6 — Story 28-1 — Tracy pilot (scite.ai end-to-end)
+
+Spec: [_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md](_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md) — 9 pts, 12 ACs.
+
+**Pre-read before starting:**
+- [_bmad-output/implementation-artifacts/epic-28-tracy-detective.md](_bmad-output/implementation-artifacts/epic-28-tracy-detective.md) — epic context + Tracy's identity
+- [_bmad-output/implementation-artifacts/epic-28/_shared/ac-spine.md](_bmad-output/implementation-artifacts/epic-28/_shared/ac-spine.md) — 8 cross-cutting ACs
+- [_bmad-output/implementation-artifacts/epic-28/_shared/runbook.md](_bmad-output/implementation-artifacts/epic-28/_shared/runbook.md) — 14-step dispatch procedure
+- [skills/bmad-agent-tracy/references/vocabulary.yaml](skills/bmad-agent-tracy/references/vocabulary.yaml) — SSOT for intent_class, authority_tier, fit_score, editorial_note, provider_metadata.scite
+
+Tracy is born-sanctum: no migration story, scaffold via `scripts/bmb_agent_migration/init_sanctum.py` v0.2.
+
+### Step 7 — Story 28-2 — Gate family + regression hardening
+
+Spec: [_bmad-output/implementation-artifacts/28-2-tracy-gate-hardening.md](_bmad-output/implementation-artifacts/28-2-tracy-gate-hardening.md) — 3 pts, stub (expand via `bmad-create-story`).
+
+### Step 8 — Trial restart (APC C1-M1 Tejal) on fresh branch
+
+After 27-1 merges (minimum) or after 27-2 + Tracy pilot closes (preferred for full robustness):
+
+```bash
+git checkout master
+git pull origin master
+git checkout -b dev/trial-run-c1m1-tejal-<YYYYMMDD>
+# Follow fresh-bundle trial-restart flow in SESSION-HANDOFF.md (prior sessions)
+```
 
 ## Branch Metadata
 
-- **Current branch (end of 2026-04-17 session):** `dev/epic-26-scaffold-v02` with 3 session commits (`a878b82`, `cdfad84`, `5e073cf`) + operator commit (`5ffc76b`) on top of handoff anchor `c9f8d1c`.
-- **Repository baseline branch after closeout:** `master` (merge NOT performed this session — see "Git Closeout Exception" below).
-- **Intended next working branch:** `dev/trial-run-c1m1-tejal-20260418` (or similar), branched from `master` after the remediation merge lands.
-
-## Git Closeout Exception (2026-04-17)
-
-**Merge-to-master was skipped this session** because `scripts/utilities/progress_map.py` carries an uncommitted mid-refactor (Juan-authored, not session work) that breaks 34 tests. Per Session WRAPUP Protocol Step 12: "Do not perform the merge-to-master flow when any of the following are true: unrelated pre-existing worktree changes remain."
-
-**Resume path:** Step 1 above (remediate `progress_map.py`) → green pytest baseline → then merge `dev/epic-26-scaffold-v02` to `master` → branch `dev/trial-run-c1m1-tejal-20260418` from fresh `master`.
+- **Repository baseline branch after closeout:** `master` at `90f19eb` (Epic 27+28 ratified + prior wave merged)
+- **Next working branch:** `dev/epic-27-texas-intake` (cut from master as Step 2 above)
+- **Epic 28 working branch:** `dev/epic-28-tracy-pilot` (cut from master after 27-1 + 27-2 merge)
+- **Preserved reference branch:** `dev/epic-26-pretrial-prep` (pushed to origin; kept for historical reference)
+- **Merge strategy:** `--no-ff` per Epic 26 + Epic 27/28 pattern
 
 ## Startup Commands
 
-```powershell
-# 1. Verify branch state
-git status --short
+```bash
+# 1. Verify branch state + pull latest master
+git checkout master
+git pull origin master
 git log --oneline -6
 
 # 2. Run the session START protocol (Cora-orchestrated)
-# Cora will re-read SESSION-HANDOFF.md + this file + git log since anchor
-# and summarize what's ready to resume.
+# Cora will run full-repo harmonization (tripwire-promoted due to deferred 0a last session).
 
-# 3. Before touching remediation, decide on progress_map.py
-git diff scripts/utilities/progress_map.py
-# → pick Option A (complete), B (revert), or C (park)
+# 3. Cut the next working branch
+git checkout -b dev/epic-27-texas-intake
+git push -u origin dev/epic-27-texas-intake
 
-# 4. Once baseline is green, open Story 26-X (Paige tech-writer):
-# pack-doc Run Constants schema repair
-# Then 26-Y (Texas wrangler expansion, party-mode)
-# Then 26-Z (Texas CLI cp1252 guard)
-# Then 26-W (Audra docs-vs-code schema-lockstep check — optional)
+# 4. Begin Story 27-1 via bmad-create-story
+# (Expand ratified-stub spec into full story, then party-mode green-light, then bmad-dev-story.)
 
-# 5. Trial restart — fresh bundle, fresh branch
-mkdir course-content\staging\tracked\source-bundles\apc-c1m1-tejal-20260418-motion
-# Author run-constants.yaml from the (now-corrected) pack doc.
-# Reuse the catch-up-message-to-Marcus from the prior runbook, adjust bundle path.
+# 5. Run HUD sanity check (shows Epic 27+28 now with proper labels per last session's progress_map hardening)
+.venv\Scripts\python -m scripts.utilities.run_hud --open
 ```
 
 ## Hot-Start Files
 
-- [SESSION-HANDOFF.md](SESSION-HANDOFF.md) — backward-looking record of this session
-- [_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md](_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md) — runbook with every trial action + halt point detail
-- [_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md](_bmad-output/implementation-artifacts/texas-visual-source-gap-backlog.md) — Step 3 source material
-- [_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md](_bmad-output/implementation-artifacts/prompt-pack-v4-2-run-constants-schema-drift.md) — Step 2 source material
-- [_bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md](_bmad-output/implementation-artifacts/26-5-bmb-scaffold-preservation.md) — the one scaffold-v0.2-adjacent story still open in backlog; gates the batch-wave of ~14 remaining agent migrations
-- [reports/dev-coherence/2026-04-17-1900/harmonization-summary.md](reports/dev-coherence/2026-04-17-1900/harmonization-summary.md) — pre-trial L1 CLEAN sweep (reuse as baseline unless something material changed since)
-- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` — the canonical pack (Step 2's target for line ~22-37 rewrite)
+- [SESSION-HANDOFF.md](SESSION-HANDOFF.md) — backward-looking record of the 2026-04-17 Epic 27+28 ratification session
+- [_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md](_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md) — Epic 27 artifact (story roster, AC spine, risk register, party-consensus record)
+- [_bmad-output/implementation-artifacts/epic-28-tracy-detective.md](_bmad-output/implementation-artifacts/epic-28-tracy-detective.md) — Epic 28 artifact (Tracy identity, dependency graph, v2 backlog capture)
+- [_bmad-output/implementation-artifacts/epic-28/_shared/](_bmad-output/implementation-artifacts/epic-28/_shared/) — shared spine (ac-spine, runbook, worksheet-template)
+- [_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md](_bmad-output/implementation-artifacts/27-1-docx-provider-wiring.md) — full spec for the first implementation story
+- [_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md](_bmad-output/implementation-artifacts/27-2-scite-ai-provider.md) — full spec for the Epic 28-blocker
+- [_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md](_bmad-output/implementation-artifacts/28-1-tracy-pilot-scite-ai.md) — full spec for Tracy's birth
+- [skills/bmad-agent-tracy/references/vocabulary.yaml](skills/bmad-agent-tracy/references/vocabulary.yaml) — SSOT for Tracy's controlled vocabulary
+
+## Key Risks / Unresolved Issues
+
+1. **Repo-wide ruff debt (377 errors, 77 auto-fixable).** Pre-existing warehouse clutter. Not a blocker. Strategy: clear incrementally as stories touch affected files. No cleanup-only story opened.
+
+2. **Tejal trial restart still pending.** Unblocked once 27-1 merges (minimum). Full robustness pending 27-2 if scite.ai referenced in the trial's source brief.
+
+3. **Story 26-5 (scaffold preservation semantics)** remains backlog. Gates the batch migration wave of the remaining ~14 sidecar-pattern agents. Not blocking Epic 27/28 (Tracy is born-sanctum).
+
+4. **Tracy v1 scoring rubric is naive by design.** Expected post-pilot iteration. First run is evidence-gathering, not rubric validation (John Round-3 flag captured as 28-1 AC).
+
+5. **Deferred Cora harmonization** from last session's 0a → **auto-promoted to full-repo scope** for this session per wrapup-protocol tripwire. Budget 5-10 minutes extra at session start.
+
+6. **Dr. Quinn's v2 concerns** (coherence drift, Loop B supply-creates-demand, Loop C vocabulary capture, Loop D rubber-stamping) are backlog-stubbed and cited in Epic 28 risk register. Post-pilot retrospective owns re-litigation.
 
 ## Key Gotchas Discovered This Session
 
-- **Pack-doc-vs-code drift** is a real defect class. Check for it in any load-bearing doc that displays YAML/config schemas. Audra gets a story for this (Step 5).
-- **`_bmad/memory/` is fully gitignored** — re-scaffolded sanctums are local-only. Fresh clone won't have them until the scaffold runs. Not a blocker; just awareness.
-- **Stale bundle gates** (`gate-01-result.yaml`, `gate-04-result.yaml` with FAIL verdicts) can linger across runs in a reused bundle directory. Always clear before a fresh run. Use a new `<YYYYMMDD>-motion` bundle dir to sidestep.
-- **Marcus via Skill tool**: not registered in the default harness. Operator had to wait for Skill-tool-native load. Once loaded, performed correctly. Unknown whether this is fixable at the harness level or is by-design.
-- **Coordination DB is canonical**; bundle + DB + pack must all agree on active run_id. A stale DB is confusing. Marcus flagged this at trial open and corrected it (cancelled 20260409, activated 20260415).
+- **Dispatch-vs-artifact is a load-bearing distinction.** For any specialist pair (Tracy↔Texas, Irene↔Gary, future...), runtime dispatch goes through Marcus; artifact handoff travels via filesystem with atomic writes. Codified as Epic 28 AC-S1; apply universally.
+- **Doc-contract before implementation.** Paige's discipline: author the SSOT vocabulary file (e.g., `vocabulary.yaml`) at ratification time so implementation can't drift from a non-existent contract.
+- **Ratification vs implementation is a hard boundary.** Last session shipped epics + story specs + shared spine + ONE doc-contract artifact. Code implementation deferred. This matches Epic 26's pattern and prevents scope creep.
+- **Pre-commit hooks clean debt as you go.** 77 ruff auto-fixes landed in-flight on `progress_map.py` during the session's commit. Follow this for every story that touches a warehouse-debt file.
+- **ratified-stub is a recognized status.** Last session added it to `READY_STATUSES` in `progress_map.py`. Use it for stories that are party-ratified with AC spine but not yet full-speced.
 
 ## Run HUD
 
-```powershell
+```bash
 .venv\Scripts\python -m scripts.utilities.run_hud --open
 ```
 
-Three tabs: System Health / Production Run / Dev Cycle. Auto-refreshes every 10 seconds.
-
-**Caveat:** run_hud currently depends on `progress_map.py` which is in a broken-mid-refactor state. The HUD may not render correctly until Step 1 completes.
+Three tabs: System Health / Production Run / Dev Cycle. Auto-refreshes every 10 seconds. After last session's progress_map hardening, the HUD will correctly show Epic 27 ("Texas Intake Surface Expansion") and Epic 28 ("Tracy the Detective") with proper labels and 0/7 + 0/4 progress bars.
 
 ## Ambient Worktree State at Handoff
 
-Expect these at session open — NOT this session's work:
-
-- `scripts/utilities/progress_map.py` — uncommitted refactor, breaks 34 tests. See Step 1.
+**Clean.** `git status --short` = empty. No uncommitted work, no untracked files outside gitignored areas.
 
 ## Protocol Status
 

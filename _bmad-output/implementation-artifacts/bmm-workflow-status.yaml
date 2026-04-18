@@ -1,5 +1,5 @@
 # BMM Workflow Status
-# Last Updated: 2026-04-17 (Epic 26 opened: BMB Sanctum Migration. Story 26-1 Marcus pilot in review after layered bmad-code-review + remediation. Epic 25 / Story 25-1 closed. Trial run deferred behind the Marcus migration per operator redirect.)
+# Last Updated: 2026-04-17 (Epic 27 + Epic 28 ratified via 3-round + 1-dispatch-clarification party-mode consensus. Epic 27 = Texas Intake Surface Expansion (7 stories, 23 pts; 27-1 DOCX + 27-2 scite.ai full-specced, 27-3..27-7 stubs). Epic 28 = Tracy the Detective (2 pilot stories + 2 v2 stubs, 12 pts; 28-1 full-specced with 12 ACs, 28-2 stub). Tracy sanctum breadcrumb landed (README + vocabulary.yaml SSOT). Winston ratification: specialists never dispatch specialists; artifact handoff via filesystem is not a rule violation. Prior: Epic 26 pilot wave + scaffold v0.2 closed; 26-6 Marcus production-readiness closed BMAD-clean; 26-7 Texas cp1252 guard closed.)
 
 current_phase: "4-implementation"
 phase_transitions:
@@ -101,7 +101,65 @@ key_decisions:
   - "EPIC 14: MOTION-ENHANCED PRESENTATION WORKFLOW (2026-04-05, Party Mode): Alternative workflow adding motion (Kira video + manual animation) to slides. New HIL Gate 2M (Motion Decision Point) separate from Gate 2. Motion is additive (most slides static). Kira image-to-video preferred; budget guardrails with auto-downgrade. Manual animation guidance is tool-agnostic. Irene perceives motion via video sensory bridge and scripts for it. Compositor assembly guide includes motion placement. 7 stories: workflow design, manifest extensions, decision point, Kira integration, animation guidance, motion perception, end-to-end orchestration."
   - "CROSS-EPIC SEQUENCING (2026-04-05): Epic 12 → Epic 13 → Epic 14. Epic 13 has hard dependency on sensory bridges (2A). Epic 14 has hard dependency on Epic 13 visual reference injection. Stories 14.4 and 14.5 can parallel."
 
-next_workflow_step: "Stories 26-1/26-2/26-3/26-4 (pilot wave + scaffold v0.2) all DONE 2026-04-17. Story 26-5 (preservation semantics) opened in backlog — MUST close before batch migration wave of remaining ~14 agents. Trial production run (APC C1-M1 Tejal) is NEXT per operator intent — pivoting now that scaffold v0.2 is locked in. Epic 26 shared artifacts at _bmad-output/implementation-artifacts/epic-26/_shared/ (AC spine, runbook, worksheet template, downstream-reference-maps for all 3 pilots, scaffold v0.2 shipped-spec)."
+next_workflow_step: "Epic 27 (Texas Intake Surface Expansion) + Epic 28 (Tracy the Detective) ratified 2026-04-17 and merged to master via commit 90f19eb. Implementation sequencing: 27-1 DOCX drift fix first (unblocks Tejal trial restart) → 27-2 scite.ai provider (blocks Epic 28) → 28-1 Tracy pilot (9 pts, full AC spine + 14-step dispatch runbook) → 28-2 gate family hardening. Per John Round-3 branch hygiene: implementation opens per-epic branches (dev/epic-27-texas-intake, dev/epic-28-tracy-pilot) cut from master. Story 26-5 (scaffold preservation semantics) still backlog; MUST close before batch migration wave. APC C1-M1 Tejal trial restart still pending — unblocked by 27-1 (DOCX fix) once implementation lands."
+
+epic_27_texas_intake_surface_expansion:
+  status: "ready-for-dev"
+  file: "_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md"
+  note: "Technician-capability upgrade epic. 7 stories, 23 pts. Critical path 27-1 → 27-2. Parallel fan-out 27-3/4/5/6/7. AC-S spine includes transform-registry lockstep check (would have caught DOCX drift pre-trial). Ratified via Round 1+2+3 party-mode consensus 2026-04-17."
+  stories:
+    "27-1-docx-provider-wiring":
+      status: "ready-for-dev"
+      tier: "Drift fix — contract-vs-code"
+      note: "Wire python-docx into .docx branch of local_file handler. Blocks Tejal trial restart. 2 pts. Full spec with 7 ACs + lockstep-check stub."
+    "27-2-scite-ai-provider":
+      status: "ready-for-dev"
+      tier: "New provider — blocks Epic 28"
+      note: "scite.ai scholarly-citation fetch. Introduces --tracy-approved-resources flag + source_origin tag + atomic-write artifact hygiene. 5 pts. Full spec with 9 ACs."
+    "27-3-image-provider":
+      status: "ratified-stub"
+      tier: "New provider — sensory-bridges integration"
+      note: "Image provider via sensory-bridges. Closes half of visual-source-gap backlog. 3 pts."
+    "27-4-youtube-provider":
+      status: "ratified-stub"
+      tier: "New provider — three-asset output"
+      note: "YouTube video + audio + transcript tri-output. Most complex of the batch. 5 pts."
+    "27-5-notion-mcp-provider":
+      status: "ratified-stub"
+      tier: "New provider — MCP-mediated"
+      note: "Notion MCP provider (distinct from legacy notion direct-API). 3 pts."
+    "27-6-box-provider":
+      status: "ratified-stub"
+      tier: "New provider — credentialed fetch"
+      note: "Box fetch layer, extraction delegated to existing format handlers. 2 pts."
+    "27-7-playwright-mcp-provider":
+      status: "ratified-stub"
+      tier: "New provider — dynamic rendering"
+      note: "Playwright MCP dynamic-rendering sibling to existing playwright_html. 3 pts."
+
+epic_28_tracy_detective:
+  status: "ready-for-dev"
+  file: "_bmad-output/implementation-artifacts/epic-28-tracy-detective.md"
+  shared_spine: "_bmad-output/implementation-artifacts/epic-28/_shared/"
+  sanctum_bundle: "skills/bmad-agent-tracy/"
+  note: "New production-tier specialist — the Detective partners with Texas (the Technician). Pilot provider scite.ai. 2 stories + 2 v2 backlog stubs, 12 pts. Shared AC spine, 14-step dispatch runbook, per-story worksheet template. Tracy sanctum breadcrumb (README + vocabulary.yaml v0.1 SSOT) landed at ratification time per Paige's doc-contract discipline. Governing architecture principle ratified: specialists never dispatch specialists at runtime; artifact handoff via filesystem is not a rule violation; Marcus owns every dispatch edge."
+  stories:
+    "28-1-tracy-pilot-scite-ai":
+      status: "ready-for-dev"
+      tier: "Pilot end-to-end"
+      note: "Tracy born: sanctum bundle + Irene→Marcus→Tracy dispatch + editorial-note-bearing manifest + operator approval + Texas second-pass + pre-Pass-2 hard gate + Irene Pass 2 ingestion. 9 pts. 12 ACs. Hard dependency: Epic 27 Story 27-2."
+    "28-2-tracy-gate-hardening":
+      status: "ratified-stub"
+      tier: "Regression hardening"
+      note: "Gate family (absent/stale/tampered receipt) + cross-agent asset-intent registry orphan detector + e2e gate-refusal. 3 pts."
+    "28-v2-a-coherence-gate":
+      status: "backlog"
+      tier: "v2 — correctness concern"
+      note: "Dr. Quinn Round 2 adversarial scenario. Coherence check between Tracy-added material and primary-source register before Pass 2 ingestion. Promote post-pilot if evidence confirms drift."
+    "28-v2-b-dispatch-budget":
+      status: "backlog"
+      tier: "v2 — Loop B mitigation"
+      note: "Dr. Quinn Round 2. Soft cap on Tracy-dispatches-per-run + approval-queue throttling. Promote if pilot evidence shows Irene flagging more gaps reflexively once Tracy is reliable."
 
 epic_26_bmb_sanctum_migration:
   status: "in-progress"

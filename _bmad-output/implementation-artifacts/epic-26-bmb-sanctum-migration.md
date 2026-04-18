@@ -60,7 +60,7 @@ Emerged from the pre-trial prep run that runs alongside Epic 26 on branch `dev/e
 | Story | Title | Status |
 |-------|-------|--------|
 | 26-6 | Marcus production-readiness capabilities (PR-PF + PR-RC full; PR-HC + PR-RS stubs) | done (2026-04-17) |
-| 26-7 | Texas CLI cp1252 guard (stretch) | ready-for-dev |
+| 26-7 | Texas CLI cp1252 guard (stretch) | done (2026-04-17) |
 | 26-10 | PR-HC + PR-RS full-impl follow-up | backlog (post-trial restart) |
 
 ## Acceptance Criteria for Epic Closure

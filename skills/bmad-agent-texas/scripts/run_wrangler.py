@@ -37,7 +37,7 @@ import hashlib
 import json
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +70,17 @@ _source_ops = load_module_from_path(
     "texas_source_wrangler_operations",
     _THIS_DIR / "source_wrangler_operations.py",
 )
+_cli_encoding = load_module_from_path(
+    "texas_cli_encoding",
+    _THIS_DIR / "_cli_encoding.py",
+)
+
+# Story 26-7 AC-C.2 + code-review finding: fire the guard at import time,
+# not just in main(). If this module is `python -m`-loaded (or imported
+# by another harness), any import-time print — from sibling modules,
+# from tracebacks during load, from wrapper scripts — would hit stdout
+# BEFORE main() runs. The guard must precede any possible stdout write.
+_cli_encoding.ensure_utf8_stdout()
 
 
 VALIDATOR_VERSION = "extraction_validator.py@2026-04-17"
@@ -431,19 +442,19 @@ def _rederive_tier_for_override(
     """Apply the same tier-threshold logic as extraction_validator to the
     override-adjusted ratio. Mirrors the validator's _TIER_THRESHOLDS so
     operator-declared floors drive tier assignment consistently."""
-    QualityTier = _extraction_validator.QualityTier
+    quality_tier = _extraction_validator.QualityTier
     if expected_min <= 0:
         # Degenerate override: keep the validator's original tier rather than
         # picking a tier based on a meaningless ratio.
         return original_tier
     ratio = word_count / expected_min
     if ratio >= 0.80 and structural_fidelity in ("high", "medium"):
-        return QualityTier.FULL_FIDELITY
+        return quality_tier.FULL_FIDELITY
     if ratio >= 0.50:
-        return QualityTier.ADEQUATE_WITH_GAPS
+        return quality_tier.ADEQUATE_WITH_GAPS
     if ratio >= 0.20:
-        return QualityTier.DEGRADED
-    return QualityTier.FAILED
+        return quality_tier.DEGRADED
+    return quality_tier.FAILED
 
 
 # ---------------------------------------------------------------------------
@@ -516,7 +527,7 @@ def _derive_overall_status(
     cross_entries: list[dict[str, Any]],
 ) -> tuple[str, list[dict[str, Any]]]:
     """Return (overall_status, blocking_issues[])."""
-    QualityTier = _extraction_validator.QualityTier
+    quality_tier = _extraction_validator.QualityTier
     blocking: list[dict[str, Any]] = []
 
     any_failed = False
@@ -536,7 +547,7 @@ def _derive_overall_status(
             any_failed = True
             continue
         tier = o.report.tier
-        if tier == QualityTier.FAILED:
+        if tier == quality_tier.FAILED:
             any_failed = True
             blocking.append(
                 {
@@ -553,7 +564,7 @@ def _derive_overall_status(
                     ),
                 }
             )
-        elif tier == QualityTier.DEGRADED:
+        elif tier == quality_tier.DEGRADED:
             any_degraded = True
             blocking.append(
                 {
@@ -569,7 +580,7 @@ def _derive_overall_status(
                     ),
                 }
             )
-        elif tier == QualityTier.ADEQUATE_WITH_GAPS:
+        elif tier == quality_tier.ADEQUATE_WITH_GAPS:
             any_warnings = True
 
     if any_failed or any_degraded:
@@ -917,7 +928,7 @@ def _write_result_envelope(
 
 def _utc_timestamp_z() -> str:
     """ISO-8601 UTC timestamp with trailing Z suffix (matches schema example)."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def run(directive_path: Path, bundle_dir: Path) -> dict[str, Any]:
@@ -993,6 +1004,10 @@ def run(directive_path: Path, bundle_dir: Path) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Story 26-7 AC-C.2: force UTF-8 stdout/stderr before any print so a
+    # Windows cp1252 terminal does not crash on non-ASCII source titles.
+    _cli_encoding.ensure_utf8_stdout()
+
     parser = argparse.ArgumentParser(
         description=(
             "Texas runtime wrangling runner — executes the Marcus ↔ Texas "

@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "story": "31-1",
+  "fields": {
+    "ScopeDecision": ["state", "scope", "proposed_by", "internal_proposed_by", "ratified_by", "locked_at"],
+    "ScopeDecisionTransition": ["event_type", "unit_id", "plan_revision", "from_state", "to_state", "from_scope", "to_scope", "actor", "internal_actor", "timestamp", "rationale_snapshot"],
+    "EventEnvelope": ["event_id", "timestamp", "plan_revision", "event_type", "payload"]
+  },
+  "extra": "forbid"
+}

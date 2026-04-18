@@ -29,6 +29,7 @@ dev = [
     "responses>=0.25,<1",
     "ruff>=0.4,<1",
     "pre-commit>=3.7,<5",
+    "jsonschema>=4.0,<5",
 ]
 
 [tool.ruff]

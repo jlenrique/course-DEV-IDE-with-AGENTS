@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "story": "31-1",
+  "fields": {
+    "FitReport": ["schema_version", "source_ref", "plan_ref", "diagnoses", "generated_at", "irene_budget_ms"],
+    "FitDiagnosis": ["unit_id", "fitness", "commentary", "recommended_scope_decision", "recommended_weather_band"]
+  },
+  "extra": "forbid"
+}

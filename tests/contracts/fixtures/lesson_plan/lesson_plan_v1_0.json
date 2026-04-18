@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "story": "31-1",
+  "fields": {
+    "LessonPlan": ["schema_version", "learning_model", "structure", "plan_units", "revision", "updated_at", "digest"],
+    "PlanUnit": ["unit_id", "event_type", "source_fitness_diagnosis", "scope_decision", "weather_band", "modality_ref", "rationale", "gaps", "dials"],
+    "Dials": ["enrichment", "corroboration"],
+    "IdentifiedGap": ["gap_id", "description", "suggested_posture"]
+  },
+  "extra": "forbid"
+}

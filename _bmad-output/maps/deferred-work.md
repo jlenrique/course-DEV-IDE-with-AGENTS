@@ -66,3 +66,20 @@ Cursor loads TWO Notion MCP servers in parallel (non-conflicting keys):
 - Paywall graceful degradation with empty abstract → body="" and no `abstract_empty` sentinel alongside `full_text_paywalled`. Add the sentinel so Vera's `completeness_ratio` logic can distinguish "paywalled but abstract available" from "fully opaque."
 - Test coverage gaps in `apply_provider_scored`: non-int `supporting_citations_min` / `cited_by_count_min` silently skip filtering (no refinement_log entry). Tighten to raise `DispatchError` or log `criterion_key=<key> reason="invalid_type"`.
 - `_mode_from_intent` silently falls through to "search" default when `params["mode"]` is an invalid string — no warning. Add a `_log_unknown_criteria`-style warning path.
+
+## 31-1 G5+G6 deferred findings
+
+Dated 2026-04-18. Twelve SHOULD-FIX findings deferred from G5 party-mode + G6 layered code review (Blind Hunter / Edge Case Hunter / Acceptance Auditor). Real but non-blocking; surfaced here for future stories in Epic 31/30/29 touching the lesson-plan schema.
+
+- [SHOULD-FIX][Blind][#4] _json_default pragma coverage — pragma acceptable; add negative test later if Decimal/UUID fields enter
+- [SHOULD-FIX][Blind][#5] structure: dict untyped — spec calls "opaque-to-platform free-shape"; document intent in future schema PR if sprawl observed
+- [SHOULD-FIX][Blind][#11] to_internal_actor error path untested — pragma acceptable; add negative test when caller surface grows in 31-2
+- [SHOULD-FIX][Edge][#5] ScopeDecision(state=proposed, ratified_by=maya) accepted — needs Quinn adjudication on semantic ambiguity; not a correctness bug but violates tri-phasic contract spirit
+- [SHOULD-FIX][Edge][#6] locked_at set on non-locked state — similar to Edge #5; needs Quinn call
+- [SHOULD-FIX][Edge][#7] from_state validator dead code (Literal already enforces) — redundant type safety is OK; revisit if Literal widens
+- [SHOULD-FIX][Edge][#10] proposed → proposed same-scope no-op — minor contract violation; promote if log-noise observed
+- [SHOULD-FIX][Edge][#11] _strip_none list None theoretical — not reachable in 31-1; promote when a nested Optional field lands
+- [SHOULD-FIX][Auditor][#3] AC-T.3 error-message specificity — tests pass; future-proofing if error string drifts
+- [SHOULD-FIX][Auditor][#4] ScopeDecisionTransition JSON Schema parity — spec says out-of-scope; declare in spec rather than test
+- [NIT-grouped][multiple] 23 NITs from Blind/Edge/Auditor — cosmetic (naming, DRY, imports, duplicate regex constants); not worth separate patch but list by file in commit message
+- [SHOULD-FIX][Auditor][Coverage] "Post-`model_dump(by_alias=True, exclude={...})` literal path not tested — spirit satisfied via to_audit_dump() but letter remains NIT"

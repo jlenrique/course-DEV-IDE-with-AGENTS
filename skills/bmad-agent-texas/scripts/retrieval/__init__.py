@@ -65,6 +65,12 @@ from .refinement_registry import (
     register_strategy,
 )
 
+# Story 27-2 Winston SHOULD-FIX: eager import of SciteProvider so
+# `list_providers()` reflects the registered adapter on first call, independent
+# of import-order. `__init_subclass__` registration still runs; this import
+# just guarantees the class is loaded.
+from .scite_provider import SciteProvider  # noqa: E402,F401
+
 __all__ = [
     "AcceptanceCriteria",
     "AdapterFactory",
@@ -88,6 +94,7 @@ __all__ = [
     "RetrievalIntent",
     "RetrievalKind",
     "SCHEMA_VERSION",
+    "SciteProvider",
     "SourceOrigin",
     "TexasRow",
     "build_texas_row",

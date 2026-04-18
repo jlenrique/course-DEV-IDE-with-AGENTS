@@ -165,6 +165,35 @@ class SourceOutcome:
     error_detail: str | None = None
 
 
+@dataclass
+class RetrievalOutcome:
+    """Collected per-source result for Story 27-2 retrieval-shape dispatch.
+
+    One `RetrievalOutcome` per directive source-row, carrying the full dispatcher
+    output (rows + acceptance + iteration stats + refinement log) plus the
+    retrieval context (intent / provider_hints / cross_validate) needed to
+    populate schema v1.1 additive fields in the extraction-report writer.
+    """
+
+    ref_id: str
+    role: str
+    fetched_at: str
+    # Retrieval context from the directive row (carried onto every row for v1.1 fields).
+    intent: str
+    provider_hints: list[dict[str, Any]]
+    cross_validate: bool
+    source_origin: str  # "operator-named" | "tracy-suggested"
+    tracy_row_ref: str | None
+    # Dispatcher output.
+    rows: list[Any]  # list[retrieval.TexasRow]
+    acceptance_met: bool
+    iterations_used: int
+    refinement_log: list[Any]  # list[retrieval.RefinementLogEntry]
+    # Failure path (if dispatcher raised).
+    error_kind: str | None = None
+    error_detail: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # Directive loading
 # ---------------------------------------------------------------------------
@@ -177,6 +206,27 @@ class DirectiveError(Exception):
 _SUPPORTED_PROVIDERS: frozenset[str] = frozenset(
     {"local_file", "pdf", "url", "notion", "playwright_html"}
 )
+
+
+# Story 27-2 AC-B.6: per-row shape classification for the dispatcher-wiring cascade.
+# Retrieval-shape rows (intent + provider_hints) route through retrieval.dispatcher;
+# locator-shape rows (provider + locator) keep the existing _fetch_source path.
+# Homogeneous directives only (v1 constraint) — mixed shapes exit 30.
+def _classify_directive_shape(src: dict[str, Any]) -> str:
+    """Return 'retrieval' | 'locator' | 'malformed' for one source row.
+
+    Per Story 27-2 AC-B.6:
+      - retrieval: `intent` + `provider_hints` keys, no `provider`+`locator`
+      - locator: `provider` + `locator` keys, no `intent`
+      - malformed: both or neither of those pairs present
+    """
+    has_intent = "intent" in src and "provider_hints" in src
+    has_locator = "provider" in src and "locator" in src
+    if has_intent and not has_locator:
+        return "retrieval"
+    if has_locator and not has_intent:
+        return "locator"
+    return "malformed"
 
 
 def _load_directive(path: Path) -> dict[str, Any]:
@@ -200,11 +250,40 @@ def _load_directive(path: Path) -> dict[str, Any]:
     sources = data.get("sources")
     if not isinstance(sources, list) or not sources:
         raise DirectiveError("Directive.sources must be a non-empty list")
-    seen_ref_ids: set[str] = set()
+
+    # Per-row shape classification (Story 27-2 AC-B.6).
+    per_row_shapes: list[str] = []
     for i, src in enumerate(sources):
         if not isinstance(src, dict):
             raise DirectiveError(f"sources[{i}] must be a mapping")
-        for required in ("ref_id", "provider", "locator", "role"):
+        shape = _classify_directive_shape(src)
+        if shape == "malformed":
+            raise DirectiveError(
+                f"sources[{i}] ambiguous shape: exactly one of "
+                f"{{intent+provider_hints}} or {{provider+locator}} must be "
+                f"present; got keys: {sorted(src.keys())}"
+            )
+        per_row_shapes.append(shape)
+
+    # Homogeneous-directive constraint (v1): all sources share one shape.
+    # A mixed directive would require the writer to be called twice with
+    # different code_path discriminants, violating the one-report-per-run
+    # contract. Split into two directives if both shapes are needed.
+    shape_set = set(per_row_shapes)
+    if len(shape_set) > 1:
+        raise DirectiveError(
+            f"Directive mixes retrieval-shape and locator-shape sources "
+            f"({sorted(shape_set)}). All sources in a directive must share "
+            f"one shape (v1 constraint). Split into two directives if both "
+            f"shapes are needed. Per-row shapes: {per_row_shapes}"
+        )
+    directive_shape = per_row_shapes[0]
+
+    # Shape-specific per-row validation.
+    seen_ref_ids: set[str] = set()
+    for i, src in enumerate(sources):
+        # Universal fields (both shapes).
+        for required in ("ref_id", "role"):
             if required not in src:
                 raise DirectiveError(
                     f"sources[{i}] missing required field: {required}"
@@ -213,11 +292,6 @@ def _load_directive(path: Path) -> dict[str, Any]:
             raise DirectiveError(
                 f"sources[{i}].role must be primary|validation|supplementary, "
                 f"got {src['role']!r}"
-            )
-        if src["provider"] not in _SUPPORTED_PROVIDERS:
-            raise DirectiveError(
-                f"sources[{i}].provider must be one of "
-                f"{sorted(_SUPPORTED_PROVIDERS)}, got {src['provider']!r}"
             )
         ref_id = src["ref_id"]
         if not isinstance(ref_id, str) or not ref_id.strip():
@@ -230,6 +304,40 @@ def _load_directive(path: Path) -> dict[str, Any]:
             )
         seen_ref_ids.add(ref_id)
 
+        if directive_shape == "locator":
+            # Legacy locator-shape validation (unchanged pre-27-2).
+            for required in ("provider", "locator"):
+                if required not in src:
+                    raise DirectiveError(
+                        f"sources[{i}] missing required field: {required}"
+                    )
+            if src["provider"] not in _SUPPORTED_PROVIDERS:
+                raise DirectiveError(
+                    f"sources[{i}].provider must be one of "
+                    f"{sorted(_SUPPORTED_PROVIDERS)}, got {src['provider']!r}"
+                )
+        else:  # retrieval-shape
+            # Intent must be a non-empty string.
+            intent = src.get("intent")
+            if not isinstance(intent, str) or not intent.strip():
+                raise DirectiveError(
+                    f"sources[{i}].intent must be a non-empty string for "
+                    f"retrieval-shape directive"
+                )
+            # provider_hints must be a non-empty list of dicts with 'provider' keys.
+            hints = src.get("provider_hints")
+            if not isinstance(hints, list) or not hints:
+                raise DirectiveError(
+                    f"sources[{i}].provider_hints must be a non-empty list "
+                    f"(retrieval-shape v1 requires explicit provider naming)"
+                )
+            for j, hint in enumerate(hints):
+                if not isinstance(hint, dict) or "provider" not in hint:
+                    raise DirectiveError(
+                        f"sources[{i}].provider_hints[{j}] must be a mapping "
+                        f"with a 'provider' key; got {hint!r}"
+                    )
+
     # Require at least one primary so downstream consumers always receive content.
     roles = [s["role"] for s in sources]
     if "primary" not in roles:
@@ -238,11 +346,177 @@ def _load_directive(path: Path) -> dict[str, Any]:
             "extracted.md without at least one primary"
         )
 
+    # Annotate directive with its shape for the run() dispatch branch.
+    data["_directive_shape"] = directive_shape
     return data
 
 
 # ---------------------------------------------------------------------------
-# Fetch dispatch
+# Retrieval-shape dispatch (Story 27-2 AC-B.6)
+# ---------------------------------------------------------------------------
+
+
+def _wrangle_retrieval_source(
+    src: dict[str, Any],
+    run_timestamp: str,
+) -> RetrievalOutcome:
+    """Wrangle one retrieval-shape directive source via `retrieval.dispatcher`.
+
+    Per AC-B.6: construct `RetrievalIntent` from directive row; call
+    `dispatcher.dispatch(intent)`; collect the resulting TexasRows.
+
+    Anti-pattern #3 guard: this path is DISJOINT from `_fetch_source` /
+    `_wrangle_source`; locator-shape sources are NOT routed through here.
+    The directive-load homogeneity check in `_load_directive` ensures the
+    entire directive uses one shape.
+
+    Dispatcher exceptions (DispatchError, MCPAuthError, etc.) are captured
+    into a FAILED-shape `RetrievalOutcome` with `error_kind` populated so
+    the writer still produces a report (same "always produce a report"
+    contract as locator-shape path).
+    """
+    # Lazy import — keeps legacy-directive smoke paths unaffected by retrieval
+    # package load cost. Also avoids import-time cycles since retrieval imports
+    # are already eager via `skills/bmad-agent-texas/scripts/retrieval/__init__.py`.
+    from retrieval import (  # noqa: PLC0415 — lazy-import intentional per anti-pattern #3 isolation
+        AcceptanceCriteria,
+        ProviderHint,
+        RetrievalIntent,
+        dispatch,
+    )
+
+    ref_id = src["ref_id"]
+    role = src["role"]
+
+    # Construct RetrievalIntent from directive row (v1.1 schema additive fields).
+    try:
+        hints = [
+            ProviderHint(
+                provider=h["provider"],
+                params=dict(h.get("params", {})),
+            )
+            for h in src["provider_hints"]
+        ]
+        acceptance_raw = src.get("acceptance_criteria", {})
+        acceptance = AcceptanceCriteria(
+            mechanical=dict(acceptance_raw.get("mechanical", {})),
+            provider_scored=dict(acceptance_raw.get("provider_scored", {})),
+            semantic_deferred=acceptance_raw.get("semantic_deferred"),
+        )
+        intent_obj = RetrievalIntent(
+            intent=src["intent"],
+            provider_hints=hints,
+            kind=src.get("kind", "query"),
+            acceptance_criteria=acceptance,
+            iteration_budget=int(src.get("iteration_budget", 3)),
+            convergence_required=bool(src.get("convergence_required", True)),
+            cross_validate=bool(src.get("cross_validate", False)),
+        )
+    except Exception as exc:  # RetrievalIntent / AcceptanceCriteria pydantic errors
+        return RetrievalOutcome(
+            ref_id=ref_id,
+            role=role,
+            fetched_at=run_timestamp,
+            intent=str(src.get("intent", "")),
+            provider_hints=list(src.get("provider_hints", [])),
+            cross_validate=bool(src.get("cross_validate", False)),
+            source_origin=str(src.get("source_origin", "operator-named")),
+            tracy_row_ref=src.get("tracy_row_ref"),
+            rows=[],
+            acceptance_met=False,
+            iterations_used=0,
+            refinement_log=[],
+            error_kind="retrieval_intent_invalid",
+            error_detail=f"{type(exc).__name__}: {exc}",
+        )
+
+    # Dispatch — dispatcher returns ProviderResult or list[ProviderResult].
+    try:
+        result = dispatch(intent_obj)
+    except Exception as exc:
+        return RetrievalOutcome(
+            ref_id=ref_id,
+            role=role,
+            fetched_at=run_timestamp,
+            intent=intent_obj.intent,
+            provider_hints=[
+                {"provider": h.provider, "params": dict(h.params)}
+                for h in intent_obj.provider_hints
+            ],
+            cross_validate=intent_obj.cross_validate,
+            source_origin=str(src.get("source_origin", "operator-named")),
+            tracy_row_ref=src.get("tracy_row_ref"),
+            rows=[],
+            acceptance_met=False,
+            iterations_used=0,
+            refinement_log=[],
+            error_kind=_classify_retrieval_error(exc),
+            error_detail=f"{type(exc).__name__}: {exc}",
+        )
+
+    # Flatten per-provider results (single or cross-validated) into one row list.
+    if isinstance(result, list):
+        all_rows: list[Any] = []
+        all_logs: list[Any] = []
+        iterations = 0
+        acceptance_met = True
+        for pr in result:
+            all_rows.extend(pr.rows)
+            all_logs.extend(pr.refinement_log)
+            iterations = max(iterations, pr.iterations_used)
+            acceptance_met = acceptance_met and pr.acceptance_met
+    else:
+        all_rows = list(result.rows)
+        all_logs = list(result.refinement_log)
+        iterations = result.iterations_used
+        acceptance_met = result.acceptance_met
+
+    return RetrievalOutcome(
+        ref_id=ref_id,
+        role=role,
+        fetched_at=run_timestamp,
+        intent=intent_obj.intent,
+        provider_hints=[
+            {"provider": h.provider, "params": dict(h.params)}
+            for h in intent_obj.provider_hints
+        ],
+        cross_validate=intent_obj.cross_validate,
+        source_origin=str(src.get("source_origin", "operator-named")),
+        tracy_row_ref=src.get("tracy_row_ref"),
+        rows=all_rows,
+        acceptance_met=acceptance_met,
+        iterations_used=iterations,
+        refinement_log=all_logs,
+    )
+
+
+def _classify_retrieval_error(exc: BaseException) -> str:
+    """Map retrieval-shape dispatcher / adapter exceptions to error_kind vocab.
+
+    Mirrors `_classify_fetch_error` module-prefix discipline (Winston
+    MUST-FIX #2 / AC-T.10): identifies MCPClient errors via
+    `type(exc).__module__.startswith("retrieval.")` so they cannot be
+    confused with foreign exception classes of the same name.
+    """
+    cls_name = type(exc).__name__
+    module = type(exc).__module__ or ""
+    # DispatchError from retrieval.dispatcher — directive-level dispatch failure.
+    if module.startswith("retrieval.") and cls_name == "DispatchError":
+        return "retrieval_dispatch_error"
+    # MCPClient exception family — provider-side HTTP failures.
+    if module.startswith("retrieval.") and cls_name == "MCPAuthError":
+        return "retrieval_auth_failed"
+    if module.startswith("retrieval.") and cls_name == "MCPRateLimitError":
+        return "retrieval_rate_limited"
+    if module.startswith("retrieval.") and cls_name == "MCPProtocolError":
+        return "retrieval_protocol_error"
+    if module.startswith("retrieval.") and cls_name == "MCPFetchError":
+        return "retrieval_fetch_failed"
+    return "retrieval_fetch_failed"
+
+
+# ---------------------------------------------------------------------------
+# Fetch dispatch (locator-shape — Story 27-2 anti-pattern #3: UNCHANGED)
 # ---------------------------------------------------------------------------
 
 
@@ -586,10 +860,19 @@ def _run_cross_validation(
 
 
 def _derive_overall_status(
-    outcomes: list[SourceOutcome],
+    outcomes: list[Any],
     cross_entries: list[dict[str, Any]],
+    *,
+    code_path: str = "locator",
 ) -> tuple[str, list[dict[str, Any]]]:
-    """Return (overall_status, blocking_issues[])."""
+    """Return (overall_status, blocking_issues[]).
+
+    Story 27-2: `code_path` param routes retrieval-shape outcomes through a
+    simpler rule-set (no extraction-tier concept — acceptance is binary per
+    `acceptance_met` + refinement log depth).
+    """
+    if code_path == "retrieval":
+        return _derive_overall_status_retrieval(outcomes)
     quality_tier = _extraction_validator.QualityTier
     blocking: list[dict[str, Any]] = []
 
@@ -658,6 +941,60 @@ def _derive_overall_status(
     if any_warnings:
         return "complete_with_warnings", blocking
 
+    return "complete", blocking
+
+
+def _derive_overall_status_retrieval(
+    outcomes: list[RetrievalOutcome],
+) -> tuple[str, list[dict[str, Any]]]:
+    """Story 27-2: overall status for retrieval-shape runs.
+
+    Rules:
+      - Any primary outcome with `error_kind` → blocked.
+      - Any primary outcome with `acceptance_met=False` AND no rows → blocked.
+      - Any primary outcome with `acceptance_met=False` AND rows → warnings.
+      - All primary outcomes acceptance_met=True → complete.
+    """
+    blocking: list[dict[str, Any]] = []
+    any_failed = False
+    any_warnings = False
+
+    primaries = [o for o in outcomes if o.role == "primary"]
+    for o in primaries:
+        if o.error_kind is not None:
+            blocking.append({
+                "ref_id": o.ref_id,
+                "reason": o.error_kind,
+                "detail": o.error_detail or "retrieval dispatch error",
+                "operator_question": (
+                    "Verify provider credentials / rate limits / MCP endpoint "
+                    "availability for the retrieval-shape directive"
+                ),
+            })
+            any_failed = True
+            continue
+        if not o.acceptance_met and not o.rows:
+            blocking.append({
+                "ref_id": o.ref_id,
+                "reason": "acceptance_criteria_unmet_no_rows",
+                "detail": (
+                    f"Retrieval dispatch produced 0 rows after "
+                    f"{o.iterations_used} iteration(s); acceptance criteria "
+                    f"not met"
+                ),
+                "operator_question": (
+                    "Loosen acceptance criteria, widen iteration_budget, or "
+                    "switch providers"
+                ),
+            })
+            any_failed = True
+        elif not o.acceptance_met:
+            any_warnings = True
+
+    if any_failed:
+        return "blocked", blocking
+    if any_warnings:
+        return "complete_with_warnings", blocking
     return "complete", blocking
 
 
@@ -740,23 +1077,63 @@ def _write_extraction_report(
     bundle_dir: Path,
     run_id: str,
     overall_status: str,
-    outcomes: list[SourceOutcome],
+    outcomes: list[Any],  # list[SourceOutcome] for locator; list[RetrievalOutcome] for retrieval
     cross_entries: list[dict[str, Any]],
     blocking_issues: list[dict[str, Any]],
     run_timestamp: str,
+    *,
+    code_path: str = "locator",
 ) -> Path:
-    """Write extraction-report.yaml matching extraction-report-schema.md v1.0."""
-    evidence_summary = _build_evidence_summary(overall_status, outcomes, cross_entries)
+    """Write extraction-report.yaml with dual-emit schema_version (AC-C.11).
+
+    Story 27-2 Winston MUST-FIX #1: the `code_path` discriminant is a CONTRACT,
+    not a hint. Mismatched outcome types raise `ValueError` rather than silently
+    default-filling. Dual-emit prevents dual-drift.
+
+      - `code_path="locator"` → `schema_version: "1.0"`; outcomes must be all
+        `SourceOutcome`; any `RetrievalOutcome` in the list raises.
+      - `code_path="retrieval"` → `schema_version: "1.1"`; outcomes must be all
+        `RetrievalOutcome`; any `SourceOutcome` in the list raises.
+    """
+    if code_path not in ("locator", "retrieval"):
+        raise ValueError(
+            f"_write_extraction_report: code_path must be 'locator' or "
+            f"'retrieval'; got {code_path!r}"
+        )
+
+    # Enforce row / code_path consistency (Winston MUST-FIX #1 teeth).
+    if code_path == "locator":
+        for o in outcomes:
+            if not isinstance(o, SourceOutcome):
+                raise ValueError(
+                    f"write_extraction_report received non-locator row on "
+                    f"locator code path: {type(o).__name__} (expected SourceOutcome)"
+                )
+        schema_version = "1.0"
+        report_sources = [_source_outcome_to_report_entry(o) for o in outcomes]
+    else:  # retrieval
+        for o in outcomes:
+            if not isinstance(o, RetrievalOutcome):
+                raise ValueError(
+                    f"write_extraction_report received non-retrieval row on "
+                    f"retrieval code path: {type(o).__name__} (expected RetrievalOutcome)"
+                )
+        schema_version = "1.1"
+        report_sources = _retrieval_outcomes_to_report_entries(outcomes)
+
+    evidence_summary = _build_evidence_summary(
+        overall_status, outcomes, cross_entries, code_path=code_path
+    )
     report = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": schema_version,
         "run_id": run_id,
         "generated_at": run_timestamp,
         "overall_status": overall_status,
         "validator_version": VALIDATOR_VERSION,
-        "sources": [_source_outcome_to_report_entry(o) for o in outcomes],
+        "sources": report_sources,
         "cross_validation": cross_entries,
         "evidence_summary": evidence_summary,
-        "recommendations": _collect_recommendations(outcomes),
+        "recommendations": _collect_recommendations(outcomes, code_path=code_path),
     }
     if overall_status == "blocked" and blocking_issues:
         report["blocking_issues"] = blocking_issues
@@ -768,12 +1145,94 @@ def _write_extraction_report(
     return path
 
 
+def _retrieval_outcomes_to_report_entries(
+    outcomes: list[RetrievalOutcome],
+) -> list[dict[str, Any]]:
+    """Flatten retrieval-shape outcomes into v1.1 source entries.
+
+    Each `RetrievalOutcome` contributes:
+      - One entry per `TexasRow` in `outcome.rows` (flattened).
+      - Retrieval context (intent, provider_hints, cross_validate) carried
+        onto every row entry for schema v1.1 additive fields.
+      - A synthetic-error entry if the dispatcher raised (no rows produced).
+    """
+    entries: list[dict[str, Any]] = []
+    for outcome in outcomes:
+        if outcome.error_kind is not None:
+            # Dispatcher / adapter failure — emit one error entry preserving
+            # retrieval context so the operator can see what was intended.
+            entries.append({
+                "ref_id": outcome.ref_id,
+                "role": outcome.role,
+                "retrieval_intent": outcome.intent,
+                "provider_hints": list(outcome.provider_hints),
+                "cross_validate": outcome.cross_validate,
+                "source_origin": outcome.source_origin,
+                "tracy_row_ref": outcome.tracy_row_ref,
+                "acceptance_met": False,
+                "iterations_used": outcome.iterations_used,
+                "fetched_at": outcome.fetched_at,
+                "error_kind": outcome.error_kind,
+                "error_detail": outcome.error_detail,
+            })
+            continue
+        if not outcome.rows:
+            # Empty-result (no adapter error, but no rows meeting criteria).
+            entries.append({
+                "ref_id": outcome.ref_id,
+                "role": outcome.role,
+                "retrieval_intent": outcome.intent,
+                "provider_hints": list(outcome.provider_hints),
+                "cross_validate": outcome.cross_validate,
+                "source_origin": outcome.source_origin,
+                "tracy_row_ref": outcome.tracy_row_ref,
+                "acceptance_met": outcome.acceptance_met,
+                "iterations_used": outcome.iterations_used,
+                "fetched_at": outcome.fetched_at,
+                "rows": [],
+            })
+            continue
+        # Happy path: one entry per TexasRow, retrieval context attached.
+        for idx, row in enumerate(outcome.rows):
+            convergence = None
+            if row.convergence_signal is not None:
+                convergence = row.convergence_signal.model_dump()
+            entries.append({
+                "ref_id": f"{outcome.ref_id}-row-{idx + 1}",
+                "role": outcome.role,
+                "retrieval_intent": outcome.intent,
+                "provider_hints": list(outcome.provider_hints),
+                "cross_validate": outcome.cross_validate,
+                "convergence_signal": convergence,
+                "source_origin": row.source_origin or outcome.source_origin,
+                "tracy_row_ref": row.tracy_row_ref or outcome.tracy_row_ref,
+                "acceptance_met": outcome.acceptance_met,
+                "iterations_used": outcome.iterations_used,
+                "fetched_at": outcome.fetched_at,
+                "source_id": row.source_id,
+                "provider": row.provider,
+                "title": row.title,
+                "body": row.body,
+                "authors": list(row.authors),
+                "date": row.date,
+                "authority_tier": row.authority_tier,
+                "provider_metadata": dict(row.provider_metadata or {}),
+                "completeness_ratio": row.completeness_ratio,
+                "structural_fidelity": row.structural_fidelity,
+            })
+    return entries
+
+
 def _build_evidence_summary(
     overall_status: str,
-    outcomes: list[SourceOutcome],
+    outcomes: list[Any],
     cross_entries: list[dict[str, Any]],
+    *,
+    code_path: str = "locator",
 ) -> list[str]:
     # Schema contract: always produce 2-5 sentences.
+    if code_path == "retrieval":
+        return _build_evidence_summary_retrieval(overall_status, outcomes)
     primaries = [o for o in outcomes if o.role == "primary"]
     validators = [o for o in outcomes if o.role == "validation"]
     supplementaries = [o for o in outcomes if o.role == "supplementary"]
@@ -808,9 +1267,58 @@ def _build_evidence_summary(
     return lines
 
 
-def _collect_recommendations(outcomes: list[SourceOutcome]) -> list[str]:
+def _build_evidence_summary_retrieval(
+    overall_status: str,
+    outcomes: list[RetrievalOutcome],
+) -> list[str]:
+    """Evidence summary for retrieval-shape runs (Story 27-2)."""
+    primaries = [o for o in outcomes if o.role == "primary"]
+    total_rows = sum(len(o.rows) for o in outcomes if o.error_kind is None)
+    errors = [o for o in outcomes if o.error_kind is not None]
+    lines: list[str] = []
+    lines.append(
+        f"{len(primaries)} primary retrieval-shape source(s) dispatched; "
+        f"{total_rows} row(s) returned across {len(outcomes)} dispatch(es)."
+    )
+    met = sum(1 for o in outcomes if o.error_kind is None and o.acceptance_met)
+    lines.append(
+        f"Acceptance criteria met on {met}/{len(outcomes)} dispatches "
+        f"(iteration budgets used: {[o.iterations_used for o in outcomes]})."
+    )
+    if errors:
+        kinds = sorted({o.error_kind for o in errors if o.error_kind})
+        lines.append(
+            f"{len(errors)} dispatch(es) failed; error kinds: {', '.join(kinds)}."
+        )
+    lines.append(f"Overall status: {overall_status}.")
+    return lines
+
+
+def _collect_recommendations(
+    outcomes: list[Any],
+    *,
+    code_path: str = "locator",
+) -> list[str]:
     out: list[str] = []
     seen: set[str] = set()
+    if code_path == "retrieval":
+        # Retrieval-shape: surface refinement-log "reason" values + any error detail.
+        for o in outcomes:
+            if o.error_kind:
+                rec = (
+                    f"Retrieval dispatch failed ({o.error_kind}): verify "
+                    f"provider auth / rate limits / MCP catalog shape. See "
+                    f"provider-specific spec for troubleshooting."
+                )
+                if rec not in seen:
+                    seen.add(rec)
+                    out.append(rec)
+            for entry in o.refinement_log:
+                reason = getattr(entry, "reason", None)
+                if reason and reason not in seen:
+                    seen.add(reason)
+                    out.append(f"Refinement log: {reason}")
+        return out
     for o in outcomes:
         for r in o.report.recommendations:
             if r not in seen:
@@ -1010,10 +1518,14 @@ def run(directive_path: Path, bundle_dir: Path) -> dict[str, Any]:
     # Capture one run-scoped timestamp so every artifact agrees on "when".
     run_timestamp = _utc_timestamp_z()
 
-    # Wrangle every source in directive order. Primary + validation both fetch
-    # content; role drives downstream treatment. Supplementary sources are
-    # fetched into metadata provenance but contribute no content to extracted.md
-    # and are not cross-validated.
+    # Story 27-2 AC-B.6: branch on directive shape. `_load_directive`
+    # already validated homogeneity and annotated the directive with its shape.
+    directive_shape = directive["_directive_shape"]
+
+    if directive_shape == "retrieval":
+        return _run_retrieval_shape(directive, bundle_dir, run_id, run_timestamp)
+
+    # Legacy locator-shape path (anti-pattern #3: UNCHANGED).
     outcomes: list[SourceOutcome] = []
     for src in directive["sources"]:
         outcomes.append(_wrangle_source(src, run_timestamp))
@@ -1036,6 +1548,7 @@ def run(directive_path: Path, bundle_dir: Path) -> dict[str, Any]:
         cross_entries,
         blocking_issues,
         run_timestamp,
+        code_path="locator",
     )
     ingestion_evidence_path = _write_ingestion_evidence(
         bundle_dir, run_id, outcomes, cross_entries, overall_status, run_timestamp
@@ -1064,6 +1577,208 @@ def run(directive_path: Path, bundle_dir: Path) -> dict[str, Any]:
 
     # Re-read the written envelope so the in-memory return matches disk exactly.
     return yaml.safe_load(result_path.read_text(encoding="utf-8"))
+
+
+def _run_retrieval_shape(
+    directive: dict[str, Any],
+    bundle_dir: Path,
+    run_id: str,
+    run_timestamp: str,
+) -> dict[str, Any]:
+    """Story 27-2 AC-B.6: retrieval-shape directive execution path.
+
+    Disjoint from the locator-shape path per anti-pattern #3 (no retrofit of
+    locator-shape providers). Writes `schema_version: "1.1"` via the writer's
+    `code_path="retrieval"` discriminant.
+    """
+    outcomes: list[RetrievalOutcome] = [
+        _wrangle_retrieval_source(src, run_timestamp)
+        for src in directive["sources"]
+    ]
+
+    # Retrieval-shape runs do NOT invoke extraction_validator or cross_validator.
+    # Those are locator-shape concepts (word counts, page ratios, key-term
+    # coverage). Retrieval-shape quality is already reflected in acceptance_met
+    # + iterations_used + refinement_log per ProviderResult.
+    cross_entries: list[dict[str, Any]] = []
+    overall_status, blocking_issues = _derive_overall_status(
+        outcomes, cross_entries, code_path="retrieval"
+    )
+
+    # Retrieval-shape extracted.md: flat concatenation of row bodies for
+    # downstream consumption parity with locator-shape.
+    primaries = [o for o in outcomes if o.role == "primary"]
+    extracted_path = _write_retrieval_extracted_md(bundle_dir, run_id, primaries)
+    metadata_path = _write_retrieval_metadata_json(
+        bundle_dir, run_id, outcomes, run_timestamp
+    )
+    extraction_report_path = _write_extraction_report(
+        bundle_dir,
+        run_id,
+        overall_status,
+        outcomes,
+        cross_entries,
+        blocking_issues,
+        run_timestamp,
+        code_path="retrieval",
+    )
+    ingestion_evidence_path = _write_retrieval_ingestion_evidence(
+        bundle_dir, run_id, outcomes, overall_status, run_timestamp
+    )
+
+    content_artifacts = [
+        extracted_path,
+        metadata_path,
+        extraction_report_path,
+        ingestion_evidence_path,
+    ]
+    manifest_path = _write_manifest_json(
+        bundle_dir, run_id, content_artifacts, run_timestamp
+    )
+
+    all_artifacts = content_artifacts + [manifest_path]
+    result_path = _write_retrieval_result_envelope(
+        bundle_dir,
+        run_id,
+        overall_status,
+        outcomes,
+        blocking_issues,
+        all_artifacts,
+    )
+
+    return yaml.safe_load(result_path.read_text(encoding="utf-8"))
+
+
+def _write_retrieval_extracted_md(
+    bundle_dir: Path,
+    run_id: str,
+    primaries: list[RetrievalOutcome],
+) -> Path:
+    """Retrieval-shape extracted.md — flat concatenation of row bodies."""
+    lines = ["# Texas Extracted Bundle (retrieval-shape)\n", f"Run ID: {run_id}\n\n"]
+    for outcome in primaries:
+        lines.append(f"## Retrieval: {outcome.ref_id}\n")
+        lines.append(f"Intent: {outcome.intent}\n\n")
+        for row in outcome.rows:
+            lines.append(f"### {row.title or row.source_id}\n")
+            if row.authors:
+                lines.append(f"Authors: {', '.join(row.authors)}\n")
+            if row.date:
+                lines.append(f"Date: {row.date}\n")
+            lines.append(f"\n{row.body}\n\n")
+    path = bundle_dir / "extracted.md"
+    path.write_text("".join(lines), encoding="utf-8")
+    return path
+
+
+def _write_retrieval_metadata_json(
+    bundle_dir: Path,
+    run_id: str,
+    outcomes: list[RetrievalOutcome],
+    run_timestamp: str,
+) -> Path:
+    """Retrieval-shape metadata.json — per-dispatch provenance."""
+    metadata: dict[str, Any] = {
+        "schema_version": "1.1",
+        "run_id": run_id,
+        "generated_at": run_timestamp,
+        "directive_shape": "retrieval",
+        "dispatches": [
+            {
+                "ref_id": o.ref_id,
+                "role": o.role,
+                "intent": o.intent,
+                "provider_hints": list(o.provider_hints),
+                "cross_validate": o.cross_validate,
+                "source_origin": o.source_origin,
+                "tracy_row_ref": o.tracy_row_ref,
+                "acceptance_met": o.acceptance_met,
+                "iterations_used": o.iterations_used,
+                "rows_returned": len(o.rows),
+                "error_kind": o.error_kind,
+                "error_detail": o.error_detail,
+            }
+            for o in outcomes
+        ],
+    }
+    path = bundle_dir / "metadata.json"
+    path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    return path
+
+
+def _write_retrieval_ingestion_evidence(
+    bundle_dir: Path,
+    run_id: str,
+    outcomes: list[RetrievalOutcome],
+    overall_status: str,
+    run_timestamp: str,
+) -> Path:
+    """Retrieval-shape ingestion-evidence.md — dispatch summary."""
+    lines = [
+        "# Ingestion Evidence (retrieval-shape)\n\n",
+        f"Run ID: {run_id}\n",
+        f"Generated: {run_timestamp}\n",
+        f"Overall status: {overall_status}\n\n",
+    ]
+    for outcome in outcomes:
+        lines.append(f"## {outcome.ref_id} ({outcome.role})\n\n")
+        lines.append(f"- Intent: `{outcome.intent}`\n")
+        lines.append(
+            f"- Providers: "
+            f"{', '.join(h['provider'] for h in outcome.provider_hints)}\n"
+        )
+        lines.append(f"- Cross-validate: {outcome.cross_validate}\n")
+        lines.append(f"- Acceptance met: {outcome.acceptance_met}\n")
+        lines.append(f"- Iterations: {outcome.iterations_used}\n")
+        lines.append(f"- Rows returned: {len(outcome.rows)}\n")
+        if outcome.error_kind:
+            lines.append(f"- **Error:** `{outcome.error_kind}` — {outcome.error_detail}\n")
+        if outcome.refinement_log:
+            lines.append("\n### Refinement log\n\n")
+            for entry in outcome.refinement_log:
+                lines.append(
+                    f"  - iter={entry.iteration} provider={entry.provider} "
+                    f"reason={entry.reason}"
+                )
+                if entry.criterion_key:
+                    lines.append(f" key={entry.criterion_key}")
+                lines.append("\n")
+        lines.append("\n")
+    path = bundle_dir / "ingestion-evidence.md"
+    path.write_text("".join(lines), encoding="utf-8")
+    return path
+
+
+def _write_retrieval_result_envelope(
+    bundle_dir: Path,
+    run_id: str,
+    overall_status: str,
+    outcomes: list[RetrievalOutcome],
+    blocking_issues: list[dict[str, Any]],
+    artifact_paths: list[Path],
+) -> Path:
+    """Retrieval-shape result.yaml — parity with locator-shape envelope."""
+    envelope: dict[str, Any] = {
+        "schema_version": "1.1",
+        "run_id": run_id,
+        "directive_shape": "retrieval",
+        "status": overall_status,
+        "dispatches_count": len(outcomes),
+        "rows_total": sum(len(o.rows) for o in outcomes if o.error_kind is None),
+        "acceptance_met_count": sum(
+            1 for o in outcomes if o.error_kind is None and o.acceptance_met
+        ),
+        "errors_count": sum(1 for o in outcomes if o.error_kind is not None),
+        "artifacts": [p.relative_to(bundle_dir).as_posix() for p in artifact_paths],
+    }
+    if blocking_issues:
+        envelope["blocking_issues"] = blocking_issues
+    path = bundle_dir / "result.yaml"
+    path.write_text(
+        yaml.safe_dump(envelope, sort_keys=False, default_flow_style=False),
+        encoding="utf-8",
+    )
+    return path
 
 
 def _list_providers_cli(

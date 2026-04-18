@@ -1,6 +1,6 @@
 # Story 27.2: scite.ai Provider (RetrievalAdapter subclass + deferred-27-0 cascade)
 
-**Status:** ready-for-dev (green-light round 1 closed 2026-04-18 — 13 MUST-FIX applied; see §Green-Light Patches Applied)
+**Status:** done (BMAD-closed 2026-04-18 — dev-story + party-mode round 2 unanimous GREEN + bmad-code-review 15 PATCH applied + 19 DEFER logged; regression 1149/2/0/2 — see §Review Record)
 **Created:** 2026-04-17 (ratified-stub post-Round-3 party consensus); pre-reshape 382-line expansion 2026-04-17 22:45 (archived); **re-expanded against Shape 3-Disciplined 27-0 contract 2026-04-18** via `bmad-create-story`; **green-light round 1 patches applied 2026-04-18** via four-panelist party-mode (Winston / Amelia / Murat / Paige).
 **Epic:** 27 — Texas Intake Surface Expansion
 **Sprint key:** `27-2-scite-ai-provider`
@@ -605,23 +605,152 @@ tests/
 
 ### Agent Model Used
 
-_(filled by dev-story at implementation time)_
+- **Model**: claude-opus-4-7[1m] (Claude Opus 4.7, 1M context)
+- **Session mode**: `bmad-dev-story` autonomous implementation (option A green-light → run-through), 2026-04-18
 
 ### Debug Log References
 
-_(filled by dev-story)_
+- **Regression-proof-tests classification** (per `feedback_regression_proof_tests.md`): one test flip in `tests/contracts/test_provider_directory_roster_placeholders.py` — scite row's expected `status` flipped `ratified` → `ready`. Classified as **update** (expected change: live adapter now supersedes placeholder). Committed inline in checkpoint commit `ff535a3` with a code comment explaining the supersession pattern for future retrieval-shape stories.
+- **Ruff self-fix loop** (one round): 3 auto-fixes at 27-2 file set (I001 import sort + F401 unused dataclass import + manual SIM108 ternary rewrite). No other lint findings on 27-2 files.
+- **Test-self-reference trap** (debug log): AC-T.11 no-stateful-mock guard initially matched its own docstring (`MagicMock`). Mitigation: assemble the forbidden tokens at runtime via string concatenation so the literal never appears in-file.
+- **Scrubber regex ordering** (debug log): `_DURATION_RE` pattern `(ms|s|seconds)` matched the `s` of "seconds" greedily. Reordered to `(seconds|ms|s)\b` with word-boundary anchor — longer alternation first + explicit boundary.
+- **Fixture word-count floor** (debug log): first DOCX parity baseline undershot the 150-word floor → exit 20. Expanded fixture paragraphs to exceed the floor so the test focuses on structural parity rather than completeness-ratio tier shifts.
 
 ### Completion Notes List
 
-_(filled by dev-story)_
+- **T1 + T2-T7** — `SciteProvider(RetrievalAdapter)` shipped with all 7 abstract methods + `PROVIDER_INFO` + honored-criteria + authority-tier lookup table + paywall degradation + DOI-primary identity-key fallback. Eager import wired in `retrieval/__init__.py` per Winston SHOULD-FIX.
+- **T8 — dispatcher wiring cascade** — `_classify_directive_shape` + homogeneity constraint + `_run_retrieval_shape` pipeline + `code_path` discriminant on `_write_extraction_report` with contract teeth raising `ValueError` on mismatched row types both directions. Legacy `_fetch_source` path unchanged; 27-1 DOCX byte-identical regression holds.
+- **T9 — SciteProvider unit tests** — 15 atoms (11 AC-T.1 + 2 AC-T.3 refine + 1 AC-T.10 module-prefix + 1 AC-T.11 no-stateful-mock guard) in `tests/test_retrieval_scite_provider.py`. Seven JSON fixtures + `README.md` provenance note under `tests/fixtures/retrieval/scite/`.
+- **T10 — Parametrized ABC-contract tests** — `tests/contracts/test_retrieval_adapter_base.py` rewritten around `ADAPTER_FACTORIES` + `AdapterHarness` factory pattern. Tests run for both `[fake]` and `[scite]` IDs. Future adapters append a factory entry instead of copying test bodies.
+- **T11 — Refinement tests** — folded into T9 via AC-T.3 atoms (monotonic looseness + exhaustion).
+- **T12 — Dispatcher integration smoke** — `test_dispatcher_scite_single_provider_integration` added to `tests/test_retrieval_dispatcher.py`. Exercises formulate_query → execute (responses-mocked MCP) → filter → normalize → `ProviderResult`.
+- **T13 — run_wrangler dispatcher-wiring regression** — `tests/test_run_wrangler_retrieval_shape.py` with 5 tests (3 AC-T.5 + 2 AC-C.11 writer-discriminant teeth).
+- **T14 — Legacy DOCX parity** — `tests/test_run_wrangler_legacy_docx_parity.py` with 8 tests (6 scrubber self-test parametrize + 1 structural parity + 1 malformed-exception parity). Goldens captured under `tests/fixtures/regression/legacy_docx_baseline/`. Regeneration procedure documented in dev-guide Recipe-4 §12.
+- **T15 — Parametrized schema-compliance** — `tests/contracts/test_extraction_report_schema_compliance.py` with `@pytest.mark.parametrize("version", ["1.0", "1.1"])`.
+- **T16 — Dev-guide Recipe-4** — sharded `docs/dev-guide/how-to-add-a-retrieval-provider.md` (~280 lines) with SciteProvider as worked example. Main `docs/dev-guide.md` gets ToC entry + 6-line Recipe-4 stub. All three surfaces landed per Paige MUST-FIX #2.
+- **T17 — references updates** — `retrieval-contract.md` got scite-specific §signals subsection under "For Tracy" + §"Authoring retrieval-shape directives directly (advanced)" subsection under "For operators" (Paige MUST-FIX #1). `extraction-report-schema.md` got new `## Provider Metadata Sub-objects` H2 with full `provider_metadata.scite` field table + worked example (Paige MUST-FIX #3: single source of truth).
+- **T18 — Regression gate** — **1143 passed / 2 skipped / 0 failed / 2 xfailed** (Murat floor was ≥1137; delta +37 over 27-0 baseline of 1106). Ruff clean on 27-2 file set.
+- **Follow-on tickets committed at green-light** — `27-2-live-cassette-refresh` + `27-2-refinement-hardening` recorded in spec §Pre-Development Gate. Opens IFF operator acquires creds / live dispatch shows drop-in-order exhaustion clustering.
 
 ### File List
 
-_(filled by dev-story; expected list matches §File Impact above)_
+**New files:**
+- `skills/bmad-agent-texas/scripts/retrieval/scite_provider.py` (~620 lines)
+- `tests/test_retrieval_scite_provider.py` (~330 lines, 15 atoms)
+- `tests/test_run_wrangler_retrieval_shape.py` (~280 lines, 5 atoms)
+- `tests/test_run_wrangler_legacy_docx_parity.py` (~300 lines, 8 atoms)
+- `tests/contracts/test_extraction_report_schema_compliance.py` (~190 lines, 2 atoms)
+- `tests/fixtures/retrieval/scite/README.md`
+- `tests/fixtures/retrieval/scite/search_happy.json`
+- `tests/fixtures/retrieval/scite/paper_metadata_happy.json`
+- `tests/fixtures/retrieval/scite/paper_metadata_paywalled.json`
+- `tests/fixtures/retrieval/scite/citation_context_happy.json`
+- `tests/fixtures/retrieval/scite/empty_search.json`
+- `tests/fixtures/retrieval/scite/auth_failure_401.json`
+- `tests/fixtures/retrieval/scite/rate_limit_429.json`
+- `tests/fixtures/regression/legacy_docx_baseline/extraction_report_scrubbed.yaml` (captured golden)
+- `tests/fixtures/regression/legacy_docx_baseline/exception_class.json` (captured golden)
+- `docs/dev-guide/how-to-add-a-retrieval-provider.md` (~280 lines)
+
+**Modified files:**
+- `skills/bmad-agent-texas/scripts/run_wrangler.py` (~350 lines added across AC-B.6 wiring + AC-C.11 discriminant + retrieval-shape pipeline)
+- `skills/bmad-agent-texas/scripts/retrieval/__init__.py` (eager SciteProvider import + `__all__` update)
+- `skills/bmad-agent-texas/references/retrieval-contract.md` (+50 lines: scite signals + advanced-directive subsection)
+- `skills/bmad-agent-texas/references/extraction-report-schema.md` (+80 lines: Provider Metadata Sub-objects H2)
+- `docs/dev-guide.md` (+8 lines: ToC entry + Recipe-4 stub)
+- `tests/contracts/test_retrieval_adapter_base.py` (rewritten around ADAPTER_FACTORIES)
+- `tests/test_retrieval_dispatcher.py` (+~50 lines for scite dispatcher-smoke)
+- `tests/contracts/test_provider_directory_roster_placeholders.py` (scite status: `ratified` → `ready`)
 
 ### Review Record
 
-_(filled by bmad-code-review; template = 27-0 Review Record structure: party-mode implementation review → layered bmad-code-review with Blind Hunter + Edge Case Hunter + Acceptance Auditor breakdown)_
+**Party-mode implementation review (2026-04-18)** — four-panelist post-implementation review. Votes: Winston GREEN / Amelia GREEN / Murat YELLOW (conditional) / Paige GREEN. Two Murat conditional MUST-HAVES applied; three panelist nits applied as polish.
+
+**Murat MH-1 (golden-file regeneration gate) — APPLIED.** Regeneration of `tests/fixtures/regression/legacy_docx_baseline/*` is now gated behind the `REGENERATE_GOLDENS=1` environment variable. Default `pytest` invocations fail loudly with an explicit error pointing at the regeneration procedure if a golden is missing (see `tests/test_run_wrangler_legacy_docx_parity.py` + `docs/dev-guide/how-to-add-a-retrieval-provider.md` §12). Silent rebase via default `pytest` is impossible by design. The §12 procedure requires reviewer countersignature (Murat or designated Test reviewer) on every baseline rebase.
+
+**Murat MH-2 (promote M-SF-2 to 27-2.5 Pre-Development Gate) — APPLIED.** CI 3x-run flake-detection gate promoted from "deferred, logged" to a 27-2.5 Pre-Development Gate MUST-HAVE. Rationale: 27-2.5's cross-validation combinatorial surface (N providers × M refinement paths × ordering-sensitive consensus) is the exact shape that produces intermittent flake; starting 27-2.5 without the gate means the first flake we see will be in 27-2.5 code under new load, unable to distinguish 27-2.5 bugs from latent 27-2 non-determinism. Pin recorded in 27-2.5's sprint-status entry.
+
+**Polish nits (all three applied):**
+- **Winston nit (authority-tier promotion)** — logged to `_bmad-output/maps/deferred-work.md` as a 27-2.5 / 27-3 opportunity: promote `SCITE_AUTHORITY_TIERS` → shared `retrieval/authority_tiers.py` when the second provider needs tier-lookup semantics. Currently provider-local; no cross-adapter demand yet.
+- **Amelia nit (spec-gap tells)** — logged to `docs/dev-guide/how-to-add-a-retrieval-provider.md` §11 Anti-patterns: (a) adapter-factory registration drift (new adapter not appended to `ADAPTER_FACTORIES`), (b) self-reference trap in literal-token guards (runtime concatenation required), (c) regex-ordering pitfalls in scrubbers (longer alternations first + explicit word boundary).
+- **Paige nit (operator "why reach for this" framing)** — added a one-sentence framing cue before the YAML example in `skills/bmad-agent-texas/references/retrieval-contract.md` §"Authoring retrieval-shape directives directly (advanced)" stating when an operator would reach for this vs. letting the dispatcher infer the shape.
+
+**Vote after conditional MUST-HAVES + polish nits applied (round 2, 2026-04-18):**
+
+- 🏗️ **Winston: GREEN** — "The golden-file env-gate closes the reproducibility seam cleanly, M-SF-2 is now a binding gate rather than aspiration, and the authority-tier promotion is captured as deferred work with a clear trigger — architectural posture is sound."
+- 💻 **Amelia: GREEN** — "Nit landed in `_bmad-output/maps/deferred-work.md` with all three tells concrete, 1143/2/0/2xf holds, ruff clean."
+- 🧪 **Murat: GREEN** (flipped from round-1 YELLOW) — "MH-1 converts a silent overwrite hazard into an explicit fail-with-procedure (reviewer-countersignature named, doc §12 anchor referenced in the failure text), and MH-2 binds the 3x flake gate as a Pre-Development Gate on 27-2.5 in sprint-status.yaml rather than a soft 'should' — both conditions are met as specified."
+- 📚 **Paige: GREEN** — "The 'When to reach for this' paragraph with three concrete use cases plus the explicit counter-case for legacy-locator scenarios gives operators exactly the orientation they need before hitting the YAML — ship it."
+
+**Unanimous GREEN (4/4).** Implementation review closes BMAD-GREEN 2026-04-18. Next gate: `bmad-code-review` layered pass.
+
+### bmad-code-review layered pass (2026-04-18)
+
+Three-layer adversarial review: **Blind Hunter** (diff-only, no context) + **Edge Case Hunter** (diff + project access) + **Acceptance Auditor** (diff + spec + context docs). Layers returned 23 + 29 + 30 = **82 findings** before triage. After dedup + triage: **15 PATCH / 19 DEFER / 48 DISMISS**. Two HIGH-confidence correctness bugs confirmed by code-trace.
+
+#### Confirmed HIGH-confidence bugs (PATCH, verified)
+
+1. **Refinement key-order skip bug** (`scite_provider.py:497-524`). `refine()` passes the cumulative `iteration` counter to `drop_filters_in_order` while also rebuilding `key_order` to exclude already-dropped keys each call — so iter 2 drops `keys[1]` of a 3-element list (i.e., `date_range`) instead of `keys[0]` (`authority_tier_min`). Net effect: `authority_tier_min` is never dropped; refinement terminates at iteration 2 instead of 4. Existing test `test_scite_refine_monotonic_looseness` passes because it only checks `len(filters)` shrinks per iteration, not WHICH key was dropped. **Fix:** pass `iteration=1` to the strategy (key_order is already shrunk each call to reflect remaining keys). Strengthen test to assert drop-order: `supporting_citations_min → authority_tier_min → date_range → cited_by_count_min`.
+
+2. **`_derive_overall_status_retrieval` only inspects primaries** (`run_wrangler.py:962`). Unlike the locator-shape `_derive_overall_status` (line 883) which iterates all outcomes, the retrieval version filters `[o for o in outcomes if o.role == "primary"]`. A validation-role scite dispatch that raises `MCPAuthError` is completely invisible — operator sees `complete` with zero `blocking_issues`. **Fix:** inspect all outcomes (primary + validation + supplementary); severity rules may differ per role but signal must surface.
+
+### Review Findings
+
+**decision-needed:** 0
+
+**patch (15) — ALL APPLIED 2026-04-18:**
+
+- [x] [Review][Patch] PATCH-1: Refinement key-order skip bug — now passes `iteration=1` to `drop_filters_in_order` since `key_order` is recomputed each call to reflect remaining keys. Added `test_scite_refine_drops_keys_in_declared_priority_order` as drop-order regression guard [skills/bmad-agent-texas/scripts/retrieval/scite_provider.py:497-527]
+- [x] [Review][Patch] PATCH-2: `_derive_overall_status_retrieval` now iterates ALL outcomes (primary + validation + supplementary); non-primary errors surface as warnings rather than silently disappearing. Mirrors the locator-shape `_derive_overall_status` shape [skills/bmad-agent-texas/scripts/retrieval/run_wrangler.py:947-1015]
+- [x] [Review][Patch] PATCH-3: unknown-exception-class default fallback now returns distinct `retrieval_unknown_error` (not `retrieval_fetch_failed`); restores diagnostic fidelity [run_wrangler.py:515]
+- [x] [Review][Patch] PATCH-4: narrowed `_wrangle_retrieval_source` catch to `(ValidationError, ValueError, KeyError, TypeError)` so programmer bugs no longer masquerade as `retrieval_intent_invalid` [run_wrangler.py:432]
+- [x] [Review][Patch] PATCH-5: error-path `RetrievalOutcome.provider_hints` now sanitized to `[{"provider": str, "params": dict}]` shape; downstream writers never KeyError on malformed directive dicts [run_wrangler.py:433-450]
+- [x] [Review][Patch] PATCH-6: `_derive_authority_tier` now accepts `Any` and rejects non-string venues via `isinstance(venue, str)` guard before `.strip()` [scite_provider.py:115-135]
+- [x] [Review][Patch] PATCH-7: `test_adapter_auto_registers_in_directory` now asserts exact `status == "ratified"` after reset; removes the "either is acceptable" clause [tests/contracts/test_retrieval_adapter_base.py:286-299]
+- [x] [Review][Patch] PATCH-8: `test_locator_shape_directive_preserves_legacy_path` now asserts `schema_version` AND `directive_shape` absent from legacy envelope [tests/test_run_wrangler_retrieval_shape.py]
+- [x] [Review][Patch] PATCH-9: `test_retrieval_shape_directive_routes_through_dispatcher` v1.1-fields loop now includes `convergence_signal` + explicit None-check (spec AC-T.5 Test 1 all-6 coverage) [tests/test_run_wrangler_retrieval_shape.py]
+- [x] [Review][Patch] PATCH-10: `_HEX_ID_RE` tightened from `\b[0-9a-f]{8,}\b` to `\b[0-9a-f]{16,}\b`; DOIs like `10.1038/abc12345` no longer scrubbed [tests/test_run_wrangler_legacy_docx_parity.py]
+- [x] [Review][Patch] PATCH-11: `_WIN_PATH_RE` + `_POSIX_PATH_RE` scoped to known temp-directory prefixes (`Users|Temp|tmp` / `tmp|var|home|Users`); URL paths in body text no longer scrubbed [tests/test_run_wrangler_legacy_docx_parity.py]
+- [x] [Review][Patch] PATCH-12: three new identity_key-fallback atoms — `test_scite_identity_key_falls_back_to_scite_paper_id_when_doi_missing`, `test_scite_identity_key_falls_back_to_source_id_when_doi_and_paper_id_missing`, `test_scite_identity_key_raises_when_all_three_tiers_empty` [tests/test_retrieval_scite_provider.py]
+- [x] [Review][Patch] PATCH-13: new `test_scite_apply_mechanical_exclude_ids_matches_scite_paper_id` atom exercises the scite_paper_id branch [tests/test_retrieval_scite_provider.py]
+- [x] [Review][Patch] PATCH-14: new `test_scite_refine_returns_none_for_non_search_modes` atom exercises mode-guard at scite_provider.py:494 [tests/test_retrieval_scite_provider.py]
+- [x] [Review][Patch] PATCH-15: pre-existing Recipe-4 ("Refining an Existing Agent's Behavior") kept in place; new retrieval-provider recipe renumbered to Recipe-6 (ToC entry + section header) [docs/dev-guide.md:21, 601]
+
+**Post-patch regression:** **1149 passed** / 2 skipped / 0 failed / 2 xfailed (baseline 1106 → +43, well above ≥1137 floor). Ruff clean on all 27-2 file set. +6 new atoms over round-2: drop-order regression + 3 identity-key-fallback + exclude_ids scite_paper_id + refine non-search mode.
+
+**defer (19 — logged below to `deferred-work.md`):**
+
+- [x] [Review][Defer] `SCITE_MCP_URL` captured at module import via `os.environ.get`; monkeypatched env post-import has no effect [scite_provider.py:38]
+- [x] [Review][Defer] `_truncate_citation_contexts` silently drops unknown classifications (e.g., future scite category); no `known_losses` sentinel [scite_provider.py:593-595]
+- [x] [Review][Defer] year-only vs ISO-date lexicographic comparison in `_row_date` / date_range filter (pub_date[:10] slice on non-ISO input is a false-positive vector) [scite_provider.py:568-574]
+- [x] [Review][Defer] Eager `from .scite_provider import SciteProvider` in `retrieval/__init__.py:72` creates hard import coupling — scite failure cascades to FakeProvider tests
+- [x] [Review][Defer] Structural-parity test uses `yaml.safe_load` + dict-compare instead of "plain string equality" specified in AC-T.6 (authorized deviation per AC-C.6 "one-line deviation permitted IFF intentional"; document in review record) [test_run_wrangler_legacy_docx_parity.py:279-287]
+- [x] [Review][Defer] `_load_runner` creates multiple module-copies of `run_wrangler.py` under distinct names (`texas_run_wrangler_under_test_*`) — cross-module `isinstance` checks brittle footgun
+- [x] [Review][Defer] `exclude_ids` / `license_allow` identity surface inconsistent — source_id fallback uses `result.get("id")` but exclude only checks `doi` + `scite_paper_id`
+- [x] [Review][Defer] `int(result.get("supporting_count", 0) or 0)` crashes on non-numeric provider payloads (defensive coercion gap)
+- [x] [Review][Defer] Empty/whitespace DOI slips through `intent.intent.strip()` → empty-DOI query [scite_provider.py:283]
+- [x] [Review][Defer] `max_results` overflow — no upper bound on `int(mechanical.get("min_results", 10))`
+- [x] [Review][Defer] Unicode venue lookup fails substring match (non-ASCII strings like "Nature Médicine"); lookup returns None — acceptable today
+- [x] [Review][Defer] `year` as string "2023" vs int inconsistency across `date = str(year) if year else None` and `_row_date`'s `isinstance(year, int)` guard
+- [x] [Review][Defer] MCPRateLimitError (429) specific-semantic test — taxonomy covered by module-prefix test but not a specific 429→MCPRateLimitError test
+- [x] [Review][Defer] Dispatcher `DispatchError` on constructor TypeError — unexercised path for scite (optional args, unlikely today)
+- [x] [Review][Defer] `_acceptance_met` raises `DispatchError` mid-loop AFTER formulate_query + execute already ran (unnecessary network call if min_results is malformed)
+- [x] [Review][Defer] `execute` paper-mode KeyError if caller constructs query without `doi` key (caller-guaranteed today by `formulate_query`)
+- [x] [Review][Defer] Fixture variety gaps: null venue, non-ISO publication_date, mixed-form authors, 0/5/2 citation-context distribution, missing `papers` key schema drift
+- [x] [Review][Defer] Paywall graceful degradation with empty abstract → body="" and no `abstract_empty` sentinel alongside `full_text_paywalled`
+- [x] [Review][Defer] Test coverage gaps: provider_scored `isinstance int` false-path, `_mode_from_intent` invalid mode string fallback
+
+**dismiss (48):** false positives / by-design / impossible-by-precondition / micro-optimization nits / tautological-self-test observations that don't change behavior. Not persisted.
+
+**Failed layers:** none.
+
+### Review Record summary
+
+- **Party-mode implementation review round 1**: Winston/Amelia/Paige GREEN, Murat YELLOW conditional on MH-1 (golden-regeneration env gate) + MH-2 (M-SF-2 promoted to 27-2.5 PDG). Both applied 2026-04-18.
+- **Party-mode implementation review round 2**: Unanimous GREEN (4/4).
+- **bmad-code-review layered pass**: 82 findings; 15 PATCH, 19 DEFER, 48 DISMISS; 2 HIGH-confidence correctness bugs confirmed by code-trace (refinement key-order, primaries-only status derivation).
+
+_(Once PATCH items are applied + regression re-verified, 27-2 flips to `done`; deferred findings logged to `_bmad-output/maps/deferred-work.md`.)_
 
 ## Green-Light Patches Applied (party-mode round 1, 2026-04-18)
 
@@ -668,7 +797,7 @@ Four-panelist roundtable: Winston (Architect) / Amelia (Dev) / Murat (Test) / Pa
 
 ### SHOULD-FIX deferred (tracked in deferred-work.md or follow-on scope)
 
-- **M-SF-2**: CI 3x-run flake-detection gate still not wired. Moderate risk for 27-2 (network-mocked paths; `responses` strict matcher reduces); MUST-WIRE at 27-2.5 (cross-validation combinatorial flake surface). Logged.
+- **M-SF-2**: CI 3x-run flake-detection gate still not wired. Moderate risk for 27-2 (network-mocked paths; `responses` strict matcher reduces). **PROMOTED 2026-04-18 (implementation-review round, Murat MH-2): promoted from "logged / MUST-WIRE at 27-2.5" to an explicit 27-2.5 Pre-Development Gate MUST-HAVE (recorded in `sprint-status.yaml::27-2.5-consensus-adapter`).** The promotion is binding — 27-2.5 dev-story cannot start until the 3x-run gate is wired in CI.
 - **W-SF-2**: `test_list_providers_before_scite_import` regression documenting observed pre-import state. Nice-to-have; deferred.
 - **P-SF-3**: AC-C.7 + AC-C.10 three-beat prose expansion for dev-guide Recipe-4 (authoring-time discipline, not AC text). Paige owns at T16.
 

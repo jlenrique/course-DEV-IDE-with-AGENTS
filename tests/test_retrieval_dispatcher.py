@@ -231,3 +231,51 @@ def test_dispatcher_non_improvement_preserves_better_prior_result() -> None:
     assert len(r.rows) == 3
     reasons = {e.reason for e in r.refinement_log}
     assert "non_improvement_abort" in reasons
+
+
+# -----------------------------------------------------------------------------
+# AC-T.4 — SciteProvider dispatcher integration smoke (Story 27-2)
+# -----------------------------------------------------------------------------
+
+
+def test_dispatcher_scite_single_provider_integration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AC-T.4 — dispatch(scite_intent) with `responses`-mocked MCP produces a
+    populated `ProviderResult`.
+
+    Exercises the full single-provider dispatch path — formulate_query → execute
+    (via MCPClient, mocked at the HTTP layer by `responses`) → apply_mechanical
+    → apply_provider_scored → acceptance check → normalize → ProviderResult.
+    """
+    import responses as _responses
+    from retrieval.scite_provider import SCITE_MCP_URL, SciteProvider
+
+    from tests._helpers.mcp_fixtures import jsonrpc_response
+
+    monkeypatch.setenv("SCITE_USER_NAME", "test-user")
+    monkeypatch.setenv("SCITE_PASSWORD", "test-pass")
+
+    fixture_path = Path(__file__).parent / "fixtures" / "retrieval" / "scite" / "search_happy.json"
+    search_result = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    adapter = SciteProvider()
+    intent = RetrievalIntent(
+        intent="sleep hygiene studies",
+        provider_hints=[ProviderHint(provider="scite")],
+        acceptance_criteria=AcceptanceCriteria(mechanical={"min_results": 1}),
+    )
+
+    with _responses.RequestsMock() as rsps:
+        rsps.post(SCITE_MCP_URL, json=jsonrpc_response(result=search_result))
+        r = dispatch(intent, factory=AdapterFactory({"scite": adapter}))
+
+    assert isinstance(r, ProviderResult)
+    assert r.provider == "scite"
+    assert r.acceptance_met is True
+    assert r.iterations_used == 1
+    assert len(r.rows) == 3
+    # Every row must have provider_metadata.scite populated (AC-C.4 opacity).
+    for row in r.rows:
+        assert "scite" in row.provider_metadata
+        assert "doi" in row.provider_metadata["scite"]

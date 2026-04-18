@@ -112,15 +112,18 @@ _HONORED_CRITERIA: frozenset[str] = frozenset({
 # ---------------------------------------------------------------------------
 
 
-def _derive_authority_tier(venue: str | None) -> str | None:
+def _derive_authority_tier(venue: Any) -> str | None:
     """Map a scite venue-string to a canonical authority tier.
 
     Resolution order:
       1. Exact case-insensitive match against `SCITE_AUTHORITY_TIERS`.
       2. Substring match (first matching key wins — iteration order is stable).
       3. None (unknown venue → downstream falls through to "web" or null).
+
+    PATCH-6 (2026-04-18): non-string venues (int, dict, list — provider-shape
+    surprise) return None rather than crashing on `.strip()`.
     """
-    if not venue:
+    if not venue or not isinstance(venue, str):
         return None
     key = venue.strip().lower()
     if key in SCITE_AUTHORITY_TIERS:
@@ -496,23 +499,25 @@ class SciteProvider(RetrievalAdapter):
 
         iteration = int(previous_query.get("_refinement_iteration", 0)) + 1
 
-        # Merge mechanical + provider_scored into one filter dict for the strategy.
-        merged: dict[str, Any] = {}
-        merged.update(criteria.mechanical or {})
-        merged.update(criteria.provider_scored or {})
-        # But only the keys that are actually present in the current query's
-        # filters (minus already-dropped keys from prior iterations).
+        # `current_filters` already reflects prior-iteration drops; `key_order`
+        # recomputes to the subset of SCITE_REFINEMENT_KEY_ORDER still present.
+        # We always drop the FIRST remaining key in that priority list — which
+        # means `drop_filters_in_order` is called with iteration=1, not the
+        # cumulative counter. Code-review PATCH-1 (2026-04-18): prior version
+        # passed the cumulative iteration, which caused `date_range` to be
+        # dropped on call 2 instead of `authority_tier_min`, violating the
+        # declared scite priority order.
         current_filters = dict(previous_query.get("filters", {}))
 
-        # Step through SCITE_REFINEMENT_KEY_ORDER skipping already-dropped keys.
         key_order = [k for k in SCITE_REFINEMENT_KEY_ORDER if k in current_filters]
-        if iteration > len(key_order):
+        if not key_order:
+            # All priority-list filters have been dropped; no further loosening.
             return None
 
         new_filters = drop_filters_in_order(
             current_filters,
             criteria,
-            iteration,
+            iteration=1,
             order=key_order,
         )
         if new_filters is None:

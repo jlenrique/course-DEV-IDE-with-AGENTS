@@ -1,0 +1,38 @@
+schema_version: '1.0'
+run_id: <RUN_ID>
+generated_at: '<TIMESTAMP>'
+overall_status: complete
+validator_version: extraction_validator.py@2026-04-17
+sources:
+- ref_id: docx-primary
+  provider: local_file
+  locator: <PATH>
+  role: primary
+  tier: FULL_FIDELITY
+  tier_value: 1
+  passed: true
+  counts:
+    words: 189
+    lines: 17
+    headings: 2
+    expected_min_words: 150
+  structural_fidelity: medium
+  completeness_ratio: 1.26
+  extractor_used: python-docx
+  fetched_at: '<TIMESTAMP>'
+  content_path: extracted.md
+  evidence:
+  - Extracted 189 words / 17 lines / 2 headings from 'Legacy DOCX structural parity'
+  - 'Expected minimum: 150 words (completeness ratio: 126.0%; operator-declared floor
+    overrode validator estimate of 100)'
+  - 'Structural fidelity: medium'
+  - 'PASS: Extraction meets completeness and structure thresholds'
+  - 'Tier re-derived after operator-declared floor: FULL_FIDELITY'
+  known_losses: []
+  recommendations: []
+cross_validation: []
+evidence_summary:
+- '1 primary source(s) processed; tiers: FULL_FIDELITY.'
+- No validation-role assets supplied; cross-validation skipped.
+- 'Overall status: complete.'
+recommendations: []

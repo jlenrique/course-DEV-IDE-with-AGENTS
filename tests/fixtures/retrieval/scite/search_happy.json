@@ -1,0 +1,58 @@
+{
+  "papers": [
+    {
+      "doi": "10.1038/s41586-021-00001",
+      "scite_paper_id": "sp-0001",
+      "title": "Sleep hygiene and cognitive performance in adults",
+      "authors": [{"name": "A. Researcher"}, {"name": "B. Coauthor"}],
+      "year": 2023,
+      "venue": "Nature Medicine",
+      "abstract": "An abstract describing the sleep hygiene randomized trial.",
+      "full_text_available": true,
+      "full_text": "Full body text of the paper describing methods and results.",
+      "supporting_count": 12,
+      "contradicting_count": 1,
+      "mentioning_count": 5,
+      "cited_by_count": 84,
+      "publication_date": "2023-04-01",
+      "scite_report_url": "https://scite.ai/reports/10.1038/s41586-021-00001",
+      "license": "cc-by"
+    },
+    {
+      "doi": "10.1101/2022.03.01.482889",
+      "scite_paper_id": "sp-0002",
+      "title": "Preprint on circadian rhythm entrainment",
+      "authors": ["C. PreprintAuthor"],
+      "year": 2022,
+      "venue": "bioRxiv",
+      "abstract": "Preprint abstract describing circadian entrainment findings.",
+      "full_text_available": true,
+      "full_text": "Preprint body text.",
+      "supporting_count": 3,
+      "contradicting_count": 0,
+      "mentioning_count": 2,
+      "cited_by_count": 11,
+      "publication_date": "2022-03-01",
+      "scite_report_url": "https://scite.ai/reports/10.1101/2022.03.01.482889",
+      "license": "cc-by-nc"
+    },
+    {
+      "doi": "10.1001/jama.2020.12345",
+      "scite_paper_id": "sp-0003",
+      "title": "Meta-analysis of sleep interventions",
+      "authors": ["D. MetaAuthor", "E. Secondary"],
+      "year": 2020,
+      "venue": "JAMA",
+      "abstract": "Meta-analysis abstract.",
+      "full_text_available": true,
+      "full_text": "Meta-analysis full body.",
+      "supporting_count": 48,
+      "contradicting_count": 4,
+      "mentioning_count": 20,
+      "cited_by_count": 312,
+      "publication_date": "2020-10-15",
+      "scite_report_url": "https://scite.ai/reports/10.1001/jama.2020.12345",
+      "license": "closed"
+    }
+  ]
+}

@@ -18,6 +18,7 @@
 7. [Skill Anatomy](#skill-anatomy)
 8. [API Client Anatomy](#api-client-anatomy)
 9. [Extension Guide: Adding New Capabilities](#extension-guide-adding-new-capabilities)
+   - [Recipe 6: Adding a Retrieval Provider (Texas)](#recipe-6-adding-a-retrieval-provider-texas)
 10. [Testing](#testing)
 11. [Coding Standards and Patterns](#coding-standards-and-patterns)
 12. [Project File Map](#project-file-map)
@@ -596,6 +597,14 @@ This is where you come in. The three-layer architecture means there are three di
 - **Evaluator:** `skills/gamma-api-mastery/scripts/gamma_evaluator.py` — extends BaseEvaluator with medium-specific extraction and comparison
 
 **Why coaching matters:** Agent definitions require domain expertise (medical education, physician audience) combined with architectural and tool knowledge. The Party Mode team provides rigor; the user provides instructional vision.
+
+### Recipe 6: Adding a Retrieval Provider (Texas)
+
+**When:** Texas needs to fetch from a new scholarly / video / image / MCP-mediated source (e.g., scite.ai, Consensus, YouTube) that follows the Shape 3-Disciplined retrieval contract (Epic 27 Story 27-0).
+
+**Scope summary:** Subclass `RetrievalAdapter` under `skills/bmad-agent-texas/scripts/retrieval/`, declare a `PROVIDER_INFO: ClassVar[ProviderInfo]` so the directory auto-registers, implement the seven abstract methods (formulate_query, execute, apply_mechanical, apply_provider_scored, normalize, refine, identity_key), and parametrize `tests/contracts/test_retrieval_adapter_base.py` against your new adapter instead of copying test bodies.
+
+**Full recipe:** [docs/dev-guide/how-to-add-a-retrieval-provider.md](dev-guide/how-to-add-a-retrieval-provider.md) — SciteProvider is the living worked example.
 
 ### Evaluator Design Requirements (Lessons from Story 3.1)
 

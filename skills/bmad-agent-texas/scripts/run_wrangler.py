@@ -378,6 +378,7 @@ def _wrangle_retrieval_source(
     # Lazy import — keeps legacy-directive smoke paths unaffected by retrieval
     # package load cost. Also avoids import-time cycles since retrieval imports
     # are already eager via `skills/bmad-agent-texas/scripts/retrieval/__init__.py`.
+    from pydantic import ValidationError  # noqa: PLC0415 — lazy, narrow catch scope
     from retrieval import (  # noqa: PLC0415 — lazy-import intentional per anti-pattern #3 isolation
         AcceptanceCriteria,
         ProviderHint,
@@ -389,6 +390,10 @@ def _wrangle_retrieval_source(
     role = src["role"]
 
     # Construct RetrievalIntent from directive row (v1.1 schema additive fields).
+    # PATCH-4 (2026-04-18): narrow the except to ValidationError / ValueError /
+    # KeyError / TypeError — the actual shapes we expect from malformed input.
+    # Bare `Exception` previously swallowed programmer bugs (AttributeError,
+    # NameError) as `retrieval_intent_invalid`, masking real issues.
     try:
         hints = [
             ProviderHint(
@@ -412,13 +417,30 @@ def _wrangle_retrieval_source(
             convergence_required=bool(src.get("convergence_required", True)),
             cross_validate=bool(src.get("cross_validate", False)),
         )
-    except Exception as exc:  # RetrievalIntent / AcceptanceCriteria pydantic errors
+    except (ValidationError, ValueError, KeyError, TypeError) as exc:
+        # PATCH-5 (2026-04-18): sanitize the error-path provider_hints into a
+        # writer-safe shape. Downstream writers iterate `h['provider']`; a raw
+        # malformed directive dict (e.g., `{"not_provider": "x"}`) without a
+        # `provider` key would KeyError in `_write_retrieval_ingestion_evidence`.
+        # Coerce to `[{"provider": str(...), "params": dict(...)}]` with safe
+        # defaults so the report still renders.
+        safe_hints: list[dict[str, Any]] = []
+        for h in src.get("provider_hints", []) or []:
+            if isinstance(h, dict):
+                safe_hints.append({
+                    "provider": str(h.get("provider") or "<unknown>"),
+                    "params": dict(h.get("params", {}))
+                    if isinstance(h.get("params"), dict)
+                    else {},
+                })
+            else:
+                safe_hints.append({"provider": "<unknown>", "params": {}})
         return RetrievalOutcome(
             ref_id=ref_id,
             role=role,
             fetched_at=run_timestamp,
             intent=str(src.get("intent", "")),
-            provider_hints=list(src.get("provider_hints", [])),
+            provider_hints=safe_hints,
             cross_validate=bool(src.get("cross_validate", False)),
             source_origin=str(src.get("source_origin", "operator-named")),
             tracy_row_ref=src.get("tracy_row_ref"),
@@ -512,7 +534,10 @@ def _classify_retrieval_error(exc: BaseException) -> str:
         return "retrieval_protocol_error"
     if module.startswith("retrieval.") and cls_name == "MCPFetchError":
         return "retrieval_fetch_failed"
-    return "retrieval_fetch_failed"
+    # PATCH-3 (2026-04-18): distinct sentinel for unknown exception classes —
+    # prior version collapsed this into `retrieval_fetch_failed`, which lost
+    # the diagnostic signal that the classifier had never seen this type before.
+    return "retrieval_unknown_error"
 
 
 # ---------------------------------------------------------------------------
@@ -949,18 +974,27 @@ def _derive_overall_status_retrieval(
 ) -> tuple[str, list[dict[str, Any]]]:
     """Story 27-2: overall status for retrieval-shape runs.
 
-    Rules:
-      - Any primary outcome with `error_kind` → blocked.
-      - Any primary outcome with `acceptance_met=False` AND no rows → blocked.
-      - Any primary outcome with `acceptance_met=False` AND rows → warnings.
-      - All primary outcomes acceptance_met=True → complete.
+    Rules (applied per-outcome across ALL roles — PATCH-2, 2026-04-18):
+      - Primary outcome with `error_kind` → blocked.
+      - Primary outcome with `acceptance_met=False` AND no rows → blocked.
+      - Primary outcome with `acceptance_met=False` AND rows → warnings.
+      - Validation or supplementary outcome with `error_kind` → warnings
+        (surfaces operator signal without blocking the run; the primary
+        still produced output).
+      - Otherwise → complete.
+
+    Rationale: prior version filtered to primaries only, which rendered
+    validation-role errors (e.g., `MCPAuthError` on a cross-validation
+    partner) completely invisible in the status + blocking_issues surface.
+    Mirror the locator-shape `_derive_overall_status` shape (which iterates
+    all outcomes) while keeping role-specific severity rules.
     """
     blocking: list[dict[str, Any]] = []
     any_failed = False
     any_warnings = False
 
-    primaries = [o for o in outcomes if o.role == "primary"]
-    for o in primaries:
+    for o in outcomes:
+        is_primary = o.role == "primary"
         if o.error_kind is not None:
             blocking.append({
                 "ref_id": o.ref_id,
@@ -971,9 +1005,13 @@ def _derive_overall_status_retrieval(
                     "availability for the retrieval-shape directive"
                 ),
             })
-            any_failed = True
+            if is_primary:
+                any_failed = True
+            else:
+                # Validation/supplementary errors degrade but do not block.
+                any_warnings = True
             continue
-        if not o.acceptance_met and not o.rows:
+        if is_primary and not o.acceptance_met and not o.rows:
             blocking.append({
                 "ref_id": o.ref_id,
                 "reason": "acceptance_criteria_unmet_no_rows",

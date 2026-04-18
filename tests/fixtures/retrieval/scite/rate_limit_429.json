@@ -1,0 +1,5 @@
+{
+  "error": "rate_limited",
+  "message": "Request throttled. Retry after 30 seconds.",
+  "retry_after_seconds": 30
+}

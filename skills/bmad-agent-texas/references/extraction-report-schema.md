@@ -89,6 +89,75 @@ counts:
   expected_min_words: <int>
 ```
 
+## Provider Metadata Sub-objects
+
+`provider_metadata` is an opaque per-provider escape hatch. Each retrieval-shape provider populates one sub-object keyed by its provider ID. Locator-shape providers generally leave `provider_metadata` empty. This section is the **single source of truth** for each documented sub-object's shape; `retrieval-contract.md` "For Tracy" points here instead of duplicating the schema (Story 27-2 Paige MUST-FIX #3).
+
+### `provider_metadata.scite` (Story 27-2)
+
+Populated by `SciteProvider.normalize`. One sub-object per row returned via the scite adapter.
+
+| Field | Type | Nullable | Description |
+|---|---|---|---|
+| `doi` | string | yes | DOI when scite returns one; `null` for preprint-only records |
+| `scite_paper_id` | string | yes | scite's internal paper ID (fallback identity when DOI is absent) |
+| `venue` | string | yes | Journal / conference / preprint-server name as reported by scite |
+| `year` | integer | yes | Publication year |
+| `supporting_count` | integer | no | Smart-citation count classified as supporting |
+| `contradicting_count` | integer | no | Smart-citation count classified as contradicting |
+| `mentioning_count` | integer | no | Smart-citation count classified as mentioning |
+| `cited_by_count` | integer | no | Total citation count |
+| `citation_context_snippets` | list[object] | no | ≤3 per classification; each element `{classification, citing_doi, snippet}` |
+| `scite_report_url` | string | yes | Human-viewable scite report URL |
+| `known_losses` | list[string] | no | Sentinel list; e.g., `["full_text_paywalled"]` when `full_text_available=false` and body degrades to abstract-only |
+
+**Identity-key fallback chain** (Story 27-2 AC-C.8): scite's `identity_key(row)` returns `provider_metadata.scite.doi` → `provider_metadata.scite.scite_paper_id` → `row.source_id`, raising `NotImplementedError` only if all three are empty. The dispatcher checks this at `cross_validate: true` preflight.
+
+**Authority tier derivation** — `row.authority_tier` (top-level `TexasRow` field) is set by `SCITE_AUTHORITY_TIERS` lookup against `provider_metadata.scite.venue`. The mapping is data (not inference), per AC-C.7.
+
+**Worked example** (retrieval-shape v1.1 source entry carrying a scite row):
+
+```yaml
+sources:
+  - ref_id: src-retrieval-1-row-1
+    role: primary
+    retrieval_intent: "peer-reviewed studies on sleep hygiene since 2020"
+    provider_hints:
+      - {provider: "scite", params: {}}
+    cross_validate: false
+    convergence_signal: null
+    source_origin: operator-named
+    tracy_row_ref: null
+    acceptance_met: true
+    iterations_used: 1
+    fetched_at: "2026-04-18T12:34:56Z"
+    source_id: "10.1038/s41586-021-00001"
+    provider: scite
+    title: "Sleep hygiene and cognitive performance in adults"
+    body: "Full body text of the paper describing methods and results."
+    authors: ["A. Researcher", "B. Coauthor"]
+    date: "2023"
+    authority_tier: peer-reviewed
+    provider_metadata:
+      scite:
+        doi: "10.1038/s41586-021-00001"
+        scite_paper_id: "sp-0001"
+        venue: "Nature Medicine"
+        year: 2023
+        supporting_count: 12
+        contradicting_count: 1
+        mentioning_count: 5
+        cited_by_count: 84
+        citation_context_snippets:
+          - {classification: supporting, citing_doi: "10.1/sup-1", snippet: "..."}
+        scite_report_url: "https://scite.ai/reports/10.1038/s41586-021-00001"
+        known_losses: []
+    completeness_ratio: null
+    structural_fidelity: null
+```
+
+When new retrieval-shape providers (Consensus in 27-2.5, YouTube in 27-4, image in 27-3) ship, each adds one subsection here naming its `provider_metadata.<id>` shape. The `retrieval-contract.md` "For Tracy" section points at this H2; do not duplicate field tables there.
+
 ## Cross-Validation Entry
 
 Each element of `cross_validation[]`:

@@ -55,6 +55,17 @@ iteration_budget: 3
 convergence_required: true
 ```
 
+### Scite-specific signals (Story 27-2)
+
+The scite adapter ships ready in Epic 27 and populates `provider_metadata.scite` on every returned row. Signals to design around:
+
+- **Smart-citation classification** — scite returns `supporting_count`, `contradicting_count`, `mentioning_count` + up-to-three context snippets per classification. Use these to express "evidence-bolster" or "contradicting-evidence" constraints in your semantic-deferred pass.
+- **Authority tier** — derived from the venue via scite's venue-type table (`SCITE_AUTHORITY_TIERS` in the adapter). `peer-reviewed` > `preprint` > `web`. Mechanical filter via `provider_scored.authority_tier_min`.
+- **Paywall degradation** — `full_text_available: false` → body becomes abstract-only, `provider_metadata.scite.known_losses = ["full_text_paywalled"]`. Downstream fidelity pass (Vera) reads the sentinel.
+- **Identity key** — DOI (primary) → `scite_paper_id` (preprint fallback) → `source_id`. Cross-validation with Consensus (27-2.5) hinges on DOI agreement.
+
+**Full `provider_metadata.scite` schema** — see [extraction-report-schema.md § Provider Metadata Sub-objects](./extraction-report-schema.md#provider-metadata-sub-objects). Single source of truth lives there.
+
 ## For operators (directive authors)
 
 Nothing changes about the directive shapes you already use. DOCX / PDF / Notion / Box / Playwright directives continue to work as they did before Story 27-0. Internally the dispatcher transforms a legacy directive:
@@ -78,6 +89,39 @@ iteration_budget: 1
 ```
 
 You never see the transform. Output (`extraction-report.yaml`) is byte-identical to pre-27-0 for legacy directives (AC-T.7 regression proof).
+
+### Authoring retrieval-shape directives directly (advanced)
+
+Most operators never write retrieval-shape directives by hand — Tracy (Epic 28) emits them. But since Story 27-2 shipped, they are authorable directly for testing or specialized workflows.
+
+**When to reach for this (vs. staying on legacy directives):**
+- You are **testing a retrieval adapter in isolation** (e.g., validating that `scite` returns the right provider_metadata for a known-good query) without standing up Tracy.
+- You are running a **specialized query shape** the legacy locator-shape cannot express — natural-language intent + acceptance criteria + multi-provider cross-validation fan-out.
+- You are **reproducing a Tracy-emitted intent** during debugging (Tracy's intents ARE retrieval-shape; hand-crafting one lets you bisect whether a bug is in Tracy's emission or in Texas's dispatch).
+
+If your use case is "fetch this exact file / URL," stay on the legacy locator shape — the retrieval dispatcher is the wrong abstraction for that, and the legacy path is byte-identical by design (AC-T.6 regression proof).
+
+The retrieval-shape directive shape:
+
+```yaml
+run_id: INTENT-RUN-001
+sources:
+  - ref_id: src-intent-1
+    role: primary
+    intent: "peer-reviewed studies on sleep hygiene since 2020"
+    provider_hints:
+      - {provider: "scite", params: {mode: "search"}}
+    acceptance_criteria:
+      mechanical: {date_range: ["2020-01-01", "2026-12-31"], min_results: 5}
+      provider_scored: {authority_tier_min: "peer-reviewed"}
+    iteration_budget: 3
+    convergence_required: true
+    cross_validate: false
+```
+
+Field reference: see §For Tracy above. Cross-validation (multi-provider fan-out) requires at least two `provider_hints` entries and `cross_validate: true`.
+
+**A directive's sources must all share one shape** (v1 constraint): either every row is retrieval-shape (has `intent`+`provider_hints`), or every row is locator-shape (has `provider`+`locator`). Mixed directives exit 30. Split into two directives if both shapes are needed in one pipeline run.
 
 ### What's new: the directory
 

@@ -1,0 +1,19 @@
+{
+  "doi": "10.1038/s41586-021-00001",
+  "scite_paper_id": "sp-0001",
+  "title": "Sleep hygiene and cognitive performance in adults",
+  "authors": [{"name": "A. Researcher"}, {"name": "B. Coauthor"}],
+  "year": 2023,
+  "venue": "Nature Medicine",
+  "abstract": "An abstract describing the sleep hygiene randomized trial.",
+  "full_text_available": true,
+  "full_text": "Full body text of the paper describing methods and results.",
+  "supporting_count": 12,
+  "contradicting_count": 1,
+  "mentioning_count": 5,
+  "cited_by_count": 84,
+  "publication_date": "2023-04-01",
+  "scite_report_url": "https://scite.ai/reports/10.1038/s41586-021-00001",
+  "license": "cc-by",
+  "citation_contexts": []
+}

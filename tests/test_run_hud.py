@@ -10,7 +10,6 @@ import yaml
 
 from scripts.utilities import run_hud as hud
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -208,9 +207,16 @@ class TestCollectHudData:
             encoding="utf-8",
         )
         handoff = tmp_path / "handoff.md"
-        handoff.write_text("# H\n\n## What Is Next\nX\n\n## Unresolved Issues\nY\n", encoding="utf-8")
+        handoff.write_text(
+            "# H\n\n## What Is Next\nX\n\n## Unresolved Issues\nY\n",
+            encoding="utf-8",
+        )
         nxt = tmp_path / "next.md"
-        nxt.write_text("# N\n\n## Immediate Next Action\nA\n\n## Key Risks / Unresolved Issues\nR\n", encoding="utf-8")
+        nxt.write_text(
+            "# N\n\n## Immediate Next Action\nA\n\n"
+            "## Key Risks / Unresolved Issues\nR\n",
+            encoding="utf-8",
+        )
 
         from scripts.utilities import progress_map as pm
         with patch.object(pm, "SPRINT_STATUS", sprint), \
@@ -450,3 +456,406 @@ class TestMainCli:
         with patch.object(hud, "HUD_OUTPUT", default):
             hud.main(["--bundle-dir", str(bundle)])
         assert default.exists()
+
+
+# ---------------------------------------------------------------------------
+# Active-run bundle resolution tests
+# ---------------------------------------------------------------------------
+
+
+def _build_coordination_db(path: Path, rows: list[dict[str, str]]) -> None:
+    """Create a minimal coordination.db with a production_runs table.
+
+    Schema mirrors the production DB's production_runs columns used by
+    ``_query_active_run_id``: run_id, status, updated_at (others are
+    optional for the query). Tests supply whichever rows they need.
+    """
+    import sqlite3
+
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            "CREATE TABLE production_runs ("
+            "run_id TEXT PRIMARY KEY, "
+            "status TEXT NOT NULL, "
+            "updated_at TEXT NOT NULL)"
+        )
+        for row in rows:
+            conn.execute(
+                "INSERT INTO production_runs (run_id, status, updated_at) "
+                "VALUES (?, ?, ?)",
+                (row["run_id"], row["status"], row["updated_at"]),
+            )
+        conn.commit()
+
+
+class TestQueryActiveRunId:
+    def test_returns_most_recent_planning_run(self, tmp_path: Path) -> None:
+        db = tmp_path / "coordination.db"
+        _build_coordination_db(db, [
+            {"run_id": "OLD-RUN", "status": "planning", "updated_at": "2026-04-10T00:00:00"},
+            {"run_id": "NEW-RUN", "status": "planning", "updated_at": "2026-04-19T00:00:00"},
+        ])
+        assert hud._query_active_run_id(db) == "NEW-RUN"
+
+    def test_returns_active_over_planning_when_newer(self, tmp_path: Path) -> None:
+        db = tmp_path / "coordination.db"
+        _build_coordination_db(db, [
+            {"run_id": "PLAN-RUN", "status": "planning", "updated_at": "2026-04-10T00:00:00"},
+            {"run_id": "ACTIVE-RUN", "status": "active", "updated_at": "2026-04-19T00:00:00"},
+        ])
+        assert hud._query_active_run_id(db) == "ACTIVE-RUN"
+
+    def test_skips_cancelled_and_completed(self, tmp_path: Path) -> None:
+        db = tmp_path / "coordination.db"
+        _build_coordination_db(db, [
+            {"run_id": "CANCELLED", "status": "cancelled", "updated_at": "2026-04-19T00:00:00"},
+            {"run_id": "COMPLETED", "status": "completed", "updated_at": "2026-04-19T00:00:00"},
+            {"run_id": "PLAN-RUN", "status": "planning", "updated_at": "2026-04-10T00:00:00"},
+        ])
+        assert hud._query_active_run_id(db) == "PLAN-RUN"
+
+    def test_missing_db_returns_none(self, tmp_path: Path) -> None:
+        assert hud._query_active_run_id(tmp_path / "nope.db") is None
+
+    def test_no_matching_rows_returns_none(self, tmp_path: Path) -> None:
+        db = tmp_path / "coordination.db"
+        _build_coordination_db(db, [
+            {"run_id": "CANCELLED", "status": "cancelled", "updated_at": "2026-04-19T00:00:00"},
+        ])
+        assert hud._query_active_run_id(db) is None
+
+    def test_malformed_db_returns_none(self, tmp_path: Path) -> None:
+        bad = tmp_path / "coordination.db"
+        bad.write_bytes(b"not a sqlite database")
+        assert hud._query_active_run_id(bad) is None
+
+    def test_missing_table_returns_none(self, tmp_path: Path) -> None:
+        import sqlite3
+        db = tmp_path / "coordination.db"
+        with sqlite3.connect(db) as conn:
+            conn.execute("CREATE TABLE unrelated (id INTEGER)")
+            conn.commit()
+        assert hud._query_active_run_id(db) is None
+
+
+class TestBundleRunId:
+    def test_reads_lowercase_run_id(self, tmp_path: Path) -> None:
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "LOWER-CASE"}), encoding="utf-8"
+        )
+        assert hud._bundle_run_id(b) == "LOWER-CASE"
+
+    def test_reads_uppercase_run_id_legacy(self, tmp_path: Path) -> None:
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "run-constants.yaml").write_text(
+            yaml.dump({"RUN_ID": "UPPER-CASE"}), encoding="utf-8"
+        )
+        assert hud._bundle_run_id(b) == "UPPER-CASE"
+
+    def test_missing_file_returns_none(self, tmp_path: Path) -> None:
+        b = tmp_path / "bundle"
+        b.mkdir()
+        assert hud._bundle_run_id(b) is None
+
+    def test_malformed_yaml_returns_none(self, tmp_path: Path) -> None:
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "run-constants.yaml").write_text("{{not yaml", encoding="utf-8")
+        assert hud._bundle_run_id(b) is None
+
+    def test_empty_run_id_returns_none(self, tmp_path: Path) -> None:
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": ""}), encoding="utf-8"
+        )
+        assert hud._bundle_run_id(b) is None
+
+
+class TestFindBundleForRunId:
+    def test_matches_correct_bundle(self, tmp_path: Path) -> None:
+        bundles = tmp_path / "bundles"
+        bundles.mkdir()
+        first = bundles / "first-bundle"
+        first.mkdir()
+        (first / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "RUN-A"}), encoding="utf-8"
+        )
+        second = bundles / "second-bundle"
+        second.mkdir()
+        (second / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "RUN-B"}), encoding="utf-8"
+        )
+        assert hud._find_bundle_for_run_id(bundles, "RUN-B") == second
+
+    def test_no_match_returns_none(self, tmp_path: Path) -> None:
+        bundles = tmp_path / "bundles"
+        bundles.mkdir()
+        b = bundles / "only-bundle"
+        b.mkdir()
+        (b / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "RUN-X"}), encoding="utf-8"
+        )
+        assert hud._find_bundle_for_run_id(bundles, "NO-SUCH") is None
+
+    def test_missing_dir_returns_none(self, tmp_path: Path) -> None:
+        assert hud._find_bundle_for_run_id(tmp_path / "nope", "any") is None
+
+    def test_skips_bundles_without_run_constants(self, tmp_path: Path) -> None:
+        bundles = tmp_path / "bundles"
+        bundles.mkdir()
+        bare = bundles / "bare-bundle"
+        bare.mkdir()
+        target = bundles / "target"
+        target.mkdir()
+        (target / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "TARGET"}), encoding="utf-8"
+        )
+        assert hud._find_bundle_for_run_id(bundles, "TARGET") == target
+
+
+class TestResolveActiveBundle:
+    def test_db_match_wins_over_mtime(self, tmp_path: Path) -> None:
+        bundles = tmp_path / "bundles"
+        bundles.mkdir()
+        # Older bundle with matching run_id
+        older = bundles / "older"
+        older.mkdir()
+        (older / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "ACTIVE-RUN"}), encoding="utf-8"
+        )
+        # Newer bundle that would win on mtime alone
+        newer = bundles / "newer"
+        newer.mkdir()
+        (newer / "run-constants.yaml").write_text(
+            yaml.dump({"run_id": "OTHER-RUN"}), encoding="utf-8"
+        )
+        (newer / "marker.txt").write_text("recent", encoding="utf-8")
+
+        db = tmp_path / "coordination.db"
+        _build_coordination_db(db, [
+            {"run_id": "ACTIVE-RUN", "status": "active", "updated_at": "2026-04-19T00:00:00"},
+        ])
+        result = hud._resolve_active_bundle(bundles, db_path=db)
+        assert result == older
+
+    def test_falls_back_to_mtime_when_no_db_match(self, tmp_path: Path) -> None:
+        bundles = tmp_path / "bundles"
+        bundles.mkdir()
+        older = bundles / "older"
+        older.mkdir()
+        newer = bundles / "newer"
+        newer.mkdir()
+        (newer / "marker.txt").write_text("x", encoding="utf-8")
+
+        db = tmp_path / "coordination.db"
+        _build_coordination_db(db, [
+            {"run_id": "ORPHAN-RUN", "status": "active", "updated_at": "2026-04-19T00:00:00"},
+        ])
+        result = hud._resolve_active_bundle(bundles, db_path=db)
+        assert result == newer
+
+    def test_falls_back_to_mtime_when_no_db(self, tmp_path: Path) -> None:
+        bundles = tmp_path / "bundles"
+        bundles.mkdir()
+        only = bundles / "only"
+        only.mkdir()
+        result = hud._resolve_active_bundle(bundles, db_path=tmp_path / "missing.db")
+        assert result == only
+
+
+# ---------------------------------------------------------------------------
+# Watch-mode tests
+# ---------------------------------------------------------------------------
+
+
+class TestCollectWatchPaths:
+    def test_includes_existing_core_files(self, tmp_path: Path) -> None:
+        (tmp_path / "state" / "config").mkdir(parents=True)
+        (tmp_path / "state" / "runtime").mkdir(parents=True)
+        (tmp_path / "_bmad-output" / "implementation-artifacts").mkdir(parents=True)
+
+        manifest = tmp_path / "state" / "config" / "pipeline-manifest.yaml"
+        manifest.write_text("{}", encoding="utf-8")
+        sprint = tmp_path / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
+        sprint.write_text("{}", encoding="utf-8")
+        mode_state = tmp_path / "state" / "runtime" / "mode_state.json"
+        mode_state.write_text("{}", encoding="utf-8")
+
+        paths = hud._collect_watch_paths(None, root=tmp_path)
+        resolved = {p.resolve() for p in paths}
+        assert manifest.resolve() in resolved
+        assert sprint.resolve() in resolved
+        assert mode_state.resolve() in resolved
+
+    def test_skips_missing_core_files(self, tmp_path: Path) -> None:
+        paths = hud._collect_watch_paths(None, root=tmp_path)
+        assert paths == []
+
+    def test_includes_bundle_files_recursively(self, tmp_path: Path) -> None:
+        bundle = tmp_path / "bundle"
+        (bundle / "gates").mkdir(parents=True)
+        (bundle / "extracted.md").write_text("x", encoding="utf-8")
+        (bundle / "gates" / "gate-01-result.yaml").write_text("x", encoding="utf-8")
+
+        paths = hud._collect_watch_paths(bundle, root=tmp_path)
+        resolved = {p.resolve() for p in paths}
+        assert (bundle / "extracted.md").resolve() in resolved
+        assert (bundle / "gates" / "gate-01-result.yaml").resolve() in resolved
+
+
+class TestSnapshotAndDetect:
+    def test_snapshot_records_mtimes(self, tmp_path: Path) -> None:
+        a = tmp_path / "a.txt"
+        a.write_text("x", encoding="utf-8")
+        snap = hud._snapshot_mtimes([a])
+        assert str(a.resolve()) in snap
+
+    def test_detect_no_changes(self, tmp_path: Path) -> None:
+        a = tmp_path / "a.txt"
+        a.write_text("x", encoding="utf-8")
+        snap = hud._snapshot_mtimes([a])
+        assert hud._detect_changes(snap, dict(snap)) is False
+
+    def test_detect_added_file(self, tmp_path: Path) -> None:
+        a = tmp_path / "a.txt"
+        a.write_text("x", encoding="utf-8")
+        snap_before = hud._snapshot_mtimes([a])
+        b = tmp_path / "b.txt"
+        b.write_text("y", encoding="utf-8")
+        snap_after = hud._snapshot_mtimes([a, b])
+        assert hud._detect_changes(snap_before, snap_after) is True
+
+    def test_detect_removed_file(self, tmp_path: Path) -> None:
+        a = tmp_path / "a.txt"
+        a.write_text("x", encoding="utf-8")
+        b = tmp_path / "b.txt"
+        b.write_text("y", encoding="utf-8")
+        snap_before = hud._snapshot_mtimes([a, b])
+        snap_after = hud._snapshot_mtimes([a])
+        assert hud._detect_changes(snap_before, snap_after) is True
+
+    def test_detect_modified_file(self, tmp_path: Path) -> None:
+        a = tmp_path / "a.txt"
+        a.write_text("x", encoding="utf-8")
+        snap_before = hud._snapshot_mtimes([a])
+        future = snap_before[str(a.resolve())] + 1.0
+        snap_after = {str(a.resolve()): future}
+        assert hud._detect_changes(snap_before, snap_after) is True
+
+
+class TestRunWatchLoop:
+    def test_generates_once_on_startup(self, bundle: Path, tmp_path: Path) -> None:
+        output = tmp_path / "hud.html"
+        prints: list[str] = []
+        exit_code = hud.run_watch_loop(
+            bundle_dir=bundle,
+            output_path=output,
+            root=tmp_path,
+            bundles_dir=tmp_path / "no-bundles",
+            db_path=tmp_path / "no-db.sqlite",
+            poll_interval=0.01,
+            max_iterations=1,
+            sleep_fn=lambda _: None,
+            print_fn=prints.append,
+        )
+        assert exit_code == 0
+        assert output.exists()
+        html = output.read_text(encoding="utf-8")
+        # Banner should render the live mode marker.
+        assert "Live" in html
+        assert "Watching" in html
+        assert any("HUD generated" in line for line in prints)
+
+    def test_regenerates_when_watched_file_changes(
+        self, bundle: Path, tmp_path: Path
+    ) -> None:
+        output = tmp_path / "hud.html"
+        # Seed a sentinel file inside the bundle so the watcher notices a change
+        sentinel = bundle / "sentinel.txt"
+        sentinel.write_text("initial", encoding="utf-8")
+
+        # The loop polls on each sleep_fn call; flip the sentinel's mtime
+        # forward on the first poll so the watcher regenerates.
+        call_count = {"n": 0}
+
+        def _fake_sleep(_seconds: float) -> None:
+            call_count["n"] += 1
+            if call_count["n"] == 1:
+                # Force a detectable mtime delta (fs granularity on Windows
+                # can be as coarse as 2s; explicit os.utime is robust).
+                import os
+                new_mtime = sentinel.stat().st_mtime + 5.0
+                os.utime(sentinel, (new_mtime, new_mtime))
+
+        prints: list[str] = []
+        hud.run_watch_loop(
+            bundle_dir=bundle,
+            output_path=output,
+            root=tmp_path,
+            bundles_dir=tmp_path / "no-bundles",
+            db_path=tmp_path / "no-db.sqlite",
+            poll_interval=0.01,
+            max_iterations=2,
+            sleep_fn=_fake_sleep,
+            print_fn=prints.append,
+        )
+        # First iteration observes the mtime change and regenerates; second
+        # iteration sees no further delta and does not.
+        regen_lines = [line for line in prints if "regenerated" in line]
+        assert len(regen_lines) == 1
+
+    def test_no_regeneration_when_nothing_changes(
+        self, bundle: Path, tmp_path: Path
+    ) -> None:
+        output = tmp_path / "hud.html"
+        prints: list[str] = []
+        hud.run_watch_loop(
+            bundle_dir=bundle,
+            output_path=output,
+            root=tmp_path,
+            bundles_dir=tmp_path / "no-bundles",
+            db_path=tmp_path / "no-db.sqlite",
+            poll_interval=0.01,
+            max_iterations=3,
+            sleep_fn=lambda _: None,
+            print_fn=prints.append,
+        )
+        regen_lines = [line for line in prints if "regenerated" in line]
+        assert regen_lines == []
+
+
+# ---------------------------------------------------------------------------
+# Snapshot banner tests
+# ---------------------------------------------------------------------------
+
+
+class TestSnapshotBanner:
+    def test_static_banner_shows_static_label_and_guidance(
+        self, bundle: Path
+    ) -> None:
+        data = hud.collect_hud_data(bundle_dir=bundle)
+        html = hud.render_html(data, watching=False)
+        assert "Static snapshot" in html
+        assert "run_hud" in html
+        assert "--watch" in html
+        assert "snapshot-banner" in html
+        assert "banner-static" in html
+
+    def test_watch_banner_shows_live_label_and_interval(
+        self, bundle: Path
+    ) -> None:
+        data = hud.collect_hud_data(bundle_dir=bundle)
+        html = hud.render_html(data, watching=True, watch_interval_seconds=5)
+        assert "Live" in html
+        assert "Watching" in html
+        assert "5s" in html
+        assert "banner-live" in html
+
+    def test_banner_includes_generated_timestamp(self, bundle: Path) -> None:
+        data = hud.collect_hud_data(bundle_dir=bundle)
+        html = hud.render_html(data)
+        assert "Generated:" in html

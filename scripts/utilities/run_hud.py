@@ -1,6 +1,6 @@
 """Run HUD — Heads-Up Display for production runs and dev cycle tracking.
 
-Generates a self-refreshing HTML dashboard that shows:
+Generates an HTML dashboard that shows:
 - Production run pipeline position and gate results
 - Dev cycle progress (epics/stories from sprint-status.yaml)
 - Critical constants, artifact status, and risk flags
@@ -9,6 +9,19 @@ Usage:
     .venv/Scripts/python -m scripts.utilities.run_hud
     .venv/Scripts/python -m scripts.utilities.run_hud --bundle-dir path/to/bundle
     .venv/Scripts/python -m scripts.utilities.run_hud --open
+    .venv/Scripts/python -m scripts.utilities.run_hud --watch --open
+
+Static vs watch mode:
+
+* Default: single generation. The HTML includes a JS timer that
+  ``location.reload()``s every 10 seconds, but that reload just re-serves
+  the same static file — data only refreshes if the file on disk is
+  rewritten. Suitable for one-shot snapshots.
+* ``--watch``: block in foreground, poll the manifest, sprint-status,
+  mode_state, and active-bundle files every ``--watch-interval`` seconds
+  (default 5), and regenerate ``run-hud.html`` on any change. Combined
+  with the browser's existing auto-reload, this yields a genuinely live
+  dashboard. Ctrl-C to stop.
 
 The output HTML auto-refreshes every 10 seconds with scroll-position
 and expand/collapse state preserved via sessionStorage.
@@ -18,6 +31,9 @@ from __future__ import annotations
 
 import argparse
 import html as html_mod
+import sqlite3
+import time
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -36,6 +52,11 @@ ROOT = project_root()
 HUD_OUTPUT = ROOT / "reports" / "run-hud.html"
 BUNDLES_DIR = ROOT / "course-content" / "staging" / "tracked" / "source-bundles"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
+PIPELINE_MANIFEST = ROOT / "state" / "config" / "pipeline-manifest.yaml"
+MODE_STATE = ROOT / "state" / "runtime" / "mode_state.json"
+COORDINATION_DB = ROOT / "state" / "runtime" / "coordination.db"
+
+DEFAULT_WATCH_INTERVAL_SECONDS = 5.0
 
 # ---------------------------------------------------------------------------
 # Pipeline step definitions
@@ -60,6 +81,99 @@ def _find_latest_bundle(bundles_dir: Path) -> Path | None:
         reverse=True,
     )
     return bundles[0] if bundles else None
+
+
+# ---------------------------------------------------------------------------
+# Active-run bundle resolution
+#
+# The previous auto-detection strategy (mtime on the bundle directory) can
+# pick up the wrong bundle at session start if a prior run's artifacts were
+# modified more recently than the newly-created active run. The authoritative
+# record of the active run is the coordination database's production_runs
+# table, not mode_state.json (which only tracks default/ad-hoc mode state).
+# ---------------------------------------------------------------------------
+
+
+def _query_active_run_id(db_path: Path | None = None) -> str | None:
+    """Return the run_id of the currently active/planning production run.
+
+    Reads ``state/runtime/coordination.db`` in read-only mode. Selects the
+    most recently updated row whose status is ``planning`` or ``active``.
+    Returns ``None`` when the DB is missing, has no matching row, or cannot
+    be queried (schema drift, IO error).
+    """
+    path = db_path or COORDINATION_DB
+    if not path.exists():
+        return None
+    try:
+        uri = f"file:{path.as_posix()}?mode=ro"
+        with sqlite3.connect(uri, uri=True) as conn:
+            row = conn.execute(
+                "SELECT run_id FROM production_runs "
+                "WHERE status IN ('planning', 'active') "
+                "ORDER BY updated_at DESC LIMIT 1"
+            ).fetchone()
+    except (sqlite3.DatabaseError, sqlite3.OperationalError):
+        return None
+    if not row:
+        return None
+    run_id = row[0]
+    return run_id if isinstance(run_id, str) and run_id else None
+
+
+def _bundle_run_id(bundle_dir: Path) -> str | None:
+    """Extract the run_id declared in a bundle's run-constants.yaml.
+
+    Accepts either canonical lowercase ``run_id`` or legacy uppercase
+    ``RUN_ID`` for schema-drift tolerance. Returns ``None`` on missing
+    file, malformed YAML, or missing field.
+    """
+    rc_path = bundle_dir / "run-constants.yaml"
+    if not rc_path.exists():
+        return None
+    try:
+        data = yaml.safe_load(rc_path.read_text(encoding="utf-8")) or {}
+    except (yaml.YAMLError, OSError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    candidate = data.get("run_id") or data.get("RUN_ID")
+    return candidate if isinstance(candidate, str) and candidate else None
+
+
+def _find_bundle_for_run_id(bundles_dir: Path, run_id: str) -> Path | None:
+    """Return the bundle directory whose run-constants.yaml matches run_id."""
+    if not bundles_dir.exists() or not run_id:
+        return None
+    for bundle in sorted(bundles_dir.iterdir()):
+        if not bundle.is_dir():
+            continue
+        if _bundle_run_id(bundle) == run_id:
+            return bundle
+    return None
+
+
+def _resolve_active_bundle(
+    bundles_dir: Path,
+    db_path: Path | None = None,
+) -> Path | None:
+    """Best bundle for the HUD: match the active run if possible, else mtime.
+
+    Precedence:
+      1. The bundle whose ``run-constants.yaml`` ``run_id`` matches the
+         active row in the coordination database's ``production_runs``
+         table.
+      2. The most recently modified bundle directory (legacy heuristic).
+
+    ``db_path`` is injectable for tests; production callers pass ``None``
+    and the module-level ``COORDINATION_DB`` is used.
+    """
+    active_run_id = _query_active_run_id(db_path)
+    if active_run_id:
+        matched = _find_bundle_for_run_id(bundles_dir, active_run_id)
+        if matched is not None:
+            return matched
+    return _find_latest_bundle(bundles_dir)
 
 
 def _load_run_constants(bundle_dir: Path) -> dict[str, Any]:
@@ -87,6 +201,130 @@ def _load_gate_results(bundle_dir: Path) -> list[dict[str, Any]]:
         except (yaml.YAMLError, OSError):
             continue
     return results
+
+
+# ---------------------------------------------------------------------------
+# Watch-mode helpers
+# ---------------------------------------------------------------------------
+
+
+def _collect_watch_paths(
+    bundle_dir: Path | None,
+    root: Path | None = None,
+) -> list[Path]:
+    """Return the list of files whose mtime the watcher monitors.
+
+    Includes the manifest, sprint-status, mode-state, coordination DB, and
+    every file inside the active bundle directory. Missing files are
+    skipped silently — their absence is itself a legitimate state to report,
+    not a crash condition.
+    """
+    base = root or ROOT
+    candidates: list[Path] = [
+        base / "state" / "config" / "pipeline-manifest.yaml",
+        base / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml",
+        base / "state" / "runtime" / "mode_state.json",
+        base / "state" / "runtime" / "coordination.db",
+    ]
+    paths: list[Path] = [p for p in candidates if p.exists()]
+    if bundle_dir and bundle_dir.exists():
+        for entry in sorted(bundle_dir.rglob("*")):
+            if entry.is_file():
+                paths.append(entry)
+    return paths
+
+
+def _snapshot_mtimes(paths: Iterable[Path]) -> dict[str, float]:
+    """Return a {absolute_path: mtime} dict. Missing paths are dropped."""
+    snapshot: dict[str, float] = {}
+    for p in paths:
+        try:
+            snapshot[str(p.resolve())] = p.stat().st_mtime
+        except OSError:
+            continue
+    return snapshot
+
+
+def _detect_changes(
+    prev: dict[str, float],
+    curr: dict[str, float],
+) -> bool:
+    """True when any file was added, removed, or modified."""
+    if set(prev.keys()) != set(curr.keys()):
+        return True
+    return any(curr[k] != prev[k] for k in curr)
+
+
+def run_watch_loop(
+    bundle_dir: Path | None,
+    output_path: Path,
+    *,
+    root: Path | None = None,
+    bundles_dir: Path | None = None,
+    db_path: Path | None = None,
+    poll_interval: float = DEFAULT_WATCH_INTERVAL_SECONDS,
+    max_iterations: int | None = None,
+    sleep_fn: Callable[[float], None] = time.sleep,
+    print_fn: Callable[[str], None] = print,
+) -> int:
+    """Render HUD once, then regenerate whenever a watched file changes.
+
+    Blocks the calling thread until ``KeyboardInterrupt`` or, for tests,
+    until ``max_iterations`` polls have completed. ``sleep_fn`` and
+    ``print_fn`` are injection points for deterministic tests.
+
+    The bundle is re-resolved on every poll so a newly-created bundle
+    that becomes active mid-session is picked up automatically.
+
+    Returns 0 on normal completion (Ctrl-C or exhausted iterations).
+    """
+    base_root = root or ROOT
+    bdir = bundles_dir or BUNDLES_DIR
+
+    def _resolve_bundle() -> Path | None:
+        if bundle_dir is not None:
+            return bundle_dir
+        return _resolve_active_bundle(bdir, db_path=db_path)
+
+    def _write(data_bundle: Path | None) -> None:
+        data = collect_hud_data(
+            bundle_dir=data_bundle,
+            bundles_dir=bdir,
+            db_path=db_path,
+        )
+        html = render_html(
+            data,
+            watching=True,
+            watch_interval_seconds=poll_interval,
+        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(html, encoding="utf-8")
+
+    effective_bundle = _resolve_bundle()
+    _write(effective_bundle)
+    print_fn(
+        f"[watch] HUD generated at {output_path} "
+        f"(poll={poll_interval}s; Ctrl-C to stop)"
+    )
+    snapshot = _snapshot_mtimes(_collect_watch_paths(effective_bundle, base_root))
+
+    iterations = 0
+    while True:
+        try:
+            sleep_fn(poll_interval)
+        except KeyboardInterrupt:
+            print_fn("[watch] stopped by user")
+            return 0
+        iterations += 1
+        effective_bundle = _resolve_bundle()
+        curr = _snapshot_mtimes(_collect_watch_paths(effective_bundle, base_root))
+        if _detect_changes(snapshot, curr):
+            _write(effective_bundle)
+            ts = datetime.now(tz=UTC).strftime("%H:%M:%S")
+            print_fn(f"[watch] {ts} regenerated (change detected)")
+            snapshot = curr
+        if max_iterations is not None and iterations >= max_iterations:
+            return 0
 
 
 _MAX_ARTIFACTS = 200
@@ -151,12 +389,13 @@ def _build_pipeline_state(
 def collect_hud_data(
     bundle_dir: Path | None = None,
     bundles_dir: Path | None = None,
+    db_path: Path | None = None,
 ) -> dict[str, Any]:
     """Collect all data needed for the HUD rendering."""
     bdir = bundles_dir or BUNDLES_DIR
 
     if bundle_dir is None:
-        bundle_dir = _find_latest_bundle(bdir)
+        bundle_dir = _resolve_active_bundle(bdir, db_path=db_path)
 
     run_constants: dict[str, Any] = {}
     gate_results: list[dict[str, Any]] = []
@@ -483,11 +722,73 @@ def _esc(text: str) -> str:
     return html_mod.escape(text, quote=True)
 
 
-def render_html(data: dict[str, Any]) -> str:
-    """Render the full HUD HTML page."""
+def _render_snapshot_banner(
+    generated_iso: str,
+    watching: bool,
+    watch_interval_seconds: float,
+) -> str:
+    """Render the top-of-page banner describing data freshness.
+
+    The banner is the single source of operator-facing truth about whether
+    the HUD is a static snapshot or a live watch-mode view. The browser's
+    JS auto-reload only refreshes data if the file on disk has been
+    rewritten, so operators need explicit guidance about which mode is
+    active.
+    """
+    try:
+        generated_dt = datetime.fromisoformat(generated_iso)
+        generated_human = generated_dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+    except ValueError:
+        generated_human = generated_iso
+
+    if watching:
+        mode_class = "banner-live"
+        mode_icon = "&#x1F7E2;"  # green circle
+        mode_label = "Live"
+        detail = (
+            f"Watching manifest, sprint-status, mode-state, and active bundle "
+            f"every {watch_interval_seconds:g}s. Regenerates on change."
+        )
+    else:
+        mode_class = "banner-static"
+        mode_icon = "&#x23F8;&#xFE0F;"  # pause
+        mode_label = "Static snapshot"
+        detail = (
+            "Browser auto-reload re-serves this file; data only refreshes "
+            "when the file on disk is rewritten. Re-run "
+            "<code>python -m scripts.utilities.run_hud</code> to regenerate, "
+            "or launch with <code>--watch</code> for live updates."
+        )
+
+    return (
+        f'<div class="snapshot-banner {mode_class}">'
+        f'<span class="banner-icon">{mode_icon}</span>'
+        f'<span class="banner-label">{mode_label}</span>'
+        f'<span class="banner-timestamp">Generated: {_esc(generated_human)}</span>'
+        f'<span class="banner-detail">{detail}</span>'
+        f'</div>'
+    )
+
+
+def render_html(
+    data: dict[str, Any],
+    *,
+    watching: bool = False,
+    watch_interval_seconds: float = DEFAULT_WATCH_INTERVAL_SECONDS,
+) -> str:
+    """Render the full HUD HTML page.
+
+    ``watching`` and ``watch_interval_seconds`` drive the snapshot banner
+    so operators can tell at a glance whether the view is live or frozen.
+    """
     rc = data["run_constants"]
     ps = data["pipeline_summary"]
     pipeline = data["pipeline"]
+    banner_html = _render_snapshot_banner(
+        data.get("generated", ""),
+        watching=watching,
+        watch_interval_seconds=watch_interval_seconds,
+    )
 
     run_id = rc.get("RUN_ID", "No active run")
     profile = rc.get("EXPERIENCE_PROFILE", "—")
@@ -553,6 +854,8 @@ def render_html(data: dict[str, Any]) -> str:
 <body>
 
 <div class="refresh-bar" id="refreshBar"></div>
+
+{banner_html}
 
 <div class="freshness-meter {freshness_cls}">
   <span class="freshness-label">Data freshness:</span>
@@ -688,6 +991,25 @@ h3 { font-size: 0.95rem; margin: 12px 0 6px; color: #94a3b8; }
   position: fixed; top: 0; left: 0; height: 2px;
   background: #38bdf8; width: 0; z-index: 999;
   transition: width linear;
+}
+
+.snapshot-banner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 6px 10px; font-size: 0.78rem;
+  background: #1e293b; border-bottom: 1px solid #334155;
+  border-left: 3px solid transparent; margin-bottom: 4px;
+}
+.snapshot-banner.banner-live { border-left-color: #22c55e; background: #052e16; }
+.snapshot-banner.banner-static { border-left-color: #eab308; background: #1c1917; }
+.snapshot-banner .banner-icon { font-size: 0.9rem; }
+.snapshot-banner .banner-label {
+  font-weight: 700; color: #f1f5f9; min-width: 120px;
+}
+.snapshot-banner .banner-timestamp { color: #cbd5e1; }
+.snapshot-banner .banner-detail { color: #94a3b8; flex: 1 1 auto; min-width: 260px; }
+.snapshot-banner code {
+  background: #0f172a; color: #e2e8f0; padding: 1px 5px;
+  border-radius: 3px; font-size: 0.72rem;
 }
 
 .freshness-meter {
@@ -932,10 +1254,48 @@ def main(argv: list[str] | None = None) -> None:
         "--open", action="store_true",
         help="Open the generated HTML in the default browser.",
     )
+    parser.add_argument(
+        "--watch", action="store_true",
+        help=(
+            "Block in foreground and regenerate the HUD whenever manifest, "
+            "sprint-status, mode-state, or active bundle files change."
+        ),
+    )
+    parser.add_argument(
+        "--watch-interval", type=float, default=DEFAULT_WATCH_INTERVAL_SECONDS,
+        help=(
+            f"Watch-mode poll interval in seconds "
+            f"(default {DEFAULT_WATCH_INTERVAL_SECONDS:g})."
+        ),
+    )
     args = parser.parse_args(argv)
 
     bundle_dir = Path(args.bundle_dir) if args.bundle_dir else None
     output_path = Path(args.output) if args.output else HUD_OUTPUT
+
+    if args.watch:
+        # Generate once up-front so the browser has something to open,
+        # then delegate to the polling loop. run_watch_loop handles its
+        # own initial render + subsequent regeneration.
+        if args.open:
+            import webbrowser
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            # Pre-touch so the initial --open doesn't race the watch loop's
+            # first write on very fast file systems.
+            if not output_path.exists():
+                data = collect_hud_data(bundle_dir=bundle_dir)
+                html = render_html(data, watching=True, watch_interval_seconds=args.watch_interval)
+                output_path.write_text(html, encoding="utf-8")
+            webbrowser.open(str(output_path.resolve()))
+        try:
+            run_watch_loop(
+                bundle_dir=bundle_dir,
+                output_path=output_path,
+                poll_interval=args.watch_interval,
+            )
+        except KeyboardInterrupt:
+            print("[watch] stopped by user")
+        return
 
     data = collect_hud_data(bundle_dir=bundle_dir)
     html = render_html(data)

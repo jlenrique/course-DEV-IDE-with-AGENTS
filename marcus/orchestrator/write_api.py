@@ -48,7 +48,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from marcus.lesson_plan.events import EventEnvelope
-from marcus.lesson_plan.log import LessonPlanLog
+from marcus.lesson_plan.log import PRE_PACKET_SNAPSHOT_EVENT_TYPE, LessonPlanLog
 from marcus.orchestrator import ORCHESTRATOR_MODULE_IDENTITY
 
 if TYPE_CHECKING:
@@ -64,7 +64,9 @@ logger = logging.getLogger(__name__)
 _MAYA_SAFE_UNAUTHORIZED_MESSAGE: str = (
     "Sorry — I hit an internal hiccup. Give me a moment and try again?"
 )
-_PRE_PACKET_SNAPSHOT_EVENT_TYPE: str = "pre_packet_snapshot"
+# 30-1 G6-D2 closure: single-source-of-truth — reference the named constant
+# exported from marcus.lesson_plan.log rather than hard-coding the literal.
+_PRE_PACKET_SNAPSHOT_EVENT_TYPE: str = PRE_PACKET_SNAPSHOT_EVENT_TYPE
 
 
 class UnauthorizedFacadeCallerError(PermissionError):

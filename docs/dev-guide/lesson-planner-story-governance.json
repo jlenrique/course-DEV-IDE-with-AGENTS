@@ -134,6 +134,12 @@
       "require_t1_readiness": true,
       "require_scaffold": true
     },
+    "32-2a": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
     "32-3": {
       "expected_gate_mode": "dual-gate",
       "schema_story": false,

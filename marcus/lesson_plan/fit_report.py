@@ -39,6 +39,7 @@ import json
 import logging
 from datetime import UTC, datetime
 
+from marcus.lesson_plan.event_type_registry import EVENT_FIT_REPORT_EMITTED
 from marcus.lesson_plan.events import EventEnvelope
 from marcus.lesson_plan.log import LessonPlanLog, WriterIdentity
 from marcus.lesson_plan.schema import (
@@ -64,9 +65,13 @@ __all__ = [
 ]
 
 
-FIT_REPORT_EMITTED_EVENT_TYPE: str = "fit_report.emitted"
+FIT_REPORT_EMITTED_EVENT_TYPE: str = EVENT_FIT_REPORT_EMITTED
 """Event-type string registered for fit-report emissions (AC-B.5 + AC-B.5.4).
 
+Single source of truth: re-exported from
+:data:`marcus.lesson_plan.event_type_registry.EVENT_FIT_REPORT_EMITTED`
+(party-mode 2026-04-19 follow-on consolidation, mirrors the
+``PRE_PACKET_SNAPSHOT_EVENT_TYPE`` / ``EVENT_PRE_PACKET_SNAPSHOT`` chain).
 Registered in :data:`marcus.lesson_plan.event_type_registry.RESERVED_LOG_EVENT_TYPES`
 and :data:`marcus.lesson_plan.log.WRITER_EVENT_MATRIX` (marcus-orchestrator
 only). Naming grammar: ``<domain_noun>.<past_tense_verb>``.
@@ -167,10 +172,13 @@ def validate_fit_report(
     diagnosis_ids = {d.unit_id for d in normalized.diagnoses}
     unknown_ids = diagnosis_ids - plan_unit_ids
     if unknown_ids:
+        # Party-mode 2026-04-19 follow-on (29-1 #4-leak): emit only the unknown
+        # unit_ids + a count of total plan units. Avoids leaking the full sorted
+        # plan-unit identifier list (potentially sensitive in non-Gagne future
+        # learning-model plans) into error messages and downstream logs.
         raise UnknownUnitIdError(
             f"fit_report contains diagnoses for unit_ids not in plan: "
-            f"{sorted(unknown_ids)}; known plan_unit ids: "
-            f"{sorted(plan_unit_ids)}"
+            f"{sorted(unknown_ids)} ({len(plan_unit_ids)} unit_ids in plan)"
         )
 
     return normalized

@@ -164,3 +164,100 @@ def test_scope_decision_direct_state_mutation_locked_without_maya_rejected() -> 
     with pytest.raises(ValidationError) as exc:
         sd.state = "locked"
     assert "ratified_by='maya'" in str(exc.value)
+
+
+# ---------------------------------------------------------------------------
+# Edge#5 + Edge#6 construction-time invariants
+# (party-mode 2026-04-19 follow-on consensus; closes 31-1 deferred SHOULD-FIX
+# items Edge#5 + Edge#6 — direct construction must not bypass the tri-phasic
+# state-vs-fields invariants enforced by transition_to.)
+# ---------------------------------------------------------------------------
+
+
+def test_scope_decision_proposed_with_ratified_by_rejected() -> None:
+    """Edge#5: state='proposed' with non-null ratified_by must be rejected."""
+    with pytest.raises(ValidationError) as exc:
+        ScopeDecision(
+            state="proposed",
+            scope="in-scope",
+            proposed_by="system",
+            _internal_proposed_by="marcus",
+            ratified_by="maya",
+        )
+    assert "must not carry ratified_by" in str(exc.value)
+
+
+def test_scope_decision_ratified_without_ratified_by_field_present() -> None:
+    """Sanity: state='ratified' continues to accept ratified_by='maya'."""
+    sd = ScopeDecision(
+        state="ratified",
+        scope="in-scope",
+        proposed_by="operator",
+        _internal_proposed_by="maya",
+        ratified_by="maya",
+    )
+    assert sd.state == "ratified"
+
+
+def test_scope_decision_proposed_locked_at_rejected() -> None:
+    """Edge#6: state='proposed' with non-null locked_at must be rejected."""
+    with pytest.raises(ValidationError) as exc:
+        ScopeDecision(
+            state="proposed",
+            scope="in-scope",
+            proposed_by="system",
+            _internal_proposed_by="marcus",
+            locked_at=datetime.now(tz=UTC),
+        )
+    assert "must not carry locked_at" in str(exc.value)
+
+
+def test_scope_decision_ratified_locked_at_rejected() -> None:
+    """Edge#6: state='ratified' with non-null locked_at must be rejected."""
+    with pytest.raises(ValidationError) as exc:
+        ScopeDecision(
+            state="ratified",
+            scope="in-scope",
+            proposed_by="operator",
+            _internal_proposed_by="maya",
+            ratified_by="maya",
+            locked_at=datetime.now(tz=UTC),
+        )
+    assert "must not carry locked_at" in str(exc.value)
+
+
+def test_scope_decision_proposed_mutation_to_ratified_by_rejected() -> None:
+    """Edge#5 via assignment: cannot mutate ratified_by while state remains 'proposed'."""
+    sd = _proposed()
+    with pytest.raises(ValidationError) as exc:
+        sd.ratified_by = "maya"
+    assert "must not carry ratified_by" in str(exc.value)
+
+
+# ---------------------------------------------------------------------------
+# Auditor Coverage #12: by_alias=True audit-emit path is pinned
+# (party-mode 2026-04-19 consensus; the audit-only emission path that allows
+# private actor surfaces to reach audit consumers must be regression-proof.)
+# ---------------------------------------------------------------------------
+
+
+def test_scope_decision_model_dump_by_alias_does_not_leak_internal() -> None:
+    """``model_dump(by_alias=True)`` MUST honor Field(exclude=True) on internal_*.
+
+    If a future Pydantic upgrade or schema refactor drops Field(exclude=True),
+    this test catches the regression — the by_alias=True path is the most
+    likely silent leak vector for ``_internal_proposed_by``.
+    """
+    sd = _proposed(internal="marcus-orchestrator")
+    by_alias_dump = sd.model_dump(by_alias=True)
+    assert "_internal_proposed_by" not in by_alias_dump
+    assert "internal_proposed_by" not in by_alias_dump
+    assert "marcus-orchestrator" not in str(by_alias_dump)
+
+
+def test_scope_decision_model_dump_by_alias_with_empty_exclude_does_not_leak() -> None:
+    """Even with explicit ``exclude=set()``, Field(exclude=True) wins (Pydantic v2)."""
+    sd = _proposed(internal="marcus-intake")
+    dump = sd.model_dump(by_alias=True, exclude=set())
+    assert "_internal_proposed_by" not in dump
+    assert "marcus-intake" not in str(dump)

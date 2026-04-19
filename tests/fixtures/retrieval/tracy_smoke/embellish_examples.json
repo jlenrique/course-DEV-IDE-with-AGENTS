@@ -1,0 +1,36 @@
+{
+  "fixture_id": "embellish_examples",
+  "brief": {
+    "gap_type": "enrichment",
+    "target_element": "gagne-event-02",
+    "enrichment_type": "examples"
+  },
+  "result": {
+    "status": "success",
+    "posture": "embellish",
+    "intent_class": "narration_citation",
+    "intent_detail": "Adds a concrete example for prior-knowledge recall.",
+    "editorial_note": "Use this example to make the recall move less abstract.",
+    "provider_metadata": {
+      "scite": {}
+    },
+    "input": {
+      "target_element": "gagne-event-02",
+      "enrichment_type": "examples"
+    },
+    "output": {
+      "content_added": true,
+      "content": "A short bridge example connecting prior knowledge to the new lesson.",
+      "sources": [
+        "scite:example-001"
+      ]
+    },
+    "provenance": {
+      "retrieval_provider": "scite.ai",
+      "query_terms": [
+        "prior knowledge example"
+      ],
+      "timestamp": "2026-04-19T12:00:00Z"
+    }
+  }
+}

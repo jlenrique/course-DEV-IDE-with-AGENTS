@@ -1,0 +1,37 @@
+{
+  "fixture_id": "corroborate_supporting",
+  "brief": {
+    "gap_type": "evidence",
+    "claim": "Worked examples improve novice transfer in introductory instruction.",
+    "source_context": "Need a supporting citation for the worked-example rationale."
+  },
+  "result": {
+    "status": "success",
+    "posture": "corroborate",
+    "intent_class": "supporting_evidence",
+    "intent_detail": "Surfaces supporting evidence for the worked-example claim.",
+    "editorial_note": "This source supports the claim strongly enough to cite directly.",
+    "provider_metadata": {
+      "scite": {}
+    },
+    "input": {
+      "claim": "Worked examples improve novice transfer in introductory instruction.",
+      "source_context": "Need a supporting citation for the worked-example rationale."
+    },
+    "output": {
+      "evidence_found": true,
+      "classification": "supporting",
+      "confidence_score": 0.92,
+      "sources": [
+        "scite:support-101"
+      ]
+    },
+    "provenance": {
+      "retrieval_provider": "scite.ai",
+      "query_terms": [
+        "worked examples novice transfer"
+      ],
+      "timestamp": "2026-04-19T12:00:00Z"
+    }
+  }
+}

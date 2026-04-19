@@ -27,6 +27,7 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from marcus.lesson_plan.event_type_registry import OPEN_ID_REGEX_PATTERN
 from marcus.lesson_plan.modality_registry import ModalityRef
 
 SCHEMA_VERSION: Final[str] = "1.0"
@@ -122,7 +123,14 @@ class ProducedAsset(BaseModel):
     source_plan_unit_id: str = Field(
         ...,
         min_length=1,
-        description="The plan unit identifier this asset serves.",
+        pattern=OPEN_ID_REGEX_PATTERN,
+        description=(
+            "The plan unit identifier this asset serves. Must conform to the "
+            "open-id regex (lowercase + digits + ``._-``). Party-mode 2026-04-19 "
+            "follow-on: pinned to single-source `OPEN_ID_REGEX_PATTERN` in "
+            "event_type_registry so non-PlanUnit producers cannot construct "
+            "asset rows with malformed identifiers (was 31-3 SHOULD-FIX#1 deferred)."
+        ),
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(tz=UTC),

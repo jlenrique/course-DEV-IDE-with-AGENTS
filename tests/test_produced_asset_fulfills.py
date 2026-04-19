@@ -175,3 +175,39 @@ def test_regex_failure_preempts_cross_field_validator() -> None:
     # The counterfeit message should NOT appear because the field validator
     # blocked it first.
     assert "counterfeit-fulfillment seam" not in msg
+
+
+# ---------------------------------------------------------------------------
+# party-mode 2026-04-19 follow-on: source_plan_unit_id regex pin (was 31-3 SHOULD-FIX#1)
+# Closes the trust-the-caller hole where a non-PlanUnit producer could synthesize
+# a malformed identifier passing only min_length=1.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "malformed_id",
+    [
+        "UPPER-CASE",       # uppercase rejected
+        "has space",        # whitespace rejected
+        "with/slash",       # slash rejected
+        "with:colon",       # colon rejected
+        "tab\there",        # tab rejected
+        "trailing\n",       # newline rejected
+    ],
+)
+def test_source_plan_unit_id_regex_rejects_malformed(malformed_id: str) -> None:
+    """Malformed ``source_plan_unit_id`` must fail Pydantic regex validation."""
+    with pytest.raises(ValidationError):
+        _build_asset(
+            source_plan_unit_id=malformed_id,
+            fulfills=f"{malformed_id}@5",
+        )
+
+
+def test_source_plan_unit_id_regex_accepts_open_id_chars() -> None:
+    """Lowercase + digits + ``._-`` are accepted (matches PlanUnit.unit_id format)."""
+    asset = _build_asset(
+        source_plan_unit_id="gagne-event-3.v2_alt",
+        fulfills="gagne-event-3.v2_alt@7",
+    )
+    assert asset.source_plan_unit_id == "gagne-event-3.v2_alt"

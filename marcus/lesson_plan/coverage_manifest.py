@@ -23,9 +23,16 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from marcus.lesson_plan.produced_asset import ProducedAsset
+from marcus.lesson_plan.quinn_r_gate import QuinnRTwoBranchResult, QuinnRUnitVerdict
+from marcus.lesson_plan.schema import PlanRef
+from marcus.lesson_plan.step_05_pre_packet_handoff import Step05PrePacketEnvelope
+from marcus.lesson_plan.step_06_plan_lock_fanout import Step06PlanLockFanoutEnvelope
+from marcus.lesson_plan.step_07_gap_dispatch import Step07GapDispatchEnvelope
 
 SCHEMA_VERSION = "1.0"
 """Coverage-manifest schema version pinned by Story 32-2."""
@@ -149,20 +156,80 @@ class CoverageInventoryEntry:
     deferred: bool = False
 
 
+_SAMPLE_DIGEST: Final[str] = "sha256:" + "0" * 64
+
+
+def _sample_step_05_pre_packet_envelope() -> Step05PrePacketEnvelope:
+    return Step05PrePacketEnvelope(
+        lesson_plan_revision=1,
+        lesson_plan_digest=_SAMPLE_DIGEST,
+    )
+
+
+def _sample_step_06_plan_lock_fanout_envelope() -> Step06PlanLockFanoutEnvelope:
+    return Step06PlanLockFanoutEnvelope(
+        lesson_plan_revision=1,
+        lesson_plan_digest=_SAMPLE_DIGEST,
+    )
+
+
+def _sample_step_07_gap_dispatch_envelope() -> Step07GapDispatchEnvelope:
+    return Step07GapDispatchEnvelope(
+        lesson_plan_revision=1,
+        lesson_plan_digest=_SAMPLE_DIGEST,
+        unit_id="u1",
+        gap_type="corroborate",
+    )
+
+
+def _sample_blueprint_producer_output() -> ProducedAsset:
+    return ProducedAsset(
+        asset_ref="blueprint-u1@1",
+        modality_ref="blueprint",
+        source_plan_unit_id="u1",
+        asset_path="_bmad-output/artifacts/blueprints/u1@1.md",
+        fulfills="u1@1",
+    )
+
+
+def _sample_quinn_r_unit_verdict() -> QuinnRUnitVerdict:
+    return QuinnRUnitVerdict(
+        unit_id="u1",
+        branch="produced-asset",
+        passed=True,
+        reason="produced asset passed quality",
+        asset_ref="blueprint-u1@1",
+    )
+
+
+def _sample_quinn_r_two_branch_result() -> QuinnRTwoBranchResult:
+    return QuinnRTwoBranchResult(
+        plan_ref=PlanRef(
+            lesson_plan_revision=1,
+            lesson_plan_digest="sha256:" + "0" * 64,
+        ),
+        evaluated_at=datetime.now(tz=UTC),
+        passed=True,
+        unit_verdicts=[],
+        prior_declined_rationales=[],
+    )
+
+
 DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
     CoverageInventoryEntry(
         step_id="05",
-        surface_name="30-2b pre-packet handoff envelope",
-        owner_story_key="30-2b-pre-packet-envelope-emission",
+        surface_name="Pre-packet handoff consumer boundary",
+        owner_story_key="30-4-plan-lock-fanout",
         module_path="marcus/lesson_plan/step_05_pre_packet_handoff.py",
         artifact_kind="envelope",
         plan_ref_mode="top-level-fields",
         assert_plan_fresh_required=True,
         notes=(
-            "Carries the 30-2b pre-packet handoff into the audited 05+ lane. "
-            "Story remains pending until the emitter lands."
+            "Consumer-side verification boundary for the pre-packet handoff, "
+            "landed by Story 30-4 as Step05PrePacketEnvelope + consume()."
         ),
         consumer_entrypoint="consume",
+        sample_factory=_sample_step_05_pre_packet_envelope,
     ),
     CoverageInventoryEntry(
         step_id="06",
@@ -174,6 +241,7 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         assert_plan_fresh_required=True,
         notes="First plan-lock fanout boundary in the 05+ branch.",
         consumer_entrypoint="consume",
+        sample_factory=_sample_step_06_plan_lock_fanout_envelope,
     ),
     CoverageInventoryEntry(
         step_id="07",
@@ -185,6 +253,7 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         assert_plan_fresh_required=True,
         notes="Downstream gap-dispatch boundary emitted from the plan-lock fanout lane.",
         consumer_entrypoint="consume",
+        sample_factory=_sample_step_07_gap_dispatch_envelope,
     ),
     CoverageInventoryEntry(
         step_id="08",
@@ -195,10 +264,13 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         plan_ref_mode="nested-plan-ref",
         assert_plan_fresh_required=True,
         notes=(
-            "Concrete produced-asset consumer boundary. One real boundary row, not "
-            "an abstract family placeholder."
+            "Deferred by Story 32-2a: Story 30-4 closed with scope limited to "
+            "05/06/07 consumer boundaries; step-08 surface has no known owner "
+            "until a future story (32-3 smoke harness or targeted follow-on) "
+            "claims it. Row kept as an explicit audit-incomplete reminder."
         ),
         consumer_entrypoint="consume",
+        deferred=True,
     ),
     CoverageInventoryEntry(
         step_id="09",
@@ -208,8 +280,13 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         artifact_kind="fit-report",
         plan_ref_mode="nested-plan-ref",
         assert_plan_fresh_required=True,
-        notes="Bridge payload preserving nested plan-ref semantics.",
+        notes=(
+            "Deferred by Story 32-2a: step-09 surface has no known owner after "
+            "Story 30-4 closed with scope limited to 05/06/07. Future claim "
+            "likely lands with 32-3 or a targeted follow-on."
+        ),
         consumer_entrypoint="consume",
+        deferred=True,
     ),
     CoverageInventoryEntry(
         step_id="10",
@@ -219,8 +296,13 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         artifact_kind="manifest-entry",
         plan_ref_mode="nested-plan-ref",
         assert_plan_fresh_required=True,
-        notes="Manifest-bound handoff surface prior to blueprint and gate branches.",
+        notes=(
+            "Deferred by Story 32-2a: step-10 surface has no known owner after "
+            "Story 30-4 closed with scope limited to 05/06/07. Future claim "
+            "likely lands with 32-3 or a targeted follow-on."
+        ),
         consumer_entrypoint="consume",
+        deferred=True,
     ),
     CoverageInventoryEntry(
         step_id="11",
@@ -230,19 +312,31 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         artifact_kind="produced-asset",
         plan_ref_mode="nested-plan-ref",
         assert_plan_fresh_required=True,
-        notes="Blueprint producer output surface emitted by Story 31-4.",
+        notes=(
+            "Blueprint producer output surface emitted by Story 31-4. "
+            "ProducedAsset does not carry a nested plan_ref field today; the "
+            "audit honestly flags plan_ref fields as absent until 30-4's "
+            "plan-lock fanout envelope wraps the asset with PlanRef."
+        ),
         consumer_entrypoint="produce",
+        sample_factory=_sample_blueprint_producer_output,
     ),
     CoverageInventoryEntry(
         step_id="12",
         surface_name="31-5 branch-result payload",
         owner_story_key="31-5-quinn-r-two-branch",
-        module_path="marcus/lesson_plan/quinn_r_branch_payload.py",
+        module_path="marcus/lesson_plan/quinn_r_gate.py",
         artifact_kind="gate-payload",
         plan_ref_mode="nested-plan-ref",
         assert_plan_fresh_required=True,
-        notes="Step-12 branch-result payload consumed by the Quinn-R gate.",
-        consumer_entrypoint="consume",
+        notes=(
+            "Step-12 per-unit branch-result payload (QuinnRUnitVerdict). "
+            "31-5 consolidated step-12 + step-13 payloads into a single "
+            "module; step-13 below audits the aggregate QuinnRTwoBranchResult. "
+            "QuinnRUnitVerdict does not carry a plan_ref today; honest audit."
+        ),
+        consumer_entrypoint="evaluate_quinn_r_two_branch_gate",
+        sample_factory=_sample_quinn_r_unit_verdict,
     ),
     CoverageInventoryEntry(
         step_id="13",
@@ -253,7 +347,8 @@ DEFAULT_COVERAGE_INVENTORY: tuple[CoverageInventoryEntry, ...] = (
         plan_ref_mode="nested-plan-ref",
         assert_plan_fresh_required=True,
         notes="Final step-13 gate payload audited before 32-3 trial smoke.",
-        consumer_entrypoint="evaluate",
+        consumer_entrypoint="evaluate_quinn_r_two_branch_gate",
+        sample_factory=_sample_quinn_r_two_branch_result,
     ),
 )
 
@@ -483,6 +578,9 @@ def _sorted_surfaces(surfaces: Sequence[CoverageSurface]) -> list[CoverageSurfac
     )
 
 
+_IMPLEMENTED_OWNER_STATUSES: frozenset[str] = frozenset({"done", "review"})
+
+
 def _resolve_status(
     entry: CoverageInventoryEntry,
     *,
@@ -502,12 +600,14 @@ def _resolve_status(
             f"Inventory drift: {entry.owner_story_key} is done but {entry.module_path} "
             "does not exist."
         )
-    if module_exists and story_status != "done":
+    if module_exists and story_status == "backlog":
         raise CoverageManifestError(
             f"Inventory drift: {entry.module_path} exists while {entry.owner_story_key} "
-            f"is not done (status={story_status!r})."
+            "is still in 'backlog'."
         )
-    return "implemented" if module_exists and story_status == "done" else "pending"
+    if module_exists and story_status in _IMPLEMENTED_OWNER_STATUSES:
+        return "implemented"
+    return "pending"
 
 
 def build_coverage_manifest(

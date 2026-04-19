@@ -1,0 +1,40 @@
+{
+  "fixture_id": "gap_fill_background",
+  "brief": {
+    "gap_type": "missing_concept",
+    "scope_decision": "in-scope",
+    "gap_description": "Missing prerequisite explanation for cognitive apprenticeship.",
+    "content_type": "background",
+    "scope": "unit"
+  },
+  "result": {
+    "status": "success",
+    "posture": "gap-fill",
+    "intent_class": "background_primary",
+    "intent_detail": "Adds missing prerequisite background for the unit.",
+    "editorial_note": "This fills the missing concept without widening scope.",
+    "provider_metadata": {
+      "scite": {}
+    },
+    "input": {
+      "gap_description": "Missing prerequisite explanation for cognitive apprenticeship.",
+      "content_type": "background",
+      "scope": "unit"
+    },
+    "output": {
+      "gap_filled": true,
+      "content": "Cognitive apprenticeship models expert thinking through visible worked practice.",
+      "relevance_score": 0.88,
+      "sources": [
+        "scite:gapfill-305"
+      ]
+    },
+    "provenance": {
+      "retrieval_provider": "scite.ai",
+      "query_terms": [
+        "cognitive apprenticeship explanation"
+      ],
+      "timestamp": "2026-04-19T12:00:00Z"
+    }
+  }
+}

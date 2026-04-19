@@ -77,9 +77,15 @@ def test_cell2_rev_match_digest_mismatch_names_digest_axis(tmp_log: LessonPlanLo
     assert "revision mismatch" not in msg, (
         f"Cell 2 must name digest only; got: {msg}"
     )
-    # Both digest values appear.
-    assert "abc" in msg
-    assert "def" in msg
+    # Tightened by party-mode 2026-04-19 follow-on (Auditor#2):
+    # assert the exact envelope/log naming so a future refactor that swaps
+    # the two axis values cannot pass with substring-only matching.
+    assert "envelope='def'" in msg, (
+        f"Cell 2 must name envelope digest verbatim ('def'); got: {msg}"
+    )
+    assert "log='abc'" in msg, (
+        f"Cell 2 must name log digest verbatim ('abc'); got: {msg}"
+    )
 
 
 def test_cell3_rev_mismatch_digest_match_names_revision_axis(tmp_log: LessonPlanLog) -> None:

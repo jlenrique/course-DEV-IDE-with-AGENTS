@@ -84,6 +84,7 @@ EXPECTED_MODULE_PUBLIC_NAMES = {
     "LessonPlanLog",
     "LogCorruptError",
     "NAMED_MANDATORY_EVENTS",
+    "PRE_PACKET_SNAPSHOT_EVENT_TYPE",
     "PlanLockedPayload",
     "PrePacketSnapshotPayload",
     "SourceRef",

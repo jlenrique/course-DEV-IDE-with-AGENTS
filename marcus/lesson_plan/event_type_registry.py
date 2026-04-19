@@ -35,24 +35,40 @@ KNOWN_PLAN_UNIT_EVENT_TYPES: frozenset[str] = frozenset(
 # Reserved log event_types (R1 ruling amendment 8 / R2 rider W-1)
 # ---------------------------------------------------------------------------
 
+# Named single-source-of-truth constants. Downstream emitters (30-2b dispatch,
+# 31-2 log writer, 29-1 fit-report emitter) MUST import these rather than
+# hard-code the string literal — closes 30-1 G6-D2 cross-story slip.
+EVENT_PRE_PACKET_SNAPSHOT: str = "pre_packet_snapshot"
+EVENT_PLAN_UNIT_CREATED: str = "plan_unit.created"
+EVENT_SCOPE_DECISION_SET: str = "scope_decision.set"
+EVENT_SCOPE_DECISION_TRANSITION: str = "scope_decision_transition"
+EVENT_PLAN_LOCKED: str = "plan.locked"
+EVENT_FANOUT_ENVELOPE_EMITTED: str = "fanout.envelope.emitted"
+EVENT_FIT_REPORT_EMITTED: str = "fit_report.emitted"
+# G6-Opus 30-3b sweep (party-mode 2026-04-19 follow-on): dedicated event-type
+# for dial-tuning operations. Was previously emitted as EVENT_SCOPE_DECISION_SET
+# in tune_unit_dials, conflating semantic categories — downstream readers
+# (32-3 smoke harness, audit consumers, 31-2 log readers) interpreting
+# scope_decision.set events would mistake a dial change for a scope change.
+EVENT_DIALS_TUNED: str = "dials.tuned"
+
 RESERVED_LOG_EVENT_TYPES: frozenset[str] = frozenset(
     {
         # Event-type naming grammar: <domain_noun>.<past_tense_verb>.
-        # E.g. "fit_report.emitted", "gagne_diagnosis.completed", "plan.locked".
-        # (Story 29-1 W-1 rider — seed the taxonomy convention at first
-        # Marcus-adjacent domain event.)
-        #
         # Reserved for 31-2 pre_packet_snapshot emission per R1 ruling amendment 13
         # (single-writer rule).
-        "pre_packet_snapshot",
-        "plan_unit.created",
-        "scope_decision.set",
-        "scope_decision_transition",
-        "plan.locked",
-        "fanout.envelope.emitted",
+        EVENT_PRE_PACKET_SNAPSHOT,
+        EVENT_PLAN_UNIT_CREATED,
+        EVENT_SCOPE_DECISION_SET,
+        EVENT_SCOPE_DECISION_TRANSITION,
+        EVENT_PLAN_LOCKED,
+        EVENT_FANOUT_ENVELOPE_EMITTED,
         # Registered by Story 29-1 — Marcus-Orchestrator emits when a
         # validated FitReport is appended to the log.
-        "fit_report.emitted",
+        EVENT_FIT_REPORT_EMITTED,
+        # Registered by 30-3b retroactively (party-mode 2026-04-19 follow-on):
+        # dial-tuning is a distinct semantic category from scope-decision-set.
+        EVENT_DIALS_TUNED,
     }
 )
 
@@ -63,7 +79,11 @@ REGISTERED_EVENT_TYPES: frozenset[str] = (
 """Union of known + reserved event_types; the "registered" set."""
 
 
-_OPEN_ID_REGEX = re.compile(r"^[a-z0-9._-]+$")
+# Single-source-of-truth open-id regex. Downstream modules (schema.py,
+# events.py) import OPEN_ID_REGEX_PATTERN for Pydantic Field(pattern=...)
+# usage; the compiled form is for in-module .match() checks.
+OPEN_ID_REGEX_PATTERN: str = r"^[a-z0-9._-]+$"
+_OPEN_ID_REGEX = re.compile(OPEN_ID_REGEX_PATTERN)
 
 # SF-4: dedup warnings — warn only on FIRST encounter of an unknown event_type
 # per process lifetime. Without this, a hot path emitting the same unknown
@@ -105,7 +125,16 @@ def validate_event_type(value: str) -> str:
 
 
 __all__ = [
+    "EVENT_DIALS_TUNED",
+    "EVENT_FANOUT_ENVELOPE_EMITTED",
+    "EVENT_FIT_REPORT_EMITTED",
+    "EVENT_PLAN_LOCKED",
+    "EVENT_PLAN_UNIT_CREATED",
+    "EVENT_PRE_PACKET_SNAPSHOT",
+    "EVENT_SCOPE_DECISION_SET",
+    "EVENT_SCOPE_DECISION_TRANSITION",
     "KNOWN_PLAN_UNIT_EVENT_TYPES",
+    "OPEN_ID_REGEX_PATTERN",
     "REGISTERED_EVENT_TYPES",
     "RESERVED_LOG_EVENT_TYPES",
     "validate_event_type",

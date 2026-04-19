@@ -25,7 +25,9 @@ def test_30_2a_unblock_handshake_resolves() -> None:
 
     assert INTAKE_MODULE_IDENTITY == "marcus-intake"
     assert ORCHESTRATOR_MODULE_IDENTITY == "marcus-orchestrator"
-    assert NEGOTIATOR_SEAM == "marcus-negotiator"
+    # 30-3a upgraded NEGOTIATOR_SEAM from string sentinel to structural marker;
+    # str() preserves the grep-discoverable contract.
+    assert str(NEGOTIATOR_SEAM) == "marcus-negotiator"
     assert callable(get_facade)
 
 

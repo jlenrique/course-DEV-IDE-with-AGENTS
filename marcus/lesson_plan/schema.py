@@ -38,6 +38,10 @@ from pydantic import (
 )
 from pydantic.json_schema import SkipJsonSchema
 
+from marcus.lesson_plan.event_type_registry import (
+    OPEN_ID_REGEX_PATTERN as _OPEN_ID_REGEX,
+)
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -215,11 +219,32 @@ class ScopeDecision(BaseModel):
 
     @model_validator(mode="after")
     def _guard_locked_without_maya(self) -> ScopeDecision:
-        """Q-5 bypass guard (AC-C.8): locked state requires ``ratified_by == 'maya'``."""
+        """Q-5 bypass guard (AC-C.8): locked state requires ``ratified_by == 'maya'``.
+
+        Also enforces the construction-time invariants closed by 31-1 follow-on
+        consensus (party-mode 2026-04-19, Edge#5 + Edge#6):
+            - ``state == 'proposed'`` MUST NOT carry a non-null ``ratified_by``.
+            - ``state != 'locked'`` MUST NOT carry a non-null ``locked_at``.
+
+        Without these invariants, direct Pydantic construction (e.g. JSON
+        deserialization, factory fixtures) could materialize state objects
+        that bypass the ``transition_to`` state-machine and leak through the
+        31-2 log writer into the 30-3a plan-lock fanout.
+        """
         if self.state == "locked" and self.ratified_by != "maya":
             raise ValueError(
                 "ScopeDecision locked state requires ratified_by='maya' "
                 "(tri-phasic contract: Maya is sole signatory; see R1 ruling amendment 5)"
+            )
+        if self.state == "proposed" and self.ratified_by is not None:
+            raise ValueError(
+                "ScopeDecision state='proposed' must not carry ratified_by "
+                "(tri-phasic contract: ratification belongs to the ratified state)"
+            )
+        if self.state != "locked" and self.locked_at is not None:
+            raise ValueError(
+                f"ScopeDecision state={self.state!r} must not carry locked_at "
+                "(locked_at is set only when state == 'locked')"
             )
         return self
 
@@ -389,13 +414,6 @@ class BlueprintSignoff(BaseModel):
 # ---------------------------------------------------------------------------
 # PlanUnit
 # ---------------------------------------------------------------------------
-
-
-# Open-string identifier regex (event_type / unit_id). Permits lowercase alpha,
-# digit, dot, underscore, and hyphen so that dotted event names like
-# ``plan.locked`` / ``fanout.envelope.emitted`` are accepted alongside the
-# Gagne labels like ``gagne-event-3``.
-_OPEN_ID_REGEX = r"^[a-z0-9._-]+$"
 
 
 class PlanUnit(BaseModel):

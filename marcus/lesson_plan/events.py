@@ -37,12 +37,13 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.json_schema import SkipJsonSchema
 
+from marcus.lesson_plan.event_type_registry import (
+    OPEN_ID_REGEX_PATTERN as _OPEN_ID_REGEX,
+)
+
 # ---------------------------------------------------------------------------
 # Generic envelope (R2 W-1 / AC-B.5a)
 # ---------------------------------------------------------------------------
-
-
-_OPEN_ID_REGEX = r"^[a-z0-9._-]+$"
 
 
 class EventEnvelope(BaseModel):
@@ -192,18 +193,6 @@ class ScopeDecisionTransition(BaseModel):
             "PlanUnit.rationale. R1 ruling amendment 16 surface."
         ),
     )
-
-    @field_validator("from_state")
-    @classmethod
-    def _from_state_not_locked(
-        cls, value: Literal["proposed", "ratified"]
-    ) -> Literal["proposed", "ratified"]:
-        if value == "locked":
-            raise ValueError(
-                "ScopeDecisionTransition.from_state cannot be 'locked' "
-                "(locked is terminal)"
-            )
-        return value
 
     @field_validator("timestamp", mode="after")
     @classmethod

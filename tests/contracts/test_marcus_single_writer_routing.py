@@ -20,9 +20,14 @@ from pathlib import Path
 
 _ALLOWED_APPEND_EVENT_CALLERS: frozenset[str] = frozenset(
     {
-        # The write_api.py module is the ONE caller of append_event
-        # on the Marcus side.
+        # The write_api.py module is the canonical Intake-originated-flow
+        # caller of append_event (via emit_pre_packet_snapshot).
         "marcus/orchestrator/write_api.py",
+        # The dispatch.py module is the Orchestrator-originated-flow caller
+        # of append_event (via dispatch_orchestrator_event) — 30-3a.
+        # Both modules are Orchestrator-side; Intake-side modules are still
+        # forbidden from append_event by this test's scan scope.
+        "marcus/orchestrator/dispatch.py",
     }
 )
 

@@ -47,14 +47,19 @@ FORBIDDEN_TOKEN_PATTERN = re.compile(
 )
 
 
-def test_facade_greet_has_no_forbidden_tokens() -> None:
-    """AC-T.8 — ``Facade.greet()`` returns a Maya-clean string."""
+def test_facade_maya_surface_has_no_forbidden_tokens() -> None:
+    """AC-T.8 — Facade Maya-surface returns a Maya-clean string.
+
+    30-3a replaced ``greet()`` with ``run_4a()``; ``repr(facade)`` remains
+    the Maya-surface smoke target (renders the one "Marcus" display
+    name per 30-1 AC-B.4 __repr__ contract).
+    """
     reset_facade()
     try:
-        surface = get_facade().greet()
+        surface = repr(get_facade())
         match = FORBIDDEN_TOKEN_PATTERN.search(surface)
         assert match is None, (
-            f"Forbidden token {match.group()!r} in Facade.greet() output: "
+            f"Forbidden token {match.group()!r} in repr(Facade) output: "
             f"{surface!r}"
         )
     finally:

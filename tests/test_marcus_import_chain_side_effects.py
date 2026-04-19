@@ -1,16 +1,21 @@
-"""Import-chain side-effect invariant (AC-T.15, Q-5 rider).
+"""Import-chain side-effect invariant (AC-T.15, Q-5 rider; extended by 30-2b AC-B.9).
 
 "No pipeline code movement" is about file placement; module-load side
 effects (registry registration, logger configuration, atexit hooks) can
 still drift envelope output. Catches "trivial pass" false positives on
 Golden-Trace.
 
-Asserts importing the 30-1 modules produces:
+Asserts importing the 30-1 + 30-2b modules produces:
 * zero new filesystem writes,
 * zero new log handler attachments,
 * zero atexit callbacks added.
 
 Uses a subprocess to get a clean import graph per test.
+
+30-2b extension (AC-B.9, 30-2a G6-D1 deferral): adds
+``marcus.intake.pre_packet`` + ``marcus.orchestrator.dispatch`` to the
+module enumeration. These modules now transitively import
+:mod:`marcus.lesson_plan.log`; the side-effect guard becomes load-bearing.
 """
 
 from __future__ import annotations
@@ -42,11 +47,15 @@ def test_importing_30_1_modules_has_no_filesystem_side_effects() -> None:
             for fn in filenames:
                 before.add(os.path.join(dirpath, fn))
 
-        # Import the 30-1 surface.
+        # Import the 30-1 + 30-2b + 30-3a surface.
         import marcus  # noqa: F401
         import marcus.facade  # noqa: F401
         import marcus.intake  # noqa: F401
+        import marcus.intake.pre_packet  # noqa: F401  -- 30-2b AC-B.9
         import marcus.orchestrator  # noqa: F401
+        import marcus.orchestrator.dispatch  # noqa: F401  -- 30-2b AC-B.9
+        import marcus.orchestrator.loop  # noqa: F401  -- 30-3a AC-T.12
+        import marcus.orchestrator.stub_dials  # noqa: F401  -- 30-3a AC-T.12
         import marcus.orchestrator.write_api  # noqa: F401
 
         # Record filesystem state AFTER import.
@@ -97,7 +106,11 @@ def test_30_1_modules_do_not_call_atexit_register_in_source() -> None:
         repo_root / "marcus" / "__init__.py",
         repo_root / "marcus" / "facade.py",
         repo_root / "marcus" / "intake" / "__init__.py",
+        repo_root / "marcus" / "intake" / "pre_packet.py",  # 30-2b AC-B.9
         repo_root / "marcus" / "orchestrator" / "__init__.py",
+        repo_root / "marcus" / "orchestrator" / "dispatch.py",  # 30-2b AC-B.9
+        repo_root / "marcus" / "orchestrator" / "loop.py",  # 30-3a AC-T.12
+        repo_root / "marcus" / "orchestrator" / "stub_dials.py",  # 30-3a AC-T.12
         repo_root / "marcus" / "orchestrator" / "write_api.py",
     ]
     offenders: list[str] = []

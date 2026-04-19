@@ -78,7 +78,13 @@ def test_single_writer_matrix_cartesian(
             f"error message missing event_type={event_type!r}: {msg}"
         )
         # And no partial line landed in the log.
-        assert not tmp_log.path.exists() or not tmp_log.path.read_text(encoding="utf-8").strip()
+        # Tightened by party-mode 2026-04-19 follow-on (Auditor#5):
+        # require strict zero-byte file (not "stripped-empty") so a stray
+        # whitespace-only line on REJECT path would still fail this assertion.
+        assert not tmp_log.path.exists() or tmp_log.path.stat().st_size == 0, (
+            f"REJECT path left non-empty bytes on disk: "
+            f"{tmp_log.path.read_bytes()!r}"
+        )
 
 
 def test_unauthorized_writer_is_permission_error_subclass() -> None:

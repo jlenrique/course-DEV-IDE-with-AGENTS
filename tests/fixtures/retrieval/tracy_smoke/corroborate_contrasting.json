@@ -1,0 +1,37 @@
+{
+  "fixture_id": "corroborate_contrasting",
+  "brief": {
+    "gap_type": "evidence",
+    "claim": "Long explanatory monologues always improve recall for novices.",
+    "source_context": "Need contrastive evidence so the claim is not overstated."
+  },
+  "result": {
+    "status": "success",
+    "posture": "corroborate",
+    "intent_class": "supporting_evidence",
+    "intent_detail": "Surfaces contrasting evidence for the monologue-length claim.",
+    "editorial_note": "Use this to qualify the claim rather than state it absolutely.",
+    "provider_metadata": {
+      "scite": {}
+    },
+    "input": {
+      "claim": "Long explanatory monologues always improve recall for novices.",
+      "source_context": "Need contrastive evidence so the claim is not overstated."
+    },
+    "output": {
+      "evidence_found": true,
+      "classification": "contrasting",
+      "confidence_score": 0.81,
+      "sources": [
+        "scite:contrast-204"
+      ]
+    },
+    "provenance": {
+      "retrieval_provider": "scite.ai",
+      "query_terms": [
+        "novice recall lecture length"
+      ],
+      "timestamp": "2026-04-19T12:00:00Z"
+    }
+  }
+}

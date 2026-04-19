@@ -1,14 +1,21 @@
-"""Zero-test-edit invariant for 30-1 (AC-T.10, M-1 rider).
+"""Zero-test-edit invariant for the Marcus duality lane (AC-T.10, M-1 rider).
 
-The 30-1 changeset does NOT modify any pre-existing file under
-``tests/`` — only adds new test files + the coverage-baseline fixture.
+Originally guarded the 30-1 changeset's "no pre-existing test edits" rule
+(AC-T.10). Rolled forward at 30-2b close to the post-30-2a baseline so the
+pin continues to guard against unintended pre-existing test edits as the
+lane advances through 30-2b and beyond.
+
 Inverted env-gate per M-1 rider: runs BY DEFAULT; skips only when
 ``MARCUS_30_1_ZERO_EDIT_CHECK_SKIP=1`` is set (for amendment scenarios
-post-30-2a where test edits become legal).
+where test edits are legal and expected in-flight).
 
-Pins against the commit range ``d7fd520..HEAD`` — the 29-1 + 32-2
-closure commit is the pre-30-1 baseline. Commit-range pin survives local
-dirty state.
+Pins against the commit range ``d1a788c..HEAD`` — the combined 30-1 +
+30-2a closure commit is the post-30-2a baseline. Commit-range pin
+survives local dirty state.
+
+Rollforward policy: when a downstream Marcus-duality story closes, the
+baseline SHOULD be advanced to that story's closing commit and the
+allowlists trimmed to the next in-flight story's scope.
 """
 
 from __future__ import annotations
@@ -19,27 +26,34 @@ from pathlib import Path
 
 import pytest
 
-_PRE_30_1_BASELINE_COMMIT: str = "d7fd520"
+_PRE_30_1_BASELINE_COMMIT: str = "d1a788c"
 _REPO_ROOT: Path = Path(__file__).parent.parent.parent.resolve()
 
-# Allowlist: the new test files added by 30-1 + the coverage-baseline
-# fixture. Anything OUTSIDE this allowlist that shows up as modified in
-# the range diff is a violation.
+# Allowlist: new test files that are legitimately added in the range
+# ``d1a788c..HEAD``. Anything OUTSIDE this allowlist that shows up as
+# ADDED in the range diff is a violation. The 30-1 and 30-2a new-test
+# files are already in the baseline commit d1a788c, so they do NOT need
+# to appear here — only post-d1a788c additions do.
 _ALLOWED_NEW_PATHS_UNDER_TESTS: frozenset[str] = frozenset(
     {
-        "tests/test_marcus_duality_imports.py",
-        "tests/test_marcus_orchestrator_write_api.py",
-        "tests/test_marcus_facade_leak_detector.py",
-        "tests/test_marcus_negotiator_seam_named.py",
-        "tests/test_marcus_facade_roundtrip.py",
-        "tests/test_marcus_golden_trace_regression.py",
+        # 30-2b new tests (AC-T.2–AC-T.7 + AC-C.1 spec entries).
+        "tests/test_marcus_intake_pre_packet_emission.py",
+        "tests/test_marcus_orchestrator_dispatch.py",
+        "tests/contracts/test_30_2b_single_writer_routing.py",
+        "tests/contracts/test_30_2b_dispatch_monopoly.py",
+        "tests/contracts/test_30_2b_voice_register.py",
+    }
+)
+
+# Modified-file allowlist: pre-existing test files that are legitimately
+# MODIFIED in the range ``d1a788c..HEAD``. Each entry must name the
+# specific AC or deferred finding that authorizes the edit.
+_ALLOWED_MODIFIED_PATHS_UNDER_TESTS: frozenset[str] = frozenset(
+    {
+        # 30-2a G6-D1 deferral + 30-2b AC-B.9: extend the side-effect
+        # guard to cover the new marcus.intake.pre_packet and
+        # marcus.orchestrator.dispatch modules that land at 30-2b.
         "tests/test_marcus_import_chain_side_effects.py",
-        "tests/test_marcus_coverage_non_regression.py",
-        "tests/contracts/test_no_intake_orchestrator_leak_marcus_duality.py",
-        "tests/contracts/test_marcus_single_writer_routing.py",
-        "tests/contracts/test_marcus_facade_is_public_surface.py",
-        "tests/contracts/test_30_1_zero_test_edits.py",
-        "tests/fixtures/coverage_baseline/marcus_pre_30-1.json",
     }
 )
 
@@ -101,8 +115,12 @@ def test_no_preexisting_test_files_modified_in_30_1() -> None:
             if path not in _ALLOWED_NEW_PATHS_UNDER_TESTS:
                 violations.append(f"{status}\t{path} (new file outside allowlist)")
             continue
-        # Modified / deleted / renamed pre-existing files are violations.
+        # Modified / deleted / renamed pre-existing files are violations
+        # unless explicitly allowed (e.g., for an in-flight AC that
+        # legitimately extends a pre-existing test).
         if status.startswith(("M", "D", "R")):
+            if path in _ALLOWED_MODIFIED_PATHS_UNDER_TESTS:
+                continue
             violations.append(f"{status}\t{path} (pre-existing file touched)")
 
     assert not violations, (

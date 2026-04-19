@@ -62,11 +62,14 @@ def test_facade_return_paths_name_one_marcus_identity(
     facade = get_facade()
 
     if return_path == "happy":
-        surface = facade.greet()
+        # 30-3a: greet() replaced by run_4a() (loop surface). repr(facade)
+        # remains the Maya-surface smoke — renders the one "Marcus"
+        # display name per 30-1's AC-B.4 __repr__ contract.
+        surface = repr(facade)
         assert MARCUS_DISPLAY_NAME in surface, (
             f"happy path must render MARCUS_DISPLAY_NAME; got {surface!r}"
         )
-        _assert_no_hyphenated_leak(surface, "facade.greet()")
+        _assert_no_hyphenated_leak(surface, "repr(facade)")
 
     elif return_path == "error":
         # AC-T.7 — negative case: non-Orchestrator invocation of write_api

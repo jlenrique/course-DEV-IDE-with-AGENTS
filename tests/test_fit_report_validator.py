@@ -171,6 +171,31 @@ def test_validate_fit_report_rejects_unknown_unit_id() -> None:
     assert "gagne-event-99" in str(exc_info.value)
 
 
+def test_unknown_unit_id_error_does_not_leak_full_plan_id_list() -> None:
+    """29-1 #4-leak (party-mode 2026-04-19): error names ONLY the unknown ids
+    plus a count of total plan units; full plan-unit identifier list MUST NOT
+    appear (defense-in-depth against sensitive identifiers in non-Gagne plans).
+    """
+    plan = _make_plan()  # has at least one known plan unit
+    known_ids = [pu.unit_id for pu in plan.plan_units]
+    report = _make_report(plan, diagnosis_unit_ids=("gagne-event-99",))
+
+    with pytest.raises(UnknownUnitIdError) as exc_info:
+        validate_fit_report(report, plan=plan)
+
+    msg = str(exc_info.value)
+    # Unknown id IS named.
+    assert "gagne-event-99" in msg
+    # Count of plan units is reported (parenthesized).
+    assert f"({len(known_ids)} unit_ids in plan)" in msg
+    # Known plan-unit ids MUST NOT appear in the message.
+    for known in known_ids:
+        assert known not in msg, (
+            f"#4-leak regression: error message leaked known plan_unit_id "
+            f"{known!r}; got: {msg}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # AC-T.6 — naive-datetime rejected at 31-1 Pydantic surface
 # ---------------------------------------------------------------------------

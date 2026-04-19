@@ -77,11 +77,15 @@ import os
 import typing
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Literal
+from types import MappingProxyType
+from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from marcus.lesson_plan.event_type_registry import RESERVED_LOG_EVENT_TYPES
+from marcus.lesson_plan.event_type_registry import (
+    EVENT_PRE_PACKET_SNAPSHOT,
+    RESERVED_LOG_EVENT_TYPES,
+)
 from marcus.lesson_plan.events import EventEnvelope
 from marcus.lesson_plan.schema import StaleRevisionError
 
@@ -148,7 +152,7 @@ equality; M-3 asserts immutability via the underlying frozenset type.
 """
 
 
-WRITER_EVENT_MATRIX: dict[str, frozenset[WriterIdentity]] = {
+_WRITER_EVENT_MATRIX_UNDERLYING: dict[str, frozenset[WriterIdentity]] = {
     "plan_unit.created": frozenset({"marcus-orchestrator"}),
     "scope_decision.set": frozenset({"marcus-orchestrator"}),
     "scope_decision_transition": frozenset({"marcus-orchestrator"}),
@@ -161,13 +165,28 @@ WRITER_EVENT_MATRIX: dict[str, frozenset[WriterIdentity]] = {
     # marcus/lesson_plan/fit_report.py docstring for the canonical-caller
     # invariant (AC-B.5.1).
     "fit_report.emitted": frozenset({"marcus-orchestrator"}),
+    # Registered by 30-3b retroactively (G6-Opus party-mode 2026-04-19 follow-on):
+    # dial tuning is Orchestrator-only, just like scope_decision.set, but is
+    # a distinct semantic event so log readers can disambiguate.
+    "dials.tuned": frozenset({"marcus-orchestrator"}),
 }
+
+WRITER_EVENT_MATRIX: typing.Mapping[str, frozenset[WriterIdentity]] = MappingProxyType(
+    _WRITER_EVENT_MATRIX_UNDERLYING
+)
 """AC-B.3 single-writer enforcement matrix.
 
 The ``pre_packet_snapshot`` row is the SOLE case where ``marcus-intake`` may
 successfully invoke ``append_event`` — all other five events are Marcus-
 Orchestrator-only. AC-T.3 parametrizes the full (2 × 6 = 12) Cartesian
 product and asserts accept-or-reject per row.
+
+**Tamper-resistance (party-mode 2026-04-19 follow-on, Blind#15):** wrapped
+in :class:`types.MappingProxyType` so callers cannot widen writer permissions
+at runtime via direct dict mutation. The inner ``frozenset`` values were
+already immutable; this wrap closes the outer-dict bypass. The single-writer
+rule (R1 ruling amendment 13) is foundational — the matrix that enforces
+it must be tamper-resistant.
 """
 
 
@@ -186,6 +205,37 @@ product and asserts accept-or-reject per row.
 assert frozenset(WRITER_EVENT_MATRIX.keys()) == NAMED_MANDATORY_EVENTS, (
     "WRITER_EVENT_MATRIX keys must equal NAMED_MANDATORY_EVENTS; "
     "if you added a new event, update BOTH."
+)
+
+
+# ---------------------------------------------------------------------------
+# Named event-type constants (single-source-of-truth; 30-1 G6-D2 closure)
+# ---------------------------------------------------------------------------
+#
+# Per 30-1 G6-D2 deferral ("apply W-3-style single-source-of-truth pattern
+# as a future hardening"), named constants are exported for callers that
+# would otherwise hard-code the raw string literals. The constants are the
+# ONE canonical source for each event-type name; WRITER_EVENT_MATRIX and
+# NAMED_MANDATORY_EVENTS use the same literals by construction, pinned by
+# the import-time assertion above.
+
+PRE_PACKET_SNAPSHOT_EVENT_TYPE: Final[str] = EVENT_PRE_PACKET_SNAPSHOT
+"""Event-type string for pre-packet snapshot emissions (30-2b, R1 amendment 13).
+
+Callers constructing a :class:`EventEnvelope` or gating an event_type in
+:mod:`marcus.orchestrator.write_api` MUST reference this constant rather
+than hard-coding the literal. Pattern precedent: 29-1's
+:data:`marcus.lesson_plan.fit_report.FIT_REPORT_EMITTED_EVENT_TYPE`.
+
+**Single source of truth:** value is re-exported from
+:data:`marcus.lesson_plan.event_type_registry.EVENT_PRE_PACKET_SNAPSHOT`
+(party-mode 2026-04-19 consolidation closing 30-1 G6-D2 cross-story slip).
+The registry is the canonical home for log event-type literals; this module
+binds the same value for callers already importing from ``log``.
+"""
+
+assert PRE_PACKET_SNAPSHOT_EVENT_TYPE in NAMED_MANDATORY_EVENTS, (
+    "PRE_PACKET_SNAPSHOT_EVENT_TYPE must be in NAMED_MANDATORY_EVENTS."
 )
 
 
@@ -507,6 +557,22 @@ class LessonPlanLog:
         Raises :class:`LogCorruptError` (G6 MF-EC-1) when a line cannot be
         parsed as JSON or fails :class:`EventEnvelope` validation. The error
         message names the line-number and file path for actionable diagnosis.
+
+        **Snapshot semantics (party-mode 2026-04-19, Edge#7):** the iterator
+        opens the file once at first ``next(...)`` and reads line-by-line.
+        Any ``append_event`` call by another writer (or this writer) after the
+        iterator opens is NOT guaranteed visible — re-call :meth:`read_events`
+        to see appended events. This snapshot contract keeps the read API
+        deterministic for any single drain.
+
+        **Iterator-drain contract (party-mode 2026-04-19, Blind#8):** to
+        guarantee prompt file-handle release, callers should fully drain the
+        iterator (``for env in log.read_events(...): ...``) or wrap it in
+        :class:`contextlib.closing` for partial consumption. CPython's
+        refcount GC closes the underlying file when the generator falls out
+        of scope, but PyPy / freethreading runtimes may delay closure under
+        GC pressure — explicit draining or ``closing(...)`` is the portable
+        guarantee.
         """
         if not self._path.exists():
             return
@@ -720,6 +786,7 @@ __all__ = [
     "LessonPlanLog",
     "LogCorruptError",
     "NAMED_MANDATORY_EVENTS",
+    "PRE_PACKET_SNAPSHOT_EVENT_TYPE",
     "PlanLockedPayload",
     "PrePacketSnapshotPayload",
     "SourceRef",

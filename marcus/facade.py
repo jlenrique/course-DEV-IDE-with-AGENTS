@@ -41,11 +41,14 @@ NOT reintroduce hyphenated sub-identity tokens.
 Developer discipline note
 -------------------------
 
-* 30-1 (structural foundation, this commit): facade shell with lazy
-  accessor, two identity constants, stub :meth:`Facade.greet`, and the
+* 30-1 (structural foundation, done): facade shell with lazy
+  accessor, two identity constants, stub ``Facade.greet``, and the
   Voice Register above.
-* 30-3a (4A skeleton + lock): replaces :meth:`Facade.greet` with a real
-  4A conversation surface honoring the Voice Register.
+* 30-3a (4A skeleton + lock, this commit): replaces the 30-1
+  ``Facade.greet`` stub with :meth:`Facade.run_4a` — the first real 4A
+  conversation surface. Runs :class:`marcus.orchestrator.loop.FourALoop`
+  under the hood; returns the locked :class:`LessonPlan`.
+* 30-3b (next): dial tuning + sync reassessment on top of the loop.
 * 30-4+ stories: extend facade dispatch to route Intake artifacts
   through :mod:`marcus.orchestrator.write_api` for log emission.
 
@@ -61,7 +64,14 @@ accessor :func:`get_facade` instead; pytest fixtures can call
 
 from __future__ import annotations
 
-from typing import Final, Literal
+from threading import Lock
+from typing import TYPE_CHECKING, Any, Final, Literal
+
+if TYPE_CHECKING:
+    from marcus.lesson_plan.fit_report import FitReport
+    from marcus.lesson_plan.log import LessonPlanLog
+    from marcus.lesson_plan.schema import LessonPlan
+    from marcus.orchestrator.loop import IntakeCallable
 
 MARCUS_IDENTITY: Literal["marcus"] = "marcus"
 """Programming-token identity. Stable key for routing + logging.
@@ -80,30 +90,110 @@ MARCUS_DISPLAY_NAME: Final[str] = "Marcus"
 class Facade:
     """Maya's single Marcus-facing surface.
 
-    At Story 30-1 the callable surface is deliberately minimal
-    (:attr:`marcus_identity`, :meth:`__repr__`, :meth:`greet` stub).
-    Story 30-3a's 4A conversation loop replaces :meth:`greet` with the
-    real conversation surface.
-
     Instances are constructed via :func:`get_facade`; direct
     instantiation is supported but not the idiomatic path.
+
+    Story 30-3a landed :meth:`run_4a` as the real 4A conversation
+    entry. Story 30-1's transitional ``greet`` stub was replaced.
     """
 
-    marcus_identity: Literal["marcus"] = MARCUS_IDENTITY
+    @property
+    def marcus_identity(self) -> Literal["marcus"]:
+        """Stable programming-token identity (read-only).
+
+        Exposed as a property instead of a mutable class attribute to avoid
+        cross-test mutation leaks.
+        """
+        return MARCUS_IDENTITY
 
     def __repr__(self) -> str:
         return MARCUS_DISPLAY_NAME
 
-    def greet(self) -> str:
-        """Return Marcus's Voice-Register-compliant greeting.
+    def run_4a(
+        self,
+        packet_plan: LessonPlan,
+        *,
+        intake_callable: IntakeCallable,
+        fit_report: FitReport | None = None,
+        prior_declined_rationales: tuple[tuple[str, str], ...] = (),
+        log: LessonPlanLog | None = None,
+        tracy_bridge: Any | None = None,
+    ) -> LessonPlan:
+        """Drive the 4A conversation loop from an initial plan through plan-lock.
 
-        TODO(30-3a): replace with real 4A loop conversation surface
-        honoring the Voice Register pinned in the module docstring.
+        Maya-facing note
+        ----------------
+
+        Maya sees one Marcus. The loop runs under the hood, iterating
+        through plan units, recording her scope-decision per unit, and
+        returning the locked :class:`LessonPlan` when every unit has
+        been ratified.
+
+        Args:
+            packet_plan: Initial :class:`LessonPlan` draft — typically
+                assembled from the 30-2b pre-packet snapshot plus the
+                29-2 fit-report. At this story the caller assembles it;
+                30-4 will thread this through the runtime.
+            intake_callable: Per-unit prompt callable. Production
+                wiring (30-3b) connects this to Maya's real UI; tests
+                pass a pre-programmed stub.
+            fit_report: Optional 29-2 :class:`FitReport`. Accepted at
+                30-3a for future-facing wiring; prior-decline carry-forward
+                (R1 amendment 15) is surfaced via the separate
+                ``prior_declined_rationales`` kwarg (see below).
+            prior_declined_rationales: Tuple of ``(unit_id, rationale)``
+                pairs from a previous run. Each becomes a pre-ratified
+                ``out-of-scope`` decision with the rationale stored
+                verbatim (R1 amendment 15). Maya is NOT prompted for
+                units named here.
+            log: Optional :class:`LessonPlanLog` for test isolation.
+                ``None`` is production default (writes to
+                ``state/runtime/lesson_plan_log.jsonl``).
+            tracy_bridge: Optional Irene→Tracy bridge adapter. When present,
+                plan-lock fanout auto-dispatches in-scope gaps through this
+                bridge and records fanout envelopes to the log.
+
+        Returns:
+            The locked :class:`LessonPlan` — ``revision`` bumped,
+            ``digest`` recomputed, every plan_unit carrying a ratified
+            scope-decision.
         """
-        return f"Hi — I'm {MARCUS_DISPLAY_NAME}. What are we planning today?"
+        # Late imports avoid circulars at module-load time; see
+        # TYPE_CHECKING block above for the static-type surface.
+        from functools import partial
+
+        from marcus.lesson_plan.log import LessonPlanLog as _LessonPlanLog
+        from marcus.orchestrator.dispatch import dispatch_orchestrator_event
+        from marcus.orchestrator.fanout import emit_plan_lock_fanout
+        from marcus.orchestrator.loop import FourALoop
+
+        resolved_log = log if log is not None else _LessonPlanLog()
+        dispatch = partial(dispatch_orchestrator_event, log=resolved_log)
+
+        # fit_report is accepted for forward-compatibility; prior-decline
+        # carry-forward flows through the dedicated kwarg per 29-2's
+        # PriorDeclinedRationale shape (unit_id + rationale only).
+        _ = fit_report  # reserved surface; consumed by downstream stories.
+
+        loop = FourALoop(
+            dispatch=dispatch,
+            latest_locked_revision=resolved_log.latest_plan_revision(),
+        )
+        locked_plan = loop.run_4a(
+            packet_plan,
+            intake_callable=intake_callable,
+            prior_declined_rationales=prior_declined_rationales,
+        )
+        emit_plan_lock_fanout(
+            locked_plan,
+            dispatch=dispatch,
+            bridge=tracy_bridge,
+        )
+        return locked_plan
 
 
 _facade: Facade | None = None
+_facade_lock: Final[Lock] = Lock()
 
 
 def get_facade() -> Facade:
@@ -113,9 +203,14 @@ def get_facade() -> Facade:
     per-session state can land at 30-3a without import-order coupling.
     """
     global _facade
-    if _facade is None:
-        _facade = Facade()
-    return _facade
+    current = _facade
+    if current is not None:
+        return current
+
+    with _facade_lock:
+        if _facade is None:
+            _facade = Facade()
+        return _facade
 
 
 def reset_facade() -> None:

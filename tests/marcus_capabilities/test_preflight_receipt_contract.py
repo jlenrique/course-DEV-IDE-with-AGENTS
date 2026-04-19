@@ -2,7 +2,7 @@
 (AC-B.4 from story 26-6).
 
 Defect class guarded: the preflight receipt PR-PF emits (pass-through of
-``emit-preflight-receipt.py`` / ``run_readiness``) drifts in shape from what
+``emit_preflight_receipt.py`` / ``run_readiness``) drifts in shape from what
 Prompt 2 consumes downstream. Same defect class as the 2026-04-17 halt — a
 schema-drift that doesn't surface until the trial fires.
 
@@ -26,7 +26,7 @@ from scripts.utilities.app_session_readiness import run_readiness
 pytestmark = pytest.mark.trial_critical
 
 # The field set Prompt 2 expects in the preflight receipt. Derived from
-# scripts/utilities/emit-preflight-receipt.py, which is the canonical
+# scripts/utilities/emit_preflight_receipt.py, which is the canonical
 # generator Marcus delegates to. If this set drifts, this test AND the
 # downstream consumer must update in the same commit.
 PROMPT_2_RECEIPT_FIELDS = frozenset({"overall_status", "checks", "root", "timestamp"})

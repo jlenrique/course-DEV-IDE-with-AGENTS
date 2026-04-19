@@ -17,7 +17,7 @@ Scope split per scope-confirmation party consensus (2026-04-17):
 
 ### Behavioral (AC-B.*)
 
-1. **AC-B.1** Authoring `run-constants.yaml` via PR-RC `execute` mode produces a file that `scripts/utilities/run_constants.py` (`parse_run_constants`) and the pipeline's `emit-preflight-receipt.py` accept on first invocation (exit 0, receipt emitted). **This is the direct fix for the 2026-04-17 Prompt 1 halt.**
+1. **AC-B.1** Authoring `run-constants.yaml` via PR-RC `execute` mode produces a file that `scripts/utilities/run_constants.py` (`parse_run_constants`) and the pipeline's `emit_preflight_receipt.py` accept on first invocation (exit 0, receipt emitted). **This is the direct fix for the 2026-04-17 Prompt 1 halt.**
 2. **AC-B.2** A dry-run of Prompt 1's preflight gate, fed a PR-RC-authored `run-constants.yaml` fixture, returns the PASS signature the halted trial required. Trial-restart proxy without firing the trial.
 3. **AC-B.3** Invoking PR-HC or PR-RS returns a structured `NOT_YET_IMPLEMENTED` return envelope carrying the stub's contract ID. Stubs MUST be operator-observable (no silent no-ops).
 4. **AC-B.4** Preflight receipt schema matches the schema Prompt 2 consumes (contract-parity check across stage boundary).
@@ -241,7 +241,7 @@ _(filled by dev-story at implementation time)_
 - [ ] [Review][Defer] Registry duplicate `code:` values across two .md files silently last-wins.
 - [ ] [Review][Defer] Registry frontmatter regex blind to UTF-8 BOM — caps silently dropped from registry.
 - [ ] [Review][Defer] `run_cli` + `main` entry points have zero direct test coverage — CLI argv parsing, `--args` JSON decoding, exit-code contract untested.
-- [ ] [Review][Defer] AC-B.1 / B.2 thin — no end-to-end subprocess test invoking `emit-preflight-receipt.py` on a PR-RC-authored file; only validator accepts.
+- [ ] [Review][Defer] AC-B.1 / B.2 thin — no end-to-end subprocess test invoking `emit_preflight_receipt.py` on a PR-RC-authored file; only validator accepts.
 - [ ] [Review][Defer] AC-C.3 thin — no external test asserts `run_cli` exits 1 only on envelope-contract violation.
 - [ ] [Review][Defer] AC-C.4 thin — registry.yaml field names diverge from AC spec (`schema` vs `schema_path`; no `description` field).
 - [ ] [Review][Defer] AC-D.6 thin — SKILL.md integrates PR-* rows inline rather than under a dedicated `## Production Readiness Capabilities` section header (compressed to respect 80-line A1 ceiling; acceptable tradeoff).

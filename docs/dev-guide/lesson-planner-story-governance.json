@@ -151,6 +151,15 @@
       "schema_story": false,
       "require_t1_readiness": true,
       "require_scaffold": false
+    },
+    "32-5": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false,
+      "k_floor": 7,
+      "target_min": 9,
+      "target_max": 10
     }
   }
 }

@@ -13,7 +13,6 @@ import json
 from pathlib import Path
 
 from scripts.utilities.app_session_readiness import run_readiness
-from scripts.utilities.file_helpers import project_root
 
 
 def emit_preflight_receipt(

@@ -58,6 +58,8 @@ state/runtime/ad-hoc-observability/
 state/runtime/perception-cache/
 state/runtime/ad-hoc-runs/
 state/runtime/run_baton.*.json
+state/runtime/lesson_plan_log.jsonl
+state/runtime/marcus-live-stt/
 
 # Generated run context (runtime artifacts; not source-of-truth docs)
 state/config/runs/
@@ -82,6 +84,7 @@ build/
 # Generated media (large binary assets — keep locally, don't commit)
 *.mp4
 uv.lock
+.coverage
 
 # Generated quality scan outputs (timestamped run artifacts)
 skills/reports/**/quality-scan/**

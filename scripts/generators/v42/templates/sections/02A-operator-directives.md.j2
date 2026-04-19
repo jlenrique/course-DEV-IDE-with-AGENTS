@@ -46,6 +46,10 @@ Artifact verification (deterministic — expected file count: **3**):
 - Expected files: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`
 - If count < 3, halt and remediate before proceeding.
 
-Stop and wait for operator confirmation.
+Gate rule:
+- Operator directives (or an explicit "no special directives" acknowledgment) must be recorded before ingestion begins.
+- Any poll auto-close, submission before the 3-minute hold, or missing directive category blocks progression until re-polled.
+
+Wait for explicit GO.
 
 ---

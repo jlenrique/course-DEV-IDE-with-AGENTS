@@ -5,8 +5,8 @@
 | Pack § | HUD id | Marcus module | Audience | One-line purpose |
 |---|---|---|---|---|
 | 01 | 01 | scripts/utilities/run_hud.py | M→O | Activation + Preflight |
-| 02 | 02 | scripts/utilities/run_hud.py | O→M | Source Authority Map |
-| 02A | 02A | scripts/utilities/run_hud.py | M→self | Operator Directives |
+| 02 | 02 | scripts/utilities/run_hud.py | M→O | Source Authority Map |
+| 02A | 02A | scripts/utilities/run_hud.py | M→O | Operator Directives |
 | 03 | 03 | scripts/utilities/run_hud.py | O→M | Ingestion + Evidence Log |
 | 04 | 04 | marcus/orchestrator/loop.py | M→O | Ingestion Quality Gate + Irene Packet |
 | 04A | 04A | marcus/orchestrator/loop.py | M→O | Lesson Plan Coauthoring + Scope Lock |
@@ -97,7 +97,11 @@ For each source, return:
 
 When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval.
 
-Stop and wait for approval.
+Gate rule:
+- Operator must approve the source authority map before ingestion begins.
+- Any unresolved source authority, routing, or risk concern blocks progression.
+
+Wait for explicit GO.
 
 ---
 
@@ -150,7 +154,11 @@ Artifact verification (deterministic — expected file count: **3**):
 - Expected files: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`
 - If count < 3, halt and remediate before proceeding.
 
-Stop and wait for operator confirmation.
+Gate rule:
+- Operator directives (or an explicit "no special directives" acknowledgment) must be recorded before ingestion begins.
+- Any poll auto-close, submission before the 3-minute hold, or missing directive category blocks progression until re-polled.
+
+Wait for explicit GO.
 
 ---
 

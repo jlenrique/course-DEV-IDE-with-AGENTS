@@ -21,6 +21,10 @@ For each source, return:
 
 When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval.
 
-Stop and wait for approval.
+Gate rule:
+- Operator must approve the source authority map before ingestion begins.
+- Any unresolved source authority, routing, or risk concern blocks progression.
+
+Wait for explicit GO.
 
 ---

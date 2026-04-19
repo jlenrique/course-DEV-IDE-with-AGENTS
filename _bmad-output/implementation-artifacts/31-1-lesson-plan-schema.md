@@ -1,6 +1,6 @@
 # Story 31-1: Lesson Plan Schema — Foundation Primitives + ScopeDecision State Machine + fit-report-v1 + dials-spec
 
-**Status:** in-progress (R2 party-mode green-light 2026-04-18; dev-story T2–T24 in flight; T25/T26/T27 pending G5/G6/G7-9 gates)
+**Status:** done (BMAD-CLOSED 2026-04-18; party-mode 2026-04-19 follow-on consensus added construction-time invariants for Edge#5 + Edge#6, Auditor Coverage #12 by_alias=True audit-path test, deleted Edge#7 dead validator, exported `EVENT_PRE_PACKET_SNAPSHOT` constants closing 30-1 G6-D2 cross-story slip, and consolidated `_OPEN_ID_REGEX` to single source of truth in `event_type_registry.py`.)
 **Created:** 2026-04-18 (authored by Amelia post-R1 orchestrator ruling; R2 green-light 2026-04-18 with 11 riders applied; dev-story executing T2–T24 in-session)
 **Epic:** 31 — Tri-phasic contract primitives + gates (FOUNDATION)
 **Sprint key:** `31-1-lesson-plan-schema`
@@ -353,6 +353,7 @@ Per Quinn's tri-phasic contract framing and ruling amendment 5's absorption list
 - **Gagné diagnostician wiring / p95 instrumentation** — 29-2 scope; 31-1 only ships the `irene_budget_ms` field shape.
 - **fit-report-v1 validator + serializer + emission wiring** — 29-1 scope; 31-1 only ships the schema.
 - **Profile runs / real-SME fixture** — §6-A1 scope (trial corpus commit per §6 readiness).
+- **`ScopeDecisionTransition` JSON Schema parity** — intentionally deferred (party-mode 2026-04-19 consensus on G6 Auditor#4). The transition primitive is an internal orchestration artifact; emission is via the Pydantic model serializer in 31-2, not via a separately-maintained external JSON Schema. Future MCP boundaries needing schema-based validation of these events MUST regenerate the JSON Schema from the Pydantic model via `model_json_schema()` rather than maintaining a hand-edited counterpart, to avoid drift. The shape-pin contract test in `tests/contracts/test_scope_decision_transition_event.py` is the authoritative drift detector.
 
 ## Dependencies on Ruling Amendments
 

@@ -1,6 +1,6 @@
 # Story 31-2: Lesson Plan Log — Append-Only JSONL + Monotonic Revision + Staleness Detector + Single-Writer Enforcement
 
-**Status:** review (R2 party-mode GREEN + G5 party-mode GREEN + G6 bmad-code-review layered pass + 19 patches applied 2026-04-18; operator flips to `done` after sprint-status.yaml flip)
+**Status:** done (BMAD-CLOSED 2026-04-18; party-mode 2026-04-19 follow-on consensus added MappingProxyType wrap on WRITER_EVENT_MATRIX, tightened AC-T.3 REJECT post-condition + AC-T.4 Cell 2 digest assertion to exact-substring matching, added iterator-drain + snapshot-semantics docstring contracts on read_events, and consolidated PRE_PACKET_SNAPSHOT_EVENT_TYPE to import EVENT_PRE_PACKET_SNAPSHOT from event_type_registry. Edge#13 Windows CRLF deferred to consolidated 0.5-pt CRLF hygiene story alongside 30-2b EC13 + 30-1 golden-trace per party-mode consensus.)
 **Created:** 2026-04-18 (authored by Amelia post-31-1 closeout; inherits R1 ruling amendments 8, 13 + Quinn Q-4 R2 carry-forward + Winston R1 amendment on 30-4)
 **Epic:** 31 — Tri-phasic contract primitives + gates (FOUNDATION)
 **Sprint key:** `31-2-lesson-plan-log`

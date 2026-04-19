@@ -190,7 +190,7 @@ Single-threaded longest chain (post-R1 ruling):
 - [ ] **F1. Provider directory.** `run_wrangler.py --list-providers` shows DOCX + scite.ai = `ready`; no regressions.
 - [ ] **F2. `SCHEMA_CHANGELOG.md` in step.** Every schema version referenced in a trial-run fixture is acknowledged.
 - [ ] **F3. bmad-code-review passed on every story** before `done` (non-negotiable per CLAUDE.md governance).
-- [ ] **F4. bmad-party-mode green-light** on the MVP-complete state before trial run.
+- [ ] **F4. bmad-party-mode green-light** on the MVP-complete state before trial run. **Preflight required**: read [`_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md`](../maps/lesson-planner-mvp-ratification-preflight-flags.md) aloud at the start of this round; per-flag verdict (ratify / block / defer) recorded in the party-mode transcript. Surfaced 2026-04-19 during Story 32-4 close; covers rendered-UX-layer absence, §6-C terminal-vs-UI ambiguity, "card turns gold" semantic relocation, stub-dials "next sprint" commitment, and retrospective scope.
 - [ ] **F5. Operator dry-run checklist** executed once by dev team before handing to real operator.
 
 ## Risk Register

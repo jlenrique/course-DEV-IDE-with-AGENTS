@@ -69,41 +69,63 @@ Cursor loads TWO Notion MCP servers in parallel (non-conflicting keys):
 
 ## 31-1 G5+G6 deferred findings
 
-Dated 2026-04-18. Twelve SHOULD-FIX findings deferred from G5 party-mode + G6 layered code review (Blind Hunter / Edge Case Hunter / Acceptance Auditor). Real but non-blocking; surfaced here for future stories in Epic 31/30/29 touching the lesson-plan schema.
+Dated 2026-04-18; updated 2026-04-19 after party-mode consensus follow-on remediation pass.
+
+**Closed by 2026-04-19 party-mode consensus pass** (5-persona round: John PM / Murat TEA / Winston Architect / Amelia Dev / Paige Tech Writer):
+
+- ✅ [Edge][#5] ScopeDecision(state=proposed, ratified_by=maya) — closed by `_guard_locked_without_maya` extension in `marcus/lesson_plan/schema.py`; new test `test_scope_decision_proposed_with_ratified_by_rejected` in `tests/test_scope_decision_transitions.py`.
+- ✅ [Edge][#6] locked_at set on non-locked state — closed by same validator extension; new tests `test_scope_decision_proposed_locked_at_rejected` + `test_scope_decision_ratified_locked_at_rejected`.
+- ✅ [Edge][#7] from_state validator dead code — `_from_state_not_locked` field_validator deleted from `marcus/lesson_plan/events.py` (Literal["proposed", "ratified"] already enforces).
+- ✅ [Auditor][#4] ScopeDecisionTransition JSON Schema parity — explicit Non-goals declaration added to 31-1 spec Out-of-scope section explaining intentional exclusion + Pydantic-as-source-of-truth.
+- ✅ [Auditor][Coverage] `model_dump(by_alias=True, exclude={...})` literal path — pinned by `test_scope_decision_model_dump_by_alias_does_not_leak_internal` + `test_scope_decision_model_dump_by_alias_with_empty_exclude_does_not_leak`.
+- ✅ NIT (duplicate regex constants) — `_OPEN_ID_REGEX` consolidated to single source of truth in `marcus/lesson_plan/event_type_registry.py` (`OPEN_ID_REGEX_PATTERN`). `schema.py` and `events.py` now import.
+- ✅ Cross-story G6-D2 slip from 30-1 closed — named constants `EVENT_PRE_PACKET_SNAPSHOT`, `EVENT_PLAN_UNIT_CREATED`, `EVENT_SCOPE_DECISION_SET`, `EVENT_SCOPE_DECISION_TRANSITION`, `EVENT_PLAN_LOCKED`, `EVENT_FANOUT_ENVELOPE_EMITTED`, `EVENT_FIT_REPORT_EMITTED` exported from `event_type_registry.py`. 30-2b dispatch can now import the constant; eliminates the literal-string-hard-code class of drift.
+- ✅ Spec status header drift — flipped `**Status:** in-progress` → `**Status:** done` on the 31-1 spec.
+
+**Confirmed-defer (party-mode consensus 4–1 or stronger):**
 
 - [SHOULD-FIX][Blind][#4] _json_default pragma coverage — pragma acceptable; add negative test later if Decimal/UUID fields enter
 - [SHOULD-FIX][Blind][#5] structure: dict untyped — spec calls "opaque-to-platform free-shape"; document intent in future schema PR if sprawl observed
 - [SHOULD-FIX][Blind][#11] to_internal_actor error path untested — pragma acceptable; add negative test when caller surface grows in 31-2
-- [SHOULD-FIX][Edge][#5] ScopeDecision(state=proposed, ratified_by=maya) accepted — needs Quinn adjudication on semantic ambiguity; not a correctness bug but violates tri-phasic contract spirit
-- [SHOULD-FIX][Edge][#6] locked_at set on non-locked state — similar to Edge #5; needs Quinn call
-- [SHOULD-FIX][Edge][#7] from_state validator dead code (Literal already enforces) — redundant type safety is OK; revisit if Literal widens
-- [SHOULD-FIX][Edge][#10] proposed → proposed same-scope no-op — minor contract violation; promote if log-noise observed
+- [SHOULD-FIX][Edge][#10] proposed → proposed same-scope no-op — minor contract violation; promote if log-noise observed; natural home 30-3a state-lock interface
 - [SHOULD-FIX][Edge][#11] _strip_none list None theoretical — not reachable in 31-1; promote when a nested Optional field lands
 - [SHOULD-FIX][Auditor][#3] AC-T.3 error-message specificity — tests pass; future-proofing if error string drifts
-- [SHOULD-FIX][Auditor][#4] ScopeDecisionTransition JSON Schema parity — spec says out-of-scope; declare in spec rather than test
-- [NIT-grouped][multiple] 23 NITs from Blind/Edge/Auditor — cosmetic (naming, DRY, imports, duplicate regex constants); not worth separate patch but list by file in commit message
-- [SHOULD-FIX][Auditor][Coverage] "Post-`model_dump(by_alias=True, exclude={...})` literal path not tested — spirit satisfied via to_audit_dump() but letter remains NIT"
+- [NIT-grouped][22 of original 23] cosmetic NITs — naming, DRY, imports; dismissed per consensus (duplicate-regex NIT promoted + closed above)
 
 ## 31-2 G5+G6 deferred findings
 
-Dated 2026-04-18. Ten SHOULD-FIX findings deferred from G5 party-mode + G6 layered code review (Blind Hunter / Edge Case Hunter / Acceptance Auditor) on Story 31-2 Lesson Plan Log. Real but non-blocking; surfaced here for future stories in Epic 31/30/29 touching the log module.
+Dated 2026-04-18; updated 2026-04-19 after party-mode consensus follow-on remediation pass.
 
-- [SHOULD-FIX][Blind][#5][Edge][#5] mkdir on every append — minor perf; move to LessonPlanLog.__init__ or accept as idempotent-cheap
-- [SHOULD-FIX][Blind][#8] read_events iterator leak on partial consumption — document iterator-drain contract (close file handle on GC relied upon)
-- [SHOULD-FIX][Edge][#7] read_events iterator-across-append undefined — document snapshot semantics (iterator yields events present at open-time; subsequent appends not guaranteed visible)
-- [SHOULD-FIX][Blind][#14-NIT] PIPE_BUF docstring citation technical error — docstring mentions PIPE_BUF atomicity guarantee which applies to pipes, not regular-file writes; edit docstring for precision
-- [SHOULD-FIX][Blind][#15-NIT] canonical_json duplicated in log.py + digest.py — extract shared helper in a future refactor story (no behavioral drift observed)
-- [NIT-grouped][Blind+Edge+Auditor] ~20 NITs — cosmetic (naming, imports, DRY, docstring style); listed in G6 output, not persisted
-- [SHOULD-FIX][Edge][#13] text-mode "\n" vs Windows CRLF translation — consider binary-mode writes for deterministic on-disk bytes (currently text-mode; newline translation could affect byte-level diffing)
-- [SHOULD-FIX][Blind][#15] WRITER_EVENT_MATRIX outer dict mutable — wrap with types.MappingProxyType in a future hardening pass (inner frozensets already immutable)
-- [SHOULD-FIX][Auditor][#2] AC-T.4 Cell 2 digest substring — partial dup with SF-AA-2 which was applied; Cell 2 tightening retained here for later review
-- [SHOULD-FIX][Auditor][#5] AC-T.3 REJECT post-condition loose — tighten to strict file-does-not-exist assertion for REJECT cases in the single-writer matrix test (current uses exists() || empty)
+**Closed by 2026-04-19 party-mode consensus pass** (4-persona round: Murat TEA / Winston Architect / Amelia Dev / John PM):
+
+- ✅ [Blind][#15] WRITER_EVENT_MATRIX outer dict mutable — wrapped via `types.MappingProxyType` in `marcus/lesson_plan/log.py`. Single-writer rule (R1 amendment 13) is tamper-resistant at runtime.
+- ✅ [Auditor][#5] AC-T.3 REJECT post-condition loose — tightened to strict `path.stat().st_size == 0` byte-level assertion in `tests/test_lesson_plan_log_single_writer.py`.
+- ✅ [Auditor][#2] AC-T.4 Cell 2 digest substring — tightened to exact `envelope='def'` + `log='abc'` substring assertions in `tests/test_lesson_plan_log_staleness.py` (substring-only matching could pass on a swapped-axis regression).
+- ✅ [Edge][#7] read_events iterator-across-append undefined — explicit snapshot-semantics contract added to `LessonPlanLog.read_events` docstring.
+- ✅ [Blind][#8] read_events iterator leak — explicit iterator-drain contract added to `LessonPlanLog.read_events` docstring (CPython refcount-GC behavior + PyPy/freethreading caveat + `contextlib.closing` recipe).
+- ✅ Cross-store consolidation: `PRE_PACKET_SNAPSHOT_EVENT_TYPE` in `log.py` now binds to `EVENT_PRE_PACKET_SNAPSHOT` from `event_type_registry.py` (single source of truth; closes the second copy from the 30-1 G6-D2 cross-story slip).
+- ✅ Spec status header drift — flipped `**Status:** review` → `**Status:** done`.
+
+**Confirmed-defer (party-mode consensus 3–1 or stronger):**
+
+- [SHOULD-FIX][Blind][#5][Edge][#5] mkdir on every append — minor perf; move to LessonPlanLog.__init__ or accept as idempotent-cheap. No user-impact until scale matters.
+- [SHOULD-FIX][Blind][#15-NIT] canonical_json duplicated in log.py + digest.py — DRY violation, no behavioral drift observed yet. **Watch flag**: extract shared helper at first sign of digest-determinism flake or before any consumer outside marcus/lesson_plan/ computes digests over log payloads.
+- [NIT-grouped][Blind+Edge+Auditor] ~20 cosmetic NITs — DISMISSED per aggressive-DISMISS rubric.
+- [SHOULD-FIX][Blind][#14-NIT] PIPE_BUF docstring citation technical error — DISMISSED (Winston) / batch into next docstring hygiene pass.
+
+**Consolidated into a separate cross-cutting story (party-mode 4-1 consensus):**
+
+- 🔁 [Edge][#13] text-mode "\n" vs Windows CRLF translation — folded into the 0.5-pt CRLF hygiene story alongside 30-2b EC13 + 30-1 golden-trace per the 2026-04-19 audit's cross-story finding #4. Natural home: pre-work ahead of 32-3 trial-run smoke harness (cross-platform CI). Murat dissented ("patch in-place AND consolidate"), but the 3-vote majority on cross-story atomicity prevails.
 
 ## 31-3 G5+G6 deferred findings
 
-Dated 2026-04-18. SHOULD-FIX and NIT findings deferred from self-conducted G5 + G6 layered code review (Blind / Edge / Acceptance) on Story 31-3 Registries + ModalityProducer ABC. All real but non-blocking; surfaced here for future stories in Epic 31/30/29/28 touching the registries/ABC modules.
+Dated 2026-04-18; updated 2026-04-19 after party-mode consensus follow-on remediation pass.
 
-- [SHOULD-FIX][Edge][#6] ProducedAsset.source_plan_unit_id has min_length=1 but no regex — consider applying `_OPEN_ID_REGEX` to match `PlanUnit.unit_id` format. In practice source_plan_unit_id always comes from plan_unit.unit_id which IS regex-clean, but the asset itself doesn't enforce. 31-4 or 30-4 may want to add this guard; likely a 1-line change with a matching test matrix.
+**Closed by 2026-04-19 party-mode consensus** (3-persona round: Winston / Murat / Amelia, unanimous):
+
+- ✅ [SHOULD-FIX][Edge][#6] ProducedAsset.source_plan_unit_id regex pin — added `pattern=OPEN_ID_REGEX_PATTERN` import from `event_type_registry.py` (single source of truth post-31-1 follow-on). 7 new parametrized rejection tests + 1 acceptance test in `tests/test_produced_asset_fulfills.py`. Closes the trust-the-caller hole where a non-PlanUnit producer could synthesize a malformed identifier passing only `min_length=1`.
+
+**Confirmed-dismiss (4 NITs):**
 - [NIT][Blind][#4] `_fulfills_regex` isinstance-guard is dead code — Pydantic v2's string-field type validation rejects int/None/list before the field_validator runs. The guard is belt-and-suspenders documentation; harmless. Keep or remove at future-refactor discretion.
 - [NIT][Blind][#6] `# noqa: S101` in component_type_registry.py import-time assertion references Bandit's S rule family which is NOT in the active ruff select list. Harmless forward-compat; no-op today.
 - [NIT][Blind][#1,#2] `_MODALITY_REGISTRY_UNDERLYING` + `_COMPONENT_TYPE_REGISTRY_UNDERLYING` — leading-underscore discourages but doesn't enforce; determined code could import and mutate. `MappingProxyType` is the public contract. Acceptable at MVP.
@@ -112,7 +134,154 @@ Dated 2026-04-18. SHOULD-FIX and NIT findings deferred from self-conducted G5 + 
 
 ## 29-1 code-review deferred findings
 
-Dated 2026-04-18. DEFER findings from bmad-code-review three-layer pass (Blind Hunter + Edge Case Hunter + Acceptance Auditor) on Story 29-1 fit-report-v1. Both findings are real but either pre-existing or naturally owned by a downstream story.
+Dated 2026-04-18; updated 2026-04-19 after party-mode consensus follow-on remediation pass.
 
-- [Review][Defer][#3-dedup] Duplicate `unit_id` entries in `report.diagnoses` silently accepted by `validate_fit_report` (marcus/lesson_plan/fit_report.py:156-164). The set-collapse `{d.unit_id for d in normalized.diagnoses}` masks conflicting fitness verdicts. Natural home is 29-2 (gagne-diagnostician) where Irene constructs diagnoses — duplicate-prevention logic lives at construction-time, not validation-time.
-- [Review][Defer][#4-leak] `UnknownUnitIdError` message embeds full sorted plan unit_id list (marcus/lesson_plan/fit_report.py:160-164). At MVP unit_ids are Gagne labels (safe). Future plans may have sensitive identifiers. Consider truncating to unknown-only + counted-total in a later hardening pass (29-3 or 30-*).
+**Closed:**
+
+- ✅ [Review][Defer][#3-dedup] Duplicate `unit_id` entries in `report.diagnoses` — closed by 29-2 (gagne-diagnostician) line 309 duplicate-target rejection at construction time per audit verification 2026-04-19.
+- ✅ [Review][Defer][#4-leak] `UnknownUnitIdError` message embeds full plan unit_id list — closed by party-mode 2026-04-19 follow-on. `marcus/lesson_plan/fit_report.py` now emits only `{sorted(unknown_ids)} ({N} unit_ids in plan)` — count-only, no per-id leak. Test `test_unknown_unit_id_error_does_not_leak_full_plan_id_list` in `tests/test_fit_report_validator.py` pins the new contract.
+- ✅ Bonus consolidation: `FIT_REPORT_EMITTED_EVENT_TYPE` in `marcus/lesson_plan/fit_report.py` now binds to `EVENT_FIT_REPORT_EMITTED` from `event_type_registry.py` (single source of truth, mirrors the `PRE_PACKET_SNAPSHOT_EVENT_TYPE` chain).
+
+## 30-1 G6 deferred findings (CENTRALIZED 2026-04-19 from spec inline)
+
+Dated 2026-04-18; centralized into `deferred-work.md` on 2026-04-19 per party-mode consensus (audit cross-story finding #1: 30-1 originally logged DEFERs inline in the story spec rather than this central register, breaking discoverability for future stories that grep here).
+
+**Closed before centralization:**
+
+- ✅ [G6-D7] AC-T.10 zero-test-edit pin self-heals at commit — pin became active post-`d1a788c` commit per audit verification.
+- ✅ [G6-D2] `_PRE_PACKET_SNAPSHOT_EVENT_TYPE` literal consolidation — closed by 31-1 follow-on (party-mode 2026-04-19): `EVENT_PRE_PACKET_SNAPSHOT` exported from `marcus/lesson_plan/event_type_registry.py`; `marcus/lesson_plan/log.py:PRE_PACKET_SNAPSHOT_EVENT_TYPE` binds to it; `marcus/orchestrator/write_api.py:69:_PRE_PACKET_SNAPSHOT_EVENT_TYPE` already chained through log → registry. Single source of truth restored.
+- ✅ [G6-D6] `NEGOTIATOR_SEAM` string-collision risk — closed by 30-3a structural-marker upgrade. `marcus/orchestrator/__init__.py` now exports a typed `NegotiatorSeam` singleton, with backward-compatible `str(NEGOTIATOR_SEAM) == "marcus-negotiator"` preserved. Contract coverage exists in `tests/test_marcus_negotiator_seam_structural.py` and `tests/test_marcus_negotiator_seam_named.py`.
+- ✅ [G6-D1] `get_facade` thread-safety — closed by lock-guarded double-check singleton initialization in `marcus/facade.py` (`_facade_lock` + guarded construction). Contract pin added: `tests/test_marcus_facade_roundtrip.py::test_get_facade_thread_safe_singleton`.
+- ✅ [G6-D4] mutable class-attribute leak trap on `Facade.marcus_identity` — closed by converting to a read-only property in `marcus/facade.py`. Contract pin added: `tests/test_marcus_facade_roundtrip.py::test_marcus_identity_read_only_property`.
+
+**Still-open (centralized; assigned future targets):**
+
+- [G6-D3] Test count 33 vs 1.5×K=19 ceiling. Dev Agent Record justifies in aggregate per [`docs/dev-guide/story-cycle-efficiency.md`](../../docs/dev-guide/story-cycle-efficiency.md). **Target: Epic 30 retrospective if pattern recurs.**
+- [G6-D5] `UnauthorizedFacadeCallerError` pickle round-trip loses `offending_writer`. Dormant in single-process MVP; activates only if multiprocessing propagation ever lands. **Target: future multiproc hardening story.**
+- [G6-D8] `patch("marcus.orchestrator.write_api.EventEnvelope.model_validate")` patches the class globally. Assertion still holds because no path calls `model_validate` in this case. Minor test-design imprecision. **Target: Epic 30 retrospective.**
+
+## 30-2b code-review deferred findings
+
+Dated 2026-04-19; updated 2026-04-19 (party-mode follow-on consensus pass).
+
+**Confirmed-defer (party-mode 2026-04-19, 3-persona unanimous):**
+
+- [Review][Defer][30-2b-EC13] Cross-platform digest stability — **CONSOLIDATED INTO Windows-newline hygiene story** (see "## Cross-cutting CRLF hygiene story" section). Same-class concern as 31-2 Edge#13 + 30-1 golden-trace `\r\n→\n` normalization. Single 0.5-pt focused story slot ahead of 32-3 trial-run harness rather than three per-story patches.
+- [Review][Defer][30-2b-EC14] Race window on bundle metadata read. **CONFIRMED-DEFER, blocked by 30-2a byte-identical LOCK.** Mitigation requires reopening the 30-2a `prepare_irene_packet` body to return raw bytes alongside the packet result, which would invalidate the 30-2a LOCK. Single-process single-writer MVP makes the race window theoretical; no test exercises this code path's race window.
+
+## 32-2 follow-on identified by 2026-04-19 audit
+
+**32-2 itself remains BMAD-CLOSED-CLEAN.** The Python inventory in `marcus/lesson_plan/coverage_manifest.py` IS up-to-date (the step_05 entry correctly reflects 30-2b's actual landing — emitter at `marcus/intake/pre_packet.py` + `marcus/orchestrator/dispatch.py`; the step_05 surface is now legitimately owned by 30-4 for the consumer-side `assert_plan_fresh` boundary).
+
+**Closed by `32-2a-inventory-hardening`** (1pt, BMAD-closed 2026-04-19, spec at [`_bmad-output/implementation-artifacts/32-2a-inventory-hardening.md`](../implementation-artifacts/32-2a-inventory-hardening.md)).
+
+**Reconciliation note** — the 2026-04-19 audit follow-on initially proposed a new key `32-2h` for this work; that proposal is RETRACTED. `32-2a-inventory-hardening` already exists, was authored 2026-04-19 against the same audit finding, and supersedes the proposal. Scope alignment:
+
+- ✅ Sample-factory backfill — `32-2a` covers steps **05/06/07/11/12/13** (broader than the proposal's 11/12/13 only — also covers 30-4-owned envelopes that the audit missed).
+- ✅ Stale on-disk JSON regeneration — `32-2a` Done-when criterion #5.
+- ✅ Step 12 module_path correction — `32-2a` Done-when criterion #2 (phantom `quinn_r_branch_payload.py` → real `quinn_r_gate.py` per 31-5 consolidation).
+- ✅ Steps 08/09/10 ownership uncertainty — `32-2a` Done-when criterion #4 marks them `deferred=True` with notes (30-4 closed having shipped only 05/06/07).
+- ✅ Honest-audit rule — `32-2a` explicitly forbids synthesizing `plan_ref` onto payloads that don't carry one in production code (`ProducedAsset` revision lives in `fulfills` string; `QuinnRUnitVerdict` carries no `plan_ref`).
+
+The audit-proposed scope estimate (2pt) was generous; the story is correctly scoped at **1pt single-gate** because it ships zero new schema shapes.
+
+## 32-2a code-review deferred findings
+
+- **32-2a-EC7 — concurrent-session sprint-status snapshot hardening.** `tests/test_coverage_manifest_regenerates_on_current_state.py::test_honest_summary_invariants_on_current_repo` reads live `sprint-status.yaml` at test time. If a concurrent session mutates the file mid-test, the test could observe transient state. Risk is low in CI but real in this repo's concurrent-session workflow. Hardening patch would monkeypatch `_load_story_statuses` to a fixed snapshot or fixture-captured dict. Not blocking: the concurrent-session failure mode is session-local rather than observed test-flake. Natural home: 32-3 trial-run smoke harness, which has stronger isolation needs.
+
+## MVP-deferred: rendered UX layer (cross-epic, no owner story)
+
+**Surfaced 2026-04-19 during Story 32-4 close.** The Lesson Planner MVP (Epics 28–32, 22 stories) does not contain a story that owns rendered user interface. Every landed story terminates at schema / log / harness / backend-specialist code. Maya cannot currently "paste source" into a text field, "see a weather ribbon", "click a gray card", or "watch the card turn gold" — those are UI-rendering semantics, not schema mutations, and no MVP story builds the rendering layer.
+
+**What the MVP does deliver for UX**: a set of UX invariants pinned at schema + validator + grep-test level. A future UI layer must honor these:
+
+- `PlanUnit.weather_band: Literal["gold", "green", "amber", "gray"]` (31-1) — no-red triple-layer rejection; band-set closed.
+- Voice Register discipline on Facade surfaces (30-1) — first-person present-tense no-hedges ends-with-question.
+- `_FORBIDDEN_PATTERN = r"\b(intake|orchestrator)\b"` grep contract (30-1 + 32-4) — pinned in 5+ test files; UI strings must pass.
+- Rationale verbatim preservation on `PlanUnit.rationale` (30-3a + 32-4 stage-6) — free text, no parsing, no coercion, no enum. UI must echo stored string byte-for-byte.
+- Marcus posture sentence templates (30-5) — one sentence per Tracy posture; UI renders as-is.
+- Prior-declined rationale carry-forward (29-2 + 30-3a) — UI must surface these when re-opening a run.
+
+**Pantomime ACs that encode UI expectations without building the UI**:
+
+- Sally YELLOW R1-4 pantomime AC on 32-4 ("card turns gold"). Currently pinned as "scope_decision.state == ratified" + rationale verbatim; no visual gold-repaint is built.
+- Sally §6-C Tuesday-morning experiential AC ("operator completes 4A loop in under 12 minutes"). Currently runnable only by a human reading CLI / JSON output and mentally rendering the ribbon.
+- "Operator click-through" affordances implied by 30-3a stub-dials ("I'll learn to tune these next sprint"). Currently a `StubDialsAffordance` frozen Pydantic model with a Literal-typed sentence — no clickable dial.
+
+**Natural home**: a new `epic-33-ux-rendering-layer` (or equivalent) post-MVP epic. Out-of-scope for the Lesson Planner MVP itself; belongs in the next planning cycle. Suggested scope placeholder:
+
+- Frame / shell that hosts the ribbon + card grid.
+- Card component keyed on `plan_unit.unit_id`; color driven by `weather_band`; state transitions driven by `scope_decision.state` (gray → gold rendering).
+- Rationale text box binding to `PlanUnit.rationale` as a controlled input; echo on ratification; one-sentence-per-Declined readback surface.
+- Posture-sentence display component consuming `render_retrieval_narration()` output verbatim.
+- Voice-register regression CI: every user-visible string in the rendered layer routed through the same `_FORBIDDEN_PATTERN` gate.
+
+**Pre-MVP-ratification flag**: see [`lesson-planner-mvp-ratification-preflight-flags.md`](lesson-planner-mvp-ratification-preflight-flags.md) for the items to surface at F4 (bmad-party-mode green-light) before MVP-complete is stamped.
+
+## 32-4 code-review deferred findings
+
+- ✅ **32-4-BH5 — default `output_path` fixture-pollution hardening** is now closed. `marcus.orchestrator.maya_walkthrough.run_maya_walkthrough()` defaults to a runtime-safe path under `state/runtime/maya-walkthrough/<run_id>/irene-packet.md` rooted at the repository, rather than writing into committed fixture directories.
+
+## Cross-cutting CRLF hygiene story (NEW — 2026-04-19 party-mode consensus)
+
+**Source:** consensus across 31-2 Edge#13 + 30-2b EC13 + 30-1 golden-trace `\r\n→\n` normalization. Three per-story deferrals on the same class of concern argue for one focused 0.5-pt hygiene story rather than three independent patches.
+
+**Working name:** `32-3p-windows-newline-hygiene` (`p` = originally proposed pre-work for 32-3; now retained as a follow-on identifier).
+
+**Scope:**
+
+- Audit every `Path.write_text(...)` call site in `marcus/` and pin `newline="\n"` (or convert to `.write_bytes()`) where determinism matters (digest computation paths in particular).
+- Add a single cross-platform contract test that writes a JSONL log, reads its `.read_bytes()`, and asserts byte-equality with the same payload computed via canonical-JSON serialization (closes 31-2 Edge#13).
+- Audit text-mode `open()` call sites in `marcus/lesson_plan/log.py` — specifically `LessonPlanLog._path.open("a", encoding="utf-8")` at line 510 and `open("r", encoding="utf-8")` at lines 538 + 574; pin `newline="\n"` on writes and `newline=""` on reads as appropriate.
+- Verify 30-1 golden-trace bundle path: the `\r\n → \n` in-test normalization is currently defense-in-depth; the production write path should make it unnecessary.
+
+**Acceptance criteria (one-liner each):**
+
+- AC-1: every `Path.write_text(...)` call site in `marcus/` either passes `newline="\n"` or has a comment explaining why platform-default is intentional.
+- AC-2: `LessonPlanLog` log writes produce identical bytes on Windows + Linux (parametrized cross-platform contract test).
+- AC-3: 30-1 golden-trace fixture round-trips byte-identical on Windows without test-side `\r\n→\n` normalization.
+- AC-4: contract test in `tests/contracts/test_marcus_path_write_text_newline_discipline.py` greps `marcus/` for `write_text(` and fails on any unannotated platform-default-newline call.
+
+**Estimated points:** 0.5
+
+**Natural home:** Post-MVP cross-platform hardening batch (32-3 is already BMAD-closed). Do not reopen 30-3a / 30-3b / 30-4 for this; scope it as a narrow hygiene follow-on.
+
+## G6-Opus independent code-review sweep across 30-3a / 30-3b / 32-1 / 32-2a (2026-04-19)
+
+Per CLAUDE.md "different-LLM-than-implementer" governance, an independent G6 layered code-review by Claude Opus 4.7 ran across the four Lesson Planner stories that were closed with self-conducted code review (Codex 5.3 implementer + same-LLM G6) rather than the cross-LLM gate. Surfaces reviewed: `marcus/orchestrator/loop.py` (653 LOC), `marcus/orchestrator/stub_dials.py` (63 LOC), `marcus/orchestrator/workflow_runner.py` (83 LOC), `marcus/lesson_plan/coverage_manifest.py` sample-factory inventory.
+
+**1 MUST-FIX patch landed:**
+
+- ✅ **G6-Opus 30-3b-B1 — event-type semantic conflation in `tune_unit_dials`.** `marcus/orchestrator/loop.py:tune_unit_dials` was emitting `EVENT_SCOPE_DECISION_SET` for dial-tuning operations. The payload included a `dials` field, but downstream readers (32-3 smoke harness, future audit consumers, 31-2 log readers) interpreting `scope_decision.set` events would mistake a dial change for a scope change. Fixed by introducing a dedicated `EVENT_DIALS_TUNED = "dials.tuned"` constant in `marcus/lesson_plan/event_type_registry.py`, registering it in `RESERVED_LOG_EVENT_TYPES`, adding it to `WRITER_EVENT_MATRIX` as marcus-orchestrator-only in `marcus/lesson_plan/log.py`, switching `tune_unit_dials` to emit it, and updating the two affected tests in `tests/test_marcus_4a_reassessment.py`.
+
+**Per-story DEFER findings (NIT-level, real but corner-case):**
+
+- [Defer][30-3a-B4] `marcus/orchestrator/loop.py:633-637` raises `RuntimeError` if `pending_units==[]` but `locked==False` — defensive but never triggers under current `trigger_plan_lock_if_ready` semantics. Document as invariant rather than runtime guard in next docstring pass.
+- [Defer][30-3a-EC3] `intake_scope_decision` does NOT validate `decision.state == "ratified"` (only requires unit_id to exist). Could append a `state="proposed"` ScopeDecision if caller misuses; loop would re-prompt. Consider tightening if observed in trial runs.
+- [Defer][30-3b-B2] `sync_reassess_with_irene` line 396 — late `from marcus.lesson_plan.digest import compute_digest` inside function body (same pattern as 30-4 B5). Move to module top in next refactor pass.
+- [Defer][30-3b-EC1] `sync_reassess_with_irene` line 416-417: `if diagnosis.unit_id in normalized_prior: recommended = "out-of-scope"` — overrides Irene's recommendation when unit was previously declined. Behavior is correct per R1 amendment 15 (Maya already decided) but not documented inline.
+- [Defer][32-1-B3] `route_step_04_gate_to_step_05` doesn't enforce step-04 prerequisite — caller could invoke without step 04 having run. Function name is suggestive but no enforcement. Consider renaming or adding a prereq check; low risk because pipeline runner controls callsite ordering.
+- [Defer][32-1-EC2] `Iterable[str]` typed but no runtime check on `insert_4a_between_step_04_and_05` step values. NIT — Pydantic would catch in production.
+
+**Reconciliation update (2026-04-19):**
+
+- ✅ Prior note about `tests/contracts/test_32_4_maya_walkthrough_voice_register.py::test_no_intake_or_orchestrator_tokens_in_operator_surface` failing is now stale. Current branch verification passes (`py -3.13 -m pytest -q tests/contracts/test_32_4_maya_walkthrough_voice_register.py` -> `1 passed`), so this is no longer an active deferred finding.
+
+## 30-4 code-review deferred findings
+
+Dated 2026-04-19. Findings from independent G6 layered code-review by Claude Opus 4.7 on Story 30-4 plan-lock-fanout (run as the second-pass review per CLAUDE.md "different-LLM-than-implementer" governance; first pass was by Codex 5.3 the implementer). 6 DEFER + 1 DISMISS; 3 MUST-FIX patches landed in the story.
+
+- [Defer][30-4-B3] `marcus/orchestrator/fanout.py` posture-name normalization: bridge-result matching keys on `posture == "gap-fill"` (Tracy hyphen form) but `IdentifiedGap.suggested_posture` Literal is `"gap_fill"` (Marcus underscore form). The seam is intentional (mirrors 30-5's normalized `gap-fill`/`gap_fill` seam) but isn't single-sourced — drift hazard if Tracy posture vocabulary widens. Natural home: 30-5 retrieval-narration-grammar follow-up or a focused posture-vocabulary-consolidation pass.
+- [Defer][30-4-B5] `marcus/orchestrator/fanout.py:127` late `from marcus.lesson_plan.digest import compute_digest` inside `emit_plan_lock_fanout` body — no actual circular reason (digest.py imports schema.py; fanout.py imports schema.py). Move to module top in next refactor pass.
+- [Defer][30-4-B6] `marcus/orchestrator/fanout.py` reassigns `locked_plan` via `model_copy` when `digest == ""`. Caller's reference is untouched (Pydantic model_copy returns new) but the function name suggests pure emission, not silent digest backfill. Add docstring sentence "if digest is empty, computes and uses fresh digest" in next docstring pass.
+- [Defer][30-4-EC1] Zero `plan_units` test coverage gap. Behavior is correct (emits step 05/06 only; in_scope_units empty; bridge skipped; result has 2 envelopes + 0 bridge_results) but no dedicated test pins it. Natural home: 32-3 trial-run smoke harness.
+- [Defer][30-4-EC4] `_gap_envelopes_for_unit` builds `results_by_gap_type` ONCE outside the per-unit loop, so a single bridge result of `[{posture: "embellish", status: "ok"}]` propagates to EVERY in-scope unit's embellish gaps. This is the right per-posture interpretation of bridge contract, but isn't documented. Add docstring clarification in next pass.
+- [Defer][30-4-EC7] Duplicate posture in bridge_results → last-write-wins on `results_by_gap_type[posture] = result` (line 89-93). Silent override. Real but corner case — promote if observed in trial runs.
+- [Dismiss] AC-Auditor.D loose `bridge: Any | None` typing on `emit_plan_lock_fanout`. Protocol class would clarify the contract but adds complexity for marginal benefit at MVP. Revisit when 32-3 wires a real bridge if drift materializes.
+
+## 30-3a code-review deferred findings
+
+Dated 2026-04-19 (via REMEDIATION pass after concurrent-session false closure). DEFER findings from the dual-gate G6 layered code-review (self-conducted Blind Hunter + Edge Case Hunter + Acceptance Auditor) on Story 30-3a 4A-skeleton-and-lock.
+
+- [Review][Defer][30-3a-EC1] Empty-packet (zero plan units) test gap. `FourALoop.run_4a` with a `LessonPlan` whose `plan_units == []` transitions directly to plan-lock (zero `plan_unit.created` + zero `scope_decision.set` + one `plan.locked`). Behavior covered by AC-B.3 but not pinned by a dedicated test. Natural home: 30-3b or 32-3.
+- [Review][Defer][30-3a-EC2] Prior-decline rationale naming an unknown `unit_id` is silent-skipped at `FourALoop.run_4a` step 2. Behavior is correct but not explicitly tested. Natural home: 30-3b or 32-3.

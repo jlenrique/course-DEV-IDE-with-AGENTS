@@ -1,21 +1,21 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-04-19T01:23:35.319433Z",
+  "generated_at": "2026-04-19T07:14:28.322066Z",
   "source_story_key": "32-2-plan-ref-envelope-coverage-manifest",
   "surfaces": [
     {
       "step_id": "05",
-      "surface_name": "30-2b pre-packet handoff envelope",
-      "owner_story_key": "30-2b-pre-packet-envelope-emission",
+      "surface_name": "Pre-packet handoff consumer boundary",
+      "owner_story_key": "30-4-plan-lock-fanout",
       "module_path": "marcus/lesson_plan/step_05_pre_packet_handoff.py",
       "artifact_kind": "envelope",
       "plan_ref_mode": "top-level-fields",
-      "has_lesson_plan_revision": false,
-      "has_lesson_plan_digest": false,
+      "has_lesson_plan_revision": true,
+      "has_lesson_plan_digest": true,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
-      "notes": "Carries the 30-2b pre-packet handoff into the audited 05+ lane. Story remains pending until the emitter lands."
+      "status": "implemented",
+      "notes": "Consumer-side verification boundary for the pre-packet handoff, landed by Story 30-4 as Step05PrePacketEnvelope + consume()."
     },
     {
       "step_id": "06",
@@ -24,11 +24,11 @@
       "module_path": "marcus/lesson_plan/step_06_plan_lock_fanout.py",
       "artifact_kind": "envelope",
       "plan_ref_mode": "top-level-fields",
-      "has_lesson_plan_revision": false,
-      "has_lesson_plan_digest": false,
+      "has_lesson_plan_revision": true,
+      "has_lesson_plan_digest": true,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
+      "status": "implemented",
       "notes": "First plan-lock fanout boundary in the 05+ branch."
     },
     {
@@ -38,11 +38,11 @@
       "module_path": "marcus/lesson_plan/step_07_gap_dispatch.py",
       "artifact_kind": "envelope",
       "plan_ref_mode": "top-level-fields",
-      "has_lesson_plan_revision": false,
-      "has_lesson_plan_digest": false,
+      "has_lesson_plan_revision": true,
+      "has_lesson_plan_digest": true,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
+      "status": "implemented",
       "notes": "Downstream gap-dispatch boundary emitted from the plan-lock fanout lane."
     },
     {
@@ -56,8 +56,8 @@
       "has_lesson_plan_digest": false,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
-      "notes": "Concrete produced-asset consumer boundary. One real boundary row, not an abstract family placeholder."
+      "status": "deferred",
+      "notes": "Deferred by Story 32-2a: Story 30-4 closed with scope limited to 05/06/07 consumer boundaries; step-08 surface has no known owner until a future story (32-3 smoke harness or targeted follow-on) claims it. Row kept as an explicit audit-incomplete reminder."
     },
     {
       "step_id": "09",
@@ -70,8 +70,8 @@
       "has_lesson_plan_digest": false,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
-      "notes": "Bridge payload preserving nested plan-ref semantics."
+      "status": "deferred",
+      "notes": "Deferred by Story 32-2a: step-09 surface has no known owner after Story 30-4 closed with scope limited to 05/06/07. Future claim likely lands with 32-3 or a targeted follow-on."
     },
     {
       "step_id": "10",
@@ -84,8 +84,8 @@
       "has_lesson_plan_digest": false,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
-      "notes": "Manifest-bound handoff surface prior to blueprint and gate branches."
+      "status": "deferred",
+      "notes": "Deferred by Story 32-2a: step-10 surface has no known owner after Story 30-4 closed with scope limited to 05/06/07. Future claim likely lands with 32-3 or a targeted follow-on."
     },
     {
       "step_id": "11",
@@ -98,26 +98,12 @@
       "has_lesson_plan_digest": false,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
-      "notes": "Blueprint producer output surface emitted by Story 31-4."
+      "status": "implemented",
+      "notes": "Blueprint producer output surface emitted by Story 31-4. ProducedAsset does not carry a nested plan_ref field today; the audit honestly flags plan_ref fields as absent until 30-4's plan-lock fanout envelope wraps the asset with PlanRef."
     },
     {
       "step_id": "12",
       "surface_name": "31-5 branch-result payload",
-      "owner_story_key": "31-5-quinn-r-two-branch",
-      "module_path": "marcus/lesson_plan/quinn_r_branch_payload.py",
-      "artifact_kind": "gate-payload",
-      "plan_ref_mode": "nested-plan-ref",
-      "has_lesson_plan_revision": false,
-      "has_lesson_plan_digest": false,
-      "assert_plan_fresh_required": true,
-      "assert_plan_fresh_verified": false,
-      "status": "pending",
-      "notes": "Step-12 branch-result payload consumed by the Quinn-R gate."
-    },
-    {
-      "step_id": "13",
-      "surface_name": "31-5 quinn-r gate payload",
       "owner_story_key": "31-5-quinn-r-two-branch",
       "module_path": "marcus/lesson_plan/quinn_r_gate.py",
       "artifact_kind": "gate-payload",
@@ -126,18 +112,32 @@
       "has_lesson_plan_digest": false,
       "assert_plan_fresh_required": true,
       "assert_plan_fresh_verified": false,
-      "status": "pending",
+      "status": "implemented",
+      "notes": "Step-12 per-unit branch-result payload (QuinnRUnitVerdict). 31-5 consolidated step-12 + step-13 payloads into a single module; step-13 below audits the aggregate QuinnRTwoBranchResult. QuinnRUnitVerdict does not carry a plan_ref today; honest audit."
+    },
+    {
+      "step_id": "13",
+      "surface_name": "31-5 quinn-r gate payload",
+      "owner_story_key": "31-5-quinn-r-two-branch",
+      "module_path": "marcus/lesson_plan/quinn_r_gate.py",
+      "artifact_kind": "gate-payload",
+      "plan_ref_mode": "nested-plan-ref",
+      "has_lesson_plan_revision": true,
+      "has_lesson_plan_digest": true,
+      "assert_plan_fresh_required": true,
+      "assert_plan_fresh_verified": false,
+      "status": "implemented",
       "notes": "Final step-13 gate payload audited before 32-3 trial smoke."
     }
   ],
   "summary": {
     "total_surfaces": 9,
-    "implemented_surfaces": 0,
-    "pending_surfaces": 9,
-    "deferred_surfaces": 0,
-    "surfaces_with_full_plan_ref_coverage": 0,
-    "surfaces_missing_one_or_both_fields": 0,
-    "surfaces_missing_freshness_gate_verification": 0,
+    "implemented_surfaces": 6,
+    "pending_surfaces": 0,
+    "deferred_surfaces": 3,
+    "surfaces_with_full_plan_ref_coverage": 4,
+    "surfaces_missing_one_or_both_fields": 2,
+    "surfaces_missing_freshness_gate_verification": 6,
     "trial_ready": false
   }
 }

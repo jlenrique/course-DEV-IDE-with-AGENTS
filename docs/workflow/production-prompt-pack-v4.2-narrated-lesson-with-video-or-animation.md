@@ -409,10 +409,10 @@ Validation command (example):
 .\.venv\Scripts\python.exe -c "import yaml,sys; from scripts.utilities.creative_directive_validator import validate_creative_directive; payload=yaml.safe_load(open(r'[BUNDLE_PATH]\\creative-directive.yaml')); errors=validate_creative_directive(payload); print(errors); sys.exit(1 if errors else 0)"
 ```
 
-Artifact verification (deterministic — expected file count: **8**):
+Artifact verification (deterministic — expected file count: **13**):
 - Run: `Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count`
-- Expected files: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`, `extracted.md`, `metadata.json`, `ingestion-evidence.md`, `irene-packet.md`, `creative-directive.yaml`
-- If count < 8, halt and remediate before proceeding.
+- Expected files (12 carried forward from Prompt 4 + 1 written here): `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`, `directive.yaml`, `extracted.md`, `metadata.json`, `extraction-report.yaml`, `manifest.json`, `ingestion-evidence.md`, `result.yaml`, `ingestion-quality-gate-receipt.md`, `irene-packet.md`, `creative-directive.yaml`
+- If count < 13, halt and remediate before proceeding.
 
 Stop and wait for operator confirmation.
 

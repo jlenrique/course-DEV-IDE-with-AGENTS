@@ -1,6 +1,7 @@
 # Story 31-3: Registries — `modality_registry` + `component_type_registry` + `ModalityProducer` ABC
 
-**Status:** done (BMAD-closed 2026-04-18)
+**Status:** done
+**Closed:** 2026-04-18 (BMAD-closed)
 **Created:** 2026-04-18 (authored by Amelia post-31-2 closeout; inherits R1 ruling amendment 5 resize 3 → 2pts; R1 ruling amendment 6 registries-runtime scoping; R1 ruling amendment 7 `31-4 blueprint-producer` HOLD at 5pts single story; Murat R1 amendment — consumer-contract fixtures; R1/R2 discipline carry-forward from 31-1/31-2)
 **Epic:** 31 — Tri-phasic contract primitives + gates (FOUNDATION)
 **Sprint key:** `31-3-registries`

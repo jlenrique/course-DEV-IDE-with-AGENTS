@@ -690,7 +690,7 @@ _bmad-output/implementation-artifacts/
 
 **Executed by:** Amelia (bmad-agent-dev), Claude Opus 4.7 (1M context).
 **Date:** 2026-04-18.
-**Commit:** `<to be filled by closing commit>` (on branch `dev/lesson-planner`).
+**Commit:** `bfdecde` (on branch `dev/lesson-planner`; pushed 2026-04-18).
 
 **T2–T14 landed files (line counts):**
 - `marcus/lesson_plan/modality_registry.py` — 218 lines (new)

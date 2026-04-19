@@ -1,0 +1,181 @@
+"""{{STORY_SLUG}} schema primitives (Story {{STORY_KEY}}).
+
+All shapes in this module are the reviewable contract that downstream stories
+read and write against. Pydantic v2.
+
+Idiom checklist (see docs/dev-guide/pydantic-v2-schema-checklist.md for rationale):
+    - ``model_config = ConfigDict(extra="forbid", validate_assignment=True)``
+      on every model. ``validate_assignment=True`` is the fix for G6 MF-1/2/3
+      (mutation re-validation); ``extra="forbid"`` catches typos at construction.
+    - Timezone-aware ``datetime`` on every timestamp field via a
+      ``field_validator`` that rejects naive datetimes (G6 MF-4). Use
+      ``datetime.now(tz=UTC)`` as default, never ``datetime.utcnow()``.
+    - UUIDs are validated as UUID4 format via ``uuid.UUID(v, version=4)``
+      parse + re-emit as str (G6 SF-5).
+    - Closed enums get three red-rejection surfaces: Pydantic validator,
+      JSON Schema ``enum`` array, and a ``TypeAdapter`` round-trip test.
+    - Internal audit fields use ``SkipJsonSchema[...] = Field(exclude=True, ...)``
+      so Maya-facing ``model_dump()`` cannot leak them. Provide a dedicated
+      ``to_audit_dump()`` for callers that need precise provenance.
+    - Free-text fields (for example ``rationale``) have no ``min_length``;
+      empty, single-char, and whitespace-only are all acceptable.
+
+Discipline notes from R1 ruling amendment 17 / R2 rider S-3:
+    User-facing strings in this module must present Marcus as a single voice.
+    Keep legacy split-role terminology out of descriptions, docstrings, error
+    messages, and companion docs. Private audit taxonomy is exempt.
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION: str = "{{SCHEMA_VERSION}}"
+"""Root schema version string emitted on every top-level model."""
+
+
+# ---------------------------------------------------------------------------
+# Errors
+# ---------------------------------------------------------------------------
+
+
+class StaleRevisionError(ValueError):
+    """Raised when a mutation presents a stale revision number."""
+
+
+# ---------------------------------------------------------------------------
+# Support shapes (example: trim or replace for this story)
+# ---------------------------------------------------------------------------
+
+
+class {{SCHEMA_NAME}}Ref(BaseModel):
+    """Lightweight reference carried on emitted artifacts tied to this schema family."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, validate_assignment=True)
+
+    # Example field: replace with this story's reference primitives.
+    key: str = Field(..., min_length=1, description="Stable identifier for the referent.")
+
+
+# ---------------------------------------------------------------------------
+# Core primitive (the model this story is really about)
+# ---------------------------------------------------------------------------
+
+
+class {{SCHEMA_NAME}}(BaseModel):
+    """Top-level primitive for Story {{STORY_KEY}}.
+
+    The field list below is placeholder-illustrative; replace with this story's
+    actual contract shape. Retain the idioms:
+        - ConfigDict with extra="forbid" + validate_assignment=True
+        - tz-aware datetime validator
+        - SCHEMA_VERSION field at the root level
+    """
+
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+
+    # Version field - keep at the top; AC-C.2 schema-version-field-present tests on it.
+    schema_version: str = Field(
+        default=SCHEMA_VERSION,
+        description="Pinned to SCHEMA_VERSION; changes drive CHANGELOG entries.",
+    )
+
+    # Example primitive fields - replace for this story.
+    identifier: str = Field(..., min_length=1, description="Stable primary key.")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(tz=UTC),
+        description="Creation timestamp; timezone-aware UTC enforced.",
+    )
+
+    # Optional: UUID4 field if this story has one.
+    # If you enable this block, add ``from uuid import UUID`` above.
+    # event_id: str = Field(..., description="UUID4 string.")
+
+    # Optional: rationale-style free-text verbatim field (no min_length).
+    # rationale: str = Field(
+    #     default="",
+    #     description="Free text, stored verbatim, surfaced verbatim.",
+    # )
+
+    # Optional: internal audit-only fields.
+    # If you enable this block, add:
+    #   from typing import Literal
+    #   from pydantic.json_schema import SkipJsonSchema
+    # _internal_actor: SkipJsonSchema[
+    #     Literal["marcus", "irene", "maya"]
+    # ] = Field(
+    #     default="marcus",
+    #     exclude=True,
+    #     description="Precise audit-surface actor; never serialized to Maya-facing payloads.",
+    # )
+
+    @field_validator("created_at")
+    @classmethod
+    def _enforce_tz_aware(cls, value: datetime) -> datetime:
+        """Reject naive datetimes."""
+        if value.tzinfo is None:
+            raise ValueError("datetime field must be timezone-aware")
+        return value
+
+    # Example UUID4 validator - copy if your schema has UUID fields.
+    # If you enable this block, add ``from uuid import UUID`` above.
+    # @field_validator("event_id")
+    # @classmethod
+    # def _enforce_uuid4(cls, value: str) -> str:
+    #     try:
+    #         parsed = UUID(value, version=4)
+    #     except (ValueError, AttributeError, TypeError) as exc:
+    #         raise ValueError("event_id must be a UUID4 string") from exc
+    #     if parsed.version != 4:
+    #         raise ValueError("event_id must be UUID4 specifically")
+    #     return str(parsed)
+
+
+# ---------------------------------------------------------------------------
+# Optional: state-machine-bearing primitive
+# ---------------------------------------------------------------------------
+
+# class {{SCHEMA_NAME}}State(BaseModel):
+#     """State machine with bypass-guard."""
+#
+#     # If you enable this block, add ``model_validator`` to the pydantic
+#     # imports above.
+#     model_config = ConfigDict(extra="forbid", validate_assignment=True)
+#
+#     state: Literal["proposed", "ratified", "locked"] = "proposed"
+#     ratified_by: str | None = None
+#
+#     @model_validator(mode="after")
+#     def _guard_locked_requires_authorized_signatory(self) -> "{{SCHEMA_NAME}}State":
+#         if self.state == "locked" and self.ratified_by != "maya":
+#             raise ValueError(
+#                 "state == 'locked' requires ratified_by == 'maya' (bypass guard)"
+#             )
+#         return self
+
+
+# ---------------------------------------------------------------------------
+# JSON Schema emission
+# ---------------------------------------------------------------------------
+
+# At dev-story time, add a small CLI or test hook that calls
+# {{SCHEMA_NAME}}.model_json_schema() and writes the output to the schema/
+# directory. The parity test in tests/ checks JSON Schema and Pydantic agree.
+
+
+# ---------------------------------------------------------------------------
+# Public surface
+# ---------------------------------------------------------------------------
+
+__all__ = [
+    "SCHEMA_VERSION",
+    "StaleRevisionError",
+    "{{SCHEMA_NAME}}",
+    "{{SCHEMA_NAME}}Ref",
+]

@@ -1,0 +1,61 @@
+"""Shape-stable contract test for {{SCHEMA_NAME}} (Story {{STORY_KEY}})."""
+
+from __future__ import annotations
+
+import pytest
+
+from {{MODULE_PATH}} import {{SCHEMA_NAME}}, {{SCHEMA_NAME}}Ref
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Scaffold placeholder: replace allowlists and remove this skip during "
+        "story implementation."
+    )
+)
+
+{{SCHEMA_NAME_UPPER}}_EXPECTED_FIELDS = frozenset(
+    {
+        "schema_version",
+        "identifier",
+        "created_at",
+    }
+)
+
+{{SCHEMA_NAME_UPPER}}_REQUIRED_FIELDS = frozenset(
+    {
+        "identifier",
+    }
+)
+
+{{SCHEMA_NAME_UPPER}}_REF_EXPECTED_FIELDS = frozenset({"key"})
+
+
+def _model_field_names(model_cls) -> frozenset[str]:
+    return frozenset(model_cls.model_fields.keys())
+
+
+def _model_required_field_names(model_cls) -> frozenset[str]:
+    return frozenset(
+        name
+        for name, field_info in model_cls.model_fields.items()
+        if field_info.is_required()
+    )
+
+
+def test_{{schema_name}}_field_set_matches_allowlist() -> None:
+    actual = _model_field_names({{SCHEMA_NAME}})
+    assert actual == {{SCHEMA_NAME_UPPER}}_EXPECTED_FIELDS
+
+
+def test_{{schema_name}}_required_fields_match() -> None:
+    actual = _model_required_field_names({{SCHEMA_NAME}})
+    assert actual == {{SCHEMA_NAME_UPPER}}_REQUIRED_FIELDS
+
+
+def test_{{schema_name}}_ref_field_set_matches_allowlist() -> None:
+    actual = _model_field_names({{SCHEMA_NAME}}Ref)
+    assert actual == {{SCHEMA_NAME_UPPER}}_REF_EXPECTED_FIELDS
+
+
+def test_{{schema_name}}_schema_version_field_present() -> None:
+    assert "schema_version" in {{SCHEMA_NAME}}.model_fields

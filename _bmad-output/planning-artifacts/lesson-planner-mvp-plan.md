@@ -2,7 +2,7 @@
 
 **Created:** 2026-04-18 (session-wrapup artifact, `dev/lesson-planner` branch)
 **Author:** Amelia (💻 BMAD Developer Agent) + Four-round party-mode consensus (John / Winston / Dr. Quinn / Sally)
-**Status:** R1 party-mode review complete (2026-04-18) — orchestrator ruling applied; 31-1 authored `ready-for-dev`. Downstream stories await next-session R2 green-light + per-story `bmad-create-story`.
+**Status:** Plan remains the strategic source for scope, sequencing, and readiness criteria. Execution status has advanced: `31-1` BMAD-closed in commit `15f68b1`, `31-2` BMAD-closed in commit `21b2d83`, and `31-3` is now the next Epic 31 foundation story. Canonical per-story status lives in `_bmad-output/implementation-artifacts/sprint-status.yaml`.
 
 ---
 

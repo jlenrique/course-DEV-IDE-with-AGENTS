@@ -1,0 +1,150 @@
+{
+  "version": "2026-04-18",
+  "stories": {
+    "28-1": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "28-2": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "28-3": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "28-4": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "29-1": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": true,
+      "require_t1_readiness": true,
+      "require_scaffold": true
+    },
+    "29-2": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "29-3": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-1": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-2a": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-2b": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-3a": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-3b": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-4": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "30-5": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "31-3": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": true,
+      "require_t1_readiness": true,
+      "require_scaffold": true,
+      "expected_k_floor": 8,
+      "expected_target_range": [
+        10,
+        12
+      ],
+      "accepted_historical_deviation": {
+        "only_when_story_status": "done",
+        "only_when_sprint_status": "done",
+        "allow_missing_t1_readiness": true,
+        "allow_estimated_landing_cap_violation": true,
+        "accepted_values": {
+          "gate_mode": "dual-gate",
+          "k_floor": 15,
+          "target_range": [
+            18,
+            23
+          ]
+        }
+      }
+    },
+    "31-4": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "31-5": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "32-1": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "32-2": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": true,
+      "require_t1_readiness": true,
+      "require_scaffold": true
+    },
+    "32-3": {
+      "expected_gate_mode": "dual-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    },
+    "32-4": {
+      "expected_gate_mode": "single-gate",
+      "schema_story": false,
+      "require_t1_readiness": true,
+      "require_scaffold": false
+    }
+  }
+}

@@ -1,0 +1,70 @@
+"""Forbidden-term grep test for Marcus-facing schema content."""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pytest
+
+from {{MODULE_PATH}} import {{SCHEMA_NAME}}
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Scaffold placeholder: finish user-facing text audit and remove this "
+        "skip during story implementation."
+    )
+)
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+FILES_TO_SCAN: list[Path] = [
+    REPO_ROOT / "{{RELATIVE_FILE_PATH}}",
+]
+
+FORBIDDEN_TOKEN_PATTERN = re.compile(
+    r"\b(intake|orchestrator)\b",
+    flags=re.IGNORECASE,
+)
+
+EXEMPT_MARKERS = (
+    "# noqa: no-leak-grep",
+    "# internal-taxonomy-exempt",
+)
+
+
+def _field_descriptions_from_model(model_cls) -> list[tuple[str, str]]:
+    pairs = []
+    for name, field_info in model_cls.model_fields.items():
+        if field_info.description:
+            pairs.append((name, field_info.description))
+    return pairs
+
+
+def test_no_forbidden_tokens_in_field_descriptions() -> None:
+    for field_name, desc in _field_descriptions_from_model({{SCHEMA_NAME}}):
+        match = FORBIDDEN_TOKEN_PATTERN.search(desc)
+        assert match is None, (
+            f"Forbidden token {match.group()!r} in {{SCHEMA_NAME}}.{field_name} description: "
+            f"{desc!r}"
+        )
+
+
+@pytest.mark.parametrize("path", FILES_TO_SCAN, ids=lambda path: str(path.relative_to(REPO_ROOT)))
+def test_no_forbidden_tokens_in_scanned_files(path: Path) -> None:
+    assert path.exists(), f"Scan target missing: {path}"
+    for lineno, line in enumerate(path.read_text().splitlines(), start=1):
+        if any(marker in line for marker in EXEMPT_MARKERS):
+            continue
+        match = FORBIDDEN_TOKEN_PATTERN.search(line)
+        assert match is None, (
+            f"Forbidden token {match.group()!r} in {path}:{lineno}: {line.strip()!r}. "
+            "Add '# noqa: no-leak-grep' if line is internal-only."
+        )
+
+
+def test_model_dump_output_has_no_forbidden_tokens() -> None:
+    instance = {{SCHEMA_NAME}}(identifier="test")
+    dumped = instance.model_dump_json()
+    match = FORBIDDEN_TOKEN_PATTERN.search(dumped)
+    assert match is None, f"Forbidden token {match.group()!r} in model_dump output"

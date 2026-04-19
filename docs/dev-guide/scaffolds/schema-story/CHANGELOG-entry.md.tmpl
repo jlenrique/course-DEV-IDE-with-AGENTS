@@ -1,0 +1,39 @@
+<!--
+Paste this block into _bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md
+under a new heading. One entry per shape family per version bump.
+
+Per R2 rider AM-1 from Story 31-1: each shape family gets its OWN CHANGELOG
+entry. Do not batch multiple shape families into one entry.
+-->
+
+## {{SCHEMA_NAME}} v{{SCHEMA_VERSION}} — {{DATE}}
+
+**Story:** {{STORY_KEY}}
+**Family:** {{SCHEMA_NAME}}
+**Previous version:** N/A (new primitive)  |  OR  |  v{{PREV_VERSION}}
+**Migration:** N/A (new primitive)  |  OR  |  [describe migration, or confirm no migration needed]
+
+### Fields introduced
+
+- ``{{SCHEMA_NAME}}.identifier`` — stable primary key (required).
+- ``{{SCHEMA_NAME}}.schema_version`` — pinned to SCHEMA_VERSION for change-detection.
+- ``{{SCHEMA_NAME}}.created_at`` — timezone-aware UTC timestamp (enforced via field_validator).
+
+### Fields removed
+
+- [none / list]
+
+### Validators introduced
+
+- Timezone-aware datetime enforcement on all timestamp fields.
+- [any story-specific validators]
+
+### Breaking-change notes
+
+- [none / describe]
+
+### Test surface
+
+- ``tests/contracts/test_{{schema_name}}_shape_stable.py``
+- ``tests/contracts/test_{{schema_name}}_json_schema_parity.py``
+- ``tests/contracts/test_no_intake_orchestrator_leak_{{schema_name}}.py``

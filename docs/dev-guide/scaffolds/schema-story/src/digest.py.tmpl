@@ -1,0 +1,52 @@
+"""Canonical-JSON + sha256 digest helpers for {{STORY_SLUG}}.
+
+Use this module only when the story's acceptance criteria require content-addressable
+serialization (31-1 precedent: LessonPlan carries both ``revision`` and ``digest``).
+Otherwise drop this file from the scaffold.
+
+Invariants (from 31-1 AM-3 R2 rider — keep in this docstring):
+    1. Nested list order is significant. ``compute_digest({"a": [1, 2]})`` and
+       ``compute_digest({"a": [2, 1]})`` produce different digests.
+    2. ``None`` values and missing fields are NOT identical.
+       ``{"a": None}`` and ``{}`` produce different digests.
+    3. Key order within objects is sorted canonically. Dict construction order
+       does not affect the digest.
+    4. Unicode is normalized via default JSON encoding; there is no NFC/NFD pass.
+
+Digest round-trip sanity: ``assert_digest_matches`` exists so callers can
+cheaply invalidate stale cached digests without recomputing downstream state.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from typing import Any
+
+
+def compute_digest(payload: Any) -> str:
+    """Canonical-JSON sha256 of ``payload``.
+
+    Uses ``sort_keys=True`` + ``ensure_ascii=False`` + ``separators=(",", ":")``
+    to produce a stable byte representation across platforms and Python versions.
+    """
+    canonical = json.dumps(
+        payload,
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        default=str,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def assert_digest_matches(payload: Any, expected: str) -> None:
+    """Raise ``ValueError`` if ``compute_digest(payload) != expected``."""
+    actual = compute_digest(payload)
+    if actual != expected:
+        raise ValueError(
+            f"digest mismatch: expected {expected!r}, got {actual!r}"
+        )
+
+
+__all__ = ["compute_digest", "assert_digest_matches"]

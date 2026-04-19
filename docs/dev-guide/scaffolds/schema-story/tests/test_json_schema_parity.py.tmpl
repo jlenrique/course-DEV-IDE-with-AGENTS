@@ -1,0 +1,69 @@
+"""JSON Schema and Pydantic parity test for {{SCHEMA_NAME}} (Story {{STORY_KEY}})."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from {{MODULE_PATH}} import {{SCHEMA_NAME}}
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Scaffold placeholder: wire schema emission and remove this skip during "
+        "story implementation."
+    )
+)
+
+SCHEMA_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "{{RELATIVE_FILE_PATH}}".replace(".py", "")
+    / "schema"
+    / "{{schema_name}}.v{{SCHEMA_VERSION}}.schema.json"
+)
+
+
+@pytest.fixture(scope="module")
+def emitted_schema() -> dict:
+    assert SCHEMA_PATH.exists(), f"Expected schema file missing: {SCHEMA_PATH}"
+    return json.loads(SCHEMA_PATH.read_text())
+
+
+@pytest.fixture(scope="module")
+def live_schema() -> dict:
+    return {{SCHEMA_NAME}}.model_json_schema()
+
+
+def test_json_schema_top_level_field_parity(emitted_schema: dict, live_schema: dict) -> None:
+    emitted_props = set(emitted_schema.get("properties", {}).keys())
+    live_props = set(live_schema.get("properties", {}).keys())
+    assert emitted_props == live_props
+
+
+def test_json_schema_required_field_parity_pydantic_to_json(live_schema: dict) -> None:
+    pydantic_required = {
+        name
+        for name, field_info in {{SCHEMA_NAME}}.model_fields.items()
+        if field_info.is_required()
+    }
+    json_required = set(live_schema.get("required", []))
+    assert not (pydantic_required - json_required)
+
+
+def test_json_schema_required_field_parity_json_to_pydantic(live_schema: dict) -> None:
+    pydantic_required = {
+        name
+        for name, field_info in {{SCHEMA_NAME}}.model_fields.items()
+        if field_info.is_required()
+    }
+    json_required = set(live_schema.get("required", []))
+    assert not (json_required - pydantic_required)
+
+
+def test_emitted_schema_has_version_field(emitted_schema: dict) -> None:
+    assert "schema_version" in emitted_schema.get("properties", {})
+
+
+def test_schema_round_trip_rejects_unknown_top_level_field(live_schema: dict) -> None:
+    assert live_schema.get("additionalProperties", True) is False

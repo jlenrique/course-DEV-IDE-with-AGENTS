@@ -12,3 +12,35 @@ This file is the **VS Code equivalent** of always-on AI rules: it mirrors [`.cur
 6. **Impasse** means: relevant voices in party mode have had at least one full round, the disagreement is stated explicitly, and no consensus option remains acceptable to all; it does not mean routine questions or a single agent’s uncertainty.
 
 Related skills: `bmad-help`, `bmad-party-mode`, `bmad-code-review`, `bmad-quick-dev`, `bmad-sprint-run-charter`.
+
+## Lesson Planner governance enforcement
+
+For Lesson Planner MVP stories (Epics 28-32), run
+`python scripts/utilities/validate_lesson_planner_story_governance.py <story-file>`
+at two gates:
+
+1. before a story is finalized as `ready-for-dev`
+2. before `bmad-dev-story` begins
+
+If the validator fails, treat it as a governance failure that must be remediated before proceeding.
+
+Default behavior is **self-remediate first, escalate second**:
+
+- Automatically fix every policy-preserving issue you can correct in the story spec or adjacent workflow artifacts.
+- Rerun the validator after remediation and continue without waiting for the human if the story reaches PASS.
+- Escalate to the human only if the remaining failure requires:
+  - a gate-mode change (`single-gate` vs `dual-gate`)
+  - a K-policy or target-range policy change
+  - an intentional update to `docs/dev-guide/lesson-planner-story-governance.json`
+  - a deliberate policy exception
+  - a true party-mode impasse on scope, architecture, or governance interpretation
+
+This validator enforces story-specific gate mode, explicit `T1 Readiness`,
+required readings, scaffold references for schema stories, story-status sync
+against `sprint-status.yaml`, and K-range discipline.
+
+Closeout hygiene remains required for Lesson Planner stories:
+
+- update `sprint-status.yaml` first
+- update `next-session-start-here.md` second
+- update any top-level plan/status line that would otherwise mislead

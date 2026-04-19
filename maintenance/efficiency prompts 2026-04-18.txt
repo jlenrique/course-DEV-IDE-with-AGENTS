@@ -1,0 +1,110 @@
+Governance checkpoint for this Lesson Planner story.
+
+Before you do any more work, treat the repo's Lesson Planner governance as binding and machine-checked, not advisory.
+
+1. Run:
+   python scripts/utilities/validate_lesson_planner_story_governance.py <story-file>
+
+2. Use these as authoritative governance sources:
+   - docs/dev-guide/lesson-planner-story-governance.json
+   - docs/dev-guide/story-cycle-efficiency.md
+   - docs/dev-guide/lesson-planner-story-readiness-checklist.md
+   - CLAUDE.md
+
+3. If the validator FAILS:
+   - automatically fix every issue you can correct without changing policy, gate mode, or intended story scope
+   - rerun the validator after remediation
+   - continue without waiting for me if the story reaches PASS
+   - if the story is already closed (`done`) and the policy file allows an accepted historical deviation, treat that as a documented grandfathered exception rather than a defect to rewrite
+   - escalate to me only if the remaining failure requires:
+     - changing gate mode
+     - changing K policy or target-range policy
+     - changing docs/dev-guide/lesson-planner-story-governance.json
+     - accepting a deliberate policy exception
+     - resolving a true party-mode impasse
+
+4. If the validator PASSES:
+   - state PASS explicitly
+   - list the confirmed governance settings for this story:
+     - gate mode
+     - K floor
+     - target collecting-test range
+     - T1 Readiness block present
+     - required readings cited
+     - scaffold required/not required
+   - then continue
+
+5. During the remainder of the run, keep these rules enforced:
+   - do not drift from the policy gate mode unless the policy file is intentionally changed
+   - keep test count within the allowed target range unless extra tests have named coverage justification
+   - for schema stories, keep scaffold usage explicit
+   - treat deferred work as touch-triggered only
+   - keep closeout hygiene in this order:
+     1. sprint-status.yaml
+     2. next-session-start-here.md
+     3. any top-level status line that would otherwise drift
+
+6. After any material spec/rider change, and again before bmad-dev-story starts, rerun:
+   python scripts/utilities/validate_lesson_planner_story_governance.py <story-file>
+
+Reply with:
+- current validator result
+- exact failures or PASS
+- remediation applied, if any
+- whether execution is blocked or cleared
+
+
+Use this right after R2, before bmad-dev-story starts.
+
+Post-R2 governance checkpoint for this Lesson Planner story.
+
+R2 is complete. Before implementation begins, treat the final post-R2 story spec as binding and revalidate governance compliance.
+
+Run now:
+python scripts/utilities/validate_lesson_planner_story_governance.py <story-file>
+
+Use these sources as authoritative:
+- docs/dev-guide/lesson-planner-story-governance.json
+- docs/dev-guide/story-cycle-efficiency.md
+- docs/dev-guide/lesson-planner-story-readiness-checklist.md
+- CLAUDE.md
+
+If validation FAILS:
+- automatically fix every issue you can correct without changing policy, gate mode, or intended story scope
+- rerun the validator after remediation
+- proceed without waiting for me if the story reaches PASS
+- if the story is already closed (`done`) and the policy file allows an accepted historical deviation, treat that as a documented grandfathered exception rather than a defect to rewrite
+- escalate to me only if the remaining failure requires:
+  - changing gate mode
+  - changing K policy or target-range policy
+  - changing docs/dev-guide/lesson-planner-story-governance.json
+  - accepting a deliberate policy exception
+  - resolving a true party-mode impasse
+
+If validation PASSES:
+- state PASS explicitly
+- report the final implementation guardrails now in force:
+  - gate mode
+  - K floor
+  - target collecting-test range
+  - T1 Readiness block present
+  - required readings cited
+  - scaffold required/not required
+  - whether any deferred-work review is in scope by touch-trigger rule
+- then confirm implementation is cleared to begin
+
+During implementation, keep these constraints active:
+- do not widen gate mode without an explicit policy change
+- do not exceed the target test range without named coverage justification
+- for schema stories, keep scaffold usage explicit
+- keep deferred work touch-triggered only
+- preserve closeout hygiene:
+  1. sprint-status.yaml
+  2. next-session-start-here.md
+  3. any top-level status line that would otherwise drift
+
+Reply with:
+- validator result
+- exact failures or PASS
+- remediation applied, if any
+- blocked vs cleared for `bmad-dev-story`

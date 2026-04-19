@@ -1,0 +1,151 @@
+# Story {{STORY_KEY}}: {{STORY_SLUG}}
+
+**Epic:** {{EPIC_NUMBER}}
+**Points:** {{POINTS}}
+**Status:** draft
+**Branch:** dev/lesson-planner
+**Predecessors:** {{PREDECESSORS}}
+
+## TL;DR
+
+One-sentence statement of what this story ships and why downstream work is unblocked by it.
+
+## Story
+
+As a [role] I want [capability] so that [outcome].
+
+## Background — Why This Story Exists
+
+Two to three paragraphs grounding the story in the ratified plan:
+- Which R1 ruling amendment(s) does this story land?
+- Which capability from the 5-item MVP scope does it advance?
+- What is unblocked (named stories, with keys) when this closes?
+
+## T1 Readiness Checklist
+
+- **Gate mode:** [single-gate or dual-gate, per `docs/dev-guide/story-cycle-efficiency.md`]
+- **Scaffold requirement:** instantiated from `docs/dev-guide/scaffolds/schema-story/` [yes/no; explain if no]
+- **Checklist sections read:** [name the relevant sections from `docs/dev-guide/pydantic-v2-schema-checklist.md`]
+- **Anti-pattern categories in scope:** [name the relevant sections from `docs/dev-guide/dev-agent-anti-patterns.md`]
+- **Target test range:** `K = {{K_FLOOR}}`; target [1.2×K–1.5×K range]
+- **Runway pre-work available:** [side tasks that can run in parallel while this story is waiting on review]
+
+## Acceptance Criteria
+
+### Behavioral / Schema (AC-B.*)
+
+- **AC-B.1 —** The primitive ``{{SCHEMA_NAME}}`` exists at ``{{MODULE_PATH}}.{{SCHEMA_NAME}}`` with the fields listed in §File Impact.
+- **AC-B.2 —** All models use ``ConfigDict(extra="forbid", validate_assignment=True)``.
+- **AC-B.3 —** All timestamp fields are timezone-aware UTC; naive datetimes raise ValueError.
+- **AC-B.4 —** SCHEMA_VERSION emitted at the top level.
+- **AC-B.5 —** [Story-specific behavioral ACs — fill in]
+- **AC-B.N —** Backward-compat: version string pinned; changes require CHANGELOG entry.
+
+### Test (AC-T.*)
+
+- **AC-T.1 —** Shape-stable test: ``test_{{schema_name}}_shape_stable.py`` with field-name + required-set allowlists.
+- **AC-T.2 —** JSON-Schema ↔ Pydantic parity test with bidirectional required-optional parity (R2 AM-2 precedent).
+- **AC-T.3 —** ``test_no_intake_orchestrator_leak_{{schema_name}}.py`` (R1 am. 17 / R2 rider S-3). NON-NEGOTIABLE.
+- **AC-T.4 —** Timezone-aware datetime enforcement test (G6 MF-4 precedent).
+- **AC-T.N —** [Story-specific tests — fill in]
+
+### Contract Pinning (AC-C.*)
+
+- **AC-C.1 —** ``SCHEMA_CHANGELOG.md`` entry appended with Migration: N/A or migration note.
+- **AC-C.2 —** Schema-version-field-present test.
+
+## File Impact (preliminary — refined at bmad-dev-story)
+
+- **NEW:** ``{{RELATIVE_FILE_PATH}}`` — Pydantic models per AC-B.1/2/3/4.
+- **NEW:** ``{{MODULE_PATH}}/schema/{{schema_name}}.v{{SCHEMA_VERSION}}.schema.json`` — emitted JSON Schema.
+- **NEW:** ``tests/contracts/test_{{schema_name}}_shape_stable.py``
+- **NEW:** ``tests/contracts/test_{{schema_name}}_json_schema_parity.py``
+- **NEW:** ``tests/contracts/test_no_intake_orchestrator_leak_{{schema_name}}.py``
+- **APPENDED:** ``_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md`` — per AC-C.1.
+
+## Tasks / Subtasks (preliminary — refined at bmad-dev-story)
+
+- [ ] T1 — Resolve post-spec party-mode green-light (single-gate per story-cycle-efficiency.md for non-foundation schema stories).
+- [ ] T2 — Instantiate schema-story scaffold (3 commands from scaffolds/schema-story/README.md).
+- [ ] T3 — Fill in {{SCHEMA_NAME}} model body with story-specific fields + validators.
+- [ ] T4 — Emit JSON Schema artifact.
+- [ ] T5 — Author shape-stable test (T1 scaffold template).
+- [ ] T6 — Author parity test (T2 scaffold template).
+- [ ] T7 — Author no-leak grep test (T3 scaffold template).
+- [ ] T8 — Add story-specific behavioral tests.
+- [ ] T9 — Append SCHEMA_CHANGELOG entry.
+- [ ] T10 — Full regression + ruff clean.
+- [ ] T11 — ``bmad-code-review`` layered pass + patch cycle.
+- [ ] T12 — Close to done; flip sprint-status + update next-session-start-here.
+
+## Test Plan
+
+``tests_added ≥ K`` with **K = {{K_FLOOR}}** per §6-E4 of lesson-planner-mvp-plan.md.
+
+**Target range:** K to 1.5×K. Per `docs/dev-guide/story-cycle-efficiency.md`, stop when the acceptance matrix is closed; do not pad.
+
+## Out-of-scope
+
+- [What this story explicitly does NOT ship]
+- Consumer wiring (next story picks it up)
+
+## Dependencies on Ruling Amendments
+
+- R1 amendment [N] — [what it says] — this story applies it via AC-B.[N].
+- R2 rider [N] from 31-1 precedent — [what it says] — this story applies it via AC-T.[N].
+
+## Risks
+
+- [Risk 1]: mitigation.
+- [Risk 2]: mitigation.
+
+## Dev Notes
+
+### Architecture
+
+[2-3 sentences on how this story fits into the tri-phasic contract / Marcus-duality / modality registry context]
+
+### Anti-patterns (dev-agent WILL get these wrong without explicit warning)
+
+Reference `docs/dev-guide/dev-agent-anti-patterns.md` for the shared catalog. Story-specific anti-patterns:
+
+- [Story-specific trap 1]
+- [Story-specific trap 2]
+
+### Source tree (new + touched)
+
+```
+{{RELATIVE_FILE_PATH}}
+{{MODULE_PATH_AS_PATH}}/schema/{{schema_name}}.v{{SCHEMA_VERSION}}.schema.json
+tests/contracts/test_{{schema_name}}_shape_stable.py
+tests/contracts/test_{{schema_name}}_json_schema_parity.py
+tests/contracts/test_no_intake_orchestrator_leak_{{schema_name}}.py
+```
+
+### Testing standards (inherited)
+
+- Pydantic v2 idioms per `docs/dev-guide/pydantic-v2-schema-checklist.md`.
+- Anti-patterns per `docs/dev-guide/dev-agent-anti-patterns.md`.
+- Gate-ceremony policy per `docs/dev-guide/story-cycle-efficiency.md`.
+
+### References
+
+- `_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md` — parent plan.
+- `_bmad-output/implementation-artifacts/31-1-lesson-plan-schema.md` — precedent for all schema idioms.
+- `docs/dev-guide/scaffolds/schema-story/` — scaffold this story was instantiated from.
+
+## Governance Closure Gates (per CLAUDE.md)
+
+- [ ] Acceptance criteria met.
+- [ ] Automated verification (pytest + ruff + pre-commit hooks).
+- [ ] Layered code review (bmad-code-review).
+- [ ] Remediated review record (G6 APPLY / DEFER / DISMISS tally logged).
+- [ ] Sprint-status flip to `done`.
+
+## Dev Agent Record
+
+[Populated at bmad-dev-story execution time]
+
+## Review Record
+
+[Populated at post-dev review time]

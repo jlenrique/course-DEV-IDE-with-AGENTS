@@ -9,22 +9,14 @@ Usage:
     .venv/Scripts/python -m scripts.utilities.run_hud
     .venv/Scripts/python -m scripts.utilities.run_hud --bundle-dir path/to/bundle
     .venv/Scripts/python -m scripts.utilities.run_hud --open
-    .venv/Scripts/python -m scripts.utilities.run_hud --watch --open
 
-Static vs watch mode:
-
-* Default: single generation. The HTML includes a JS timer that
-  ``location.reload()``s every 10 seconds, but that reload just re-serves
-  the same static file — data only refreshes if the file on disk is
-  rewritten. Suitable for one-shot snapshots.
-* ``--watch``: block in foreground, poll the manifest, sprint-status,
-  mode_state, and active-bundle files every ``--watch-interval`` seconds
-  (default 5), and regenerate ``run-hud.html`` on any change. Combined
-  with the browser's existing auto-reload, this yields a genuinely live
-  dashboard. Ctrl-C to stop.
-
-The output HTML auto-refreshes every 10 seconds with scroll-position
-and expand/collapse state preserved via sessionStorage.
+The HUD is a static snapshot. The output HTML includes a JS timer that
+``location.reload()``s every 10 seconds, but that reload just re-serves
+the same file — data only refreshes when this script runs again. The
+snapshot banner at the top of the page states this explicitly so the
+operator is never confused about freshness. The banner rendering also
+retains a dormant ``watching=True`` path for a future re-enablement of
+live-regeneration mode.
 """
 
 from __future__ import annotations
@@ -32,8 +24,6 @@ from __future__ import annotations
 import argparse
 import html as html_mod
 import sqlite3
-import time
-from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -52,10 +42,11 @@ ROOT = project_root()
 HUD_OUTPUT = ROOT / "reports" / "run-hud.html"
 BUNDLES_DIR = ROOT / "course-content" / "staging" / "tracked" / "source-bundles"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
-PIPELINE_MANIFEST = ROOT / "state" / "config" / "pipeline-manifest.yaml"
-MODE_STATE = ROOT / "state" / "runtime" / "mode_state.json"
 COORDINATION_DB = ROOT / "state" / "runtime" / "coordination.db"
 
+# Default poll interval retained for the dormant ``watching=True`` banner
+# path; the watch loop that consumed it was reverted (commit 6268dc5
+# follow-up) so this constant is currently inert outside render_html.
 DEFAULT_WATCH_INTERVAL_SECONDS = 5.0
 
 # ---------------------------------------------------------------------------
@@ -201,130 +192,6 @@ def _load_gate_results(bundle_dir: Path) -> list[dict[str, Any]]:
         except (yaml.YAMLError, OSError):
             continue
     return results
-
-
-# ---------------------------------------------------------------------------
-# Watch-mode helpers
-# ---------------------------------------------------------------------------
-
-
-def _collect_watch_paths(
-    bundle_dir: Path | None,
-    root: Path | None = None,
-) -> list[Path]:
-    """Return the list of files whose mtime the watcher monitors.
-
-    Includes the manifest, sprint-status, mode-state, coordination DB, and
-    every file inside the active bundle directory. Missing files are
-    skipped silently — their absence is itself a legitimate state to report,
-    not a crash condition.
-    """
-    base = root or ROOT
-    candidates: list[Path] = [
-        base / "state" / "config" / "pipeline-manifest.yaml",
-        base / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml",
-        base / "state" / "runtime" / "mode_state.json",
-        base / "state" / "runtime" / "coordination.db",
-    ]
-    paths: list[Path] = [p for p in candidates if p.exists()]
-    if bundle_dir and bundle_dir.exists():
-        for entry in sorted(bundle_dir.rglob("*")):
-            if entry.is_file():
-                paths.append(entry)
-    return paths
-
-
-def _snapshot_mtimes(paths: Iterable[Path]) -> dict[str, float]:
-    """Return a {absolute_path: mtime} dict. Missing paths are dropped."""
-    snapshot: dict[str, float] = {}
-    for p in paths:
-        try:
-            snapshot[str(p.resolve())] = p.stat().st_mtime
-        except OSError:
-            continue
-    return snapshot
-
-
-def _detect_changes(
-    prev: dict[str, float],
-    curr: dict[str, float],
-) -> bool:
-    """True when any file was added, removed, or modified."""
-    if set(prev.keys()) != set(curr.keys()):
-        return True
-    return any(curr[k] != prev[k] for k in curr)
-
-
-def run_watch_loop(
-    bundle_dir: Path | None,
-    output_path: Path,
-    *,
-    root: Path | None = None,
-    bundles_dir: Path | None = None,
-    db_path: Path | None = None,
-    poll_interval: float = DEFAULT_WATCH_INTERVAL_SECONDS,
-    max_iterations: int | None = None,
-    sleep_fn: Callable[[float], None] = time.sleep,
-    print_fn: Callable[[str], None] = print,
-) -> int:
-    """Render HUD once, then regenerate whenever a watched file changes.
-
-    Blocks the calling thread until ``KeyboardInterrupt`` or, for tests,
-    until ``max_iterations`` polls have completed. ``sleep_fn`` and
-    ``print_fn`` are injection points for deterministic tests.
-
-    The bundle is re-resolved on every poll so a newly-created bundle
-    that becomes active mid-session is picked up automatically.
-
-    Returns 0 on normal completion (Ctrl-C or exhausted iterations).
-    """
-    base_root = root or ROOT
-    bdir = bundles_dir or BUNDLES_DIR
-
-    def _resolve_bundle() -> Path | None:
-        if bundle_dir is not None:
-            return bundle_dir
-        return _resolve_active_bundle(bdir, db_path=db_path)
-
-    def _write(data_bundle: Path | None) -> None:
-        data = collect_hud_data(
-            bundle_dir=data_bundle,
-            bundles_dir=bdir,
-            db_path=db_path,
-        )
-        html = render_html(
-            data,
-            watching=True,
-            watch_interval_seconds=poll_interval,
-        )
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(html, encoding="utf-8")
-
-    effective_bundle = _resolve_bundle()
-    _write(effective_bundle)
-    print_fn(
-        f"[watch] HUD generated at {output_path} "
-        f"(poll={poll_interval}s; Ctrl-C to stop)"
-    )
-    snapshot = _snapshot_mtimes(_collect_watch_paths(effective_bundle, base_root))
-
-    iterations = 0
-    while True:
-        try:
-            sleep_fn(poll_interval)
-        except KeyboardInterrupt:
-            print_fn("[watch] stopped by user")
-            return 0
-        iterations += 1
-        effective_bundle = _resolve_bundle()
-        curr = _snapshot_mtimes(_collect_watch_paths(effective_bundle, base_root))
-        if _detect_changes(snapshot, curr):
-            _write(effective_bundle)
-            ts = datetime.now(tz=UTC).strftime("%H:%M:%S")
-            print_fn(f"[watch] {ts} regenerated (change detected)")
-            snapshot = curr
-        if max_iterations is not None and iterations >= max_iterations:
-            return 0
 
 
 _MAX_ARTIFACTS = 200
@@ -1254,48 +1121,10 @@ def main(argv: list[str] | None = None) -> None:
         "--open", action="store_true",
         help="Open the generated HTML in the default browser.",
     )
-    parser.add_argument(
-        "--watch", action="store_true",
-        help=(
-            "Block in foreground and regenerate the HUD whenever manifest, "
-            "sprint-status, mode-state, or active bundle files change."
-        ),
-    )
-    parser.add_argument(
-        "--watch-interval", type=float, default=DEFAULT_WATCH_INTERVAL_SECONDS,
-        help=(
-            f"Watch-mode poll interval in seconds "
-            f"(default {DEFAULT_WATCH_INTERVAL_SECONDS:g})."
-        ),
-    )
     args = parser.parse_args(argv)
 
     bundle_dir = Path(args.bundle_dir) if args.bundle_dir else None
     output_path = Path(args.output) if args.output else HUD_OUTPUT
-
-    if args.watch:
-        # Generate once up-front so the browser has something to open,
-        # then delegate to the polling loop. run_watch_loop handles its
-        # own initial render + subsequent regeneration.
-        if args.open:
-            import webbrowser
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            # Pre-touch so the initial --open doesn't race the watch loop's
-            # first write on very fast file systems.
-            if not output_path.exists():
-                data = collect_hud_data(bundle_dir=bundle_dir)
-                html = render_html(data, watching=True, watch_interval_seconds=args.watch_interval)
-                output_path.write_text(html, encoding="utf-8")
-            webbrowser.open(str(output_path.resolve()))
-        try:
-            run_watch_loop(
-                bundle_dir=bundle_dir,
-                output_path=output_path,
-                poll_interval=args.watch_interval,
-            )
-        except KeyboardInterrupt:
-            print("[watch] stopped by user")
-        return
 
     data = collect_hud_data(bundle_dir=bundle_dir)
     html = render_html(data)

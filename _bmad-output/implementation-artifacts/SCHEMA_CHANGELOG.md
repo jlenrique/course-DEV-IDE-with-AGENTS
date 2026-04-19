@@ -7,6 +7,182 @@ Per semver-for-schemas:
 - **Minor (1.X)** — additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
 - **Patch (1.0.X)** — docs / clarifications / typo fixes; no machine-readable change.
 
+## Modality Registry v1.0 — 2026-04-18 — Story 31-3 Registries
+
+**Type:** Initial shape (no predecessor).
+
+**Reason for introduction:** 31-3 ships the TARGETING SURFACE — the frozen
+closed-set catalog of atomic producer targets. Marcus-Orchestrator reads the
+registry at plan-lock to route `scope_decision.delegated-to-modality-X` entries
+to concrete producers; Irene references `modality_ref` validity; Tracy dispatches
+based on composite composition.
+
+**Shapes pinned (live in `marcus/lesson_plan/modality_registry.py`):**
+
+- `ModalityRef`: `Literal["slides", "blueprint", "leader-guide", "handout",
+  "classroom-exercise"]` — closed set of 5 entries at MVP. Widening requires
+  ruling amendment + schema-version bump (minor if additive, major if
+  renaming or status-semantics change) + SCHEMA_CHANGELOG entry (AC-C.4).
+- `ModalityEntry`: `modality_ref` (ModalityRef) / `status`
+  (`Literal["ready", "pending"]`) / `producer_class_path` (`str | None`) /
+  `description` (free-text). `ConfigDict(extra="forbid", frozen=True,
+  validate_assignment=True)`. AC-C.6 invariant via
+  `@model_validator(mode="after")`: `status == "pending"` implies
+  `producer_class_path is None`.
+- `MODALITY_REGISTRY`: `types.MappingProxyType` wrapping the seeded dict.
+  `isinstance(MODALITY_REGISTRY, MappingProxyType)` is the pinned type.
+  Any mutation attempt raises (`TypeError` from MappingProxyType or
+  `AttributeError` from missing methods).
+- Query API: `get_modality_entry(modality_ref) -> ModalityEntry | None`
+  (no warn / no raise on unknown — closed-set discipline);
+  `list_ready_modalities() -> frozenset[str]` (returns `{"slides",
+  "blueprint"}` at MVP); `list_pending_modalities() -> frozenset[str]`
+  (returns `{"leader-guide", "handout", "classroom-exercise"}` at MVP).
+
+**Semantics pinned:**
+
+- CLOSED SET at MVP. Unlike `event_type_registry` (which WARNs on unknown for
+  Gagné-seam extensibility), `modality_registry` rejects silently via `None`
+  return — widening is not an extensibility surface; it's a governed change.
+- At 31-3 MVP every entry has `producer_class_path=None`. Gary/slides
+  backfills via separate amendment; 31-4 backfills `blueprint` via minor
+  schema bump; `pending` modalities stay `None`.
+- R2 rider S-2 carry-forward: `description` is free-text, no `min_length`.
+
+**Anti-patterns locked down:**
+
+- No runtime registry extension, no plugin discovery hooks, no per-tenant
+  variation (AC-C.7).
+- `MODALITY_REGISTRY["slides"] = ...` / `del` / `clear` / `update` / `pop` /
+  `popitem` / `setdefault` / attribute set all raise. AC-T.2 parametrized
+  matrix enforces at CI.
+- `intake` / `orchestrator` tokens forbidden in user-facing strings (AC-T.8 /
+  R1 amendment 17 / R2 rider S-3 carry-forward).
+
+**Migration:** N/A (initial shape).
+
+**Consumer compatibility:** 30-3 / 29-2 / 28-2 / 31-4 / 30-4 consume via the
+public query API. Direct `MODALITY_REGISTRY[key]` access is PERMITTED
+(public Mapping) but the query helpers are preferred because they return
+`None` on miss.
+
+## Component Type Registry v1.0 — 2026-04-18 — Story 31-3 Registries
+
+**Type:** Initial shape (no predecessor).
+
+**Reason for introduction:** Names the N=2 composite-package shapes at MVP —
+the minimum needed to prove both single-modality and multi-modality composite
+shapes using only `ready` modalities. Prompt-pack authors compose packages
+against these entries; Tracy dispatches enrichment per composite.
+
+**Shapes pinned (live in `marcus/lesson_plan/component_type_registry.py`):**
+
+- `ComponentTypeEntry`: `component_type_ref` (str, min_length=1) /
+  `modality_refs` (`tuple[ModalityRef, ...]`, every element must be a key in
+  MODALITY_REGISTRY) / `description` (free-text) / `prompt_pack_version`
+  (`str | None`). `ConfigDict(extra="forbid", frozen=True,
+  validate_assignment=True)`. Composition-validity enforced at TWO layers:
+  (a) `ModalityRef` Literal closed-set check at field-validation time,
+  (b) `@model_validator(mode="after")` explicit lookup against
+  `MODALITY_REGISTRY` (defense in depth against `ModalityRef` widening
+  without registry update).
+- `COMPONENT_TYPE_REGISTRY`: `types.MappingProxyType` with 2 entries:
+  `narrated-deck` composes `("slides",)`;
+  `motion-enabled-narrated-lesson` composes `("slides", "blueprint")`.
+  Both `prompt_pack_version=None` at MVP.
+- Query API: `get_component_type_entry(component_type_ref) ->
+  ComponentTypeEntry | None`.
+
+**Semantics pinned:**
+
+- N=2 ENTRIES FROZEN at MVP. Widening requires ruling amendment +
+  schema-version bump + SCHEMA_CHANGELOG entry (AC-C.5).
+- Composites compose ONLY `ready` modalities at MVP (cross-status coupling
+  out-of-scope).
+- Recursive composites (a composite of composites) are out-of-scope
+  (AC-C.7 (f)).
+- Import-time assertion in the module: every seeded
+  `component_type_ref.modality_refs` element is a key in
+  `MODALITY_REGISTRY` (belt-and-suspenders against typos in the seed dict).
+
+**Anti-patterns locked down:**
+
+- Same immutability + no-runtime-extension discipline as Modality Registry.
+- `modality_refs` is a `tuple` (frozen-by-value); not a `list`.
+
+**Migration:** N/A (initial shape).
+
+**Consumer compatibility:** 28-2 / prompt-pack authors consume via
+`get_component_type_entry` or direct registry iteration.
+
+## ModalityProducer ABC v1.0 — 2026-04-18 — Story 31-3 Registries
+
+**Type:** Initial shape (no predecessor).
+
+**Reason for introduction:** Names the producer contract every modality
+producer subclasses. 31-4 (blueprint-producer, 5pt single story) implements
+this ABC first; Gary/Gamma slides adopts via separate amendment. R1 ruling
+amendment 7 binding: ABC MUST be complete-enough that 31-4 lands without
+splitting.
+
+**Shapes pinned (live in `marcus/lesson_plan/modality_producer.py` and
+`marcus/lesson_plan/produced_asset.py`):**
+
+- `ModalityProducer` (ABC):
+  - `modality_ref: ClassVar[str]` — pinned by subclass.
+  - `status: ClassVar[Literal["ready", "pending"]]` — pinned by subclass.
+  - `@abstractmethod produce(self, plan_unit, context) -> ProducedAsset`.
+  - **M-AM-2 (Murat R2 BINDING) `__init_subclass__` hook:** CPython does NOT
+    check `ClassVar[...]` type hints at class-definition or instantiation
+    time; the hook raises `TypeError` at class-definition time on missing /
+    wrong-type `modality_ref`, missing `status`, or status outside the
+    closed set. This is the actual enforcement — the annotations are
+    documentation-only without this hook.
+  - ABC membership enforced separately via `abc.ABC` + abstract method:
+    subclass missing `produce()` → `TypeError` at instantiation.
+- `ProductionContext` (Pydantic):
+  - `lesson_plan_revision: int ge=0` / `lesson_plan_digest: str min_length=1`.
+  - `ConfigDict(extra="forbid", frozen=True, validate_assignment=True)`.
+  - **W-2 (Winston R2) extensibility seam:** 31-4 MAY subclass for
+    blueprint-specific fields WITHOUT a schema version bump; subclasses MUST
+    preserve `lesson_plan_revision` + `lesson_plan_digest` as the
+    staleness-gate primitives. Subclass stories document extensions in their
+    own SCHEMA_CHANGELOG entry.
+- `ProducedAsset` (Pydantic):
+  - `asset_ref` / `modality_ref` / `source_plan_unit_id` / `created_at`
+    (tz-aware UTC) / `asset_path` / `fulfills`.
+  - `fulfills` regex: `^[a-z0-9._-]+@(?:0|[1-9]\d*)$`. Accepts zero revision
+    (`unit@0`); rejects leading-zero (`unit@007` — M-AM-3 strict-monotonic
+    integer discipline), negative, non-integer, uppercase, unicode, multi-@,
+    whitespace.
+  - **Q-R2-A (Quinn R2) cross-field validator:** `source_plan_unit_id ==
+    fulfills.split("@", 1)[0]` — rejects counterfeit-fulfillment with the
+    explicit `"counterfeit-fulfillment seam; tri-phasic contract violation"`
+    error message.
+
+**Semantics pinned:**
+
+- Every `ProducedAsset` carries `fulfills: {plan_unit_id}@{plan_revision}` —
+  Quinn's Tri-Phasic Contract execution-phase artifact.
+- The ABC does NOT enforce registry membership at instantiation
+  (`modality_ref="unknown-but-a-str"` is still instantiable at the ABC
+  layer). That's a consumer-site check — see
+  `tests/fixtures/consumers/fixture_30_3_marcus_consumer.py`
+  staleness-gate-at-consumer-boundary pattern (Q-R2-B).
+
+**Anti-patterns locked down:**
+
+- No hooks beyond `produce()` on the ABC (no `setup()` / `teardown()` /
+  `validate()`). If 31-4 needs more, widen here, not there (R1 amendment 7
+  binding).
+- `ProducedAsset.fulfills` must pass regex AND cross-field validator —
+  either failure rejects.
+
+**Migration:** N/A (initial shape).
+
+**Consumer compatibility:** 31-4 subclasses `ModalityProducer`; 30-4 + 31-5
+read `ProducedAsset.fulfills` for fanout tracking + Quinn-R gate.
+
 ## Lesson Plan Log v1.0 — 2026-04-18 — Story 31-2 Lesson Plan Log
 
 **Type:** Initial shape (no predecessor log file exists).

@@ -98,3 +98,14 @@ Dated 2026-04-18. Ten SHOULD-FIX findings deferred from G5 party-mode + G6 layer
 - [SHOULD-FIX][Blind][#15] WRITER_EVENT_MATRIX outer dict mutable — wrap with types.MappingProxyType in a future hardening pass (inner frozensets already immutable)
 - [SHOULD-FIX][Auditor][#2] AC-T.4 Cell 2 digest substring — partial dup with SF-AA-2 which was applied; Cell 2 tightening retained here for later review
 - [SHOULD-FIX][Auditor][#5] AC-T.3 REJECT post-condition loose — tighten to strict file-does-not-exist assertion for REJECT cases in the single-writer matrix test (current uses exists() || empty)
+
+## 31-3 G5+G6 deferred findings
+
+Dated 2026-04-18. SHOULD-FIX and NIT findings deferred from self-conducted G5 + G6 layered code review (Blind / Edge / Acceptance) on Story 31-3 Registries + ModalityProducer ABC. All real but non-blocking; surfaced here for future stories in Epic 31/30/29/28 touching the registries/ABC modules.
+
+- [SHOULD-FIX][Edge][#6] ProducedAsset.source_plan_unit_id has min_length=1 but no regex — consider applying `_OPEN_ID_REGEX` to match `PlanUnit.unit_id` format. In practice source_plan_unit_id always comes from plan_unit.unit_id which IS regex-clean, but the asset itself doesn't enforce. 31-4 or 30-4 may want to add this guard; likely a 1-line change with a matching test matrix.
+- [NIT][Blind][#4] `_fulfills_regex` isinstance-guard is dead code — Pydantic v2's string-field type validation rejects int/None/list before the field_validator runs. The guard is belt-and-suspenders documentation; harmless. Keep or remove at future-refactor discretion.
+- [NIT][Blind][#6] `# noqa: S101` in component_type_registry.py import-time assertion references Bandit's S rule family which is NOT in the active ruff select list. Harmless forward-compat; no-op today.
+- [NIT][Blind][#1,#2] `_MODALITY_REGISTRY_UNDERLYING` + `_COMPONENT_TYPE_REGISTRY_UNDERLYING` — leading-underscore discourages but doesn't enforce; determined code could import and mutate. `MappingProxyType` is the public contract. Acceptable at MVP.
+- [NIT][Auditor] A few tests use inline `from X import Y` within function bodies where module-top would be fine — style-only, no behavior impact.
+- [NIT][Auditor] `test_valid_subclass_is_instantiable` could be parametrized over (valid_status, valid_modality) pairs for more coverage; landed single-case + G5 rider strengthened class+instance ClassVar readback.

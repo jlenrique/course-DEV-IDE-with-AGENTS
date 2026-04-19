@@ -1,0 +1,54 @@
+{
+  "_internal_emitter": "marcus-intake",
+  "artifact_refs": [
+    "metadata.json",
+    "ingestion-evidence.md"
+  ],
+  "bundle_dir": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion",
+  "capture_mode": "tracked_bundle_synthesis",
+  "capture_point": "02",
+  "ingestion_evidence_markdown": "# Ingestion Evidence\n\n| source_id | pathway_used | extraction_status | coverage_metric | confidence | bundle_location | provenance_summary | planning_readiness |\n|---|---|---|---|---|---|---|---|\n| SRC-PRIMARY-PDF-01 | official source-wrangler local PDF path (`wrangle_local_pdf` + `write_source_bundle`) | pass | 24/24 pages scanned with extraction scope narrowed to Part 1 before the Part 2 marker | high | extracted.md#SRC-PRIMARY-PDF-01 | source file C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC C1-M1 Tejal 2026-03-29.pdf; kind=local_pdf; pypdf scanned=24/24; Part 1-focused extraction with directorial guidance isolated | ready |\n| SRC-CONTEXT-IMG-01 | official image-capable sensory route (`bridge_utils.perceive` modality=image, gate=G0 -> `write_source_bundle`) | pass | 3-course roadmap headings, lanes, and timing structure captured; structured perception recorded in raw/perception-roadmap.json | high | extracted.md#SRC-CONTEXT-IMG-01 | source file C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC Content Roadmap.jpg; kind=local_image; perception raw/perception-roadmap.json; framing-only series context | ready |\n\n- preflight_reference: C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\staging\\tracked\\source-bundles\\apc-c1m1-tejal-20260406-motion\\preflight-results.json\n- blocked_sources: none\n- next_action: confidence validation should pass at high/ready; if so, proceed to Prompt 4.\n",
+  "manifest": null,
+  "metadata": {
+    "generated_at": "{{TIMESTAMP}}",
+    "media_references": [
+      {
+        "id": "MR-PRIMARY-PDF-PART1-VISUALS",
+        "note": "Part 1 slide-level visual formats, video storyboard cues, B-roll instructions, roadmap/infographic concepts, and other visual guidance preserved in extracted.md under SRC-PRIMARY-PDF-01.",
+        "ref": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC C1-M1 Tejal 2026-03-29.pdf",
+        "source": "local_pdf"
+      },
+      {
+        "id": "MR-ROADMAP-DIAGRAM",
+        "note": "Program roadmap figure used only for highest-level three-course context; structured perception recorded in raw/perception-roadmap.json and summarized under SRC-CONTEXT-IMG-01.",
+        "ref": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC Content Roadmap.jpg",
+        "source": "local_image"
+      }
+    ],
+    "operator_directives_path": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\staging\\tracked\\source-bundles\\apc-c1m1-tejal-20260409-motion\\operator-directives.md",
+    "primary_consumption_path": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\staging\\tracked\\source-bundles\\apc-c1m1-tejal-20260409-motion\\extracted.md",
+    "prior_run_id": "C1-M1-PRES-20260406",
+    "provenance": [
+      {
+        "fetched_at": "{{TIMESTAMP}}",
+        "kind": "local_pdf",
+        "note": "pypdf scanned=24/24 (carried from C1-M1-PRES-20260406)",
+        "ref": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC C1-M1 Tejal 2026-03-29.pdf"
+      },
+      {
+        "fetched_at": "{{TIMESTAMP}}",
+        "kind": "local_image",
+        "note": "sensory-bridges bridge_utils.perceive(modality=image, gate=G0); schema=1.0; perception raw/perception-roadmap.json (carried from C1-M1-PRES-20260406)",
+        "ref": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC Content Roadmap.jpg"
+      }
+    ],
+    "source_authority_scope": {
+      "primary_source_scope": "Part 1 only",
+      "secondary_source_scope": "highest-level series context only",
+      "special_treatment": "video directorial guidance isolated from topical/script content"
+    },
+    "title": "apc-c1m1-tejal (C1-M1-PRES-20260409)"
+  },
+  "result": null,
+  "source_path": "course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf"
+}

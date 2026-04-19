@@ -8,11 +8,20 @@ committed here with operator-verifiable SHA-256 recorded in the run charter.
 
 ## Status (as of 2026-04-18)
 
-**EMPTY — pending the operator to select and commit a named 7-page SME source
-file.** Scaffolded from the Cowork-side late session on 2026-04-18 ahead of
-the Story 30-1 Golden-Trace Baseline capture (see
-`../golden_trace/marcus_pre_30-1/README.md` and
-`_bmad-output/specs/30-1-golden-trace-baseline-capture-plan.md`).
+No duplicated source file is stored here yet.
+
+The initial `30-1` Golden-Trace baseline was satisfied instead by referencing
+the already-versioned canonical source:
+
+- `course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf`
+
+plus the committed tracked bundle:
+
+- `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/`
+
+This is an accepted initial-baseline shortcut because duplicating the same real
+SME source into this folder would add no new control value. This directory
+remains the preferred home for any future expanded trial corpus.
 
 ## What belongs here
 

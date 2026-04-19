@@ -155,6 +155,12 @@ WRITER_EVENT_MATRIX: dict[str, frozenset[WriterIdentity]] = {
     "plan.locked": frozenset({"marcus-orchestrator"}),
     "fanout.envelope.emitted": frozenset({"marcus-orchestrator"}),
     "pre_packet_snapshot": frozenset({"marcus-orchestrator", "marcus-intake"}),
+    # Story 29-1 — fit-report emissions are Marcus-Orchestrator-only.
+    # Irene (29-2) produces FitReport instances and hands them to Marcus via
+    # the orchestration seam; Irene MUST NOT emit directly. See
+    # marcus/lesson_plan/fit_report.py docstring for the canonical-caller
+    # invariant (AC-B.5.1).
+    "fit_report.emitted": frozenset({"marcus-orchestrator"}),
 }
 """AC-B.3 single-writer enforcement matrix.
 

@@ -37,11 +37,38 @@ from marcus.lesson_plan.component_type_registry import (
     ComponentTypeEntry,
     get_component_type_entry,
 )
+from marcus.lesson_plan.coverage_manifest import (
+    COVERAGE_MANIFEST_PATH,
+    DEFAULT_COVERAGE_INVENTORY,
+    CoverageInventoryEntry,
+    CoverageManifest,
+    CoverageManifestError,
+    CoverageSummary,
+    CoverageSurface,
+    build_coverage_manifest,
+    emit_coverage_manifest,
+    render_coverage_manifest_json,
+    summarize_surfaces,
+    verify_assert_plan_fresh_usage,
+    verify_plan_ref_fields,
+)
+from marcus.lesson_plan.coverage_manifest import (
+    SCHEMA_VERSION as COVERAGE_MANIFEST_SCHEMA_VERSION,
+)
 from marcus.lesson_plan.digest import assert_digest_matches, compute_digest
 from marcus.lesson_plan.events import (
     EventEnvelope,
     ScopeDecisionTransition,
     to_internal_actor,
+)
+from marcus.lesson_plan.fit_report import (
+    FIT_REPORT_EMITTED_EVENT_TYPE,
+    StaleFitReportError,
+    UnknownUnitIdError,
+    deserialize_fit_report,
+    emit_fit_report,
+    serialize_fit_report,
+    validate_fit_report,
 )
 from marcus.lesson_plan.log import (
     LOG_PATH,
@@ -83,9 +110,18 @@ from marcus.lesson_plan.schema import (
 
 __all__ = [
     "COMPONENT_TYPE_REGISTRY",
+    "COVERAGE_MANIFEST_PATH",
+    "COVERAGE_MANIFEST_SCHEMA_VERSION",
     "Dials",
     "ComponentTypeEntry",
+    "CoverageInventoryEntry",
+    "CoverageManifest",
+    "CoverageManifestError",
+    "CoverageSummary",
+    "CoverageSurface",
+    "DEFAULT_COVERAGE_INVENTORY",
     "EventEnvelope",
+    "FIT_REPORT_EMITTED_EVENT_TYPE",
     "FitDiagnosis",
     "FitReport",
     "IdentifiedGap",
@@ -109,17 +145,29 @@ __all__ = [
     "ScopeDecision",
     "ScopeDecisionTransition",
     "SourceRef",
+    "StaleFitReportError",
     "StalePlanRefError",
     "StaleRevisionError",
     "UnauthorizedWriterError",
+    "UnknownUnitIdError",
     "WRITER_EVENT_MATRIX",
     "WriterIdentity",
     "assert_digest_matches",
     "assert_plan_fresh",
+    "build_coverage_manifest",
     "compute_digest",
+    "deserialize_fit_report",
+    "emit_coverage_manifest",
+    "emit_fit_report",
     "get_component_type_entry",
     "get_modality_entry",
     "list_pending_modalities",
     "list_ready_modalities",
+    "render_coverage_manifest_json",
+    "serialize_fit_report",
+    "summarize_surfaces",
     "to_internal_actor",
+    "validate_fit_report",
+    "verify_assert_plan_fresh_usage",
+    "verify_plan_ref_fields",
 ]

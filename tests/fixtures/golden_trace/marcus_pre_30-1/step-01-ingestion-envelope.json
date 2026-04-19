@@ -1,0 +1,97 @@
+{
+  "_internal_emitter": "marcus-intake",
+  "artifact_refs": [
+    "run-constants.yaml",
+    "preflight-results.json",
+    "operator-directives.md"
+  ],
+  "bundle_dir": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion",
+  "capture_mode": "tracked_bundle_synthesis",
+  "capture_point": "01",
+  "operator_directives_markdown": "# Operator Directives\n\nrun_id: C1-M1-PRES-20260409\ntimestamp_utc: {{TIMESTAMP}}\npoll_started_utc: {{TIMESTAMP}}\nreply_eligible_utc: {{TIMESTAMP}}\npoll_close_utc: {{TIMESTAMP}}\npoll_status: carried-from-C1-M1-PRES-20260406\noperator: juanl\n\nfocus_directives:\n- Focus on Part 1 of the C1M1 notes.\n- For the slide presentation, prioritize the topical descriptions and scripts labeled as slides.\n- For video production, look for directorial guidance that exists in Part 1.\n- Use other material in Part 1 for context only.\n- Use the secondary source image file only for the highest-level context: the three-course series, with this production creating assets for the first module of the first course.\n\nexclusion_directives:\n- No specific exclusions.\n\nspecial_treatment_directives:\n- Separate directorial guidance for video from all other topical, scripted, or contextual guidance in Part 1.\n- Use the non-directorial Part 1 material to inform the slide-accompanying script.\n- Use the directorial guidance in Part 1 to inform the video-related scripting.\n",
+  "preflight_results": {
+    "checks": [
+      {
+        "detail": "coordination.db present with required schema",
+        "name": "coordination_db",
+        "resolution": "",
+        "status": "pass"
+      },
+      {
+        "detail": "Directory exists and is writable: state/config",
+        "name": "state:state/config",
+        "resolution": "",
+        "status": "pass"
+      },
+      {
+        "detail": "Directory exists and is writable: state/runtime",
+        "name": "state:state/runtime",
+        "resolution": "",
+        "status": "pass"
+      },
+      {
+        "detail": "mode_state.json is readable JSON",
+        "name": "mode_state",
+        "resolution": "",
+        "status": "pass"
+      },
+      {
+        "detail": "Import sanity checks passed for observability/reporting modules",
+        "name": "imports",
+        "resolution": "",
+        "status": "pass"
+      },
+      {
+        "detail": "run-constants.yaml present and valid for this bundle path",
+        "name": "bundle_run_constants",
+        "resolution": "",
+        "status": "pass"
+      },
+      {
+        "detail": "Tool pre-flight passed (ready=9)",
+        "name": "preflight_tools",
+        "resolution": "",
+        "status": "pass"
+      }
+    ],
+    "overall_status": "pass",
+    "root": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS",
+    "timestamp": "{{TIMESTAMP}}"
+  },
+  "run_constants": {
+    "bundle_path": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion",
+    "deliberate_dispatch": true,
+    "double_dispatch": true,
+    "execution_mode": "tracked/default",
+    "frozen_at_utc": "{{TIMESTAMP}}",
+    "frozen_note": "Re-run of C1-M1 with double-dispatch deliberate variants, operator-set slide classifications (15 slides target), expanded motion budget. Source material identical to C1-M1-PRES-20260406.",
+    "lesson_slug": "apc-c1m1-tejal",
+    "locked_slide_count": 15,
+    "motion_budget": {
+      "max_credits": 125,
+      "model_preference": "pro"
+    },
+    "motion_enabled": true,
+    "optional_context_assets": [
+      "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC Content Roadmap.jpg"
+    ],
+    "primary_source_file": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\courses\\APC C1-M1 Tejal 2026-03-29.pdf",
+    "prior_run_id": "C1-M1-PRES-20260406",
+    "quality_preset": "production",
+    "requested_content_type": "narrated-deck-video-export",
+    "run_id": "C1-M1-PRES-20260409",
+    "schema_version": 1,
+    "slide_mode_proportions": {
+      "creative": 0.7,
+      "irene_discretion": 0.3
+    },
+    "slide_runtime_average_seconds": 40,
+    "slide_runtime_variability_scale": 0.5,
+    "target_total_runtime_minutes": 10,
+    "theme_paramset_key": "hil-2026-apc-nejal-A",
+    "theme_selection": "hil-2026-apc-nejal-A",
+    "variant_strategies_ref": "variant-strategies.json",
+    "variant_strategies_type": "deliberate_by_mode"
+  },
+  "source_path": "course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf"
+}

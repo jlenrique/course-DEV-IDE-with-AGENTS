@@ -109,3 +109,10 @@ Dated 2026-04-18. SHOULD-FIX and NIT findings deferred from self-conducted G5 + 
 - [NIT][Blind][#1,#2] `_MODALITY_REGISTRY_UNDERLYING` + `_COMPONENT_TYPE_REGISTRY_UNDERLYING` — leading-underscore discourages but doesn't enforce; determined code could import and mutate. `MappingProxyType` is the public contract. Acceptable at MVP.
 - [NIT][Auditor] A few tests use inline `from X import Y` within function bodies where module-top would be fine — style-only, no behavior impact.
 - [NIT][Auditor] `test_valid_subclass_is_instantiable` could be parametrized over (valid_status, valid_modality) pairs for more coverage; landed single-case + G5 rider strengthened class+instance ClassVar readback.
+
+## 29-1 code-review deferred findings
+
+Dated 2026-04-18. DEFER findings from bmad-code-review three-layer pass (Blind Hunter + Edge Case Hunter + Acceptance Auditor) on Story 29-1 fit-report-v1. Both findings are real but either pre-existing or naturally owned by a downstream story.
+
+- [Review][Defer][#3-dedup] Duplicate `unit_id` entries in `report.diagnoses` silently accepted by `validate_fit_report` (marcus/lesson_plan/fit_report.py:156-164). The set-collapse `{d.unit_id for d in normalized.diagnoses}` masks conflicting fitness verdicts. Natural home is 29-2 (gagne-diagnostician) where Irene constructs diagnoses — duplicate-prevention logic lives at construction-time, not validation-time.
+- [Review][Defer][#4-leak] `UnknownUnitIdError` message embeds full sorted plan unit_id list (marcus/lesson_plan/fit_report.py:160-164). At MVP unit_ids are Gagne labels (safe). Future plans may have sensitive identifiers. Consider truncating to unknown-only + counted-total in a later hardening pass (29-3 or 30-*).

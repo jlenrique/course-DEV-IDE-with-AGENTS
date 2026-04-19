@@ -7,6 +7,55 @@ Per semver-for-schemas:
 - **Minor (1.X)** — additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
 - **Patch (1.0.X)** — docs / clarifications / typo fixes; no machine-readable change.
 
+## Coverage Manifest v1.0 — 2026-04-18 — Story 32-2 Plan-Ref Envelope Coverage Manifest
+
+**Type:** Initial shape (no predecessor).
+
+**Reason for introduction:** 32-2 ships the explicit audit artifact that 32-3
+will consume directly. It does not invent downstream emitters; it enumerates
+the expected 05→13 plan-ref surfaces, records whether each one preserves
+`lesson_plan_revision` + `lesson_plan_digest`, and verifies whether the live
+consumer path proves canonical `assert_plan_fresh(...)` usage.
+
+**Shapes pinned (live in `marcus/lesson_plan/coverage_manifest.py`):**
+
+- `CoverageSurface`: `step_id`, `surface_name`, `owner_story_key`,
+  `module_path`, `artifact_kind`, `plan_ref_mode`,
+  `has_lesson_plan_revision`, `has_lesson_plan_digest`,
+  `assert_plan_fresh_required`, `assert_plan_fresh_verified`, `status`,
+  `notes`.
+- `CoverageSummary`: `total_surfaces`, `implemented_surfaces`,
+  `pending_surfaces`, `deferred_surfaces`,
+  `surfaces_with_full_plan_ref_coverage`,
+  `surfaces_missing_one_or_both_fields`,
+  `surfaces_missing_freshness_gate_verification`, `trial_ready`.
+- `CoverageManifest`: `schema_version`, `generated_at`, `source_story_key`,
+  `surfaces`, `summary`.
+- `CoverageInventoryEntry`: story-owned inventory row used to materialize the
+  emitted manifest and gate stale pending/implemented transitions.
+
+**Semantics pinned:**
+
+- Canonical emitted artifact path:
+  `_bmad-output/maps/coverage-manifest/lesson-plan-envelope-coverage-manifest.json`.
+- Deterministic ordering: `step_id`, then `owner_story_key`, then
+  `surface_name`.
+- `trial_ready` is true only when there are no pending/deferred rows and every
+  implemented row has full plan-ref coverage plus verified freshness gating.
+- `assert_plan_fresh` proof is AST-based and import-path-aware. Accepted proofs
+  are limited to direct canonical calls from `marcus.lesson_plan.log` or a
+  same-module wrapper that itself calls that canonical symbol on the live
+  surface before downstream processing.
+
+**Anti-patterns locked down:**
+
+- No abstract family placeholder standing in for multiple concrete boundaries.
+- No grep-only freshness verification.
+- No silent omission of future surfaces; they remain visible as `pending` until
+  the owning story lands and the module path exists.
+
+**Migration:** N/A (initial shape).
+
 ## Modality Registry v1.0 — 2026-04-18 — Story 31-3 Registries
 
 **Type:** Initial shape (no predecessor).

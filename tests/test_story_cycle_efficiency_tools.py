@@ -243,3 +243,88 @@ def test_validate_golden_trace_fixture_dir_flags_missing_files_and_paths(
     assert any("capture_points length" in issue for issue in issues)
     assert any("absolute repo-root path" in issue for issue in issues)
     assert any("missing capture point file" in issue for issue in issues)
+
+
+def test_capture_golden_trace_from_tracked_bundle_synthesis(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    source = repo_root / "course-content" / "courses" / "tejal-APC-C1" / "sample.pdf"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("real-ish source", encoding="utf-8")
+
+    bundle_dir = (
+        repo_root
+        / "course-content"
+        / "staging"
+        / "tracked"
+        / "source-bundles"
+        / "sample-run"
+    )
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = repo_root / "tests" / "fixtures" / "golden_trace" / "marcus_pre_30-1"
+
+    (bundle_dir / "run-constants.yaml").write_text(
+        "requested_content_type: narrated-lesson-with-video-or-animation\n"
+        "execution_mode: tracked/default\n"
+        "quality_preset: production\n"
+        "motion_enabled: true\n"
+        "double_dispatch: false\n"
+        "theme_selection: theme-a\n",
+        encoding="utf-8",
+    )
+    (bundle_dir / "preflight-results.json").write_text(
+        '{\n  "bundle_path": "C:/abs/repo/path",\n  "timestamp": "2026-04-18T12:34:56Z"\n}\n',
+        encoding="utf-8",
+    )
+    (bundle_dir / "operator-directives.md").write_text(
+        "# Operator Directives\nfocus: keep it\n",
+        encoding="utf-8",
+    )
+    (bundle_dir / "metadata.json").write_text(
+        '{\n  "source_authority_scope": {"primary": "part-1"}\n}\n',
+        encoding="utf-8",
+    )
+    (bundle_dir / "ingestion-evidence.md").write_text(
+        "# Ingestion Evidence\n- ok\n",
+        encoding="utf-8",
+    )
+    (bundle_dir / "manifest.json").write_text(
+        '{\n  "bundle_dir": "C:/abs/repo/path/bundle"\n}\n',
+        encoding="utf-8",
+    )
+    (bundle_dir / "result.yaml").write_text(
+        "status: complete\nartifacts:\n  - extracted.md\n",
+        encoding="utf-8",
+    )
+    (bundle_dir / "ingestion-quality-gate-receipt.md").write_text(
+        "# Gate Receipt\n- gate_decision: proceed\n",
+        encoding="utf-8",
+    )
+    (bundle_dir / "irene-packet.md").write_text(
+        "# Irene Packet\n- ready\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(golden_trace, "project_root", lambda: repo_root)
+
+    exit_code = golden_trace.main(
+        [
+            "--source",
+            str(source),
+            "--bundle-dir",
+            str(bundle_dir),
+            "--output",
+            str(output_dir),
+        ]
+    )
+
+    assert exit_code == 0
+    issues = golden_trace_validator.validate_fixture_dir(output_dir, repo_root)
+    assert issues == []
+    step_01 = (output_dir / "step-01-ingestion-envelope.json").read_text(encoding="utf-8")
+    assert "{{TIMESTAMP}}" in step_01
+    assert "{{REPO_ROOT}}" not in step_01 or "C:/abs/repo/path" not in step_01

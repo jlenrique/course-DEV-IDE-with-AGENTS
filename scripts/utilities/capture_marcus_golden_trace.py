@@ -79,6 +79,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from scripts.utilities.file_helpers import project_root
 
 # ============================================================================
@@ -180,7 +182,153 @@ CAPTURE_POINTS: list[dict[str, str]] = [
 # ============================================================================
 
 
-def _run_marcus_pipeline(source: Path) -> list[dict[str, Any]]:
+def _load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _load_yaml(path: Path) -> Any:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def _relative_to_repo(path: Path, repo_root: Path) -> str:
+    return path.resolve().relative_to(repo_root).as_posix()
+
+
+def _resolve_bundle_file(bundle_dir: Path, filename: str, *, required: bool = True) -> Path | None:
+    candidate = bundle_dir / filename
+    if candidate.is_file():
+        return candidate
+    if required:
+        raise FileNotFoundError(
+            f"Expected tracked-bundle artifact missing: {candidate}"
+        )
+    return None
+
+
+def _synthesize_envelopes_from_tracked_bundle(
+    source: Path,
+    bundle_dir: Path,
+    repo_root: Path,
+) -> list[dict[str, Any]]:
+    """Synthesize the five capture envelopes from a committed tracked bundle.
+
+    This is a pragmatic 30-1 unblocker: it captures the real pre-refactor
+    Prompt 01-04/04A artifacts already emitted by Marcus during tracked runs,
+    without requiring a fresh live rerun of the old pathway.
+    """
+    run_constants_path = _resolve_bundle_file(bundle_dir, "run-constants.yaml")
+    preflight_path = _resolve_bundle_file(bundle_dir, "preflight-results.json")
+    operator_directives_path = _resolve_bundle_file(bundle_dir, "operator-directives.md")
+    metadata_path = _resolve_bundle_file(bundle_dir, "metadata.json")
+    ingestion_evidence_path = _resolve_bundle_file(bundle_dir, "ingestion-evidence.md")
+    manifest_path = _resolve_bundle_file(bundle_dir, "manifest.json", required=False)
+    result_path = _resolve_bundle_file(bundle_dir, "result.yaml", required=False)
+    quality_gate_path = _resolve_bundle_file(
+        bundle_dir,
+        "ingestion-quality-gate-receipt.md",
+    )
+    irene_packet_path = _resolve_bundle_file(bundle_dir, "irene-packet.md")
+
+    run_constants = _load_yaml(run_constants_path)
+    preflight_results = _load_json(preflight_path)
+    metadata = _load_json(metadata_path)
+
+    if not isinstance(run_constants, dict):
+        raise ValueError(f"run-constants.yaml must deserialize to a mapping: {run_constants_path}")
+    if not isinstance(preflight_results, dict):
+        raise ValueError(f"preflight-results.json must deserialize to an object: {preflight_path}")
+    if not isinstance(metadata, dict):
+        raise ValueError(f"metadata.json must deserialize to an object: {metadata_path}")
+
+    manifest_payload = _load_json(manifest_path) if manifest_path else None
+    result_payload = _load_yaml(result_path) if result_path else None
+
+    profile_projection = {
+        "requested_content_type": run_constants.get("requested_content_type"),
+        "execution_mode": run_constants.get("execution_mode"),
+        "quality_preset": run_constants.get("quality_preset"),
+        "motion_enabled": run_constants.get("motion_enabled"),
+        "double_dispatch": run_constants.get("double_dispatch"),
+        "theme_selection": run_constants.get("theme_selection"),
+        "target_total_runtime_minutes": run_constants.get("target_total_runtime_minutes"),
+        "slide_mode_proportions": run_constants.get("slide_mode_proportions"),
+        "operator_directives_poll_status": "recorded",
+        "audience_profile_basis": (
+            "Inferred from run constants and pre-packet planning state because "
+            "tracked bundles do not persist a dedicated step-03 audience-profile artifact."
+        ),
+    }
+
+    common = {
+        "capture_mode": "tracked_bundle_synthesis",
+        "source_path": _relative_to_repo(source, repo_root),
+        "bundle_dir": _relative_to_repo(bundle_dir, repo_root),
+    }
+
+    return [
+        {
+            "_internal_emitter": "marcus-intake",
+            "capture_point": "01",
+            **common,
+            "artifact_refs": [
+                "run-constants.yaml",
+                "preflight-results.json",
+                "operator-directives.md",
+            ],
+            "run_constants": run_constants,
+            "preflight_results": preflight_results,
+            "operator_directives_markdown": _read_text(operator_directives_path),
+        },
+        {
+            "_internal_emitter": "marcus-intake",
+            "capture_point": "02",
+            **common,
+            "artifact_refs": [
+                "metadata.json",
+                "ingestion-evidence.md",
+                *([] if manifest_path is None else ["manifest.json"]),
+                *([] if result_path is None else ["result.yaml"]),
+            ],
+            "metadata": metadata,
+            "ingestion_evidence_markdown": _read_text(ingestion_evidence_path),
+            "manifest": manifest_payload,
+            "result": result_payload,
+        },
+        {
+            "_internal_emitter": "marcus-orchestrator",
+            "capture_point": "03",
+            **common,
+            "artifact_refs": [
+                "run-constants.yaml",
+                "operator-directives.md",
+                "metadata.json",
+            ],
+            "audience_profile": profile_projection,
+            "operator_directives_markdown": _read_text(operator_directives_path),
+            "metadata_source_authority_scope": metadata.get("source_authority_scope"),
+        },
+        {
+            "_internal_emitter": "marcus-orchestrator",
+            "capture_point": "04",
+            **common,
+            "artifact_refs": ["ingestion-quality-gate-receipt.md"],
+            "ingestion_quality_gate_receipt_markdown": _read_text(quality_gate_path),
+        },
+        {
+            "_internal_emitter": "marcus-orchestrator",
+            "capture_point": "04-05",
+            **common,
+            "artifact_refs": ["irene-packet.md"],
+            "irene_packet_markdown": _read_text(irene_packet_path),
+        },
+    ]
+
+
+def _run_marcus_pipeline(source: Path, bundle_dir: Path | None = None) -> list[dict[str, Any]]:
     """Run the current (pre-30-1) Marcus pipeline and collect envelopes.
 
     TODO (Cursor-side capture agent on dev/30-1-baseline-capture):
@@ -210,6 +358,10 @@ def _run_marcus_pipeline(source: Path) -> list[dict[str, Any]]:
         List of envelope dicts in CAPTURE_POINTS order. MUST have exactly
         ``len(CAPTURE_POINTS)`` entries.
     """
+    if bundle_dir is not None:
+        repo_root = project_root()
+        return _synthesize_envelopes_from_tracked_bundle(source, bundle_dir, repo_root)
+
     raise NotImplementedError(
         "Marcus pipeline wiring is owned by the Cursor-side capture agent on "
         "dev/30-1-baseline-capture. See the TODO in _run_marcus_pipeline for "
@@ -283,7 +435,7 @@ def _write_manifest(
         f"captured_at: {datetime.now(UTC).isoformat()}",
         f"source_path: {source.relative_to(repo_root).as_posix()}",
         f"source_sha256: {source_sha256}",
-        f"repo_commit_sha: {_get_repo_commit_sha(repo_root)}",
+        f'repo_commit_sha: "{_get_repo_commit_sha(repo_root)}"',
         "",
         "module_versions:",
     ]
@@ -359,6 +511,16 @@ def main(argv: list[str] | None = None) -> int:
             "tests/fixtures/golden_trace/marcus_pre_30-1/"
         ),
     )
+    parser.add_argument(
+        "--bundle-dir",
+        type=Path,
+        help=(
+            "Optional tracked bundle directory to synthesize the five capture "
+            "envelopes from already-committed Prompt 01-04/04A artifacts. "
+            "Use this to unblock 30-1 when a complete tracked bundle already "
+            "exists and a fresh live rerun would be duplicative."
+        ),
+    )
     args = parser.parse_args(argv)
 
     repo_root = project_root()
@@ -389,10 +551,29 @@ def main(argv: list[str] | None = None) -> int:
     source_sha256 = _compute_source_sha256(source)
     print(f"Source SHA-256: {source_sha256}")
 
+    bundle_dir: Path | None = None
+    if args.bundle_dir is not None:
+        bundle_dir = args.bundle_dir.resolve()
+        if not bundle_dir.is_dir():
+            print(
+                f"ERROR: --bundle-dir must point to an existing directory; got {bundle_dir}",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            bundle_dir.relative_to(repo_root)
+        except ValueError:
+            print(
+                "ERROR: --bundle-dir must be inside the repository; "
+                f"got {bundle_dir}",
+                file=sys.stderr,
+            )
+            return 2
+
     # Run the pipeline. The pipeline stub raises NotImplementedError; the
     # Cursor-side capture agent on dev/30-1-baseline-capture is responsible
     # for wiring in the five envelope emission points.
-    envelopes = _run_marcus_pipeline(source)
+    envelopes = _run_marcus_pipeline(source, bundle_dir=bundle_dir)
 
     # Write normalized envelopes + manifest.
     _write_envelopes(output_dir, envelopes, repo_root)

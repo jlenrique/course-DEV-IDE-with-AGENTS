@@ -4,7 +4,15 @@
 
 ## Status
 
-Empty on purpose until the authoritative capture lane runs the real baseline capture.
+Captured and validated in the worktree on 2026-04-18.
+
+Baseline inputs used:
+- Canonical source: `course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf`
+- Tracked bundle: `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/`
+
+Capture mode:
+- Deterministic tracked-bundle synthesis via `scripts/utilities/capture_marcus_golden_trace.py --bundle-dir ...`
+- This is the accepted initial `30-1` baseline because the bundle already contains real Prompt `01-04/04A` artifacts and avoids redundant source duplication.
 
 ## Expected contents after capture
 

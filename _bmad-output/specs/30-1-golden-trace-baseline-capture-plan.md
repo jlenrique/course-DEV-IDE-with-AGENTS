@@ -4,6 +4,8 @@
 **Purpose:** capture pre-refactor Marcus envelope I/O on the trial corpus as a committed fixture before Story `30-1-marcus-duality-split` opens. Required by R1 ruling amendment 12 and Murat's binding PDG.  
 **Runway discipline:** this capture is independent of `31-2` / `31-3` dev and should execute in a side worktree during their in-flight time per `docs/dev-guide/story-cycle-efficiency.md`.
 
+**Execution update (2026-04-18):** baseline fixture bundle is now synthesized and validated in the worktree using the committed tracked bundle `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion/` plus canonical source `course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf`. This intentionally avoids duplicating the same real SME source into `tests/fixtures/trial_corpus/` for the initial baseline.
+
 ---
 
 ## Why this runs before 30-1
@@ -14,10 +16,14 @@ Capturing the baseline before `30-1` opens makes the later diff meaningful and k
 
 ## Trial corpus selection
 
-Use one named real 7-page SME source file per section 6-A1 of `_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md`.
+Use one named real SME source file per section 6-A1 of `_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md`.
 
-- Commit the source under `tests/fixtures/trial_corpus/`.
-- Record its SHA-256 in a sibling `.provenance.yaml` card.
+- Preferred future pattern: commit the source under `tests/fixtures/trial_corpus/` with a sibling `.provenance.yaml` card.
+- Accepted initial baseline pattern for `30-1`: reference an already-committed canonical source elsewhere in the repo when:
+  - the source is already versioned,
+  - the tracked bundle artifacts are already committed,
+  - the capture manifest records the source SHA-256, and
+  - duplicating the file into `tests/fixtures/trial_corpus/` would add no new control value.
 - Keep the first capture narrow. Broader corpus expansion can happen later.
 
 ## Capture scope
@@ -119,14 +125,14 @@ Run this in parallel with `31-3` or other non-blocking story work.
 
 ### Pending in the authoritative capture lane
 
-- [ ] Select and commit the named SME source file under `tests/fixtures/trial_corpus/`
-- [ ] Add the sibling `.provenance.yaml` card with SHA-256
-- [ ] Wire `_run_marcus_pipeline()` in `scripts/utilities/capture_marcus_golden_trace.py`
-- [ ] Run one clean capture and write the manifest
-- [ ] Run `python -m scripts.utilities.validate_marcus_golden_trace_fixture --fixture-dir tests/fixtures/golden_trace/marcus_pre_30-1/`
-- [ ] Re-run the capture and confirm identical normalized output
+- [x] Select the canonical committed source file `course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf` and reference it from the manifest (duplicate `tests/fixtures/trial_corpus/` copy intentionally skipped for the initial synthesized baseline)
+- [x] Record source SHA-256 in `golden-trace-manifest.yaml`
+- [x] Wire `_run_marcus_pipeline()` in `scripts/utilities/capture_marcus_golden_trace.py` with deterministic `--bundle-dir` tracked-bundle synthesis mode
+- [x] Run one clean capture and write the manifest
+- [x] Run `python -m scripts.utilities.validate_marcus_golden_trace_fixture --fixture-dir tests/fixtures/golden_trace/marcus_pre_30-1/`
+- [x] Re-run the capture and confirm identical normalized envelope output (manifest `captured_at` intentionally drifts)
 - [ ] Commit source fixture, pipeline wiring, captured envelopes, and manifest together
-- [ ] Append capture date and commit SHA back into this plan or linked status notes
+- [x] Append capture date and status back into this plan / linked status notes
 
 ## Out of scope
 

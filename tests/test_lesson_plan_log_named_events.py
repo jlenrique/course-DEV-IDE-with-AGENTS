@@ -42,8 +42,16 @@ def test_named_mandatory_events_is_alias_of_reserved() -> None:
 
 
 def test_named_mandatory_events_contains_all_six_amendment_8_events() -> None:
-    """R1 ruling amendment 8 — six named mandatory event_types."""
-    expected = {
+    """R1 ruling amendment 8 — the six named mandatory event_types are
+    minimums, not ceilings.
+
+    Subsequent stories may extend the registered set via ruling amendment
+    (e.g. Story 29-1 adds ``fit_report.emitted`` per R1 amendment 5 and
+    the 29-1 spec). The invariant pinned by this test is that the original
+    six R1-amendment-8 events remain a SUBSET of NAMED_MANDATORY_EVENTS —
+    removing any of them requires a new ruling amendment, not a quiet edit.
+    """
+    r1_amendment_8_minimum = {
         "plan_unit.created",
         "scope_decision.set",
         "scope_decision_transition",
@@ -51,7 +59,11 @@ def test_named_mandatory_events_contains_all_six_amendment_8_events() -> None:
         "fanout.envelope.emitted",
         "pre_packet_snapshot",
     }
-    assert expected == NAMED_MANDATORY_EVENTS
+    missing = r1_amendment_8_minimum - NAMED_MANDATORY_EVENTS
+    assert not missing, (
+        f"R1 amendment 8 minimum set drifted — missing: {sorted(missing)}. "
+        f"Removing any amendment-8 event requires a ruling amendment."
+    )
 
 
 # ---------------------------------------------------------------------------

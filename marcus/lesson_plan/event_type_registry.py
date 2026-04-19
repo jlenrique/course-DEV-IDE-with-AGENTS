@@ -37,6 +37,11 @@ KNOWN_PLAN_UNIT_EVENT_TYPES: frozenset[str] = frozenset(
 
 RESERVED_LOG_EVENT_TYPES: frozenset[str] = frozenset(
     {
+        # Event-type naming grammar: <domain_noun>.<past_tense_verb>.
+        # E.g. "fit_report.emitted", "gagne_diagnosis.completed", "plan.locked".
+        # (Story 29-1 W-1 rider — seed the taxonomy convention at first
+        # Marcus-adjacent domain event.)
+        #
         # Reserved for 31-2 pre_packet_snapshot emission per R1 ruling amendment 13
         # (single-writer rule).
         "pre_packet_snapshot",
@@ -45,6 +50,9 @@ RESERVED_LOG_EVENT_TYPES: frozenset[str] = frozenset(
         "scope_decision_transition",
         "plan.locked",
         "fanout.envelope.emitted",
+        # Registered by Story 29-1 — Marcus-Orchestrator emits when a
+        # validated FitReport is appended to the log.
+        "fit_report.emitted",
     }
 )
 

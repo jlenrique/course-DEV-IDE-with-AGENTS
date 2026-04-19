@@ -1,0 +1,33 @@
+{
+  "_internal_emitter": "marcus-orchestrator",
+  "artifact_refs": [
+    "run-constants.yaml",
+    "operator-directives.md",
+    "metadata.json"
+  ],
+  "audience_profile": {
+    "audience_profile_basis": "Inferred from run constants and pre-packet planning state because tracked bundles do not persist a dedicated step-03 audience-profile artifact.",
+    "double_dispatch": true,
+    "execution_mode": "tracked/default",
+    "motion_enabled": true,
+    "operator_directives_poll_status": "recorded",
+    "quality_preset": "production",
+    "requested_content_type": "narrated-deck-video-export",
+    "slide_mode_proportions": {
+      "creative": 0.7,
+      "irene_discretion": 0.3
+    },
+    "target_total_runtime_minutes": 10,
+    "theme_selection": "hil-2026-apc-nejal-A"
+  },
+  "bundle_dir": "course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260409-motion",
+  "capture_mode": "tracked_bundle_synthesis",
+  "capture_point": "03",
+  "metadata_source_authority_scope": {
+    "primary_source_scope": "Part 1 only",
+    "secondary_source_scope": "highest-level series context only",
+    "special_treatment": "video directorial guidance isolated from topical/script content"
+  },
+  "operator_directives_markdown": "# Operator Directives\n\nrun_id: C1-M1-PRES-20260409\ntimestamp_utc: {{TIMESTAMP}}\npoll_started_utc: {{TIMESTAMP}}\nreply_eligible_utc: {{TIMESTAMP}}\npoll_close_utc: {{TIMESTAMP}}\npoll_status: carried-from-C1-M1-PRES-20260406\noperator: juanl\n\nfocus_directives:\n- Focus on Part 1 of the C1M1 notes.\n- For the slide presentation, prioritize the topical descriptions and scripts labeled as slides.\n- For video production, look for directorial guidance that exists in Part 1.\n- Use other material in Part 1 for context only.\n- Use the secondary source image file only for the highest-level context: the three-course series, with this production creating assets for the first module of the first course.\n\nexclusion_directives:\n- No specific exclusions.\n\nspecial_treatment_directives:\n- Separate directorial guidance for video from all other topical, scripted, or contextual guidance in Part 1.\n- Use the non-directorial Part 1 material to inform the slide-accompanying script.\n- Use the directorial guidance in Part 1 to inform the video-related scripting.\n",
+  "source_path": "course-content/courses/tejal-APC-C1/APC C1-M1 Tejal 2026-03-29.pdf"
+}

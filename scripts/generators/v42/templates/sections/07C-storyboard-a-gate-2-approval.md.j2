@@ -1,0 +1,31 @@
+{{ audience("M→O") }}
+
+
+Marcus, build the pre-Irene review storyboard for the winner deck and obtain Gate 2 approval.
+
+Storyboard inputs:
+- If `DOUBLE_DISPATCH: false`, use `[BUNDLE_PATH]/gary-dispatch-result.json`
+- If `DOUBLE_DISPATCH: true`, use `storyboard/storyboard.json` plus `[BUNDLE_PATH]/variant-selection.json` for winner collapse
+
+Required behavior:
+- Generate `storyboard/storyboard.json` and `storyboard/index.html`
+- Present the slide review summary and the reviewer-friendly HTML storyboard surface (ordered thumbnails, script/script-notes panels, orientation/provenance metadata, related-assets section)
+- Obtain explicit Gate 2 approval on the selected winner deck
+
+Required write:
+- `[BUNDLE_PATH]/authorized-storyboard.json`
+
+Authorization command:
+
+```powershell
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
+  --manifest [BUNDLE_PATH]/storyboard/storyboard.json `
+  --run-id [RUN_ID] `
+  --output [BUNDLE_PATH]/authorized-storyboard.json `
+  [--selections [BUNDLE_PATH]/variant-selection.json]
+```
+
+Gate rule:
+- Motion planning and Irene Pass 2 must consume the authorized winner deck, not unresolved A/B variants.
+
+---

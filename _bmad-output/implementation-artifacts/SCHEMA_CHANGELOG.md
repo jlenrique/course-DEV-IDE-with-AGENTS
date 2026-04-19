@@ -7,6 +7,77 @@ Per semver-for-schemas:
 - **Minor (1.X)** â€” additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
 - **Patch (1.0.X)** â€” docs / clarifications / typo fixes; no machine-readable change.
 
+## Epic 33 Pipeline Lockstep Substrate v1.0 - 2026-04-19 - Story 33-2 Pipeline Manifest SSOT
+
+**Type:** Initial shape (no predecessor manifest contract).
+
+**Reason for introduction:** Story 33-2 landed the canonical pipeline-manifest substrate so pack/hud/orchestrator projections share one declarative source of truth and deterministic lockstep enforcement.
+
+**Shapes and contracts pinned:**
+
+- `state/config/pipeline-manifest.yaml` schema surface, including top-level fields:
+  `schema_version`, `pack_version`, `generator_ref`, `learning_events`, `steps`.
+- `scripts/utilities/pipeline_manifest.py` loader contract:
+  parse/validate manifest shape, expose deterministic typed projection, enforce invariant checks.
+- `scripts/utilities/check_pipeline_manifest_lockstep.py` L1 contract:
+  deterministic lockstep checks, strict exit-code discipline, trace artifact emission.
+
+**Semantics pinned:**
+
+- Manifest is the canonical pipeline topology authority; downstream projections are derived.
+- Lockstep checks classify failures deterministically and are CI-automatable.
+- Story 33-2 closed with AC-B.15 rewire deferred to 33-1a because 33-1 Case C found no in-repo generator of record.
+
+**Migration:** N/A (initial shape).
+
+## Epic 33 Generator Substrate v1.1 - 2026-04-19 - Story 33-1a Build v4.2 Generator
+
+**Type:** Additive extension to Epic 33 substrate contracts.
+
+**Reason for introduction:** Story 33-1a closed Case-C escalation by introducing the in-repo deterministic v4.2 generator and extending manifest step entries with rationale metadata for generated provenance.
+
+**Shapes and contracts pinned:**
+
+- `scripts/generators/v42/` package with deterministic Jinja2 rendering (`render.py`, `env.py`, `manifest.py`, template tree).
+- Manifest step additive field in `scripts/utilities/pipeline_manifest.py`:
+  `StepEntry.rationale: str | None`.
+- Fixture ratification pair for downstream regeneration gate:
+  `tests/generators/v42/fixtures/manifest_fixture.yaml`,
+  `tests/generators/v42/fixtures/expected_pack/fixture_pack.md`,
+  `tests/generators/v42/fixtures/pack_sha_fixture.txt`.
+
+**Semantics pinned:**
+
+- Generator path-of-record: `scripts/generators/v42/render.py` (wired in `state/config/pipeline-manifest.yaml` `generator_ref`).
+- Deterministic render contract validated by hash round-trip + 5x repeatability tests.
+- No LLM in critical path (`test_33_1a_no_llm_imports.py` contract guard).
+
+**Migration:** Additive only; existing manifests without `rationale` remain valid (`rationale=None` default).
+
+## Epic 15 Learning Events Lite v1.0 - 2026-04-19 - Story 15-1-lite-marcus
+
+**Type:** Additive extension across manifest + new learning-event schema/check surfaces.
+
+**Reason for introduction:** Story 15-1-lite-marcus introduced the minimal learning-event contract (schema + capture + Marcus gate wiring + L1 lockstep) used as Epic 33's load-bearing meta-test.
+
+**Shapes and contracts pinned:**
+
+- New schema config: `state/config/learning-event-schema.yaml` (`schema_version`, closed `event_type_enum`, required-field contract).
+- New capture surface: `scripts/utilities/learning_event_capture.py` (`LearningEvent`, `create_event`, `validate_event`, `append_to_ledger`).
+- New L1 checker: `scripts/utilities/check_learning_event_lockstep.py` with deterministic checks A/B/C/D and 0/1/2 exit-code discipline.
+- Manifest extensions in `state/config/pipeline-manifest.yaml`:
+  - top-level `learning_events.schema_ref` populated,
+  - Gate 2/3/4 emitter declarations (`G2C`, `G3`, `G4`) with event types `[approval, revision, waiver]`,
+  - `block_mode_trigger_paths` entries for learning-event files.
+
+**Semantics pinned:**
+
+- Closed event type set for lite scope: `approval`, `revision`, `waiver`.
+- Append-only learning ledger contract at `{run_dir}/learning-events.yaml`.
+- Marcus gate wiring emits exactly three statically-resolvable call-sites (G2C/G3/G4).
+
+**Migration:** Additive only; existing non-learning-event flows remain valid with empty/non-emitting declarations.
+
 ## Lesson Plan v1.0 additive extension â€” 2026-04-18 â€” Story 29-3 Irene Blueprint Co-author
 
 **Type:** Additive optional-field extension to the existing Lesson Plan v1.0 shape family.

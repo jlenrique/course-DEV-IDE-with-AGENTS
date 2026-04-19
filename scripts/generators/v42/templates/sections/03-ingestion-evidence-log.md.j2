@@ -1,0 +1,92 @@
+{{ audience("M→O") }}
+
+
+Marcus, delegate ingestion for RUN_ID [RUN_ID] to Texas (Source Wrangler agent) by invoking his runtime wrangling runner. Texas's runner orchestrates fetch + extract + validate + cross-validate + artifact emission in one deterministic pass, using his 4-tier quality classifier and (when validation-role assets are supplied) his cross-validator.
+
+Inputs:
+- source authority map
+- operator directives
+
+Ingestion scope rule:
+- Extract ALL content from the primary source, regardless of focus directives. Focus directives control downstream emphasis, not extraction scope.
+- The full extraction must be preserved in `extracted.md` so downstream agents and the estimator can analyze word count and section depth accurately.
+
+### 3.a) Write the wrangling directive
+
+Marcus authors `[BUNDLE_PATH]/directive.yaml` from the source authority map gathered in Prompt 2 and the operator directives from Prompt 2A. The directive shape is documented in `skills/bmad-agent-texas/references/delegation-contract.md`. Minimum fields:
+
+```yaml
+run_id: "[RUN_ID]"
+sources:
+  - ref_id: "src-001"
+    provider: "local_file"      # local_file | pdf | url | notion | playwright_html
+    locator: "[absolute-or-repo-relative path or URL]"
+    role: "primary"              # primary | validation | supplementary
+    description: "[human-readable]"
+    expected_min_words: [int]    # optional; operator-declared floor
+    pages_total: [int]           # optional; for PDF provider
+  # - add validation-role entries to enable cross-validation
+```
+
+### 3.b) Invoke Texas's runner
+
+```
+.\.venv\Scripts\python.exe skills/bmad-agent-texas/scripts/run_wrangler.py --directive [BUNDLE_PATH]/directive.yaml --bundle-dir [BUNDLE_PATH]
+```
+
+Exit-code semantics (non-zero is NOT automatically a halt — Marcus consults the result envelope):
+- `0`  complete — proceed to Prompt 4
+- `10` complete_with_warnings — proceed; surface warnings to operator
+- `20` blocked — halt; present `result.yaml`'s `blocking_issues[]` to operator; do NOT proceed to Prompt 4
+- `30` directive/IO error — malformed directive or missing locator; fix the directive and re-run
+
+### 3.c) Required artifacts after runner exits
+
+Texas writes all six canonical artifacts to `[BUNDLE_PATH]/`:
+
+- `extracted.md`
+- `metadata.json`
+- `extraction-report.yaml` (Texas's quality report per `skills/bmad-agent-texas/references/extraction-report-schema.md`)
+- `manifest.json` (bundle index with sha256 per artifact)
+- `ingestion-evidence.md`
+- `result.yaml` (Marcus's return envelope — read this into the production envelope)
+
+### 3.d) Belt-and-suspenders word-count check (retained)
+
+After the runner exits 0 or 10, Marcus still independently verifies extraction word count — the runner's tier classifier and this prose check validate the same invariant at different levels, and either firing alone is sufficient to halt the run:
+
+1. Count words in `extracted.md`: `(Get-Content [BUNDLE_PATH]/extracted.md | Measure-Object -Word).Words`
+2. Compare against `metadata.json` page count: expect approximately 250–400 words per source page as a rough floor.
+3. If extracted word count is less than 50% of the expected floor (page_count × 250), HALT and report an extraction gap. Do not proceed to Prompt 4.
+4. Record the actual word count in `ingestion-evidence.md` alongside the page count for audit.
+
+This check exists because a prior trial run produced a 30-line extracted.md from a 24-page source, resulting in a stub that passed the quality gate but would have produced garbage estimates downstream. Texas's runner enforces the same floor via tier classification, but keeping the prose check in place provides defense in depth.
+
+Cross-validation hint: if the primary source PDF is known to be a Notion export (as with APC C1-M1 Tejal), supply the Notion-exported Markdown as a `role: validation` entry in the directive — Texas will run his cross-validator automatically and report section + key-term coverage in `extraction-report.yaml.cross_validation[]`.
+
+### 3.e) Artifact verification (deterministic — expected file count: **9**)
+
+```
+Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count
+```
+
+Expected files after Prompt 3 completes: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`, `directive.yaml`, `extracted.md`, `metadata.json`, `extraction-report.yaml`, `manifest.json`, `ingestion-evidence.md`, plus `result.yaml` (total 10 files; `gates/` subdir contents are counted separately). If count is less than 10, halt and remediate before proceeding.
+
+### 3.f) Fallback
+
+- If any planning-critical area is medium/low confidence, stop for targeted remediation before Prompt 4.
+
+### 3.g) Legacy prose-only fallback (deprecated — removal after two clean runner trials)
+
+**Deprecated / Sunset:** Use this path only if the runner fails unexpectedly mid-pipeline (runner-specific infra issue, not a source problem) **and** you have NOT yet logged two clean runner trials. If two clean trials are already recorded, skip this section entirely.
+
+If the fallback is explicitly authorized, Marcus may revert to the pre-Epic-25 prose-only path:
+
+1. Hand-execute fetch + extract using the helpers in `skills/bmad-agent-texas/scripts/source_wrangler_operations.py`
+2. Write `extracted.md`, `metadata.json`, `ingestion-evidence.md` by hand
+3. Run the old validator wrapper: `.\.venv\Scripts\python.exe -m scripts.utilities.validate_source_bundle_confidence --bundle-dir [BUNDLE_PATH]`
+4. Place a `.runner-bypassed` breadcrumb file in the bundle so post-mortems can identify which path ran and why
+
+This fallback survives for exactly two clean trial runs of the runner path (per story 25-1 party-mode decision, Murat's risk-math argument). After two clean runs, delete this section. Bundles that use the fallback cannot claim Texas-integrated status.
+
+---

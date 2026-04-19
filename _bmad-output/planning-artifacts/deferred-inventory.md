@@ -1,0 +1,120 @@
+# Deferred Inventory — Standing Index
+
+**Purpose:** canonical register of every deferred epic, deferred story, and named-but-not-filed follow-on across the project. Single source of truth consulted at:
+
+1. **Every Epic retrospective** — per [CLAUDE.md §Pipeline lockstep regime](../../CLAUDE.md) and §Deferred inventory governance, the retrospective MUST review this inventory against the closing Epic's new substrate / evidence / learnings; flag now-ready-to-reactivate entries to the next sprint-planning round.
+2. **Every session hot-start** — `next-session-start-here.md` surfaces the inventory counts so the operator sees "don't overlook" context every session open.
+3. **Story authoring** — when a new story spec names a follow-on (e.g., "15-1-lite-irene is a fast-follow after this story"), the author adds the follow-on to §Named-But-Not-Filed Follow-Ons below.
+
+**Maintenance:** update at (a) each Epic retrospective close, (b) each story closure that names a new follow-on, (c) any session-wrapup where the operator flags a new deferred item. Last refreshed: **2026-04-19** (Epic 33 mid-sprint).
+
+---
+
+## Backlog Epics — Full Scope Deferred
+
+| Epic | Focus | Stories | Story count | Reactivation trigger |
+|---|---|---|---|---|
+| **Epic 15** | Learning & Compound Intelligence — convert tracked runs into organizational intelligence | 15-1, 15-2, 15-3, 15-4, 15-5, 15-6, 15-7 | 7 | "At least one tracked trial run completed" (hard dependency per epic seed). 15-1-lite-marcus (Epic 33 meta-test) unlocks the chain's first link via its learning-event ledger infrastructure. 15-2 (retrospective artifact) is the natural next link once the ledger exists. |
+| **Epic 16** | Bounded Autonomy Expansion — Marcus autonomous routing on routine decisions | 16-1, 16-2, 16-3, 16-4, 16-5 | 5 | Depends on Epic 15 evidence base for autonomous-routing calibration. |
+| **Epic 17** | Research & Reference Services — related-resources + citation injection + hypothesis research | 17-1, 17-2, 17-3, 17-4, 17-5 | 5 | No explicit trigger named; appears to be operator-priority-driven. Re-evaluate at Epic 15/16 retrospectives. |
+| **Epic 18** | Additional Assets & Workflow Families — cases, quizzes, discussions, handouts, podcasts, diagrams, workflow-family framework | 18-1, 18-2, 18-3, 18-4, 18-5, 18-6, 18-7 | 7 | **18-7 gates all others** (implementation framework must land first). Trigger for 18-7: operator-priority decision on new content type. Note: 18-5 (podcasts) + 18-6 (infographics) are "new pack types" per [Pipeline Manifest Regime §Pack Versioning Policy](../../docs/dev-guide/pipeline-manifest-regime.md#pack-versioning-policy) — NOT v5 of narrated-lesson; they ship as new families. |
+
+**Total deferred-epic story count: 24 stories across 4 epics.**
+
+---
+
+## Deferred Stories Within Active / Done Epics
+
+| Story | Epic | Status | Reactivation trigger (from sprint-status comments) |
+|---|---|---|---|
+| **20c-4** Master Arc Composition | Epic 20c (in-progress) | Deferred | "When complexity justifies" — return after profile-driven runs validate clustering. Wave 2 Deferred block in sprint-status.yaml. |
+| **20c-5** Pax Agent | Epic 20c (in-progress) | Deferred | Same Wave 2 Deferred gating. |
+| **20c-6** Lens Capability | Epic 20c (in-progress) | Deferred | Same Wave 2 Deferred gating; "start as capability" framing. |
+| **20a-5** Exemplar Library | Epic 20a (done) | Ready-for-dev with reactivation-choice flag | "Unblocked; re-evaluate against deferred/reactivation choice" per 2026-04-15 decision. Currently staged but not pulled — awaits operator priority call. |
+
+**Reactivation criteria (Epic 20c-native, from sprint-status.yaml line 111-115):** After 20c-14 (E2E validation) reveals specific gaps in clustering quality, reactivate the relevant deferred story to address it. 2026-04-15 decision: 23-1 reactivated as the next implementation target (unlocks the broadest downstream path with less speculation than 20c-4/5/6).
+
+**Total deferred-story count in active epics: 4 stories.**
+
+---
+
+## Named-But-Not-Filed Follow-Ons
+
+Follow-on stories named in existing specs or retrospectives but not yet filed as sprint-status entries. Filed only when their parent story closes and/or the trigger fires.
+
+| Follow-on | Parent story | Condition | Trigger |
+|---|---|---|---|
+| **15-1-lite-irene** | 15-1-lite-marcus | Epic 33 meta-test validates the substrate catches new contracts on Marcus | File when 15-1-lite-marcus closes CLEAN-CLOSE-META-TEST-PASSED. Extends learning-event capture to Irene's Gates. |
+| **15-1-lite-gary** | 15-1-lite-marcus | Same as above | File when 15-1-lite-marcus closes CLEAN-CLOSE-META-TEST-PASSED. Extends learning-event capture to Dan/Gary's Gates. |
+| **v4.3 substrate extension** | Epic 33 retrospective | No current trigger; mechanism ready per Q1 parameterized-version-hook | File when operator identifies the first Tier-2 pack change per [Pipeline Manifest Regime §Pack Versioning Policy Tier 2](../../docs/dev-guide/pipeline-manifest-regime.md#tier-2--minor-v42--v43-new-pack-file-v42-preserved-for-audit). Ships as `scripts/generators/v43/` sibling + manifest entries with `pack_version: "v4.3"`. |
+| **Full Epic 15 chain (15-2 through 15-7)** | 15-1-lite-marcus + first tracked trial run | First tracked trial run completes AND 15-1-lite-marcus's compressed ledger proves viable | Sequence per Epic 15 seed: 15-2 retrospective artifact → 15-3 upstream feedback routing → 15-4 synergy scorecard → 15-5 pattern condensation → 15-6 workflow-family ledger → 15-7 calibration harness. Each story already specced in [epics.md §Epic 15](epics.md). |
+| **33-1a follow-on: §4.55 body polish** | 33-1a | Dev agent self-review identifies prose imprecision on §4.55 lock-semantic body | File only if 33-1a dev agent flags ambiguity; otherwise no story needed. |
+| **Epic 33 retrospective follow-ons** | Epic 33 retrospective (required) | Retrospective identifies substrate work not yet scoped | TBD per retrospective outcome. Epic 33 spec names "multi-version v4.3 + 15-1-lite-irene/gary fan-outs" as expected candidates. |
+| **PR-TR (Trial Resumption capability) + trial-branch discipline + config-reload refinement** | 2026-04-19 session — operator-surfaced during trial-prep discussion | First tracked trial generates evidence of which discipline details matter most | File post-trial-#1. Scope at ~2pt single-gate: (a) PR-TR capability = deterministic pause-hash capture + resumption-delta diff + Green/Yellow/Red classification, additive to existing PR-* scaffold; (b) CREED standing-order refinement for config-reload-on-resumption; (c) hot-start banner template for `trial/<RUN_ID>` branch + clean-working-tree invariant counter. Parked per evidence-driven-before-spec discipline. |
+
+**Total named follow-ons: 7.**
+
+---
+
+## Wave / Phase Deferreds (Epic-Group Gating)
+
+### Cluster Intelligence Wave 2 (Epic 19-24 + 20c)
+
+Per sprint-status.yaml Wave 2 Deferred block: 20c-4, 20c-5, 20c-6 deferred because profile runs will expose gaps more effectively than isolated A/B trials. Return when creative control iteration stabilizes. **Profile runs serve as the integration test that A/B trials were designed to be.**
+
+### Wave 3 — Codify (epic 23)
+
+- **23-2 G4 Gate Extension** — "codify what good looks like" (waits for Wave 2A + 2B to stabilize)
+- **23-3 Bridge Cadence** — finalize stitching rules (same gate)
+
+Wave 3 reactivation trigger: clustering + creative control stabilizes through profile-driven runs.
+
+### Wave 4 — Downstream (epic 22, 24)
+
+- 22-2 Storyboard B + Script
+- 22-3 Flat-Play Preview
+- 22-4 Generation Script & Publish
+- 24-1 Assembly Contract
+- 24-2 Descript Guide
+- 24-3 ElevenLabs Short Segments
+
+Reactivation trigger: Irene output stabilizes (Wave 3 close).
+
+### Wave 5 — Capstone (epic 24)
+
+- **24-4 Regression Suite** — full end-to-end validation. Depends on all prior waves.
+
+---
+
+## Inventory Summary
+
+| Category | Count | Reactivation posture |
+|---|---|---|
+| Backlog epics | 4 (Epic 15, 16, 17, 18) | Triggered by Epic 33 meta-test + trial-run evidence |
+| Deferred stories in active epics | 4 (20c-4/5/6, 20a-5) | Triggered by profile-driven run gaps |
+| Named-but-not-filed follow-ons | 7 | Triggered by parent-story closure + condition |
+| Wave 3/4/5 stories (partially deferred via gating) | ~10 | Triggered by prior-wave stabilization |
+
+**Near-term candidates (post-Epic-33):**
+1. 15-1-lite-irene + 15-1-lite-gary (immediately after 15-1-lite-marcus meta-test passes)
+2. 20a-5 Exemplar Library reactivation (operator priority call)
+3. Full Epic 15 chain (after first tracked trial run)
+4. Epic 18-7 workflow-family framework (if operator prioritizes new content types)
+
+---
+
+## Governance Hooks (where this inventory gets consulted)
+
+- **[CLAUDE.md §Pipeline lockstep regime](../../CLAUDE.md)** — binds retrospective runs to consult this inventory during "Next Epic Preparation" phase per the `bmad-retrospective` workflow §Two-part format line 15.
+- **[next-session-start-here.md](../../next-session-start-here.md)** — standing hot-start line surfaces inventory counts.
+- **Each story spec** — when authoring a new story that names a follow-on, the author adds the entry to §Named-But-Not-Filed Follow-Ons above.
+
+---
+
+## References
+
+- [_bmad-output/planning-artifacts/epics.md](epics.md) — per-Epic scope authority; backlog epics declare their stories + ACs there.
+- [_bmad-output/implementation-artifacts/sprint-status.yaml](../implementation-artifacts/sprint-status.yaml) — canonical story state; comments carry Wave-group deferral rationale.
+- [_bmad-output/maps/deferred-work.md](../maps/deferred-work.md) — **different surface**: tracks deferred G6 code-review FINDINGS per story, not deferred stories themselves. Relevant at retrospectives as a sibling input.
+- [docs/dev-guide/pipeline-manifest-regime.md §Pack Versioning Policy](../../docs/dev-guide/pipeline-manifest-regime.md#pack-versioning-policy) — relevant for Epic 18 new-pack-type framing.
+- [CLAUDE.md](../../CLAUDE.md) — governance umbrella; names the retrospective + session-start consultation requirement.

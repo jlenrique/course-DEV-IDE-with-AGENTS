@@ -1,0 +1,6 @@
+## 0) TL;DR Crosswalk
+
+| Pack § | HUD id | Marcus module | Audience | One-line purpose |
+|---|---|---|---|---|
+{% for step in steps %}| {{ step.id }} | {{ step.hud_id }} | {{ step.module_path }} | {{ step.audience }} | {{ step.label }} |
+{% endfor %}

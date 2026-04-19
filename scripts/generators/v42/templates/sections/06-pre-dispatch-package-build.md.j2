@@ -1,0 +1,21 @@
+{{ audience("M→O") }}
+
+
+Marcus, after Gate 1 approval, build Gary's pre-dispatch package and stop before dispatch.
+
+Required machine artifacts:
+- `[BUNDLE_PATH]/g2-slide-brief.md`
+- `[BUNDLE_PATH]/gary-slide-content.json`
+- `[BUNDLE_PATH]/gary-fidelity-slides.json`
+- `[BUNDLE_PATH]/gary-diagram-cards.json`
+- `[BUNDLE_PATH]/gary-theme-resolution.json`
+- `[BUNDLE_PATH]/gary-outbound-envelope.yaml`
+- `[BUNDLE_PATH]/pre-dispatch-package-gary.md`
+
+Double-dispatch behavior:
+- If `DOUBLE_DISPATCH: true`, `gary-outbound-envelope.yaml` must carry `dispatch_count: 2`.
+- Variant B artifacts use `-B` suffix where applicable.
+
+Stop if any artifact fails contract rules.
+
+---

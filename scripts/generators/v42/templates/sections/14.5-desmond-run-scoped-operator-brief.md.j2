@@ -1,0 +1,26 @@
+{{ audience("M→O") }}
+
+
+Marcus delegates to **Desmond** (`skills/bmad-agent-desmond/`) immediately after compositor artifacts exist. Desmond translates the generic compositor guide into **Descript-product-specific** operator steps for **this run** and closes with a mandatory **`## Automation Advisory`** (REST API vs MCP vs CLI vs manual app) per `skills/bmad-agent-desmond/references/automation-advisory.md`.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/` (entire folder, including localized `visuals/` and `motion/`)
+- `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- `run_id`, workflow template (`narrated-lesson-with-video-or-animation`), `motion_enabled`, slide count / segment count as relevant
+- Open notes: Quinn-R pre-composition receipt or path (`quinnr-precomposition-review.json` or successor), plus **explicit operator-accepted** advisory items (e.g. post-production sync fixes)
+- Any bundle-local approvals that constrain finishing (e.g. `gate-3-approval.json`)
+
+Required output:
+- **`[BUNDLE_PATH]/assembly-bundle/DESMOND-OPERATOR-BRIEF.md`** containing:
+  - **Run header** — lesson title, run id, motion vs static summary, known finishing debt called out in plain language
+  - **Descript-native steps** — timeline/track language grounded in current team conventions (`_bmad/memory/bmad-agent-desmond/` when present) and doc cache under `skills/bmad-agent-desmond/references/cache/`
+  - **Per-segment reminders** where this run differs from a generic lesson (e.g. motion on specific slides, accepted WPM advisory)
+  - **`## Automation Advisory`** — required subsection classifying ingest, assembly, captions, audio polish, export/publish vs **Full / Partial / Manual** for **REST** (`descriptapi.com/v1`), **MCP** (`https://api.descript.com/v2/mcp`), **CLI**, and **Descript app**
+
+Fallback:
+- If Desmond is not invoked in-tool, Marcus (or the operator) still **writes** `DESMOND-OPERATOR-BRIEF.md` to the same contract by following the skill references above.
+
+Required assembly-bundle contents (adds to 14):
+- `DESMOND-OPERATOR-BRIEF.md`
+
+---

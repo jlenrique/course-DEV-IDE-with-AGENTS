@@ -1,0 +1,11 @@
+schema_version: "1.0"
+audience: "Marcus internal contract surface; never expose internals to Maya."
+event_type_enum:
+  - approval
+  - revision
+  - waiver
+required_fields:
+  - run_id
+  - gate
+  - event_type
+  - timestamp

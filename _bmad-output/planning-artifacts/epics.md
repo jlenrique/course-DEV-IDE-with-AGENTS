@@ -268,7 +268,6 @@ Enhanced master orchestrator with predictive optimization skills, evolved coordi
 17. **Epic 16: Bounded Autonomy Expansion** - Autonomy evidence framework, shared governance enforcement utilities, expanded handoff validators, contract linting, Marcus autonomous routing for routine decisions
 18. **Epic 17: Research & Reference Services** - Consensus + Scite.ai triangulation, related-resources list generation, inline citation injection, hypothesis/pro-con research for learning experiences, shared research skill
 19. **Epic 18: Additional Assets & Workflow Families** - Discovery-first requirements for cases/scenarios, quizzes, discussions, handouts, podcasts, diagrams; reusable workflow-family implementation framework
-
 ---
 
 ## Epic 1: Repository Environment & Agent Infrastructure
@@ -3203,3 +3202,195 @@ So that each approved content type can be stood up efficiently without reinventi
 **And** the framework is documented in `docs/workflow/workflow-family-implementation-guide.md`
 **And** the framework is validated by implementing the first approved content type end-to-end
 **And** subsequent content types can be stood up by following the framework without architectural changes
+
+## Epic 33: Pipeline Lockstep Substrate (Added 2026-04-19)
+
+**Goal**: Convert the three drift-prone pipeline surfaces — v4.2 prompt pack, Marcus orchestrator runtime, HUD — from hand-maintained peers into three projections of a single canonical `pipeline-manifest.yaml` source of truth. Land the deterministic L1 lockstep check and promote Cora's pre-closure hook to block-mode so the next workflow-stage-touching story cannot silently reopen the drift class. Prove the substrate works by threading a meta-test (Story 15-1-lite-marcus) through it immediately after close.
+
+**Depends on**: Lesson Planner MVP (Epics 28-32) closure is not a hard block, but Epic 33's Story 33-4 changes a governance surface (Cora pre-closure hook) that all subsequent workflow-stage edits will flow through. Recommended landing before any Epic 33+ work touches `marcus/orchestrator/` or `docs/workflow/` again.
+
+**Seed documents**:
+- Party-mode transcript 2026-04-19 (harmonization walkthrough + 15-1-lite meta-test integration)
+- [next-session-start-here.md](../../next-session-start-here.md) §"At-session-close regressions" — DC-4 (`test_hud_pipeline_contains_4a_between_04x_and_05` red) is the concrete seam
+- [scripts/utilities/run_hud.py:44](../../scripts/utilities/run_hud.py#L44) — TODO line that named the substrate
+- [skills/bmad-agent-audra/SKILL.md](../../skills/bmad-agent-audra/SKILL.md) — Principles 1 (L1-first), 2 (exit-code contract), 3 (intelligence placement) that shape the L1 check
+- [skills/bmad-agent-cora/SKILL.md](../../skills/bmad-agent-cora/SKILL.md) §HZ — "Workflow-stage lockstep is mandatory: stage additions/renames (for example `04A`) must be present in prompt packs, operator cards, structural-walk manifests, and Marcus workflow templates before closure." Epic 33 operationalizes this contract.
+
+**Design guardrails**:
+- **One anchor, N projections.** `pipeline-manifest.yaml` is the canonical declaration; v4.2 pack, HUD `PIPELINE_STEPS`, Marcus orchestrator insertion points, and downstream consumers are all derivations. No two projections may disagree; disagreement is always an SSOT edit first, not a projection patch.
+- **Deterministic neck integrity.** The L1 check (`check_pipeline_manifest_lockstep.py`) uses AST parsing, set/sequence/string equality, and bitmap diffs. No LLM-judgment in the script body. Intelligence placement (Audra Principle 3) is strictly enforced.
+- **No god-manifest.** The SSOT carries pipeline-shape concerns (gate topology, emission points, step names, insertion rules). Payload shapes (e.g., `learning-event-schema.yaml` — the 15-1-lite-marcus consumer) live in sibling contracts. Cross-reference is declared, not flattened.
+- **Block-mode selectivity.** Cora's pre-closure hook promotes to block-mode ONLY for workflow-stage-touching stories (per the change-window detector keyed on manifest-declared contract surfaces). Warn-mode stays the default for prose drift, doc harmonization, and general dev work.
+- **Meta-test before declaring done.** Epic 33 does not close until Story 15-1-lite-marcus has successfully exercised the block-mode hook by introducing new contracts (learning-event-schema.yaml + Marcus Gate 2/3/4 integration) and the hook correctly fires on simulated drift. A green test suite alone is insufficient — the substrate must be proven by a real-world new-contract introduction.
+
+**Sprint shape (strict sequential — no parallelism until substrate lands)**:
+- **33-1 Generator Discovery** (0.5pt, single-gate, investigation spike) → locates v4.2 generator, documents inputs/outputs, gap analysis for 33-2, kill-switch conditions. Deliverable: findings report. Blocker for 33-2.
+- **33-2 pipeline-manifest.yaml SSOT + generator rewire + L1 check** (dual-gate, schema-shape) → authors the manifest, lands `check_pipeline_manifest_lockstep.py` with 8 deterministic checks (set/order/name/gate-bitmap/insertion-point + emission-declaration/schema_ref/event_types-subset), rewires `run_hud.py` + `progress_map.py` + `workflow_runner.py` + the v4.2 generator to read from manifest. Parameterized version hook per Q1 compromise. Blocker for 33-3.
+- **33-3 Regenerate v4.2 and validate** (1-2pt, single-gate) → runs the manifest-driven generator, commits regenerated pack, reconciles DC-4 regression test to match runtime-insertion contract. No hand-edits to v4.2 permitted. Blocker for 33-4.
+- **33-4 Cora/Audra pre-closure block-mode** (2pt, single-gate, governance) → promotes Cora's hook to block-mode for workflow-stage-touching stories, wires Audra's L1 into the pre-closure gate, change-window detector keyed on manifest-declared surfaces (NOT hardcoded globs). AC includes integration smoke test. Unblocks 15-1-lite-marcus meta-test.
+- **15-1-lite-marcus Marcus Learning Glimmers** (2-3pt, single-gate, META-TEST; compressed subset of backlogged 15.1) → lands learning-event-schema.yaml, capture script, Marcus Gate 2/3/4 integration, manifest entries (learning_events.emits/event_types/schema_ref), new `check_learning_event_lockstep.py` with 4 checks, two O/I/A red-path fixtures. Success criterion: Cora's block-mode hook fires correctly on a simulated schema-drift commit during dev. Blocked-by all four preceding stories.
+
+**Consensus history (2026-04-19 party-mode round)**:
+- **LG-1 story shape** — single Marcus-only meta-test (4-1; Murat dissent on multi-agent concurrency route preserved as follow-on)
+- **LG-2 timing** — strict-after-33-4 for 15-1-lite-marcus (4-1; Winston schema-only-interleave proposal rejected as confound risk)
+- **LG-3 contract home** — hybrid (manifest = topology, schema = payload, two L1 checks)
+- **Q1 multi-version linter** — split 2-2; orchestrator read carried Murat's parameterized-hook compromise
+- **Q2 epic scope** — split 2-2; tipped to Epic 33 after 15-1-lite-marcus surfaced as second substrate consumer
+
+### Story 33.1: v4.2 Prompt-Pack Generator Discovery
+
+As the dev agent opening Epic 33,
+I want a written, citable record of where the v4.2 pack's generator lives, how it runs, and what it consumes today,
+So that Story 33-2 can be authored against the generator's actual shape (not assumed shape), and the risk of mid-story scope-drift on the substrate work is bounded.
+
+**Acceptance Criteria:**
+
+**Given** the dev agent opens Story 33-1 with the Epic 33 party-mode consensus as authority
+**When** the investigation spike runs
+**Then** a findings report exists at `_bmad-output/specs/33-1-generator-discovery-findings.md` with sections: Summary, Generator Location, Generator Inputs, Generator Outputs, Regeneration Procedure, Drift Between Generator and On-Disk v4.2, Gap Analysis, Kill-switch Decision, Escalation, Evidence Index
+**And** the generator is identified via one of three cases: (a) in-repo entry point with invocation command, (b) external tool with wrap-vs-rebuild decision surfaced, or (c) explicit escalation block naming Story 33-1a as follow-up if no generator exists
+**And** the current on-disk v4.2 SHA-256 fingerprint is recorded for Story 33-3's regeneration baseline
+**And** the gap analysis names specific changes Story 33-2 must make to wire `pipeline-manifest.yaml` as the canonical input
+**And** the kill-switch decision states PROCEED or ESCALATE with rationale per the five kill-switch conditions (generator missing, external non-modifiable, ≥3 callers beyond v4.2, ≥3 non-version-controlled input sources, or discovery exceeds 2 working hours)
+**And** one contract test at `tests/contracts/test_33_1_findings_doc_structure.py` pins the findings-doc section structure
+**And** zero edits land to `docs/workflow/production-prompt-pack-v4.2-*.md`, `scripts/utilities/run_hud.py`, or any file under `marcus/orchestrator/` (27-2 hand-edit anti-pattern enforcement)
+
+**Story spec**: [_bmad-output/implementation-artifacts/33-1-generator-discovery.md](../implementation-artifacts/33-1-generator-discovery.md)
+
+### Story 33.2: pipeline-manifest.yaml SSOT + Generator Rewire + L1 Check
+
+As a system architect,
+I want `pipeline-manifest.yaml` as the canonical declaration of pipeline steps/gates/emissions with `check_pipeline_manifest_lockstep.py` enforcing three-way equality across manifest ↔ HUD ↔ generated pack,
+So that the drift class that produced DC-1..DC-5 at session-close 2026-04-19 cannot silently reopen on any future pipeline edit.
+
+**Acceptance Criteria:**
+
+**Given** Story 33-1 findings report is complete and kill-switch verdict is PROCEED
+**When** Story 33-2 dev-story opens
+**Then** `_bmad/manifests/pipeline-manifest.yaml` exists as SSOT with per-step fields: `id`, `label`, `gate` (bool), `sub_phase_of` (nullable parent step id), `insertion_after` (nullable), `hud_tracked` (bool), `pack_version` (parameterized for Q1 compromise), `learning_events.emits` (bool), `learning_events.event_types` (list, empty if emits=false), `learning_events.schema_ref` (top-level field naming the payload schema path)
+**And** `scripts/utilities/check_pipeline_manifest_lockstep.py` lands with 8 checks: set equality, order equality, name-per-id equality, gate-flag bitmap equality, insertion-point consistency, emission-declaration integrity (check 6), schema_ref resolves (check 7), event_types ⊆ schema enum (check 8)
+**And** exit-code contract is strict: 0=PASS, 1=FAIL (per-check O/I/A-tagged trace at `reports/dev-coherence/<ts>/`), 2=manifest missing/unparseable (structural)
+**And** schema-driven traversal is enforced (per Murat's DoD) — adding a new top-level key in the manifest automatically becomes an assertion target; no hardcoded field list
+**And** closed-enum bidirectional checks catch both "new field in manifest not in schema" and "new field in schema not in manifest"
+**And** red-path fixtures prove the checker catches schema-only-drift and manifest-only-drift
+**And** `run_hud.py`, `progress_map.py`, `workflow_runner.py::insert_4a_*` (and any sibling insertion helpers), and the v4.2 generator (per 33-1 findings) all read from the manifest — no duplicate step-list literals remain
+**And** AST-only parsing for the Python projections (no regex per Audra's anti-pattern-3 guard)
+**And** all existing tests that depend on PIPELINE_STEPS or pack structure pass against the manifest-sourced projections
+**And** R1 + R2 party-mode rounds occur for dual-gate ceremony; schema-story scaffold adopted per CLAUDE.md
+**And** `bmad-code-review` layered pass completes before closure
+
+### Story 33.3: Regenerate v4.2 and Validate
+
+As a production operator,
+I want the v4.2 prompt pack regenerated from the manifest-driven generator and the drift test suite green under the new contract,
+So that the MVP-ratification preflight flags can close and downstream pipeline edits flow through the manifest, not through the pack.
+
+**Acceptance Criteria:**
+
+**Given** Story 33-2 is done (manifest + check + rewired generator all landed)
+**When** Story 33-3 executes the manifest-driven regeneration
+**Then** `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` is byte-equivalent to what the generator produces from the current manifest
+**And** `scripts/utilities/check_pipeline_manifest_lockstep.py` exits 0 across all 8 checks
+**And** `tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05` is green (DC-4 reconciled to the runtime-insertion contract or the contract clarified via manifest)
+**And** DC-1 drift (HUD missing 5 pack steps) is resolved — either by adding gate-bearing steps like §7.5 G2.5 to HUD or by declaring §4.75/§6.2/§6.3/§14.5 as sub-phases per manifest, with Paige/Murat bifurcation applied
+**And** DC-2 drift (04A position mismatch) is resolved — three surfaces agree
+**And** DC-3 drift (04.5 semantic collision) is resolved — one canonical name for id 04.5 everywhere
+**And** zero hand-edits to v4.2 land (all changes flow through manifest → regeneration)
+**And** full regression passes (baseline: 3 pre-existing at-session-close regressions tracked separately; 33-3 must not add a 4th)
+
+### Story 33.4: Cora/Audra Pre-Closure Block-Mode + Change-Window Detector
+
+As Cora (dev-session orchestrator),
+I want my pre-closure hook promoted to block-mode for workflow-stage-touching stories with a change-window detector keyed on manifest-declared contract surfaces,
+So that FM-A (HZ invocation advisory-not-load-bearing) and FM-C (no SSOT means no check is authoritative) — the two failure modes that let Epic 32's DC-1..DC-5 reach session-close — cannot recur.
+
+**Acceptance Criteria:**
+
+**Given** Story 33-3 is done (manifest + L1 check + regenerated pack all green)
+**When** Story 33-4 dev-story opens
+**Then** Cora's pre-closure hook (PC capability in her SKILL) promotes to block-mode when the diff's change-window intersects paths declared in `pipeline-manifest.yaml` as gate-boundary contracts
+**And** the change-window detector's path-classification logic is itself declared in the manifest (NOT hardcoded in `workflows/` globs) — per Cora's governance mandate that FM-C medicine applies to her own tool
+**And** block-mode invokes Audra's `check_pipeline_manifest_lockstep.py` as the deterministic gate; non-zero exit code blocks story closure
+**And** warn-mode remains the default for non-workflow-stage edits (prose drift, doc harmonization, etc.) per Cora Principle 5
+**And** a pre-flight smoke test at `tests/test_pre_closure_hook_block_mode.py` simulates a learning-event-schema edit and asserts block-mode fires correctly
+**And** Cora's SKILL.md and Audra's SKILL.md are updated to reflect the promotion and the change-window detector's manifest-driven contract
+**And** the HUD scope union (per Cora SKILL §HZ) extends to include `learning-event-schema.yaml` and `learning_event_capture.py` paths so Story 15-1-lite-marcus's new contracts are in-scope
+**And** `bmad-code-review` layered pass completes; party-mode green-light before 15-1-lite-marcus opens
+
+### Story 15-1-lite-marcus: Marcus Learning Glimmers (META-TEST)
+
+As Marcus (production orchestrator),
+I want a minimal learning-event capture capability at Gates 2, 3, and 4 — compressed from the full Epic 15 Story 15.1 scope — so the next trial production run becomes a learning run,
+So that Epic 15's compound-intelligence value chain unlocks AND Epic 33's substrate is proven load-bearing by a real-world new-contract introduction.
+
+**Acceptance Criteria:**
+
+**Given** Stories 33-1, 33-2, 33-3, 33-4 are all done (substrate live; block-mode active)
+**When** Story 15-1-lite-marcus dev-story opens
+**Then** `state/config/learning-event-schema.yaml` exists with 4 core fields: `run_id` (UUID4), `gate` (enum of Gate IDs), `event_type` (closed enum: approval | revision | waiver), `timestamp` (timezone-aware ISO-8601)
+**And** `scripts/utilities/learning_event_capture.py` provides `create_event(...)`, `validate_event(event, schema)`, `append_to_ledger(event, run_dir)`
+**And** events are appended to `{run_dir}/learning-events.yaml` as an append-only YAML list
+**And** Marcus calls `append_to_ledger()` at Gate 2 (HIL slide review), Gate 3 (fidelity), Gate 4 (narration script review)
+**And** `_bmad/manifests/pipeline-manifest.yaml` is extended with `learning_events.emits/event_types/schema_ref` entries declaring which gates emit which event types
+**And** `scripts/utilities/check_learning_event_lockstep.py` lands with 4 checks: schema ↔ capture enum equality (A), call-site gates ⊆ manifest emitters (B), manifest emitters ⊆ call-site gates (C), call-site event_type ⊆ manifest gate's declared set (D); exit-code contract mirrors `check_pipeline_manifest_lockstep.py`
+**And** two O/I/A red-path fixtures land as regression tests: (i) adding `circuit_break` to `validate_event` without updating the schema must cause check A to fail; (ii) Marcus calling `append_to_ledger` at a Gate declared `emits: false` must cause check B to fail
+**And** **META-TEST**: during dev-story execution, a deliberate workflow-stage-touching diff (the manifest edit) is committed; Cora's block-mode hook fires correctly per Story 33-4; Audra's L1 sweep captures the diff in scope. If the hook does NOT fire, Epic 33 is incomplete and must reopen
+**And** K=4+ floor met with tests covering schema validation, append behavior, integration smoke, ad-hoc boundary
+**And** this story explicitly DOES NOT touch Irene or Dan (Gary) — those get follow-on stories 15-1-lite-irene and 15-1-lite-gary after meta-test validity is confirmed
+**And** `bmad-code-review` layered pass + party-mode green-light before closure; closure invokes the full block-mode guard (Cora's hook logging the block, Audra's trace produced at `reports/dev-coherence/<ts>/`)
+
+**Dependency-lock**: Cannot enter T1 until 33-4 is done. Amelia's AC-trap flag during the party round.
+
+### Epic 33 Closure Criteria
+
+Epic 33 closes `done` when:
+1. All five stories (33-1, 33-2, 33-3, 33-4, 15-1-lite-marcus) are `done` in `sprint-status.yaml`.
+2. The meta-test in 15-1-lite-marcus has fired successfully — Cora's block-mode hook caught the simulated schema-drift during dev.
+3. A party-mode retrospective round has confirmed that the substrate + block-mode + L1 checks meet the "harmony and lockstep reliable" bar Juanl set at the session start on 2026-04-19.
+4. Cora's and Audra's SKILLs reflect the promoted hook and the L1 catalog extensions.
+5. `next-session-start-here.md` is updated to remove DC-1..DC-5 from the outstanding-findings list (they're now caught by CI, not a session-close regression).
+
+**Retrospective**: required (not `optional`) since Epic 33 changes governance surfaces. Per BMAD sprint governance, retrospective assesses whether the failure modes named in Cora's party response (FM-A/FM-B/FM-C) are closed, and what remaining substrate work (multi-version support for v4.3, 15-1-lite-irene / 15-1-lite-gary fan-outs) the next epic should pick up.
+
+### Standing Regime — What Persists After Epic 33 Closes
+
+**Epic 33 is a regime, not a project.** The sprint delivers a standing set of infrastructure + governance primitives that bind every future pipeline edit. None of the seven components below are sunsettable without explicit party-mode consensus + an Epic-N successor story filed first.
+
+**Canonical reference for dev agents at T1 on any future pipeline-touching story**: [`docs/dev-guide/pipeline-manifest-regime.md`](../../docs/dev-guide/pipeline-manifest-regime.md). This sub-section is the Epic-scope authority; the dev-guide doc is the operational cheatsheet.
+
+**The seven components:**
+
+1. **`state/config/pipeline-manifest.yaml` = canonical SSOT** for pipeline shape. Authoritative declaration of gates, order, names, gate-flag bitmap, insertion-points, emission topology (`learning_events.emits / event_types / schema_ref`), `block_mode_trigger_paths`, and per-section `rationale`. All future pipeline edits flow through manifest first; never through pack prose, never through HUD list, never through orchestrator helpers. Schema ratified by 33-2 §R1 Resolutions + extended by 33-4 (`block_mode_trigger_paths`) + 33-1a (`rationale:`).
+
+2. **`scripts/utilities/check_pipeline_manifest_lockstep.py` = standing L1 deterministic check.** 8 checks (set/order/name/gate-bitmap/insertion-point equality + emission-declaration integrity + schema_ref resolution + event_types subset). Strict 0/1/2 exit-code contract. O/I/A trace at `reports/dev-coherence/<ts>/`. Invokable any time (CI, pre-commit, ad-hoc) — continuous enforcement surface.
+
+3. **`scripts/generators/v42/` = standing regeneration path.** Jinja2 template-driven, no LLM in critical path (33-1a R1-33-1a-A ruling). Every manifest edit → rerun generator → commit regenerated pack in the same PR. Infrastructure, not migration tooling. Future pack versions (v4.3, v5, etc.) extend via `scripts/generators/v<N>/` sibling packages + `pack_version` manifest field — horizontal scaling, zero refactor to the substrate.
+
+4. **Cora's block-mode pre-closure hook (33-4) = self-enforcing governance.** When a future story's diff intersects manifest-declared `block_mode_trigger_paths`, pre-closure runs the L1 check; non-zero exit blocks story closure. Closes FM-A (HZ invocation advisory). The regime is gated code, not a convention agents can forget.
+
+5. **Consumer rewires (33-2) = manifest-sourced at import time.** `run_hud.py::PIPELINE_STEPS`, `progress_map.py`, `workflow_runner.py::insert_between`, and the v4.2 generator all read the manifest. Zero hand-maintained parallel lists. One anchor, N projections.
+
+6. **Parameterized version hook (Q1 compromise, landed 33-2) = regime extends to future packs.** Manifest's `pack_version` field + L1 check's `--pack-version` CLI arg are in place. v4.3 ships as `scripts/generators/v43/` + a manifest entry with `pack_version: "v4.3"`, NOT a refactor. The regime scales horizontally by pack version.
+
+7. **15-1-lite-marcus META-TEST PASS evidence = regime-validation artifact.** Not a one-time test — the captured hook-fire trace + timestamp proves the regime catches new-contract introductions at the substrate's level of abstraction. Every future cross-cutting-concern introduction (telemetry, cost ledgers, retrospective schemas, Irene/Dan learning events) follows the same pattern. The meta-test is the canonical template.
+
+**Standard operator doctrine for future pipeline-touching stories:**
+
+```
+1. Edit state/config/pipeline-manifest.yaml (source of truth for new shape)
+2. Edit scripts/generators/v42/templates/ if prose changes are paired
+3. Run scripts/generators/v42/render.py against the manifest → regenerate pack
+4. Run scripts/utilities/check_pipeline_manifest_lockstep.py → assert exit 0
+5. Commit all four artifacts (manifest + templates + pack + any consumer code) as ONE logical change
+6. Cora's block-mode hook validates lockstep at pre-closure (automatic)
+```
+
+**What the regime forbids (binding on all future stories):**
+
+- **Hand-editing the pack** (27-2 anti-pattern; extended by 33-1a to also forbid LLM-editing templates outside the regeneration workflow).
+- **Maintaining parallel step lists** in code (broken at 33-2 by consumer rewires; must stay broken).
+- **Shimming legacy insertion helpers** (33-2 R1-B ruling: delete, don't shim; Murat AC-C.1 trap on shims defeating the orphan-literal guard).
+- **Smuggling LLMs into the critical path** (33-1a kill-switch #6 + AC-C.1 no-LLM-imports guard; the 40-60% hook-disable probability Murat calculated is the standing rationale).
+- **Silent scope creep** — any substrate-level change (manifest shape, L1 check logic, block-mode trigger paths) requires party-mode consensus before dev opens. Case-C-class escalations file a sibling story.
+
+**When the regime hits an unanticipated class of drift**: follow the 33-1 kill-switch template. Stop, escalate, file a sibling story (33-1a precedent), ratify scope via party-mode round before resuming. Do NOT silently expand the in-flight story.

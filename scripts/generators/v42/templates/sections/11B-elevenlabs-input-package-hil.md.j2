@@ -1,0 +1,33 @@
+{{ audience("M→O") }}
+
+
+Marcus, before Prompt 12 synthesis, deliberately display the exact locked ElevenLabs input package and wait for explicit operator GO.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json` when present
+- approved `[BUNDLE_PATH]/voice-selection.json`
+
+Required Marcus behavior:
+- present a concise, operator-readable package review that shows:
+  - locked script path + hash
+  - locked manifest path + hash
+  - approved lesson-level voice id and preview/source
+  - audio buffer setting
+  - segment count and segment id range
+  - any explicit segment-level `voice_id` overrides
+  - any non-default voice-direction controls inherited from `pass2-envelope.json` such as `speed`, `emotional_variability`, and `pace_variability`
+  - runtime-plan summary sufficient to show the intended slide-length variability
+  - bridge-cadence expectations sufficient to show how intros/outros are meant to appear
+- write the review artifact before asking for approval
+- require explicit operator GO before Prompt 12 begins
+
+Required writes:
+- `[BUNDLE_PATH]/elevenlabs-input-review.md`
+
+Go/no-go:
+- no go to Prompt 12 until the operator explicitly approves the displayed ElevenLabs input package
+- if the locked script, manifest, voice selection, or inherited voice-direction defaults change after this review, regenerate the review artifact and re-approve before synthesis
+
+---

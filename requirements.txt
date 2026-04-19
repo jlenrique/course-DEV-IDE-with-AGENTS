@@ -29,3 +29,6 @@ pytest-asyncio>=0.23,<1
 pytest-timeout>=2.3,<3
 responses>=0.25,<1  # HTTP mocking for retrieval/mcp_client tests — Story 27-0
 ruff>=0.4,<1
+
+# Deterministic template generator (Story 33-1a)
+jinja2>=3.1,<4

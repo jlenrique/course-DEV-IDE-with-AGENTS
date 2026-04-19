@@ -1,0 +1,50 @@
+{{ audience("M→O") }}
+
+
+Marcus, delegate Irene Pass 1 for RUN_ID [RUN_ID].
+
+Inputs:
+- Irene packet
+- source bundle
+- source metadata
+- operator directives
+- ingestion quality receipt
+
+Required output:
+- `[BUNDLE_PATH]/irene-pass1.md`
+
+Before Gate 1 approval, run:
+- Vera G1
+- Vera G2
+- Quinn-R quality G2
+
+Hard constraints:
+- Exactly one mode per slide: creative, literal-text, or literal-visual.
+- No slides planned from excluded content.
+- Literal-visual slides must carry complete spec cards.
+
+Stop after Gate 1 review and approval.
+
+### Prompt 5.5: Irene Mode Assignments + HIL Approval
+
+Marcus, after Irene Pass 1, run HIL review of mode assignments.
+
+Required inputs:
+- `[BUNDLE_PATH]/irene-pass1.md` (with mode assignments per slide)
+- `slide_mode_proportions` from run-constants.yaml
+
+Required HIL task:
+- Review Irene's mode assignments against operator proportions
+- Approve or override specific slide modes
+- Ensure proportions are approximately met (within 10% tolerance)
+
+Required write:
+- `[BUNDLE_PATH]/hil-mode-approval.json` with final approved modes per slide
+
+Gate rule:
+- Irene Pass 1 cannot proceed to Gate 1 until HIL approval is recorded.
+- If overrides change proportions significantly, flag for operator re-confirmation.
+
+Stop after HIL approval.
+
+---

@@ -1,0 +1,106 @@
+{{ audience("M→O") }}
+
+
+Marcus, present the final handoff package for the human operator who will assemble/edit in Descript.
+
+Required handoff receipt:
+- run id
+- assembly bundle path
+- manifest path
+- compositor guide path (`DESCRIPT-ASSEMBLY-GUIDE.md`)
+- **Desmond operator brief path** (`DESMOND-OPERATOR-BRIEF.md`)
+- **Automation advisory present** (yes — must be inside `DESMOND-OPERATOR-BRIEF.md` per 14.5)
+- audio status
+- captions status
+- visuals status
+- motion status
+- open notes, if any
+
+Required operator-facing instructions:
+- open **`DESMOND-OPERATOR-BRIEF.md`** for **run-specific** Descript vocabulary and finishing callouts; use **`DESCRIPT-ASSEMBLY-GUIDE.md`** as the **deterministic** segment order, timings, and asset inventory from compositor
+- import assets from `audio/`, `captions/`, `visuals/`, and `motion/` when present
+- follow manifest/guide segment order exactly
+- treat the approved motion clip as the playback visual for non-static segments and the approved still as the poster/reference asset
+- do not improvise new narration copy or new motion assets during Descript assembly
+- read **`## Automation Advisory`** before choosing scripted/API work vs manual finishing
+
+Completion condition:
+- this prompt pack's required path is complete once the assembly bundle contains **`DESCRIPT-ASSEMBLY-GUIDE.md`**, **`DESMOND-OPERATOR-BRIEF.md`** (with Automation Advisory), and all referenced media folders are ready for Descript handoff
+
+Optional post-handoff operations:
+- append the run update to the trial log
+- execute `docs/workflow/production-session-wrapup.md` if the operator wants to close the shift
+
+---
+
+## Mandatory Receipts Per Stage
+
+Require Marcus to emit a compact receipt for every prompt:
+- stage
+- status (pass | warn | fail)
+- artifacts_written
+- validator_results
+- gate_decision
+- next_action
+
+---
+
+## Scope Position
+
+This prompt pack is the right home for motion-enabled narrated runs.
+
+Documentation rule going forward:
+- keep `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md` for the non-motion narrated workflow
+- keep this doc for motion-enabled narrated workflow
+- keep `DOUBLE_DISPATCH` as a conditional branch inside either doc rather than splitting it into separate single-dispatch and double-dispatch prompt packs
+
+---
+
+# Appendix
+
+## Prompt Pack Lineage
+
+Status:
+- Cousin to `docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md`, not a replacement.
+- Intended for tracked/default runs that include Epic 14 motion controls.
+- `DOUBLE_DISPATCH` remains an inline branch inside this workflow rather than requiring its own separate prompt pack.
+
+## Why This Is A Separate Prompt Pack
+
+Motion changes the control plane enough to warrant its own prompts document:
+- a new HIL checkpoint exists after slide approval (`Gate 2M`)
+- Marcus must persist and route a run-scoped `motion_plan.yaml`
+- non-static slides must pass motion generation/import and Motion Gate before Irene Pass 2
+- Irene Pass 2 becomes motion-aware and fail-closed on incomplete motion coverage
+
+By contrast, double-dispatch is a bounded branch inside the Gary stage:
+- Gary produces A/B variants
+- Marcus captures per-slide selections
+- the selected winner deck then rejoins the normal path
+
+That makes motion a separate workflow doc, and `DOUBLE_DISPATCH` a conditional branch inside it.
+
+## Design Principles
+
+- Use one workflow doc for all motion-enabled narrated runs.
+- Treat `motion_enabled` as the authoritative workflow switch.
+- Treat `DOUBLE_DISPATCH` as a local branch in slide generation and selection, not a separate workflow family.
+- Bind Gate 2M to the authorized winner deck only, never unresolved A/B pairs.
+- Keep explicit stop rules at every human gate.
+
+Execution mode: tracked/default.
+
+Primary contract references:
+- `docs/workflow/trial-run-pass2-artifacts-contract.md`
+- `state/config/fidelity-contracts/`
+- `_bmad-output/planning-artifacts/motion-enhanced-workflow-design.md`
+
+## Changelog
+
+- **v4.2i (2026-04-19)** — Added explicit Prompt `04A` Lesson Plan coauthoring + scope-lock checkpoint between Prompt 4 and Prompt 4.5, with required event evidence (`scope_decision.set`, `plan.locked`) and hard block on downstream progression until Step 04A is completed.
+- **v4.2g (2026-04-16)** — Prompt 1: added `--bundle-dir [BUNDLE_PATH]` to preflight command (was identified as a blocker in the 2026-04-15 trial run — preflight skipped bundle-specific run-constants.yaml validation without it).
+- **v4.2h (2026-04-17)** — Added Prompt 4.75 Creative Directive resolution (CD), including `creative-directive.yaml` validation and `narration_profile_controls` persistence; added cluster prompt engineering (6.2), dispatch sequencing (6.3), and G2.5 coherence gate (7.5) for cluster-enabled runs; added Prompt 1 `app_session_readiness --with-preflight`; added `narration-script-parameters.yaml` to Pass 2 inputs; linked Irene A/B loop guidance; clarified motion-first ordering.
+- **v4.2f (2026-04-15)** — Preamble reordered: Pre-Run Checklist → Run Constants → Initialization → Execution Rules → Prompts. Added audience tags (OPERATOR vs MARCUS). Prompt 2 gains greenfield vs. resume guidance. Prompt 2A rewritten with concrete directive examples, governance rules (focus=emphasis, exclusion=provenance, special treatment=override), and resume-run re-confirmation. Prompt 3 adds ingestion scope rule (extract ALL content), extraction completeness validation (word-count floor check, HALT threshold), and cross-validation hint for Notion-exported PDFs. Prompt 4 now requires per-dimension evidence sentences (bare PASS/FAIL rejected). Source Wrangler agent vision document created (`_bmad-output/planning-artifacts/source-wrangler-agent-vision.md`). Design principles, lineage, and changelog moved to appendix.
+- **v4.2e (2026-04-15)** — Story 20c-15: profile-aware slide count estimator integrated into Prompt 4.5, 2-input operator poll (parent_slide_count + target_total_runtime_minutes), experience-profile-driven feasibility triangle, run-constants locking.
+- **v4.2d (2026-04-15)** — Pre-Run Checklist added for visual-led profile. Run Constants updated with concrete C1-M1-PRES-20260415 values, experience profile mapping rule, and CLUSTER_DENSITY. Initialization Instructions expanded with step-by-step bundle setup. Artifact verification protocol added to Execution Rules.
+- **v4.2** — Added Epic 14 motion controls (`motion_enabled`, Gate 2M, motion generation/import, Motion Gate, motion-aware Irene Pass 2) while preserving the Epic 12 `DOUBLE_DISPATCH` branch inside the same document. Canonical generators for preflight receipts, operator directives, Irene packets.

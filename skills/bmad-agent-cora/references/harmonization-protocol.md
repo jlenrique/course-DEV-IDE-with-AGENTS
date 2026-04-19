@@ -30,6 +30,8 @@ This protocol is a six-gap-closed evolution of `maintenance/doc review prompt 20
    - `scripts/utilities/progress_map.py` — dev-cycle panel (sprint/epic rollup consumed by the HUD)
    - `tests/test_run_hud.py` — HUD regression coverage
    - `tests/test_progress_map.py` — progress-map regression coverage (tests must co-evolve with `progress_map.py`; orphaned guards left behind by a refactor are a past-incident defect class)
+   - `state/config/learning-event-schema.yaml` — learning-event contract surface that must participate in workflow-stage lockstep
+   - `scripts/utilities/learning_event_capture.py` — learning-event capture implementation wired to the schema contract
 
    Rationale: git-narrow windows often skip tooling that must stay in lockstep with `sprint-status.yaml`, prompt-pack pipeline ordering, and bundle gate sidecars. The HUD surfaces **production-run** truth (latest bundle, `run-constants.yaml`, gate results) and **dev-session** truth (`build_progress_report` / sprint state) in separate panels; coherence work must verify those code paths whenever internal artifacts move.
 

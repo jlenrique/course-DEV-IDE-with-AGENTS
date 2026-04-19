@@ -26,6 +26,7 @@ from typing import Any
 import yaml
 
 from scripts.utilities.file_helpers import project_root
+from scripts.utilities.pipeline_manifest import hud_steps, load_manifest
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -36,6 +37,7 @@ LATEST_TEXT_REPORT = ROOT / "reports" / "progress-map-latest.txt"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
 SESSION_HANDOFF = ROOT / "SESSION-HANDOFF.md"
 NEXT_SESSION = ROOT / "next-session-start-here.md"
+PIPELINE_STEPS = hud_steps(load_manifest())
 
 # ---------------------------------------------------------------------------
 # Status classification
@@ -158,6 +160,7 @@ WAVE_LABELS: dict[str, str] = {
     "30": "Marcus Duality Split + Plan-Lock Fanout",
     "31": "Tri-phasic Contract Primitives + Gates",
     "32": "Envelope Audit + Coverage Manifest",
+    "33": "Pipeline Lockstep Substrate",
 }
 
 # ---------------------------------------------------------------------------

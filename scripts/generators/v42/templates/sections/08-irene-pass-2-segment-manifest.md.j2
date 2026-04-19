@@ -1,0 +1,96 @@
+{{ audience("M→O") }}
+
+
+Marcus, delegate Irene Pass 2 only after:
+- Gate 2 approval completed
+- `authorized-storyboard.json` exists
+- `motion_plan.yaml` exists and fully covers the authorized winner deck
+- all approved motion assets are present for non-static slides
+
+Inputs:
+- winner slide output derived from the authorized deck
+- source bundle
+- operator directives
+- Irene Pass 1
+- refreshed `[BUNDLE_PATH]/pass2-envelope.json`
+- `state/config/narration-script-parameters.yaml` (resolved `narration_profile_controls`)
+- if `DOUBLE_DISPATCH: true`, `[BUNDLE_PATH]/variant-selection.json`
+- if `MOTION_ENABLED: true`, `[BUNDLE_PATH]/motion_plan.yaml`
+
+Required Marcus behavior before delegation:
+- refresh or regenerate `[BUNDLE_PATH]/pass2-envelope.json` so it reflects the current authorized deck, current `motion_plan.yaml`, expected Pass 2 outputs, and any approved motion assets for this run
+- carry forward the locked runtime plan into `pass2-envelope.json` as structured data, including slide-count/runtime settings and any per-slide runtime targets from Irene Pass 1
+- carry forward `voice_direction_defaults` into `pass2-envelope.json` so downstream voice work inherits the current recommended ElevenLabs starting settings
+- if this is a rerun, archive or remove stale partial Pass 2 outputs before delegation so Irene writes fresh canonical artifacts at bundle root
+- treat `authorized-storyboard.json` plus the approved local winner-slide PNGs as the slide identity source of truth; do not reuse prior storyboard review projections as execution inputs
+- in motion runs, preserve the exact Motion Gate-approved asset path per non-static slide; do not re-decide motion inside Pass 2
+
+Canonical Marcus prep command:
+
+```powershell
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py `
+  --bundle [BUNDLE_PATH]
+```
+
+Expected prep outputs before Irene runs:
+- fresh `[BUNDLE_PATH]/pass2-envelope.json`
+- `[BUNDLE_PATH]/pass2-prep-receipt.json`
+- stale prior Pass 2 root artifacts archived under `[BUNDLE_PATH]/recovery/archive/pass2-reruns/` when this is a rerun
+- static-slide motion leftovers reported but not rebound into the handoff
+
+Required outputs:
+- `[BUNDLE_PATH]/narration-script.md`
+- `[BUNDLE_PATH]/segment-manifest.yaml`
+- `[BUNDLE_PATH]/perception-artifacts.json`
+- image perception artifacts must include `visual_complexity_level` and `visual_complexity_summary`
+- if motion exists: motion perception confirmations aligned to non-static segments, written into `pass2-envelope.json` as `motion_perception_artifacts`
+- if motion exists: video perception artifacts should include `temporal_event_density_level` and `temporal_event_density_summary`
+
+Required Pass 2 timing metadata per segment:
+- `timing_role`
+- `content_density`
+- `visual_detail_load`
+- `duration_rationale`
+- `bridge_type`
+
+Required validation:
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-irene-pass2-handoff.py --envelope [BUNDLE_PATH]/pass2-envelope.json`
+- Vera G4
+
+Validator expectations at this stage:
+- every authorized slide must have at least one segment in `segment-manifest.yaml`
+- every manifest segment must have non-empty `narration_text`
+- every manifest segment must contain at least one non-empty `visual_references[].narration_cue` that is traceable to `perception-artifacts.json` and present in the segment narration text
+- every manifest segment must remain audience-directed when `narration-script-parameters.yaml` forbids meta slide language; grounded cues stay required, but slide-tour phrasing does not pass
+- if `runtime_plan.per_slide_targets[]` exists, Pass 2 validation fails closed when narration word count falls materially outside the soft runtime band implied by target runtime and `narration_density.target_wpm` (unless explicitly run in advisory mode)
+- missing or invalid `timing_role`, `content_density`, `visual_detail_load`, `duration_rationale`, or weak timing rationale are hard failures in strict mode (not advisory drift)
+- bridge-cadence gaps are hard failures in strict mode when the configured intro/outro cadence is exceeded
+- every non-static motion segment must remain bound to the approved `motion_plan.yaml` asset and have matching motion perception confirmation before handoff passes
+- every manifest segment should include a non-empty `behavioral_intent` in both narration-script.md and segment-manifest.yaml; segments missing `behavioral_intent` generate a warning (Vera G4-13 validates quality at gate time)
+- video segments (`visual_mode: video`) should contain motion-first narration referencing dynamic/temporal visual content; the validator flags segments whose narration lacks motion keywords as a heuristic advisory (Vera G4-09 performs the agentic assessment)
+
+Vera G4 criteria at this gate (19 criteria):
+- G4-01 through G4-12 (existing): slide correspondence, visual accuracy, assessment exactness, terminology consistency, invention detection, manifest alignment, source depth, perception lineage, audience-directed visual grounding (now including motion-first narration for video segments), runtime plan coherence, timing rationale completeness, script-parameter policy
+- **G4-13**: behavioral_intent validation — verifies the claim is segment-specific and narration supports the stated learner effect
+- **G4-14**: motion_brief fidelity — verifies motion_brief descriptions match motion perception confirmations
+- **G4-15**: duration_rationale semantic correctness — agentic companion to G4-11, verifying rationale quality beyond field presence
+- **G4-16**: cluster narration coherence — interstitials serve `master_behavioral_intent` (skipped when `CLUSTER_DENSITY` is none)
+- **G4-17**: cluster word budget — head: 80–140 words, interstitial: 25–40 words (skipped when `CLUSTER_DENSITY` is none)
+- **G4-18**: no new concepts in interstitials — interstitials scoped to head's `source_ref` (skipped when `CLUSTER_DENSITY` is none)
+- **G4-19**: cluster arc integrity — establish → tension → develop → resolve progression (skipped when `CLUSTER_DENSITY` is none)
+
+Motion-specific rules:
+- Irene must hydrate motion fields from `motion_plan.yaml`, not infer them from draft narration.
+- Motion-enabled manifest hydration must fail closed on empty or partial plan coverage.
+- Motion-enabled reruns must fail closed if `motion_plan.yaml` is not already in final Motion Gate-approved state.
+- Non-static segments must pass motion perception confirmation before final handoff.
+- If a segment's approved playback visual is a motion clip (`visual_mode: video`, `motion_type: video`), Irene should write motion-first narration: use the slide once for orientation if needed, then speak primarily to the visible action/change in the approved clip rather than continuing to narrate the static slide layout as if it were still on screen.
+
+**Visual-Led Profile HIL Notes:**
+- Favor creative slides (60% proportion) for maximum visual impact and motion opportunities.
+- Use literal-visual slides (25%) for direct source-anchored visual grounding.
+- Limit literal-text slides (15%) to essential data or transitions.
+- Ensure narration grounds in visual elements, especially for motion segments.
+
+Rerun rule:
+- If Prompt 8 is being re-run after a partial or invalid Pass 2 attempt, restart at Prompt 8 itself once Gate 2 and Motion Gate remain valid; do not jump ahead to Storyboard B from stale Pass 2 artifacts.

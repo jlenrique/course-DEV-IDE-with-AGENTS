@@ -1,0 +1,43 @@
+schema_version: "1.0"
+pack_version: "v4.2"
+generator_ref: "scripts/generators/v42/render.py"
+learning_events:
+  schema_ref: state/config/learning-event-schema.yaml
+block_mode_trigger_paths: []
+steps:
+  - id: "01"
+    label: "Gate 2"
+    gate: true
+    gate_code: "G2"
+    sub_phase_of: null
+    insertion_after: null
+    hud_tracked: true
+    pack_section_anchor: "1)"
+    learning_events:
+      emits: true
+      event_types: ["approval", "revision", "waiver"]
+      schema_ref: state/config/learning-event-schema.yaml
+  - id: "02"
+    label: "Gate 3"
+    gate: true
+    gate_code: "G3"
+    sub_phase_of: null
+    insertion_after: "01"
+    hud_tracked: true
+    pack_section_anchor: "2)"
+    learning_events:
+      emits: true
+      event_types: ["approval", "revision", "waiver"]
+      schema_ref: state/config/learning-event-schema.yaml
+  - id: "03"
+    label: "Gate 4"
+    gate: true
+    gate_code: "G4"
+    sub_phase_of: null
+    insertion_after: "02"
+    hud_tracked: true
+    pack_section_anchor: "3)"
+    learning_events:
+      emits: true
+      event_types: ["approval", "revision", "waiver"]
+      schema_ref: state/config/learning-event-schema.yaml

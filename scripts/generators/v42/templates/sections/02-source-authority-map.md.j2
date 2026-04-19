@@ -1,0 +1,26 @@
+{{ audience("M→O") }}
+
+
+Marcus, produce source authority and ingestion map for RUN_ID [RUN_ID].
+
+Primary source:
+- [PRIMARY_SOURCE_FILE]
+
+Optional context:
+- [OPTIONAL_CONTEXT_ASSETS]
+
+For each source, return:
+- source_id
+- source_type
+- authority_level
+- downstream_consumers_direct
+- downstream_consumers_indirect
+- extraction_pathway
+- expected_confidence
+- known_risks
+
+When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval.
+
+Stop and wait for approval.
+
+---

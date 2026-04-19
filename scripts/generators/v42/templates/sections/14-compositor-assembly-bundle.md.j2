@@ -1,0 +1,39 @@
+{{ audience("M→O") }}
+
+
+Marcus, build the final assembly bundle for Descript from the pre-composition-approved manifest.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- generated audio/captions
+- approved still PNG references
+- approved motion assets for non-static segments
+
+Required Marcus/compositor behavior:
+- run compositor `sync-visuals` on `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- localize approved stills into `[BUNDLE_PATH]/assembly-bundle/visuals/`
+- localize approved motion assets into `[BUNDLE_PATH]/assembly-bundle/motion/`
+- regenerate `[BUNDLE_PATH]/assembly-bundle/DESCRIPT-ASSEMBLY-GUIDE.md`
+- confirm the guide points at the localized bundle paths, not the original Gary/motion source trees
+
+Required assembly-bundle contents:
+- `segment-manifest.yaml`
+- `DESCRIPT-ASSEMBLY-GUIDE.md`
+- `audio/`
+- `captions/`
+- `visuals/`
+- `motion/` when any segment is non-static
+
+Motion-specific rules:
+- keep `visual_file` bound to the approved still/poster-frame reference
+- keep `motion_asset_path` bound to the approved playback asset
+- do not collapse still and motion references into one field
+- the assembly guide must include per-segment placement/sync instructions for motion segments, using the approved clip on the visual track and the still as the reference/poster asset
+
+Packaging rule:
+- use the actual compositor output layout for handoff: `visuals/` plus `motion/`
+
+Go/no-go:
+- do not advance to **15** until **14.5** completes successfully (Desmond operator brief written)
+
+---

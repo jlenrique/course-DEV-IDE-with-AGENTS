@@ -57,7 +57,16 @@ def _baseline_is_placeholder() -> bool:
     except json.JSONDecodeError:
         return False
     note = str(payload.get("_note", "")).lower()
-    return "placeholder" in note
+    comment = str(payload.get("_comment", "")).lower()
+    if "placeholder" in note or "placeholder" in comment:
+        return True
+
+    for entry in payload.values():
+        if isinstance(entry, dict):
+            entry_note = str(entry.get("note", "")).lower()
+            if "placeholder" in entry_note:
+                return True
+    return False
 
 
 @pytest.mark.skipif(

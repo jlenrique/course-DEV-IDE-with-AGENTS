@@ -18,15 +18,14 @@ from __future__ import annotations
 
 import argparse
 import html as html_mod
-import json
-import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 from scripts.utilities.file_helpers import project_root
+from scripts.utilities.pipeline_manifest import hud_steps, load_manifest
 from scripts.utilities.progress_map import build_report as build_progress_report
 
 # ---------------------------------------------------------------------------
@@ -39,39 +38,11 @@ BUNDLES_DIR = ROOT / "course-content" / "staging" / "tracked" / "source-bundles"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
 
 # ---------------------------------------------------------------------------
-# Pipeline step definitions (from prompt pack v4.2)
-# SYNC-WITH: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-# TODO: Extract to shared pipeline-manifest.yaml for single-source-of-truth
+# Pipeline step definitions
+# SYNC-WITH: state/config/pipeline-manifest.yaml
 # ---------------------------------------------------------------------------
 
-PIPELINE_STEPS: list[dict[str, str]] = [
-    {"id": "01", "name": "Activation + Preflight", "gate": "yes"},
-    {"id": "02", "name": "Source Authority Map", "gate": "no"},
-    {"id": "02A", "name": "Operator Directives", "gate": "no"},
-    {"id": "03", "name": "Ingestion + Evidence Log", "gate": "no"},
-    {"id": "04", "name": "Ingestion Quality Gate + Irene Packet", "gate": "yes"},
-    {"id": "04.5", "name": "Estimator + Run Constants Lock", "gate": "no"},
-    {"id": "05", "name": "Irene Pass 1 + Gate 1 Fidelity", "gate": "yes"},
-    {"id": "05B", "name": "Cluster Plan G1.5 Gate", "gate": "yes"},
-    {"id": "06", "name": "Pre-Dispatch Package Build", "gate": "no"},
-    {"id": "06B", "name": "Literal-Visual Operator Build", "gate": "no"},
-    {"id": "07", "name": "Gary Dispatch + Export", "gate": "no"},
-    {"id": "07B", "name": "Variant Selection Gate", "gate": "yes"},
-    {"id": "07C", "name": "Storyboard A + Gate 2 Approval", "gate": "yes"},
-    {"id": "07D", "name": "Gate 2M Motion Designation", "gate": "yes"},
-    {"id": "07E", "name": "Motion Generation / Import", "gate": "no"},
-    {"id": "07F", "name": "Motion Gate", "gate": "yes"},
-    {"id": "08", "name": "Irene Pass 2 + Segment Manifest", "gate": "no"},
-    {"id": "08B", "name": "Storyboard B + HIL Review", "gate": "yes"},
-    {"id": "09", "name": "Gate 3 - Lock Pass 2 Package", "gate": "yes"},
-    {"id": "10", "name": "Fidelity + Quality Pre-Spend", "gate": "yes"},
-    {"id": "11", "name": "ElevenLabs Voice Selection HIL", "gate": "yes"},
-    {"id": "11B", "name": "ElevenLabs Input Package HIL", "gate": "yes"},
-    {"id": "12", "name": "ElevenLabs Audio Generation", "gate": "no"},
-    {"id": "13", "name": "Quinn-R Pre-Composition QA", "gate": "yes"},
-    {"id": "14", "name": "Compositor Assembly Bundle", "gate": "no"},
-    {"id": "15", "name": "Operator Handoff - Descript Ready", "gate": "no"},
-]
+PIPELINE_STEPS: list[dict[str, str]] = hud_steps(load_manifest())
 
 
 # ---------------------------------------------------------------------------
@@ -219,12 +190,12 @@ def collect_hud_data(
         dev_report = None
 
     # Source freshness tracking
-    now = datetime.now(tz=timezone.utc).replace(microsecond=0)
+    now = datetime.now(tz=UTC).replace(microsecond=0)
     source_freshness: dict[str, str] = {}
 
     def _file_ts(p: Path, label: str) -> None:
         if p.exists():
-            mtime = datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc).replace(microsecond=0)
+            mtime = datetime.fromtimestamp(p.stat().st_mtime, tz=UTC).replace(microsecond=0)
             source_freshness[label] = mtime.isoformat()
 
     _file_ts(SPRINT_STATUS, "sprint-status")
@@ -449,12 +420,15 @@ def _render_health_panel(
                 check_icon = "&#x2705;" if str(v).lower() in ("true", "connected", "pass", "ok") else "&#x26A0;&#xFE0F;"
                 metrics_html += f'<div class="health-row">{check_icon} <strong>{_esc(k)}:</strong> {val_str}</div>'
         summary = step_01.get("summary", "")
+        summary_html = f'<div class="step-summary">{_esc(summary)}</div>' if summary else ""
+        timestamp = step_01.get("timestamp", "")
+        timestamp_html = f'<div class="dim">Ran: {_esc(timestamp)}</div>' if timestamp else ""
         sections.append(
             f'<div class="health-section {css}">'
             f'<h4>{icon} Preflight</h4>'
-            f'{"<div class=\"step-summary\">" + _esc(summary) + "</div>" if summary else ""}'
+            f'{summary_html}'
             f'{metrics_html}'
-            f'{"<div class=\"dim\">Ran: " + _esc(step_01.get("timestamp", "")) + "</div>" if step_01.get("timestamp") else ""}'
+            f'{timestamp_html}'
             f'</div>'
         )
     else:
@@ -520,7 +494,7 @@ def render_html(data: dict[str, Any]) -> str:
     source = rc.get("PRIMARY_SOURCE_FILE", "—")
     bundle = data["bundle_path"] or "—"
     pct = round(ps["current_step"] / ps["total_steps"] * 100) if ps["total_steps"] else 0
-    bar_w = int(pct * 2)
+    int(pct * 2)
 
     # Header status badges
     header_cls = ""
@@ -558,7 +532,7 @@ def render_html(data: dict[str, Any]) -> str:
     for src_name, ts in freshness.items():
         if ts:
             try:
-                age = (datetime.now(tz=timezone.utc) - datetime.fromisoformat(ts)).total_seconds()
+                age = (datetime.now(tz=UTC) - datetime.fromisoformat(ts)).total_seconds()
             except (ValueError, TypeError):
                 age = 9999
             age_str = f"{int(age)}s ago" if age < 120 else f"{int(age / 60)}m ago"

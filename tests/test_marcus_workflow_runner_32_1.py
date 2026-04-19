@@ -11,7 +11,7 @@ from marcus.lesson_plan.log import LessonPlanLog
 from marcus.lesson_plan.schema import LearningModel, LessonPlan, PlanUnit, ScopeDecision
 from marcus.orchestrator.workflow_runner import (
     Step4AWorkflowResult,
-    insert_4a_between_step_04_and_05,
+    insert_between,
     route_step_04_gate_to_step_05,
 )
 from scripts.utilities.run_hud import PIPELINE_STEPS
@@ -43,23 +43,23 @@ def _decision(scope: str = "in-scope") -> ScopeDecision:
     )
 
 
-def test_insert_4a_places_stage_between_04_and_05() -> None:
+def test_insert_between_places_stage_between_04_and_05() -> None:
     sequence = ("01", "02", "03", "04", "04.5", "05", "06")
-    updated = insert_4a_between_step_04_and_05(sequence)
+    updated = insert_between("04", "05", "04A", sequence)
     assert updated.index("04") < updated.index("04A") < updated.index("05")
 
 
-def test_insert_4a_is_idempotent_with_existing_04a() -> None:
+def test_insert_between_is_idempotent_with_existing_04a() -> None:
     sequence = ("01", "02", "03", "04", "04A", "05", "06")
-    updated = insert_4a_between_step_04_and_05(sequence)
+    updated = insert_between("04", "05", "04A", sequence)
     assert updated.count("04A") == 1
 
 
-def test_insert_4a_rejects_missing_required_steps() -> None:
+def test_insert_between_rejects_missing_required_steps() -> None:
     with pytest.raises(ValueError, match="missing required step '04'"):
-        insert_4a_between_step_04_and_05(("01", "02", "05"))
+        insert_between("04", "05", "04A", ("01", "02", "05"))
     with pytest.raises(ValueError, match="missing required step '05'"):
-        insert_4a_between_step_04_and_05(("01", "02", "04"))
+        insert_between("04", "05", "04A", ("01", "02", "04"))
 
 
 def test_route_step_04_to_05_runs_4a_and_returns_handoff(tmp_path: Path) -> None:

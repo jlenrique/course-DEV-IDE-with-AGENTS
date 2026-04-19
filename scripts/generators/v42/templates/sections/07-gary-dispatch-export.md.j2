@@ -1,0 +1,35 @@
+{{ audience("M→O") }}
+
+
+Marcus, dispatch Gary only if all checks are true:
+- no unresolved literal-visual blockers
+- envelope READY
+- singular mode preserved
+- theme mapping frozen
+- requested content is content-bearing and dispatch-ready
+
+Dispatch behavior:
+- If `DOUBLE_DISPATCH: false`, run one Gary dispatch cycle.
+- If `DOUBLE_DISPATCH: true`, run variant A and variant B for every eligible slide position.
+
+Required outputs:
+- `[BUNDLE_PATH]/gary-dispatch-result.json`
+- `[BUNDLE_PATH]/gary-dispatch-run-log.json`
+- If `DOUBLE_DISPATCH: true`: `[BUNDLE_PATH]/gary-dispatch-result-B.json`
+- If `DOUBLE_DISPATCH: true`: `[BUNDLE_PATH]/gary-dispatch-run-log-B.json`
+- `gamma-export/...`
+- If `DOUBLE_DISPATCH: true`: `gamma-export-B/...`
+
+Required validation:
+- Vera G3 on every dispatch set produced
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-gary-dispatch-ready.py --payload [BUNDLE_PATH]/gary-dispatch-result.json`
+- PNG export-to-card mapping validation (ensure slide_XX.png matches card number XX)
+- If `DOUBLE_DISPATCH: true`, run the same validator against `[BUNDLE_PATH]/gary-dispatch-result-B.json`
+
+Required write:
+- `[BUNDLE_PATH]/gary-dispatch-validation-result.json`
+- If `DOUBLE_DISPATCH: true`: `[BUNDLE_PATH]/gary-dispatch-validation-result-B.json`
+
+Stop on any validator or G3 failure.
+
+---

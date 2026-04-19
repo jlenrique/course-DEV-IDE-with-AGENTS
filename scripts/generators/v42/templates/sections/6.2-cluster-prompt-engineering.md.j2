@@ -1,0 +1,17 @@
+{{ audience("M→O") }}
+
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
+
+Marcus, render cluster-aware prompts using the G1.5-approved cluster plan.
+
+Required command (capture stdout to file):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_prompt_engineering.py --cluster [BUNDLE_PATH]/clusters.json --config state/config/prompting.yaml > [BUNDLE_PATH]/cluster-prompts.json`
+
+Required write:
+- `[BUNDLE_PATH]/cluster-prompts.json` (contains prompt_id, audit metadata, and prompt text per cluster)
+
+Gate rule:
+- Halt if prompt engineering fails or `cluster-prompts.json` is empty.
+
+---

@@ -1,0 +1,49 @@
+{{ audience("M→O") }}
+
+
+Marcus, route non-static slides from `motion_plan.yaml` to their downstream handlers.
+
+Routing rules:
+- `static` slides remain unchanged.
+- `video` slides route to Kling.
+- `animation` slides route to manual animation guidance and import validation.
+
+Required outcomes:
+- video rows acquire generated MP4s plus credits consumed
+- animation rows acquire imported approved files plus duration
+- `motion_plan.yaml` is updated with concrete asset paths and statuses
+- reviewer-facing inspection artifacts exist under `[BUNDLE_PATH]/recovery/inspection/` before Motion Gate closes
+
+Recommended authoritative command for `video` rows:
+
+```powershell
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/run_motion_generation.py `
+  --motion-plan [BUNDLE_PATH]/motion_plan.yaml `
+  --slide-id [AUTHORIZED_SLIDE_ID]
+```
+
+Expected receipts per generated slide:
+- run-scoped `.progress.json` receipt with `task_id` for resume/reconciliation
+- run-scoped terminal `.json` receipt with provider status, local asset path, credits, and validation details
+- production silence encoded as `requested_audio_mode: silent` with Kling native-audio field omitted from the API request
+
+Recommended inspection-pack command after generation/import settles:
+
+```powershell
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/build-pass2-inspection-pack.py `
+  --bundle [BUNDLE_PATH]
+```
+
+Implementation note:
+- motion/perception helpers should resolve `ffmpeg` through the repo utility (`scripts/utilities/ffmpeg.py`) before assuming it is unavailable on `PATH`.
+
+Fail-closed rules:
+- One `pro -> std` downgrade is allowed per over-budget clip.
+- If a clip still exceeds budget after downgrade, pause for operator action.
+- No silent partial continuation.
+- If a `.progress.json` receipt already exists for the same slide, resume polling that `task_id` instead of submitting a duplicate job.
+- Patch `motion_plan.yaml` only after the downloaded MP4 passes local validation.
+
+Stop before Irene Pass 2 until all non-static rows intended for this run have concrete assets or explicit operator resolution.
+
+---

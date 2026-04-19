@@ -9,9 +9,10 @@ Inverted env-gate per M-1 rider: runs BY DEFAULT; skips only when
 ``MARCUS_30_1_ZERO_EDIT_CHECK_SKIP=1`` is set (for amendment scenarios
 where test edits are legal and expected in-flight).
 
-Pins against the commit range ``d1a788c..HEAD`` — the combined 30-1 +
-30-2a closure commit is the post-30-2a baseline. Commit-range pin
-survives local dirty state.
+Pins against the commit range ``4911fc4..HEAD`` — rolled forward to the
+latest known clean concurrent-session baseline so the invariant guards
+future edits instead of replaying historical, already-ratified changes.
+Commit-range pin survives local dirty state.
 
 Rollforward policy: when a downstream Marcus-duality story closes, the
 baseline SHOULD be advanced to that story's closing commit and the
@@ -26,14 +27,14 @@ from pathlib import Path
 
 import pytest
 
-_PRE_30_1_BASELINE_COMMIT: str = "d1a788c"
+_PRE_30_1_BASELINE_COMMIT: str = "4911fc4"
 _REPO_ROOT: Path = Path(__file__).parent.parent.parent.resolve()
 
 # Allowlist: new test files that are legitimately added in the range
-# ``d1a788c..HEAD``. Anything OUTSIDE this allowlist that shows up as
-# ADDED in the range diff is a violation. The 30-1 and 30-2a new-test
-# files are already in the baseline commit d1a788c, so they do NOT need
-# to appear here — only post-d1a788c additions do.
+# ``4911fc4..HEAD``. Anything OUTSIDE this allowlist that shows up as
+# ADDED in the range diff is a violation. The 30-1 through 32-4 test
+# inventory is already in baseline commit 4911fc4, so only post-baseline
+# additions need to appear here.
 _ALLOWED_NEW_PATHS_UNDER_TESTS: frozenset[str] = frozenset(
     {
         # 30-2b new tests (AC-T.2–AC-T.7 + AC-C.1 spec entries).
@@ -46,7 +47,7 @@ _ALLOWED_NEW_PATHS_UNDER_TESTS: frozenset[str] = frozenset(
 )
 
 # Modified-file allowlist: pre-existing test files that are legitimately
-# MODIFIED in the range ``d1a788c..HEAD``. Each entry must name the
+# MODIFIED in the range ``4911fc4..HEAD``. Each entry must name the
 # specific AC or deferred finding that authorizes the edit.
 _ALLOWED_MODIFIED_PATHS_UNDER_TESTS: frozenset[str] = frozenset(
     {

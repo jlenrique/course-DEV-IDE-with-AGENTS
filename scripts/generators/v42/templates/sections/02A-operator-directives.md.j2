@@ -1,0 +1,51 @@
+{{ audience("M→O") }}
+
+
+**This step is mandatory.** Ingestion (Prompt 3) cannot proceed without either explicit directives or an explicit "no special directives" acknowledgment from the operator.
+
+Poll timing policy (hard requirement):
+- Start a poll timer when Prompt 2A is issued.
+- Enforce a hard 3-minute reply hold from poll start before any submission can be accepted.
+- Auto-close the poll exactly 15 minutes after poll start if a complete submission is not received.
+- Submissions before the 3-minute mark are invalid and must be re-polled.
+- If the poll auto-closes, keep ingestion blocked and require a new Prompt 2A poll.
+
+Marcus, record the operator's source-processing directives for RUN_ID [RUN_ID].
+
+The operator will provide directives in three categories. For each, record exactly what is stated:
+
+**Focus directives** — sections, topics, or content to emphasize:
+- [e.g., "Focus on Part 1 slides and their visual format descriptions"]
+- [e.g., "The table on page 12 is the primary data for slide content"]
+
+**Exclusion directives** — content to ignore or deprioritize:
+- [e.g., "Ignore Appendix B (instructor notes, not student-facing)"]
+- [e.g., "Skip the bibliography and references section"]
+
+**Special treatment directives** — content requiring non-default handling:
+- [e.g., "Treat the infographic on page 8 as a literal-visual candidate"]
+- [e.g., "The acronym list on page 2 should feed the pronunciation dictionary, not slide content"]
+- [e.g., "Diagram on page 14 must be preserved exactly as-is (source-crop, no rebranding)"]
+
+If the operator has no special directives, record: "No operator directives — process all source content at default authority levels."
+
+Governance rules:
+- Operator directives bind Texas (Source Wrangler agent) during ingestion and Irene during planning.
+- Exclusion directives are provenance records: Vera G0 must not flag excluded content as an omission if the exclusion is recorded here.
+- Focus directives are emphasis signals, not exclusion of unmentioned content. The entire source must still be extracted; focus directives control downstream emphasis, not ingestion scope.
+- Special treatment directives override default fidelity classification for the specified content only.
+- This artifact becomes a first-class input alongside `extracted.md` for downstream agents.
+
+When resuming a run that already has `operator-directives.md`, Marcus may present the existing directives for re-confirmation rather than re-polling from scratch.
+
+Required write:
+- `[BUNDLE_PATH]/operator-directives.md`
+
+Artifact verification (deterministic — expected file count: **3**):
+- Run: `Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count`
+- Expected files: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`
+- If count < 3, halt and remediate before proceeding.
+
+Stop and wait for operator confirmation.
+
+---

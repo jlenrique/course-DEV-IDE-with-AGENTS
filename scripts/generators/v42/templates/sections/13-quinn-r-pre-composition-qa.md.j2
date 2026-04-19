@@ -1,0 +1,35 @@
+{{ audience("M→O") }}
+
+
+Marcus, run Quinn-R pre-composition review after ElevenLabs completes and before compositor packaging.
+
+Inputs:
+- `[BUNDLE_PATH]/assembly-bundle/segment-manifest.yaml`
+- generated audio and VTT assets
+- approved still PNG references
+- approved motion clips for every non-static segment
+
+Required Quinn-R checks:
+- narration WPM is reviewed against the expected range, with advisory notes when the approved script itself already implies the pacing rather than ElevenLabs causing the issue
+- VTT timestamps are monotonic
+- segment coverage is complete
+- when `motion_type != static`, `motion_duration_seconds` is coherent against `narration_duration`
+- video/animation duration vs narration duration stays within accepted tolerance, or explicit edit guidance is produced
+- required audio/SFX/music files referenced by the manifest exist
+
+Advisory vs blocking rule:
+- blocking: missing assets, missing coverage, non-monotonic VTT, unreadable motion assets, or material motion mismatch that would make composition incorrect
+- advisory: script-implied pacing variance, upstream runtime-band warnings, weak timing rationale, or bridge-cadence drift that the operator accepts
+
+Motion-specific rules:
+- treat `narration_duration` as the authoritative timing signal for downstream composition
+- do not silently retime, overwrite, or replace approved motion clips inside this prompt
+- if a non-static segment has material duration mismatch or unreadable `motion_asset_path`, stop and report the exact segment ids
+- remediation target must be explicit:
+  - ElevenLabs if the issue is narration pacing or audio coverage
+  - motion/editing decision if the issue is clip fit against approved narration
+
+Go/no-go:
+- no go to compositor until Quinn-R pre-composition passes or the operator explicitly accepts the reported non-blocking notes
+
+---

@@ -1,0 +1,31 @@
+{{ audience("M→O") }}
+
+
+Marcus, run the downstream readiness checks on the Gate 3-approved package before ElevenLabs and compositor spend.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json`
+- locked `[BUNDLE_PATH]/motion_plan.yaml`
+- Storyboard B approval record
+
+Required Marcus behavior:
+- present the most recent Prompt 8 Vera G4 receipt if the artifacts are unchanged
+- if any Pass 2 artifact changed after Prompt 8, rerun Vera G4 on the changed package before continuing — G4 now includes G4-13 (behavioral_intent), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic correctness), G4-16..19 (cluster criteria, when applicable), and extended G4-09 (motion-first narration quality)
+- run Quinn-R on the approved Pass 2 package before ElevenLabs spend — Quinn-R now includes SFX/music cue selection check (CI sub-check), behavioral_intent pre-composition validation (IF extension), and bridge re-validation at pre-composition
+- in motion runs, include motion-cue alignment and approved-asset-path drift checks against `motion_plan.yaml`
+
+Required checks:
+- no G4 critical findings remain open (includes G4-13 through G4-15, plus G4-16..19 cluster criteria when applicable)
+- Quinn-R sees no blocker that would make audio generation wasteful (includes SFX/music cue and behavioral_intent coherence checks)
+- every non-static segment still preserves:
+  - `visual_file` as the approved still/poster-frame reference
+  - `motion_asset_path` as the approved playback asset
+  - motion-first narration intent for `visual_mode: video`
+
+Go/no-go:
+- no go if motion bindings drifted from `motion_plan.yaml`
+- no go if any non-static segment would require regenerated copy or regenerated motion to remain coherent
+
+---

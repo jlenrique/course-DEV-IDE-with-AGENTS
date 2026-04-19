@@ -11,6 +11,7 @@ from marcus.facade import Facade
 from marcus.lesson_plan.log import LessonPlanLog
 from marcus.lesson_plan.schema import LessonPlan
 from marcus.orchestrator.loop import IntakeCallable
+from scripts.utilities.pipeline_manifest import load_manifest
 
 
 class StepBatonHandoff(BaseModel):
@@ -33,24 +34,34 @@ class Step4AWorkflowResult(BaseModel):
     handoff: StepBatonHandoff
 
 
-def insert_4a_between_step_04_and_05(steps: Iterable[str]) -> tuple[str, ...]:
-    """Ensure 4A appears in the pipeline between step 04 and step 05."""
+def insert_between(
+    before_id: str, after_id: str, new_step: str, steps: Iterable[str]
+) -> tuple[str, ...]:
+    """Ensure new_step appears between before_id and after_id."""
+    step_map = {step.id: step for step in load_manifest().steps}
+    if before_id not in step_map:
+        raise ValueError(f"pipeline manifest does not define step '{before_id}'")
+    if after_id not in step_map:
+        raise ValueError(f"pipeline manifest does not define step '{after_id}'")
+
     ordered = list(steps)
-    if "04" not in ordered:
-        raise ValueError("pipeline is missing required step '04'")
-    if "05" not in ordered:
-        raise ValueError("pipeline is missing required step '05'")
+    if before_id not in ordered:
+        raise ValueError(f"pipeline is missing required step '{before_id}'")
+    if after_id not in ordered:
+        raise ValueError(f"pipeline is missing required step '{after_id}'")
 
-    idx_04 = ordered.index("04")
-    idx_05 = ordered.index("05")
-    if idx_04 >= idx_05:
-        raise ValueError("pipeline order invalid: step '04' must precede step '05'")
+    idx_before = ordered.index(before_id)
+    idx_after = ordered.index(after_id)
+    if idx_before >= idx_after:
+        raise ValueError(
+            f"pipeline order invalid: step '{before_id}' must precede step '{after_id}'"
+        )
 
-    between = ordered[idx_04 + 1 : idx_05]
-    if "04A" in between or "4A" in between:
+    between = ordered[idx_before + 1 : idx_after]
+    if new_step in between:
         return tuple(ordered)
 
-    ordered.insert(idx_05, "04A")
+    ordered.insert(idx_after, new_step)
     return tuple(ordered)
 
 

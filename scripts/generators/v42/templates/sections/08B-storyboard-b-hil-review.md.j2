@@ -1,0 +1,50 @@
+{{ audience("M→O") }}
+
+
+Regenerate Storyboard B with script context before downstream audio finalization.
+
+Marcus, after Irene Pass 2 G4 and Motion Gate approval, regenerate Storyboard B with full script context before Gate 3 or any audio spend. **Generation of storyboards (both A and B) now always concludes with the existing publish_snapshot_tree routine (in generate-storyboard.py) to post the hydrated snapshot to the site repo, generating a publish-receipt.json containing the live GitHub.io URL for HIL review.**
+
+Inputs:
+- `[BUNDLE_PATH]/narration-script.md`
+- `[BUNDLE_PATH]/segment-manifest.yaml`
+- `[BUNDLE_PATH]/authorized-storyboard.json`
+- `[BUNDLE_PATH]/motion_plan.yaml` (final approved state)
+- `[BUNDLE_PATH]/perception-artifacts.json` (motion perception confirmations)
+
+Required behavior:
+- Treat `authorized-storyboard.json` + approved local winner-slide PNGs as the sole slide identity source of truth.
+- Hydrate storyboard.json and regenerate `storyboard/index.html` with script context (thumbnails, script/script-notes panels, orientation/provenance, related-assets including motion clips, perception cues).
+- Include Storyboard B runtime/script-policy metadata in the header (target total runtime, target average slide runtime, target slide-runtime variance, script policy highlights) sourced from `pass2-envelope.json` when present.
+- Include voice-direction variability defaults in the Storyboard B header when present (`voice_direction_defaults.emotional_variability`, `voice_direction_defaults.pace_variability`) so operators can compare script intent vs synthesis settings before spend.
+- Include per-slide timing-policy metadata in the reviewer evidence panel when available (runtime target seconds, timing role, content density, visual detail load, duration rationale, bridge type, behavioral intent) from `segment-manifest.yaml` / `pass2-envelope.json`.
+- Preserve all Motion Gate-approved `motion_asset_path` bindings; use motion-first narration cues for non-static segments.
+- Do not reuse prior storyboard review projections.
+- **Always conclude with the existing publish routine to copy snapshot to target_subdir under assets/storyboards/ in the jlenrique.github.io repo and emit publish-receipt.json with `publish_url`.**
+
+Required command (example):
+```powershell
+.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/write-authorized-storyboard.py `
+  --manifest [BUNDLE_PATH]/storyboard/storyboard.json `
+  --run-id [RUN_ID] `
+  --output [BUNDLE_PATH]/authorized-storyboard.json `
+  --script-context [BUNDLE_PATH]/narration-script.md `
+  --motion-plan [BUNDLE_PATH]/motion_plan.yaml
+# Follow-on generate-storyboard.py call (with --segment-manifest) will now always trigger publish_snapshot_tree
+```
+
+Required validation:
+- Vera G4 (re-run if changed) — includes G4-13 (behavioral_intent), G4-14 (motion_brief fidelity), G4-15 (duration_rationale semantic), G4-16..19 (cluster criteria, when applicable), and G4-09 motion-first narration checks
+- `validate-irene-pass2-handoff.py` (confirm motion perception alignment + behavioral_intent presence + motion-first narration heuristic)
+- Confirm publish-receipt.json exists with valid `publish_url` and "status": "published"
+
+Required HIL review (replaces prior bullet):
+- Operator reviews regenerated reviewer-friendly HTML storyboard surface **from the live publish_url** (e.g. https://jlenrique.github.io/assets/storyboards/.../index.html).
+- Explicit approval on the script-context-aware winner deck.
+- Record approval artifact (e.g. update receipt or create approval note linked to the URL).
+
+Gate rule:
+- Gate 3 (Prompt 9) is blocked until this regeneration + publish-to-Git + HIL approval completes.
+- Revision at Gate 3 must trigger re-regeneration of Storyboard B with updated script context + re-publish before any downstream spend.
+
+---

@@ -89,7 +89,7 @@ Read current repo state:
 | L1 | Deterministic sweep runner: structural walk, reference resolution, schema lockstep, lane-matrix coverage, closure-artifact audit, placement audit, git-anchored change window | Load `./references/deterministic-sweep.md` |
 | L2 | Agentic sweep: prose drift on changed docs, intent-of-change on schema-touching changes without doc updates, doc-to-code narrative alignment, parameter-directory pruning candidates | Load `./references/agentic-sweep.md` |
 | TR | Trace-report authoring in O/I/A taxonomy | Load `./references/trace-report-format.md` |
-| CA | Closure-artifact audit for a specific story ID (triggered by Cora's pre-closure protocol) | Load `./references/closure-artifact-audit.md` |
+| CA | Closure-artifact audit for a specific story ID (triggered by Cora's pre-closure protocol); when invoked in Cora block-mode, requires `check_pipeline_manifest_lockstep.py` exit 0 before closure is permitted | Load `./references/closure-artifact-audit.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 
 ### External Skills
@@ -97,6 +97,7 @@ Read current repo state:
 | Capability | Target Skill | Status | Context Passed |
 |------------|-------------|--------|----------------|
 | Deterministic architectural-drift detection | `scripts/utilities/structural_walk.py` | active | Workflow (`standard` / `motion` / `cluster`); exit 0 = READY |
+| Pipeline lockstep closure gate | `scripts/utilities/check_pipeline_manifest_lockstep.py` | active | Manifest path, pack path; used by Cora pre-closure block-mode gate |
 | Single-command L1 sweep runner (consolidates every L1 check; exit-code contract) | `scripts/utilities/dev_coherence_sweep.py` | planned (Phase 2 of vision doc) | Anchor commit, scope flag, report-home path; ships before Audra takes sole ownership of the L1 catalog |
 | Parameter-lockstep audit | `scripts/utilities/check_parameter_lockstep.py` | planned (Phase 3) | Directory/schema paths |
 | Lane-matrix coverage audit | `scripts/utilities/check_lane_coverage.py` | planned (Phase 3) | Lane-matrix path, skills-tree root |

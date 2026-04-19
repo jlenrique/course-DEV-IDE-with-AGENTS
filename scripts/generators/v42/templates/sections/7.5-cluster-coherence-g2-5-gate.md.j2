@@ -1,0 +1,22 @@
+{{ audience("M→O") }}
+
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
+
+Marcus, run G2.5 cluster coherence validation on the generated cluster outputs **before** Storyboard A.
+
+Required command (capture stdout to file):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_coherence_validation.py --manifest [CLUSTER_MANIFEST_PATH] --outputs [CLUSTER_OUTPUTS_PATH] --config state/config/validation.yaml > [BUNDLE_PATH]/cluster-coherence-report.json`
+
+Inputs guidance:
+- `CLUSTER_MANIFEST_PATH` should reference the cluster-aware manifest used for dispatch ordering (cluster plan + slide ids).
+- `CLUSTER_OUTPUTS_PATH` should reference the generated cluster outputs from Gary (or the merged outputs list for double-dispatch).
+
+Required write:
+- `[BUNDLE_PATH]/cluster-coherence-report.json`
+
+Gate rule:
+- If coherence fails, run the interstitial redispatch protocol (`skills/bmad-agent-marcus/scripts/run-interstitial-redispatch.py`) and re-run this gate.
+- Do not proceed to Prompt 7B/7C until G2.5 passes or the operator explicitly accepts the violations.
+
+---

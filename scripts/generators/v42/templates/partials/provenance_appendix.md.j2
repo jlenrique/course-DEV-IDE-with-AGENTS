@@ -1,0 +1,6 @@
+## Provenance Appendix
+
+| Section | Rationale |
+|---|---|
+{% for step in steps if step.rationale %}| {{ step.id }} | {{ step.rationale }} |
+{% endfor %}

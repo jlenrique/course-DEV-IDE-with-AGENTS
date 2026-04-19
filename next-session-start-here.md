@@ -1,16 +1,25 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> **Current objective:** land MVP ratification (plan §F4 party-mode green-light) against the **preflight-flags doc**, then investigate the three at-session-close regressions surfaced by the 2026-04-19 full-suite run.
+> **Current objective:** start Marcus trial production run from a clean post-harmonization baseline.
+>
+> **Deferred inventory status (2026-04-19):** 4 backlog epics (15, 16, 17, 18) / 4 deferred stories in active epics (20c-4, 20c-5, 20c-6, 20a-5) / 6 named-but-not-filed follow-ons. See [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md) for reactivation triggers per entry. Binding consultation per [CLAUDE.md §Deferred inventory governance](CLAUDE.md).
+
+## Session-Adjacent Update (2026-04-19)
+
+- Epic 33 substrate story `33-2-pipeline-manifest-ssot` is now BMAD-closed (`done`).
+- AC-B.15 was formally DEFERRED to `33-1a-build-v42-generator` per 33-1 Case C (no in-repo generator of record).
+- Sprint reshape is recorded: `33-1a` now blocks `33-3` (replacing the prior direct 33-2 -> 33-3 handoff).
+- **Deferred inventory governance landed 2026-04-19**: single index at [`deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md); retrospective hook + session-start-here line + CLAUDE.md governance section all in place.
 
 ## Immediate Next Action
 
 1. Run the BMAD Session Protocol Session START.
 2. Confirm branch. Session closed on `master` (concurrent sessions merged `dev/lesson-planner` back to master).
 3. Use `_bmad-output/implementation-artifacts/sprint-status.yaml` as the canonical status source.
-4. **Triage the three at-session-close regressions** (see "At-session-close regressions" below) BEFORE stamping MVP-complete — each is a concurrent-session landing that has not been reconciled with the full suite.
-5. **Read the MVP Ratification Preflight Flags** at [_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md](_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md) before convening the F4 bmad-party-mode green-light round.
-6. After triage + preflight: convene F4 party-mode round, record per-flag verdict, proceed to MVP-complete or block per verdict.
+4. Confirm Step 0a harmonization report exists and review it: [reports/dev-coherence/2026-04-19-1546/harmonization-summary.md](reports/dev-coherence/2026-04-19-1546/harmonization-summary.md).
+5. Review F4 party-mode verdict record: [_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md](_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md).
+6. Re-run command set in `reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md`, then begin trial run if all checks stay green.
 
 ## Repo State
 
@@ -24,15 +33,15 @@
   - Backend-faithfulness preamble in [_bmad-output/maps/maya-journey/maya-walkthrough.md](_bmad-output/maps/maya-journey/maya-walkthrough.md).
   - F4 row amended in [_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md](_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md) §F4 to require reading preflight doc aloud.
 
-## At-session-close regressions (3)
+## At-session-close regressions (3) — RESOLVED 2026-04-19
 
-Full regression at 2026-04-19 session close: **1899 passed / 2 failed / 1 collection error / 4 skipped / 27 deselected / 2 xfailed**. None of the three failures are from this session's 32-2a or 32-4 work — all three are concurrent-session landings that have not been reconciled with the full suite. Surface for investigation at next session START:
+At 2026-04-19 session close the suite was **1899 passed / 2 failed / 1 collection error / 4 skipped / 27 deselected / 2 xfailed**. A-first remediation + B-step full harmonization were completed in-session and recorded under `reports/dev-coherence/2026-04-19-1546/`. Current re-verify status: **1910 passed / 4 skipped / 27 deselected / 2 xfailed**.
 
-- **`tests/contracts/test_tracy_postures.py` — ImportError at collection**. `from skills.bmad_agent_tracy.scripts.posture_dispatcher import PostureDispatcher` fails because `tests/conftest.py::_SKILL_SCRIPTS` namespace-module hack creates `skills` as a `types.ModuleType` with `__path__ = []`, which shadows the real `skills/__init__.py` package and breaks all other skills subpackage imports. The hack was authored for `skills.pre_flight_check.scripts` (dashed dir) but overreaches. Fix options: (a) only install the namespace-hack if a real `skills` package isn't already loaded; (b) extend the hack to register `skills.bmad_agent_tracy.scripts` too; (c) keep the hack narrowly scoped and re-import the real `skills` package after. Direct `python -c "from skills.bmad_agent_tracy..."` works — this is pytest-specific.
-- **`tests/contracts/test_30_1_zero_test_edits.py::test_no_preexisting_test_files_modified_in_30_1` — AssertionError (30-1 zero-edit invariant violated)**. The baseline commit pinned by 30-2b (`d1a788c`) is out of date vs. current master — concurrent-session commits (32fea9b, b98aad6, etc.) touched pre-existing test files within the 30-1 allowlist boundary. Fix: roll the baseline forward to the latest green commit and regenerate the `_ALLOWED_MODIFIED_PATHS_UNDER_TESTS` allowlist.
-- **`tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05` — AssertionError `'04A' not in ['01', '02', '02A', '03', '04', '04.5', ...]`**. The HUD pipeline currently surfaces `04.5` but not the expected `04A` stage label. Concurrent session `b98aad6 (chore(lockstep): enforce 04A workflow parity and venv structural-walk usage)` touched `scripts/utilities/structural_walk.py` and multiple workflow docs; the 04A label threading into `run_hud.py` is incomplete or was reverted.
+- **`tests/contracts/test_tracy_postures.py` — ImportError at collection**. **Resolved** by tightening package registration in `tests/conftest.py` so synthetic namespace modules do not shadow the real `skills` package.
+- **`tests/contracts/test_30_1_zero_test_edits.py::test_no_preexisting_test_files_modified_in_30_1` — stale baseline pin**. **Resolved** by rolling `_PRE_30_1_BASELINE_COMMIT` forward to `4911fc4`.
+- **`tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05` — missing `04A` in HUD pipeline**. **Resolved** by restoring `04A` stage in `scripts/utilities/run_hud.py` between `04.5` and `05`.
 
-**None of these failures touch 32-2a or 32-4 artifacts.** A triage-first-then-F4 sequence keeps the ratification round clean.
+All three failures were concurrent-session drift, not 32-2a/32-4 logic defects; they are now closed with traceable evidence.
 
 ## Recent Closures (prior sessions)
 
@@ -65,8 +74,8 @@ Full regression at 2026-04-19 session close: **1899 passed / 2 failed / 1 collec
 ```bash
 git status
 cat _bmad-output/implementation-artifacts/sprint-status.yaml
-python scripts/utilities/validate_lesson_planner_story_governance.py _bmad-output/implementation-artifacts/32-4-maya-journey-walkthrough.md
-python -m pytest -p no:cacheprovider --tb=no -q  # expect 3 failures to triage first
+python -m pytest tests/contracts/test_tracy_postures.py tests/contracts/test_30_1_zero_test_edits.py::test_no_preexisting_test_files_modified_in_30_1 tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05 -q
+python -m pytest -q
 ```
 
 ## Notes

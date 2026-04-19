@@ -1,0 +1,26 @@
+{{ audience("M→O") }}
+
+
+> Skip this prompt when `DOUBLE_DISPATCH` is false.
+
+Marcus, run per-slide variant selection for RUN_ID [RUN_ID].
+
+Preconditions:
+- Both variant sets exist and passed G3.
+- All file paths are valid.
+
+Required operator task:
+- Review paired A/B variants per slide.
+- Select the stronger treatment for each slide position.
+
+Required write:
+- `[BUNDLE_PATH]/variant-selection.json`
+
+Gate rule:
+- No downstream progression until every slide has exactly one selected variant.
+- Deferred slides block progression.
+
+Fallback:
+- If one side failed, auto-select the surviving side and record that fallback explicitly.
+
+---

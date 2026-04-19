@@ -46,7 +46,7 @@ overall_status: pass | warn
 gap_summary: "<one-line-if-warn>"
 ```
 
-Any `false` in the four artifact checks sets `overall_status: warn`. Per Phase 6 policy: **never block**. Always relay to Cora who relays to the operator.
+Any `false` in the four artifact checks sets `overall_status: warn`. In Cora warn-mode flows this remains advisory. In Cora block-mode flows (workflow-stage touches), closure also requires `check_pipeline_manifest_lockstep.py` exit 0 before Cora permits status flip.
 
 ## Evidence File
 

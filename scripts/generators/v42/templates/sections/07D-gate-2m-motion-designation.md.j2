@@ -1,0 +1,59 @@
+{{ audience("M→O") }}
+
+
+Marcus, after `authorized-storyboard.json` exists and `MOTION_ENABLED: true`, present Gate 2M.
+
+Required Marcus behavior before operator designation:
+- Generate a per-slide recommendation for every authorized slide.
+- Every recommendation must include:
+  - recommended motion type
+  - rationale
+  - source anchor
+  - confidence label
+- Present the recommendation set as the starting point for operator review; the operator may override or add detail.
+
+Required operator task:
+- For each authorized slide, choose exactly one:
+  - `static`
+  - `video`
+  - `animation`
+- Add optional `motion_brief` for video slides
+- Add optional `guidance_notes` for animation slides
+- If you override Marcus's recommendation on any slide, add `override_reason`
+
+Required writes:
+- `[BUNDLE_PATH]/motion-designations.json`
+- `[BUNDLE_PATH]/motion_plan.yaml`
+
+Required commands:
+
+```powershell
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/motion_plan.py build `
+  --authorized-storyboard [BUNDLE_PATH]/authorized-storyboard.json `
+  --output [BUNDLE_PATH]/motion_plan.yaml `
+  --designations-output [BUNDLE_PATH]/motion-designations.json `
+  --motion-enabled `
+  --motion-budget-max-credits [MOTION_BUDGET_MAX_CREDITS] `
+  --motion-budget-model-preference [MOTION_BUDGET_MODEL_PREFERENCE]
+```
+
+```powershell
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/motion_plan.py apply `
+  --motion-plan [BUNDLE_PATH]/motion_plan.yaml `
+  --designations [BUNDLE_PATH]/motion-designations.json `
+  --output [BUNDLE_PATH]/motion_plan.yaml
+```
+
+Optional routing summary:
+
+```powershell
+.\.venv\Scripts\python.exe skills/production-coordination/scripts/motion_plan.py route `
+  --motion-plan [BUNDLE_PATH]/motion_plan.yaml
+```
+
+Gate rules:
+- Every authorized slide must have Gate 2M coverage.
+- Recommendations must be presented for every authorized slide before operator selection.
+- Unknown slide IDs or incomplete coverage block progression.
+
+---

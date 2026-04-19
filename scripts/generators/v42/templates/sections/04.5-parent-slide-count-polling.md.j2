@@ -1,0 +1,31 @@
+{{ audience("M→O") }}
+
+
+Marcus, run the profile-aware slide count and runtime precursor step for RUN_ID [RUN_ID].
+
+Required analysis:
+- Run `scripts/utilities/slide_count_runtime_estimator.py` on `[BUNDLE_PATH]/extracted.md`
+  with `--experience-profile [EXPERIENCE_PROFILE]` and `--parent-slides [operator value or recommendation]`
+  and `--target-runtime [operator value or recommendation]`.
+- The estimator calls `estimate_and_validate()` which loads the experience profile,
+  derives `estimated_total_slides` and `avg_slide_seconds` from the profile's
+  `cluster_expansion` block, and runs a 5-condition feasibility triangle.
+
+Required polling:
+- Poll operator for exactly two inputs: `parent_slide_count` and `target_total_runtime_minutes`
+- All other values (`estimated_total_slides`, `avg_slide_seconds`, word budgets) are
+  system-derived from the experience profile — do not poll for them.
+- Poll with 3-minute hold, 15-minute auto-close
+- If feasibility returns BLOCK, loop — re-poll with adjusted values
+- If feasibility returns WARN, surface the warning and require operator ACK before proceeding
+
+Required locking:
+- Persist locked values in `run-constants.yaml`:
+  - `parent_slide_count` (operator-confirmed)
+  - `target_total_runtime_minutes` (operator-confirmed)
+  - `estimated_total_slides` (system-derived, informational)
+  - `avg_slide_seconds` (system-derived, informational)
+
+Stop and wait for operator lock confirmation.
+
+---

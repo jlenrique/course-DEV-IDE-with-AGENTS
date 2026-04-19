@@ -1,0 +1,17 @@
+{{ audience("M→O") }}
+
+
+**Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
+
+Marcus, build a deterministic cluster dispatch plan.
+
+Required command (capture stdout to file):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/cluster_dispatch_sequencing.py --clusters [BUNDLE_PATH]/clusters-list.json --config state/config/dispatch.yaml > [BUNDLE_PATH]/cluster-dispatch-plan.json`
+
+Required write:
+- `[BUNDLE_PATH]/cluster-dispatch-plan.json` (includes `plan_hash`, batch schedule, retry policy)
+
+Gate rule:
+- Halt if dispatch sequencing fails or `plan_hash` is missing.
+
+---

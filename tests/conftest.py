@@ -5,6 +5,7 @@
 - Registers skill script modules with dashed directory names
 """
 
+import importlib
 import importlib.util
 import os
 import sys
@@ -126,16 +127,36 @@ _SKILL_SCRIPTS = [
     ),
 ]
 
+
+def _ensure_module_package(
+    module_name: str,
+    module_path: Path | None = None,
+) -> types.ModuleType:
+    """Return an importable package module without shadowing real packages."""
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        return existing
+
+    try:
+        return importlib.import_module(module_name)
+    except ImportError:
+        module = types.ModuleType(module_name)
+        if module_path is not None:
+            module.__path__ = [str(module_path)]
+        else:
+            module.__path__ = []
+        sys.modules[module_name] = module
+        return module
+
 for pkg_name, pkg_path in _SKILL_SCRIPTS:
     if pkg_name in sys.modules:
         continue
     parts = pkg_name.split(".")
-    for i in range(1, len(parts) + 1):
+    _ensure_module_package(parts[0], ROOT / parts[0])
+    for i in range(2, len(parts) + 1):
         partial = ".".join(parts[:i])
-        if partial not in sys.modules:
-            mod = types.ModuleType(partial)
-            mod.__path__ = []
-            sys.modules[partial] = mod
+        partial_path = pkg_path.parent if i < len(parts) else pkg_path
+        _ensure_module_package(partial, partial_path)
     if pkg_path.is_dir():
         for py_file in sorted(pkg_path.glob("*.py")):
             if py_file.name == "__init__.py":

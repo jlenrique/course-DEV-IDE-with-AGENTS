@@ -1,72 +1,46 @@
-# Production Prompt Pack v4.2: Marcus Motion-Enabled Narrated Workflow
+# Production Prompt Pack v4.2 (Generated)
 
----
+## 0) TL;DR Crosswalk
 
-## Pre-Prompt Readiness (moved into Marcus — 2026-04-17)
+| Pack § | HUD id | Marcus module | Audience | One-line purpose |
+|---|---|---|---|---|
+| 01 | 01 | scripts/utilities/run_hud.py | M→O | Activation + Preflight |
+| 02 | 02 | scripts/utilities/run_hud.py | O→M | Source Authority Map |
+| 02A | 02A | scripts/utilities/run_hud.py | M→self | Operator Directives |
+| 03 | 03 | scripts/utilities/run_hud.py | O→M | Ingestion + Evidence Log |
+| 04 | 04 | marcus/orchestrator/loop.py | M→O | Ingestion Quality Gate + Irene Packet |
+| 04A | 04A | marcus/orchestrator/loop.py | M→O | Lesson Plan Coauthoring + Scope Lock |
+| 04.5 | 04.5 | marcus/orchestrator/loop.py | M→self | Parent Slide Count Polling |
+| 04.55 | 04.55 | marcus/orchestrator/loop.py | M→self | Estimator + Run Constants Lock |
+| 4.75 | 4.75 | scripts/utilities/run_hud.py | M→self | Creative Directive Resolution |
+| 05 | 05 | scripts/utilities/run_hud.py | M→O | Irene Pass 1 + Gate 1 Fidelity |
+| 05B | 05B | scripts/utilities/run_hud.py | M→O | Cluster Plan G1.5 Gate |
+| 06 | 06 | scripts/utilities/run_hud.py | O→M | Pre-Dispatch Package Build |
+| 6.2 | 6.2 | scripts/utilities/run_hud.py | M→self | Cluster Prompt Engineering |
+| 6.3 | 6.3 | scripts/utilities/run_hud.py | M→self | Cluster Dispatch Sequencing |
+| 06B | 06B | scripts/utilities/run_hud.py | M→self | Literal-Visual Operator Build |
+| 07 | 07 | skills/bmad-agent-gary | O→M | Gary Dispatch + Export |
+| 7.5 | 7.5 | scripts/utilities/run_hud.py | M→O | Cluster Coherence G2.5 Gate |
+| 07B | 07B | skills/bmad-agent-gary | M→O | Variant Selection Gate |
+| 07C | 07C | skills/bmad-agent-gary | M→O | Storyboard A + Gate 2 Approval |
+| 07D | 07D | skills/bmad-agent-gary | M→O | Gate 2M Motion Designation |
+| 07E | 07E | skills/bmad-agent-gary | M→self | Motion Generation / Import |
+| 07F | 07F | skills/bmad-agent-gary | M→O | Motion Gate |
+| 08 | 08 | scripts/utilities/run_hud.py | O→M | Irene Pass 2 + Segment Manifest |
+| 08B | 08B | scripts/utilities/run_hud.py | M→O | Storyboard B + HIL Review |
+| 09 | 09 | scripts/utilities/run_hud.py | M→O | Gate 3 - Lock Pass 2 Package |
+| 10 | 10 | scripts/utilities/run_hud.py | M→O | Fidelity + Quality Pre-Spend |
+| 11 | 11 | skills/bmad-agent-audra | M→O | ElevenLabs Voice Selection HIL |
+| 11B | 11B | skills/bmad-agent-audra | M→O | ElevenLabs Input Package HIL |
+| 12 | 12 | skills/bmad-agent-audra | O→M | ElevenLabs Audio Generation |
+| 13 | 13 | scripts/utilities/run_hud.py | M→O | Quinn-R Pre-Composition QA |
+| 14 | 14 | skills/bmad-agent-desmond | O→M | Compositor Assembly Bundle |
+| 14.5 | 14.5 | skills/bmad-agent-desmond | M→self | Desmond Run-Scoped Operator Brief |
+| 15 | 15 | skills/bmad-agent-desmond | O→M | Operator Handoff - Descript Ready |
 
-> **Marcus capabilities moved.** The readiness/execution checks previously in
-> "Pre-Run Checklist", "Run Constants", and "Initialization Instructions"
-> sections of this pack are now Marcus capabilities — **PR-PF, PR-RC, PR-HC,
-> PR-RS** — invoked from conversation via the verbose landing-point posture
-> (ask → default/prior → recommend → proceed?). This pack now keeps only
-> operator-facing *prompts*; readiness mechanics are Marcus's concern.
->
-> - **Canonical reference:** [`docs/dev-guide/marcus-capabilities.md`](../dev-guide/marcus-capabilities.md)
-> - **Historical archive** (the pre-2026-04-17 content, verbatim): [`docs/workflow/archive/prompt-pack-preprompt-2026-04.md`](archive/prompt-pack-preprompt-2026-04.md)
-> - **Story of record:** 26-6 — Marcus Production-Readiness Capabilities
->
-> **What this means for operators:** before firing Prompt 1, simply ask
-> Marcus to prepare the run ("Marcus, run preflight" / "Marcus, author the
-> run constants for this bundle"). Marcus will ask, show defaults, recommend,
-> and proceed on your approval — closing the doc-vs-code schema drift that
-> halted the 2026-04-17 trial.
+## 01) Activation + Preflight
+[M→O]
 
-## Experience-Profile Routing (Operator Rule)
-
-> **Audience: MARCUS (agent).** Production workflow doctrine for PR-RC and
-> downstream specialists — this stays in the pack because it governs how
-> Marcus ASKS the operator, not how the YAML is formatted.
-
-- Marcus must ask the operator in plain language: "Should the visuals lead, or should the text lead for this lesson?"
-- Do not ask the operator to choose an `experience_profile` by name.
-- Mapping rule for persisted run constants:
-  - visuals lead → `experience_profile: visual-led`
-  - text lead → `experience_profile: text-led`
-  - no preference stated → omit `experience_profile` and preserve legacy behavior
-- `MOTION_ENABLED: true` requires an explicit positive budget.
-- `DOUBLE_DISPATCH` changes only the Gary selection branch, not the rest of the workflow.
-- Do not change run constants mid-run.
-
-## Execution Rules (Marcus)
-
-> **Audience: MARCUS (agent).** These rules bind all prompts below.
-
-Execution convention:
-- Use the repo-local interpreter for every repo command in this prompt pack: `.\.venv\Scripts\python.exe`
-- Do not rely on global `python`, `py`, or bare `pytest` during production operations.
-
-SPOC rule (non-negotiable):
-- Marcus is the **single point of contact** for the operator during the run.
-- All specialist actions (Texas, CD, Irene, Gary, Vera, Quinn-R, ElevenLabs, Kling, Compositor, Desmond) are **mediated and reported through Marcus**. No direct specialist-to-operator exchanges.
-- If a specialist must ask for clarification, route the question back to Marcus for operator review.
-
-Artifact verification protocol (hard requirement):
-- After every prompt that declares a "Required write" or "Required artifacts", Marcus must run a deterministic file-count verification before reporting success.
-- Verification command: `Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count`
-- The expected cumulative file count after each checkpoint is listed in the prompt. If the actual count is less than expected, Marcus must halt, list the missing files, and attempt remediation before proceeding.
-- Verbal confirmation of file writes is insufficient. Only the deterministic count is authoritative.
-- This protocol exists because Act-mode agents have a proven failure pattern of confirming file writes that did not execute.
-
-Motion-first ordering note:
-- This prompt pack intentionally routes motion generation **before** Irene Pass 2 so narration can align to the approved motion assets.
-- Marcus’s generic pipeline reference shows the narration-first order for non-motion runs; this document is the motion-led override.
-- If you must invert the order, stop and explicitly re-plan the run rather than silently swapping steps.
-
----
-
-# Prompts
-
-## 1) Activation + Preflight Contract Gate
 
 Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 
@@ -99,7 +73,9 @@ Wait for explicit GO.
 
 ---
 
-## 2) Source Authority Map Before Ingestion
+## 02) Source Authority Map
+[M→O]
+
 
 Marcus, produce source authority and ingestion map for RUN_ID [RUN_ID].
 
@@ -125,7 +101,9 @@ Stop and wait for approval.
 
 ---
 
-## 2A) Operator Directives (Mandatory)
+## 02A) Operator Directives
+[M→O]
+
 
 **This step is mandatory.** Ingestion (Prompt 3) cannot proceed without either explicit directives or an explicit "no special directives" acknowledgment from the operator.
 
@@ -176,7 +154,9 @@ Stop and wait for operator confirmation.
 
 ---
 
-## 3) Ingestion Execution + Evidence Log
+## 03) Ingestion + Evidence Log
+[M→O]
+
 
 Marcus, delegate ingestion for RUN_ID [RUN_ID] to Texas (Source Wrangler agent) by invoking his runtime wrangling runner. Texas's runner orchestrates fetch + extract + validate + cross-validate + artifact emission in one deterministic pass, using his 4-tier quality classifier and (when validation-role assets are supplied) his cross-validator.
 
@@ -268,7 +248,9 @@ This fallback survives for exactly two clean trial runs of the runner path (per 
 
 ---
 
-## 4) Ingestion Quality Gate + Irene Packet
+## 04) Ingestion Quality Gate + Irene Packet
+[M→O]
+
 
 Marcus, run ingestion quality gate for RUN_ID [RUN_ID].
 
@@ -296,7 +278,9 @@ Stop if any dimension or G0 fails.
 
 ---
 
-## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)
+## 04A) Lesson Plan Coauthoring + Scope Lock
+[M→O]
+
 
 Marcus, run the mandatory Lesson Plan coauthoring checkpoint for RUN_ID [RUN_ID] after Prompt 4 and before Prompt 4.5.
 
@@ -323,7 +307,9 @@ Stop and wait for operator confirmation.
 
 ---
 
-## 4.5) Precursor Step: Parent Slide Count & Runtime Polling
+## 04.5) Parent Slide Count Polling
+[M→O]
+
 
 Marcus, run the profile-aware slide count and runtime precursor step for RUN_ID [RUN_ID].
 
@@ -354,7 +340,18 @@ Stop and wait for operator lock confirmation.
 
 ---
 
-## 4.75) Creative Directive Resolution (CD)
+## 04.55) Estimator + Run Constants Lock
+[M→O]
+
+This lock commits the estimator outputs and run constants into a single deterministic checkpoint before downstream emissions proceed. The polling pass in 4.5 observes inputs and readiness; 4.55 performs the transactional lock that gates later event emission.
+
+When this lock succeeds, the HUD confirms the run constants are frozen for the active revision and downstream stages can trust a stable baseline. When it fails, resolve estimator or run-constant mismatches first, then rerun the lock so subsequent sections do not operate on mixed assumptions.
+
+[M→self] Keep the lock boundary strict: no emission side effects should be recorded as complete until this lock transitions to success.
+
+## 4.75) Creative Directive Resolution
+[M→O]
+
 
 **Conditional:** Run this step only when `EXPERIENCE_PROFILE` is set. If no experience profile is set, skip to Prompt 5.
 
@@ -391,7 +388,9 @@ Stop and wait for operator confirmation.
 
 ---
 
-## 5) Irene Pass 1 Structure + Gate 1 Fidelity
+## 05) Irene Pass 1 + Gate 1 Fidelity
+[M→O]
+
 
 Marcus, delegate Irene Pass 1 for RUN_ID [RUN_ID].
 
@@ -441,11 +440,15 @@ Stop after HIL approval.
 
 ---
 
-## 5B) Cluster Plan G1.5 Gate + Operator Review
+## 05B) Cluster Plan G1.5 Gate
+[M→O]
+
 
 **Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none. If `CLUSTER_DENSITY` is none or absent, skip to Prompt 6 immediately.
 
 Marcus, run G1.5 Cluster Plan gate for RUN_ID [RUN_ID]:
+
+Legacy heading alias retained for compatibility checks: `5B) Cluster Plan G1.5 Gate + Operator Review`.
 
 Required command:
 - `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/run-g1.5-cluster-gate.py --bundle-dir [BUNDLE_PATH]`
@@ -465,7 +468,9 @@ Do not auto-advance. Explicit operator approval is required before Gary dispatch
 > **Optional A/B Loop:** If you are running an Irene Pass 1 tuning loop, pause here and follow
 > `docs/workflow/operator-script-v4.2-irene-ab-loop.md`. Resume at Prompt 6 once a winner is promoted.
 
-## 6) Gate 1 Approved -> Pre-Dispatch Package Build (No Send)
+## 06) Pre-Dispatch Package Build
+[M→O]
+
 
 Marcus, after Gate 1 approval, build Gary's pre-dispatch package and stop before dispatch.
 
@@ -486,7 +491,9 @@ Stop if any artifact fails contract rules.
 
 ---
 
-## 6.2) Cluster Prompt Engineering (Conditional)
+## 6.2) Cluster Prompt Engineering
+[M→O]
+
 
 **Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
 
@@ -503,7 +510,9 @@ Gate rule:
 
 ---
 
-## 6.3) Cluster Dispatch Sequencing (Conditional)
+## 6.3) Cluster Dispatch Sequencing
+[M→O]
+
 
 **Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
 
@@ -520,9 +529,17 @@ Gate rule:
 
 ---
 
-## 6B) Literal-Visual Operator Build + Confirmation
+## 06B) Literal-Visual Operator Build
+[M→O]
+
 
 Marcus, before Prompt 7, run the mandatory literal-visual operator checkpoint.
+
+Prompt the operator in plain language:
+- "Should the visuals lead, or should the text lead for this lesson?"
+- Record the internal profile choice as one of:
+  - `experience_profile: visual-led`
+  - `experience_profile: text-led`
 
 Required write:
 - `[BUNDLE_PATH]/literal-visual-operator-packet.md`
@@ -532,7 +549,9 @@ Gate rule:
 
 ---
 
-## 7) Gary Dispatch + Export + Sort Verification
+## 07) Gary Dispatch + Export
+[M→O]
+
 
 Marcus, dispatch Gary only if all checks are true:
 - no unresolved literal-visual blockers
@@ -567,7 +586,9 @@ Stop on any validator or G3 failure.
 
 ---
 
-## 7.5) Cluster Coherence G2.5 Gate (Conditional)
+## 7.5) Cluster Coherence G2.5 Gate
+[M→O]
+
 
 **Conditional:** Run this step only when `CLUSTER_DENSITY` ≠ none.
 
@@ -589,7 +610,9 @@ Gate rule:
 
 ---
 
-## 7B) Variant Selection Gate (Double-Dispatch Only)
+## 07B) Variant Selection Gate
+[M→O]
+
 
 > Skip this prompt when `DOUBLE_DISPATCH` is false.
 
@@ -615,7 +638,9 @@ Fallback:
 
 ---
 
-## 7C) Storyboard A + Gate 2 Approval + Winner Authorization
+## 07C) Storyboard A + Gate 2 Approval
+[M→O]
+
 
 Marcus, build the pre-Irene review storyboard for the winner deck and obtain Gate 2 approval.
 
@@ -646,7 +671,9 @@ Gate rule:
 
 ---
 
-## 7D) Gate 2M Motion Designation
+## 07D) Gate 2M Motion Designation
+[M→O]
+
 
 Marcus, after `authorized-storyboard.json` exists and `MOTION_ENABLED: true`, present Gate 2M.
 
@@ -705,7 +732,9 @@ Gate rules:
 
 ---
 
-## 7E) Motion Generation / Import
+## 07E) Motion Generation / Import
+[M→O]
+
 
 Marcus, route non-static slides from `motion_plan.yaml` to their downstream handlers.
 
@@ -754,7 +783,9 @@ Stop before Irene Pass 2 until all non-static rows intended for this run have co
 
 ---
 
-## 7F) Motion Gate
+## 07F) Motion Gate
+[M→O]
+
 
 Marcus, run Motion Gate after motion generation/import is complete.
 
@@ -772,7 +803,9 @@ Gate rule:
 
 ---
 
-## 8) Irene Pass 2 - Motion-Aware Narration + Segment Manifest
+## 08) Irene Pass 2 + Segment Manifest
+[M→O]
+
 
 Marcus, delegate Irene Pass 2 only after:
 - Gate 2 approval completed
@@ -868,7 +901,9 @@ Motion-specific rules:
 Rerun rule:
 - If Prompt 8 is being re-run after a partial or invalid Pass 2 attempt, restart at Prompt 8 itself once Gate 2 and Motion Gate remain valid; do not jump ahead to Storyboard B from stale Pass 2 artifacts.
 
-## 8B) Storyboard B Regeneration + HIL Review (Post-Pass 2)
+## 08B) Storyboard B + HIL Review
+[M→O]
+
 
 Regenerate Storyboard B with script context before downstream audio finalization.
 
@@ -918,7 +953,9 @@ Gate rule:
 
 ---
 
-## 9) Gate 3 Decision - Lock the Approved Pass 2 Package
+## 09) Gate 3 - Lock Pass 2 Package
+[M→O]
+
 
 This prompt begins only after **8B Storyboard B regeneration + explicit HIL approval** (with full script context).
 
@@ -951,7 +988,9 @@ Motion-specific lock rule:
 
 ---
 
-## 10) Fidelity + Quality Before Additional Spend
+## 10) Fidelity + Quality Pre-Spend
+[M→O]
+
 
 Marcus, run the downstream readiness checks on the Gate 3-approved package before ElevenLabs and compositor spend.
 
@@ -982,7 +1021,9 @@ Go/no-go:
 
 ---
 
-## 11) ElevenLabs Voice Selection HIL - Catalog Preview Before Spend
+## 11) ElevenLabs Voice Selection HIL
+[M→O]
+
 
 Marcus, before actual ElevenLabs narration generation, run the Voice Director in preview-only mode on the locked Gate 3 package.
 
@@ -1063,7 +1104,9 @@ Go/no-go:
 
 ---
 
-## 11B) ElevenLabs Input Package HIL Review Before Spend
+## 11B) ElevenLabs Input Package HIL
+[M→O]
+
 
 Marcus, before Prompt 12 synthesis, deliberately display the exact locked ElevenLabs input package and wait for explicit operator GO.
 
@@ -1096,7 +1139,9 @@ Go/no-go:
 
 ---
 
-## 12) ElevenLabs - Locked Manifest Audio Generation
+## 12) ElevenLabs Audio Generation
+[M→O]
+
 
 Marcus, delegate the Voice Director to run manifest-driven narration from the locked Gate 3 package.
 
@@ -1161,7 +1206,9 @@ Go/no-go:
 
 ---
 
-## 13) Quinn-R Pre-Composition - Audio, Caption, and Motion Alignment
+## 13) Quinn-R Pre-Composition QA
+[M→O]
+
 
 Marcus, run Quinn-R pre-composition review after ElevenLabs completes and before compositor packaging.
 
@@ -1196,7 +1243,9 @@ Go/no-go:
 
 ---
 
-## 14) Compositor - Motion-Aware Assembly Bundle + Descript Guide
+## 14) Compositor Assembly Bundle
+[M→O]
+
 
 Marcus, build the final assembly bundle for Descript from the pre-composition-approved manifest.
 
@@ -1235,7 +1284,9 @@ Go/no-go:
 
 ---
 
-## 14.5) Desmond — Run-scoped Descript operator brief (required)
+## 14.5) Desmond Run-Scoped Operator Brief
+[M→O]
+
 
 Marcus delegates to **Desmond** (`skills/bmad-agent-desmond/`) immediately after compositor artifacts exist. Desmond translates the generic compositor guide into **Descript-product-specific** operator steps for **this run** and closes with a mandatory **`## Automation Advisory`** (REST API vs MCP vs CLI vs manual app) per `skills/bmad-agent-desmond/references/automation-advisory.md`.
 
@@ -1261,7 +1312,9 @@ Required assembly-bundle contents (adds to 14):
 
 ---
 
-## 15) Operator Handoff - Descript Package Ready
+## 15) Operator Handoff - Descript Ready
+[M→O]
+
 
 Marcus, present the final handoff package for the human operator who will assemble/edit in Descript.
 
@@ -1366,3 +1419,41 @@ Primary contract references:
 - **v4.2e (2026-04-15)** — Story 20c-15: profile-aware slide count estimator integrated into Prompt 4.5, 2-input operator poll (parent_slide_count + target_total_runtime_minutes), experience-profile-driven feasibility triangle, run-constants locking.
 - **v4.2d (2026-04-15)** — Pre-Run Checklist added for visual-led profile. Run Constants updated with concrete C1-M1-PRES-20260415 values, experience profile mapping rule, and CLUSTER_DENSITY. Initialization Instructions expanded with step-by-step bundle setup. Artifact verification protocol added to Execution Rules.
 - **v4.2** — Added Epic 14 motion controls (`motion_enabled`, Gate 2M, motion generation/import, Motion Gate, motion-aware Irene Pass 2) while preserving the Epic 12 `DOUBLE_DISPATCH` branch inside the same document. Canonical generators for preflight receipts, operator directives, Irene packets.
+
+## Provenance Appendix
+
+| Section | Rationale |
+|---|---|
+| 01 | Section 01 maintains manifest-driven pipeline contract. |
+| 02 | Section 02 maintains manifest-driven pipeline contract. |
+| 02A | Section 02A maintains manifest-driven pipeline contract. |
+| 03 | Section 03 maintains manifest-driven pipeline contract. |
+| 04 | Section 04 maintains manifest-driven pipeline contract. |
+| 04A | Section 04A maintains manifest-driven pipeline contract. |
+| 04.5 | Section 04.5 maintains manifest-driven pipeline contract. |
+| 04.55 | Section 04.55 maintains manifest-driven pipeline contract. |
+| 4.75 | Section 4.75 maintains manifest-driven pipeline contract. |
+| 05 | Section 05 maintains manifest-driven pipeline contract. |
+| 05B | Section 05B maintains manifest-driven pipeline contract. |
+| 06 | Section 06 maintains manifest-driven pipeline contract. |
+| 6.2 | Section 6.2 maintains manifest-driven pipeline contract. |
+| 6.3 | Section 6.3 maintains manifest-driven pipeline contract. |
+| 06B | Section 06B maintains manifest-driven pipeline contract. |
+| 07 | Section 07 maintains manifest-driven pipeline contract. |
+| 7.5 | Section 7.5 maintains manifest-driven pipeline contract. |
+| 07B | Section 07B maintains manifest-driven pipeline contract. |
+| 07C | Section 07C maintains manifest-driven pipeline contract. |
+| 07D | Section 07D maintains manifest-driven pipeline contract. |
+| 07E | Section 07E maintains manifest-driven pipeline contract. |
+| 07F | Section 07F maintains manifest-driven pipeline contract. |
+| 08 | Section 08 maintains manifest-driven pipeline contract. |
+| 08B | Section 08B maintains manifest-driven pipeline contract. |
+| 09 | Section 09 maintains manifest-driven pipeline contract. |
+| 10 | Section 10 maintains manifest-driven pipeline contract. |
+| 11 | Section 11 maintains manifest-driven pipeline contract. |
+| 11B | Section 11B maintains manifest-driven pipeline contract. |
+| 12 | Section 12 maintains manifest-driven pipeline contract. |
+| 13 | Section 13 maintains manifest-driven pipeline contract. |
+| 14 | Section 14 maintains manifest-driven pipeline contract. |
+| 14.5 | Section 14.5 maintains manifest-driven pipeline contract. |
+| 15 | Section 15 maintains manifest-driven pipeline contract. |

@@ -1,0 +1,33 @@
+{{ audience("M→O") }}
+
+
+This prompt begins only after **8B Storyboard B regeneration + explicit HIL approval** (with full script context).
+
+```
+Gate 3 decision: [APPROVED or REVISION].
+
+If APPROVED:
+- lock `[BUNDLE_PATH]/narration-script.md`
+- lock `[BUNDLE_PATH]/segment-manifest.yaml`
+- lock `[BUNDLE_PATH]/pass2-envelope.json`
+- lock the final Motion Gate-approved `[BUNDLE_PATH]/motion_plan.yaml`
+- record that downstream audio/composition work must use the approved Storyboard B package (with script context) as-is
+- (see cross-ref to `docs/fidelity-gate-map.md` and `trial-run-pass2-artifacts-contract.md`)
+
+If REVISION:
+- list only the affected segment ids / slide ids and required edits
+- patch only the named artifacts
+- rerun Prompt 8 validation + 8B Storyboard B regeneration (with updated script context) before any downstream spend
+```
+
+Required governance at this stage:
+- treat `authorized-storyboard.json` plus the approved local winner-slide PNGs as the only slide identity source of truth
+- do not use `storyboard/index.html`, unresolved review payloads, or stale Pass 2 artifacts as execution inputs
+- preserve the exact Motion Gate-approved `motion_asset_path` for every non-static segment (see consolidated "Motion Contract" rules)
+- do not re-open Gate 2M, motion generation, or Motion Gate from downstream prompts unless the operator explicitly redirects the run
+- cross-ref: `docs/human-in-the-loop.md` for HIL protocol
+
+Motion-specific lock rule:
+- Gate 3 approval must lock not only the script and manifest, but also the approved `motion_plan.yaml` bindings for every non-static segment
+
+---

@@ -1,0 +1,36 @@
+"""Render v4.2 pack from pipeline manifest and templates."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from scripts.generators.v42.env import make_env
+from scripts.generators.v42.manifest import load_generator_manifest
+
+
+def render_pack(manifest_path: Path, output_path: Path) -> None:
+    """Render pack markdown at the requested output path."""
+    generator_manifest = load_generator_manifest(manifest_path)
+    env = make_env()
+    template = env.get_template("layout/pack.md.j2")
+    content = template.render(steps=generator_manifest.steps)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content, encoding="utf-8", newline="\n")
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Render v4.2 prompt pack from manifest")
+    parser.add_argument("--manifest", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    return parser
+
+
+def main() -> int:
+    args = _parser().parse_args()
+    render_pack(args.manifest, args.output)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

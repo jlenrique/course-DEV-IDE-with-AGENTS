@@ -1,0 +1,5 @@
+schema_version: "1.0"
+event_type_enum:
+  - approval
+  - revision
+  - waiver

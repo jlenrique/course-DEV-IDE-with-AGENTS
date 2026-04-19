@@ -1,0 +1,11 @@
+# Production Prompt Pack v4.2 (Generated)
+
+{% include "partials/tldr_crosswalk.md.j2" %}
+
+{% from "macros/audience_tag.j2" import audience %}
+{% for step in steps %}
+## {{ step.id }}) {{ step.label }}
+{% include step.template_name %}
+
+{% endfor %}
+{% include "partials/provenance_appendix.md.j2" %}

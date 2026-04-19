@@ -39,6 +39,12 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+# run_hud.py generates an HTML/CSS dashboard; embedded CSS/HTML strings in
+# Python string literals are long by necessity and don't benefit from
+# line-wrapping. Exempt E501 (line-too-long) for this file only.
+"scripts/utilities/run_hud.py" = ["E501"]
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests",

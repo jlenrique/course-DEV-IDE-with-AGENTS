@@ -2,6 +2,16 @@
 
 - ~~2026-04-02: Build function to save downloaded literal visuals from Gamma into the existing Git site destination. Status: implemented on `dev/storyboarding-feature` with preintegration publish helper, mode-aware fail-closed behavior, URL substitution wiring, and regression/live integration test coverage.~~ **Closed 2026-04-02.**
 
+## 33-1 generator discovery deferred findings (2026-04-19)
+
+- Generator creation is required before Story 33-2 can execute its current "rewire existing generator to pipeline-manifest.yaml" scope. Route: propose Story `33-1a` or re-scope `33-2` in party-mode.
+- If generator creation is folded into 33-2, update story points and gate mode because scope is no longer "rewire only"; it becomes net-new generator architecture work.
+- Preserve a multi-version extension hook (`--pack-version` style) while designing the generator so v4.1/v4.2 parity does not require a second refactor story.
+
+## 33-2 pipeline-manifest-ssot deferred findings (2026-04-19)
+
+- AC-B.15 generator rewire DEFERRED per 33-1 kill-switch Case C; routed to Story 33-1a (generator build-from-scratch). Pack hand-edit remains forbidden; regeneration gates on 33-1a completion.
+
 ## Stashed for Story 27-5 (Notion provider) — 2026-04-17
 
 Cursor loads TWO Notion MCP servers in parallel (non-conflicting keys):

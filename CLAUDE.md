@@ -13,6 +13,26 @@ This repository uses BMAD methodology. For sprint-style runs, follow the **BMAD 
 
 Related skills: `bmad-help`, `bmad-party-mode`, `bmad-code-review`, `bmad-quick-dev`, `bmad-sprint-run-charter`.
 
+## Pipeline lockstep regime
+
+For ANY story whose diff touches a path listed in `state/config/pipeline-manifest.yaml::block_mode_trigger_paths` (manifest itself, L1 check script, run_hud.py, progress_map.py, workflow_runner.py, v4.2 pack, v4.2 generator package, learning-event schema/capture, etc.), the dev agent reads [`docs/dev-guide/pipeline-manifest-regime.md`](docs/dev-guide/pipeline-manifest-regime.md) at T1 before any code. That document is the operational cheatsheet for the seven-component regime Epic 33 established; [`_bmad-output/planning-artifacts/epics.md §Epic 33 — Standing Regime`](_bmad-output/planning-artifacts/epics.md) is the Epic-scope authority.
+
+**Pack version bumps are governance, not technical.** Any Tier-2 (minor, e.g., new pipeline step) or Tier-3 (major, e.g., new pack family) change per [`docs/dev-guide/pipeline-manifest-regime.md §Pack Versioning Policy`](docs/dev-guide/pipeline-manifest-regime.md) requires party-mode consensus BEFORE dev opens. Tier-1 (patch; prose/connective-tissue) proceeds under dev-agent authority gated by Cora's block-mode hook. Frozen-at-ship discipline: once a pack ships + a tracked trial-run completes, subsequent structural edits bump the version; the frozen prior-version pack stays on disk for audit.
+
+Related stories (sprint reference): Epic 33 stories 33-1, 33-2, 33-1a, 33-3, 33-4, plus the 15-1-lite-marcus meta-test.
+
+## Deferred inventory governance
+
+The canonical register of deferred epics, deferred stories, and named-but-not-filed follow-ons lives at [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md). It exists so deferred work does not drift out of view after an Epic closes.
+
+Binding consultation points (all three are mandatory, not advisory):
+
+1. **Every Epic retrospective (per `bmad-retrospective` skill).** During the "Next Epic Preparation" phase of the retrospective (per the skill's two-part format), the facilitator MUST review `deferred-inventory.md` against the closing Epic's new substrate / evidence / learnings. Flag now-ready-to-reactivate entries to the next sprint-planning round. Record which entries were consulted + the reactivation verdict per entry in the retrospective artifact.
+2. **Every session hot-start.** `next-session-start-here.md` carries a standing "Deferred inventory status" line with current counts (backlog epics / deferred stories / follow-ons). Operator sees it every session open; serves as the "don't overlook" standing reminder.
+3. **Every new story spec that names a follow-on.** The story author adds the follow-on to `deferred-inventory.md` §Named-But-Not-Filed Follow-Ons (not in the parent story spec alone — the inventory is the single source of truth for "what's queued but not filed yet"). Examples: 15-1-lite-marcus names 15-1-lite-irene + 15-1-lite-gary; 33-1a names §4.55 body-polish as a conditional follow-on. Both live in the inventory.
+
+Maintenance: the inventory is updated at (a) each Epic retrospective close, (b) each story closure that names a new follow-on, (c) any session-wrapup where the operator flags a new deferred item.
+
 ## Texas retrieval
 
 Shape 3-Disciplined retrieval contract lives at [`skills/bmad-agent-texas/references/retrieval-contract.md`](skills/bmad-agent-texas/references/retrieval-contract.md). The provider directory (`run_wrangler.py --list-providers`, or `retrieval.list_providers()`) is authoritative for "what Texas can fetch." Schema v1.1 changelog at [`_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md`](_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md).

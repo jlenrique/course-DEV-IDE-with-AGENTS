@@ -1,0 +1,81 @@
+{{ audience("M→O") }}
+
+
+Marcus, before actual ElevenLabs narration generation, run the Voice Director in preview-only mode on the locked Gate 3 package.
+
+Inputs:
+- locked `[BUNDLE_PATH]/narration-script.md`
+- locked `[BUNDLE_PATH]/segment-manifest.yaml`
+- locked `[BUNDLE_PATH]/pass2-envelope.json`
+- voice continuity state for this presentation when available
+- style-guide ElevenLabs defaults for new-presentation fallback
+- governed recommendation profile from `state/config/elevenlabs-voice-profiles.yaml`
+- presentation attributes that matter for voice fit: audience, tone, content type, pacing expectations
+
+Required Marcus behavior:
+- delegate a preview-only request to the Voice Director; do not generate any new audio in this prompt
+- confirm the audio buffer (default 1.5s lead-in + 1.5s tail) and capture the operator-approved value for voice selection
+- provide the operator with exactly one of these review paths:
+  - `continuity_preview` or `default_plus_alternatives`:
+    - previously used voice for this presentation, if one exists
+    - otherwise the style-guide default voice for a new presentation
+    - plus two APP-selected alternatives based on presentation attributes
+  - `description_driven_search`:
+    - if the operator provides a narrative description of the ideal voice, return three recommended catalog voices instead
+- present catalog sample links only; these must be existing ElevenLabs preview/sample URLs, not newly generated clips
+- bind the preview receipt to the locked Gate 3 package by recording the script/manifest hashes in the preview artifact
+
+Suggested command surface:
+
+```powershell
+.\.venv\Scripts\python.exe skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-preview `
+  --mode [continuity_preview|default_plus_alternatives|description_driven_search] `
+  --locked-manifest [BUNDLE_PATH]/segment-manifest.yaml `
+  --locked-script [BUNDLE_PATH]/narration-script.md `
+  --presentation-attributes-json "{...}" `
+  [--previous-voice-receipt [BUNDLE_PATH]/voice-selection.json] `
+  [--ideal-voice-description "..."] `
+  [--audio-buffer-seconds 1.5] `
+  --output-path [BUNDLE_PATH]/voice-preview-options.json
+```
+
+Required writes:
+- `[BUNDLE_PATH]/voice-preview-options.json`
+- `[BUNDLE_PATH]/voice-selection-review.md`
+- after operator approval: `[BUNDLE_PATH]/voice-selection.json`
+
+Suggested decision command surface:
+
+```powershell
+.\.venv\Scripts\python.exe skills/elevenlabs-audio/scripts/elevenlabs_operations.py voice-select `
+  [BUNDLE_PATH]/voice-preview-options.json `
+  --selected-voice-id [VOICE_ID] `
+  --output-path [BUNDLE_PATH]/voice-selection.json `
+  [--operator-notes "..."] `
+  [--override-reason "..."] `
+  [--audio-buffer-seconds 1.5]
+```
+
+Required fields in `voice-selection.json`:
+- `selected_voice_id`
+- `selection_mode`
+- `selected_from`
+- `preview_url`
+- `selection_rationale`
+- `selected_from_rank`
+- `audio_buffer_seconds`
+- `locked_manifest_hash`
+- `locked_script_hash`
+- `override_reason` when the operator selects a non-primary candidate
+
+Governance rules:
+- keep the Gate 3-approved root `narration-script.md` and `segment-manifest.yaml` locked
+- record lesson-level voice choice separately in `voice-selection.json`; do not treat voice selection as a Storyboard B rewrite
+- preserve any explicit segment-level `voice_id` overrides already present in the locked manifest
+
+Go/no-go:
+- no go to ElevenLabs synthesis until the operator has approved a lesson-level default voice or explicitly accepted an existing prior selection
+- no go if any presented candidate lacks a working catalog preview/sample URL
+- no go if the preview receipt hashes no longer match the locked script/manifest at synthesis time
+
+---

@@ -1,0 +1,18 @@
+{{ audience("M→O") }}
+
+
+Marcus, run Motion Gate after motion generation/import is complete.
+
+Required operator review:
+- confirm generated/imported motion assets are acceptable
+- confirm each non-static slide is either approved or intentionally reset to static
+- confirm the exact approved asset path for each non-static slide before Irene Pass 2 handoff
+
+Required state:
+- every non-static row in `motion_plan.yaml` must be `approved`
+- any reset-to-static row must be updated in `motion_plan.yaml` before Irene Pass 2
+
+Gate rule:
+- Irene Pass 2 is blocked until Motion Gate closes cleanly.
+
+---

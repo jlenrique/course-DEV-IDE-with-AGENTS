@@ -1,0 +1,7 @@
+{{ audience("M→O") }}
+
+This lock commits the estimator outputs and run constants into a single deterministic checkpoint before downstream emissions proceed. The polling pass in 4.5 observes inputs and readiness; 4.55 performs the transactional lock that gates later event emission.
+
+When this lock succeeds, the HUD confirms the run constants are frozen for the active revision and downstream stages can trust a stable baseline. When it fails, resolve estimator or run-constant mismatches first, then rerun the lock so subsequent sections do not operate on mixed assumptions.
+
+[M→self] Keep the lock boundary strict: no emission side effects should be recorded as complete until this lock transitions to success.

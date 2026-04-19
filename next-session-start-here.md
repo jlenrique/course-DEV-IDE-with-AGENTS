@@ -3,88 +3,67 @@
 > Scope note: this file is the hot-start for the next repo session.
 > **Current objective:** Fire first tracked trial production run (Marcus-the-APP) against the Epic 33 clean baseline.
 >
-> **Trial branch:** `trial/2026-04-19` @ commit `2ba1e32` (pinned at Epic 33 sprint close). Both sessions (Marcus window + dev-support window) operate on this branch. Working tree MUST be clean at every session handoff.
+> **Trial branch:** `trial/2026-04-19` @ commit `8b70076`. Both sessions (Marcus window + dev-support window) operate on this branch. Verify with `git branch --show-current` before any work begins. Working tree MUST be clean at every session handoff.
 >
-> **Deferred inventory status (2026-04-19):** 4 backlog epics (15, 16, 17, 18) / 4 deferred stories in active epics (20c-4, 20c-5, 20c-6, 20a-5) / 7 named-but-not-filed follow-ons. See [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md) for reactivation triggers per entry. Binding consultation per [CLAUDE.md §Deferred inventory governance](CLAUDE.md).
+> **Deferred inventory status (2026-04-19):** 4 backlog epics (15, 16, 17, 18) / 4 deferred stories in active epics (20c-4, 20c-5, 20c-6, 20a-5) / 7 named-but-not-filed follow-ons. See [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md). Binding consultation per [CLAUDE.md §Deferred inventory governance](CLAUDE.md).
 
-## Session-Adjacent Update (2026-04-19)
-
-- Epic 33 substrate story `33-2-pipeline-manifest-ssot` is now BMAD-closed (`done`).
-- AC-B.15 was formally DEFERRED to `33-1a-build-v42-generator` per 33-1 Case C (no in-repo generator of record).
-- Sprint reshape is recorded: `33-1a` now blocks `33-3` (replacing the prior direct 33-2 -> 33-3 handoff).
-- **Deferred inventory governance landed 2026-04-19**: single index at [`deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md); retrospective hook + session-start-here line + CLAUDE.md governance section all in place.
-
-## Immediate Next Action
+## Immediate Next Action — Trial Production Run
 
 1. Run the BMAD Session Protocol Session START.
-2. **Confirm branch: `trial/2026-04-19`** — both Marcus window and dev-support window must be on this branch before any trial work begins. Verify with `git branch --show-current`.
-3. Re-run the preflight reverify command set from [reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md](reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md) against the trial branch baseline.
-4. Say "Marcus, run preflight" → Marcus executes PR-PF against the trial-branch environment.
-5. Say "Marcus, author the run constants for this bundle" → PR-RC (will ask: SME source / visuals-or-text-lead / motion-enabled / double-dispatch).
+2. **Confirm branch: `trial/2026-04-19`** — `git branch --show-current` must return `trial/2026-04-19`. If not, run `git checkout trial/2026-04-19`.
+3. Confirm working tree is clean: `git status --short` should show only `?? .coverage` (benign pytest artifact). No other untracked or modified files.
+4. Say **"Marcus, run preflight"** → Marcus executes PR-PF against the trial-branch environment.
+5. Say **"Marcus, author the run constants for this bundle"** → Marcus executes PR-RC. Will ask (in plain language): SME source / visuals-or-text-lead / motion-enabled / double-dispatch.
 6. Operator GO on Prompt 1 once preflight + run constants are confirmed green.
-5. Review F4 party-mode verdict record: [_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md](_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md).
-6. Re-run command set in `reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md`, then begin trial run if all checks stay green.
+
+## Trial Session Discipline
+
+**Fix-in-flight (when something breaks mid-trial):**
+- Operator announces: *"Marcus, fix-in-flight."*
+- Marcus records the pause-hash and the affected gate/step.
+- Dev-support-agent (other IDE window, same branch) commits the fix to `trial/2026-04-19` directly.
+- Operator returns to Marcus window: *"Marcus, resume trial."*
+- Marcus diffs since the pause-hash, classifies Green/Yellow/Red, reports before resuming.
+
+**Exploration (curiosity / "what if" questions):**
+- Operator announces: *"Marcus, pause trial, switch to ad-hoc."*
+- Marcus flips `state/runtime/mode_state.json` to `ad-hoc`; exploration happens in `state/runtime/ad-hoc-runs/`.
+- Operator announces: *"Marcus, resume trial."* → Marcus flips back to tracked; exploration is quarantined.
+
+**Clean-working-tree invariant:** before any session handoff (Marcus to dev-support or vice versa), `git status --short` must be clean. Both agents commit + push before switching windows.
 
 ## Repo State
 
-- **Lesson Planner MVP: all 22 planned stories BMAD-closed** plus one post-audit follow-on (`32-2a`). Epic 32 retrospective remains `optional`.
-- **Closed this session:**
-  - `32-2a-inventory-hardening` (1pt, single-gate, 2026-04-19) — inventory factory wiring + module-path fix + `_resolve_status` `review`-status tolerance + step 08/09/10 `deferred=True`.
-  - `32-4-maya-journey-walkthrough` (3pts, single-gate, 2026-04-19) — operator pantomime walkthrough + canned SME fixture + operator markdown + 9 collecting test functions (14 nodeids).
-- **Authored this session (no code):**
-  - [_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md](_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md) — 5 named flags for F4 party-mode round.
-  - UX-rendering-layer row in [_bmad-output/maps/deferred-work.md](_bmad-output/maps/deferred-work.md) (`## MVP-deferred: rendered UX layer`).
-  - Backend-faithfulness preamble in [_bmad-output/maps/maya-journey/maya-walkthrough.md](_bmad-output/maps/maya-journey/maya-walkthrough.md).
-  - F4 row amended in [_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md](_bmad-output/planning-artifacts/lesson-planner-mvp-plan.md) §F4 to require reading preflight doc aloud.
+- **Epic 33 Pipeline Lockstep Substrate:** ALL 6 stories BMAD-closed (33-1 / 33-2 / 33-1a / 33-3 / 33-4 / 15-1-lite-marcus). META-TEST PASS captured — Cora's block-mode hook fired on real intermediate drift; substrate proven load-bearing.
+- **Lesson Planner MVP:** all 22 planned stories BMAD-closed + 32-2a. F4 ratification: GREEN/YELLOW (proceed with trial).
+- **master** at `2ba1e32` (feat(epic-33): close Pipeline Lockstep Substrate sprint end-to-end). Pushed to origin.
+- **trial/2026-04-19** at `8b70076` (chore(trial): pin trial/2026-04-19 branch context). Pushed to origin.
+- **No outstanding regressions** — full suite: 1910 passed / 4 skipped / 27 deselected / 2 xfailed / 0 failed.
+- **Epic 33 retrospective** — status `required` in sprint-status.yaml; authored at `_bmad-output/implementation-artifacts/epic-33-retro-2026-04-19.md`; NOT yet party-mode reviewed. Can run after trial; not a trial blocker.
 
-## At-session-close regressions (3) — RESOLVED 2026-04-19
+## Outstanding Items (next session must surface at Start Step 1a)
 
-At 2026-04-19 session close the suite was **1899 passed / 2 failed / 1 collection error / 4 skipped / 27 deselected / 2 xfailed**. A-first remediation + B-step full harmonization were completed in-session and recorded under `reports/dev-coherence/2026-04-19-1546/`. Current re-verify status: **1910 passed / 4 skipped / 27 deselected / 2 xfailed**.
+1. **Step 0a harmonization skipped** — no formal Audra sweep run this session (Cora was off-manifest participant in party rounds, not invoked as a live skill). Next session's start protocol tripwire will auto-promote /harmonize to full-repo scope. Run `/harmonize` at session open if time permits before trial kickoff; or defer to post-trial.
 
-- **`tests/contracts/test_tracy_postures.py` — ImportError at collection**. **Resolved** by tightening package registration in `tests/conftest.py` so synthetic namespace modules do not shadow the real `skills` package.
-- **`tests/contracts/test_30_1_zero_test_edits.py::test_no_preexisting_test_files_modified_in_30_1` — stale baseline pin**. **Resolved** by rolling `_PRE_30_1_BASELINE_COMMIT` forward to `4911fc4`.
-- **`tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05` — missing `04A` in HUD pipeline**. **Resolved** by restoring `04A` stage in `scripts/utilities/run_hud.py` between `04.5` and `05`.
+2. **Epic 33 retrospective** — required per [epics.md §Epic 33 Closure Criteria](_bmad-output/planning-artifacts/epics.md). Party-mode round post-trial: assess FM-A/FM-B/FM-C closure, evaluate META-TEST PASS legitimacy, flag reactivation candidates from `deferred-inventory.md`. Expected candidates: 15-1-lite-irene / 15-1-lite-gary, 26-10 (PR-TR + health-check capabilities), v4.3 substrate trigger.
 
-All three failures were concurrent-session drift, not 32-2a/32-4 logic defects; they are now closed with traceable evidence.
-
-## Recent Closures (prior sessions)
-
-- **32-4-maya-journey-walkthrough** — BMAD-closed 2026-04-19
-  - landed `marcus/orchestrator/maya_walkthrough.py` (~360 LOC) + 7-section canned SME fixture + operator markdown
-  - 9 collecting functions (14 nodeids; K=6 target 8-9 ceiling)
-  - mid-dev scope discovery: `weather_band` is static; "card turns gold" pinned as ratified scope + rationale verbatim at the observable system level
-  - layered review CLEAN PASS (0 PATCH / 1 DEFER / ~8 DISMISS)
-
-- **32-2a-inventory-hardening** — BMAD-closed 2026-04-19
-  - 6 sample_factory callables wired (steps 05/06/07/11/12/13) + step 12 module_path phantom fix + steps 08/09/10 `deferred=True` + `_resolve_status` relaxed for `{done, review}` statuses
-  - regenerated canonical coverage-manifest artifact at `_bmad-output/maps/coverage-manifest/`
-  - 6 collecting functions (K=4 target 5-6 ceiling); CLEAN PASS (0 PATCH / 1 DEFER)
-
-- **32-3-trial-run-smoke-harness** — BMAD-closed
-  - `marcus/orchestrator/trial_smoke_harness.py` with deterministic 01→13 traversal + Murat §6-E1 5x-consecutive stability check
-
-- **32-1-step-4a-workflow-wiring** — BMAD-closed (but see "At-session-close regressions" above for HUD pipeline gap)
-
-- **30-3b-dials-and-sync-reassessment** — BMAD-closed
-- **30-4-plan-lock-fanout** — BMAD-closed
-- **28-4-tracy-smoke-fixtures** — BMAD-closed
-- **30-5-retrieval-narration-grammar** — BMAD-closed
-- **31-5-quinn-r-two-branch** — BMAD-closed
-- **28-3-irene-tracy-bridge** — BMAD-closed
-- **28-2-tracy-three-modes** — BMAD-closed
+3. **TALK/marcus-live branch** — off-books live-voice experiments; committed + pushed to `origin/TALK/marcus-live`; NOT merged into master. Trial branch (`trial/2026-04-19`) is clean of TALK commits. If voice-related side-effects surface during trial, revert-ready.
 
 ## Startup Commands
 
 ```bash
-git status
-cat _bmad-output/implementation-artifacts/sprint-status.yaml
-python -m pytest tests/contracts/test_tracy_postures.py tests/contracts/test_30_1_zero_test_edits.py::test_no_preexisting_test_files_modified_in_30_1 tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05 -q
-python -m pytest -q
+# Verify clean trial baseline before starting session
+git branch --show-current          # must be: trial/2026-04-19
+git status --short                  # expect: ?? .coverage only
+git log --oneline -3                # expect: 8b70076 / 2ba1e32 / 4911fc4
+
+# Optional pre-trial regression smoke
+python -m pytest -q --tb=no 2>&1 | tail -5   # expect: 1910 passed, 0 failed
 ```
 
 ## Notes
 
-- **MVP ratification preflight is required before F4 green-light.** The 5 flags in [_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md](_bmad-output/maps/lesson-planner-mvp-ratification-preflight-flags.md) cover: rendered-UX layer absence, §6-C terminal-vs-UI ambiguity, "card turns gold" semantic relocation, stub-dials "next sprint" commitment, retrospective scope.
-- The Lesson Planner governance validator is active. Run it on any newly authored Lesson Planner story spec before treating the story as `ready-for-dev`.
-- `32-4` and `32-2a` are the final stories authored in this session. All 22 planned Lesson Planner MVP stories are closed + 1 post-audit follow-on (32-2a).
-- No deferred "UX rendering" work has been filed as a story — it lives as a cross-epic row in `deferred-work.md §MVP-deferred: rendered UX layer` awaiting a post-MVP epic scoping round.
+- Trial-branch-discipline parked as Story PR-TR in [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md) — scope it after trial #1 generates evidence.
+- Pipeline lockstep regime operational cheatsheet: [`docs/dev-guide/pipeline-manifest-regime.md`](docs/dev-guide/pipeline-manifest-regime.md) — T1 required reading for any future pipeline-touching story.
+- Any future pipeline edit flows through `state/config/pipeline-manifest.yaml` (manifest → regenerate → commit), not through direct pack or HUD edits.
+- Marcus-the-agent CREED has a new standing order: any time he reports sprint state, he re-reads the authoritative file fresh. He does NOT narrate from prior-turn context.

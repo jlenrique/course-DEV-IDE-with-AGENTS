@@ -430,6 +430,80 @@ def wrangle_local_docx(
     return title, body, rec
 
 
+# ---------------------------------------------------------------------------
+# Local Markdown provider wiring
+#
+# Signature mirrors wrangle_local_pdf / wrangle_local_docx so the runner's
+# suffix-branch in _fetch_source can route .md files through here without
+# any structural reshape. Normalization (backslash-unescape, HTML entity
+# decode, blank-line collapse) is delegated to source_ops/normalize_notion_md
+# which is loaded lazily because the parent directory contains a hyphen and
+# cannot be imported via standard ``from ... import`` syntax.
+# ---------------------------------------------------------------------------
+
+
+def _load_notion_md_normalizer() -> Any:
+    """Lazy-load the source_ops.normalize_notion_md module.
+
+    Uses the same ``importlib.util.spec_from_file_location`` pattern the
+    runner relies on for hyphenated-parent-directory imports.
+    """
+    import importlib.util
+
+    module_path = Path(__file__).resolve().parent / "source_ops" / "normalize_notion_md.py"
+    spec = importlib.util.spec_from_file_location(
+        "texas_normalize_notion_md", module_path
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load normalize_notion_md from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def wrangle_local_md(path: str | Path) -> tuple[str, str, SourceRecord]:
+    """Read a local Markdown file and normalize Notion-export artefacts.
+
+    Handles Notion's escaped-Markdown export format (``\\#`` → ``#``,
+    ``&#x20;`` → space, triple-blank-line collapse). Falls through the
+    same normalization path even for hand-authored Markdown — the
+    operation is idempotent and never corrupts clean Markdown.
+
+    Signature + return shape mirror :func:`wrangle_local_pdf` and
+    :func:`wrangle_local_docx`. Title derives from ``Path(path).stem``
+    with underscores replaced by spaces. ``rec.kind == "local_md"`` so
+    provenance can distinguish a normalized Markdown read from the
+    generic ``local_text_read`` fall-through.
+
+    Raises:
+        FileNotFoundError: if ``path`` is missing.
+        ValueError: if ``path`` does not have a ``.md`` or ``.markdown``
+            suffix (use :func:`read_text_file` for generic text files).
+    """
+    p = Path(path).resolve()
+    if not p.is_file():
+        raise FileNotFoundError(f"Markdown file not found: {p}")
+    if p.suffix.lower() not in (".md", ".markdown"):
+        raise ValueError(f"Expected a .md or .markdown file, got: {p}")
+
+    raw = read_text_file(p)
+    normalizer = _load_notion_md_normalizer()
+    body = normalizer.normalize_notion_markdown(raw)
+
+    title = p.stem.replace("_", " ")
+    raw_lines = raw.count("\n")
+    cleaned_lines = body.count("\n")
+    escapes_removed = raw.count("\\") - body.count("\\")
+    note_parts = [
+        f"markdown normalize raw_lines={raw_lines}",
+        f"cleaned_lines={cleaned_lines}",
+        f"escapes_removed={max(escapes_removed, 0)}",
+    ]
+    note = " ".join(note_parts)
+    rec = SourceRecord(kind="local_md", ref=str(p), note=note)
+    return title, body, rec
+
+
 def build_extracted_markdown(
     title: str,
     sections: list[tuple[str, str]],

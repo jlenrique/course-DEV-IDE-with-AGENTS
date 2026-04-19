@@ -1,19 +1,48 @@
-# Schema Changelog
+﻿# Schema Changelog
 
-Authoritative record of extraction-report schema versions and the contracts pinned by `skills/bmad-agent-texas/scripts/retrieval/contracts.py`. Every non-patch bump requires a new entry here — the schema-pin contract test (`tests/contracts/test_acceptance_criteria_schema_stable.py`) enforces this gate.
+Authoritative record of extraction-report schema versions and the contracts pinned by `skills/bmad-agent-texas/scripts/retrieval/contracts.py`. Every non-patch bump requires a new entry here â€” the schema-pin contract test (`tests/contracts/test_acceptance_criteria_schema_stable.py`) enforces this gate.
 
 Per semver-for-schemas:
-- **Major (X.0)** — breaking: renamed field, changed type, removed field, changed required↔optional for an existing field.
-- **Minor (1.X)** — additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
-- **Patch (1.0.X)** — docs / clarifications / typo fixes; no machine-readable change.
+- **Major (X.0)** â€” breaking: renamed field, changed type, removed field, changed requiredâ†”optional for an existing field.
+- **Minor (1.X)** â€” additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
+- **Patch (1.0.X)** â€” docs / clarifications / typo fixes; no machine-readable change.
 
-## Coverage Manifest v1.0 — 2026-04-18 — Story 32-2 Plan-Ref Envelope Coverage Manifest
+## Lesson Plan v1.0 additive extension â€” 2026-04-18 â€” Story 29-3 Irene Blueprint Co-author
+
+**Type:** Additive optional-field extension to the existing Lesson Plan v1.0 shape family.
+
+**Reason for introduction:** 31-4 proved the blueprint branch can emit a real
+draft artifact, but it intentionally did not invent the final typed sign-off
+pointer. Story 29-3 adds the minimal machine-readable bridge so downstream
+stories can distinguish "draft exists" from "Irene + writer approved the
+blueprint branch."
+
+**Shapes pinned (live in marcus/lesson_plan/schema.py):**
+
+- BlueprintSignoff: lueprint_asset_path, signoff_artifact_path,
+  irene_review_complete, writer_signoff_complete, signed_at.
+- PlanUnit.blueprint_signoff: new OPTIONAL field (BlueprintSignoff | None).
+
+**Semantics pinned:**
+
+- Both stored paths are repo-relative strings; absolute paths and upward
+  traversal are rejected by validator logic.
+- signed_at is timezone-aware.
+- The pointer is additive and optional: pre-29-3 plans remain valid with
+  lueprint_signoff = null.
+- 29-3 records approval state in a deterministic sidecar artifact plus the
+  typed pointer; it does not emit directly to the Lesson Plan log and does not
+  implement 31-5's pass/fail branch.
+
+**Migration:** N/A. Existing v1.0 lesson plans remain valid because the new
+field is optional.
+## Coverage Manifest v1.0 â€” 2026-04-18 â€” Story 32-2 Plan-Ref Envelope Coverage Manifest
 
 **Type:** Initial shape (no predecessor).
 
 **Reason for introduction:** 32-2 ships the explicit audit artifact that 32-3
 will consume directly. It does not invent downstream emitters; it enumerates
-the expected 05→13 plan-ref surfaces, records whether each one preserves
+the expected 05â†’13 plan-ref surfaces, records whether each one preserves
 `lesson_plan_revision` + `lesson_plan_digest`, and verifies whether the live
 consumer path proves canonical `assert_plan_fresh(...)` usage.
 
@@ -56,11 +85,11 @@ consumer path proves canonical `assert_plan_fresh(...)` usage.
 
 **Migration:** N/A (initial shape).
 
-## Modality Registry v1.0 — 2026-04-18 — Story 31-3 Registries
+## Modality Registry v1.0 â€” 2026-04-18 â€” Story 31-3 Registries
 
 **Type:** Initial shape (no predecessor).
 
-**Reason for introduction:** 31-3 ships the TARGETING SURFACE — the frozen
+**Reason for introduction:** 31-3 ships the TARGETING SURFACE â€” the frozen
 closed-set catalog of atomic producer targets. Marcus-Orchestrator reads the
 registry at plan-lock to route `scope_decision.delegated-to-modality-X` entries
 to concrete producers; Irene references `modality_ref` validity; Tracy dispatches
@@ -69,7 +98,7 @@ based on composite composition.
 **Shapes pinned (live in `marcus/lesson_plan/modality_registry.py`):**
 
 - `ModalityRef`: `Literal["slides", "blueprint", "leader-guide", "handout",
-  "classroom-exercise"]` — closed set of 5 entries at MVP. Widening requires
+  "classroom-exercise"]` â€” closed set of 5 entries at MVP. Widening requires
   ruling amendment + schema-version bump (minor if additive, major if
   renaming or status-semantics change) + SCHEMA_CHANGELOG entry (AC-C.4).
 - `ModalityEntry`: `modality_ref` (ModalityRef) / `status`
@@ -83,7 +112,7 @@ based on composite composition.
   Any mutation attempt raises (`TypeError` from MappingProxyType or
   `AttributeError` from missing methods).
 - Query API: `get_modality_entry(modality_ref) -> ModalityEntry | None`
-  (no warn / no raise on unknown — closed-set discipline);
+  (no warn / no raise on unknown â€” closed-set discipline);
   `list_ready_modalities() -> frozenset[str]` (returns `{"slides",
   "blueprint"}` at MVP); `list_pending_modalities() -> frozenset[str]`
   (returns `{"leader-guide", "handout", "classroom-exercise"}` at MVP).
@@ -91,8 +120,8 @@ based on composite composition.
 **Semantics pinned:**
 
 - CLOSED SET at MVP. Unlike `event_type_registry` (which WARNs on unknown for
-  Gagné-seam extensibility), `modality_registry` rejects silently via `None`
-  return — widening is not an extensibility surface; it's a governed change.
+  GagnÃ©-seam extensibility), `modality_registry` rejects silently via `None`
+  return â€” widening is not an extensibility surface; it's a governed change.
 - At 31-3 MVP every entry has `producer_class_path=None`. Gary/slides
   backfills via separate amendment; 31-4 backfills `blueprint` via minor
   schema bump; `pending` modalities stay `None`.
@@ -115,11 +144,11 @@ public query API. Direct `MODALITY_REGISTRY[key]` access is PERMITTED
 (public Mapping) but the query helpers are preferred because they return
 `None` on miss.
 
-## Component Type Registry v1.0 — 2026-04-18 — Story 31-3 Registries
+## Component Type Registry v1.0 â€” 2026-04-18 â€” Story 31-3 Registries
 
 **Type:** Initial shape (no predecessor).
 
-**Reason for introduction:** Names the N=2 composite-package shapes at MVP —
+**Reason for introduction:** Names the N=2 composite-package shapes at MVP â€”
 the minimum needed to prove both single-modality and multi-modality composite
 shapes using only `ready` modalities. Prompt-pack authors compose packages
 against these entries; Tracy dispatches enrichment per composite.
@@ -164,7 +193,7 @@ against these entries; Tracy dispatches enrichment per composite.
 **Consumer compatibility:** 28-2 / prompt-pack authors consume via
 `get_component_type_entry` or direct registry iteration.
 
-## ModalityProducer ABC v1.0 — 2026-04-18 — Story 31-3 Registries
+## ModalityProducer ABC v1.0 â€” 2026-04-18 â€” Story 31-3 Registries
 
 **Type:** Initial shape (no predecessor).
 
@@ -178,17 +207,17 @@ splitting.
 `marcus/lesson_plan/produced_asset.py`):**
 
 - `ModalityProducer` (ABC):
-  - `modality_ref: ClassVar[str]` — pinned by subclass.
-  - `status: ClassVar[Literal["ready", "pending"]]` — pinned by subclass.
+  - `modality_ref: ClassVar[str]` â€” pinned by subclass.
+  - `status: ClassVar[Literal["ready", "pending"]]` â€” pinned by subclass.
   - `@abstractmethod produce(self, plan_unit, context) -> ProducedAsset`.
   - **M-AM-2 (Murat R2 BINDING) `__init_subclass__` hook:** CPython does NOT
     check `ClassVar[...]` type hints at class-definition or instantiation
     time; the hook raises `TypeError` at class-definition time on missing /
     wrong-type `modality_ref`, missing `status`, or status outside the
-    closed set. This is the actual enforcement — the annotations are
+    closed set. This is the actual enforcement â€” the annotations are
     documentation-only without this hook.
   - ABC membership enforced separately via `abc.ABC` + abstract method:
-    subclass missing `produce()` → `TypeError` at instantiation.
+    subclass missing `produce()` â†’ `TypeError` at instantiation.
 - `ProductionContext` (Pydantic):
   - `lesson_plan_revision: int ge=0` / `lesson_plan_digest: str min_length=1`.
   - `ConfigDict(extra="forbid", frozen=True, validate_assignment=True)`.
@@ -201,21 +230,21 @@ splitting.
   - `asset_ref` / `modality_ref` / `source_plan_unit_id` / `created_at`
     (tz-aware UTC) / `asset_path` / `fulfills`.
   - `fulfills` regex: `^[a-z0-9._-]+@(?:0|[1-9]\d*)$`. Accepts zero revision
-    (`unit@0`); rejects leading-zero (`unit@007` — M-AM-3 strict-monotonic
+    (`unit@0`); rejects leading-zero (`unit@007` â€” M-AM-3 strict-monotonic
     integer discipline), negative, non-integer, uppercase, unicode, multi-@,
     whitespace.
   - **Q-R2-A (Quinn R2) cross-field validator:** `source_plan_unit_id ==
-    fulfills.split("@", 1)[0]` — rejects counterfeit-fulfillment with the
+    fulfills.split("@", 1)[0]` â€” rejects counterfeit-fulfillment with the
     explicit `"counterfeit-fulfillment seam; tri-phasic contract violation"`
     error message.
 
 **Semantics pinned:**
 
-- Every `ProducedAsset` carries `fulfills: {plan_unit_id}@{plan_revision}` —
+- Every `ProducedAsset` carries `fulfills: {plan_unit_id}@{plan_revision}` â€”
   Quinn's Tri-Phasic Contract execution-phase artifact.
 - The ABC does NOT enforce registry membership at instantiation
   (`modality_ref="unknown-but-a-str"` is still instantiable at the ABC
-  layer). That's a consumer-site check — see
+  layer). That's a consumer-site check â€” see
   `tests/fixtures/consumers/fixture_30_3_marcus_consumer.py`
   staleness-gate-at-consumer-boundary pattern (Q-R2-B).
 
@@ -224,7 +253,7 @@ splitting.
 - No hooks beyond `produce()` on the ABC (no `setup()` / `teardown()` /
   `validate()`). If 31-4 needs more, widen here, not there (R1 amendment 7
   binding).
-- `ProducedAsset.fulfills` must pass regex AND cross-field validator —
+- `ProducedAsset.fulfills` must pass regex AND cross-field validator â€”
   either failure rejects.
 
 **Migration:** N/A (initial shape).
@@ -232,7 +261,7 @@ splitting.
 **Consumer compatibility:** 31-4 subclasses `ModalityProducer`; 30-4 + 31-5
 read `ProducedAsset.fulfills` for fanout tracking + Quinn-R gate.
 
-## Lesson Plan Log v1.0 — 2026-04-18 — Story 31-2 Lesson Plan Log
+## Lesson Plan Log v1.0 â€” 2026-04-18 â€” Story 31-2 Lesson Plan Log
 
 **Type:** Initial shape (no predecessor log file exists).
 
@@ -250,20 +279,20 @@ amendment on 30-4).
 - `WriterIdentity`: `Literal["marcus-orchestrator", "marcus-intake"]`
   (closed set per AC-C.5; widening requires ruling amendment + major
   schema bump).
-- `WRITER_EVENT_MATRIX`: `dict[str, frozenset[WriterIdentity]]` — AC-B.3
+- `WRITER_EVENT_MATRIX`: `dict[str, frozenset[WriterIdentity]]` â€” AC-B.3
   single-writer enforcement matrix. Only the `pre_packet_snapshot` row
   permits `marcus-intake`; the other five rows are
   Marcus-Orchestrator-only per R1 ruling amendment 13.
 - `NAMED_MANDATORY_EVENTS`: alias of
   `event_type_registry.RESERVED_LOG_EVENT_TYPES` (single source of truth,
-  two naming surfaces). Frozenset — M-3 immutability asserted via
+  two naming surfaces). Frozenset â€” M-3 immutability asserted via
   `.add()` raising `AttributeError`.
 - `SourceRef`: `source_id`, `path` (Optional), `content_digest`.
 - `PrePacketSnapshotPayload`: `sme_refs` (list[SourceRef]),
   `ingestion_digest`, `pre_packet_artifact_path`,
-  `step_03_extraction_checksum` — the four fields 30-4 needs to
+  `step_03_extraction_checksum` â€” the four fields 30-4 needs to
   reconstruct Intake-era context from the log alone (Winston R1).
-- `PlanLockedPayload`: `lesson_plan_digest` — the digest field
+- `PlanLockedPayload`: `lesson_plan_digest` â€” the digest field
   `latest_plan_digest()` reads.
 - `StalePlanRefError`: new exception (subclass of `ValueError`) raised by
   `assert_plan_fresh` when envelope revision and/or digest mismatches
@@ -273,14 +302,14 @@ amendment on 30-4).
   `PermissionError`) raised by `append_event` on writer/event-type mismatch.
 - `assert_plan_fresh`: module-level staleness detector; duck-typed on
   `lesson_plan_revision` + `lesson_plan_digest` attributes. Called by
-  every envelope 05→13 before downstream processing; 32-2 coverage
+  every envelope 05â†’13 before downstream processing; 32-2 coverage
   manifest audits call-site coverage.
-- `LOG_PATH`: `Path("state/runtime/lesson_plan_log.jsonl")` — module
+- `LOG_PATH`: `Path("state/runtime/lesson_plan_log.jsonl")` â€” module
   constant; tests override via fixture or explicit `path=` kwarg.
 
 **Semantics pinned:**
 
-- Append-only JSONL — one canonical-JSON line per event + newline.
+- Append-only JSONL â€” one canonical-JSON line per event + newline.
   `open("a") + write + flush + fsync`. Atomic on POSIX for writes <
   `PIPE_BUF`; single-process single-writer assumption bridges the
   Windows NTFS gap (see W-R1 future-hardening note below).
@@ -301,22 +330,22 @@ amendment on 30-4).
 - `NAMED_MANDATORY_EVENTS.add()` raises `AttributeError` (M-3 frozenset
   immutability).
 - Unknown event_types are REJECTED at write time (governance artifact,
-  not extensibility surface) — AC-B.2 (b) / AC-T.7.
+  not extensibility surface) â€” AC-B.2 (b) / AC-T.7.
 
 **R2 party-mode GREEN with 7 riders (2026-04-18):**
 
-- W-R1 — Windows atomic-write future-hardening caveat (docstring only).
-- Q-R2-R1 — writer_identity anti-pattern discipline (Dev Notes +
+- W-R1 â€” Windows atomic-write future-hardening caveat (docstring only).
+- Q-R2-R1 â€” writer_identity anti-pattern discipline (Dev Notes +
   code-review grep).
-- M-1 — AC-T.4 2×2 staleness matrix + axis-named error message.
-- M-2 — Monotonic gate ONLY on plan.locked (non-plan.locked stale
+- M-1 â€” AC-T.4 2Ã—2 staleness matrix + axis-named error message.
+- M-2 â€” Monotonic gate ONLY on plan.locked (non-plan.locked stale
   ACCEPTED).
-- M-3 — `NAMED_MANDATORY_EVENTS` frozenset immutability test.
-- M-4 — Baseline rebase to commit `15f68b1` HEAD (1023 `--run-live` /
+- M-3 â€” `NAMED_MANDATORY_EVENTS` frozenset immutability test.
+- M-4 â€” Baseline rebase to commit `15f68b1` HEAD (1023 `--run-live` /
   1001 default).
-- M-5 — AC-T.11 re-read-after-write consistency + K floor 15 → 17.
+- M-5 â€” AC-T.11 re-read-after-write consistency + K floor 15 â†’ 17.
 
-**Migration:** N/A (initial shape; no predecessor log file exists —
+**Migration:** N/A (initial shape; no predecessor log file exists â€”
 `state/runtime/lesson_plan_log.jsonl` is created by first `append_event`
 call).
 
@@ -324,7 +353,7 @@ call).
 `LessonPlanLog.read_events` API. Direct `open(LOG_PATH)` reads in
 consumer code are a code-review block (AC-C.8).
 
-## Lesson Plan v1.0 — 2026-04-18 — Story 31-1 Lesson Plan Schema Foundation
+## Lesson Plan v1.0 â€” 2026-04-18 â€” Story 31-1 Lesson Plan Schema Foundation
 
 **Type:** Initial shape (no predecessor).
 
@@ -350,7 +379,7 @@ layers.
 
 **Migration**: N/A (initial shape; no predecessor artifacts exist).
 
-## Fit Report v1.0 — 2026-04-18 — Story 31-1 Lesson Plan Schema Foundation
+## Fit Report v1.0 â€” 2026-04-18 â€” Story 31-1 Lesson Plan Schema Foundation
 
 **Type:** Initial shape (absorbed from original 29-1 per R1 ruling amendment 5).
 
@@ -367,7 +396,7 @@ top of the shape.
 
 **Migration**: N/A (initial shape; no predecessor artifacts exist).
 
-## Scope Decision v1.0 — 2026-04-18 — Story 31-1 Lesson Plan Schema Foundation
+## Scope Decision v1.0 â€” 2026-04-18 â€” Story 31-1 Lesson Plan Schema Foundation
 
 **Type:** Initial shape (absorbed from 30-3a / implicit 31-1 per R1 ruling
 amendment 5; R2 rider S-4 adds the two-level actor surface; R2 rider W-1
@@ -381,12 +410,12 @@ audit tooling receives a separate private actor surface.
 
 - `ScopeDecision`: `state` (`proposed | ratified | locked`), `scope`
   (`in-scope | out-of-scope | delegated | blueprint`), `proposed_by`
-  (`system | operator` — public), `internal_proposed_by` (five-valued
+  (`system | operator` â€” public), `internal_proposed_by` (five-valued
   internal Marcus-duality taxonomy; `Field(exclude=True)` +
   `SkipJsonSchema`), `ratified_by` (`"maya" | None`), `locked_at`.
 - `ScopeDecisionTransition`: `event_type` (Literal
   `"scope_decision_transition"`), `unit_id`, `plan_revision`, `from_state`,
-  `to_state`, `from_scope`, `to_scope`, `actor` (`system | operator` —
+  `to_state`, `from_scope`, `to_scope`, `actor` (`system | operator` â€”
   public), `internal_actor` (private + `SkipJsonSchema`), `timestamp`,
   `rationale_snapshot`.
 - `EventEnvelope`: `event_id`, `timestamp`, `plan_revision`, `event_type`,
@@ -399,7 +428,7 @@ default `model_dump` or the published JSON Schema.
 
 **Migration**: N/A (initial shape; no predecessor artifacts exist).
 
-## v1.1 — 2026-04-18 — Story 27-0 Retrieval Foundation
+## v1.1 â€” 2026-04-18 â€” Story 27-0 Retrieval Foundation
 
 **Type:** Minor (additive, backwards-compatible)
 
@@ -416,22 +445,23 @@ default `model_dump` or the published JSON Schema.
 
 **Contracts pinned (`retrieval/contracts.py`):**
 
-- `RetrievalIntent` — `intent`, `provider_hints: list[ProviderHint]`, `kind`, `acceptance_criteria`, `iteration_budget`, `convergence_required`, `cross_validate`
-- `ProviderHint` — `provider`, `params` (AC-C.10, Winston MUST-FIX #2)
-- `AcceptanceCriteria` — `mechanical`, `provider_scored`, `semantic_deferred`
-- `TexasRow` — `source_id`, `title`, `body`, `authors`, `date`, `provider`, `provider_metadata`, `source_origin`, `tracy_row_ref`, `convergence_signal`, `authority_tier`, `completeness_ratio`, `structural_fidelity`
-- `ConvergenceSignal` — `providers_agreeing`, `providers_disagreeing`, `single_source_only` (structural per AC-C.11 dumbness clause)
-- `ProviderInfo` — `id`, `shape`, `status`, `capabilities`, `auth_env_vars`, `spec_ref`, `notes` (AC-B.8 operator amendment 2026-04-18)
+- `RetrievalIntent` â€” `intent`, `provider_hints: list[ProviderHint]`, `kind`, `acceptance_criteria`, `iteration_budget`, `convergence_required`, `cross_validate`
+- `ProviderHint` â€” `provider`, `params` (AC-C.10, Winston MUST-FIX #2)
+- `AcceptanceCriteria` â€” `mechanical`, `provider_scored`, `semantic_deferred`
+- `TexasRow` â€” `source_id`, `title`, `body`, `authors`, `date`, `provider`, `provider_metadata`, `source_origin`, `tracy_row_ref`, `convergence_signal`, `authority_tier`, `completeness_ratio`, `structural_fidelity`
+- `ConvergenceSignal` â€” `providers_agreeing`, `providers_disagreeing`, `single_source_only` (structural per AC-C.11 dumbness clause)
+- `ProviderInfo` â€” `id`, `shape`, `status`, `capabilities`, `auth_env_vars`, `spec_ref`, `notes` (AC-B.8 operator amendment 2026-04-18)
 
 **Consumer compatibility matrix:**
 
 | Consumer reads | Writer emits v1.0 | Writer emits v1.1 |
 |---|---|---|
-| v1.0 | ✓ native | ✓ new fields invisible (ignored) |
-| v1.1 | ✓ new fields default | ✓ native |
+| v1.0 | âœ“ native | âœ“ new fields invisible (ignored) |
+| v1.1 | âœ“ new fields default | âœ“ native |
 
-**Rollback:** N/A — no breaking change. Revert via `schema_version: "1.0"` on writer side; consumers continue to work.
+**Rollback:** N/A â€” no breaking change. Revert via `schema_version: "1.0"` on writer side; consumers continue to work.
 
-## v1.0 — pre-2026-04-18 — baseline
+## v1.0 â€” pre-2026-04-18 â€” baseline
 
 Original extraction-report schema shipped with Epic 25 (Story 25-1, Texas runtime wrangling runner). See `skills/bmad-agent-texas/references/extraction-report-schema.md` (v1.0 block) for the baseline field set.
+

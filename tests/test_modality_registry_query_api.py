@@ -26,7 +26,11 @@ from marcus.lesson_plan.modality_registry import (
     "modality_ref, expected_status, expected_producer_class_path",
     [
         ("slides", "ready", None),
-        ("blueprint", "ready", None),
+        (
+            "blueprint",
+            "ready",
+            "marcus.lesson_plan.blueprint_producer.BlueprintProducer",
+        ),
         ("leader-guide", "pending", None),
         ("handout", "pending", None),
         ("classroom-exercise", "pending", None),

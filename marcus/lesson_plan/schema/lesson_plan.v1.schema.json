@@ -1,24 +1,52 @@
 {
   "$defs": {
+    "BlueprintSignoff": {
+      "additionalProperties": false,
+      "description": "Typed pointer for 29-3's Irene + writer blueprint sign-off seam.\n\nThis is intentionally additive and minimal: one pointer to the original\nblueprint draft, one pointer to the sign-off sidecar artifact, two explicit\napproval booleans, and one timezone-aware timestamp for when the sign-off\nrecord was captured.",
+      "properties": {
+        "blueprint_asset_path": {
+          "description": "Repo-relative path to the 31-4 blueprint draft artifact that this sign-off record approves.",
+          "minLength": 1,
+          "title": "Blueprint Asset Path",
+          "type": "string"
+        },
+        "signoff_artifact_path": {
+          "description": "Repo-relative path to the deterministic Irene+writer sign-off sidecar artifact emitted by Story 29-3.",
+          "minLength": 1,
+          "title": "Signoff Artifact Path",
+          "type": "string"
+        },
+        "irene_review_complete": {
+          "description": "True once Irene's blueprint review has been recorded.",
+          "title": "Irene Review Complete",
+          "type": "boolean"
+        },
+        "writer_signoff_complete": {
+          "description": "True once the human writer has approved the blueprint draft.",
+          "title": "Writer Signoff Complete",
+          "type": "boolean"
+        },
+        "signed_at": {
+          "description": "Timezone-aware timestamp at which the sign-off pointer was emitted.",
+          "format": "date-time",
+          "title": "Signed At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "blueprint_asset_path",
+        "signoff_artifact_path",
+        "irene_review_complete",
+        "writer_signoff_complete",
+        "signed_at"
+      ],
+      "title": "BlueprintSignoff",
+      "type": "object"
+    },
     "Dials": {
       "additionalProperties": false,
       "description": "Operator-set dials for enrichment + corroboration (AC-B.3).\n\nBoth dials accept ``None`` (dial unset) or a float in ``[0.0, 1.0]``.\nInteraction rules + operator-facing wording documented in ``dials-spec.md``.",
       "properties": {
-        "corroboration": {
-          "anyOf": [
-            {
-              "maximum": 1.0,
-              "minimum": 0.0,
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Evidence-bolster dial: operator-requested cross-validation of existing source claims. Null = unset.",
-          "title": "Corroboration"
-        },
         "enrichment": {
           "anyOf": [
             {
@@ -33,6 +61,21 @@
           "default": null,
           "description": "Aspirational enrichment dial: operator-requested depth beyond what the source materials alone could carry. Null = unset.",
           "title": "Enrichment"
+        },
+        "corroboration": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence-bolster dial: operator-requested cross-validation of existing source claims. Null = unset.",
+          "title": "Corroboration"
         }
       },
       "title": "Dials",
@@ -42,14 +85,14 @@
       "additionalProperties": false,
       "description": "Single gap surfaced by Irene on an in-scope unit (AC-B.3).",
       "properties": {
-        "description": {
-          "minLength": 1,
-          "title": "Description",
-          "type": "string"
-        },
         "gap_id": {
           "minLength": 1,
           "title": "Gap Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
           "type": "string"
         },
         "suggested_posture": {
@@ -98,16 +141,11 @@
       "additionalProperties": false,
       "description": "Single plan unit inside the lesson plan (AC-B.2).\n\n``rationale`` is stored verbatim \u2014 no parsing, no coercion, no trim\n(R1 ruling amendment 16). Empty string is valid (R2 rider S-2).",
       "properties": {
-        "dials": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Dials"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
+        "unit_id": {
+          "minLength": 1,
+          "pattern": "^[a-z0-9._-]+$",
+          "title": "Unit Id",
+          "type": "string"
         },
         "event_type": {
           "minLength": 1,
@@ -115,12 +153,33 @@
           "title": "Event Type",
           "type": "string"
         },
-        "gaps": {
-          "items": {
-            "$ref": "#/$defs/IdentifiedGap"
-          },
-          "title": "Gaps",
-          "type": "array"
+        "source_fitness_diagnosis": {
+          "minLength": 1,
+          "title": "Source Fitness Diagnosis",
+          "type": "string"
+        },
+        "scope_decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScopeDecision"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Jurisdictional verdict carried by this plan unit. None is permitted during plan drafting before Maya has weighed in on this unit."
+        },
+        "weather_band": {
+          "description": "Abundance-framed source-fitness band. gold = you've got this cold; green = we're in step; amber = your call; gray = Marcus leans in more (proposes additional support, delegation or blueprint, for this unit). Red is forbidden (AC-B.7).",
+          "enum": [
+            "gold",
+            "green",
+            "amber",
+            "gray"
+          ],
+          "title": "Weather Band",
+          "type": "string"
         },
         "modality_ref": {
           "anyOf": [
@@ -141,39 +200,35 @@
           "title": "Rationale",
           "type": "string"
         },
-        "scope_decision": {
+        "blueprint_signoff": {
           "anyOf": [
             {
-              "$ref": "#/$defs/ScopeDecision"
+              "$ref": "#/$defs/BlueprintSignoff"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "Jurisdictional verdict carried by this plan unit. None is permitted during plan drafting before Maya has weighed in on this unit."
+          "description": "Optional typed pointer emitted by Story 29-3 when a blueprint draft has been co-authored and signed off by Irene plus the human writer."
         },
-        "source_fitness_diagnosis": {
-          "minLength": 1,
-          "title": "Source Fitness Diagnosis",
-          "type": "string"
+        "gaps": {
+          "items": {
+            "$ref": "#/$defs/IdentifiedGap"
+          },
+          "title": "Gaps",
+          "type": "array"
         },
-        "unit_id": {
-          "minLength": 1,
-          "pattern": "^[a-z0-9._-]+$",
-          "title": "Unit Id",
-          "type": "string"
-        },
-        "weather_band": {
-          "description": "Abundance-framed source-fitness band. gold = you've got this cold; green = we're in step; amber = your call; gray = Marcus leans in more (proposes additional support, delegation or blueprint, for this unit). Red is forbidden (AC-B.7).",
-          "enum": [
-            "gold",
-            "green",
-            "amber",
-            "gray"
+        "dials": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Dials"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "title": "Weather Band",
-          "type": "string"
+          "default": null
         }
       },
       "required": [
@@ -189,19 +244,26 @@
       "additionalProperties": false,
       "description": "Jurisdictional primitive. Maya is the SOLE signatory (AC-C.5 / AC-C.8).\n\nTwo-level actor surface (R2 rider S-4):\n    - ``proposed_by``: PUBLIC; Literal[\"system\", \"operator\"]; serializes to\n      Maya-facing payloads.\n    - ``_internal_proposed_by``: PRIVATE; Literal over the five-valued\n      internal taxonomy; ``Field(exclude=True)`` so it DOES NOT appear in\n      default ``model_dump`` / ``model_dump_json``. Private-audit tooling\n      can opt in by overriding ``exclude``.\n\nState machine:\n    - ``proposed -> ratified`` requires ``ratified_by == \"maya\"``.\n    - ``ratified -> locked`` requires the plan-lock trigger (30-3a).\n    - ``proposed -> proposed`` permitted (re-propose with different scope).\n    - ``locked -> *`` forbidden (terminal).",
       "properties": {
-        "locked_at": {
-          "anyOf": [
-            {
-              "format": "date-time",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+        "state": {
+          "description": "Lifecycle state of this scope decision.",
+          "enum": [
+            "proposed",
+            "ratified",
+            "locked"
           ],
-          "default": null,
-          "description": "Timestamp at which this decision entered the terminal locked state.",
-          "title": "Locked At"
+          "title": "State",
+          "type": "string"
+        },
+        "scope": {
+          "description": "Jurisdictional verdict for this plan unit.",
+          "enum": [
+            "in-scope",
+            "out-of-scope",
+            "delegated",
+            "blueprint"
+          ],
+          "title": "Scope",
+          "type": "string"
         },
         "proposed_by": {
           "description": "Public actor surface: 'system' when generated by the platform, 'operator' when supplied by the course author.",
@@ -226,26 +288,19 @@
           "description": "Signatory; Literal['maya'] or None. Maya is the sole signatory.",
           "title": "Ratified By"
         },
-        "scope": {
-          "description": "Jurisdictional verdict for this plan unit.",
-          "enum": [
-            "in-scope",
-            "out-of-scope",
-            "delegated",
-            "blueprint"
+        "locked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "title": "Scope",
-          "type": "string"
-        },
-        "state": {
-          "description": "Lifecycle state of this scope decision.",
-          "enum": [
-            "proposed",
-            "ratified",
-            "locked"
-          ],
-          "title": "State",
-          "type": "string"
+          "default": null,
+          "description": "Timestamp at which this decision entered the terminal locked state.",
+          "title": "Locked At"
         }
       },
       "required": [
@@ -257,18 +312,21 @@
       "type": "object"
     }
   },
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Root lesson plan artifact (AC-B.1).",
   "properties": {
-    "digest": {
-      "default": "",
-      "description": "sha256 of canonical JSON serialization.",
-      "title": "Digest",
+    "schema_version": {
+      "default": "1.0",
+      "pattern": "^\\d+\\.\\d+$",
+      "title": "Schema Version",
       "type": "string"
     },
     "learning_model": {
       "$ref": "#/$defs/LearningModel"
+    },
+    "structure": {
+      "title": "Structure",
+      "type": "object"
     },
     "plan_units": {
       "items": {
@@ -283,20 +341,15 @@
       "title": "Revision",
       "type": "integer"
     },
-    "schema_version": {
-      "default": "1.0",
-      "pattern": "^\\d+\\.\\d+$",
-      "title": "Schema Version",
-      "type": "string"
-    },
-    "structure": {
-      "additionalProperties": true,
-      "title": "Structure",
-      "type": "object"
-    },
     "updated_at": {
       "format": "date-time",
       "title": "Updated At",
+      "type": "string"
+    },
+    "digest": {
+      "default": "",
+      "description": "sha256 of canonical JSON serialization.",
+      "title": "Digest",
       "type": "string"
     }
   },

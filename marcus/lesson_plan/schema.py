@@ -26,6 +26,7 @@ Discipline notes:
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import PurePosixPath
 from typing import Literal
 
 from pydantic import (
@@ -316,6 +317,76 @@ class ScopeDecision(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# BlueprintSignoff
+# ---------------------------------------------------------------------------
+
+
+class BlueprintSignoff(BaseModel):
+    """Typed pointer for 29-3's Irene + writer blueprint sign-off seam.
+
+    This is intentionally additive and minimal: one pointer to the original
+    blueprint draft, one pointer to the sign-off sidecar artifact, two explicit
+    approval booleans, and one timezone-aware timestamp for when the sign-off
+    record was captured.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        validate_assignment=True,
+    )
+
+    blueprint_asset_path: str = Field(
+        ...,
+        min_length=1,
+        description=(
+            "Repo-relative path to the 31-4 blueprint draft artifact that this "
+            "sign-off record approves."
+        ),
+    )
+    signoff_artifact_path: str = Field(
+        ...,
+        min_length=1,
+        description=(
+            "Repo-relative path to the deterministic Irene+writer sign-off "
+            "sidecar artifact emitted by Story 29-3."
+        ),
+    )
+    irene_review_complete: bool = Field(
+        ...,
+        description="True once Irene's blueprint review has been recorded.",
+    )
+    writer_signoff_complete: bool = Field(
+        ...,
+        description="True once the human writer has approved the blueprint draft.",
+    )
+    signed_at: datetime = Field(
+        ...,
+        description="Timezone-aware timestamp at which the sign-off pointer was emitted.",
+    )
+
+    @field_validator("blueprint_asset_path", "signoff_artifact_path")
+    @classmethod
+    def _validate_repo_relative_path(cls, value: str) -> str:
+        path = PurePosixPath(value)
+        if path.is_absolute():
+            raise ValueError("blueprint signoff paths must be repo-relative")
+        if ".." in path.parts:
+            raise ValueError("blueprint signoff paths must not traverse upward")
+        return value
+
+    @field_validator("signed_at", mode="after")
+    @classmethod
+    def _signed_at_must_be_aware(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError(
+                "datetime field must be timezone-aware (UTC); "
+                "got naive datetime"
+            )
+        return value
+
+
+# ---------------------------------------------------------------------------
 # PlanUnit
 # ---------------------------------------------------------------------------
 
@@ -376,6 +447,13 @@ class PlanUnit(BaseModel):
             "Free text, stored verbatim, surfaced verbatim (R1 ruling amendment 16). "
             "Accepts any content including the empty string; no min_length; "
             "no trimming. R2 rider S-2."
+        ),
+    )
+    blueprint_signoff: BlueprintSignoff | None = Field(
+        None,
+        description=(
+            "Optional typed pointer emitted by Story 29-3 when a blueprint draft "
+            "has been co-authored and signed off by Irene plus the human writer."
         ),
     )
     gaps: list[IdentifiedGap] = Field(default_factory=list)
@@ -527,6 +605,7 @@ class FitReport(BaseModel):
 # ---------------------------------------------------------------------------
 
 __all__ = [
+    "BlueprintSignoff",
     "Dials",
     "FitDiagnosis",
     "FitReport",

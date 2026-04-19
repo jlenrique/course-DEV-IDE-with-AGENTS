@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://course-dev-ide-with-agents/schemas/suggested-resources",
+  "title": "Suggested Resources Schema",
+  "description": "Schema for Tracy's suggested resources output",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["success", "failed"],
+      "description": "Status of the posture execution"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for failure when status is failed"
+    },
+    "intent_class": {
+      "type": "string",
+      "description": "Controlled vocabulary for why the resource was surfaced"
+    },
+    "intent_detail": {
+      "type": "string",
+      "description": "Specifics about the intent"
+    },
+    "editorial_note": {
+      "type": "string",
+      "description": "Tracy's editorial judgment"
+    },
+    "provider_metadata": {
+      "type": "object",
+      "properties": {
+        "scite": {
+          "type": "object",
+          "description": "Scite specific provider metadata"
+        }
+      }
+    },
+    "posture": {
+      "type": "string",
+      "enum": ["embellish", "corroborate", "gap-fill"]
+    },
+    "input": {
+      "type": "object",
+      "properties": {
+        "target_element": {"type": "string"},
+        "enrichment_type": {"type": "string"},
+        "claim": {"type": "string"},
+        "source_context": {"type": "string"},
+        "gap_description": {"type": "string"},
+        "content_type": {"type": "string"},
+        "scope": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "description": "Output from the posture execution",
+      "properties": {
+        "content_added": {"type": "boolean"},
+        "evidence_found": {"type": "boolean"},
+        "gap_filled": {"type": "boolean"},
+        "classification": {
+          "type": "string",
+          "enum": ["supporting", "contrasting", "mentioning"]
+        },
+        "content": {"type": "string"},
+        "message": {"type": "string"},
+        "sources": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "relevance_score": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "retrieval_provider": {"type": "string"},
+        "query_terms": {"type": "array", "items": {"type": "string"}},
+        "timestamp": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["status", "posture", "input"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "success" } }
+      },
+      "then": {
+        "required": ["output", "intent_class", "intent_detail", "editorial_note", "provider_metadata"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "failed" } }
+      },
+      "then": {
+        "required": ["reason"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "posture": { "const": "embellish" } }
+      },
+      "then": {
+        "properties": {
+          "output": {
+            "required": ["content_added", "content"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "posture": { "const": "corroborate" } }
+      },
+      "then": {
+        "properties": {
+          "output": {
+            "required": ["evidence_found", "classification", "confidence_score"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "posture": { "const": "gap-fill" } }
+      },
+      "then": {
+        "properties": {
+          "output": {
+            "required": ["gap_filled", "content", "relevance_score"]
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

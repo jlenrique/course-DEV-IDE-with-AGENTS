@@ -133,16 +133,18 @@ def test_modality_registry_status_split_matches_expected() -> None:
     assert pending == EXPECTED_PENDING_MODALITIES
 
 
-def test_all_producer_class_paths_are_none_at_mvp() -> None:
-    """AC-B.1 table: every initial entry has producer_class_path=None.
-
-    Gary/slides backfills via separate amendment; 31-4 backfills blueprint via
-    minor schema bump; pending modalities stay None.
-    """
-    for key, entry in MODALITY_REGISTRY.items():
-        assert entry.producer_class_path is None, (
-            f"MODALITY_REGISTRY[{key!r}].producer_class_path must be None at "
-            f"31-3 MVP; got {entry.producer_class_path!r}"
+def test_producer_class_paths_match_current_mvp_state() -> None:
+    """31-4 backfills blueprint; slides/pending entries still remain null."""
+    assert MODALITY_REGISTRY["slides"].producer_class_path is None
+    assert (
+        MODALITY_REGISTRY["blueprint"].producer_class_path
+        == "marcus.lesson_plan.blueprint_producer.BlueprintProducer"
+    )
+    for key in EXPECTED_PENDING_MODALITIES:
+        assert MODALITY_REGISTRY[key].producer_class_path is None, (
+            f"MODALITY_REGISTRY[{key!r}].producer_class_path must remain None "
+            f"for pending modalities; got "
+            f"{MODALITY_REGISTRY[key].producer_class_path!r}"
         )
 
 

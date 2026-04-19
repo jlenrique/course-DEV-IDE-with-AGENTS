@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 
 from marcus.lesson_plan.schema import (
+    BlueprintSignoff,
     Dials,
     FitDiagnosis,
     FitReport,
@@ -136,6 +137,13 @@ def test_plan_unit_weather_band_enum_parity() -> None:
     assert "red" not in wb
 
 
+def test_plan_unit_blueprint_signoff_field_is_optional_and_present() -> None:
+    schema = _load_schema("lesson_plan.v1.schema.json")
+    pu_def = schema["$defs"]["PlanUnit"]
+    assert "blueprint_signoff" in pu_def["properties"]
+    assert "blueprint_signoff" not in pu_def.get("required", [])
+
+
 # ---------------------------------------------------------------------------
 # AC-T.2 (c) model_dump round-trip
 # ---------------------------------------------------------------------------
@@ -234,6 +242,7 @@ def test_required_optional_parity_fit_report() -> None:
     "model_cls,model_name,schema_file",
     [
         (FitDiagnosis, "FitDiagnosis", "fit_report.v1.schema.json"),
+        (BlueprintSignoff, "BlueprintSignoff", "lesson_plan.v1.schema.json"),
         (Dials, "Dials", "lesson_plan.v1.schema.json"),
         (IdentifiedGap, "IdentifiedGap", "lesson_plan.v1.schema.json"),
     ],

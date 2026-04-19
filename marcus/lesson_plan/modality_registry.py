@@ -132,11 +132,11 @@ _MODALITY_REGISTRY_UNDERLYING: dict[str, ModalityEntry] = {
     "blueprint": ModalityEntry(
         modality_ref="blueprint",
         status="ready",
-        producer_class_path=None,
+        producer_class_path="marcus.lesson_plan.blueprint_producer.BlueprintProducer",
         description=(
             "Blueprint modality — authoring-ready lesson blueprint artifact. "
-            "Producer lands in Story 31-4 (blueprint-producer); "
-            "producer_class_path backfilled by that story via minor schema bump."
+            "Producer landed in Story 31-4 (blueprint-producer); "
+            "producer_class_path now points at the concrete producer."
         ),
     ),
     "leader-guide": ModalityEntry(

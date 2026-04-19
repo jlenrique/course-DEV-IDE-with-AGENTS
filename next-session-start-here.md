@@ -1,9 +1,11 @@
 # Next Session Start Here
 
 > Scope note: this file is the hot-start for the next repo session.
-> **Current objective:** start Marcus trial production run from a clean post-harmonization baseline.
+> **Current objective:** Fire first tracked trial production run (Marcus-the-APP) against the Epic 33 clean baseline.
 >
-> **Deferred inventory status (2026-04-19):** 4 backlog epics (15, 16, 17, 18) / 4 deferred stories in active epics (20c-4, 20c-5, 20c-6, 20a-5) / 6 named-but-not-filed follow-ons. See [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md) for reactivation triggers per entry. Binding consultation per [CLAUDE.md §Deferred inventory governance](CLAUDE.md).
+> **Trial branch:** `trial/2026-04-19` @ commit `2ba1e32` (pinned at Epic 33 sprint close). Both sessions (Marcus window + dev-support window) operate on this branch. Working tree MUST be clean at every session handoff.
+>
+> **Deferred inventory status (2026-04-19):** 4 backlog epics (15, 16, 17, 18) / 4 deferred stories in active epics (20c-4, 20c-5, 20c-6, 20a-5) / 7 named-but-not-filed follow-ons. See [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md) for reactivation triggers per entry. Binding consultation per [CLAUDE.md §Deferred inventory governance](CLAUDE.md).
 
 ## Session-Adjacent Update (2026-04-19)
 
@@ -15,9 +17,11 @@
 ## Immediate Next Action
 
 1. Run the BMAD Session Protocol Session START.
-2. Confirm branch. Session closed on `master` (concurrent sessions merged `dev/lesson-planner` back to master).
-3. Use `_bmad-output/implementation-artifacts/sprint-status.yaml` as the canonical status source.
-4. Confirm Step 0a harmonization report exists and review it: [reports/dev-coherence/2026-04-19-1546/harmonization-summary.md](reports/dev-coherence/2026-04-19-1546/harmonization-summary.md).
+2. **Confirm branch: `trial/2026-04-19`** — both Marcus window and dev-support window must be on this branch before any trial work begins. Verify with `git branch --show-current`.
+3. Re-run the preflight reverify command set from [reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md](reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md) against the trial branch baseline.
+4. Say "Marcus, run preflight" → Marcus executes PR-PF against the trial-branch environment.
+5. Say "Marcus, author the run constants for this bundle" → PR-RC (will ask: SME source / visuals-or-text-lead / motion-enabled / double-dispatch).
+6. Operator GO on Prompt 1 once preflight + run constants are confirmed green.
 5. Review F4 party-mode verdict record: [_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md](_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md).
 6. Re-run command set in `reports/dev-coherence/2026-04-19-1546/evidence/reverify-commands.md`, then begin trial run if all checks stay green.
 

@@ -17,7 +17,7 @@ Audra is a **memory agent**: drift-velocity patterns, brittle-contract observati
 
 ## Lane Responsibility
 
-Audra owns **internal-artifact lockstep judgment**: structural-walk invocation, L1-contract ↔ parameter-directory ↔ schema lockstep, lane-matrix coverage checklist, BMAD closure-artifact audit, doc-to-code reference resolution, prose-drift detection on changed docs, placement audit per `directory-responsibilities.md`.
+Audra owns **internal-artifact lockstep judgment**: structural-walk invocation, L1-contract ↔ parameter-directory ↔ schema lockstep, lane-matrix coverage checklist, BMAD closure-artifact audit, doc-to-code reference resolution, workflow-stage lockstep (prompt packs/operator docs/manifests/template registry), prose-drift detection on changed docs, placement audit per `directory-responsibilities.md`.
 
 Audra does not own: source-to-output fidelity on production artifacts (Vera's lane), production-artifact quality standards (Quinn-R's lane), production orchestration (Marcus), dev-session orchestration (Cora), test-suite regression on behavior (Murat's lane), substantial prose rewrites (Paige's lane).
 

@@ -58,18 +58,35 @@ anti_drift:
     needles:
       - "literal-visual content entries are URL-only"
       - "must not include supporting prose"
+  - name: Standard prompt-pack 04A coauthoring checkpoint
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needles:
+      - "## 4) Ingestion Quality Gate + Irene Packet"
+      - "## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)"
+      - "## 5) Irene Pass 1 Structure + Gate 1 Fidelity"
+    ordered: true
   - name: Standard storyboard checkpoints
     path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
     needles:
       - "Required HIL review (Storyboard A):"
       - "Required HIL review (Storyboard B, before audio/script finalization):"
     ordered: true
+  - name: Marcus workflow template 04A stage invariant
+    path: skills/bmad-agent-marcus/references/workflow-templates.yaml
+    needles:
+      - "stage: \"lesson-plan-coauthoring-04a\""
   - name: Operations context experience-profile invariant
     path: docs/operations-context.md
     needles:
       - "EXPERIENCE_PROFILE"
       - "narration_profile_controls"
 sequence_doc_parity:
+  - stage: lesson-plan-coauthoring-04a
+    path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
+    needle: "## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)"
+  - stage: lesson-plan-coauthoring-04a
+    path: docs/workflow/production-operator-card-v4.md
+    needle: "### 04A. Prompt 04A: Lesson Plan Coauthoring + Scope Lock"
   - stage: storyboard
     path: docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md
     needle: "Required HIL review (Storyboard A):"

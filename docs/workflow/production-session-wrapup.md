@@ -99,8 +99,8 @@ Run:
 
 - `git status --short`
 - `git worktree list`
-- `python -m scripts.utilities.structural_walk --workflow standard`
-- if the run used motion: `python -m scripts.utilities.structural_walk --workflow motion`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard`
+- if the run used motion: `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion`
 
 Pass criteria:
 

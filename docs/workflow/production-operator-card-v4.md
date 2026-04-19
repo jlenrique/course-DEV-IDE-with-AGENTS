@@ -95,6 +95,14 @@ Fast path:
 - Run/record G0 receipt.
 - Go/no-go: no go if any fail.
 
+### 04A. Prompt 04A: Lesson Plan Coauthoring + Scope Lock
+- **Mandatory checkpoint.** Runs after Prompt 4 and before Prompt 4.75.
+- Confirm Marcus and operator ratify per-unit scope decisions in plain language.
+- Confirm `scope_decision.set` event(s) exist for this run revision.
+- Confirm `plan.locked` exists for the same revision.
+- Confirm a Step `04A` handoff/evidence record exists before Step `05`.
+- Go/no-go: no go until 04A is complete and the locked plan revision is confirmed.
+
 ### 4.75. Prompt 4.75: Creative Directive Resolution (CD)
 - **Skip if `EXPERIENCE_PROFILE` is not set.**
 - Confirm `creative-directive.yaml` is written and validated.

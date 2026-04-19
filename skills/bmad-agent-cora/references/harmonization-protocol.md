@@ -37,6 +37,12 @@ This protocol is a six-gap-closed evolution of `maintenance/doc review prompt 20
 
 6. **Invoke Audra L1 deterministic sweep.** Context envelope: `{anchor, scope, workflow, report_home, changed_files_window}`. Wait for structured result. If exit code \!= 0, halt the pipeline — report L1 findings to operator; do not run L2 until L1 is clean. Note: Audra's whole-repo invariant checks (L1-3 parameter-directory <-> schema lockstep, L1-4 gate-contract lockstep, L1-5 lane-matrix coverage) run regardless of scope; only the file-window checks (L1-2, L1-7) respect the change window.
 
+   **Critical workflow-stage lockstep (hard requirement):** if a stage or checkpoint is added/renamed (for example `04A`), L1 must confirm the update appears across all four surfaces before Cora can call the run coherent:
+   - prompt pack(s) and operator checkpoint doc(s)
+   - structural-walk workflow manifest(s)
+   - Marcus workflow template registry (`workflow-templates.yaml`)
+   - sequence-doc parity mappings used by structural-walk dry-run
+
 7. **On L1 clean — invoke Audra L2 agentic sweep.** Scope: the same changed-files window for since-handoff scope; full-repo for full-repo scope. Context envelope: `{changed_docs, anchor, report_home}`.
 
 8. **Route substantial prose work to Paige.** If Audra's L2 surfaces a doc rework exceeding paragraph scope, Cora offers to route to `bmad-agent-tech-writer` (Paige). Operator decides.

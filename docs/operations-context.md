@@ -46,11 +46,11 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 ## Canonical Commands
 
 - Structural walk, standard:
-  - `python -m scripts.utilities.structural_walk --workflow standard`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard`
 - Structural walk, motion:
-  - `python -m scripts.utilities.structural_walk --workflow motion`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion`
 - Structural walk, cluster:
-  - `python -m scripts.utilities.structural_walk --workflow cluster`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow cluster`
 - Session readiness + preflight:
   - `.venv/Scripts/python.exe -m scripts.utilities.app_session_readiness --with-preflight`
 - Tracked bundle readiness:

@@ -90,6 +90,10 @@ anti_drift:
     needles:
       - "EXPERIENCE_PROFILE"
       - "narration_profile_controls"
+  - name: Marcus workflow template 04A stage invariant
+    path: skills/bmad-agent-marcus/references/workflow-templates.yaml
+    needles:
+      - "stage: \"lesson-plan-coauthoring-04a\""
 sequence_doc_parity:
   - stage: cluster-plan
     path: docs/workflow/cluster-workflow.md

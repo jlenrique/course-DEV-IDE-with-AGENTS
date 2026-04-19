@@ -37,6 +37,7 @@ Anti-drift controls that must be enforced in this session:
 - Prompt 6B literal-visual operator packet + readiness confirmation before Prompt 7.
 - Storyboard A after Gary dispatch, before Gate 2 approval.
 - Storyboard B after Irene Pass 2, before downstream audio/script finalization.
+- Prompt 04A Lesson Plan coauthoring + scope-lock checkpoint between Prompt 4 and Prompt 4.75.
 - If `EXPERIENCE_PROFILE` is set, enforce Prompt 4.75 Creative Directive before Irene Pass 1.
 - If `CLUSTER_DENSITY` is not `none`, enforce cluster prompt engineering (6.2), dispatch sequencing (6.3), and G2.5 coherence before Storyboard A.
 

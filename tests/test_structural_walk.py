@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -13,16 +13,18 @@ from scripts.utilities.structural_walk import (
     AntiDriftSpec,
     AssetSpec,
     CrossCuttingSpec,
+    LiveProbeSpec,
     _build_anti_drift_result,
     _status_for_asset,
-    LiveProbeSpec,
     build_report,
     default_output_path,
     get_workflow_specs,
     load_workflow_spec,
     manifest_path,
-    main as structural_main,
     render_markdown,
+)
+from scripts.utilities.structural_walk import (
+    main as structural_main,
 )
 
 
@@ -79,6 +81,7 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             '            "stages": [\n'
             '                {"stage": "source-wrangling"},\n'
             '                {"stage": "lesson-plan-and-slide-brief"},\n'
+            '                {"stage": "lesson-plan-coauthoring-04a"},\n'
             '                {"stage": "gate-1"},\n'
             '                {"stage": "slide-generation"},\n'
             '                {"stage": "storyboard"},\n'
@@ -95,8 +98,9 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             '            "aliases": [],\n'
             '            "stages": [\n'
             '                {"stage": "source-wrangling"},\n'
-            '                {"stage": "creative-directive"},\n'
             '                {"stage": "lesson-plan-and-slide-brief"},\n'
+            '                {"stage": "lesson-plan-coauthoring-04a"},\n'
+            '                {"stage": "creative-directive"},\n'
             '                {"stage": "fidelity-g1"},\n'
             '                {"stage": "fidelity-g2"},\n'
             '                {"stage": "quality-g2"},\n'
@@ -131,6 +135,7 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             '            "stages": [\n'
             '                {"stage": "source-wrangling"},\n'
             '                {"stage": "lesson-plan-and-slide-brief"},\n'
+            '                {"stage": "lesson-plan-coauthoring-04a"},\n'
             '                {"stage": "fidelity-g1"},\n'
             '                {"stage": "cluster-plan"},\n'
             '                {"stage": "fidelity-g2"},\n'
@@ -161,7 +166,8 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             "    return {key: key for key in workflow_templates}\n"
             "\n"
             "def select_workflow_variant(content_type, motion_enabled=False):\n"
-            '    if content_type == "narrated-lesson-with-video-or-animation" and not motion_enabled:\n'
+            '    if content_type == "narrated-lesson-with-video-or-animation" and '
+            "not motion_enabled:\n"
             '        return "narrated-deck-video-export"\n'
             '    if content_type == "narrated-deck-video-export" and motion_enabled:\n'
             '        return "narrated-lesson-with-video-or-animation"\n'
@@ -184,6 +190,7 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             "    stages:\n"
             "      - stage: source-wrangling\n"
             "      - stage: lesson-plan-and-slide-brief\n"
+            "      - stage: lesson-plan-coauthoring-04a\n"
             "      - stage: gate-1\n"
             "      - stage: slide-generation\n"
             "      - stage: storyboard\n"
@@ -198,8 +205,9 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             "    aliases: []\n"
             "    stages:\n"
             "      - stage: source-wrangling\n"
-            "      - stage: creative-directive\n"
             "      - stage: lesson-plan-and-slide-brief\n"
+            "      - stage: lesson-plan-coauthoring-04a\n"
+            "      - stage: creative-directive\n"
             "      - stage: fidelity-g1\n"
             "      - stage: fidelity-g2\n"
             "      - stage: quality-g2\n"
@@ -233,6 +241,7 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
             "    stages:\n"
             "      - stage: source-wrangling\n"
             "      - stage: lesson-plan-and-slide-brief\n"
+            "      - stage: lesson-plan-coauthoring-04a\n"
             "      - stage: fidelity-g1\n"
             "      - stage: cluster-plan\n"
             "      - stage: fidelity-g2\n"
@@ -272,7 +281,11 @@ def _write_asset(root: Path, relative_path: str, *, gate: str | None = None) -> 
 def _create_minimal_repo(root: Path, workflow: str) -> None:
     _write(root, "pyproject.toml", "[project]\nname='structural-walk-test'\n")
     spec = get_workflow_specs()[workflow]
-    _write(root, "skills/sensory-bridges/scripts/bridge_utils.py", '"""stub"""\ndef build_response(**kwargs):\n    return kwargs\n')
+    _write(
+        root,
+        "skills/sensory-bridges/scripts/bridge_utils.py",
+        '"""stub"""\ndef build_response(**kwargs):\n    return kwargs\n',
+    )
     _write_workflow_manifests(root)
 
     for gate in spec.gate_specs:
@@ -325,11 +338,7 @@ def _write_workflow_manifests(root: Path) -> None:
                         if item.redirect_contains is not None
                         else {}
                     ),
-                    **(
-                        {"check_mode": item.check_mode}
-                        if item.check_mode != "auto"
-                        else {}
-                    ),
+                    **({"check_mode": item.check_mode} if item.check_mode != "auto" else {}),
                 }
                 for item in spec.cross_cutting_specs
             ],
@@ -364,7 +373,11 @@ def _write_workflow_manifests(root: Path) -> None:
                     for item in spec.dry_run_steps
                 ]
             }
-        _write(root, str(manifest_path(root, workflow).relative_to(root)), yaml.safe_dump(payload, sort_keys=False))
+        _write(
+            root,
+            str(manifest_path(root, workflow).relative_to(root)),
+            yaml.safe_dump(payload, sort_keys=False),
+        )
 
 
 def test_standard_workflow_happy_path_is_ready(tmp_path: Path) -> None:
@@ -373,7 +386,7 @@ def test_standard_workflow_happy_path_is_ready(tmp_path: Path) -> None:
     report = build_report(
         root=tmp_path,
         workflow="standard",
-        generated_at=datetime(2026, 4, 5, 12, 0, 0, tzinfo=timezone.utc),
+        generated_at=datetime(2026, 4, 5, 12, 0, 0, tzinfo=UTC),
     )
     markdown = render_markdown(report)
 
@@ -393,16 +406,19 @@ def test_manifest_loader_reads_repo_manifest_contract(tmp_path: Path) -> None:
     assert spec.key == "motion"
     assert spec.title == "Motion-enabled narrated workflow"
     assert any(item.component == "Motion execution script" for item in spec.cross_cutting_specs)
-    assert any(item.name == "Motion prompt-pack workflow sequence" for item in spec.anti_drift_specs)
+    assert any(
+        item.name == "Motion prompt-pack workflow sequence" for item in spec.anti_drift_specs
+    )
     assert len(spec.dry_run_steps) == 3
     assert spec.dry_run_steps[0].kind == "manifest"
     assert spec.dry_run_steps[1].kind == "sequence"
     assert spec.dry_run_steps[2].kind == "sequence_docs"
-    # 10 parity specs after v4.2 workflow enhancements (commit 5ffc76b):
-    # storyboard, creative-directive, cluster-prompt-engineering,
-    # cluster-dispatch-sequencing, cluster-coherence, gate-2m (x2 — prompt-pack
-    # + operator-card), motion-gate (x2), narration-and-manifest.
-    assert len(spec.sequence_doc_parity_specs) == 10
+    # 12 parity specs after v4.2 + 04A lockstep checks:
+    # lesson-plan-coauthoring-04a (x2 — prompt-pack + operator-card), storyboard,
+    # creative-directive, cluster-prompt-engineering, cluster-dispatch-sequencing,
+    # cluster-coherence, gate-2m (x2 — prompt-pack + operator-card), motion-gate
+    # (x2), narration-and-manifest.
+    assert len(spec.sequence_doc_parity_specs) == 12
 
 
 def test_manifest_loader_reads_cluster_manifest_contract(tmp_path: Path) -> None:
@@ -458,7 +474,7 @@ def test_manifest_loader_reads_standard_dry_run_steps(tmp_path: Path) -> None:
     assert spec.dry_run_steps[0].kind == "manifest"
     assert spec.dry_run_steps[2].kind == "sequence_docs"
     assert spec.dry_run_steps[-1].kind == "documents"
-    assert len(spec.sequence_doc_parity_specs) == 4
+    assert len(spec.sequence_doc_parity_specs) == 6
 
 
 def test_manifest_loader_rejects_empty_dry_run_steps(tmp_path: Path) -> None:
@@ -515,7 +531,7 @@ def test_motion_workflow_uses_motion_scope_and_output_dir(tmp_path: Path) -> Non
     output_path = default_output_path(
         tmp_path,
         workflow="motion",
-        generated_at=datetime(2026, 4, 5, 12, 30, 0, tzinfo=timezone.utc),
+        generated_at=datetime(2026, 4, 5, 12, 30, 0, tzinfo=UTC),
     )
 
     assert report["workflow"] == "motion"
@@ -605,7 +621,9 @@ def test_json_parse_failure_is_reported(tmp_path: Path) -> None:
 
 
 def test_redirect_mismatch_is_reported(tmp_path: Path) -> None:
-    _write(tmp_path, "_bmad/memory/master-orchestrator-sidecar/index.md", "# Redirect\nwrong target\n")
+    _write(
+        tmp_path, "_bmad/memory/master-orchestrator-sidecar/index.md", "# Redirect\nwrong target\n"
+    )
 
     status, findings = _status_for_asset(
         tmp_path,
@@ -618,7 +636,8 @@ def test_redirect_mismatch_is_reported(tmp_path: Path) -> None:
 
     assert status == "Invalid redirect"
     assert findings == [
-        "Redirect placeholder missing canonical redirect text: _bmad/memory/master-orchestrator-sidecar/index.md"
+        "Redirect placeholder missing canonical redirect text: "
+        "_bmad/memory/master-orchestrator-sidecar/index.md"
     ]
 
 
@@ -683,16 +702,20 @@ def test_standard_dry_run_preview_adds_plan_and_results(tmp_path: Path) -> None:
     assert "## Dry Run Results" in markdown
     assert "Manifest resolution and shape check" in markdown
     sequence_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus workflow sequence preview"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus workflow sequence preview"
     )
     assert sequence_row["result"] == "Pass"
     assert "narrated-deck-video-export:" in sequence_row["evidence"]
     assert "source-wrangling -> lesson-plan-and-slide-brief" in sequence_row["evidence"]
     parity_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus sequence-to-document parity"
     )
     assert parity_row["result"] == "Pass"
-    assert "Validated 4 sequence-doc checkpoint(s)" in parity_row["evidence"]
+    assert "Validated 6 sequence-doc checkpoint(s)" in parity_row["evidence"]
 
 
 def test_standard_dry_run_blocks_on_contract_failure(tmp_path: Path) -> None:
@@ -703,12 +726,16 @@ def test_standard_dry_run_blocks_on_contract_failure(tmp_path: Path) -> None:
 
     assert report["dry_run"]["summary"]["blocked"] >= 1
     contract_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Local fidelity contract validation"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Local fidelity contract validation"
     )
     assert contract_row["result"] == "Blocked"
     assert contract_row["blocker"].startswith("Invalid contract:")
     aggregate_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Local planner and document sanity"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Local planner and document sanity"
     )
     assert aggregate_row["result"] == "Pass"
     assert aggregate_row["blocker"] == ""
@@ -721,7 +748,9 @@ def test_standard_dry_run_blocks_when_marcus_plan_resolution_fails(tmp_path: Pat
     report = build_report(root=tmp_path, workflow="standard", dry_run=True)
 
     sequence_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus workflow sequence preview"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus workflow sequence preview"
     )
     assert sequence_row["result"] == "Blocked"
     assert sequence_row["blocker"].startswith("Marcus production-plan resolution failed:")
@@ -730,22 +759,28 @@ def test_standard_dry_run_blocks_when_marcus_plan_resolution_fails(tmp_path: Pat
 
 def test_standard_dry_run_blocks_when_sequence_doc_parity_marker_is_missing(tmp_path: Path) -> None:
     _create_minimal_repo(tmp_path, "standard")
-    prompt_pack = tmp_path / "docs" / "workflow" / "production-prompt-pack-v4.1-narrated-deck-video-export.md"
+    prompt_pack = (
+        tmp_path / "docs" / "workflow" / "production-prompt-pack-v4.1-narrated-deck-video-export.md"
+    )
     prompt_pack.write_text("Required HIL review (Storyboard A):\n", encoding="utf-8")
 
     report = build_report(root=tmp_path, workflow="standard", dry_run=True)
 
     parity_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus sequence-to-document parity"
     )
     assert parity_row["result"] == "Blocked"
     assert parity_row["blocker"] == (
-        "Sequence-doc parity marker missing for stage 'narration-and-manifest': "
+        "Sequence-doc parity marker missing for stage 'lesson-plan-coauthoring-04a': "
         "docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md"
     )
 
 
-def test_dry_run_manifest_step_blocks_when_marcus_planning_assets_are_undeclared(tmp_path: Path) -> None:
+def test_dry_run_manifest_step_blocks_when_marcus_planning_assets_are_undeclared(
+    tmp_path: Path,
+) -> None:
     for workflow in ("standard", "motion"):
         case_root = tmp_path / workflow
         _create_minimal_repo(case_root, workflow)
@@ -760,7 +795,9 @@ def test_dry_run_manifest_step_blocks_when_marcus_planning_assets_are_undeclared
 
         report = build_report(root=case_root, workflow=workflow, dry_run=True)
         manifest_row = next(
-            row for row in report["dry_run"]["results"] if row["step"] == "Manifest resolution and shape check"
+            row
+            for row in report["dry_run"]["results"]
+            if row["step"] == "Manifest resolution and shape check"
         )
         assert manifest_row["result"] == "Blocked"
         assert manifest_row["blocker"] == (
@@ -779,7 +816,9 @@ def test_motion_dry_run_preview_adds_marcus_motion_sequence(tmp_path: Path) -> N
     assert "## Dry Run Plan" in markdown
     assert "## Dry Run Results" in markdown
     sequence_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus workflow sequence preview"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus workflow sequence preview"
     )
     assert sequence_row["result"] == "Pass"
     assert "narrated-lesson-with-video-or-animation:" in sequence_row["evidence"]
@@ -787,14 +826,16 @@ def test_motion_dry_run_preview_adds_marcus_motion_sequence(tmp_path: Path) -> N
     assert "motion-generation" in sequence_row["evidence"]
     assert "motion-gate" in sequence_row["evidence"]
     parity_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus sequence-to-document parity"
     )
     assert parity_row["result"] == "Pass"
-    # 10 parity checkpoints after v4.2 workflow enhancements (commit 5ffc76b):
-    # storyboard, creative-directive, cluster-prompt-engineering,
-    # cluster-dispatch-sequencing, cluster-coherence, gate-2m (x2), motion-gate (x2),
-    # narration-and-manifest.
-    assert "Validated 10 sequence-doc checkpoint(s)" in parity_row["evidence"]
+    # 12 parity checkpoints after v4.2 + 04A lockstep enhancements:
+    # lesson-plan-coauthoring-04a (x2), storyboard, creative-directive,
+    # cluster-prompt-engineering, cluster-dispatch-sequencing, cluster-coherence,
+    # gate-2m (x2), motion-gate (x2), narration-and-manifest.
+    assert "Validated 12 sequence-doc checkpoint(s)" in parity_row["evidence"]
 
 
 def test_cluster_dry_run_preview_adds_cluster_sequence(tmp_path: Path) -> None:
@@ -807,14 +848,18 @@ def test_cluster_dry_run_preview_adds_cluster_sequence(tmp_path: Path) -> None:
     assert "## Dry Run Plan" in markdown
     assert "## Dry Run Results" in markdown
     sequence_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus workflow sequence preview"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus workflow sequence preview"
     )
     assert sequence_row["result"] == "Pass"
     assert "clustered-narrated-deck-video-export:" in sequence_row["evidence"]
     assert "cluster-plan" in sequence_row["evidence"]
     assert "cluster-coherence" in sequence_row["evidence"]
     parity_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus sequence-to-document parity"
     )
     assert parity_row["result"] == "Pass"
     assert "Validated 2 sequence-doc checkpoint(s)" in parity_row["evidence"]
@@ -827,7 +872,9 @@ def test_motion_dry_run_blocks_when_marcus_plan_resolution_fails(tmp_path: Path)
     report = build_report(root=tmp_path, workflow="motion", dry_run=True)
 
     sequence_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus workflow sequence preview"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus workflow sequence preview"
     )
     assert sequence_row["result"] == "Blocked"
     assert sequence_row["blocker"].startswith("Marcus production-plan resolution failed:")
@@ -838,18 +885,21 @@ def test_motion_dry_run_blocks_when_sequence_doc_parity_marker_is_missing(tmp_pa
     _create_minimal_repo(tmp_path, "motion")
     operator_card = tmp_path / "docs" / "workflow" / "production-operator-card-v4.md"
     operator_card.write_text(
-        "Confirm Storyboard A artifacts and approval:\n### 7D. Prompt 7D: Gate 2M Motion Designation\n",
+        "Confirm Storyboard A artifacts and approval:\n"
+        "### 7D. Prompt 7D: Gate 2M Motion Designation\n",
         encoding="utf-8",
     )
 
     report = build_report(root=tmp_path, workflow="motion", dry_run=True)
 
     parity_row = next(
-        row for row in report["dry_run"]["results"] if row["step"] == "Marcus sequence-to-document parity"
+        row
+        for row in report["dry_run"]["results"]
+        if row["step"] == "Marcus sequence-to-document parity"
     )
     assert parity_row["result"] == "Blocked"
     assert parity_row["blocker"] == (
-        "Sequence-doc parity marker missing for stage 'motion-gate': "
+        "Sequence-doc parity marker missing for stage 'lesson-plan-coauthoring-04a': "
         "docs/workflow/production-operator-card-v4.md"
     )
 
@@ -858,7 +908,15 @@ def test_cli_rejects_live_probe_in_dry_run_mode(tmp_path: Path, capsys) -> None:
     _create_minimal_repo(tmp_path, "standard")
 
     exit_code = structural_main(
-        ["--root", str(tmp_path), "--workflow", "standard", "--dry-run", "--live-probe", "contracts-cli"]
+        [
+            "--root",
+            str(tmp_path),
+            "--workflow",
+            "standard",
+            "--dry-run",
+            "--live-probe",
+            "contracts-cli",
+        ]
     )
     captured = capsys.readouterr()
 
@@ -892,7 +950,11 @@ def test_canonical_cli_default_path_omits_live_probes(tmp_path: Path) -> None:
     _create_minimal_repo(tmp_path, "standard")
 
     exit_code = structural_main(["--root", str(tmp_path), "--workflow", "standard"])
-    report_path = next((tmp_path / "reports" / "structural-walk" / "standard").glob("structural-walk-standard-*.md"))
+    report_path = next(
+        (tmp_path / "reports" / "structural-walk" / "standard").glob(
+            "structural-walk-standard-*.md"
+        )
+    )
     markdown = report_path.read_text(encoding="utf-8")
 
     assert exit_code == 0
@@ -903,7 +965,7 @@ def test_dry_run_output_path_includes_suffix(tmp_path: Path) -> None:
     output_path = default_output_path(
         tmp_path,
         workflow="standard",
-        generated_at=datetime(2026, 4, 5, 13, 0, 0, tzinfo=timezone.utc),
+        generated_at=datetime(2026, 4, 5, 13, 0, 0, tzinfo=UTC),
         dry_run=True,
     )
 
@@ -959,6 +1021,5 @@ def test_real_repo_standard_workflow_smoke_has_no_default_live_probes() -> None:
     root = project_root()
 
     report = build_report(root=root, workflow="standard")
-    markdown = render_markdown(report)
 
     assert report["summary"]["overall_status"]

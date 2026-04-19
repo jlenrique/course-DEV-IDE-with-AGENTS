@@ -20,40 +20,41 @@ Primary references:
 ## Run Sequence
 
 1. Open the shift and confirm workspace, branch, and active run context.
-2. If `EXPERIENCE_PROFILE` is set, run Prompt 4.75 Creative Directive before Irene Pass 1.
-3. Complete Gate 1 and approve Irene Pass 1 artifacts.
-4. Build the pre-dispatch bundle:
+2. Complete Prompt 04A (Lesson Plan coauthoring + scope lock) after ingestion quality and before Prompt 4.75.
+3. If `EXPERIENCE_PROFILE` is set, run Prompt 4.75 Creative Directive before Irene Pass 1.
+4. Complete Gate 1 and approve Irene Pass 1 artifacts.
+5. Build the pre-dispatch bundle:
    - `g2-slide-brief.md`
    - `gary-slide-content.json`
    - `gary-fidelity-slides.json`
    - `gary-diagram-cards.json`
    - `gary-theme-resolution.json`
    - `gary-outbound-envelope.yaml`
-5. Verify every slide has exactly one fidelity mode.
-6. For each literal-visual card, provide exactly one dispatch-ready source:
+6. Verify every slide has exactly one fidelity mode.
+7. For each literal-visual card, provide exactly one dispatch-ready source:
    - `image_url`, or
    - `preintegration_png_path` in tracked/default mode only
-7. If `CLUSTER_DENSITY` is not `none`, run Prompt 6.2 (cluster prompts) and 6.3 (dispatch sequencing).
-8. If any `preintegration_png_path` is used, include `site_repo_url`.
-9. Produce the Gate 6B packet at `<bundle-dir>/literal-visual-operator-packet.md`.
-10. Do not dispatch Prompt 7 until all required literal-visual cards are operator-ready.
-11. Present the pre-dispatch summary, get explicit approval, and run Gary mixed-fidelity dispatch.
-12. Validate the dispatch result with `validate-gary-dispatch-ready.py`.
-13. If `CLUSTER_DENSITY` is not `none`, run G2.5 coherence before Storyboard A.
-14. Generate Storyboard A from the dispatch payload and get explicit Gate 2 approval.
-15. Write `authorized-storyboard.json`.
-16. If `DOUBLE_DISPATCH` is enabled:
+8. If `CLUSTER_DENSITY` is not `none`, run Prompt 6.2 (cluster prompts) and 6.3 (dispatch sequencing).
+9. If any `preintegration_png_path` is used, include `site_repo_url`.
+10. Produce the Gate 6B packet at `<bundle-dir>/literal-visual-operator-packet.md`.
+11. Do not dispatch Prompt 7 until all required literal-visual cards are operator-ready.
+12. Present the pre-dispatch summary, get explicit approval, and run Gary mixed-fidelity dispatch.
+13. Validate the dispatch result with `validate-gary-dispatch-ready.py`.
+14. If `CLUSTER_DENSITY` is not `none`, run G2.5 coherence before Storyboard A.
+15. Generate Storyboard A from the dispatch payload and get explicit Gate 2 approval.
+16. Write `authorized-storyboard.json`.
+17. If `DOUBLE_DISPATCH` is enabled:
     - record `variant-selection.json`
     - allow documented surviving-side fallback if one branch failed
     - collapse to the winner deck before narration or motion continues
-17. If `MOTION_ENABLED` is enabled:
+18. If `MOTION_ENABLED` is enabled:
     - run Gate 2M on the authorized winner deck only
     - write `motion-designations.json` and `motion_plan.yaml`
     - complete motion generation/import
     - close Motion Gate before Irene Pass 2
-18. Run Irene Pass 2 using approved `gary_slide_output`.
-19. Regenerate Storyboard B and get approval before downstream audio/script finalization.
-20. Save a compact run receipt with outcomes, blockers, and next action.
+19. Run Irene Pass 2 using approved `gary_slide_output`.
+20. Regenerate Storyboard B and get approval before downstream audio/script finalization.
+21. Save a compact run receipt with outcomes, blockers, and next action.
 
 ## Stop Conditions
 

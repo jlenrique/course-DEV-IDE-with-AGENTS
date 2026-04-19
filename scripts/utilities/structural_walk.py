@@ -13,8 +13,9 @@ import hashlib
 import json
 import subprocess
 import sys
+from contextlib import suppress
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,10 +29,16 @@ from scripts.utilities.skill_module_loader import (
 )
 from scripts.validate_fidelity_contracts import validate_contract
 
-
 VALID_WORKFLOWS = ("standard", "motion", "cluster")
 MANIFEST_DIR = Path("state/config/structural-walk")
-VALID_DRY_RUN_KINDS = ("manifest", "sequence", "sequence_docs", "contracts", "aggregate", "documents")
+VALID_DRY_RUN_KINDS = (
+    "manifest",
+    "sequence",
+    "sequence_docs",
+    "contracts",
+    "aggregate",
+    "documents",
+)
 
 
 @dataclass(frozen=True)
@@ -83,8 +90,8 @@ class WorkflowSpec:
     gate_specs: tuple[GateSpec, ...]
     cross_cutting_specs: tuple[CrossCuttingSpec, ...]
     anti_drift_specs: tuple[AntiDriftSpec, ...]
-    dry_run_steps: tuple["DryRunStep", ...] = ()
-    sequence_doc_parity_specs: tuple["SequenceDocParitySpec", ...] = ()
+    dry_run_steps: tuple[DryRunStep, ...] = ()
+    sequence_doc_parity_specs: tuple[SequenceDocParitySpec, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -113,8 +120,12 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
         assets=(
             AssetSpec("Skill", "skills/bmad-agent-texas/SKILL.md"),
             AssetSpec("Script", "skills/bmad-agent-texas/scripts/extraction_validator.py"),
-            AssetSpec("Contract", "state/config/fidelity-contracts/g0-source-bundle.yaml", contract=True),
-            AssetSpec("Contract Schema", "state/config/fidelity-contracts/_schema.yaml", check_mode="yaml"),
+            AssetSpec(
+                "Contract", "state/config/fidelity-contracts/g0-source-bundle.yaml", contract=True
+            ),
+            AssetSpec(
+                "Contract Schema", "state/config/fidelity-contracts/_schema.yaml", check_mode="yaml"
+            ),
             AssetSpec("Sensory Bridge", "skills/sensory-bridges/scripts/pdf_to_agent.py"),
         ),
     ),
@@ -126,10 +137,14 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
         contract_path="state/config/fidelity-contracts/g1-lesson-plan.yaml",
         assets=(
             AssetSpec("Skill", "skills/bmad-agent-content-creator/SKILL.md"),
-            AssetSpec("Template", "skills/bmad-agent-content-creator/references/template-lesson-plan.md"),
+            AssetSpec(
+                "Template", "skills/bmad-agent-content-creator/references/template-lesson-plan.md"
+            ),
             AssetSpec("Config", "state/config/course_context.yaml", check_mode="yaml"),
             AssetSpec("Style Bible", "resources/style-bible/master-style-bible.md"),
-            AssetSpec("Contract", "state/config/fidelity-contracts/g1-lesson-plan.yaml", contract=True),
+            AssetSpec(
+                "Contract", "state/config/fidelity-contracts/g1-lesson-plan.yaml", contract=True
+            ),
         ),
     ),
     GateSpec(
@@ -140,9 +155,15 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
         contract_path="state/config/fidelity-contracts/g2-slide-brief.yaml",
         assets=(
             AssetSpec("Skill", "skills/bmad-agent-content-creator/SKILL.md"),
-            AssetSpec("Template", "skills/bmad-agent-content-creator/references/template-slide-brief.md"),
-            AssetSpec("Contract", "state/config/fidelity-contracts/g2-slide-brief.yaml", contract=True),
-            AssetSpec("Gamma Execution Path", "skills/gamma-api-mastery/scripts/gamma_operations.py"),
+            AssetSpec(
+                "Template", "skills/bmad-agent-content-creator/references/template-slide-brief.md"
+            ),
+            AssetSpec(
+                "Contract", "state/config/fidelity-contracts/g2-slide-brief.yaml", contract=True
+            ),
+            AssetSpec(
+                "Gamma Execution Path", "skills/gamma-api-mastery/scripts/gamma_operations.py"
+            ),
         ),
     ),
     GateSpec(
@@ -158,7 +179,11 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
             AssetSpec("API Client", "scripts/api_clients/gamma_client.py"),
             AssetSpec("Sensory Bridge", "skills/sensory-bridges/scripts/pptx_to_agent.py"),
             AssetSpec("Sensory Bridge", "skills/sensory-bridges/scripts/png_to_agent.py"),
-            AssetSpec("Contract", "state/config/fidelity-contracts/g3-generated-slides.yaml", contract=True),
+            AssetSpec(
+                "Contract",
+                "state/config/fidelity-contracts/g3-generated-slides.yaml",
+                contract=True,
+            ),
         ),
     ),
     GateSpec(
@@ -169,12 +194,24 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
         contract_path="state/config/fidelity-contracts/g4-narration-script.yaml",
         assets=(
             AssetSpec("Skill", "skills/bmad-agent-content-creator/SKILL.md"),
-            AssetSpec("Template", "skills/bmad-agent-content-creator/references/template-narration-script.md"),
-            AssetSpec("Template", "skills/bmad-agent-content-creator/references/template-segment-manifest.md"),
-            AssetSpec("Config", "state/config/narration-grounding-profiles.yaml", check_mode="yaml"),
+            AssetSpec(
+                "Template",
+                "skills/bmad-agent-content-creator/references/template-narration-script.md",
+            ),
+            AssetSpec(
+                "Template",
+                "skills/bmad-agent-content-creator/references/template-segment-manifest.md",
+            ),
+            AssetSpec(
+                "Config", "state/config/narration-grounding-profiles.yaml", check_mode="yaml"
+            ),
             AssetSpec("Config", "state/config/narration-script-parameters.yaml", check_mode="yaml"),
             AssetSpec("Sensory Bridge", "skills/sensory-bridges/scripts/png_to_agent.py"),
-            AssetSpec("Contract", "state/config/fidelity-contracts/g4-narration-script.yaml", contract=True),
+            AssetSpec(
+                "Contract",
+                "state/config/fidelity-contracts/g4-narration-script.yaml",
+                contract=True,
+            ),
         ),
     ),
     GateSpec(
@@ -204,7 +241,9 @@ COMMON_GATE_SPECS: tuple[GateSpec, ...] = (
             AssetSpec("Reference", "skills/compositor/references/assembly-guide-format.md"),
             AssetSpec("Reference", "skills/compositor/references/manifest-interpretation.md"),
             AssetSpec("Sensory Bridge", "skills/sensory-bridges/scripts/video_to_agent.py"),
-            AssetSpec("Contract", "state/config/fidelity-contracts/g6-composition.yaml", contract=True),
+            AssetSpec(
+                "Contract", "state/config/fidelity-contracts/g6-composition.yaml", contract=True
+            ),
         ),
     ),
 )
@@ -221,8 +260,9 @@ DEFAULT_LIVE_PROBES: dict[str, LiveProbeSpec] = {
     ),
 }
 
+
 def _now_utc() -> datetime:
-    return datetime.now(tz=timezone.utc).replace(microsecond=0)
+    return datetime.now(tz=UTC).replace(microsecond=0)
 
 
 def _normalize_workflow(workflow: str) -> str:
@@ -288,7 +328,9 @@ def load_workflow_spec(root: Path, workflow: str) -> WorkflowSpec:
             raise ValueError(f"cross_cutting[{index}].redirect_contains must be a string in {path}")
         check_mode = item.get("check_mode", "auto")
         if not isinstance(check_mode, str) or not check_mode.strip():
-            raise ValueError(f"cross_cutting[{index}].check_mode must be a non-empty string in {path}")
+            raise ValueError(
+                f"cross_cutting[{index}].check_mode must be a non-empty string in {path}"
+            )
         cross_cutting_specs.append(
             CrossCuttingSpec(
                 component=component,
@@ -310,10 +352,14 @@ def load_workflow_spec(root: Path, workflow: str) -> WorkflowSpec:
             raise ValueError(f"anti_drift[{index}] missing non-empty name in {path}")
         if not isinstance(item_path, str) or not item_path.strip():
             raise ValueError(f"anti_drift[{index}] missing non-empty path in {path}")
-        if not isinstance(needles, list) or not needles or not all(
-            isinstance(needle, str) and needle for needle in needles
+        if (
+            not isinstance(needles, list)
+            or not needles
+            or not all(isinstance(needle, str) and needle for needle in needles)
         ):
-            raise ValueError(f"anti_drift[{index}].needles must be a non-empty string list in {path}")
+            raise ValueError(
+                f"anti_drift[{index}].needles must be a non-empty string list in {path}"
+            )
         if not isinstance(ordered, bool):
             raise ValueError(f"anti_drift[{index}].ordered must be boolean in {path}")
         anti_drift_specs.append(
@@ -331,7 +377,9 @@ def load_workflow_spec(root: Path, workflow: str) -> WorkflowSpec:
             raise ValueError(f"Structural-walk manifest dry_run must be a mapping: {path}")
         steps_raw = dry_run_raw.get("steps")
         if not isinstance(steps_raw, list) or not steps_raw:
-            raise ValueError(f"Structural-walk manifest dry_run.steps must be a non-empty list: {path}")
+            raise ValueError(
+                f"Structural-walk manifest dry_run.steps must be a non-empty list: {path}"
+            )
         for index, item in enumerate(steps_raw):
             if not isinstance(item, dict):
                 raise ValueError(f"dry_run.steps[{index}] must be a mapping in {path}")
@@ -446,10 +494,8 @@ def _python_importable(root: Path, target: Path) -> list[str]:
     finally:
         sys.modules.pop(module_name, None)
         if added_root:
-            try:
+            with suppress(ValueError):
                 sys.path.remove(str(root))
-            except ValueError:
-                pass
 
 
 def _yaml_parsable(target: Path) -> list[str]:
@@ -641,15 +687,19 @@ def _resolve_marcus_workflow_sequence(
     root: Path, *, content_type: str, motion_enabled: bool
 ) -> tuple[str, tuple[str, ...]]:
     module_path = root / "skills" / "bmad-agent-marcus" / "scripts" / "generate-production-plan.py"
-    template_path = (
-        root / "skills" / "bmad-agent-marcus" / "references" / "workflow-templates.yaml"
-    )
+    template_path = root / "skills" / "bmad-agent-marcus" / "references" / "workflow-templates.yaml"
     if not module_path.exists():
-        raise FileNotFoundError(f"Missing required asset: {module_path.relative_to(root).as_posix()}")
+        raise FileNotFoundError(
+            f"Missing required asset: {module_path.relative_to(root).as_posix()}"
+        )
     if not template_path.exists():
-        raise FileNotFoundError(f"Missing required asset: {template_path.relative_to(root).as_posix()}")
+        raise FileNotFoundError(
+            f"Missing required asset: {template_path.relative_to(root).as_posix()}"
+        )
 
-    module_name = f"structural_walk_marcus_plan_{hashlib.sha1(str(module_path).encode('utf-8')).hexdigest()}"
+    module_name = (
+        f"structural_walk_marcus_plan_{hashlib.sha1(str(module_path).encode('utf-8')).hexdigest()}"
+    )
     module = load_module_from_path(module_name, module_path)
     try:
         workflow_templates = module.load_workflow_templates(template_path)
@@ -733,7 +783,9 @@ def _evaluate_sequence_doc_parity(
     return (
         "Pass",
         "",
-        f"Validated {len(spec.sequence_doc_parity_specs)} sequence-doc checkpoint(s) across {len(doc_positions)} document(s)",
+        "Validated "
+        f"{len(spec.sequence_doc_parity_specs)} sequence-doc checkpoint(s) "
+        f"across {len(doc_positions)} document(s)",
     )
 
 
@@ -804,7 +856,11 @@ def _build_dry_run_result(report: dict[str, Any], spec: WorkflowSpec, root: Path
             if manifest_findings:
                 status = "Blocked"
                 blocker = manifest_findings[0]
-            evidence = f"Resolved {spec.key} manifest with {len(spec.cross_cutting_specs)} cross-cutting checks and {len(spec.anti_drift_specs)} document checks"
+            evidence = (
+                f"Resolved {spec.key} manifest with "
+                f"{len(spec.cross_cutting_specs)} cross-cutting checks and "
+                f"{len(spec.anti_drift_specs)} document checks"
+            )
         elif step.kind == "sequence":
             resolved = get_resolved_sequence()
             if resolved is not None:
@@ -827,7 +883,13 @@ def _build_dry_run_result(report: dict[str, Any], spec: WorkflowSpec, root: Path
             if contract_failures:
                 status = "Blocked"
                 blocker = contract_failures[0]
-            evidence = f"Validated {sum(1 for gate in report['gates'] for asset in gate['assets'] if asset['type'] == 'Contract')} workflow contracts"
+            contract_count = sum(
+                1
+                for gate in report["gates"]
+                for asset in gate["assets"]
+                if asset["type"] == "Contract"
+            )
+            evidence = f"Validated {contract_count} workflow contracts"
         elif step.kind == "aggregate":
             if structural_failures:
                 status = "Blocked"
@@ -842,7 +904,9 @@ def _build_dry_run_result(report: dict[str, Any], spec: WorkflowSpec, root: Path
                 blocker = document_failures[0]
             evidence = f"Verified {len(report['anti_drift'])} workflow document checkpoint(s)"
         else:
-            raise ValueError(f"Unsupported dry-run step kind '{step.kind}' for workflow '{spec.key}'")
+            raise ValueError(
+                f"Unsupported dry-run step kind '{step.kind}' for workflow '{spec.key}'"
+            )
 
         if status == "Blocked":
             blocked += 1
@@ -908,7 +972,9 @@ def build_report(
 
     for check in anti_drift:
         if check["status"] == "Fail":
-            remediation_items.append(f"Document check failed: {check['check']} ({check['evidence']})")
+            remediation_items.append(
+                f"Document check failed: {check['check']} ({check['evidence']})"
+            )
             critical_findings += 1
 
     for probe in probe_results:
@@ -983,9 +1049,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         ]
     )
     for component in report["cross_cutting"]["components"]:
-        lines.append(
-            f"| {component['component']} | {component['path']} | {component['status']} |"
-        )
+        lines.append(f"| {component['component']} | {component['path']} | {component['status']} |")
     lines.extend(["", "### Findings", ""])
     if report["cross_cutting"]["findings"]:
         lines.extend([f"- {finding}" for finding in report["cross_cutting"]["findings"]])
@@ -1020,7 +1084,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         )
         for probe in report["live_probes"]:
             lines.append(
-                f"| {probe['probe']} | {probe['status']} | {probe['command']} | {probe['evidence']} |"
+                f"| {probe['probe']} | {probe['status']} | "
+                f"{probe['command']} | {probe['evidence']} |"
             )
 
     if report.get("dry_run"):
@@ -1036,9 +1101,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             ]
         )
         for step in report["dry_run"]["steps"]:
-            lines.append(
-                f"| {step['step']} | {step['scope']} | {step['input']} | {step['kind']} |"
-            )
+            lines.append(f"| {step['step']} | {step['scope']} | {step['input']} | {step['kind']} |")
         lines.extend(
             [
                 "",
@@ -1131,6 +1194,30 @@ def _validate_cli_args(args: argparse.Namespace) -> str | None:
     return None
 
 
+def _venv_runtime_warning(root: Path, workflow: str) -> str | None:
+    venv_root = (root / ".venv").resolve()
+    if not venv_root.exists():
+        return None
+    executable = Path(sys.executable).resolve()
+    if venv_root in executable.parents:
+        return None
+    if sys.platform.startswith("win"):
+        canonical = (
+            ".\\.venv\\Scripts\\python.exe -m scripts.utilities.structural_walk "
+            f"--workflow {workflow}"
+        )
+    else:
+        canonical = (
+            "./.venv/bin/python -m scripts.utilities.structural_walk "
+            f"--workflow {workflow}"
+        )
+    return (
+        "WARNING: structural_walk is running outside the repo virtual environment "
+        f"({executable}). Use `{canonical}` to avoid dependency drift "
+        "(for example ffmpeg/imageio_ffmpeg)."
+    )
+
+
 GATE_SPECS = COMMON_GATE_SPECS
 WORKFLOW_SPECS: dict[str, WorkflowSpec] = {}
 CROSS_CUTTING_SPECS: tuple[CrossCuttingSpec, ...] = ()
@@ -1144,6 +1231,9 @@ def main(argv: list[str] | None = None) -> int:
         print(cli_error, file=sys.stderr)
         return 1
     root = args.root.resolve() if args.root else project_root()
+    venv_warning = _venv_runtime_warning(root, args.workflow)
+    if venv_warning is not None:
+        print(venv_warning, file=sys.stderr)
     generated_at = _now_utc()
     live_probes = tuple(DEFAULT_LIVE_PROBES[name] for name in args.live_probes)
     try:
@@ -1157,8 +1247,10 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    output_path = args.output.resolve() if args.output else default_output_path(
-        root, args.workflow, generated_at, dry_run=bool(args.dry_run)
+    output_path = (
+        args.output.resolve()
+        if args.output
+        else default_output_path(root, args.workflow, generated_at, dry_run=bool(args.dry_run))
     )
     write_report(output_path, render_markdown(report))
 

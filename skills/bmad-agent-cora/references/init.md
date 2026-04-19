@@ -14,7 +14,7 @@ Before creating the memory structure, gather essential context:
 2. **Current branch** — `git branch --show-current`; confirm this is the active dev branch.
 3. **Hot-start pair presence** — Do `SESSION-HANDOFF.md` and `next-session-start-here.md` exist at project root? If not, note that Cora will create them at the next session WRAPUP.
 4. **Sprint-status snapshot** — Read `_bmad-output/implementation-artifacts/sprint-status.yaml`; confirm Cora can see the current story state.
-5. **Structural walk availability** — Confirm `python -m scripts.utilities.structural_walk --workflow standard` runs without error; this is the foundation of Audra's L1 sweep.
+5. **Structural walk availability** — Confirm `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard` runs without error; this is the foundation of Audra's L1 sweep.
 6. **Operator preferences** — Ask the operator one time:
    - Preferred harmonization scope default? (full repo / since-handoff / directory-scoped)
    - Pre-closure hook preference? (warn / silent). Default: warn.

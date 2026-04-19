@@ -10,7 +10,7 @@ Run checks in this order. If any check fails, record the finding and continue �
 
 ### L1-1: Structural Walk
 
-Invoke: `python -m scripts.utilities.structural_walk --workflow <standard|motion|cluster>`
+Invoke: `.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow <standard|motion|cluster>`
 
 - If the envelope specifies a workflow, run only that workflow.
 - If scope is full-repo or since-handoff without a workflow specified, run all three.
@@ -104,6 +104,7 @@ Whole-repo invariant checks that do NOT respect the change window (they always r
 - L1-6: Closure-Artifact Audit (sweep mode — spot mode is single-story by definition)
 - L1-8: Hot-Start-Pair Freshness
 - L1-10: Run HUD Lockstep
+- L1-11: Workflow Stage Lockstep
 
 On full-repo scope, every check is whole-repo regardless of the classification above. On directory scope, the change window is constrained to files under the named directory.
 
@@ -117,6 +118,19 @@ Whole-repo invariant (always runs regardless of change window). The Run HUD (`py
 4. **Feed integrity:** Confirm `run_hud.py` imports `build_progress_report` from `progress_map` and that import path exists.
 
 Any failure -> L1 finding with the appropriate type/severity above. This check is **not** a substitute for Murat’s behavioral tests; it ensures internal-artifact and routing descriptions the HUD displays do not silently drift from repo SSOT.
+
+### L1-11: Workflow Stage Lockstep
+
+Whole-repo invariant (always runs regardless of change window). Stage/checkpoint additions or renames (for example `04A`) must land in all connected control surfaces or the repo is not coherent.
+
+1. **Template registry:** confirm `skills/bmad-agent-marcus/references/workflow-templates.yaml` includes the stage in every narrated template variant that should carry it.
+2. **Prompt-pack checkpoints:** confirm each affected prompt pack contains the stage marker at the correct sequence location.
+3. **Operator checkpoint parity:** confirm `docs/workflow/production-operator-card-v4.md` contains the matching operator checkpoint marker.
+4. **Manifest parity wiring:** confirm `state/config/structural-walk/*.yaml` has:
+   - anti-drift needles for the stage marker order, and
+   - `sequence_doc_parity` rows mapping the stage to prompt-pack/operator-card needles.
+
+Missing or partially applied stage propagation -> L1 finding, type: `omission`, severity: `high`, check: `workflow-stage-lockstep`.
 
 ## Exit Code Contract
 

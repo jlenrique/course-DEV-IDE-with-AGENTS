@@ -11,8 +11,8 @@ operator habits still reference `python -m scripts.utilities.fidelity_walk`.
 Use:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow standard
-python -m scripts.utilities.structural_walk --workflow motion
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion
 ```
 
 The canonical documentation lives in [docs/structural-walk.md](structural-walk.md).
@@ -22,7 +22,7 @@ The canonical documentation lives in [docs/structural-walk.md](structural-walk.m
 This compatibility command still works:
 
 ```powershell
-python -m scripts.utilities.fidelity_walk
+.\.venv\Scripts\python.exe -m scripts.utilities.fidelity_walk
 ```
 
 Behavior:

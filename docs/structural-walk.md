@@ -42,40 +42,40 @@ document-integrity checkpoints that the canonical tool evaluates.
 Standard workflow:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow standard
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard
 ```
 
 Motion workflow:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow motion
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion
 ```
 
 Cluster workflow:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow cluster
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow cluster
 ```
 
 Optional explicit output path:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow motion --output reports/structural-walk/motion/custom-report.md
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion --output reports/structural-walk/motion/custom-report.md
 ```
 
 Optional live probes:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow standard --live-probe contracts-cli
-python -m scripts.utilities.structural_walk --workflow motion --live-probe heartbeat
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard --live-probe contracts-cli
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion --live-probe heartbeat
 ```
 
 Read-only dry-run planning preview:
 
 ```powershell
-python -m scripts.utilities.structural_walk --workflow standard --dry-run
-python -m scripts.utilities.structural_walk --workflow motion --dry-run
-python -m scripts.utilities.structural_walk --workflow cluster --dry-run
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow standard --dry-run
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow motion --dry-run
+.\.venv\Scripts\python.exe -m scripts.utilities.structural_walk --workflow cluster --dry-run
 ```
 
 Exit code rules:
@@ -112,6 +112,7 @@ For motion workflow only:
 - motion-planning and Kling execution assets
 - motion manifest hydration and motion perception wiring
 - Gate 2M / Motion Gate / winner-deck binding markers
+- Prompt 04A Lesson Plan coauthoring + scope-lock marker parity across prompt pack, operator card, and session launcher
 
 For cluster workflow:
 
@@ -179,7 +180,7 @@ Accepted dry-run step kinds in the current manifest contract:
 The legacy command still works:
 
 ```powershell
-python -m scripts.utilities.fidelity_walk
+.\.venv\Scripts\python.exe -m scripts.utilities.fidelity_walk
 ```
 
 It is now a compatibility alias that routes to the canonical structural

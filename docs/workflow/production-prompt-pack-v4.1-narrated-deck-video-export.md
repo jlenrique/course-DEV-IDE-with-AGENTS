@@ -7,6 +7,7 @@ Status:
 
 ## Changelog
 
+- **v4.1.1** — Added explicit Prompt `04A` Lesson Plan coauthoring + scope-lock checkpoint between Prompt 4 and Prompt 5 to align Marcus/HIL control flow with Lesson Planner lockstep governance.
 - **v4.1** — Added `DOUBLE_DISPATCH` run constant + conditional dispatch/selection logic in Prompts 1, 6, 7 (new 7B), 8 (Epic 12). Canonical generators for preflight receipts, operator directives, Irene packets.
 
 ## Workflow Scope
@@ -266,6 +267,30 @@ Fallback (detailed):
   - provide 2 remediation options
   - include precise source anchors affected
   - stop until corrected artifacts are produced and rechecked
+
+---
+
+## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)
+
+Marcus, before Prompt 5, run the Lesson Plan coauthoring loop with the operator on the `LessonPlan` produced from Prompt 4 artifacts.
+
+Required behavior:
+- Present each plan unit scope decision and collect explicit operator rationale where needed.
+- Record accepted scope decisions and any declined-rationale carry-forward notes.
+- Allow dial tuning only as part of explicit coauthoring decisions.
+- Do not proceed until the plan is locked and the lock boundary is visible to downstream steps.
+
+Required evidence:
+- Emit/append scope-decision and plan-lock events to the lesson-plan log.
+- Return a compact checkpoint receipt with:
+  - `step_id: 04A`
+  - `plan_revision`
+  - `plan_digest`
+  - `plan_locked: true`
+  - count of scope decisions captured
+
+Gate rule:
+- If the plan is not locked, stop and return remediation options. Do not start Prompt 5.
 
 ---
 

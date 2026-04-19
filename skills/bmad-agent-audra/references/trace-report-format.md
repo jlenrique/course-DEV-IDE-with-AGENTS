@@ -35,7 +35,7 @@ l1_findings:
   - id: l1-<seq>
     type: omission | invention | alteration
     severity: low | med | high
-    check: structural-walk | reference-resolution | parameter-lockstep | gate-contract-lockstep | lane-matrix-coverage | closure-artifact | placement | hot-start-freshness
+    check: structural-walk | reference-resolution | parameter-lockstep | gate-contract-lockstep | lane-matrix-coverage | closure-artifact | placement | hot-start-freshness | hud-pipeline-lockstep | workflow-stage-lockstep
     ref: "<file-path-or-contract-key>"
     detail: "<one-line-summary>"
     evidence_path: "evidence/l1-<seq>.md"

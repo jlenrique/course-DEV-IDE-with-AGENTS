@@ -296,6 +296,33 @@ Stop if any dimension or G0 fails.
 
 ---
 
+## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)
+
+Marcus, run the mandatory Lesson Plan coauthoring checkpoint for RUN_ID [RUN_ID] after Prompt 4 and before Prompt 4.5.
+
+Purpose:
+- This is the explicit operator-facing 4A conversation loop where Marcus and the operator ratify scope per plan unit.
+- The checkpoint must lock the plan revision before any downstream estimator, creative-directive, or dispatch-prep work.
+
+Required Marcus behavior:
+- Present each plan unit with the current proposed scope in plain language.
+- Capture operator ratification (or revision) per unit with rationale.
+- Lock the plan only after every in-scope decision is ratified.
+- Emit a baton handoff for Step 05 from the locked plan state.
+
+Required evidence:
+- At least one `scope_decision.set` event exists for this run.
+- A `plan.locked` event exists for the same locked revision.
+- A fanout envelope or sidecar records Step `04A` completion before Step `05`.
+
+Gate rule:
+- Prompt 4.5 is blocked until 04A is complete and the locked plan revision is confirmed.
+- If no ratified in-scope plan units remain, halt and return to operator scope decisions instead of silently advancing.
+
+Stop and wait for operator confirmation.
+
+---
+
 ## 4.5) Precursor Step: Parent Slide Count & Runtime Polling
 
 Marcus, run the profile-aware slide count and runtime precursor step for RUN_ID [RUN_ID].
@@ -1332,6 +1359,7 @@ Primary contract references:
 
 ## Changelog
 
+- **v4.2i (2026-04-19)** — Added explicit Prompt `04A` Lesson Plan coauthoring + scope-lock checkpoint between Prompt 4 and Prompt 4.5, with required event evidence (`scope_decision.set`, `plan.locked`) and hard block on downstream progression until Step 04A is completed.
 - **v4.2g (2026-04-16)** — Prompt 1: added `--bundle-dir [BUNDLE_PATH]` to preflight command (was identified as a blocker in the 2026-04-15 trial run — preflight skipped bundle-specific run-constants.yaml validation without it).
 - **v4.2h (2026-04-17)** — Added Prompt 4.75 Creative Directive resolution (CD), including `creative-directive.yaml` validation and `narration_profile_controls` persistence; added cluster prompt engineering (6.2), dispatch sequencing (6.3), and G2.5 coherence gate (7.5) for cluster-enabled runs; added Prompt 1 `app_session_readiness --with-preflight`; added `narration-script-parameters.yaml` to Pass 2 inputs; linked Irene A/B loop guidance; clarified motion-first ordering.
 - **v4.2f (2026-04-15)** — Preamble reordered: Pre-Run Checklist → Run Constants → Initialization → Execution Rules → Prompts. Added audience tags (OPERATOR vs MARCUS). Prompt 2 gains greenfield vs. resume guidance. Prompt 2A rewritten with concrete directive examples, governance rules (focus=emphasis, exclusion=provenance, special treatment=override), and resume-run re-confirmation. Prompt 3 adds ingestion scope rule (extract ALL content), extraction completeness validation (word-count floor check, HALT threshold), and cross-validation hint for Notion-exported PDFs. Prompt 4 now requires per-dimension evidence sentences (bare PASS/FAIL rejected). Source Wrangler agent vision document created (`_bmad-output/planning-artifacts/source-wrangler-agent-vision.md`). Design principles, lineage, and changelog moved to appendix.

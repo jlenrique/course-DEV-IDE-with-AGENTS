@@ -64,7 +64,7 @@ This check exists because a prior trial run produced a 30-line extracted.md from
 
 Cross-validation hint: if the primary source PDF is known to be a Notion export (as with APC C1-M1 Tejal), supply the Notion-exported Markdown as a `role: validation` entry in the directive — Texas will run his cross-validator automatically and report section + key-term coverage in `extraction-report.yaml.cross_validation[]`.
 
-### 3.e) Artifact verification (deterministic — expected file count: **9**)
+### 3.e) Artifact verification (deterministic — expected file count: **10**)
 
 ```
 Get-ChildItem [BUNDLE_PATH] -File | Measure-Object | Select-Object -ExpandProperty Count

@@ -167,6 +167,62 @@ Extend this pattern audit to other `.venv`-resident binaries if the grep surface
 
 ---
 
+## Issue 10 — `literal-visual` Mode Enforcement: Require SOT Image and Surface at Gate 1
+
+**Problem:** Irene can assign `literal-visual` mode to any slide regardless of whether a source image exists. In trial C1-M1-PRES-20260419B, S05 (roadmap crop) and S11 (concept map) were tagged `literal-visual` but have no source image — they are Gary-generated from structural briefs. This caused two failures: (1) no `diagram_cards` entries → Gary's literal-visual processing loop silently skips them; (2) no SOT image → no fallback if Gary generation fails. Both were manually reclassified to `creative` mid-trial.
+
+**Rule to enforce:** `literal-visual` mode = a pre-existing source image is reproduced or incorporated by Gamma (image_url or preintegration_png_path required). If Gary originates the visual from a text/structural brief with no source image, the mode must be `creative` regardless of how precisely specified the brief is.
+
+**Two upstream fixes needed (Tier-1 pack template edits + lightweight Gate 1 check):**
+
+**Fix A — §05 Irene Pass 1 template (`05-irene-pass-1-gate-1-fidelity.md.j2`):**
+Add a hard constraint block:
+```
+Literal-visual mode constraint (mandatory):
+- A slide may only be assigned `literal-visual` mode if its slide brief identifies a specific
+  source image (file path or hosted URL) in the source_anchor or diagram_cards entry.
+- If the visual is Gary-originated from a structural text brief (concept map, annotated crop,
+  diagrammatic illustration) with no pre-existing source image, assign `creative` mode instead.
+- Irene must include a `diagram_card_required: true/false` flag per literal-visual slide in
+  irene-pass1.md, with the source image path when true.
+```
+
+**Fix B — Gate 1 literal-visual image inventory (new lightweight check at §05 / §5.5):**
+After Gate 1 approval, Marcus surfaces a `literal-visual image inventory` to the operator — before §5.5 mode approval and before §06 pre-dispatch build:
+
+```
+Literal-visual slides requiring source images:
+| # | Slide | Title | Source image | Status |
+|---|---|---|---|---|
+| 1 | S12 | 3-Course Series Roadmap | APC Content Roadmap.jpg | CONFIRMED (file exists) |
+| 2 | S05 | Sparking Innovation Scope | n/a — Gary crop of S04 | RECLASSIFY to creative |
+```
+
+Operator approves the inventory before §06 proceeds. This is the "surface early and often" checkpoint. Required write: `literal-visual-image-inventory.json` (or extend `hil-mode-approval.json` with a `literal_visual_image_inventory` field).
+
+**No new gate script needed** — the existing `validate-literal-visual-pre-dispatch.py` (§06B) is the enforcement gate. The Gate 1 inventory is an advisory HIL surface, not a machine block. Irene's constraint (Fix A) is documentation enforcement; a lightweight check could validate that no `literal-visual` slides in `irene-pass1.md` lack a `diagram_card_required: true` entry with a real path.
+
+**Priority:** Medium — trial can proceed with manual reclassification. Fix before next run.
+
+## Issue 9 — §05B G1.5 Cluster Gate: Irene Pass 1 Must Emit Machine-Readable Cluster Plan
+
+**Problem:** `run-g1.5-cluster-gate.py` expects `segment-manifest.yaml` with cluster metadata fields (`cluster_id`, `cluster_role`, `cluster_position`, etc.). That artifact is produced by Irene Pass 2 — not Pass 1. §05B is positioned between Pass 1 and Gary dispatch, so the gate fires before the manifest exists. Result: exit code 1 / "segment manifest not found" on every cluster-enabled run.
+
+**Fix:** Irene Pass 1 should emit a lightweight `cluster-plan.yaml` (or `clusters.json`) capturing the cluster structure decided in Pass 1 (which parents cluster with which interstitials, cluster_arc per slot). The G1.5 validator should accept this lighter artifact for pre-Gary validation. The full `segment-manifest.yaml` (with narration text, timing, etc.) remains a Pass 2 artifact validated at a later gate.
+
+**Alternatively:** Move §05B to after Irene Pass 2 if the intent was always to validate the full manifest. Requires pack resequencing — party-mode governance decision.
+
+**Priority:** Medium — G1.5 qualitative review (Vera + Quinn-R) works as a workaround but loses the deterministic machine gate that the script provides.
+
+**Pack update required (Tier-1 prose — two template edits):**
+
+1. `scripts/generators/v42/templates/sections/05-irene-pass-1-gate-1-fidelity.md.j2` — add to Required writes for cluster-enabled runs:
+   > `[BUNDLE_PATH]/cluster-plan.yaml` (structural cluster plan — `cluster_density` + `segments[]` with Pass 1 fields only; write-once after G1.5 passes)
+
+2. `scripts/generators/v42/templates/sections/05B-cluster-plan-g1-5-gate.md.j2` — update the required command and gate description to reflect that the gate reads `cluster-plan.yaml` at Pass 1 time (not `segment-manifest.yaml`). Document the fallback probe order (`cluster-plan.yaml` → `segment-manifest.yaml`) and the write-once lifecycle after gate passage.
+
+After both edits: regenerate the pack (`python -m scripts.generators.v42.render --manifest state/config/pipeline-manifest.yaml --output docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`) and run `check_pipeline_manifest_lockstep.py` to confirm L1 exits 0. Generator fixture tests must also pass.
+
 ## Issue 8 — §4.75 CD (Dan) Not Invoked — Creative Directive Authored by Marcus Directly
 
 **Problem:** §4.75 requires delegating creative directive resolution to the Creative Director (CD) agent. Marcus bypassed CD and read `state/config/experience-profiles.yaml` defaults verbatim, writing the directive himself. The directive is schema-valid but is a profile printout, not a CD creative resolution. Dan never shaped narrative tension, emotional coloring, or rhetorical richness for this specific lesson content.

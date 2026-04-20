@@ -43,3 +43,7 @@ specialists:
   coursearc-specialist:
     path: skills/bmad-agent-coursearc/SKILL.md
     status: active
+  creative-director:
+    path: skills/bmad-agent-cd/SKILL.md
+    status: active
+    notes: Dan — resolves creative directives, experience profile mapping, narration shaping. Invoked at §4.75.

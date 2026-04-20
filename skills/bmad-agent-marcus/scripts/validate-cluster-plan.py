@@ -65,15 +65,26 @@ def _seg_id(seg: dict[str, Any]) -> str:
     return str(seg.get("slide_id", "<unknown>"))
 
 
-def validate_cluster_plan(manifest: dict[str, Any]) -> dict[str, Any]:
+# Fields populated only during Irene Pass 2 — skipped in structural mode
+_NARRATION_ONLY_CHECKS = frozenset(
+    {"isolation_target", "narration_burden", "master_behavioral_intent", "develop_type"}
+)
+
+
+def validate_cluster_plan(manifest: dict[str, Any], *, mode: str = "full") -> dict[str, Any]:
     """Validate a cluster plan manifest dict against all G1.5 criteria.
 
     Args:
         manifest: Dict with keys ``cluster_density`` and ``segments`` (list of segment dicts).
+        mode: ``"full"`` (default) validates all 14 criteria including narration-time fields.
+              ``"structural"`` skips narration-only checks (G1.5-03, G1.5-04, G1.5-06,
+              G1.5-07, G1.5-14) — safe to use against a Pass 1 ``cluster-plan.yaml`` where
+              those fields are intentionally null.
 
     Returns:
         Dict with ``passed`` (bool) and ``errors`` (list of str, each prefixed with criterion ID).
     """
+    structural_only = mode == "structural"
     errors: list[str] = []
     segments: list[dict[str, Any]] = manifest.get("segments", [])
     cluster_density: str | None = manifest.get("cluster_density")
@@ -87,7 +98,11 @@ def validate_cluster_plan(manifest: dict[str, Any]) -> dict[str, Any]:
     flat = [s for s in segments if s.get("cluster_role") is None]
 
     # Cluster ID sets
-    cluster_ids: set[str] = {str(s["cluster_id"]) for s in heads + interstitials if s.get("cluster_id")}
+    cluster_ids: set[str] = {
+        str(s["cluster_id"])
+        for s in heads + interstitials
+        if s.get("cluster_id")
+    }
 
     # G1.5-01: Every interstitial's parent_slide_id references an existing head
     for seg in interstitials:
@@ -120,22 +135,24 @@ def validate_cluster_plan(manifest: dict[str, Any]) -> dict[str, Any]:
                 f"canonical vocabulary {sorted(VALID_INTERSTITIAL_TYPES)}"
             )
 
-    # G1.5-03: non-empty isolation_target
-    for seg in interstitials:
-        target = seg.get("isolation_target")
-        if not target:
-            errors.append(
-                f"G1.5-03 [{_seg_id(seg)}]: isolation_target is empty or null"
-            )
+    # G1.5-03: non-empty isolation_target (narration concern — skipped in structural mode)
+    if not structural_only:
+        for seg in interstitials:
+            target = seg.get("isolation_target")
+            if not target:
+                errors.append(
+                    f"G1.5-03 [{_seg_id(seg)}]: isolation_target is empty or null"
+                )
 
-    # G1.5-04: narration_burden validity
-    for seg in interstitials:
-        burden = seg.get("narration_burden")
-        if burden not in VALID_NARRATION_BURDENS:
-            errors.append(
-                f"G1.5-04 [{_seg_id(seg)}]: narration_burden {burden!r} is not one of "
-                f"{sorted(VALID_NARRATION_BURDENS)}"
-            )
+    # G1.5-04: narration_burden validity (narration concern — skipped in structural mode)
+    if not structural_only:
+        for seg in interstitials:
+            burden = seg.get("narration_burden")
+            if burden not in VALID_NARRATION_BURDENS:
+                errors.append(
+                    f"G1.5-04 [{_seg_id(seg)}]: narration_burden {burden!r} is not one of "
+                    f"{sorted(VALID_NARRATION_BURDENS)}"
+                )
 
     # G1.5-05: non-empty narrative_arc on every head
     for seg in heads:
@@ -147,42 +164,50 @@ def validate_cluster_plan(manifest: dict[str, Any]) -> dict[str, Any]:
 
     # G1.5-13: clustered manifest must have cluster_density
     if cluster_ids and cluster_density is None:
-        errors.append("G1.5-13: manifest contains clustered segments but cluster_density is null or omitted")
+        errors.append(
+            "G1.5-13: manifest contains clustered segments but cluster_density is "
+            "null or omitted"
+        )
 
     # G1.5-14: non-empty master_behavioral_intent on every head
-    for seg in heads:
-        intent = seg.get("master_behavioral_intent")
-        if not intent:
-            errors.append(
-                f"G1.5-14 [{_seg_id(seg)}]: head segment is missing master_behavioral_intent"
-            )
+    # (narration concern — skipped in structural mode)
+    if not structural_only:
+        for seg in heads:
+            intent = seg.get("master_behavioral_intent")
+            if not intent:
+                errors.append(
+                    f"G1.5-14 [{_seg_id(seg)}]: head segment is missing master_behavioral_intent"
+                )
 
     # G1.5-06: develop-position interstitials must have a valid develop_type
-    for seg in interstitials:
-        if seg.get("cluster_position") == "develop":
-            dtype = seg.get("develop_type")
-            if dtype not in VALID_DEVELOP_TYPES:
-                errors.append(
-                    f"G1.5-06 [{_seg_id(seg)}]: develop-position interstitial has "
-                    f"develop_type {dtype!r} — must be one of {sorted(VALID_DEVELOP_TYPES)}"
-                )
+    # (narration concern — skipped in structural mode)
+    # G1.5-07: no duplicate develop_type within a cluster
+    # (narration concern — skipped in structural mode)
+    if not structural_only:
+        for seg in interstitials:
+            if seg.get("cluster_position") == "develop":
+                dtype = seg.get("develop_type")
+                if dtype not in VALID_DEVELOP_TYPES:
+                    errors.append(
+                        f"G1.5-06 [{_seg_id(seg)}]: develop-position interstitial has "
+                        f"develop_type {dtype!r} — must be one of {sorted(VALID_DEVELOP_TYPES)}"
+                    )
 
-    # G1.5-07: no two develop-position interstitials in the same cluster share develop_type
-    develop_by_cluster: dict[str, list[str]] = {}
-    for seg in interstitials:
-        if seg.get("cluster_position") == "develop":
-            cid = str(seg.get("cluster_id", ""))
-            dtype = str(seg.get("develop_type", ""))
-            develop_by_cluster.setdefault(cid, []).append(dtype)
-    for cid, dtypes in develop_by_cluster.items():
-        seen: set[str] = set()
-        for dt in dtypes:
-            if dt in seen:
-                errors.append(
-                    f"G1.5-07 [cluster={cid}]: develop_type {dt!r} is used more than "
-                    "once within this cluster — develop sub-types must be distinct"
-                )
-            seen.add(dt)
+        develop_by_cluster: dict[str, list[str]] = {}
+        for seg in interstitials:
+            if seg.get("cluster_position") == "develop":
+                cid = str(seg.get("cluster_id", ""))
+                dtype = str(seg.get("develop_type", ""))
+                develop_by_cluster.setdefault(cid, []).append(dtype)
+        for cid, dtypes in develop_by_cluster.items():
+            seen: set[str] = set()
+            for dt in dtypes:
+                if dt in seen:
+                    errors.append(
+                        f"G1.5-07 [cluster={cid}]: develop_type {dt!r} is used more than "
+                        "once within this cluster — develop sub-types must be distinct"
+                    )
+                seen.add(dt)
 
     # G1.5-08: double_dispatch_eligible must be false for all interstitials
     for seg in interstitials:
@@ -258,7 +283,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="G1.5 Cluster Plan Quality Gate — validates Irene Pass 1 cluster plan."
     )
-    parser.add_argument("--manifest", type=Path, required=True, help="Path to segment manifest YAML")
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        required=True,
+        help="Path to segment manifest YAML",
+    )
     parser.add_argument(
         "--cluster-density",
         choices=["none", "sparse", "default", "rich"],

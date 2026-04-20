@@ -598,8 +598,14 @@ Prompt the operator in plain language:
 Required write:
 - `[BUNDLE_PATH]/literal-visual-operator-packet.md`
 
+Required gate command (run after writing the packet, before advancing to Prompt 7):
+- `.\.venv\Scripts\python.exe skills/bmad-agent-marcus/scripts/validate-literal-visual-pre-dispatch.py --bundle-dir [BUNDLE_PATH]`
+
 Gate rule:
-- Prompt 7 is blocked until all required literal-visual assets are operator-ready.
+- Prompt 7 is blocked until this gate exits 0.
+- If any required diagram card has `image_url: null` and no valid `preintegration_png_path` on disk, the gate fails and Gary dispatch is blocked. Resolve all failing cards (publish asset to get a hosted HTTPS URL, or confirm `preintegration_png_path` file exists on disk) and re-run the gate before advancing.
+- If `diagram_cards` is empty (no literal-visual source assets this run), the gate exits 0 automatically.
+- The more literal the slide, the more critical operator scrutiny — source asset integrity for literal-visual slides is non-negotiable before Gamma API spend.
 
 ---
 

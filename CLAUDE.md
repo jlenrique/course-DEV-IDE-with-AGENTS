@@ -2,6 +2,27 @@
 
 This repository uses BMAD methodology. For sprint-style runs, follow the **BMAD sprint governance** checklist below (mirrors `.cursor/rules/bmad-sprint-governance.mdc` and `.github/copilot-instructions.md` for VS Code / GitHub Copilot).
 
+## Custom agents vs. “registered” BMAD personas (cold start)
+
+**Do not treat `_bmad/_config/agent-manifest.csv` as the full roster of invocable agents.** That file lists BMAD stock personas used by party mode (Mary, Amelia, Murat, etc.). Custom production agents for this repo — including **Marcus** — are **intentionally absent** from that manifest. If the operator says “talk to Marcus” (or another custom name), do **not** reply that they are “unregistered” based only on that CSV or on Claude Code’s native agent list.
+
+**Two layouts coexist by design:**
+
+- **Legacy / skill-quarantine tree:** Operator-facing `SKILL.md`, scripts, and references for many custom agents live under `skills/bmad-agent-{name}/`. This keeps them separate from BMAD stock paths under `_bmad/bmm/` and similar.
+- **Sanctum tree (BMAD Method Builder / BMB):** Migrated agents keep persistent persona and continuity artifacts under `_bmad/memory/bmad-agent-{name}/`. For Marcus, that directory is `_bmad/memory/bmad-agent-marcus/`. Activation order is defined in [`skills/bmad-agent-marcus/SKILL.md`](skills/bmad-agent-marcus/SKILL.md) (read the skill first; then load sanctum files such as `INDEX.md`, `PERSONA.md`, per that skill).
+
+On a cold session, **read the relevant `skills/bmad-agent-<name>/SKILL.md` (and sanctum per that skill)** to embody the agent — do not require a manifest row.
+
+## Marcus first (APP production cold start)
+
+For **course-content production**, orchestration, or anything that sounds like an APP run: **activate Marcus before other custom agents.** He is the operator-facing orchestrator; specialists (Irene, Gary, Vera, Texas, etc.) are normally **delegated through him**, not jumped to ad hoc unless the operator names one.
+
+**Cold start, operator says “Marcus” / production / orchestration:** Immediately read [`skills/bmad-agent-marcus/SKILL.md`](skills/bmad-agent-marcus/SKILL.md) and follow its activation sequence (config load → sanctum batch under `_bmad/memory/bmad-agent-marcus/` or First Breath if sanctum is absent). Do not wait for `agent-manifest.csv` or a Claude Code “registered agent” list.
+
+**Why Marcus first:** Once Marcus is correctly embodied and has loaded his skill + sanctum, he routes work using his references (for example `skills/bmad-agent-marcus/references/specialist-registry.yaml`) and conversation protocols. That keeps a single point of contact and avoids fragmented cold-start guesses about which specialist to impersonate.
+
+For full session ramp (docs, handoff, deferred inventory), the operator may also use [`bmad-session-protocol-session-START.md`](bmad-session-protocol-session-START.md); Marcus activation still applies when production is in scope.
+
 ## BMAD sprint governance
 
 1. **Epics and stories** must be produced with BMAD workflows only (for example `bmad-create-epics-and-stories`, `bmad-create-story`, `bmad-create-prd` / architecture / UX chains as appropriate, or `bmad-quick-dev` when that is the right path). If unsure which variant to use, read **`bmad-help`**, run **`bmad --help`**, or convene **`bmad-party-mode`** and ask the team to recommend full planning vs quick-dev vs another module skill.

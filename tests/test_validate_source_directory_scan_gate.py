@@ -117,7 +117,9 @@ def test_validate_source_directory_scan_gate_requires_primary_assignment(tmp_pat
     assert "At least one operator-assigned primary row is required" in result["issues"][0]
 
 
-def test_validate_source_directory_scan_gate_requires_complete_directory_coverage(tmp_path: Path) -> None:
+def test_validate_source_directory_scan_gate_requires_complete_directory_coverage(
+    tmp_path: Path,
+) -> None:
     scanned_dir = tmp_path / "source"
     scanned_dir.mkdir()
     (scanned_dir / "lesson.pdf").write_text("a", encoding="utf-8")
@@ -138,4 +140,6 @@ def test_validate_source_directory_scan_gate_requires_complete_directory_coverag
     result = validate_source_directory_scan_gate(scan_path)
 
     assert result["valid"] is False
-    assert "Scan rows must cover every file in scanned_directory exactly once" in result["issues"][0]
+    assert (
+        "Scan rows must cover every file in scanned_directory exactly once" in result["issues"][0]
+    )

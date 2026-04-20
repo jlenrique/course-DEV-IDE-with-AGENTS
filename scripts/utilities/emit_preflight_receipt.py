@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,10 +43,7 @@ def emit_preflight_receipt(
                 f"{session_receipt} (max age {max_age_minutes} minutes)."
             )
             return cached
-        print(
-            "Session receipt cache missing, unreadable, or stale; "
-            "running live readiness."
-        )
+        print("Session receipt cache missing, unreadable, or stale; running live readiness.")
 
     report = run_readiness(
         root=root,
@@ -67,7 +64,7 @@ def _load_session_receipt_if_fresh(
     if not path.is_file():
         return None
 
-    age_seconds = datetime.now(tz=timezone.utc).timestamp() - path.stat().st_mtime
+    age_seconds = datetime.now(tz=UTC).timestamp() - path.stat().st_mtime
     if age_seconds > max_age_minutes * 60:
         return None
 

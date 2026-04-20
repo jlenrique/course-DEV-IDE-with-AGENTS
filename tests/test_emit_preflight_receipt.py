@@ -109,7 +109,12 @@ def test_emit_preflight_receipt_rejects_cached_receipt_with_wrong_root(
     now = time.time()
     os.utime(session_receipt, (now, now))
 
-    live_report = {"overall_status": "pass", "checks": [], "root": str(tmp_path), "timestamp": "now"}
+    live_report = {
+        "overall_status": "pass",
+        "checks": [],
+        "root": str(tmp_path),
+        "timestamp": "now",
+    }
     monkeypatch.setattr(receipt_module, "run_readiness", lambda **_: live_report)
 
     report = emit_preflight_receipt(root=tmp_path, session_receipt=session_receipt)

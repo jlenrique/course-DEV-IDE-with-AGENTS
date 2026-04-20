@@ -361,6 +361,9 @@ def test_docx_provider_is_accepted_at_directive_load(tmp_path: Path) -> None:
     exit_code = _runner.main(["--directive", str(directive), "--bundle-dir", str(bundle)])
     assert exit_code in {_runner.EXIT_COMPLETE, _runner.EXIT_COMPLETE_WITH_WARNINGS}
 
+    report = yaml.safe_load((bundle / "extraction-report.yaml").read_text(encoding="utf-8"))
+    assert report["sources"][0]["extractor_used"] == "python-docx"
+
 
 # ---------------------------------------------------------------------------
 # AC-7 — Malformed directive exits 30

@@ -137,7 +137,7 @@ _EXTRACTOR_LABELS_BY_KIND: dict[str, str] = {
 _PROVIDER_SOURCE_TYPE: dict[str, str] = {
     "local_file": "default",
     "pdf": "pdf",
-    "docx": "default",
+    "docx": "docx",
     "md": "default",
     "url": "html",
     "notion": "notion",

@@ -1,96 +1,99 @@
-# Session Handoff — 2026-04-19 (Epic 33 Pipeline Lockstep Substrate closed; first trial production run ready)
+# Session Handoff — 2026-04-20 (Trial C1-M1-PRES-20260419B: Irene Pass 2 validated + Storyboard B published)
 
-**Session window:** 2026-04-19 (anchor `ca133ab` prior-session wrapup) → 2026-04-19 (wrapup, this commit).
-**Branches touched:** `dev/epic-33-lockstep` (sprint work) → merged to `master` → `trial/2026-04-19` (trial baseline created + cleaned).
+**Session window:** 2026-04-20 (resumed after context-compression event) → 2026-04-20 (wrapup, this commit).
+**Branch touched:** `trial/2026-04-19` (trial production run, no story-sprint work).
 **Operator:** Juanl.
 
 ## What Was Completed
 
-### Phase 1 — F4 Lesson Planner MVP Ratification + Regression Triage
+### Phase 1 — Irene Pass 2 Final Validator Remediation
 
-F4 party-mode green-light round completed. Verdict: **Conditional GREEN / YELLOW — proceed with trial production run now.** MVP defined as "UX-ready backend contracts + walkthrough harness, not rendered UX." Three `BACKLOG-FOLLOW-ON` flags (rendered UX epic, stub-dials wording, consolidated retrospective) are non-blocking. Evidence at [`_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md`](_bmad-output/maps/lesson-planner-mvp-ratification-f4-verdict-2026-04-19.md).
+Resumed the trial run at §08 with `validate-irene-pass2-handoff.py` still returning STATUS: fail. Remaining errors addressed in this session:
 
-Three at-session-close regressions from prior session were **all resolved** during this session:
-- `tests/contracts/test_tracy_postures.py` ImportError — fixed by tightening `tests/conftest.py` package namespace registration.
-- `tests/contracts/test_30_1_zero_test_edits.py` stale baseline — resolved by rolling `_PRE_30_1_BASELINE_COMMIT` forward to `4911fc4`.
-- `tests/test_marcus_workflow_runner_32_1.py::test_hud_pipeline_contains_4a_between_04x_and_05` — resolved by restoring `04A` in `run_hud.py` between `04.5` and `05`.
+- **Card-07 (c-u04 head):** `cluster_boundary` bridge type required both intro-class ("Let's turn to...") AND outro-class spoken cue — added "Moving forward, we'll examine what each archetype built." Added `turned` and `filed` tokens (pre-seed for interstitial card-08 narration). Added `crisis` and `observation` pre-seeds after token churn from edits.
+- **Card-10 (c-u05 head):** `cluster_boundary` bridge type lacked outro — added "Moving forward, these conditions make your innovation work possible." Added `applied`, `fundamental`, `gives`, `novel`, `problem`, `process` pre-seeds (from card-11 interstitial narration tokens). Added `framework`, `principles`, `then`, `thinking`, `third` pre-seeds for "First Principles Thinking" cluster-11 interstitial.
+- **Card-13 (c-u07 head):** Added `tool` token to pre-seed for card-14 interstitial: "first active tool — the Opportunity Diagnostic."
+- **Source image path fix** (carried from prior session): all 14 `source_image_path` entries in `perception-artifacts.json` and `pass2-envelope.json` updated to exact absolute Windows paths matching `gary_slide_output.file_path`.
 
-Post-fix regression: **1910 passed / 4 skipped / 27 deselected / 2 xfailed / 0 failed.**
+**Final validator result: `STATUS: pass`** — all hard errors cleared. One informational finding: `motion_segments_with_static_narration_hint` on card-01 (expected for a video slide; not a fail condition).
 
-### Phase 2 — Epic 33 Pipeline Lockstep Substrate — ALL 6 STORIES BMAD-CLOSED
+### Phase 2 — Narration Script Sync
 
-Harmonization walkthrough (party-mode round with Winston / Amelia / Paige / Murat + Cora / Audra) surfaced five cross-surface drifts (DC-1..DC-5) between v4.2 pack ↔ Marcus orchestrator ↔ HUD. DC-5 (absence of SSOT) named as root cause. Unanimous party consensus launched Epic 33 six-story sprint on `dev/epic-33-lockstep`.
+`narration-script.md` synced for the three changed segments (S07, S10, S13) to match validated `segment-manifest.yaml` narration_text, including updated bridge labels (`cluster_boundary` for S07 and S10), target word counts, and final narration prose.
 
-**33-1 generator-discovery (0.5pt, single-gate)** — investigation spike. Findings: Case C — no in-repo generator of record; pack was de-facto hand-authored. Filed Story 33-1a (build generator from scratch). Findings report at `_bmad-output/specs/33-1-generator-discovery-findings.md`.
+### Phase 3 — Irene Pass 2 Structural Debt: Logged and Filed
 
-**33-2 pipeline-manifest-ssot (5pt, dual-gate)** — landed `state/config/pipeline-manifest.yaml` as canonical SSOT + `scripts/utilities/check_pipeline_manifest_lockstep.py` (8-assertion L1 check, 0/1/2 exit contract) + consumer rewires (`run_hud.py` / `progress_map.py` / `workflow_runner.py` — `insert_4a_between_step_04_and_05` deleted; `insert_between(before_id, after_id, new_step)` per R1-B ruling). AC-B.15 (generator rewire) DEFERRED to 33-1a per Case C escalation.
+Per operator instruction, logged the full structural debt record in the trial run log:
 
-**33-1a build-v42-generator (5pt, single-gate)** — pure Jinja2, no LLM. Verbatim prose extraction (1368 lines → `scripts/generators/v42/templates/sections/*.md.j2`). Fresh §4.55 "Estimator + Run Constants Lock" authored in-story per R1-A 04.5/04.55 split ruling. Determinism acceptance test set (AC-T.1–T.4 + 3 red-path fixtures) + 33-3-consumption fixture pair authored. jinja2≥3.1,<4 added.
+- `_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260419.md` § `B-Run §08 — Irene Pass 2 work product: structural debt revealed` — table with 8 root-cause categories and 30+ individual violations remediated across two full sessions.
+- Filed **"Irene Pass 2 authoring template / schema contract"** to `_bmad-output/planning-artifacts/deferred-inventory.md` §Named-But-Not-Filed Follow-Ons as HIGH priority. Follow-on count: 12.
 
-**33-3 regenerate-v42-and-validate (2pt, single-gate)** — manifest-driven generator executed; v4.2 pack regenerated byte-identically; `check_pipeline_manifest_lockstep.py` exit 0; DC-1/DC-2/DC-3/DC-4 resolved at regeneration time. Diff summary at `_bmad-output/specs/33-3-regeneration-diff-summary.md`.
+### Phase 4 — Storyboard B Regeneration + Publish
 
-**33-4 cora-audra-block-mode (2pt, single-gate, governance)** — promoted Cora's pre-closure hook to BLOCK-MODE for workflow-stage-touching stories via `skills/bmad-agent-cora/scripts/preclosure_hook.py`; manifest-declared `block_mode_trigger_paths` field drives change-window detector; Audra L1 check wired into closure-artifact audit gate; Cora SKILL + Audra SKILL updated; pre-flight smoke test confirms block fires on learning-event-schema edit.
+Regenerated Storyboard B with full script context per §08B of the production pack:
 
-**15-1-lite-marcus META-TEST (3pt, single-gate)** — Marcus Learning Glimmers. Landed `state/config/learning-event-schema.yaml` + `scripts/utilities/learning_event_capture.py` + append-only `{run_dir}/learning-events.yaml` ledger + Marcus call-sites at Gates 2/3/4 + manifest extensions + `scripts/utilities/check_learning_event_lockstep.py` (4-assertion L1 per Audra spec A/B/C/D) + 2 O/I/A red-path fixtures. **META-TEST PASS captured**: Cora's block-mode hook fired correctly on a deliberate intermediate-drift commit during dev. Substrate proven load-bearing, not paper contract.
+- **Command:** `generate-storyboard.py generate --payload gary-dispatch-result.json --segment-manifest segment-manifest.yaml --pass2-envelope pass2-envelope.json --cluster-coherence-report cluster-coherence-report.json`
+- **Result:** 14/14 slides with narration attached; 0 missing assets; 0 pending narration; fidelity mix: creative=11, literal-text=2, literal-visual=1.
+- **Published:** `generate-storyboard.py publish --manifest storyboard/storyboard.json`
+- **Publish receipt:** `exports/storyboard-C1-M1-PRES-20260419B-publish-receipt.json` — `status: published`, `changed: true`, `file_count: 17`.
+- **Live URL:** [https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260419B/index.html](https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260419B/index.html)
 
-### Phase 3 — Governance + Regime Documentation
-
-- [`docs/dev-guide/pipeline-manifest-regime.md`](docs/dev-guide/pipeline-manifest-regime.md) — operational cheatsheet for all future pipeline-touching stories. Pack Versioning Policy (Tier 1 patch / Tier 2 minor / Tier 3 major) + frozen-at-ship discipline.
-- [`_bmad-output/planning-artifacts/deferred-inventory.md`](_bmad-output/planning-artifacts/deferred-inventory.md) — canonical register of deferred epics / stories / named-but-not-filed follow-ons. Binding consultation at every Epic retrospective + every session hot-start.
-- **CLAUDE.md** — §Pipeline lockstep regime (T1 required-reading pointer for pipeline-touching stories, pack-versioning-as-governance notice) + §Deferred inventory governance (three binding consultation points).
-- **Marcus CREED** — new standing order §State-narration-fresh-read: Marcus re-reads authoritative files fresh at every state-narration moment; never narrates from prior-turn context. Pinned 2026-04-19 after he narrated stale sprint state.
-- **Marcus dual-naming** — "Marcus" now refers both to the orchestrator agent AND to the enhanced APP. Disambiguation by context; pinned to operator-local auto-memory.
-- **Audra + Cora SKILLs** — updated to reflect block-mode promotion and L1 catalog extensions.
-- **Epic 33 retrospective** authored at `_bmad-output/implementation-artifacts/epic-33-retro-2026-04-19.md` — required per Epic 33 Closure Criteria; NOT yet reviewed/completed by party-mode. Status: `required` in sprint-status.yaml.
-
-### Phase 4 — Commit / Merge / Trial Baseline
-
-- All sprint work committed as `2ba1e32 feat(epic-33): close Pipeline Lockstep Substrate sprint end-to-end` (131 files).
-- `dev/epic-33-lockstep` fast-forward merged into `master`; `origin/master` pushed at `2ba1e32`.
-- `trial/2026-04-19` branch created off master @ `2ba1e32`; `next-session-start-here.md` updated with trial-branch context committed as `8b70076`; branch pushed to `origin/trial/2026-04-19`.
-- Trial working tree cleaned: TALK/marcus-live runtime artifacts (`state/runtime/marcus-live-stt/`, `state/runtime/lesson_plan_log.jsonl`) removed via `git clean`.
-- **Current branch: `trial/2026-04-19` @ `8b70076`. Working tree: clean (`.coverage` aside).**
+**Current trial status: §08B complete. Pending HIL: operator reviews Storyboard B at the live URL.**
 
 ## What Is Next
 
-**Immediate: first tracked trial production run on `trial/2026-04-19`.**
+1. **Operator reviews Storyboard B** at `https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260419B/index.html`
+2. **If approved:** proceed to §09 Gate 3 — Lock Pass 2 Package
+3. **If revision needed:** tell Marcus what to change → re-run Irene on affected slides → re-validate → re-generate Storyboard B → re-publish → HIL approval
 
-Open the Marcus window, confirm `git branch --show-current` = `trial/2026-04-19`, then:
-1. Say "Marcus, run preflight" → PR-PF
-2. Say "Marcus, author the run constants for this bundle" → PR-RC (will ask: SME source / visuals-or-text-lead / motion-enabled / double-dispatch)
-3. Operator GO on Prompt 1
-
-Fix-in-flight discipline: if a code fix is needed mid-trial, dev-support-agent commits directly to `trial/2026-04-19`; Marcus pauses + announces "fix-in-flight" + records the pause-hash; at resumption Marcus diffs since pause-hash, classifies Green/Yellow/Red, reports before resuming.
-
-**After trial:** Epic 33 retrospective (required). Retrospective consults `deferred-inventory.md` per CLAUDE.md governance hook → expected reactivation candidates: 15-1-lite-irene / 15-1-lite-gary (post-META-TEST fan-out), 26-10 (PR-TR + health-check capabilities after trial evidence), v4.3 substrate (when first Tier-2 pack change arises).
+After §09: §10 Fidelity + Quality Pre-Spend gate → §11 ElevenLabs Voice Selection HIL → §12+ audio assembly.
 
 ## Unresolved Issues / Blockers
 
-1. **Epic 33 retrospective** — required per [epics.md §Epic 33 Closure Criteria](_bmad-output/planning-artifacts/epics.md); status `required` in sprint-status.yaml. Must run before Epic 33 formally closes. Party-mode round: assess FM-A/FM-B/FM-C closure; evaluate META-TEST PASS legitimacy; identify reactivation candidates from deferred-inventory.md. No blocker on trial run — retrospective can happen after.
+1. **Step 0a harmonization skipped — 2 consecutive sessions.** Prior session skipped; this session skipped (trial-only, no BMAD story changes, clean worktree). Per wrapup protocol tripwire: next session MUST run `/harmonize` with full-repo scope before any trial work. This is mandatory, not advisory.
 
-2. **`.coverage` untracked** — pytest artifact at repo root; not committed; not in `.gitignore`. Benign; consider adding a `.gitignore` entry post-trial if it continues to appear.
+2. **Epic 33 retrospective** — still `required` in sprint-status.yaml. No blocker on trial completion, but must run before Epic 33 formally closes. Target: after trial completes.
 
-3. **`TALK/marcus-live` branch** — off-books live-voice-conversation experiments with Marcus; committed + pushed to `origin/TALK/marcus-live`; NOT merged into master. Contains STT/audio runtime artifacts. If any side-effect surfaces during trial, revert-ready. No action needed now.
+3. **Irene Pass 2 authoring template** — HIGH priority deferred follow-on filed to `deferred-inventory.md`. Two sessions of remediation work documented in trial run log. Must be scoped before next Irene Pass 2 run to prevent recurrence.
 
-## Key Decisions Taken
+4. **`.coverage` untracked** — pytest artifact at repo root; benign. Add `.gitignore` entry post-trial.
 
-1. **Marcus dual-naming** — "Marcus" = orchestrator agent AND the enhanced APP. Disambiguate by context.
-2. **Epic 33 R1 rulings** — R1-A: 04.5 split into 04.5 polling + 04.55 lock (Audra L1-lane tiebreak); R1-B: `insert_between` rename+generalize, no shim (Audra Principle-3 + Murat AC-C.1 tiebreak); R1-C: manifest at `state/config/` (unanimous).
-3. **Pack Versioning Policy** — Tier 1 (patch, no bump) / Tier 2 (minor, v4.2 → v4.3) / Tier 3 (major); frozen-at-ship rule; codified in pipeline-manifest-regime.md.
-4. **Trial-session discipline** — single trial branch; fix-in-flight via dev-support-agent committing directly; ad-hoc mode for exploration; Marcus announces pause-hash explicitly before any fix session.
-5. **Deferred-inventory governance** — PR-TR + trial-branch hardening parked for post-trial-#1 evidence; 26-10 parked for post-retrospective scope round; 15-1-lite-irene/gary parked for post-META-TEST-PASS confirmation.
-6. **Epic 33 retrospective status** — promoted from `optional` to `required` in sprint-status.yaml STATUS DEFINITIONS (new enum value added with comment).
+## Key Decisions / Observations This Session
+
+1. **`source_image_path` comparison in validator is direct string match, not path-normalized** — absolute paths must match `gary_slide_output.file_path` exactly (Windows-style backslash). Bundle-relative paths fail silently.
+2. **`_behavioral_intent_serves_master()` only accepts short-form keyword compatibility table** — full-sentence behavioral intents for interstitials must exactly match the head's `master_behavioral_intent` string.
+3. **`_extract_concept_tokens()` is exact token (word) match at ≥4 chars** — "turned" ≠ "turning"; "framework" ≠ "frameworks". Head narrations must pre-seed every ≥4-char non-stopword token used in interstitial narrations.
+4. **`cluster_boundary` bridge type is treated as `both` (intro + outro required)** — both intro-class and outro-class spoken cue patterns must appear in the narration_text.
+5. **`visual_detail_load` allowed values: `{light, medium, heavy}` only** — `high` and `very_high` are invalid (despite matching `visual_complexity_level` vocabulary).
 
 ## Validation Summary
 
-- **Step 0a harmonization sweep**: skipped this session (Cora was off-manifest participant in party rounds, not invoked as a live skill). Next session's start protocol will surface the missing-audit-trail condition and offer full-repo /harmonize per the tripwire.
-- **Step 0b pre-closure audit**: all 6 Epic 33 stories flipped to `done` by dev agents in-sprint per BMAD closure discipline; `bmad-code-review` layered pass completed on each; story specs carry review records. Epic 33 retrospective required before epic formally closes.
-- **Step 1 quality gate**: full regression at session close = **1910 passed / 4 skipped / 27 deselected / 2 xfailed / 0 failed**.
-- **Governance validators**: Epic 33 is outside Lesson Planner scope; Lesson Planner governance validator not applicable. BMAD sprint governance per CLAUDE.md applied throughout.
+- **Step 0a harmonization:** skipped (second consecutive skip). Tripwire fires: next session auto-promotes to full-repo scope.
+- **Step 0b pre-closure:** skipped (no stories flipped to `done`).
+- **Step 1 quality gate:** N/A — no BMAD story changes; trial-only session. Bundle files are in gitignored `course-content/staging/`; no linter/test run performed.
+- **Validator gate:** `validate-irene-pass2-handoff.py` returned `STATUS: pass` before Storyboard B generation.
+- **Storyboard B:** 14/14 narration coverage; 0 asset issues; publish receipt confirmed.
 
 ## Git Closeout
 
-- **Commits**: `2ba1e32` (Epic 33 sprint + governance) + `8b70076` (trial hot-start banner). Both on master and `origin/master`.
-- **Trial branch**: `trial/2026-04-19` @ `8b70076` on local + `origin/trial/2026-04-19`.
-- **Kept**: `dev/epic-33-lockstep` (local, audit trail; same tip as master merge point).
-- **Current branch at wrapup**: `trial/2026-04-19`. Working tree: clean.
+- **Branch:** `trial/2026-04-19` — clean working tree at wrapup.
+- **Session-owned git changes:** none — all session work is in gitignored `course-content/staging/` paths (segment-manifest, narration-script, perception-artifacts, pass2-envelope, storyboard) and gitignored `exports/` path (publish receipt). The BMAD tracking files (trial-run log, deferred-inventory) were already committed in HEAD `f7cfb41` (prior-session work committed by operator).
+- **No new commit needed this session.** Resume state: `trial/2026-04-19` @ `f7cfb41`.
+
+## Artifact Update Checklist
+
+| Artifact | Updated? | Notes |
+|---|---|---|
+| `course-content/staging/.../segment-manifest.yaml` | ✅ | Gitignored — local only. Cards 07, 10, 13 narrations + bridges finalized. |
+| `course-content/staging/.../narration-script.md` | ✅ | Gitignored — S07, S10, S13 synced. |
+| `course-content/staging/.../perception-artifacts.json` | ✅ | Gitignored — absolute paths set. |
+| `course-content/staging/.../pass2-envelope.json` | ✅ | Gitignored — perception_artifacts populated, motion artifact path added. |
+| `course-content/staging/.../storyboard/storyboard.json` | ✅ | Gitignored — regenerated with script context. |
+| `course-content/staging/.../storyboard/index.html` | ✅ | Gitignored — Storyboard B HTML. |
+| `_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260419.md` | ✅ | Committed in f7cfb41 — §08 structural debt section present. |
+| `_bmad-output/planning-artifacts/deferred-inventory.md` | ✅ | Committed in f7cfb41 — Irene Pass 2 authoring template follow-on added. |
+| `exports/storyboard-C1-M1-PRES-20260419B-publish-receipt.json` | ✅ | Gitignored — publish receipt with live URL. |
+| `sprint-status.yaml` | ⬜ | No change — trial run is not a sprint story. |
+| `next-session-start-here.md` | ✅ | Updated below (Step 7). |
+| `docs/project-context.md` | ⬜ | No architectural change this session. |
+| `docs/agent-environment.md` | ⬜ | No tool/MCP change this session. |

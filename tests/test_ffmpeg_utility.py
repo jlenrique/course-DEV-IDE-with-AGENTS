@@ -24,7 +24,9 @@ def test_path_used_when_env_missing(mock_which) -> None:
 
 
 @patch("scripts.utilities.ffmpeg.shutil.which", return_value="C:/path/ffmpeg.exe")
-def test_repo_local_binary_wins_before_path(mock_which, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_repo_local_binary_wins_before_path(
+    mock_which, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     local_binary = tmp_path / ".venv" / "Scripts" / "ffmpeg.exe"
     local_binary.parent.mkdir(parents=True, exist_ok=True)
     local_binary.write_text("stub", encoding="utf-8")
@@ -48,7 +50,8 @@ def test_imageio_fallback_used_when_path_missing(mock_which) -> None:
 
 @patch("scripts.utilities.ffmpeg.shutil.which", return_value=None)
 def test_resolver_raises_when_no_sources_available(mock_which) -> None:
-    with patch.dict("sys.modules", {"imageio_ffmpeg": None}):
-        with pytest.raises(RuntimeError, match="ffmpeg is not available"):
-            resolve_ffmpeg_binary()
+    with patch.dict("sys.modules", {"imageio_ffmpeg": None}), pytest.raises(
+        RuntimeError, match="ffmpeg is not available"
+    ):
+        resolve_ffmpeg_binary()
     mock_which.assert_called_once_with("ffmpeg")

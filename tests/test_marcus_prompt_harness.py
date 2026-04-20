@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pathlib import Path
-
 import pytest
 
 from scripts.utilities.marcus_prompt_harness import (
@@ -103,37 +101,67 @@ def test_non_cluster_step_headings_excludes_5b(tmp_path: Path) -> None:
 
 
 def test_prompt_pack_v41_contains_cluster_gate_step() -> None:
-    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.1-narrated-deck-video-export.md").read_text(encoding="utf-8")
+    pack = (
+        _ROOT / "docs" / "workflow" / "production-prompt-pack-v4.1-narrated-deck-video-export.md"
+    ).read_text(encoding="utf-8")
     assert "5B) Cluster Plan G1.5 Gate + Operator Review" in pack
 
 
 def test_prompt_pack_v42_contains_cluster_gate_step() -> None:
-    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    pack = (
+        _ROOT
+        / "docs"
+        / "workflow"
+        / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md"
+    ).read_text(encoding="utf-8")
     assert "5B) Cluster Plan G1.5 Gate + Operator Review" in pack
 
 
 def test_prompt_pack_v42_contains_plain_language_profile_selection_step() -> None:
-    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    pack = (
+        _ROOT
+        / "docs"
+        / "workflow"
+        / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md"
+    ).read_text(encoding="utf-8")
     assert "Should the visuals lead, or should the text lead for this lesson?" in pack
     assert "experience_profile: visual-led" in pack
     assert "experience_profile: text-led" in pack
 
 
 def test_prompt_pack_v42_documents_pr_rc_prerequisite_for_prompt_1() -> None:
-    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    pack = (
+        _ROOT
+        / "docs"
+        / "workflow"
+        / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md"
+    ).read_text(encoding="utf-8")
     assert "Run constants must be authored (via Marcus PR-RC)" in pack
     assert "[--session-receipt [BUNDLE_PATH]/session-preflight-receipt.json]" in pack
     assert "scripts/utilities/app_session_readiness.py --with-preflight" not in pack
 
 
 def test_prompt_pack_v42_documents_correct_poll_timing_policy() -> None:
-    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
-    assert "Operator input received before the floor elapses is valid and accepted immediately." in pack
+    pack = (
+        _ROOT
+        / "docs"
+        / "workflow"
+        / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "Operator input received before the floor elapses is valid and accepted immediately."
+        in pack
+    )
     assert "Submissions before the 3-minute mark are invalid" not in pack
 
 
 def test_prompt_pack_v42_documents_source_directory_scan_gate() -> None:
-    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    pack = (
+        _ROOT
+        / "docs"
+        / "workflow"
+        / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md"
+    ).read_text(encoding="utf-8")
     assert "source-directory-scan.md" in pack
     assert "validate_source_directory_scan_gate" in pack
     assert "Operator-assigned roles are authoritative." in pack
@@ -141,7 +169,9 @@ def test_prompt_pack_v42_documents_source_directory_scan_gate() -> None:
 
 
 def test_conversation_management_maps_plain_language_profile_selection() -> None:
-    guidance = (_ROOT / "skills" / "bmad-agent-marcus" / "references" / "conversation-mgmt.md").read_text(encoding="utf-8")
+    guidance = (
+        _ROOT / "skills" / "bmad-agent-marcus" / "references" / "conversation-mgmt.md"
+    ).read_text(encoding="utf-8")
     assert "Should the visuals lead, or should the text lead for this lesson?" in guidance
     assert "`visual-led`" in guidance
     assert "`text-led`" in guidance
@@ -163,23 +193,33 @@ def test_marcus_skill_declares_hil_display_standards() -> None:
 
 
 def test_conversation_management_declares_hil_display_standards() -> None:
-    guidance = (_ROOT / "skills" / "bmad-agent-marcus" / "references" / "conversation-mgmt.md").read_text(encoding="utf-8")
+    guidance = (
+        _ROOT / "skills" / "bmad-agent-marcus" / "references" / "conversation-mgmt.md"
+    ).read_text(encoding="utf-8")
     assert "## HIL Display Standards" in guidance
-    assert "Every table or list requiring operator selection or reference must include a unique sequential row number" in guidance
+    assert (
+        "Every table or list requiring operator selection or reference "
+        "must include a unique sequential row number"
+        in guidance
+    )
     assert "present the first page and offer `show next` on demand" in guidance
 
 
 def test_c1_m1_storyboard_html_remains_view_only_for_profile_selection() -> None:
     html = (
-        _ROOT
-        / "course-content"
-        / "staging"
-        / "tracked"
-        / "source-bundles"
-        / "apc-c1m1-tejal-20260406-motion"
-        / "storyboard"
-        / "index.html"
-    ).read_text(encoding="utf-8").lower()
+        (
+            _ROOT
+            / "course-content"
+            / "staging"
+            / "tracked"
+            / "source-bundles"
+            / "apc-c1m1-tejal-20260406-motion"
+            / "storyboard"
+            / "index.html"
+        )
+        .read_text(encoding="utf-8")
+        .lower()
+    )
     assert "experience_profile" not in html
     assert "visual-led" not in html
     assert "text-led" not in html
@@ -314,7 +354,9 @@ def test_infer_context_raises_for_invalid_profile_density_contract(tmp_path: Pat
         ),
     )
 
-    with pytest.raises(RunConstantsError, match="cluster_density must match the resolved experience_profile values"):
+    with pytest.raises(
+        RunConstantsError, match="cluster_density must match the resolved experience_profile values"
+    ):
         infer_context(root=tmp_path, bundle_dir=bundle_dir)
 
 
@@ -375,7 +417,9 @@ def test_build_step_reports_marks_prompt_2_pass_with_scan_gate(tmp_path: Path) -
     assert "source-directory-scan.md present" in prompt2.evidence
 
 
-def test_build_step_reports_marks_prompt_2_inconsistent_for_invalid_scan_gate(tmp_path: Path) -> None:
+def test_build_step_reports_marks_prompt_2_inconsistent_for_invalid_scan_gate(
+    tmp_path: Path,
+) -> None:
     bundle_dir = tmp_path / "bundle"
     source_dir = tmp_path / "source"
     bundle_dir.mkdir()
@@ -416,7 +460,8 @@ def test_build_consistency_findings_detects_run_id_drift(tmp_path: Path) -> None
     findings = build_consistency_findings(context)
 
     assert findings == [
-        "preflight-results.json run_id=C1-M1-PRES-20260406 does not match canonical run_id=C1-M1-PRES-20260405"
+        "preflight-results.json run_id=C1-M1-PRES-20260406 does not match "
+        "canonical run_id=C1-M1-PRES-20260405"
     ]
 
 
@@ -520,13 +565,18 @@ def test_build_step_reports_adds_motion_steps_for_motion_runs(tmp_path: Path) ->
             ]
         ),
     )
-    _write(bundle_dir / "motion-gate-receipt.json", json.dumps({"run_id": "C1-M1-PRES-20260405", "decision": "go"}))
+    _write(
+        bundle_dir / "motion-gate-receipt.json",
+        json.dumps({"run_id": "C1-M1-PRES-20260405", "decision": "go"}),
+    )
     _write(
         bundle_dir / "pass2-envelope.json",
         json.dumps(
             {
                 "run_id": "C1-M1-PRES-20260405",
-                "motion_perception_artifacts": {"slide-01": {"artifact_path": "C:/example/slide-01.mp4"}},
+                "motion_perception_artifacts": {
+                    "slide-01": {"artifact_path": "C:/example/slide-01.mp4"}
+                },
             }
         ),
     )
@@ -590,7 +640,10 @@ def test_build_step_reports_accepts_list_shaped_motion_perception_artifacts(tmp_
             ]
         ),
     )
-    _write(bundle_dir / "motion-gate-receipt.json", json.dumps({"run_id": "C1-M1-PRES-20260405", "decision": "go"}))
+    _write(
+        bundle_dir / "motion-gate-receipt.json",
+        json.dumps({"run_id": "C1-M1-PRES-20260405", "decision": "go"}),
+    )
     _write(
         bundle_dir / "pass2-envelope.json",
         json.dumps(

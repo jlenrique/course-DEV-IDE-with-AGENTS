@@ -44,7 +44,8 @@ def resolve_ffmpeg_binary(explicit_path: str | None = None) -> str:
         from imageio_ffmpeg import get_ffmpeg_exe
     except ModuleNotFoundError as exc:  # pragma: no cover - runtime dependency
         raise RuntimeError(
-            "ffmpeg is not available. Install imageio-ffmpeg, provide FFMPEG_BINARY, or place bundled ffmpeg.exe in bin/."
+            "ffmpeg is not available. Install imageio-ffmpeg, provide "
+            "FFMPEG_BINARY, or place bundled ffmpeg.exe in bin/."
         ) from exc
 
     return str(get_ffmpeg_exe())

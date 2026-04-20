@@ -137,6 +137,7 @@ _EXTRACTOR_LABELS_BY_KIND: dict[str, str] = {
 _PROVIDER_SOURCE_TYPE: dict[str, str] = {
     "local_file": "default",
     "pdf": "pdf",
+    "docx": "default",
     "md": "default",
     "url": "html",
     "notion": "notion",
@@ -207,7 +208,7 @@ class DirectiveError(Exception):
 
 
 _SUPPORTED_PROVIDERS: frozenset[str] = frozenset(
-    {"local_file", "pdf", "md", "url", "notion", "playwright_html"}
+    {"local_file", "pdf", "docx", "md", "url", "notion", "playwright_html"}
 )
 
 
@@ -557,7 +558,7 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
     provider = src["provider"]
     locator = src["locator"]
 
-    if provider in ("local_file", "pdf", "md"):
+    if provider in ("local_file", "pdf", "docx", "md"):
         path = Path(locator)
         if not path.is_file():
             raise ValueError(f"File not found: {locator}")

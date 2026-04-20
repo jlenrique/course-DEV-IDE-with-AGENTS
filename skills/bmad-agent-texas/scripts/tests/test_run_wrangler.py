@@ -332,6 +332,36 @@ def test_unsupported_provider_rejected_at_directive_load(
     assert "provider" in err.lower()
 
 
+def test_docx_provider_is_accepted_at_directive_load(tmp_path: Path) -> None:
+    """`docx` provider should route through local DOCX extraction, not reject."""
+    doc = pytest.importorskip("docx")
+    bundle = tmp_path / "bundle"
+    docx_fixture = tmp_path / "source.docx"
+    document = doc.Document()
+    document.add_heading("Docx Source", level=1)
+    document.add_paragraph("This is a synthetic DOCX source for dispatch acceptance.")
+    document.save(docx_fixture)
+    directive = _write_directive(
+        tmp_path,
+        {
+            "run_id": "TEST-DOCX-001",
+            "sources": [
+                {
+                    "ref_id": "src-001",
+                    "provider": "docx",
+                    "locator": str(docx_fixture),
+                    "role": "primary",
+                    "description": "docx dispatch acceptance",
+                    "expected_min_words": 1,
+                }
+            ],
+        },
+    )
+
+    exit_code = _runner.main(["--directive", str(directive), "--bundle-dir", str(bundle)])
+    assert exit_code in {_runner.EXIT_COMPLETE, _runner.EXIT_COMPLETE_WITH_WARNINGS}
+
+
 # ---------------------------------------------------------------------------
 # AC-7 — Malformed directive exits 30
 # ---------------------------------------------------------------------------

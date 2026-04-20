@@ -572,7 +572,11 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
         # error_kind="docx_extraction_failed" with known_losses=["docx_open_failed"]
         # so the text-read fall-through below is NOT re-entered after failure
         # (which would re-introduce the binary-garbage defect 27-1 exists to fix).
-        if suffix == ".docx":
+        if provider == "docx" and suffix != ".docx":
+            raise ValueError(
+                f"provider 'docx' requires a .docx locator, got: {locator}"
+            )
+        if suffix == ".docx" or provider == "docx":
             title, body, rec = _source_ops.wrangle_local_docx(path)
             return title, body, rec
         # Markdown (Notion-export-safe): route through wrangle_local_md so

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.utilities.app_session_readiness import run_readiness
+from scripts.utilities.file_helpers import project_root
 from scripts.utilities.workflow_policy import load_workflow_policy
 
 _REQUIRED_RECEIPT_FIELDS = frozenset({"overall_status", "checks", "root", "timestamp"})
@@ -28,6 +29,7 @@ def emit_preflight_receipt(
     session_receipt: Path | None = None,
 ) -> dict[str, Any]:
     """Emit canonical preflight receipt for Marcus Prompt 1."""
+    effective_root = root or project_root()
     policy = load_workflow_policy(root)
     max_age_minutes = policy["session_receipt_max_age_minutes"]
 
@@ -35,7 +37,7 @@ def emit_preflight_receipt(
         cached = _load_session_receipt_if_fresh(
             session_receipt,
             max_age_minutes=max_age_minutes,
-            required_root=root,
+            required_root=effective_root,
         )
         if cached is not None:
             print(

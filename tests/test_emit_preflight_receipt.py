@@ -164,3 +164,47 @@ def test_main_writes_output_from_cached_session_receipt(
     assert rc == 0
     assert json.loads(output.read_text(encoding="utf-8")) == cached_report
     assert "Using cached session receipt" in capsys.readouterr().out
+
+
+def test_main_rejects_cached_session_receipt_with_wrong_root(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    session_receipt = tmp_path / "session.json"
+    output = tmp_path / "bundle" / "preflight-results.json"
+    session_receipt.write_text(
+        json.dumps(
+            {
+                "overall_status": "pass",
+                "checks": [],
+                "root": "C:/wrong-root",
+                "timestamp": "now",
+            }
+        ),
+        encoding="utf-8",
+    )
+    now = time.time()
+    os.utime(session_receipt, (now, now))
+
+    live_report = {
+        "overall_status": "pass",
+        "checks": [],
+        "root": str(project_root().resolve()),
+        "timestamp": "now",
+    }
+    monkeypatch.setattr(receipt_module, "run_readiness", lambda **_: live_report)
+
+    rc = receipt_module.main(
+        [
+            "--output",
+            str(output),
+            "--session-receipt",
+            str(session_receipt),
+        ]
+    )
+
+    assert rc == 0
+    assert json.loads(output.read_text(encoding="utf-8")) == live_report
+    captured = capsys.readouterr().out
+    assert "cache missing, unreadable, or stale" in captured.lower()

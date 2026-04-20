@@ -143,3 +143,29 @@ def test_validate_source_directory_scan_gate_requires_complete_directory_coverag
     assert (
         "Scan rows must cover every file in scanned_directory exactly once" in result["issues"][0]
     )
+
+
+def test_validate_source_directory_scan_gate_rejects_duplicate_file_rows(
+    tmp_path: Path,
+) -> None:
+    scanned_dir = tmp_path / "source"
+    scanned_dir.mkdir()
+    (scanned_dir / "lesson.pdf").write_text("a", encoding="utf-8")
+    scan_path = tmp_path / "source-directory-scan.md"
+    _write_scan(
+        scan_path,
+        "\n".join(
+            [
+                "operator_assignment_status: approved",
+                f"scanned_directory: {scanned_dir.as_posix()}",
+                "| row | file | proposed | assigned | note |",
+                "| 1 | lesson.pdf | primary | primary | canonical source |",
+                "| 2 | lesson.pdf | validation | validation | duplicate row |",
+            ]
+        ),
+    )
+
+    result = validate_source_directory_scan_gate(scan_path)
+
+    assert result["valid"] is False
+    assert "Scan rows must not contain duplicate file entries" in result["issues"]

@@ -108,10 +108,13 @@ def validate_source_directory_scan_gate(scan_path: Path) -> dict[str, Any]:
                 for item in scanned_path.iterdir()
                 if item.is_file()
             }
-            listed_files = {
+            listed_file_names = [
                 Path(match.group("file").strip()).name
                 for match in row_matches
-            }
+            ]
+            listed_files = set(listed_file_names)
+            if len(listed_file_names) != len(listed_files):
+                issues.append("Scan rows must not contain duplicate file entries")
             if listed_files != actual_files:
                 issues.append(
                     "Scan rows must cover every file in scanned_directory exactly once"

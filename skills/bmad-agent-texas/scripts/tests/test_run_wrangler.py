@@ -365,6 +365,21 @@ def test_docx_provider_is_accepted_at_directive_load(tmp_path: Path) -> None:
     assert report["sources"][0]["extractor_used"] == "python-docx"
 
 
+def test_docx_provider_rejects_non_docx_locator(tmp_path: Path) -> None:
+    txt_path = tmp_path / "source.txt"
+    txt_path.write_text("plain text", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"requires a \.docx locator"):
+        _runner._fetch_source(
+            {
+                "provider": "docx",
+                "locator": str(txt_path),
+                "role": "primary",
+                "ref_id": "src-001",
+            }
+        )
+
+
 # ---------------------------------------------------------------------------
 # AC-7 — Malformed directive exits 30
 # ---------------------------------------------------------------------------

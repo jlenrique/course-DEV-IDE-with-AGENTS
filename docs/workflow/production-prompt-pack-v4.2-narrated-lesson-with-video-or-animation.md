@@ -42,6 +42,11 @@
 [M→O]
 
 
+**Prerequisite:** Run constants must be authored (via Marcus PR-RC) before this prompt
+can be executed. `RUN_ID` and `BUNDLE_PATH` are required by the commands below.
+If run constants are not yet established, stop and run PR-RC first.
+
+
 Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 
 1. Active agent identity and role.
@@ -52,8 +57,7 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 6. Motion + double-dispatch readiness summary.
 
 Required commands:
-- `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight`
-- `.\.venv\Scripts\python.exe -m scripts.utilities.emit_preflight_receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.emit_preflight_receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json [--session-receipt [BUNDLE_PATH]/session-preflight-receipt.json]`
 - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `DOUBLE_DISPATCH: true`, also require double-dispatch compatibility confirmation from preflight runner before proceeding.
 
@@ -85,6 +89,19 @@ Primary source:
 Optional context:
 - [OPTIONAL_CONTEXT_ASSETS]
 
+**Required pre-map gate (mandatory — do not skip):**
+Before drafting the source authority map:
+1. Scan the source directory containing `[PRIMARY_SOURCE_FILE]` and list every file found.
+2. Present the full discovered file list to the operator and record that operator-facing scan
+   at `[BUNDLE_PATH]/source-directory-scan.md` with a numbered row per file, proposed role
+   for each (`primary` / `validation` / `supplementary` / `skip`), the operator-assigned
+   role, and a brief note.
+3. Wait for operator role assignments.
+4. Run `.\.venv\Scripts\python.exe -m scripts.utilities.validate_source_directory_scan_gate --scan-path [BUNDLE_PATH]/source-directory-scan.md`
+5. Draft the source authority map only after the scan gate passes.
+
+Operator-assigned roles are authoritative. Do not infer roles from run-constants alone — run-constants lists intended sources but the directory is ground truth.
+
 For each source, return:
 - source_id
 - source_type
@@ -95,9 +112,14 @@ For each source, return:
 - expected_confidence
 - known_risks
 
-When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval.
+When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval after the scan gate passes.
+
+Required writes:
+- `[BUNDLE_PATH]/source-directory-scan.md`
+- `[BUNDLE_PATH]/source-authority-map.md`
 
 Gate rule:
+- The source-directory scan gate must pass before the source authority map is drafted.
 - Operator must approve the source authority map before ingestion begins.
 - Any unresolved source authority, routing, or risk concern blocks progression.
 
@@ -113,9 +135,11 @@ Wait for explicit GO.
 
 Poll timing policy (hard requirement):
 - Start a poll timer when Prompt 2A is issued.
-- Enforce a hard 3-minute reply hold from poll start before any submission can be accepted.
-- Auto-close the poll exactly 15 minutes after poll start if a complete submission is not received.
-- Submissions before the 3-minute mark are invalid and must be re-polled.
+- The poll must remain open for a minimum of 3 minutes — Marcus
+  may not auto-close or auto-advance before this floor has elapsed.
+- Operator input received before the floor elapses is valid and accepted immediately.
+- Auto-close the poll 15 minutes after poll start
+  if a complete submission has not been received.
 - If the poll auto-closes, keep ingestion blocked and require a new Prompt 2A poll.
 
 Marcus, record the operator's source-processing directives for RUN_ID [RUN_ID].
@@ -156,7 +180,7 @@ Artifact verification (deterministic — expected file count: **3**):
 
 Gate rule:
 - Operator directives (or an explicit "no special directives" acknowledgment) must be recorded before ingestion begins.
-- Any poll auto-close, submission before the 3-minute hold, or missing directive category blocks progression until re-polled.
+- Any poll auto-close or missing directive category blocks progression until re-polled. Early operator submission within the minimum open window is valid.
 
 Wait for explicit GO.
 

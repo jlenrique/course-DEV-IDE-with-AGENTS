@@ -30,17 +30,18 @@ From invocation args (`Invocation.args`):
 
 - `with_preflight` (bool, default true) — if false, readiness check only; preflight suite skipped.
 - `json_only` (bool, default true) — underlying runner uses JSON output.
+- `session_receipt_path` (string, optional) — explicit location for a reusable session receipt. If omitted and `context.bundle_path` exists on disk, PR-PF writes `[BUNDLE_PATH]/session-preflight-receipt.json`.
 
 ## Procedure
 
 1. **Summarize mode.** Report what would be checked: readiness scope, preflight scope, target bundle, recent receipt status if known. No side-effects.
-2. **Execute mode.** Invoke `python -m scripts.utilities.app_session_readiness --with-preflight [--json-only] [--bundle-dir <path>]` as a subprocess. Parse JSON output. Populate `ReturnEnvelope.result` with the readiness report and `landing_point` with bundle + manifest + sha256 pointers.
+2. **Execute mode.** Invoke `python -m scripts.utilities.app_session_readiness --with-preflight [--json-only] [--bundle-dir <path>]` as a subprocess. Parse JSON output. When the run is clean, persist a reusable session receipt either to `Invocation.args.session_receipt_path` or the default `[BUNDLE_PATH]/session-preflight-receipt.json` when the bundle exists. Populate `ReturnEnvelope.result` with the readiness report and session-receipt path.
 3. **On subprocess non-zero exit,** set `status: error` and populate `errors[]` with a code `PREFLIGHT_FAILED` entry carrying the underlying runner's summary. Do **not** let the exception cross the Marcus boundary (AC-C.3).
 
 ## Outputs / artifacts
 
 - Structured `ReturnEnvelope` with `status, result, landing_point, errors, telemetry`.
-- No filesystem writes from this capability itself — the underlying runner emits receipts to its canonical location.
+- Optional session-scoped receipt at the explicit `session_receipt_path` or default `[BUNDLE_PATH]/session-preflight-receipt.json`.
 
 ## Gates / checkpoints
 

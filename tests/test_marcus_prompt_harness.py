@@ -119,6 +119,27 @@ def test_prompt_pack_v42_contains_plain_language_profile_selection_step() -> Non
     assert "experience_profile: text-led" in pack
 
 
+def test_prompt_pack_v42_documents_pr_rc_prerequisite_for_prompt_1() -> None:
+    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    assert "Run constants must be authored (via Marcus PR-RC)" in pack
+    assert "[--session-receipt [BUNDLE_PATH]/session-preflight-receipt.json]" in pack
+    assert "scripts/utilities/app_session_readiness.py --with-preflight" not in pack
+
+
+def test_prompt_pack_v42_documents_correct_poll_timing_policy() -> None:
+    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    assert "Operator input received before the floor elapses is valid and accepted immediately." in pack
+    assert "Submissions before the 3-minute mark are invalid" not in pack
+
+
+def test_prompt_pack_v42_documents_source_directory_scan_gate() -> None:
+    pack = (_ROOT / "docs" / "workflow" / "production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md").read_text(encoding="utf-8")
+    assert "source-directory-scan.md" in pack
+    assert "validate_source_directory_scan_gate" in pack
+    assert "Operator-assigned roles are authoritative." in pack
+    assert "Present the full discovered file list to the operator" in pack
+
+
 def test_conversation_management_maps_plain_language_profile_selection() -> None:
     guidance = (_ROOT / "skills" / "bmad-agent-marcus" / "references" / "conversation-mgmt.md").read_text(encoding="utf-8")
     assert "Should the visuals lead, or should the text lead for this lesson?" in guidance
@@ -132,6 +153,20 @@ def test_cd_skill_declares_marcus_only_intake_contract() -> None:
     assert "## Intake Contract" in skill
     assert "Marcus's envelope" in skill
     assert "returns structured output only to Marcus" in skill
+
+
+def test_marcus_skill_declares_hil_display_standards() -> None:
+    skill = (_ROOT / "skills" / "bmad-agent-marcus" / "SKILL.md").read_text(encoding="utf-8")
+    assert "## HIL Display Standards" in skill
+    assert "**Numbered rows:**" in skill
+    assert "**Paginated output:**" in skill
+
+
+def test_conversation_management_declares_hil_display_standards() -> None:
+    guidance = (_ROOT / "skills" / "bmad-agent-marcus" / "references" / "conversation-mgmt.md").read_text(encoding="utf-8")
+    assert "## HIL Display Standards" in guidance
+    assert "Every table or list requiring operator selection or reference must include a unique sequential row number" in guidance
+    assert "present the first page and offer `show next` on demand" in guidance
 
 
 def test_c1_m1_storyboard_html_remains_view_only_for_profile_selection() -> None:
@@ -296,6 +331,76 @@ def test_build_step_reports_marks_prompt_2_inferred_without_direct_map(tmp_path:
 
     assert prompt2.status == "INFERRED"
     assert "ingestion-evidence.md present" in prompt2.evidence
+
+
+def test_build_step_reports_marks_prompt_2_partial_without_scan_gate(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    _minimal_run_constants(bundle_dir)
+    _write(bundle_dir / "source-authority-map.md", "# map")
+
+    context = infer_context(root=tmp_path, bundle_dir=bundle_dir)
+    reports = build_step_reports(context)
+    prompt2 = next(item for item in reports if item.step == "2")
+
+    assert prompt2.status == "PARTIAL"
+    assert "source-directory-scan.md missing" in prompt2.gaps
+
+
+def test_build_step_reports_marks_prompt_2_pass_with_scan_gate(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    source_dir = tmp_path / "source"
+    bundle_dir.mkdir()
+    source_dir.mkdir()
+    _minimal_run_constants(bundle_dir)
+    _write(bundle_dir / "source-authority-map.md", "# map")
+    _write(source_dir / "source.pdf", "stub")
+    _write(
+        bundle_dir / "source-directory-scan.md",
+        "\n".join(
+            [
+                "operator_assignment_status: approved",
+                f"scanned_directory: {source_dir.as_posix()}",
+                "| row | file | proposed | assigned | note |",
+                "| 1 | source.pdf | primary | primary | canonical source |",
+            ]
+        ),
+    )
+
+    context = infer_context(root=tmp_path, bundle_dir=bundle_dir)
+    reports = build_step_reports(context)
+    prompt2 = next(item for item in reports if item.step == "2")
+
+    assert prompt2.status == "PASS"
+    assert "source-directory-scan.md present" in prompt2.evidence
+
+
+def test_build_step_reports_marks_prompt_2_inconsistent_for_invalid_scan_gate(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    source_dir = tmp_path / "source"
+    bundle_dir.mkdir()
+    source_dir.mkdir()
+    _minimal_run_constants(bundle_dir)
+    _write(bundle_dir / "source-authority-map.md", "# map")
+    _write(source_dir / "source.pdf", "stub")
+    _write(
+        bundle_dir / "source-directory-scan.md",
+        "\n".join(
+            [
+                "operator_assignment_status: pending",
+                f"scanned_directory: {source_dir.as_posix()}",
+                "| row | file | proposed | assigned | note |",
+                "| 1 | source.pdf | primary | primary | canonical source |",
+            ]
+        ),
+    )
+
+    context = infer_context(root=tmp_path, bundle_dir=bundle_dir)
+    reports = build_step_reports(context)
+    prompt2 = next(item for item in reports if item.step == "2")
+
+    assert prompt2.status == "INCONSISTENT"
+    assert any("operator_assignment_status must be approved" in gap for gap in prompt2.gaps)
 
 
 def test_build_consistency_findings_detects_run_id_drift(tmp_path: Path) -> None:

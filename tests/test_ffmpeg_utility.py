@@ -23,6 +23,21 @@ def test_path_used_when_env_missing(mock_which) -> None:
     mock_which.assert_called_once_with("ffmpeg")
 
 
+@patch("scripts.utilities.ffmpeg.shutil.which", return_value="C:/path/ffmpeg.exe")
+def test_repo_local_binary_wins_before_path(mock_which, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    local_binary = tmp_path / ".venv" / "Scripts" / "ffmpeg.exe"
+    local_binary.parent.mkdir(parents=True, exist_ok=True)
+    local_binary.write_text("stub", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "scripts.utilities.ffmpeg._repo_local_ffmpeg_candidates",
+        lambda _root: (local_binary,),
+    )
+
+    assert resolve_ffmpeg_binary() == str(local_binary)
+    mock_which.assert_not_called()
+
+
 @patch("scripts.utilities.ffmpeg.shutil.which", return_value=None)
 def test_imageio_fallback_used_when_path_missing(mock_which) -> None:
     fake_module = types.SimpleNamespace(get_ffmpeg_exe=lambda: "C:/venv/ffmpeg.exe")

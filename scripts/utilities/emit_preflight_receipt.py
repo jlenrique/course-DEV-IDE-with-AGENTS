@@ -10,9 +10,14 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from scripts.utilities.app_session_readiness import run_readiness
+from scripts.utilities.workflow_policy import load_workflow_policy
+
+_REQUIRED_RECEIPT_FIELDS = frozenset({"overall_status", "checks", "root", "timestamp"})
 
 
 def emit_preflight_receipt(
@@ -20,8 +25,29 @@ def emit_preflight_receipt(
     bundle_dir: Path | None = None,
     with_preflight: bool = False,
     motion_enabled: bool = False,
-) -> dict[str, any]:
+    session_receipt: Path | None = None,
+) -> dict[str, Any]:
     """Emit canonical preflight receipt for Marcus Prompt 1."""
+    policy = load_workflow_policy(root)
+    max_age_minutes = policy["session_receipt_max_age_minutes"]
+
+    if session_receipt is not None:
+        cached = _load_session_receipt_if_fresh(
+            session_receipt,
+            max_age_minutes=max_age_minutes,
+            required_root=root,
+        )
+        if cached is not None:
+            print(
+                "Using cached session receipt "
+                f"{session_receipt} (max age {max_age_minutes} minutes)."
+            )
+            return cached
+        print(
+            "Session receipt cache missing, unreadable, or stale; "
+            "running live readiness."
+        )
+
     report = run_readiness(
         root=root,
         with_preflight=with_preflight,
@@ -29,6 +55,39 @@ def emit_preflight_receipt(
         bundle_dir=bundle_dir,
     )
     return report
+
+
+def _load_session_receipt_if_fresh(
+    path: Path,
+    *,
+    max_age_minutes: int,
+    required_root: Path | None = None,
+) -> dict[str, Any] | None:
+    """Return cached receipt when present, parseable, and within age window."""
+    if not path.is_file():
+        return None
+
+    age_seconds = datetime.now(tz=timezone.utc).timestamp() - path.stat().st_mtime
+    if age_seconds > max_age_minutes * 60:
+        return None
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if not _REQUIRED_RECEIPT_FIELDS.issubset(payload):
+        return None
+    if required_root is None:
+        return payload
+
+    cached_root = payload.get("root")
+    if not isinstance(cached_root, str):
+        return None
+    if Path(cached_root).resolve() != required_root.resolve():
+        return None
+    return payload
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,6 +120,15 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="Output path for preflight-results.json",
     )
+    parser.add_argument(
+        "--session-receipt",
+        type=Path,
+        default=None,
+        help=(
+            "Optional session-scoped readiness receipt to reuse when it exists "
+            "and is still fresh under workflow policy."
+        ),
+    )
 
     args = parser.parse_args(argv)
 
@@ -69,6 +137,7 @@ def main(argv: list[str] | None = None) -> int:
         bundle_dir=args.bundle_dir,
         with_preflight=args.with_preflight,
         motion_enabled=args.motion_enabled,
+        session_receipt=args.session_receipt,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

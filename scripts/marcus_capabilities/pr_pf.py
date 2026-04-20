@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 from scripts.marcus_capabilities._shared import (
@@ -31,6 +32,7 @@ CAPABILITY_CODE = "PR-PF"
 
 # Subprocess entrypoint. Injectable for testing (patch at import site).
 _READINESS_ENTRYPOINT = "scripts.utilities.app_session_readiness"
+_DEFAULT_SESSION_RECEIPT_NAME = "session-preflight-receipt.json"
 
 # Upper bound on how long the readiness subprocess may run before we abort
 # and surface PREFLIGHT_TIMEOUT into the envelope. 120s is generous for a
@@ -46,6 +48,11 @@ def summarize(invocation: Invocation) -> ReturnEnvelope:
     json_only = bool(args.get("json_only", True))
     ctx = invocation.context
     bundle_path = ctx.bundle_path if ctx else None
+    session_receipt_path = _resolve_session_receipt_path(
+        args,
+        bundle_path,
+        require_existing_bundle=False,
+    )
 
     plan_lines = [
         f"Would invoke: python -m {_READINESS_ENTRYPOINT}",
@@ -54,6 +61,8 @@ def summarize(invocation: Invocation) -> ReturnEnvelope:
     ]
     if bundle_path:
         plan_lines.append(f"  --bundle-dir={bundle_path}")
+    if session_receipt_path is not None:
+        plan_lines.append(f"  --session-receipt-artifact={session_receipt_path}")
 
     return ReturnEnvelope(
         status="ok",
@@ -65,6 +74,9 @@ def summarize(invocation: Invocation) -> ReturnEnvelope:
             "with_preflight": with_preflight,
             "json_only": json_only,
             "bundle_path": bundle_path,
+            "session_receipt_path": (
+                str(session_receipt_path) if session_receipt_path is not None else None
+            ),
         },
         landing_point=LandingPoint(bundle_path=bundle_path),
         errors=[],
@@ -81,6 +93,29 @@ def _build_cmd(args: dict[str, Any], bundle_path: str | None) -> list[str]:
     if bundle_path:
         cmd.extend(["--bundle-dir", bundle_path])
     return cmd
+
+
+def _resolve_session_receipt_path(
+    args: dict[str, Any],
+    bundle_path: str | None,
+    *,
+    require_existing_bundle: bool,
+) -> Path | None:
+    explicit = args.get("session_receipt_path")
+    if isinstance(explicit, str) and explicit.strip():
+        return Path(explicit)
+    if not bundle_path:
+        return None
+
+    bundle_dir = Path(bundle_path)
+    if require_existing_bundle and not bundle_dir.exists():
+        return None
+    return bundle_dir / _DEFAULT_SESSION_RECEIPT_NAME
+
+
+def _write_session_receipt(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def _run_subprocess(cmd: list[str]) -> tuple[int, str, str]:
@@ -110,6 +145,11 @@ def execute(invocation: Invocation) -> ReturnEnvelope:
     ctx = invocation.context
     bundle_path = ctx.bundle_path if ctx else None
     cmd = _build_cmd(invocation.args, bundle_path)
+    session_receipt_path = _resolve_session_receipt_path(
+        invocation.args,
+        bundle_path,
+        require_existing_bundle=True,
+    )
 
     try:
         returncode, stdout, stderr = _run_subprocess(cmd)
@@ -219,6 +259,21 @@ def execute(invocation: Invocation) -> ReturnEnvelope:
         status = "ok"
 
     preflight_passed = returncode == 0 and not parse_failed
+    if preflight_passed and parsed is not None and session_receipt_path is not None:
+        try:
+            _write_session_receipt(session_receipt_path, parsed)
+        except OSError as exc:
+            status = "partial"
+            errors.append(
+                CapabilityError(
+                    code="SESSION_RECEIPT_WRITE_FAILED",
+                    message=f"Could not persist PR-PF session receipt: {exc}",
+                    remediation=(
+                        "Confirm the bundle path is writable, or pass an explicit "
+                        "session_receipt_path in the capability args."
+                    ),
+                )
+            )
 
     return ReturnEnvelope(
         status=status,
@@ -229,6 +284,9 @@ def execute(invocation: Invocation) -> ReturnEnvelope:
             "returncode": returncode,
             "readiness": parsed if parsed is not None else {"raw_stdout": stdout},
             "preflight_passed": preflight_passed,
+            "session_receipt_path": (
+                str(session_receipt_path) if session_receipt_path is not None else None
+            ),
         },
         landing_point=LandingPoint(bundle_path=bundle_path),
         errors=errors,

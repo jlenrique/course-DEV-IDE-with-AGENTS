@@ -17,6 +17,9 @@ except ImportError:  # pragma: no cover - pyyaml is a declared dependency
 
 from scripts.utilities.file_helpers import project_root
 from scripts.utilities.run_constants import RunConstantsError, load_run_constants
+from scripts.utilities.validate_source_directory_scan_gate import (
+    validate_source_directory_scan_gate,
+)
 
 
 STANDARD_PROMPT_PACK = Path("docs/workflow/production-prompt-pack-v4.1-narrated-deck-video-export.md")
@@ -371,15 +374,30 @@ def _check_step_1(bundle_dir: Path) -> StepReport:
 
 def _check_step_2(bundle_dir: Path) -> StepReport:
     source_map = bundle_dir / "source-authority-map.md"
+    source_scan = bundle_dir / "source-directory-scan.md"
     ingestion_evidence = bundle_dir / "ingestion-evidence.md"
     metadata = bundle_dir / "metadata.json"
     evidence: list[str] = []
     gaps: list[str] = []
     direct_ok = source_map.is_file()
     inferred_ok = False
-    if direct_ok:
+    inconsistent = False
+    if source_map.is_file():
         evidence.append("source-authority-map.md present")
     else:
+        gaps.append("source-authority-map.md missing")
+    if source_scan.is_file():
+        evidence.append("source-directory-scan.md present")
+        gate_result = validate_source_directory_scan_gate(source_scan)
+        if gate_result["valid"]:
+            evidence.append("source-directory scan gate valid")
+        else:
+            inconsistent = True
+            gaps.extend(str(item) for item in gate_result["issues"])
+    elif source_map.is_file():
+        gaps.append("source-directory-scan.md missing")
+
+    if not direct_ok and not source_map.is_file():
         if ingestion_evidence.is_file():
             evidence.append("ingestion-evidence.md present")
             inferred_ok = True
@@ -388,11 +406,13 @@ def _check_step_2(bundle_dir: Path) -> StepReport:
             inferred_ok = True
         if not inferred_ok:
             gaps.append("No source authority map or downstream ingestion evidence found")
-    status = _step_status(direct_ok=direct_ok, inferred_ok=inferred_ok, inconsistent=False, gaps=gaps)
+    status = _step_status(direct_ok=direct_ok, inferred_ok=inferred_ok, inconsistent=inconsistent, gaps=gaps)
     summary = {
-        "PASS": "Direct source authority map artifact found.",
+        "PASS": "Direct source scan and source authority map artifacts found.",
         "INFERRED": "Prompt 2 is only indirectly evidenced by downstream ingestion artifacts.",
         "MISSING": "No evidence that Prompt 2 output was persisted.",
+        "PARTIAL": "Prompt 2 map exists but the scan-first gate artifact is missing.",
+        "INCONSISTENT": "Prompt 2 artifacts exist but the scan-first gate validator failed.",
     }.get(status, "Prompt 2 evidence is incomplete.")
     return StepReport("2", STANDARD_STEP_HEADINGS[1], status, summary, tuple(evidence), tuple(gaps))
 

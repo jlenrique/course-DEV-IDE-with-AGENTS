@@ -9,6 +9,19 @@ Primary source:
 Optional context:
 - [OPTIONAL_CONTEXT_ASSETS]
 
+**Required pre-map gate (mandatory — do not skip):**
+Before drafting the source authority map:
+1. Scan the source directory containing `[PRIMARY_SOURCE_FILE]` and list every file found.
+2. Present the full discovered file list to the operator and record that operator-facing scan
+   at `[BUNDLE_PATH]/source-directory-scan.md` with a numbered row per file, proposed role
+   for each (`primary` / `validation` / `supplementary` / `skip`), the operator-assigned
+   role, and a brief note.
+3. Wait for operator role assignments.
+4. Run `.\.venv\Scripts\python.exe -m scripts.utilities.validate_source_directory_scan_gate --scan-path [BUNDLE_PATH]/source-directory-scan.md`
+5. Draft the source authority map only after the scan gate passes.
+
+Operator-assigned roles are authoritative. Do not infer roles from run-constants alone — run-constants lists intended sources but the directory is ground truth.
+
 For each source, return:
 - source_id
 - source_type
@@ -19,9 +32,14 @@ For each source, return:
 - expected_confidence
 - known_risks
 
-When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval.
+When the operator has already provided directives in a prior session (e.g. the same run resumed), Marcus may pre-populate the source map from prior artifacts. When this is a fresh greenfield run, produce the map from scratch and present it for operator approval after the scan gate passes.
+
+Required writes:
+- `[BUNDLE_PATH]/source-directory-scan.md`
+- `[BUNDLE_PATH]/source-authority-map.md`
 
 Gate rule:
+- The source-directory scan gate must pass before the source authority map is drafted.
 - Operator must approve the source authority map before ingestion begins.
 - Any unresolved source authority, routing, or risk concern blocks progression.
 

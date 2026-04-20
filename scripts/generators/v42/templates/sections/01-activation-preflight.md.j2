@@ -1,6 +1,11 @@
 {{ audience("M→O") }}
 
 
+**Prerequisite:** Run constants must be authored (via Marcus PR-RC) before this prompt
+can be executed. `RUN_ID` and `BUNDLE_PATH` are required by the commands below.
+If run constants are not yet established, stop and run PR-RC first.
+
+
 Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 
 1. Active agent identity and role.
@@ -11,8 +16,7 @@ Marcus, return an activation receipt for RUN_ID [RUN_ID]:
 6. Motion + double-dispatch readiness summary.
 
 Required commands:
-- `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight`
-- `.\.venv\Scripts\python.exe -m scripts.utilities.emit_preflight_receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
+- `.\.venv\Scripts\python.exe -m scripts.utilities.emit_preflight_receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json [--session-receipt [BUNDLE_PATH]/session-preflight-receipt.json]`
 - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `DOUBLE_DISPATCH: true`, also require double-dispatch compatibility confirmation from preflight runner before proceeding.
 

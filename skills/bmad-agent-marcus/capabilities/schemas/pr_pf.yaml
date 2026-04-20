@@ -15,6 +15,10 @@ args:
     type: bool
     default: true
     description: Ask the underlying runner for JSON output.
+  session_receipt_path:
+    type: str
+    required: false
+    description: Optional explicit output path for a reusable PR-PF session receipt.
 
 result:
   readiness:
@@ -23,3 +27,7 @@ result:
   preflight_passed:
     type: bool
     description: True if the preflight subsystem reported clean.
+  session_receipt_path:
+    type: str
+    required: false
+    description: Path where PR-PF persisted the reusable session receipt, when available.

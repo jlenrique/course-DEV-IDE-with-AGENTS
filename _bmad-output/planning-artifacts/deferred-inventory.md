@@ -61,7 +61,9 @@ Follow-on stories named in existing specs or retrospectives but not yet filed as
 
 | **Irene Pass 2 authoring template / schema contract** | 2026-04-20 trial run B-Run §08 — operator-flagged after validator remediation across two full sessions | Before next Pass 2 production run | Irene's Pass 2 work product required exceptional post-hoc repair before `validate-irene-pass2-handoff.py` returned STATUS: pass. The validator's strict contract (exact behavioral-intent form, 4+-char token-level narration pre-seeding, absolute path matching, valid `visual_detail_load` values, bridge-cadence mechanics, cluster arc integrity rules) is implicit in validator code and not surfaced to Irene at composition time. Required: a structured Irene Pass 2 authoring template that encodes the validator's implicit contract as explicit schema constraints and inline authoring guidance — so segment-manifest.yaml and pass2-envelope.json can be produced in one pass without post-hoc debugging. HIGH priority: single highest-friction step in the production pipeline observed this trial. Natural home: Epic 20c or new Epic 34 (Irene authoring contract). ~3-5pt. |
 
-**Total named follow-ons: 12.**
+| **Theatrical-direction synthesis (Tier 1 + Tier 2)** | 2026-04-21 trial run B §11 — operator explored dials-only ceiling and asked whether per-segment feature specification is part of a "theatrical direction"–capable approach | After C1-M1-PRES-20260419B synthesis output is evaluated; operator decides whether dials-only expressiveness is sufficient or whether escalation is warranted | Current trial is **dials-only amp-up** on `eleven_multilingual_v2` with uniform voice_settings across 14 segments (only `speed` varies per segment via `pace_variability` client-side nudge). This reveals the ceiling of single-parameter-set synthesis. Two escalation tiers for future trials: **Tier 1 — per-segment voice_settings.** Extend `segment-manifest.yaml` and `pass2-envelope.json` to carry per-segment `stability` / `style` / `similarity_boost` hints. Irene authors them alongside narration (e.g., heavy reflection segment → higher stability + lower style; excited call-to-action → lower stability + higher style). Runner builds a per-segment `voice_settings` payload instead of reusing one envelope. Works on v2 model; no API/model change required. Estimated ~70% of theatrical value at ~20% of complexity. ~3-5pt. **Tier 2 — model swap + audio-tag authoring.** Add model selection capability (`eleven_v3` / `v3-alpha` / future tag-capable models) to `voice-selection.json`. Irene Pass 2 authors inline audio tags (`[laughs] [whispers] [shouts] [sighs] [pause]`) at per-segment granularity. Runner detects model capability and passes tags through. Combined with Tier 1 this delivers full director-mode control: per-segment voice parameters + per-utterance performance markers. ~5-8pt. Natural home: new Epic (Director-Mode Synthesis) or Epic 24 extension. Parent-story decision trigger: operator reviews trial B audio output, declares "dials-only ceiling is too flat for category X content." Until then, dials-only remains the cost-effective default. |
+
+**Total named follow-ons: 13.**
 
 ---
 
@@ -101,7 +103,7 @@ Reactivation trigger: Irene output stabilizes (Wave 3 close).
 |---|---|---|
 | Backlog epics | 4 (Epic 15, 16, 17, 18) | Triggered by Epic 33 meta-test + trial-run evidence |
 | Deferred stories in active epics | 4 (20c-4/5/6, 20a-5) | Triggered by profile-driven run gaps |
-| Named-but-not-filed follow-ons | 7 | Triggered by parent-story closure + condition |
+| Named-but-not-filed follow-ons | 13 | Triggered by parent-story closure + condition |
 | Wave 3/4/5 stories (partially deferred via gating) | ~10 | Triggered by prior-wave stabilization |
 
 **Near-term candidates (post-Epic-33):**

@@ -260,3 +260,148 @@ _(Marcus self-assessment of pack conformance gaps, recorded per operator instruc
 **Operator instruction:** Note in the run log that a **data schema / structured template** for Irene's Pass 2 work product is a mandatory follow-on item. The validator's strict contract is not discoverable from the segment-manifest schema alone — the constraints (exact behavioral-intent form, token-level narration pre-seeding, absolute path matching, valid `visual_detail_load` values, bridge-cadence mechanics) are implicit in the validator logic and not surfaced to Irene at composition time.
 
 **Deferred follow-on (file to deferred-inventory.md):** Design a structured **Irene Pass 2 authoring template** that encodes the validator's implicit contract as explicit schema constraints and authoring guidance at the point of composition — so that a correctly structured segment-manifest and pass2-envelope can be produced in one pass without post-hoc debugging. Priority: HIGH — this is the highest-friction single step in the production pipeline for this trial class.
+
+### 2026-04-21 — §08B Storyboard B HIL approved
+
+- Operator reviewed published Storyboard B at https://jlenrique.github.io/assets/storyboards/C1-M1-PRES-20260419B/index.html (14 slides, narration text + script context + motion bindings).
+- Operator approval phrase: "Marcus, 08B approved" — 2026-04-21T01:03:57Z.
+- No revision requests. Gate 3 unblocked.
+
+### 2026-04-21 — §09 Gate 3 Lock executed
+
+- Marcus authored `gate3-lock-receipt.json` at bundle root with sha256 pins for the four locked artifacts:
+  - `narration-script.md` `5e7a7205…e360`
+  - `segment-manifest.yaml` `1ecbfcba…081c`
+  - `pass2-envelope.json` `3a99ab99…b206`
+  - `motion_plan.yaml` `346268d6…eda6`
+- Identity sources also pinned (not locked — referenced as SSOT):
+  - `authorized-storyboard.json` `f95546b5…b4d9`
+  - `motion-gate-receipt.json` `051c1278…43dd`
+- Downstream contract recorded: ElevenLabs + compositor must read locked artifacts; must-not-modify; must preserve Motion-Gate-approved `motion_asset_path`; Gate 2M / motion-gen / Motion Gate do not re-open unless operator redirects.
+- Closed-gates list affirmed: 02A, 04, 04A, 07C, 07D, 07F, 08B.
+- Receipt `next_action: prompt-10-fidelity-and-quality-pre-spend`. No operator action required to begin §10.
+
+**Conformance note:** Marcus surfaced two coordination.db / hot-start-text drifts at session-open, deferred per operator direction:
+- `state/runtime/coordination.db` still lists `C1-M1-PRES-20260415` as active_run (stale since 2026-04-17 planning state — paused/abandoned run from 2026-04-16). Reconcile at trial wrapup via production-coordination `manage_run.py`, not by hand-edit.
+- `next-session-start-here.md` cited commit `f7cfb41` at session-open; actual HEAD was `39a014a` (the wrapup commit that shipped the hot-start itself — harmless self-reference). Cleared in this session's hot-start update.
+
+### 2026-04-21 — §10 Fidelity + Quality Pre-Spend executed
+
+- Marcus ran L1 deterministic pre-spend checks on the Gate-3-locked package. All pass:
+  - Segment count: 1 video + 13 static = 14 (matches Motion Gate).
+  - Slide-01 three-way motion-path match: segment-manifest ↔ motion_plan.yaml ↔ motion-gate-receipt.json → `motion/slide-01-motion.mp4`.
+  - `visual_file` present on non-static (slide-01 poster frame `gamma-export/…_slide_01.png`).
+  - `authorized-storyboard.json`: 14/14 slides have `file_path`; 0 open findings; 0 Vera/Quinn scores under threshold.
+  - Gate-3 lock integrity: sha256-pinned artifacts unchanged since 2026-04-21T01:03:57Z.
+- L2 evidence carried forward (no re-run required — artifacts unchanged):
+  - §07F Motion Gate APPROVED receipt stands.
+  - §08 Irene Pass 2 validator STATUS: pass stands.
+  - §08B Storyboard B HIL APPROVED stands.
+- Quinn-R pre-composition L2 advisory: deferred to on-demand agent pass (not a hard-gate requirement for §10).
+- Cost posture: ~45/125 credits committed so far; ~50–60 projected to finish — within pro-tier production envelope.
+- Receipt authored: `gate10-fidelity-quality-receipt.json` (status: pass, gate_decision: GO).
+- Closed-gates list extended to include §10. `next_action: prompt-11-voice-selection-hil`.
+
+### 2026-04-21 — §11 ElevenLabs Voice Selection HIL approved
+
+- Marcus ran `elevenlabs_operations.py voice-preview` in `continuity_preview` mode, carrying forward prior voice `o0t0Wz5oSDuuCV6p7rba` (Marc B. Laurent) from `apc-c1m1-tejal-20260409-motion/voice-selection.json`.
+- Operator reviewed the first slate (Marc Laurent, Olusola, Natasha) and asked for a refresh keeping Marc but substituting the two alternatives.
+- Second slate produced via shim that reuses `_rank_voice_candidates` with excludes `{Marc, Olusola, Natasha}` on the alternatives pick: **Christina** (`BuaKXS4Sv1Mccaw3flfU`, energetic commercial American female, score 78) and **River** (`SAz9YHcvj6GT2YYXdXww`, relaxed/neutral/informative, score 77).
+- **Operator selected Rank 2 — Christina** (voice_id `BuaKXS4Sv1Mccaw3flfU`). Override reason recorded: deliberate departure from continuity to evaluate a female voice register for trial run B.
+- **Audio buffer bumped from 1.5s → 2.0s** per operator.
+- Hashes in `voice-selection.json` match §09 lock (`manifest 1ecbfcba…081c` / `script 5e7a7205…e360`) — no drift since Gate 3 lock.
+- Receipts written:
+  - `voice-preview-options.json` (3 candidates, catalog_voice_count=45)
+  - `voice-selection-review.md`
+  - `voice-selection.json` (approved_at_utc 2026-04-21T02:35:53Z)
+- Next: §11B ElevenLabs Input Package HIL — operator explicit GO before Prompt 12 synthesis spend.
+
+**Conformance observation (operator-flagged follow-on):** `voice-preview` CLI does not expose an `--exclude-voice-ids` flag. Re-slating a continuity preview with the anchor kept but specific alternatives excluded required an ad-hoc shim that imports `_rank_voice_candidates` directly. File as a dev-agent follow-on: add `--exclude-voice-ids` pass-through to the `voice-preview` subcommand so Marcus can re-slate via the canonical CLI path. Priority: MEDIUM.
+
+### 2026-04-21 — §11B Input Package HIL — voice-direction dials-only amp-up
+
+- Operator asked to "bump emotional variability and pace variability" and preferred erring "over the top" on the first synthesis to exercise the ceiling of the available controls.
+- Extended Q&A established the parameter landscape honestly:
+  - Real ElevenLabs API parameters (verified in `scripts/api_clients/elevenlabs_client.py::_build_voice_settings` and `text_to_speech_with_timestamps_file`): `stability`, `similarity_boost`, `style`, `speed`, `use_speaker_boost`.
+  - Marcus-layer wrappers (verified in `skills/elevenlabs-audio/scripts/elevenlabs_operations.py::_resolve_voice_direction`): `emotional_variability` maps to API `stability` via `stability = 1.0 - emotional_variability`; `pace_variability` is a client-side per-segment speed-nudge bound applied in `generate_manifest_narration` based on each segment's duration vs cluster average.
+  - Per-segment variation scope: only `speed` actually varies per API call. `stability` / `similarity_boost` / `style` / `use_speaker_boost` are identical across all 14 segments. Emotional differentiation between segments comes from text content + `previous_request_ids` continuity stitching, not per-segment parameter values.
+  - Model ceiling: `eleven_multilingual_v2` does not support audio tags (`[laughs]`, `[whispers]`, `[shouts]`). The locked script carries 0 exclamations / 0 questions / 1 ellipsis — factual/instructional register.
+- Governance clarified: pass2-envelope.json values are pipeline placeholders (Gate-3 locked; must_not_modify). §11/§11B is where operator configures voice direction for the first time. Overrides are recorded in `voice-selection.json` (not locked) via a new `voice_direction_overrides` block.
+- **Operator-approved effective values (recorded to `voice-selection.json`):**
+  - `stability=0.25` (envelope default 0.5) — lower = wider expressive swing
+  - `similarity_boost=0.75` (unchanged) — voice-identity fidelity
+  - `style=0.25` (envelope default 0.0) — exaggerates Christina's "energetic commercial" character
+  - `speed=1.0` (unchanged request-level; per-segment nudge up to ±0.15)
+  - `use_speaker_boost=false` (unchanged)
+  - `emotional_variability=0.75` (envelope default 0.5) — Marcus wrapper; collapses to API `stability=0.25`
+  - `pace_variability=0.15` (envelope default 0.05) — widens per-segment cadence contrast
+  - `applied_uniformly_across_segments=true`; `per_segment_differentiation_note` records that only `speed` varies per segment.
+- Runner integration note recorded: `elevenlabs_operations.py` manifest CLI does not yet read `voice_direction_overrides` from `voice-selection.json`. Marcus will invoke `generate_manifest_narration()` via shim with `parameter_overrides={...}` from the override block.
+
+**Follow-on filed: "Theatrical-direction synthesis (Tier 1 + Tier 2)"** in `deferred-inventory.md §Named-But-Not-Filed Follow-Ons`. Tier 1 = per-segment voice_settings (extend segment-manifest.yaml + pass2-envelope.json to carry per-segment stability/style/similarity_boost hints; Irene authors them alongside narration; runner passes per-segment voice_settings to v2 model; ~70% of theatrical value at ~20% complexity, ~3-5pt). Tier 2 = model swap to `eleven_v3` / `v3-alpha` + Irene-authored inline audio tags (`[laughs] [whispers] [shouts] [sighs] [pause]`) at per-segment granularity (~5-8pt). Parent trigger: this trial's synthesis output is evaluated; operator decides whether dials-only ceiling is sufficient or escalation is warranted.
+
+**Follow-on filed: CLI canonicalization** (captured in `voice-selection.json::runner_integration_note`) — extend `elevenlabs_operations.py manifest` subcommand to read `voice_direction_overrides` from `voice-selection.json` so the shim is retired. Priority: MEDIUM.
+
+### 2026-04-21 — §11B Operator GO + §12 ElevenLabs synthesis
+
+- Operator GO received on the dials-only amp-up package (2026-04-21 via "GO!").
+- Marcus created `assembly-bundle/` under the bundle root and copied the six locked artifacts: `narration-script.md`, `segment-manifest.yaml`, `pass2-envelope.json`, `motion_plan.yaml`, `voice-selection.json`, `gate3-lock-receipt.json`. SHA-256 of the four Gate-3-locked artifacts re-verified inside assembly-bundle → **no drift** from §09 lock.
+- Synthesis shim authored at `scripts/marcus_shims/run_prompt12_narration.py` (invokes `generate_manifest_narration()` with `parameter_overrides` read from `voice-selection.json::voice_direction_overrides`). Shim is trial-only — retired once CLI-canonicalization follow-on lands.
+- **§12 synthesis executed 2026-04-21 03:23:29Z → 03:24:39Z (≈70s wall time).**
+  - API: `text-to-speech/{voice_id}/with-timestamps`, model `eleven_multilingual_v2`, 14 sequential calls with `previous_request_ids` continuity stitching.
+  - Per-segment `voice_settings` applied: `stability=0.25, similarity_boost=0.75, style=0.25, use_speaker_boost=false` identical on every call; `speed` nudged per-segment from base 1.0 by pace-variability band ±0.15 relative to cluster-average duration.
+  - Outputs: 14 MP3s (`assembly-bundle/audio/`) + 14 VTTs (`assembly-bundle/captions/`) + 2.0s head/tail silence pad applied via ffmpeg on each MP3; VTT cues offset by the 2.0s lead-in.
+  - **Total narration duration: 424.74s (7.08 min).** Target envelope 7.00 min → PASS (fit within tolerance; first-segment margin absorbed by the ±0.15 pace-variability band).
+  - Duration distribution validates expressive spread: shortest card-05 10.50s → longest card-07 57.68s (5.5× range across segments with identical voice_settings — contrast driven by text content + continuity stitching, as expected).
+- Receipt: `prompt12-synthesis-receipt.json` written at bundle root. `downstream_gate: prompt-13-assembly`.
+- Cost posture: this run committed the projected ~15-25 synthesis credits; running budget now ~60-70/125. Motion + compositor spend still ahead.
+- First-synthesis audio evaluation deferred to operator (subjective quality check on a sample segment before Prompt 13 assembly). Output of this evaluation informs whether the dials-only-amp-up ceiling is sufficient or whether the theatrical-direction escalation (Tier 1 / Tier 2 in deferred-inventory.md) should be prioritized.
+
+### 2026-04-21 — B-Run §13 Quinn-R Pre-Composition QA — PASS_WITH_ADVISORIES → operator GO
+
+- Quinn-R shim authored at `scripts/marcus_shims/run_prompt13_quinnr_precomposition.py` (5 check categories: WPM band [130, 175], VTT monotonicity, segment coverage, motion vs narration coherence ±0.50s, asset existence).
+- **First-run false positives debugged:** initial run flagged card-01 visual_file as missing + motion clip as fail. Root cause: shim resolved relative paths against CWD instead of bundle root. Fix: added `_resolve(path_str, bundle, fallback)` helper; routed all path lookups through it.
+- **ffprobe absent from imageio_ffmpeg distribution.** Switched to `ffmpeg -i <clip>` and parsed `Duration:` regex from stderr. No ffprobe needed.
+- **card-01 motion_duration_seconds was null** in segment-manifest (Irene Pass 2 didn't populate). Shim ffmpeg-probed the clip on the fly: **5.04s**. Computed delta vs 44.31s narration → 39.27s shortfall.
+- Final §13 status: **PASS_WITH_ADVISORIES** (0 blocking, 4 advisories: 1 motion-fit on card-01 + slow-WPM on cards 03/06/09).
+- For card-01 motion-fit, shim emitted `edit_guidance_options: [A=cross-fade to poster, B=loop ~9×, C=freeze final frame]` with `recommended_option: A`.
+- Receipt: `quinnr-precomposition-receipt.json` written at bundle root.
+- **Operator HIL acceptance ("Yes. on 1 and 2"):** Option A approved for card-01 + slow-WPM accepted as script-implied for cards 03/06/09. Both decisions written into receipt's `operator_acceptance` block; gate_decision: GO; downstream_gate: prompt-14-compositor-assembly.
+
+### 2026-04-21 — B-Run §14 Compositor Assembly — closed
+
+- **Three §14 prep blockers remediated** (all trace to Irene Pass 2 emission gaps — extends existing HIGH-priority Irene authoring template follow-on with concrete failure modes from this run):
+  1. **Duplicate `motion_asset` + `motion_asset_path`** keys on card-01 caused `sync-visuals` to refuse manifest edit ("path appears 2 times, expected 1"). Fix: removed redundant `motion_asset` key. Compositor only uses `motion_asset_path` — confirmed via repo-wide grep.
+  2. **Cards 02-14 missing `visual_file` field entirely** — Irene Pass 2 only populated card-01. Compositor's `validate_manifest` rejects any segment without `visual_file`. Fix: inline patch script read `authorized-storyboard.json` (Gate-2 SSOT) and injected `visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_NN.png` into 13 segments.
+  3. **`motion_duration_seconds: null` on card-01** (already noted at §13). Fix: injected the Quinn-R-probed 5.04s into the manifest before `sync-visuals` ran.
+- `sync-visuals` succeeded with `--repo-root` pointed at the bundle: 14 visuals copied to `assembly-bundle/visuals/`, 1 motion clip to `assembly-bundle/motion/`, manifest paths rewritten to bundle-relative.
+- `compositor_operations.py guide` generated `DESCRIPT-ASSEMBLY-GUIDE.md` (timeline table + per-segment instructions + asset inventory). Total runtime in guide: `00:07:04.739`.
+- **Guide post-processed** to inject the operator-approved Option A explicitly: added "Operator Decisions (per §13 Quinn-R Pre-Composition Receipt)" block after Summary, replaced card-01 V-track instruction line to call out clip + 1.0s cross-fade + poster hold (and to forbid loop / freeze).
+- Stray asset noted (non-blocking): `assembly-bundle/audio/apc-c1m1-tejal-20260419b-motion-card-04.zip` is leftover from an earlier alignment-zip experiment, not manifest-referenced.
+- Receipt: `prompt14-compositor-receipt.json` written at bundle root with all 3 blocker remediations + their durability classification (this-run-only patches; durable fix lives with Irene Pass 2 authoring template).
+
+### 2026-04-21 — B-Run §14.5 Desmond Run-Scoped Operator Brief — closed
+
+- Marcus delegated to Desmond (`skills/bmad-agent-desmond/`). Desmond sanctum loaded from `_bmad/memory/bmad-agent-desmond/`; sanctum `MEMORY.md` flags Descript version target as **Unknown** and doc cache as **never refreshed** — disclosed honestly in the brief's Automation Advisory Notes (per Desmond's "never lie / never fake continuity" creed).
+- Brief authored at `course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260419b-motion/DESMOND-OPERATOR-BRIEF.md`. Structure: track-family overview, Operator Decision A (card-01 cross-fade — full timestamp triplet), Operator Decision B (slow-WPM accepted), per-segment assembly loop, VTT alignment check (2.0s offset spot-check on card-01 + card-07), audio finishing (minimal — single-voice no-music run), preflight checklist, what-NOT-to-change boundary, **mandatory `## Automation Advisory`** section in the canonical REST/MCP/CLI/Manual format.
+- Two operator follow-ups recommended in the §14.5 receipt: (a) refresh Desmond Descript doc cache before next run, (b) decide whether to delete the stray card-04.zip.
+- Receipt: `prompt14_5-desmond-receipt.json` written at bundle root with `automation_advisory_section_present: true` compliance check + sanctum honesty disclosure note.
+
+### 2026-04-21 — B-Run §15 Operator Handoff (Descript Ready) — closed
+
+- §15 [M→O] handoff package presented per pack v4.2 §15 contract.
+- Completion condition check: bundle contains `DESCRIPT-ASSEMBLY-GUIDE.md` and `DESMOND-OPERATOR-BRIEF.md` (with `## Automation Advisory`); all four media folders (`audio/` 14, `captions/` 14, `visuals/` 14, `motion/` 1) ready. **Verdict: COMPLETE.**
+- Receipt: `prompt15-handoff-receipt.json` written at bundle root with media-status block, operator-decisions-propagated block (Option A card-01 + slow-WPM accepted), open-notes block (stray card-04.zip; Desmond doc cache refresh recommended; three Irene Pass 2 authoring failures patched this run).
+- Pack v4.2 trial-run path is now complete end-to-end (§01 → §15). Optional next: operator runs `docs/workflow/production-session-wrapup.md` to close the shift; the actual Descript assembly is operator-led and out of pack scope.
+
+### 2026-04-22 — High-value enhancements for next run (operator note)
+
+Captured for product / sprint planning; not a blocker on closing this trial record.
+
+1. **Reproducibility report.** Post-run report that lists parameters and other critical variable settings required to reproduce a given run’s results.
+2. **Ad hoc production mode.** Ability to run a production pass in an open, ad hoc mode where profile settings (experience profiles and related controls normally anchored to Dan-selected profiles) can be unlocked during the run, then optionally saved at end if the settings prove well-liked.
+3. **Segment-level audio control.** Segment-by-segment control over audio clip generation, including audio tags for expressiveness (where the selected model supports them).
+4. **Source content type — collateral.** Add a `collateral` catch-all source content type for blueprint-oriented use cases.
+5. **Dan — active role.** Treat Dan (Creative Director) as the ongoing keeper of creative-treatment profiles, not only a one-off directive author.
+6. **Research retrieval and injection.** Activate research retrieval and injection in the production path.
+7. **Pronunciation dictionary.** Prominently surface the pronunciation dictionary while prepping the audio generation run (before synthesis spend).

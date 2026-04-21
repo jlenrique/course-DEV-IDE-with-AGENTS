@@ -1,4 +1,9 @@
-"""Lesson Planner workflow runner seam for Step 4A insertion (Story 32-1)."""
+"""Lesson Planner workflow runner seam for Step 4A insertion (Story 32-1).
+
+Story 32-5 adds ``pre_collected_decisions`` to
+:func:`route_step_04_gate_to_step_05` so the production HIL intake callable
+can be wired from the operator's conversational ratification decisions.
+"""
 
 from __future__ import annotations
 
@@ -68,15 +73,53 @@ def insert_between(
 def route_step_04_gate_to_step_05(
     packet_plan: LessonPlan,
     *,
-    intake_callable: IntakeCallable,
+    intake_callable: IntakeCallable | None = None,
+    pre_collected_decisions: dict[str, tuple[str, str]] | None = None,
     facade: Facade | None = None,
     prior_declined_rationales: tuple[tuple[str, str], ...] = (),
     log: LessonPlanLog | None = None,
     tracy_bridge: Any | None = None,
 ) -> Step4AWorkflowResult:
-    """Run the 4A loop and return the baton contract for step 05."""
+    """Run the 4A loop and return the baton contract for step 05.
+
+    Exactly one of ``intake_callable`` or ``pre_collected_decisions`` must
+    be provided.  When ``pre_collected_decisions`` is given,
+    :func:`~marcus.orchestrator.hil_intake.build_hil_intake_callable`
+    constructs the callable from the operator's conversational decisions
+    (Step 04A production HIL path — Story 32-5).
+    """
     if len(packet_plan.plan_units) == 0:
         raise ValueError("step-04 handoff requires at least one plan unit before 4A routing")
+
+    # G6-P1: exactly one source — ambiguous when both provided
+    if intake_callable is not None and pre_collected_decisions is not None:
+        raise ValueError(
+            "route_step_04_gate_to_step_05 requires exactly one of intake_callable "
+            "or pre_collected_decisions, not both"
+        )
+
+    if pre_collected_decisions is not None:
+        from marcus.orchestrator.hil_intake import build_hil_intake_callable
+        # G6-P2: validate no extra / missing unit_ids in the decisions map
+        plan_unit_ids = {unit.unit_id for unit in packet_plan.plan_units}
+        decision_ids = set(pre_collected_decisions.keys())
+        extra = decision_ids - plan_unit_ids
+        missing = plan_unit_ids - decision_ids
+        if extra:
+            raise ValueError(
+                f"pre_collected_decisions contains unit_ids not in the packet plan: {sorted(extra)}"
+            )
+        if missing:
+            raise ValueError(
+                "pre_collected_decisions is missing unit_ids present in the packet plan: "
+                f"{sorted(missing)}"
+            )
+        intake_callable = build_hil_intake_callable(pre_collected_decisions)
+    elif intake_callable is None:
+        raise ValueError(
+            "route_step_04_gate_to_step_05 requires either intake_callable "
+            "or pre_collected_decisions"
+        )
 
     resolved_facade = facade or Facade()
     locked_plan = resolved_facade.run_4a(

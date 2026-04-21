@@ -60,7 +60,7 @@ Fast path:
 ### 1. Prompt 1: Preflight
 - Run:
   - `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight`
-  - `.\.venv\Scripts\python.exe -m scripts.utilities.emit-preflight-receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
+  - `.\.venv\Scripts\python.exe -m scripts.utilities.emit_preflight_receipt --with-preflight --motion-enabled --bundle-dir [BUNDLE_PATH] --output [BUNDLE_PATH]/preflight-results.json`
   - `.\.venv\Scripts\python.exe -m scripts.utilities.venv_health_check`
 - If `MOTION_ENABLED: true`, require motion-capable readiness path:
   - `.\.venv\Scripts\python.exe scripts/utilities/app_session_readiness.py --with-preflight --motion-enabled`

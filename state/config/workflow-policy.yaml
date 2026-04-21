@@ -1,0 +1,3 @@
+poll_min_open_minutes: 3
+poll_auto_close_minutes: 15
+session_receipt_max_age_minutes: 60

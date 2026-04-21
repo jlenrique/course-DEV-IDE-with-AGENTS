@@ -24,11 +24,11 @@ motion_budget:
   model_preference: pro
 ```
 
-Prior working bundles (20260409, 20260406-motion) use the lowercase nested form — the canonical schema. The pack-doc uppercase presentation is presumably intended as operator-facing readability (looks like env vars) but is not marked as display-only, so an operator setting up from the pack alone follows the doc verbatim and hits validator fail at emit-preflight-receipt.
+Prior working bundles (20260409, 20260406-motion) use the lowercase nested form — the canonical schema. The pack-doc uppercase presentation is presumably intended as operator-facing readability (looks like env vars) but is not marked as display-only, so an operator setting up from the pack alone follows the doc verbatim and hits validator fail at emit_preflight_receipt.
 
 ## Evidence
 
-- Trial run 2026-04-17 Prompt 1 execution — Marcus halted when `emit-preflight-receipt.py` failed with "Missing or empty required string field: run_id"
+- Trial run 2026-04-17 Prompt 1 execution — Marcus halted when `emit_preflight_receipt.py` failed with "Missing or empty required string field: run_id"
 - Prior runs succeeded because `run-constants.yaml` was copied from a prior bundle template rather than authored from the pack doc
 - Runbook: `_bmad-output/implementation-artifacts/trial-run-c1m1-tejal-20260417.md` — "Marcus Prompt 1 execution: HALT on validator fail" section
 
@@ -57,4 +57,4 @@ Filed as a nested recommendation in `texas-visual-source-gap-backlog.md` (the sa
 
 - Pack doc Run Constants section shows canonical lowercase nested YAML
 - Validator unchanged (still case-sensitive lowercase-only)
-- A fresh operator authoring `run-constants.yaml` from the pack alone → `emit-preflight-receipt.py` PASSES first try
+- A fresh operator authoring `run-constants.yaml` from the pack alone → `emit_preflight_receipt.py` PASSES first try

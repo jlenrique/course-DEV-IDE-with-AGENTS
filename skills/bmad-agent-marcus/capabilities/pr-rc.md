@@ -46,7 +46,7 @@ From invocation context:
 
 ## Gates / checkpoints
 
-- `emit-preflight-receipt.py` (external validator) accepts PR-RC-authored files on first invocation (AC-B.1). This is the gate whose failure halted the 2026-04-17 trial.
+- `emit_preflight_receipt.py` (external validator) accepts PR-RC-authored files on first invocation (AC-B.1). This is the gate whose failure halted the 2026-04-17 trial.
 - Schema-parity check against the receipt consumer at Prompt 2 (AC-B.4) — contract match, not behavior.
 
 ## Examples

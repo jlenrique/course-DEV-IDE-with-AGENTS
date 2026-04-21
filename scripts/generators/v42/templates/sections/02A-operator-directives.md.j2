@@ -5,9 +5,11 @@
 
 Poll timing policy (hard requirement):
 - Start a poll timer when Prompt 2A is issued.
-- Enforce a hard 3-minute reply hold from poll start before any submission can be accepted.
-- Auto-close the poll exactly 15 minutes after poll start if a complete submission is not received.
-- Submissions before the 3-minute mark are invalid and must be re-polled.
+- The poll must remain open for a minimum of {{ poll_min_open_minutes | default(3) }} minutes — Marcus
+  may not auto-close or auto-advance before this floor has elapsed.
+- Operator input received before the floor elapses is valid and accepted immediately.
+- Auto-close the poll {{ poll_auto_close_minutes | default(15) }} minutes after poll start
+  if a complete submission has not been received.
 - If the poll auto-closes, keep ingestion blocked and require a new Prompt 2A poll.
 
 Marcus, record the operator's source-processing directives for RUN_ID [RUN_ID].
@@ -46,6 +48,10 @@ Artifact verification (deterministic — expected file count: **3**):
 - Expected files: `run-constants.yaml`, `preflight-results.json`, `operator-directives.md`
 - If count < 3, halt and remediate before proceeding.
 
-Stop and wait for operator confirmation.
+Gate rule:
+- Operator directives (or an explicit "no special directives" acknowledgment) must be recorded before ingestion begins.
+- Any poll auto-close or missing directive category blocks progression until re-polled. Early operator submission within the minimum open window is valid.
+
+Wait for explicit GO.
 
 ---

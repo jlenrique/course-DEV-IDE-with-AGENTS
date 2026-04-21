@@ -35,9 +35,11 @@ narration_density:
 slide_echo:
   default: paraphrase
   per_fidelity_override:
-    creative: inspired
-    literal-text: paraphrase
-    literal-visual: paraphrase
+    creative: paraphrase       # operator trial run B override: was inspired; erring literal this run
+    literal-text: verbatim     # operator trial run B override: was paraphrase
+    literal-visual: verbatim   # operator trial run B override: was paraphrase
+  per_visual_complexity_override:
+    very_high: verbatim        # operator trial run B override: slides with very_high complexity use verbatim regardless of fidelity
   allow_verbatim: true         # permit per-segment override to verbatim
 
 # ---------------------------------------------------------------------------
@@ -278,7 +280,7 @@ runtime_variability:
 #   warm     -> supportive/encouraging emotional color
 #   vivid    -> stronger emotional coloration when appropriate
 narration_profile_controls:
-  narrator_source_authority: balanced
+  narrator_source_authority: source-grounded  # updated: visual-led profile (C1-M1-PRES-20260419B)
   slide_content_density: adaptive
   elaboration_budget: medium
   connective_weight: balanced

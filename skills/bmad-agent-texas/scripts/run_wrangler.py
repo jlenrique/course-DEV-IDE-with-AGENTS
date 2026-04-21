@@ -115,6 +115,7 @@ _STATUS_TO_EXIT = {
 _EXTRACTOR_LABELS: dict[str, str] = {
     "local_file": "local_text_read",
     "pdf": "pypdf",
+    "md": "markdown_unescape",
     "url": "requests+html_to_text",
     "notion": "notion_client",
     "playwright_html": "playwright_file",
@@ -122,11 +123,12 @@ _EXTRACTOR_LABELS: dict[str, str] = {
 
 # extractor_used string per SourceRecord.kind — preferred lookup because it
 # distinguishes extractors within a single provider (e.g., local_file splits
-# into local_text_read / local_pdf / local_docx based on file suffix).
+# into local_text_read / local_pdf / local_docx / local_md based on file suffix).
 _EXTRACTOR_LABELS_BY_KIND: dict[str, str] = {
     "local_file": "local_text_read",
     "local_pdf": "pypdf",
     "local_docx": "python-docx",
+    "local_md": "markdown_unescape",
     "notion_page": "notion_client",
     "playwright_saved_html": "playwright_file",
 }
@@ -135,6 +137,8 @@ _EXTRACTOR_LABELS_BY_KIND: dict[str, str] = {
 _PROVIDER_SOURCE_TYPE: dict[str, str] = {
     "local_file": "default",
     "pdf": "pdf",
+    "docx": "docx",
+    "md": "default",
     "url": "html",
     "notion": "notion",
     "playwright_html": "html",
@@ -204,7 +208,7 @@ class DirectiveError(Exception):
 
 
 _SUPPORTED_PROVIDERS: frozenset[str] = frozenset(
-    {"local_file", "pdf", "url", "notion", "playwright_html"}
+    {"local_file", "pdf", "docx", "md", "url", "notion", "playwright_html"}
 )
 
 
@@ -554,7 +558,7 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
     provider = src["provider"]
     locator = src["locator"]
 
-    if provider in ("local_file", "pdf"):
+    if provider in ("local_file", "pdf", "docx", "md"):
         path = Path(locator)
         if not path.is_file():
             raise ValueError(f"File not found: {locator}")
@@ -568,10 +572,24 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
         # error_kind="docx_extraction_failed" with known_losses=["docx_open_failed"]
         # so the text-read fall-through below is NOT re-entered after failure
         # (which would re-introduce the binary-garbage defect 27-1 exists to fix).
-        if suffix == ".docx":
+        if provider == "docx" and suffix != ".docx":
+            raise ValueError(
+                f"provider 'docx' requires a .docx locator, got: {locator}"
+            )
+        if suffix == ".docx" or provider == "docx":
             title, body, rec = _source_ops.wrangle_local_docx(path)
             return title, body, rec
-        # Local .md / .txt / other text — read directly.
+        # Markdown (Notion-export-safe): route through wrangle_local_md so
+        # Notion's backslash-escaped export format (\#, \*\*, &#x20;, etc.)
+        # is normalized before the extractor + validator see it. Handles
+        # both the explicit `provider: md` directive and the `local_file`
+        # fallback for .md / .markdown files — catches the defect where a
+        # Notion export fell through to raw read_text_file and produced
+        # garbage-encoded extracted.md (2026-04-19 trial diagnosis).
+        if suffix in (".md", ".markdown") or provider == "md":
+            title, body, rec = _source_ops.wrangle_local_md(path)
+            return title, body, rec
+        # Local .txt / other text — read directly.
         body = _source_ops.read_text_file(path)
         rec = _source_ops.SourceRecord(
             kind="local_file",

@@ -14,6 +14,7 @@ block_mode_trigger_paths:
 - docs/workflow/production-prompt-pack-v4.2-*.md
 - state/config/learning-event-schema.yaml
 - scripts/utilities/learning_event_capture.py
+- skills/bmad-agent-marcus/scripts/validate-literal-visual-pre-dispatch.py
 steps:
 - id: '01'
   label: Activation + Preflight
@@ -27,8 +28,8 @@ steps:
   rationale: Section 01 maintains manifest-driven pipeline contract.
 - id: '02'
   label: Source Authority Map
-  gate: false
-  gate_code: null
+  gate: true
+  gate_code: G0A
   sub_phase_of: null
   insertion_after: '01'
   hud_tracked: true
@@ -37,8 +38,8 @@ steps:
   rationale: Section 02 maintains manifest-driven pipeline contract.
 - id: 02A
   label: Operator Directives
-  gate: false
-  gate_code: null
+  gate: true
+  gate_code: G0B
   sub_phase_of: '02'
   insertion_after: '02'
   hud_tracked: true

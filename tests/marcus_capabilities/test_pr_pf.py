@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 from unittest.mock import patch
 
 from scripts.marcus_capabilities import pr_pf
@@ -42,6 +43,7 @@ def test_summarize_reports_plan_without_touching_disk() -> None:
     assert "app_session_readiness" in plan_text
     assert "--with-preflight" in plan_text
     assert "some/bundle" in plan_text
+    assert "session-preflight-receipt.json" in plan_text
 
 
 def test_execute_passes_on_zero_exit() -> None:
@@ -120,3 +122,34 @@ def test_build_cmd_respects_args() -> None:
     assert "--with-preflight" not in cmd
     assert "--json-only" in cmd
     assert cmd[-2:] == ["--bundle-dir", "B"]
+
+
+def test_execute_writes_default_session_receipt_when_bundle_exists(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    fake_stdout = json.dumps(
+        {
+            "overall_status": "pass",
+            "checks": [],
+            "root": str(tmp_path),
+            "timestamp": "now",
+        }
+    )
+    invocation = Invocation(
+        capability_code="PR-PF",
+        mode="execute",
+        args={},
+        context=InvocationContext(
+            run_id="PF-TEST-2",
+            bundle_path=str(bundle_dir),
+            invoked_by="marcus",
+        ),
+    )
+
+    with patch.object(pr_pf, "_run_subprocess", return_value=(0, fake_stdout, "")):
+        envelope = pr_pf.execute(invocation)
+
+    receipt_path = bundle_dir / "session-preflight-receipt.json"
+    assert envelope.status == "ok"
+    assert envelope.result["session_receipt_path"] == str(receipt_path)
+    assert json.loads(receipt_path.read_text(encoding="utf-8"))["overall_status"] == "pass"

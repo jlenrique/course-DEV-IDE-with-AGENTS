@@ -332,6 +332,54 @@ def test_unsupported_provider_rejected_at_directive_load(
     assert "provider" in err.lower()
 
 
+def test_docx_provider_is_accepted_at_directive_load(tmp_path: Path) -> None:
+    """`docx` provider should route through local DOCX extraction, not reject."""
+    doc = pytest.importorskip("docx")
+    bundle = tmp_path / "bundle"
+    docx_fixture = tmp_path / "source.docx"
+    document = doc.Document()
+    document.add_heading("Docx Source", level=1)
+    document.add_paragraph("This is a synthetic DOCX source for dispatch acceptance.")
+    document.save(docx_fixture)
+    directive = _write_directive(
+        tmp_path,
+        {
+            "run_id": "TEST-DOCX-001",
+            "sources": [
+                {
+                    "ref_id": "src-001",
+                    "provider": "docx",
+                    "locator": str(docx_fixture),
+                    "role": "primary",
+                    "description": "docx dispatch acceptance",
+                    "expected_min_words": 1,
+                }
+            ],
+        },
+    )
+
+    exit_code = _runner.main(["--directive", str(directive), "--bundle-dir", str(bundle)])
+    assert exit_code in {_runner.EXIT_COMPLETE, _runner.EXIT_COMPLETE_WITH_WARNINGS}
+
+    report = yaml.safe_load((bundle / "extraction-report.yaml").read_text(encoding="utf-8"))
+    assert report["sources"][0]["extractor_used"] == "python-docx"
+
+
+def test_docx_provider_rejects_non_docx_locator(tmp_path: Path) -> None:
+    txt_path = tmp_path / "source.txt"
+    txt_path.write_text("plain text", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"requires a \.docx locator"):
+        _runner._fetch_source(
+            {
+                "provider": "docx",
+                "locator": str(txt_path),
+                "role": "primary",
+                "ref_id": "src-001",
+            }
+        )
+
+
 # ---------------------------------------------------------------------------
 # AC-7 — Malformed directive exits 30
 # ---------------------------------------------------------------------------

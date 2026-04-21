@@ -20,12 +20,8 @@ Covers:
 
 from __future__ import annotations
 
-import json
 from importlib import util
 from pathlib import Path
-
-import pytest
-import yaml
 
 ROOT = Path(__file__).resolve().parents[4]
 SCRIPT_PATH = ROOT / "skills" / "bmad-agent-marcus" / "scripts" / "validate-cluster-plan.py"
@@ -183,7 +179,9 @@ def test_valid_interstitial_types_pass() -> None:
         m = _valid_manifest()
         m["segments"][1]["interstitial_type"] = itype
         result = validate_cluster_plan(m)
-        assert result["passed"] is True, f"Expected pass for type={itype}, got errors: {result['errors']}"
+        assert result["passed"] is True, (
+            f"Expected pass for type={itype}, got errors: {result['errors']}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -314,12 +312,16 @@ def test_cluster_interstitial_count_four_fails() -> None:
 
 def test_cluster_count_exceeds_sparse_fails() -> None:
     # sparse = 1-2 clusters; give it 3
+    resolve_kw = {"cluster_position": "resolve", "develop_type": None}
     m = {
         "cluster_density": "sparse",
         "segments": [
-            _head("s1", "c1"), _interstitial("s2", "c1", "s1", cluster_position="resolve", develop_type=None),
-            _head("s3", "c2"), _interstitial("s4", "c2", "s3", cluster_position="resolve", develop_type=None),
-            _head("s5", "c3"), _interstitial("s6", "c3", "s5", cluster_position="resolve", develop_type=None),
+            _head("s1", "c1"),
+            _interstitial("s2", "c1", "s1", **resolve_kw),
+            _head("s3", "c2"),
+            _interstitial("s4", "c2", "s3", **resolve_kw),
+            _head("s5", "c3"),
+            _interstitial("s6", "c3", "s5", **resolve_kw),
         ],
     }
     result = validate_cluster_plan(m)
@@ -427,3 +429,94 @@ def test_actual_count_mismatch_fails() -> None:
     result = validate_cluster_plan(m)
     assert result["passed"] is False
     assert any("G1.5-09" in e for e in result["errors"])
+
+
+# ---------------------------------------------------------------------------
+# Structural mode: Pass 1 cluster-plan.yaml compatibility
+# ---------------------------------------------------------------------------
+
+def test_structural_mode_passes_with_null_narration_fields() -> None:
+    """Minimal cluster-plan.yaml with null narration fields passes in structural mode."""
+    m = {
+        "cluster_density": "sparse",
+        "segments": [
+            {
+                "slide_id": "s1",
+                "cluster_id": "c1",
+                "cluster_role": "head",
+                "cluster_position": "establish",
+                "parent_slide_id": None,
+                "interstitial_type": None,
+                "isolation_target": None,      # null — narration concern
+                "narration_burden": None,       # null — narration concern
+                "narrative_arc": "From confusion to clarity",
+                "master_behavioral_intent": None,  # null — narration concern
+                "develop_type": None,           # null — narration concern
+                "cluster_interstitial_count": 1,
+                "double_dispatch_eligible": True,
+            },
+            {
+                "slide_id": "s2",
+                "cluster_id": "c1",
+                "cluster_role": "interstitial",
+                "cluster_position": "resolve",
+                "parent_slide_id": "s1",
+                "interstitial_type": "reveal",
+                "isolation_target": None,      # null — narration concern
+                "narration_burden": None,       # null — narration concern
+                "narrative_arc": None,
+                "master_behavioral_intent": None,
+                "develop_type": None,
+                "cluster_interstitial_count": None,
+                "double_dispatch_eligible": False,
+            },
+        ],
+    }
+    result = validate_cluster_plan(m, mode="structural")
+    assert result["passed"] is True
+    assert result["errors"] == []
+
+
+def test_full_mode_fails_on_null_narration_fields() -> None:
+    """Same minimal dict fails in full mode due to missing narration fields."""
+    m = {
+        "cluster_density": "sparse",
+        "segments": [
+            {
+                "slide_id": "s1",
+                "cluster_id": "c1",
+                "cluster_role": "head",
+                "cluster_position": "establish",
+                "parent_slide_id": None,
+                "interstitial_type": None,
+                "isolation_target": None,
+                "narration_burden": None,
+                "narrative_arc": "From confusion to clarity",
+                "master_behavioral_intent": None,  # fails G1.5-14 in full mode
+                "develop_type": None,
+                "cluster_interstitial_count": 1,
+                "double_dispatch_eligible": True,
+            },
+            {
+                "slide_id": "s2",
+                "cluster_id": "c1",
+                "cluster_role": "interstitial",
+                "cluster_position": "resolve",
+                "parent_slide_id": "s1",
+                "interstitial_type": "reveal",
+                "isolation_target": None,   # fails G1.5-03 in full mode
+                "narration_burden": None,   # fails G1.5-04 in full mode
+                "narrative_arc": None,
+                "master_behavioral_intent": None,
+                "develop_type": None,
+                "cluster_interstitial_count": None,
+                "double_dispatch_eligible": False,
+            },
+        ],
+    }
+    result = validate_cluster_plan(m, mode="full")
+    assert result["passed"] is False
+    error_codes = " ".join(result["errors"])
+    assert "G1.5-03" in error_codes  # isolation_target
+    assert "G1.5-04" in error_codes  # narration_burden
+    assert "G1.5-14" in error_codes  # master_behavioral_intent

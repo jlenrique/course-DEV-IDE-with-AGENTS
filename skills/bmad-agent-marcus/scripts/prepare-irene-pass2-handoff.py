@@ -18,7 +18,7 @@ import json
 import re
 import shutil
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -34,17 +34,17 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from cluster_template_planner import (
+from cluster_template_planner import (  # noqa: E402
     build_cluster_template_plan,
     load_default_template_library,
     load_operator_template_overrides,
 )
-from scripts.utilities.run_constants import (
+
+from scripts.utilities.run_constants import (  # noqa: E402
     RunConstantsError,
     parse_run_constants,
     resolve_experience_profile,
 )
-
 
 EXPECTED_PASS2_OUTPUTS = (
     "narration-script.md",
@@ -80,7 +80,7 @@ RUNTIME_ROW_RE = re.compile(
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _timestamp_slug(now: datetime) -> str:
@@ -355,11 +355,12 @@ def _hydrate_cluster_rows_from_template_plan(
 def _validate_cluster_template_sequence_alignment(
     gary_slide_output: list[dict[str, Any]],
     cluster_template_plan: dict[str, Any],
-) -> list[str]:
+) -> tuple[list[str], list[str]]:
     errors: list[str] = []
+    warnings: list[str] = []
     clusters = cluster_template_plan.get("clusters")
     if not isinstance(clusters, list):
-        return errors
+        return errors, warnings
 
     rows_by_cluster: dict[str, list[dict[str, Any]]] = {}
     for row in gary_slide_output:
@@ -403,9 +404,9 @@ def _validate_cluster_template_sequence_alignment(
         ]
         expected_count = cluster.get("expected_interstitial_count")
         if isinstance(expected_count, int) and len(interstitial_rows) != expected_count:
-            errors.append(
-                f"{cluster_id}: interstitial count mismatch actual={len(interstitial_rows)} "
-                f"expected={expected_count}"
+            warnings.append(
+                f"{cluster_id}: template expects {expected_count} interstitials but storyboard has "
+                f"{len(interstitial_rows)}; template is advisory — storyboard is authoritative"
             )
 
         expected_sequence = (
@@ -414,9 +415,9 @@ def _validate_cluster_template_sequence_alignment(
             else []
         )
         if expected_sequence and len(expected_sequence) != len(interstitial_rows):
-            errors.append(
-                f"{cluster_id}: expected_interstitial_sequence length={len(expected_sequence)} "
-                f"does not match actual interstitial rows={len(interstitial_rows)}"
+            warnings.append(
+                f"{cluster_id}: template sequence has {len(expected_sequence)} steps but storyboard has "
+                f"{len(interstitial_rows)} interstitial rows; template is advisory"
             )
 
         for index, row in enumerate(interstitial_rows):
@@ -448,7 +449,7 @@ def _validate_cluster_template_sequence_alignment(
                     f"{cluster_id}:{row.get('slide_id')}: develop_type={current_develop or '<missing>'} "
                     f"mismatch expected={expected_develop}"
                 )
-    return errors
+    return errors, warnings
 
 
 def _resolve_slide_asset_path(file_path: str, *, bundle_dir: Path) -> Path:
@@ -874,12 +875,12 @@ def prepare_irene_pass2_handoff(
                     cluster_template_plan,
                 )
             )
-            errors.extend(
-                _validate_cluster_template_sequence_alignment(
-                    gary_slide_output,
-                    cluster_template_plan,
-                )
+            alignment_errors, alignment_warnings = _validate_cluster_template_sequence_alignment(
+                gary_slide_output,
+                cluster_template_plan,
             )
+            errors.extend(alignment_errors)
+            warnings.extend(alignment_warnings)
             envelope["cluster_template_plan"] = cluster_template_plan
     except Exception as exc:
         warnings.append(

@@ -57,6 +57,12 @@ When requests are ambiguous, ask smart clarifying questions — never guess. Exa
 - "That could be a full lesson build or just slides for an existing lesson. Which are you thinking?"
 - "Do you want this as a standalone assessment, or paired with the lecture we built last week?"
 
+## HIL Display Standards
+
+**Numbered rows:** Every table or list requiring operator selection or reference must include a unique sequential row number as the first column (`1, 2, 3...`). Apply this to source file lists, plan unit tables, variant selection displays, and any other operator-facing enumeration so the operator can respond by row number without ambiguity.
+
+**Paginated output:** For displays exceeding roughly 15 rows or 30 lines, present the first page and offer `show next` on demand rather than dumping the full surface at once. Apply this to file listings, storyboard summaries, gate receipts with many items, and other conversational review surfaces. Machine-readable artifacts written to disk are exempt.
+
 ## Content Type Vocabulary
 
 Marcus recognizes these content types, each mapping to different specialist agents and workflows:

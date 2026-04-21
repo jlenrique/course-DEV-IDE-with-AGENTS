@@ -1,6 +1,6 @@
 """Run HUD — Heads-Up Display for production runs and dev cycle tracking.
 
-Generates a self-refreshing HTML dashboard that shows:
+Generates an HTML dashboard that shows:
 - Production run pipeline position and gate results
 - Dev cycle progress (epics/stories from sprint-status.yaml)
 - Critical constants, artifact status, and risk flags
@@ -10,14 +10,20 @@ Usage:
     .venv/Scripts/python -m scripts.utilities.run_hud --bundle-dir path/to/bundle
     .venv/Scripts/python -m scripts.utilities.run_hud --open
 
-The output HTML auto-refreshes every 10 seconds with scroll-position
-and expand/collapse state preserved via sessionStorage.
+The HUD is a static snapshot. The output HTML includes a JS timer that
+``location.reload()``s every 10 seconds, but that reload just re-serves
+the same file — data only refreshes when this script runs again. The
+snapshot banner at the top of the page states this explicitly so the
+operator is never confused about freshness. The banner rendering also
+retains a dormant ``watching=True`` path for a future re-enablement of
+live-regeneration mode.
 """
 
 from __future__ import annotations
 
 import argparse
 import html as html_mod
+import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -36,6 +42,12 @@ ROOT = project_root()
 HUD_OUTPUT = ROOT / "reports" / "run-hud.html"
 BUNDLES_DIR = ROOT / "course-content" / "staging" / "tracked" / "source-bundles"
 SPRINT_STATUS = ROOT / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
+COORDINATION_DB = ROOT / "state" / "runtime" / "coordination.db"
+
+# Default poll interval retained for the dormant ``watching=True`` banner
+# path; the watch loop that consumed it was reverted (commit 6268dc5
+# follow-up) so this constant is currently inert outside render_html.
+DEFAULT_WATCH_INTERVAL_SECONDS = 5.0
 
 # ---------------------------------------------------------------------------
 # Pipeline step definitions
@@ -60,6 +72,99 @@ def _find_latest_bundle(bundles_dir: Path) -> Path | None:
         reverse=True,
     )
     return bundles[0] if bundles else None
+
+
+# ---------------------------------------------------------------------------
+# Active-run bundle resolution
+#
+# The previous auto-detection strategy (mtime on the bundle directory) can
+# pick up the wrong bundle at session start if a prior run's artifacts were
+# modified more recently than the newly-created active run. The authoritative
+# record of the active run is the coordination database's production_runs
+# table, not mode_state.json (which only tracks default/ad-hoc mode state).
+# ---------------------------------------------------------------------------
+
+
+def _query_active_run_id(db_path: Path | None = None) -> str | None:
+    """Return the run_id of the currently active/planning production run.
+
+    Reads ``state/runtime/coordination.db`` in read-only mode. Selects the
+    most recently updated row whose status is ``planning`` or ``active``.
+    Returns ``None`` when the DB is missing, has no matching row, or cannot
+    be queried (schema drift, IO error).
+    """
+    path = db_path or COORDINATION_DB
+    if not path.exists():
+        return None
+    try:
+        uri = f"file:{path.as_posix()}?mode=ro"
+        with sqlite3.connect(uri, uri=True) as conn:
+            row = conn.execute(
+                "SELECT run_id FROM production_runs "
+                "WHERE status IN ('planning', 'active') "
+                "ORDER BY updated_at DESC LIMIT 1"
+            ).fetchone()
+    except (sqlite3.DatabaseError, sqlite3.OperationalError):
+        return None
+    if not row:
+        return None
+    run_id = row[0]
+    return run_id if isinstance(run_id, str) and run_id else None
+
+
+def _bundle_run_id(bundle_dir: Path) -> str | None:
+    """Extract the run_id declared in a bundle's run-constants.yaml.
+
+    Accepts either canonical lowercase ``run_id`` or legacy uppercase
+    ``RUN_ID`` for schema-drift tolerance. Returns ``None`` on missing
+    file, malformed YAML, or missing field.
+    """
+    rc_path = bundle_dir / "run-constants.yaml"
+    if not rc_path.exists():
+        return None
+    try:
+        data = yaml.safe_load(rc_path.read_text(encoding="utf-8")) or {}
+    except (yaml.YAMLError, OSError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    candidate = data.get("run_id") or data.get("RUN_ID")
+    return candidate if isinstance(candidate, str) and candidate else None
+
+
+def _find_bundle_for_run_id(bundles_dir: Path, run_id: str) -> Path | None:
+    """Return the bundle directory whose run-constants.yaml matches run_id."""
+    if not bundles_dir.exists() or not run_id:
+        return None
+    for bundle in sorted(bundles_dir.iterdir()):
+        if not bundle.is_dir():
+            continue
+        if _bundle_run_id(bundle) == run_id:
+            return bundle
+    return None
+
+
+def _resolve_active_bundle(
+    bundles_dir: Path,
+    db_path: Path | None = None,
+) -> Path | None:
+    """Best bundle for the HUD: match the active run if possible, else mtime.
+
+    Precedence:
+      1. The bundle whose ``run-constants.yaml`` ``run_id`` matches the
+         active row in the coordination database's ``production_runs``
+         table.
+      2. The most recently modified bundle directory (legacy heuristic).
+
+    ``db_path`` is injectable for tests; production callers pass ``None``
+    and the module-level ``COORDINATION_DB`` is used.
+    """
+    active_run_id = _query_active_run_id(db_path)
+    if active_run_id:
+        matched = _find_bundle_for_run_id(bundles_dir, active_run_id)
+        if matched is not None:
+            return matched
+    return _find_latest_bundle(bundles_dir)
 
 
 def _load_run_constants(bundle_dir: Path) -> dict[str, Any]:
@@ -151,12 +256,13 @@ def _build_pipeline_state(
 def collect_hud_data(
     bundle_dir: Path | None = None,
     bundles_dir: Path | None = None,
+    db_path: Path | None = None,
 ) -> dict[str, Any]:
     """Collect all data needed for the HUD rendering."""
     bdir = bundles_dir or BUNDLES_DIR
 
     if bundle_dir is None:
-        bundle_dir = _find_latest_bundle(bdir)
+        bundle_dir = _resolve_active_bundle(bdir, db_path=db_path)
 
     run_constants: dict[str, Any] = {}
     gate_results: list[dict[str, Any]] = []
@@ -483,11 +589,73 @@ def _esc(text: str) -> str:
     return html_mod.escape(text, quote=True)
 
 
-def render_html(data: dict[str, Any]) -> str:
-    """Render the full HUD HTML page."""
+def _render_snapshot_banner(
+    generated_iso: str,
+    watching: bool,
+    watch_interval_seconds: float,
+) -> str:
+    """Render the top-of-page banner describing data freshness.
+
+    The banner is the single source of operator-facing truth about whether
+    the HUD is a static snapshot or a live watch-mode view. The browser's
+    JS auto-reload only refreshes data if the file on disk has been
+    rewritten, so operators need explicit guidance about which mode is
+    active.
+    """
+    try:
+        generated_dt = datetime.fromisoformat(generated_iso)
+        generated_human = generated_dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+    except ValueError:
+        generated_human = generated_iso
+
+    if watching:
+        mode_class = "banner-live"
+        mode_icon = "&#x1F7E2;"  # green circle
+        mode_label = "Live"
+        detail = (
+            f"Watching manifest, sprint-status, mode-state, and active bundle "
+            f"every {watch_interval_seconds:g}s. Regenerates on change."
+        )
+    else:
+        mode_class = "banner-static"
+        mode_icon = "&#x23F8;&#xFE0F;"  # pause
+        mode_label = "Static snapshot"
+        detail = (
+            "Browser auto-reload re-serves this file; data only refreshes "
+            "when the file on disk is rewritten. Re-run "
+            "<code>python -m scripts.utilities.run_hud</code> to regenerate, "
+            "or launch with <code>--watch</code> for live updates."
+        )
+
+    return (
+        f'<div class="snapshot-banner {mode_class}">'
+        f'<span class="banner-icon">{mode_icon}</span>'
+        f'<span class="banner-label">{mode_label}</span>'
+        f'<span class="banner-timestamp">Generated: {_esc(generated_human)}</span>'
+        f'<span class="banner-detail">{detail}</span>'
+        f'</div>'
+    )
+
+
+def render_html(
+    data: dict[str, Any],
+    *,
+    watching: bool = False,
+    watch_interval_seconds: float = DEFAULT_WATCH_INTERVAL_SECONDS,
+) -> str:
+    """Render the full HUD HTML page.
+
+    ``watching`` and ``watch_interval_seconds`` drive the snapshot banner
+    so operators can tell at a glance whether the view is live or frozen.
+    """
     rc = data["run_constants"]
     ps = data["pipeline_summary"]
     pipeline = data["pipeline"]
+    banner_html = _render_snapshot_banner(
+        data.get("generated", ""),
+        watching=watching,
+        watch_interval_seconds=watch_interval_seconds,
+    )
 
     run_id = rc.get("RUN_ID", "No active run")
     profile = rc.get("EXPERIENCE_PROFILE", "—")
@@ -553,6 +721,8 @@ def render_html(data: dict[str, Any]) -> str:
 <body>
 
 <div class="refresh-bar" id="refreshBar"></div>
+
+{banner_html}
 
 <div class="freshness-meter {freshness_cls}">
   <span class="freshness-label">Data freshness:</span>
@@ -688,6 +858,25 @@ h3 { font-size: 0.95rem; margin: 12px 0 6px; color: #94a3b8; }
   position: fixed; top: 0; left: 0; height: 2px;
   background: #38bdf8; width: 0; z-index: 999;
   transition: width linear;
+}
+
+.snapshot-banner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 6px 10px; font-size: 0.78rem;
+  background: #1e293b; border-bottom: 1px solid #334155;
+  border-left: 3px solid transparent; margin-bottom: 4px;
+}
+.snapshot-banner.banner-live { border-left-color: #22c55e; background: #052e16; }
+.snapshot-banner.banner-static { border-left-color: #eab308; background: #1c1917; }
+.snapshot-banner .banner-icon { font-size: 0.9rem; }
+.snapshot-banner .banner-label {
+  font-weight: 700; color: #f1f5f9; min-width: 120px;
+}
+.snapshot-banner .banner-timestamp { color: #cbd5e1; }
+.snapshot-banner .banner-detail { color: #94a3b8; flex: 1 1 auto; min-width: 260px; }
+.snapshot-banner code {
+  background: #0f172a; color: #e2e8f0; padding: 1px 5px;
+  border-radius: 3px; font-size: 0.72rem;
 }
 
 .freshness-meter {

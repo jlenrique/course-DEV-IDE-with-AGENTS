@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib import util
 from pathlib import Path
 from typing import Any
@@ -32,7 +32,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 _ROOT = _SCRIPTS_DIR.parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from scripts.utilities.run_constants import RunConstantsError, load_run_constants
+from scripts.utilities.run_constants import RunConstantsError, load_run_constants  # noqa: E402
 
 # Load validate-cluster-plan module dynamically (same dir)
 _VALIDATOR_PATH = _SCRIPTS_DIR / "validate-cluster-plan.py"
@@ -46,6 +46,7 @@ DENSITY_RANGES = _validator_mod.DENSITY_RANGES  # type: ignore[attr-defined]
 RECEIPT_FILENAME = "g1.5-cluster-gate-receipt.json"
 REVIEW_FILENAME = "cluster-plan-review.md"
 MANIFEST_FILENAME = "segment-manifest.yaml"
+CLUSTER_PLAN_FILENAME = "cluster-plan.yaml"
 RUN_CONSTANTS_FILENAME = "run-constants.yaml"
 
 _DENSITY_RANGE_LABELS: dict[str | None, str] = {
@@ -130,7 +131,11 @@ def _build_review_doc(
             + "\n".join(rows)
         )
 
-    cluster_sections = "\n\n---\n\n".join(cluster_sections_parts) if cluster_sections_parts else "_No clusters found._"
+    cluster_sections = (
+        "\n\n---\n\n".join(cluster_sections_parts)
+        if cluster_sections_parts
+        else "_No clusters found._"
+    )
 
     # Validation summary
     if passed:
@@ -152,7 +157,8 @@ def _build_review_doc(
         "---\n\n"
         "## Operator Decision\n\n"
         "Review each cluster above. Confirm:\n"
-        "- Every interstitial only reveals, emphasizes, simplifies, or reframes content from its head slide\n"
+        "- Every interstitial only reveals, emphasizes, simplifies, or reframes "
+        "content from its head slide\n"
         "- Each cluster has a visible internal arc (establish → develop/tension → resolve)\n"
         "- Narrative arcs are specific enough to guide narration\n\n"
         "**Select one:**\n\n"
@@ -180,24 +186,40 @@ def run_gate(
         cluster_density = _read_cluster_density(bundle_dir)
     except RunConstantsError:
         # Fail gate on broken run-constants
-        return {"skipped": False, "passed": False, "errors": ["run-constants.yaml is invalid or missing"]}
+        return {
+            "skipped": False,
+            "passed": False,
+            "errors": ["run-constants.yaml is invalid or missing"],
+        }
 
     # Skip for non-clustered runs
     if cluster_density is None or cluster_density == "none":
         return {"skipped": True, "passed": True, "errors": []}
 
-    # Locate manifest
-    mpath = manifest_path or (bundle_dir / MANIFEST_FILENAME)
-    if not mpath.is_file():
-        raise FileNotFoundError(f"Segment manifest not found: {mpath}")
+    # Locate manifest — probe cluster-plan.yaml (Pass 1) first, then segment-manifest.yaml (Pass 2)
+    if manifest_path is not None:
+        mpath = manifest_path
+    else:
+        cluster_plan_path = bundle_dir / CLUSTER_PLAN_FILENAME
+        segment_manifest_path = bundle_dir / MANIFEST_FILENAME
+        if cluster_plan_path.is_file():
+            mpath = cluster_plan_path
+        elif segment_manifest_path.is_file():
+            mpath = segment_manifest_path
+        else:
+            raise FileNotFoundError(
+                f"Neither {MANIFEST_FILENAME} nor {CLUSTER_PLAN_FILENAME} found in {bundle_dir}"
+            )
+
+    structural_mode = mpath.name == CLUSTER_PLAN_FILENAME
 
     manifest = _load_yaml(mpath)
     # Inject cluster_density from run-constants if manifest doesn't have it
     if "cluster_density" not in manifest or manifest["cluster_density"] is None:
         manifest["cluster_density"] = cluster_density
 
-    result = validate_cluster_plan(manifest)
-    timestamp = datetime.now(timezone.utc).isoformat()
+    result = validate_cluster_plan(manifest, mode="structural" if structural_mode else "full")
+    timestamp = datetime.now(UTC).isoformat()
     cluster_ids = {
         str(s["cluster_id"])
         for s in manifest.get("segments", [])
@@ -211,6 +233,7 @@ def run_gate(
         "cluster_density": cluster_density,
         "errors": result["errors"],
         "timestamp": timestamp,
+        "source_artifact": mpath.name,
     }
     receipt_path = bundle_dir / RECEIPT_FILENAME
     receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")

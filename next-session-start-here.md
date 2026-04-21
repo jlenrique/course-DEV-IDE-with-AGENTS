@@ -3,7 +3,7 @@
 > Scope note: this file is the hot-start for the next repo session.
 > **Current objective:** Trial production run `C1-M1-PRES-20260419B` reached pack completion condition (§01 → §15 closed end-to-end). First-ever end-to-end Marcus-the-APP run.
 >
-> **Trial branch:** `trial/2026-04-19` @ <session-WRAPUP-commit pending>. After Step 12 commit, working tree must be clean (excluding pre-existing ambient changes — see Repo State).
+> **Trial branch:** `trial/2026-04-19` @ `5533145` (wrapup commit; merged into `master` @ `6fe40fd`, both pushed). Working tree clean apart from gitignored paths.
 >
 > **Deferred inventory status (2026-04-21):** 4 backlog epics (15, 16, 17, 18) / 4 deferred stories in active epics (20c-4, 20c-5, 20c-6, 20a-5) / **13 named-but-not-filed follow-ons** (added: theatrical-direction synthesis Tier 1 + Tier 2). See [`_bmad-output/planning-artifacts/deferred-inventory.md`](\_bmad-output/planning-artifacts/deferred-inventory.md). Binding consultation per [CLAUDE.md §Deferred inventory governance](CLAUDE.md).
 
@@ -65,18 +65,19 @@ After Descript export, choose one of:
 
 ## Repo State
 
-- **`trial/2026-04-19`** @ <commit pending Step 12>. Will be pushed to origin only on explicit operator approval.
-- **`master`** @ `2ba1e32` (last-known). NOT updated this session. Merge-to-master deferred pending operator approval (CLAUDE.md requires explicit auth before push/merge).
-- **Working tree:** clean after this session's WRAPUP commit (apart from gitignored paths).
-- **No new test regressions** — no source code touched outside `scripts/marcus_shims/` (new shims, no test coverage required at this stage).
+- **`trial/2026-04-19`** @ `5533145` — pushed to origin.
+- **`master`** @ `6fe40fd` — merge of `trial/2026-04-19`; pushed to origin.
+- **Working tree:** clean apart from gitignored paths (sidecars, dev-coherence reports, `course-content/staging/`).
+- **No new test regressions** — `tests/test_marcus_shims_importable.py` smoke test 2/2 PASS guards the two new dispatch shims.
+- **Next working branch:** not pre-cut. Next session opens on `trial/2026-04-19`. Operator cuts a fresh branch from `master` when picking a repo-work direction (motion-walk drift remediation, Irene Pass 2 template, or new lesson trial).
 
 ## Startup Commands
 
 ```bash
-# Verify trial baseline before starting
-git branch --show-current          # must be: trial/2026-04-19
-git status --short                  # expect: ambient carryover only after this session's commit
-git log --oneline -3                # expect: this session's WRAPUP commit at HEAD
+# Verify baseline before starting
+git branch --show-current          # trial/2026-04-19 (or operator-cut new branch)
+git status --short                  # expect: clean apart from gitignored paths
+git log --oneline -3                # expect: 5533145 trial(wrapup)... ; 6fe40fd merge ... reachable from master
 
 # OPTIONAL: harmonization sweep (tripwire CLEARED — defaults to since-handoff scope)
 # Recommend running it if intent is to start motion-walk drift remediation,

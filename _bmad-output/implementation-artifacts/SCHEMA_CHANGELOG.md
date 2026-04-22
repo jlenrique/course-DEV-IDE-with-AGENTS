@@ -7,6 +7,30 @@ Per semver-for-schemas:
 - **Minor (1.X)** â€” additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
 - **Patch (1.0.X)** â€” docs / clarifications / typo fixes; no machine-readable change.
 
+## Sprint #1 Segment Manifest v1.1 - 2026-04-22 - Story §7.1 Irene Pass 2 Authoring Template
+
+**Type:** Initial authoritative schema (no predecessor JSON Schema file; `schema_version: "1.1"` has been emitted in manifests by convention, now pinned as a contract).
+
+**Reason for introduction:** Trial `C1-M1-PRES-20260419B` exposed three structural failure modes in Irene Pass 2 manifest emission (§6.3 duplicate `motion_asset` + `motion_asset_path` keys; §6.4 missing `visual_file` on 13/14 segments; §6.5 null `motion_duration_seconds` despite Motion Gate receipt carrying the value). Story §7.1 ships the first authoritative JSON Schema for the segment-manifest shape, enforcing the three durable dispositions structurally so Irene cannot re-emit these bugs silently.
+
+**Shapes and contracts pinned:**
+
+- `state/config/schemas/segment-manifest.schema.json` — JSON Schema Draft 2020-12 contract for the Irene Pass 2 segment-manifest envelope and per-segment shape.
+- Per-segment required fields: `id`, `slide_id`, `card_number`, `visual_mode`, `motion_asset_path`, `motion_duration_seconds`.
+- Per-segment conditional constraints:
+  - §6.3 ban — `motion_asset` legacy key forbidden via `not: {required: ["motion_asset"]}`.
+  - §6.4 — `visual_file` required on every segment with non-null `visual_mode`.
+  - §6.5 structural — non-null `motion_duration_seconds` (positive number) required on every segment with `visual_mode == "video"`.
+- Envelope-level `schema_version` pinned to `const: "1.1"` — the first manifest shape under strict enforcement.
+
+**Semantics pinned:**
+
+- Schema enforces structural presence + nullability; value-vs-receipt cross-validation (§6.5 upstream-reference check against Motion Gate receipt) is **NOT** schema-enforced. That check is T5 lint territory (`scripts/validators/pass_2_emission_lint.py`, story §7.1 AC-B.3).
+- `additionalProperties: true` at both envelope and segment level — Irene's authoring-layer fields (narration_text, behavioral_intent, narration_burden, etc.) continue without schema enforcement; this contract is structural only, per §7.1 non-goals (creative-layer outputs remain LLM-driven).
+- The canonical post-fix manifest from trial `C1-M1-PRES-20260419B` (minimal 2-segment variant at `tests/fixtures/7-1-irene-pass-2-authoring-template/pass_2_emissions/trial_c1m1_canonical.yaml`) is the AC-T.3 regression canary — MUST pass schema unchanged across future schema edits.
+
+**Migration:** Structural enforcement is stricter-than-pre-existing on the same `schema_version: "1.1"` envelope. Pre-existing manifest files (archived trial runs in `course-content/staging/...`) are NOT rewritten; the schema applies prospectively to new Pass 2 emissions. Irene's authoring discipline (story §7.1) guarantees new emissions conform.
+
 ## Epic 33 Pipeline Lockstep Substrate v1.0 - 2026-04-19 - Story 33-2 Pipeline Manifest SSOT
 
 **Type:** Initial shape (no predecessor manifest contract).

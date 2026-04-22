@@ -97,8 +97,8 @@ So that **the three trial-#1 failure modes (§6.3 / §6.4 / §6.5) cannot recur 
 ## Tasks / Subtasks (spine — expand at green-light)
 
 - [x] T1 — Harvest trial-#1 fixtures — as-emitted + Motion Gate receipt + minimal 2-segment canonical + 3 malformed variants (§6.3 / §6.4 / §6.5)
-- [ ] T2 — Segment-manifest schema tightening (forbid `motion_asset`; require `visual_file` conditional on `visual_mode`; require `motion_duration_seconds` on motion segments)
-- [ ] T3 — Schema version bump + `SCHEMA_CHANGELOG.md` entry
+- [x] T2 — Segment-manifest schema tightening (forbid `motion_asset`; require `visual_file` conditional on `visual_mode`; require `motion_duration_seconds` on motion segments)
+- [x] T3 — Schema version bump + `SCHEMA_CHANGELOG.md` entry
 - [ ] T4 — Pass 2 emission lint validator script (deterministic; Pydantic-based)
 - [ ] T5 — Upstream-reference cross-validation (Motion Gate receipt → manifest motion_duration_seconds)
 - [ ] T6 — Authoring template markdown (full schema + worked examples + legacy-key forbidden list)
@@ -290,3 +290,29 @@ Shipped a **minimal 2-segment canonical** (card-01 motion + card-02 static) that
 **Session DoD (opens, not done)**
 
 Per operator DoD for this session: §7.1 opened via bmad-dev-story with T1 started ✓. Story is `in-progress` in sprint-status.yaml; fixtures landed; anchor tests green. Full story completion spans additional sessions — not a HALT condition, just a sensible session boundary given T2-T(final) span ~1000+ more lines of code/tests.
+
+### 2026-04-22 — T2 + T3 (same session continuation)
+
+**T2 schema tightening landed.** New `state/config/schemas/segment-manifest.schema.json` — JSON Schema Draft 2020-12, first authoritative contract for the segment-manifest shape. Structural enforcement of all three §7.1 failure modes:
+
+- **§6.3** — `not: {required: ["motion_asset"]}` in per-segment `allOf`. Legacy duplicate key is rejected declaratively.
+- **§6.4** — conditional `if visual_mode is string → then required: [visual_file]` with non-empty string constraint.
+- **§6.5 structural** — conditional `if visual_mode == "video" → then motion_duration_seconds: {type: "number", exclusiveMinimum: 0}` plus required `motion_asset_path`. Value-vs-receipt cross-validation deferred to T5 lint (AC-B.3 upstream-reference check).
+
+Schema implementation choice: `additionalProperties: true` at both envelope and segment level (Irene's authoring-layer fields — narration_text, behavioral_intent, visual_references, etc. — continue without schema enforcement per story §Non-goals). Only structural contracts are pinned.
+
+**T3 SCHEMA_CHANGELOG entry landed.** New section `## Sprint #1 Segment Manifest v1.1 - 2026-04-22 - Story §7.1 Irene Pass 2 Authoring Template` at the top of the changelog (before Epic 33 Pipeline Lockstep entry). Type: **initial authoritative schema** — `schema_version: "1.1"` was a convention emitted in manifests; §7.1 pins it as a contract. Not a major bump (no breaking changes to the implicit pre-existing shape), not additive-minor (the contract is the shape) — documented as initial-shape per Epic 33 precedent.
+
+**Tests landed (T2+T3)**
+
+- `tests/irene/test_segment_manifest_schema.py` — 8 tests, all green:
+  - schema file exists + is Draft 2020-12
+  - canonical fixture passes unchanged (AC-T.3 regression canary)
+  - each malformed variant fails with the specific violation surfacing in message/path/schema_path
+  - as-emitted trial manifest triggers all three violations
+  - schema_version pinned to `const: "1.1"`
+  - motion_asset ban is declarative (not merely implicit via additionalProperties)
+
+Irene suite cumulative: 22 passed (14 fixture anchors from T1 + 8 schema from T2). Full regression deferred to T(final).
+
+**T-task status:** T1 [x], T2 [x], T3 [x]. Remaining: T4 lint validator, T5 Motion Gate receipt reader, T6 authoring template markdown, T7 retrieval-intake coordination (pointer only), T8 pack v4.2 integration, T9 pass-2-procedure pointer + Irene INDEX pointer, T10 AC-T.1-T.5 tests, T11 AC-T.5 doc-parity lockstep, T12 AC-T.6 pipeline smoke, T(final) regression + pre-commit + review.

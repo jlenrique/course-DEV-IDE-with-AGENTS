@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "state/config/schemas/segment-manifest.schema.json",
+  "title": "SegmentManifest",
+  "description": "Irene Pass 2 segment-manifest structural contract. Closes §7.1 failure modes from trial C1-M1-PRES-20260419B: §6.3 forbid legacy motion_asset key; §6.4 require visual_file on non-null-visual-mode segments; §6.5 require non-null motion_duration_seconds on motion (visual_mode=='video') segments. Value-vs-receipt cross-validation is NOT schema-enforced — see scripts/validators/pass_2_emission_lint.py for the upstream-reference check.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "generated_at_utc",
+    "generated_by",
+    "segments"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.1"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/segment"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "segment": {
+      "type": "object",
+      "required": [
+        "id",
+        "slide_id",
+        "card_number",
+        "visual_mode",
+        "motion_asset_path",
+        "motion_duration_seconds"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slide_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "card_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "visual_mode": {
+          "type": ["string", "null"],
+          "enum": ["video", "static", "animation", null]
+        },
+        "motion_asset_path": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "motion_duration_seconds": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "visual_file": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "description": "§6.3 — legacy motion_asset key is forbidden; only motion_asset_path is emitted",
+          "not": {
+            "required": ["motion_asset"]
+          }
+        },
+        {
+          "description": "§6.4 — visual_file required on any segment with non-null visual_mode",
+          "if": {
+            "properties": {
+              "visual_mode": {
+                "type": "string"
+              }
+            },
+            "required": ["visual_mode"]
+          },
+          "then": {
+            "required": ["visual_file"],
+            "properties": {
+              "visual_file": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "description": "§6.5 — motion segments (visual_mode=='video') must carry non-null motion_duration_seconds and motion_asset_path",
+          "if": {
+            "properties": {
+              "visual_mode": {
+                "const": "video"
+              }
+            },
+            "required": ["visual_mode"]
+          },
+          "then": {
+            "required": ["motion_duration_seconds", "motion_asset_path"],
+            "properties": {
+              "motion_duration_seconds": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "motion_asset_path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

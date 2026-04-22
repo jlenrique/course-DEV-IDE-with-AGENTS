@@ -9,13 +9,30 @@
 
 ## Immediate Next Action
 
-**Operator-led Descript assembly** of bundle `apc-c1m1-tejal-20260419b-motion`. Out of pack scope. Open [`DESMOND-OPERATOR-BRIEF.md`](course-content/staging/tracked/source-bundles/apc-c1m1-tejal-20260419b-motion/DESMOND-OPERATOR-BRIEF.md), follow the per-segment loop, run the preflight checklist (7 items), export MP4 + VTT sidecar.
+**Sprint #1 preparation and party-mode green-light** (2026-04-22 session continuation).
 
-After Descript export, choose one of:
-- **(a) Motion structural-walk drift remediation** — Tier-1 dev-agent path; aligns walk-spec markers in `state/config/structural-walk/motion.yaml` to the v4.2 pack's actual section titles (or vice versa). Six markers; CLAUDE.md "Pipeline lockstep regime" Tier-1 = dev-agent authority via Cora's block-mode hook; no party-mode required.
-- **(b) Irene Pass 2 authoring template scoping** — HIGH-priority deferred follow-on; three concrete failure modes captured in this run's reproducibility report (duplicate motion_asset/motion_asset_path, missing visual_file on cards 02-14, null motion_duration_seconds). Must be scoped before next Pass 2 production run.
-- **(c) Epic 33 retrospective** — still `required` in sprint-status.yaml; not a trial blocker.
-- **(d) Next lesson trial run** (after addressing (b)).
+This session (2026-04-22) completed motion-walk drift remediation (6 pre-existing findings → READY on all three structural walks) and full-repo coherence sweep. All three structural workflows READY. User locked three strategic decisions:
+
+1. **Research capability activation:** Full cross-validation via scite.ai + Consensus with convergence_signal
+2. **§7.1 Irene Pass 2 template placement:** Must land in Sprint #1 (not deferred backlog)
+3. **Research knob scope:** Evidence-bolster only (no aspirational enrichment or gap-filling for trial #2)
+
+**Sprint #1 composition (locked, ~24–30 pts across 7 stories):**
+- 27-2 scite.ai adapter (re-expand from ratified-stub)
+- 27-2.5 Consensus adapter (re-expand from ratified-stub)
+- 28-1 Tracy reshape charter (post-Round-3 consensus)
+- PR-R Marcus dispatch reshaping (new story, pull request standardization)
+- Irene retrieval-intake (new story, Shape 3 integration)
+- Evidence-bolster control surface (new story, research knob wiring)
+- §7.1 Irene Pass 2 template authoring (from reproducibility report §7.1, HIGH priority)
+
+**Next steps at session open:**
+1. `bmad-create-epics-and-stories` to re-expand 27-2 + 27-2.5 from ratified-stub to full dev spec
+2. `bmad-create-story` for 28-1 reshape charter (3 stages: intake + decision + output)
+3. File new stories: PR-R, Irene retrieval-intake, evidence-bolster control, §7.1 Irene template
+4. `bmad-party-mode` green-light on Sprint #1 composition before dev work opens
+
+**Epic 34 (Creative-Treatment Experimentation & Profile Curation) proposed for future sprint.** Scoped in this session: 5 stories (34-1 through 34-5) with Dan as curator. Deferred pending Sprint #1 completion.
 
 ## Trial Run Status — C1-M1-PRES-20260419B (FINAL)
 
@@ -43,25 +60,47 @@ After Descript export, choose one of:
 
 **Production-shift close record:** [`_bmad-output/implementation-artifacts/shift-close-2026-04-21-c1m1-tejal-20260419b.md`](\_bmad-output/implementation-artifacts/shift-close-2026-04-21-c1m1-tejal-20260419b.md) — close mode **controlled** (Risk 1 motion structural-walk pack-vs-walk-spec drift; 6 pre-existing findings).
 
-## Outstanding Items (surface at Start Step 1a)
+## Outstanding Items (Completed This Session — See § Drift Remediation Summary Below)
 
-1. **Motion structural-walk: 6 pre-existing pack-vs-walk-spec drift findings** (Risk 1 in shift-close). NOT introduced by trial-run work. Walk-spec at `state/config/structural-walk/motion.yaml` expects `## 4) Ingestion Quality Gate + Irene Packet`, `## 4.75) Creative Directive Resolution (CD)`, `## 6.2)`, `## 6.3)`, `## 7.5)`, `## 7C)` markers that don't match v4.2 pack actual section titles. Per CLAUDE.md "Pipeline lockstep regime" — Tier-1 prose alignment is dev-agent authority via Cora's block-mode hook; no party-mode required. Recommended at session open before any new trial work.
+1. **✅ Motion structural-walk: 6 pre-existing pack-vs-walk-spec drift findings REMEDIATED** (2026-04-22). All three structural walks (standard, motion, cluster) now READY. Edits applied to: (a) `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (6 section-heading updates: 04A, 4.75, 6.2, 6.3, 7.5, 07C — added semantic qualifiers + adopted zero-padding), (b) `state/config/structural-walk/motion.yaml` (9 anti_drift + sequence_doc_parity needle updates matching pack). Validation: motion-walk final READY with 0 criticals. Standard/cluster verified no regression. Complete evidence in `reports/dev-coherence/2026-04-22-0236/evidence/`.
 
-2. **L2 agentic harmonization sweep deferred this session** — gated on L1 motion clean. Rerun after (1) remediated.
+2. **✅ L2 agentic harmonization sweep completed** (2026-04-22). Full-repo drift sweep (L1 deterministic + L2 agentic) discovered 5 findings (motion-walk drift REMEDIATED, parameter lockstep Class A/B drift STAGED for Paige, lane-matrix coverage STAGED for Winston, handoff stale claim FIXED, memory drift FIXED). Trace report + 5 evidence files staged in `reports/dev-coherence/2026-04-22-0236/`. Three staged briefs (Paige + Winston + memory-update) for routing next session.
 
-3. **Irene Pass 2 authoring template (HIGH priority)** — `_bmad-output/planning-artifacts/deferred-inventory.md` entry expanded with three concrete failure modes from this run. Must be scoped before next Pass 2 production run.
+3. **Irene Pass 2 authoring template (HIGH priority)** — NOW IN SPRINT #1 scope. Three concrete failure modes from reproducibility report §7 (duplicate motion_asset key, missing visual_file on cards 02-14, null motion_duration_seconds) will be authored as Story: §7.1 Irene Template Authoring (new story, ~3pts, scoped for Sprint #1).
 
-4. **Theatrical-direction synthesis (Tier 1 + Tier 2)** — newly added to deferred-inventory follow-ons (count 12 → 13). Decision trigger: operator reviews trial B audio output, declares whether dials-only ceiling is sufficient.
+4. **Theatrical-direction synthesis (Tier 1 + Tier 2)** — deferred-inventory entry 12 → 13. Now in Epic 34 proposed backlog (stories 34-1 through 34-5). Decision pending user review of trial B audio output.
 
-5. **Desmond doc-cache never refreshed** — `_bmad/memory/bmad-agent-desmond/MEMORY.md` records Descript version target as **Unknown**. Brief authored honestly with this disclosure. Run `python skills/bmad-agent-desmond/scripts/refresh_descript_reference.py` and update sanctum before next narrated-lesson run.
+5. **Desmond doc-cache never refreshed** — carries forward as pre-condition check before next narrated-lesson run. `_bmad/memory/bmad-agent-desmond/MEMORY.md` still records Descript version target as **Unknown**. Run `python skills/bmad-agent-desmond/scripts/refresh_descript_reference.py` when preparing next lesson.
 
-6. **Stray asset (cosmetic)** — `assembly-bundle/audio/apc-c1m1-tejal-20260419b-motion-card-04.zip` is a leftover ElevenLabs alignment-zip experiment, not manifest-referenced. Operator may delete before Descript import or leave in place (harmless).
+6. **Stray asset (cosmetic)** — `assembly-bundle/audio/apc-c1m1-tejal-20260419b-motion-card-04.zip` carries forward. Operator may delete or leave (harmless).
 
-7. **Epic 33 retrospective** — still `required` in `sprint-status.yaml`. Target: after trial completes (now). Not a trial blocker.
+7. **Epic 33 retrospective** — still `required` in `sprint-status.yaml`. Action: update `sprint-status.yaml` to reflect **Epic 33 already closed (2026-04-19)** and remove "required" status; update `next-session-start-here.md` accordingly.
 
-8. **Tripwire CLEARED for next session.** This session ran Step 0a full-repo (3 consecutive prior skips). Next `/harmonize` defaults to since-handoff scope unless operator escalates.
+8. **Tripwire CLEARED for next session.** This session ran Step 0a full-repo drift sweep (motion walk remediation blocked L2 completion). L2 now unblocked (motion READY). Next `/harmonize` defaults to since-handoff scope.
 
-9. **Carried-forward ambient state:** none. Prior session's pre-existing dirty list was committed in `39a014a` before this session's anchor. After this session's WRAPUP commit, working tree is clean apart from gitignored sidecar/report/staging paths.
+9. **Carried-forward ambient state:** none. This session's WRAPUP commit completes motion-walk remediation + drift-sweep artifacts. Working tree clean apart from gitignored paths after commit.
+
+## Drift Remediation Summary (This Session — 2026-04-22)
+
+**Motion-walk marker drift remediation: 6 → 0 findings (COMPLETE)**
+
+| File | Changes | Result |
+|---|---|---|
+| `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` | 6 section-heading updates (lines 335, 406, 548, 567, 649, 701) | Pack sections now carry semantic qualifiers; zero-padding aligned |
+| `state/config/structural-walk/motion.yaml` | 9 needle/sequence entries updated (lines 66-68, 106-107, 112-116, 144, 150, 153, 156, 159, 165) | Walk-spec markers match pack headings; zero-padding convention adopted |
+| Structural walk validation | All three workflows re-validated | **motion READY (0 criticals), standard READY, cluster READY** |
+| Drift-sweep artifacts | Trace + 5 evidence files staged | `reports/dev-coherence/2026-04-22-0236/{trace-report.yaml, evidence/*.md, briefs}` |
+| User memory refresh | project_structural_walk_status.md rewritten | Removed stale snapshot; added note: live status in `reports/structural-walk/` |
+
+**Research capability activation locked (trial #2 planning):**
+- Full cross-validation: scite.ai + Consensus with convergence_signal
+- Evidence-bolster knob only (no enrichment / no gap-fill for trial #2)
+- §7.1 Irene Pass 2 template lands in Sprint #1
+
+**Sprint #1 locked: ~24–30 pts, 7 stories**
+- 27-2, 27-2.5, 28-1 (retrieval + Tracy reshape)
+- PR-R (Marcus dispatch), Irene retrieval-intake, evidence-bolster control (new stories)
+- §7.1 Irene template (from reproducibility §7.1, HIGH priority)
 
 ## Repo State
 

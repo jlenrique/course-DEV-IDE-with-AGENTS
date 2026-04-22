@@ -1,8 +1,70 @@
-# Session Handoff — 2026-04-21 (Trial C1-M1-PRES-20260419B: §09 → §15 closed end-to-end; first complete Marcus-the-APP run)
+# Session Handoff — 2026-04-22 (BMAD WRAPUP: drift remediation + Sprint #1 planning locked)
 
-**Session window:** 2026-04-20 21:05 → 2026-04-21 06:03 UTC.
-**Branch touched:** `trial/2026-04-19` (trial production run; no story-sprint work).
+**WRAPUP Session window (2026-04-22):** Continuation after context summary. Primary objectives: complete motion-walk drift remediation (Tier-1 dev-agent authority), execute full-repo L1/L2 coherence sweep with Cora + Audra, stage deferred remediation briefs for specialist routing, lock Sprint #1 composition + research-capability activation decision.
+
+**Preceding trial session window:** 2026-04-20 21:05 → 2026-04-21 06:03 UTC.
+**Branch touched:** `trial/2026-04-19` (WRAPUP), `master` (post-merge verification).
 **Operator:** Juanl.
+
+## What Was Completed This Session (2026-04-22 WRAPUP)
+
+### Motion-walk marker drift remediation (Risk 1 closed)
+
+Remediated 6 pre-existing pack-vs-walk-spec marker mismatches (6 findings → 0 criticals on motion workflow structural walk):
+- **Pack edits** (`docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`): 6 section headings updated with semantic qualifiers + zero-padding alignment (lines 335, 406, 548, 567, 649, 701)
+- **Walk-spec edits** (`state/config/structural-walk/motion.yaml`): 9 needle + sequence entries updated to match pack headings (lines 66-68, 106-107, 112-116, 144, 150, 153, 156, 159, 165)
+- **Validation**: Final structural-walk runs confirm motion READY (0 criticals); standard + cluster verified no regression
+
+**Full evidence:** `reports/dev-coherence/2026-04-22-0236/evidence/motion-walk-markers.md` (6-item drift table with pack/walk-spec comparison; remediation trace log)
+
+### Full-repo coherence sweep (L1 deterministic + L2 agentic)
+
+Cora (orchestrator) + Audra (validators) executed Step 0a full-scope harmonization:
+
+**L1 deterministic findings (5 total; exit code 1):**
+1. Motion-walk marker drift (6) → REMEDIATED this session
+2. Parameter directory ↔ schema lockstep (5 schema-only + ~12 directory-only keys) → STAGED brief for Paige
+3. Lane-matrix Coverage Checklist scope (16 of 32 skills lack `## Lane Responsibility` section) → STAGED brief for Winston
+4. Handoff stale claim (Epic 33 retrospective marked "required" but already closed 2026-04-19) → FIXED in this session
+5. Memory drift (user memory asserted "Both workflows READY" but motion was NEEDS REMEDIATION) → FIXED in this session
+
+**L2 agentic gated off** (per protocol: gated on L1 motion clean; now unblocked for next sweep)
+
+**Staged artifacts for specialist routing next session:**
+- `paige-brief-parameter-lockstep.md` — Class A (5 schema-implemented keys missing from directory) + Class B (~12 directory-implemented keys missing from schema); recommends add-to-directory or decompose schema; notes Phase 3 backlog script
+- `winston-brief-lane-matrix-coverage.md` — Decision gate: (a) formalize Coverage Checklist as judgment-bearing-skills-only + refine Audra L1-5 check, OR (b) require all 32 skills, OR (c) per-skill decision
+- User memory `project_structural_walk_status.md` rewritten — removed stale status snapshot, added reference to live status location
+
+**Evidence trail:** `reports/dev-coherence/2026-04-22-0236/` (trace-report.yaml + 5 evidence files + 2 briefs)
+
+### Strategic decision lockdown (Sprint #1 + Epic 34 + research capability)
+
+User locked three critical decisions for trial #2 onward:
+
+1. **Research capability activation:** Full cross-validation pathway via scite.ai + Consensus with convergence_signal (no aspirational enrichment or gap-filling for trial #2)
+2. **§7.1 Irene Pass 2 template placement:** MUST land in Sprint #1 (not deferred); three concrete failure modes documented in reproducibility report §7
+3. **Research knob scope for trial #2:** Evidence-bolster only (single control knob; no enrichment, no gap-fill)
+
+**Sprint #1 composition locked (~24–30 pts, 7 stories):**
+- 27-2 scite.ai adapter (re-expand from ratified-stub)
+- 27-2.5 Consensus adapter (re-expand from ratified-stub)
+- 28-1 Tracy reshape charter (post-Round-3 consensus)
+- PR-R Marcus dispatch reshaping (new, pull-request standardization)
+- Irene retrieval-intake (new, Shape 3 integration)
+- Evidence-bolster control surface (new, research knob wiring)
+- §7.1 Irene Pass 2 template authoring (from reproducibility §7.1, HIGH priority, ~3pts)
+
+**Epic 34 proposal (Creative-Treatment Experimentation & Profile Curation):** Scoped with 5 stories (34-1 through 34-5); Dan as curator. Deferred to future sprint post-Sprint #1.
+
+### Handoff artifacts finalized
+
+- `next-session-start-here.md` — updated "Immediate Next Action" to Sprint #1 prep (bmad-create-epics-and-stories, bmad-create-story, bmad-party-mode green-light sequence)
+- `SESSION-HANDOFF.md` — this file (appended WRAPUP session summary)
+- User memory — project_structural_walk_status.md refreshed (stale snapshot removed)
+
+---
+
+### Prior Session Summary (2026-04-21, Trial C1-M1-PRES-20260419B: §09 → §15 closed end-to-end; first complete Marcus-the-APP run)
 
 ## What Was Completed
 

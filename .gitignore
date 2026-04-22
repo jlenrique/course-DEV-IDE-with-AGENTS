@@ -2,6 +2,15 @@
 .env
 .env.*
 
+# Local session lifecycle (operator / clone-specific hot-start and rituals)
+# Canonical protocol text lives in skills (e.g. Cora session-start / session-wrapup references).
+# These root files are recreated per workspace; do not ship handoff state via git.
+/SESSION-HANDOFF.md
+/next-session-start-here.md
+/bmad-session-protocol-session-START.md
+/bmad-session-protocol-session-WRAPUP.md
+/sessions/
+
 # Cursor / Playwright MCP local logs
 .playwright-mcp/
 

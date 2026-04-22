@@ -9,28 +9,70 @@
 
 ## Immediate Next Action
 
-**Sprint #1 preparation and party-mode green-light** (2026-04-22 session continuation).
+**Wire PDG-3 CI 3x-run flake-detection gate, then open §7.1 + 27-2.5 in parallel via `bmad-dev-story`** (2026-04-23 session start).
 
-This session (2026-04-22) completed motion-walk drift remediation (6 pre-existing findings → READY on all three structural walks) and full-repo coherence sweep. All three structural workflows READY. User locked three strategic decisions:
+Sprint #1 is GREEN-LIT — all 5 stories `ready-for-dev` with unanimous party-mode verdicts and riders applied. Dev order ratified. First concrete action: wire the flake-detection gate (binding PDG-3; blocks 27-2.5 T1). Second: open §7.1 (trial-#2 blocker) concurrent with 27-2.5.
 
-1. **Research capability activation:** Full cross-validation via scite.ai + Consensus with convergence_signal
-2. **§7.1 Irene Pass 2 template placement:** Must land in Sprint #1 (not deferred backlog)
-3. **Research knob scope:** Evidence-bolster only (no aspirational enrichment or gap-filling for trial #2)
+Prior session-level context (Sprint #1 preparation → authoring → green-light, completed 2026-04-22):
 
-**Sprint #1 composition (locked, ~24–30 pts across 7 stories):**
-- 27-2 scite.ai adapter (re-expand from ratified-stub)
-- 27-2.5 Consensus adapter (re-expand from ratified-stub)
-- 28-1 Tracy reshape charter (post-Round-3 consensus)
-- PR-R Marcus dispatch reshaping (new story, pull request standardization)
-- Irene retrieval-intake (new story, Shape 3 integration)
-- Evidence-bolster control surface (new story, research knob wiring)
-- §7.1 Irene Pass 2 template authoring (from reproducibility report §7.1, HIGH priority)
+1. **Research capability activation (locked):** Full cross-validation via scite.ai + Consensus with convergence_signal
+2. **§7.1 Irene Pass 2 template placement (locked):** Lands in Sprint #1, not deferred backlog; position 1 dev order; trial-#2 blocker
+3. **Research knob scope (locked):** Evidence-bolster only (no aspirational enrichment or gap-filling for trial #2)
+4. **Sprint #1 composition (locked 2026-04-22 party-mode):** 5 stories, 16 pts firm, dev order + D1-D7 rulings + canonical naming recorded below
 
-**Next steps at session open:**
-1. `bmad-create-epics-and-stories` to re-expand 27-2 + 27-2.5 from ratified-stub to full dev spec
-2. `bmad-create-story` for 28-1 reshape charter (3 stages: intake + decision + output)
-3. File new stories: PR-R, Irene retrieval-intake, evidence-bolster control, §7.1 Irene template
-4. `bmad-party-mode` green-light on Sprint #1 composition before dev work opens
+## Sprint #1 GREEN-LIT 2026-04-22 — 16 pts firm across 5 stories
+
+### Dev Order (party-mode ratified per D7)
+
+| Pos | Story | Pts | Floor | Open when |
+|---|---|---|---|---|
+| **1** | **§7.1 Irene Pass 2 authoring template** ([spec](_bmad-output/implementation-artifacts/7-1-irene-pass-2-authoring-template.md)) | 3 | ≥12 | **Trial-#2 BLOCKER — open FIRST** |
+| **2** | **27-2.5 Consensus adapter** ([spec](_bmad-output/implementation-artifacts/27-2.5-consensus-adapter.md)) | 3 | ≥20 | Parallel with §7.1; **PDG-3 flake gate wired + zero-flake verified BEFORE T1** |
+| **3** | **evidence-bolster control surface** ([spec](_bmad-output/implementation-artifacts/evidence-bolster-control-surface.md)) | 2 | ≥10 | After 27-2.5 T1 |
+| **4** | **irene-retrieval-intake** ([spec](_bmad-output/implementation-artifacts/irene-retrieval-intake.md)) | 3 | ≥14 | After evidence-bolster (consumes `evidence_bolster_active`) |
+| **5** | **PR-R Marcus dispatch reshaping** ([spec](_bmad-output/implementation-artifacts/PR-R-marcus-dispatch-reshaping.md)) | 5 | ≥17 | **Open LAST** — 3 consumers inform the generalization |
+
+**Total: 16 pts firm. Cumulative regression floor: ≥1220 passed.**
+
+### D1-D7 Green-Light Rulings (2026-04-22 party-mode round 1)
+
+| # | Decision | Ruling |
+|---|---|---|
+| **D1** | PR-R retrofit edge count | **3 edges**: Irene Pass 2 + Kira motion + Texas (minimal confirmation); Gary/Vera/Quinn-R deferred |
+| **D2** | PR-R registry location | **NEW** `skills/bmad-agent-marcus/references/dispatch-registry.yaml` (mirrors specialist-registry pattern) |
+| **D3** | PR-R L1 lockstep check | **IN-SCOPE** (+1 pt; non-negotiable per CLAUDE.md pipeline lockstep regime) |
+| **D4** | Irene intake contract doc | **NEW** `skills/bmad-agent-content-creator/references/retrieval-intake-contract.md` (skill-folder proximity) |
+| **D5** | Evidence-bolster missing-credential | **HARD-FAIL at Marcus boot** (contract integrity > first-run friction) |
+| **D6** | Intake layer field name | **`evidence_bolster_active`** (`_active` suffix for layer-2 runtime state projection) |
+| **D7** | PR-R sequencing | **Open LAST** (three consumers inform the generalization) |
+
+### Canonical 3-Layer Naming (sprint-level, authoritative for all 5 stories)
+
+- **Layer 1 (run-constants YAML)**: `evidence_bolster: bool = false`
+- **Layer 2 (Irene intake Pydantic)**: `evidence_bolster_active: bool`
+- **Layer 3 (Tracy RetrievalIntent)**: `cross_validate: bool` (unchanged from 27-2)
+
+### Roster-Level Riders
+
+1. **Shared doc-parity test pattern** — pin shared helper before §7.1 / retrieval-intake / evidence-bolster open dev (Murat)
+2. **Module-level constants, no `os.environ.get` at import** — inherits 27-2 DEFER trap guard (Amelia)
+3. **Cumulative regression floor ≥1220 passed** (Murat)
+4. **Fixture hygiene**: `tests/fixtures/<story-id>/`; no cross-story reference (Amelia)
+5. **`docs/research-knobs-guide.md`** as dedicated file (NOT appended to operations-context.md) with 3-concept comparison table + 'what it does NOT do' anti-conflation column (Paige)
+6. **Flake-gate binding EXTENDED to PR-R** (Murat); other stories get "local 3x-run before PR" hygiene
+
+### Drift Remediation (this session, 2026-04-22)
+
+1. **27-2 done-drift**: 27-2 BMAD-closed 2026-04-18 (SciteProvider 620 LOC; 1149/2/0/2; 15 PATCH), but `bmm-workflow-status.yaml` / `epic-27-texas-intake-expansion.md` / this file labeled it `ratified-stub`. All 4 surfaces aligned.
+2. **Epic 28 done-drift**: 4-story Tracy reshape (28-1-reshape-charter + 28-2-three-modes + 28-3-irene-tracy-bridge + 28-4-smoke-fixtures) BMAD-closed 2026-04-19, but `bmm-workflow-status.yaml` + `epic-28-tracy-detective.md` showed retired pre-reshape roster. All surfaces aligned.
+3. `sprint-status.yaml` `development_status` was the authoritative Kanban throughout; all other surfaces re-sync'd to match.
+
+### Next Steps at Session Open
+
+1. **Wire PDG-3 CI 3x-run flake-detection gate** on `pytest -k "cross_validate or retrieval_dispatcher"`; zero-flake verified BEFORE 27-2.5 dev-story T1 (binding; extends to PR-R per Murat roster rider).
+2. **Open §7.1 + 27-2.5 in parallel** (positions 1 + 2) via `bmad-dev-story`. §7.1 is trial-#2 blocker.
+3. **Pin shared doc-parity test pattern** before positions 3/4 open.
+4. **Commit drift remediation + authored story specs + green-light patches + sprint-status updates** (DEFERRED from this session per operator at D-time; commit at session start or batch at wrapup).
 
 **Epic 34 (Creative-Treatment Experimentation & Profile Curation) proposed for future sprint.** Scoped in this session: 5 stories (34-1 through 34-5) with Dan as curator. Deferred pending Sprint #1 completion.
 

@@ -4,7 +4,7 @@ Runs ``pytest -k "<selector>" -p no:cacheprovider`` N times in sequence and
 fails if any run diverges from the others (different exit code, different
 pass/fail/error counts, or different collected-node count).
 
-Binding per Story 27-2.5 §Pre-Development Gate PDG-3 and extended to PR-R per
+Binding per Story 27-2.5 Pre-Development Gate PDG-3 and extended to PR-R per
 Murat's Sprint #1 roster rider #6.
 
 Usage:
@@ -25,16 +25,27 @@ from dataclasses import dataclass
 
 DEFAULT_SELECTOR = "cross_validate or retrieval_dispatcher"
 DEFAULT_RUNS = 3
-
-_SUMMARY_RE = re.compile(
-    r"(?P<passed>\d+) passed"
-    r"(?:, (?P<failed>\d+) failed)?"
-    r"(?:, (?P<errors>\d+) error[s]?)?"
-    r"(?:, (?P<skipped>\d+) skipped)?"
-    r"(?:, (?P<xfailed>\d+) xfailed)?"
-    r"(?:, (?P<xpassed>\d+) xpassed)?"
-    r"(?:, (?P<deselected>\d+) deselected)?"
-)
+# Subprocess timeout (seconds) — upper bound on any single pytest run in the
+# gate. Prevents a deadlocked test from hanging the gate indefinitely. The
+# flake-gate slice is expected to complete in seconds; anything approaching
+# this bound is itself a signal worth investigating.
+_RUN_TIMEOUT_SECONDS = 600
+# Pytest terminal-summary sentinel: authoritative summary line ends with
+# `in <seconds>s` (with optional minute/hour spans). Used to anchor the
+# regex to the real summary, not stray `"5 passed"` strings elsewhere in
+# stdout (tracebacks, log messages, assertion text).
+_SUMMARY_TAIL_RE = re.compile(r"\bin [\d.:]+s\b\s*$")
+# Individual-count patterns (each optional). Parsed independently so we
+# don't require a fixed ordering or require `passed` to be present.
+_COUNT_PATTERNS: dict[str, re.Pattern[str]] = {
+    "passed": re.compile(r"(\d+) passed\b"),
+    "failed": re.compile(r"(\d+) failed\b"),
+    "errors": re.compile(r"(\d+) errors?\b"),
+    "skipped": re.compile(r"(\d+) skipped\b"),
+    "xfailed": re.compile(r"(\d+) xfailed\b"),
+    "xpassed": re.compile(r"(\d+) xpassed\b"),
+    "deselected": re.compile(r"(\d+) deselected\b"),
+}
 
 
 @dataclass(frozen=True)
@@ -48,8 +59,14 @@ class RunOutcome:
     xpassed: int
     deselected: int
     raw_tail: str
+    parser_recognized_summary: bool = True
 
-    def signature(self) -> tuple[int, int, int, int, int, int, int, int]:
+    def signature(
+        self,
+    ) -> tuple[int, int, int, int, int, int, int, int, bool]:
+        # parser_recognized_summary is part of signature so "zero-tuple
+        # because we couldn't parse any summary" is NOT confused with a
+        # genuine "0 passed" outcome.
         return (
             self.exit_code,
             self.passed,
@@ -59,24 +76,30 @@ class RunOutcome:
             self.xfailed,
             self.xpassed,
             self.deselected,
+            self.parser_recognized_summary,
         )
 
 
-def _parse_summary(stdout: str) -> tuple[int, int, int, int, int, int, int]:
+def _parse_summary(stdout: str) -> tuple[dict[str, int], bool]:
+    """Parse pytest's terminal summary, anchoring on the ``in <n>s`` tail.
+
+    Returns (counts_dict, recognized). ``recognized`` is True iff we matched
+    an authoritative summary line. Used by callers to distinguish a genuine
+    all-zero result from an unparseable output.
+    """
     for line in reversed(stdout.splitlines()):
-        m = _SUMMARY_RE.search(line)
-        if not m:
+        if not _SUMMARY_TAIL_RE.search(line):
             continue
-        return (
-            int(m.group("passed") or 0),
-            int(m.group("failed") or 0),
-            int(m.group("errors") or 0),
-            int(m.group("skipped") or 0),
-            int(m.group("xfailed") or 0),
-            int(m.group("xpassed") or 0),
-            int(m.group("deselected") or 0),
-        )
-    return (0, 0, 0, 0, 0, 0, 0)
+        counts: dict[str, int] = {}
+        for key, pattern in _COUNT_PATTERNS.items():
+            match = pattern.search(line)
+            counts[key] = int(match.group(1)) if match else 0
+        # Only recognize a summary line that carries at least one real
+        # outcome count — otherwise we match any random `"foo in 1.5s"`
+        # line (e.g., verbose duration plugin output).
+        if any(counts.values()) or re.search(r"no tests ran", line):
+            return counts, True
+    return {k: 0 for k in _COUNT_PATTERNS}, False
 
 
 def _run_once(selector: str) -> RunOutcome:
@@ -91,29 +114,60 @@ def _run_once(selector: str) -> RunOutcome:
         "--tb=line",
         "-q",
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    passed, failed, errors, skipped, xfailed, xpassed, deselected = _parse_summary(
-        proc.stdout
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=_RUN_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout or ""
+        return RunOutcome(
+            exit_code=-1,
+            passed=0,
+            failed=0,
+            errors=0,
+            skipped=0,
+            xfailed=0,
+            xpassed=0,
+            deselected=0,
+            raw_tail=(
+                f"[timeout after {_RUN_TIMEOUT_SECONDS}s]\n"
+                + "\n".join(partial.splitlines()[-3:] if partial else [])
+            ),
+            parser_recognized_summary=False,
+        )
+
+    counts, recognized = _parse_summary(proc.stdout)
     tail_lines = proc.stdout.splitlines()[-3:] if proc.stdout else []
     return RunOutcome(
         exit_code=proc.returncode,
-        passed=passed,
-        failed=failed,
-        errors=errors,
-        skipped=skipped,
-        xfailed=xfailed,
-        xpassed=xpassed,
-        deselected=deselected,
+        passed=counts["passed"],
+        failed=counts["failed"],
+        errors=counts["errors"],
+        skipped=counts["skipped"],
+        xfailed=counts["xfailed"],
+        xpassed=counts["xpassed"],
+        deselected=counts["deselected"],
         raw_tail="\n".join(tail_lines),
+        parser_recognized_summary=recognized,
     )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=(
+            "PDG-3 flake-detection gate: run a pytest slice N times and "
+            "fail if outcomes diverge or any run is not green."
+        )
+    )
     parser.add_argument("--selector", default=DEFAULT_SELECTOR)
     parser.add_argument("--runs", type=int, default=DEFAULT_RUNS)
     args = parser.parse_args()
+
+    if args.runs < 2:
+        parser.error("--runs must be >= 2 (flake detection requires comparing runs)")
 
     print(f"PDG-3 flake gate: {args.runs}x `pytest -k \"{args.selector}\"`")
     outcomes: list[RunOutcome] = []
@@ -121,11 +175,15 @@ def main() -> int:
         print(f"  run {idx}/{args.runs}...", end=" ", flush=True)
         outcome = _run_once(args.selector)
         outcomes.append(outcome)
+        summary_note = (
+            "" if outcome.parser_recognized_summary else " [NO PARSEABLE SUMMARY]"
+        )
         print(
             f"exit={outcome.exit_code} "
             f"passed={outcome.passed} failed={outcome.failed} "
             f"errors={outcome.errors} skipped={outcome.skipped} "
             f"xfailed={outcome.xfailed} deselected={outcome.deselected}"
+            f"{summary_note}"
         )
 
     signatures = {o.signature() for o in outcomes}
@@ -138,6 +196,20 @@ def main() -> int:
         return 1
 
     sig = outcomes[0]
+
+    # Fail closed when we couldn't parse a summary on any run — a crash
+    # (segfault, import error, timeout) yields zero outcome counts that
+    # must never be confused with "3 consecutive green runs".
+    if not sig.parser_recognized_summary:
+        print(
+            f"\nGATE FAILED — could not parse pytest terminal summary across "
+            f"{args.runs} runs (likely crash, timeout, or no tests selected). "
+            f"signature={sig.signature()}"
+        )
+        if sig.raw_tail:
+            print(f"tail: {sig.raw_tail}")
+        return 1
+
     if sig.exit_code != 0 or sig.failed > 0 or sig.errors > 0:
         print(
             f"\nGATE FAILED — all {args.runs} runs agree but outcome is "

@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "state/config/schemas/segment-manifest.schema.json",
   "title": "SegmentManifest",
   "description": "Irene Pass 2 segment-manifest structural contract. Closes §7.1 failure modes from trial C1-M1-PRES-20260419B: §6.3 forbid legacy motion_asset key; §6.4 require visual_file on non-null-visual-mode segments; §6.5 require non-null motion_duration_seconds on motion (visual_mode=='video') segments. Value-vs-receipt cross-validation is NOT schema-enforced — see scripts/validators/pass_2_emission_lint.py for the upstream-reference check.",
   "type": "object",

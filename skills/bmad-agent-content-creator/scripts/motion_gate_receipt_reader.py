@@ -18,6 +18,7 @@ Public API:
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 
@@ -58,11 +59,21 @@ def read_motion_durations(path: Path) -> dict[str, float]:
     is empty (static-only deck).
     """
     receipt = load_receipt(path)
+    if not isinstance(receipt, dict):
+        raise MotionGateReceiptError(
+            f"Motion Gate receipt root must be a JSON object, got "
+            f"{type(receipt).__name__} ({path})"
+        )
 
     gate_decision = receipt.get("gate_decision")
     if gate_decision is None:
         raise MotionGateReceiptError(
             f"Motion Gate receipt is missing gate_decision ({path})"
+        )
+    if not isinstance(gate_decision, str):
+        raise MotionGateReceiptError(
+            f"gate_decision must be a string, got {type(gate_decision).__name__} "
+            f"({path})"
         )
     if gate_decision != "approved":
         raise MotionGateReceiptError(
@@ -78,17 +89,37 @@ def read_motion_durations(path: Path) -> dict[str, float]:
 
     durations: dict[str, float] = {}
     for idx, entry in enumerate(non_static):
+        if not isinstance(entry, dict):
+            raise MotionGateReceiptError(
+                f"non_static_slides[{idx}] must be a mapping, got "
+                f"{type(entry).__name__} ({path})"
+            )
         slide_id = entry.get("slide_id")
         if slide_id is None:
             raise MotionGateReceiptError(
                 f"non_static_slides[{idx}] is missing slide_id ({path})"
+            )
+        if not isinstance(slide_id, str) or not slide_id:
+            raise MotionGateReceiptError(
+                f"non_static_slides[{idx}] slide_id must be a non-empty string, "
+                f"got {slide_id!r} ({path})"
             )
         if slide_id in durations:
             raise MotionGateReceiptError(
                 f"duplicate slide_id {slide_id!r} in non_static_slides ({path})"
             )
         duration = entry.get("duration_seconds")
-        if duration is None or not isinstance(duration, (int, float)) or duration <= 0:
+        # Reject bool explicitly — isinstance(True, int) is True in Python,
+        # and `True > 0` evaluates True, so without this guard a
+        # `duration_seconds: true` in JSON would coerce to 1.0 silently.
+        if (
+            duration is None
+            or isinstance(duration, bool)
+            or not isinstance(duration, (int, float))
+            or duration <= 0
+            or math.isnan(duration)
+            or math.isinf(duration)
+        ):
             raise MotionGateReceiptError(
                 f"non_static_slides[{idx}] has invalid duration "
                 f"({duration!r}) for slide_id {slide_id!r} ({path})"

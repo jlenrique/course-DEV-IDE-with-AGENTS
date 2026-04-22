@@ -1,6 +1,6 @@
 # Story §7.1: Irene Pass 2 Authoring Template (Schema-Validated Emission + Fail-Closed Lint)
 
-**Status:** review (2026-04-22 — all 13 T-tasks complete; 61 new tests green; full regression 2187 passed / 5 failed (all pre-existing on branch, unrelated to §7.1 — classified in Dev Agent Record); ready for `bmad-code-review`)
+**Status:** done (2026-04-22 — all 13 T-tasks complete; bmad-code-review complete, 19 patches applied + 10 deferred; full regression 2193 passed / 4 failed, 4 failures pre-existing on branch unrelated to §7.1)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Irene Pass 2 contract hardening — likely future Epic 23-extension "Irene Output Discipline")
 **Sprint key:** `7-1-irene-pass-2-authoring-template`
@@ -378,4 +378,51 @@ All 5 are eligible for bmad-code-review consideration as pre-existing drift; non
 - `tests/irene/test_pack_v4_2_lint_integration.py` (T12) — 5 tests
 - `tests/fixtures/7-1-irene-pass-2-authoring-template/**` (T1) — 6 fixtures
 
-**Next step:** `bmad-code-review` on this story (recommended fresh-context session per BMAD convention). Findings triage per Sprint #1 discipline; story transitions `review` → `done` post-review.
+### 2026-04-22 — bmad-code-review layered pass (same session continuation; story → done)
+
+Three parallel reviewers (Blind Hunter + Edge Case Hunter + Acceptance Auditor) produced 61 raw findings. Triage: **19 PATCH applied / 10 DEFER / 11 DISMISS.** Acceptance Auditor: 21/21 spec criteria SATISFIED — zero MUST-FIX at the spec layer.
+
+All 19 patches applied this session. Story suite now **76 tests in tests/irene/ + tests/ci/ passing** (was 61). Full regression: **2193 passed / 4 failed / 5 skipped** — the same 4 pre-existing branch-drift failures that pre-dated §7.1, now classified in the Dev Agent Record for separate operator triage. Deferred items appended to `_bmad-output/maps/deferred-work.md` under a dedicated §7.1-code-review heading.
+
+### Review Findings
+
+bmad-code-review layered pass completed 2026-04-22 (three parallel reviewers: Blind Hunter / Edge Case Hunter / Acceptance Auditor). Summary: **19 patch / 10 defer / 11 dismissed.** Acceptance Auditor: 21/21 spec criteria met. Triage ordered by severity.
+
+#### PATCH (to apply — unresolved correctness / contract gaps)
+
+- [x] [Review][Patch] Flake-gate regex fails on failure-only summary ("1 failed in 0.10s") — silently returns zero-tuple, masks real failures [`scripts/ci/run_flake_gate.py:29-37`]
+- [x] [Review][Patch] Flake-gate crash produces zero-tuple signature that looks green; 3 crashes converge to same signature [`scripts/ci/run_flake_gate.py:85-90`]
+- [x] [Review][Patch] Flake-gate subprocess has no timeout; deadlocked test hangs the gate forever [`scripts/ci/run_flake_gate.py:94`]
+- [x] [Review][Patch] Flake-gate --runs 0/1 degenerate: --runs 0 IndexError; --runs 1 flake detection meaningless [`scripts/ci/run_flake_gate.py:120-131`]
+- [x] [Review][Patch] Lint: non-dict segment entry raises uncaught AttributeError; CLI exits 1 with traceback instead of 2 [`scripts/validators/pass_2_emission_lint.py:86`]
+- [x] [Review][Patch] Lint: empty manifest (`yaml.safe_load` → None) crashes `manifest.get("segments")` uncaught [`scripts/validators/pass_2_emission_lint.py:179`]
+- [x] [Review][Patch] Lint: `motion_duration_seconds` as string `"5.041"` crashes `abs(duration - receipt_duration)` with TypeError [`scripts/validators/pass_2_emission_lint.py:158-159`]
+- [x] [Review][Patch] Lint: NaN / Infinity `motion_duration_seconds` silently accepted (abs(NaN-x) is NaN, not > tolerance) [`scripts/validators/pass_2_emission_lint.py:158-159`]
+- [x] [Review][Patch] Lint: `segments: []` (empty) + `--skip-schema` passes as clean [`scripts/validators/pass_2_emission_lint.py:75-84`]
+- [x] [Review][Patch] Lint: receipt-lookup slide_id/id fallback reports finding against seg_id even when receipt was keyed on slide_id; misleading operator triage [`scripts/validators/pass_2_emission_lint.py:125-128`]
+- [x] [Review][Patch] Lint: duration tolerance comment says "1ms round-trip slop" — actual round-trip IEEE-754 slop is ~1e-15, so 1ms is a business tolerance; update comment [`scripts/validators/pass_2_emission_lint.py:27`]
+- [x] [Review][Patch] Receipt reader: non-dict entry in non_static_slides raises AttributeError instead of MotionGateReceiptError [`skills/bmad-agent-content-creator/scripts/motion_gate_receipt_reader.py:80-85`]
+- [x] [Review][Patch] Receipt reader: `duration_seconds: true` accepted (bool is subclass of int); coerces to 1.0 silently [`skills/bmad-agent-content-creator/scripts/motion_gate_receipt_reader.py:91`]
+- [x] [Review][Patch] Receipt reader: `gate_decision` type check and `slide_id: ""` empty-string check [`skills/bmad-agent-content-creator/scripts/motion_gate_receipt_reader.py:54-85`]
+- [x] [Review][Patch] Receipt reader: NaN / Infinity duration accepted [`skills/bmad-agent-content-creator/scripts/motion_gate_receipt_reader.py:91`]
+- [x] [Review][Patch] JSON Schema `$id: "state/config/schemas/..."` is a relative path, not a URI; breaks `$ref` resolution. Drop `$id` or use URN [`state/config/schemas/segment-manifest.schema.json:3`]
+- [x] [Review][Patch] Zero-test-edit guard `skipif` evaluates `_guard_is_dormant()` at collection time; env vars set via fixture won't arm the guard. Use callable form [`tests/contracts/test_30_1_zero_test_edits.py:83-85`]
+- [x] [Review][Patch] Test module sys.modules registrations under common names ("run_flake_gate", "pass_2_emission_lint") can collide with other tests / plugin state; use unique `_test_*` names [`tests/ci/test_run_flake_gate.py:19-23`, `tests/irene/test_pass_2_emission_lint.py:29-33`]
+- [x] [Review][Patch] AC-B.6 sanctum INDEX.md pointer landed under gitignored path — untracked; add a tracked pointer to the authoring template from `skills/bmad-agent-content-creator/SKILL.md` so the bond survives fresh clones
+
+#### DEFER (real but out-of-§7.1-scope or follow-on)
+
+- [x] [Review][Defer] Schema `additionalProperties: true` admits typos/aliases (`motion-asset`, `motionAsset`, etc.); Paige's ban was scoped to the specific legacy key. Opportunity for a separate hardening story [`state/config/schemas/segment-manifest.schema.json:38, 95`]
+- [x] [Review][Defer] `visual_mode: "animation"` has no §6.5-equivalent structural rule; trial-#1 failure modes were all motion-video. Out of §7.1 scope per §Non-goals but a reasonable follow-on [`state/config/schemas/segment-manifest.schema.json:111-131`]
+- [x] [Review][Defer] Duplicate segment `id` / `slide_id` across segments not detected by schema or lint [`scripts/validators/pass_2_emission_lint.py:86-173`]
+- [x] [Review][Defer] visual_mode case sensitivity + empty string can escape lint's `--skip-schema` path [`scripts/validators/pass_2_emission_lint.py:105-123`]
+- [x] [Review][Defer] ANSI color escapes could break flake-gate regex in local dev (CI disables color) [`scripts/ci/run_flake_gate.py:29-37`]
+- [x] [Review][Defer] Lint CLI fallback `importlib.util` uses shared module name that can collide with stale sys.modules entries [`scripts/validators/pass_2_emission_lint.py:190-205`]
+- [x] [Review][Defer] schema_version `const: "1.1"` has no negative test (wrong-version manifest rejected) [`tests/irene/test_segment_manifest_schema.py`]
+- [x] [Review][Defer] `test_schema_forbids_motion_asset_key_declaratively` logical disjunction has latent TypeError if schema later adds top-level `not` [`tests/irene/test_segment_manifest_schema.py:140-152`]
+- [x] [Review][Defer] §6.3 test asserts finding touches card-01 via substring; tightening to exact equality is a test-quality improvement [`tests/irene/test_pass_2_emission_lint.py:52-55`]
+- [x] [Review][Defer] Flake-gate divergence detector has no post-mortem output (saved stdout per run) for operator triage [`scripts/ci/run_flake_gate.py:115-122`]
+
+#### DISMISSED
+
+11 cosmetic or false-positive findings dismissed: canonical fixture schema false-alarm (retracted by reviewer); §6.5 mismatch test substring assertion (cosmetic); argparse uses full docstring for --help (cosmetic); `_schema_errors` collapses to `<manifest>` for root errors (defensive-is-fine); tolerance `>` vs `>=` boundary (cosmetic); seg_id `<unknown>` collision under duplicates (schema blocks it); `_schema_errors` subscripting (defensive is fine); visual_mode absent escape (schema blocks it); gate_decision uppercase "APPROVED" rejection (case-sensitive is acceptable); tolerance fixture value boundary (cosmetic); Amelia rider reader path substitution (already reconciled in Dev Agent Record).

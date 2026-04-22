@@ -1,5 +1,18 @@
 # Deferred Work
 
+## Deferred from: code review of story-7.1-irene-pass-2-authoring-template (2026-04-22)
+
+- **Schema `additionalProperties: true` admits motion_asset typos/aliases** (`motion-asset`, `motionAsset`, `motion_assets`, etc.) — Paige's ban was scoped to the specific legacy key. A follow-on hardening story could enumerate a full alias blacklist or switch to `unevaluatedProperties: false` with explicit extras allowlist.
+- **§6.5-equivalent structural rule for `visual_mode: "animation"`** — current schema and lint only fire motion-required checks on `"video"`. Animation segments can ship with null `motion_duration_seconds`. Out of §7.1 trial-#1 scope (all failure modes were video) but a reasonable hardening once animation runs happen.
+- **Duplicate segment `id` / `slide_id` detection** — neither schema (no uniqueItems) nor lint track duplicates. Downstream renderer likely breaks on duplicate keys; pre-flight catch would improve error locality.
+- **Lint `--skip-schema` path lets empty / whitespace / case-variant `visual_mode` escape §6.4+§6.5 checks** — current hardening assumes schema layer always runs. `--skip-schema` is a niche flag, but if we ever run lint-only (no schema) this is a gap.
+- **Flake-gate ANSI color escape handling** — regex can break when pytest color is enabled (local dev). CI path disables via `-q`; add `NO_COLOR=1` env or ANSI-strip for robustness.
+- **Lint CLI `importlib.util` fallback uses shared module name** — if a prior partial import leaves a stale `motion_gate_receipt_reader` in `sys.modules`, fallback path picks up the stale version. Rename to `_pass2_lint_fallback_motion_gate_reader`.
+- **Schema `schema_version: const: "1.1"` negative test missing** — no fixture exercises rejection of a wrong-version manifest. Low-priority but would document the version-pin contract.
+- **`test_schema_forbids_motion_asset_key_declaratively` logical disjunction has latent TypeError** — current `segment_schema.get("not", []) + [...]` concatenation crashes if schema ever adds top-level `not` as a dict. Trivial fix; defer until schema evolves.
+- **§6.3 test asserts finding touches card-01 via substring, not exact equality** — tightening to exact segment_id equality improves signal quality for future regressions.
+- **Flake-gate divergence detector has no per-run stdout capture** — on divergence, operator sees "signatures differ" with no diff. Save each run's full stdout under timestamped dir for post-mortem.
+
 - ~~2026-04-02: Build function to save downloaded literal visuals from Gamma into the existing Git site destination. Status: implemented on `dev/storyboarding-feature` with preintegration publish helper, mode-aware fail-closed behavior, URL substitution wiring, and regression/live integration test coverage.~~ **Closed 2026-04-02.**
 
 ## 33-1 generator discovery deferred findings (2026-04-19)

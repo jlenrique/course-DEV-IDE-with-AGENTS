@@ -26,10 +26,12 @@ import yaml
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _LINT_PATH = _REPO_ROOT / "scripts" / "validators" / "pass_2_emission_lint.py"
-_spec = importlib.util.spec_from_file_location("pass_2_emission_lint", _LINT_PATH)
+# Unique module name avoids collision with any stale sys.modules entry.
+_MODULE_NAME = "_test_pass_2_emission_lint_helper"
+_spec = importlib.util.spec_from_file_location(_MODULE_NAME, _LINT_PATH)
 assert _spec is not None and _spec.loader is not None
 lint = importlib.util.module_from_spec(_spec)
-sys.modules["pass_2_emission_lint"] = lint
+sys.modules[_MODULE_NAME] = lint
 _spec.loader.exec_module(lint)
 
 FIXTURE_ROOT = (

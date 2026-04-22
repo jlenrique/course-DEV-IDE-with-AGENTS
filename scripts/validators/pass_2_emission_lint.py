@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,8 +28,12 @@ import yaml
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SCHEMA_PATH = _REPO_ROOT / "state" / "config" / "schemas" / "segment-manifest.schema.json"
 
-# Absolute-tolerance for receipt↔manifest duration comparison. Motion Gate
-# records durations to 3 decimal places; we allow 1ms slop for float round-trip.
+# Absolute-tolerance for receipt↔manifest duration comparison. This is a
+# BUSINESS tolerance (how precisely Motion Gate reports durations and how
+# precisely Irene needs to carry them forward), not a round-trip-float
+# slop allowance (actual IEEE-754 round-trip drift on typical durations is
+# ~1e-15). 1 millisecond is well below human-perceptible audio-alignment
+# thresholds while still catching meaningful value disagreements.
 _DURATION_TOLERANCE_SECONDS = 0.001
 
 # Supported finding kinds (closed set for AC-C.2 determinism).
@@ -72,6 +77,19 @@ def lint_manifest(
     """
     findings: list[LintFinding] = []
 
+    if not isinstance(manifest, dict):
+        findings.append(
+            LintFinding(
+                kind=_KIND_SCHEMA,
+                segment_id="<manifest>",
+                detail=(
+                    f"manifest root must be a mapping, got "
+                    f"{type(manifest).__name__}"
+                ),
+            )
+        )
+        return _sorted_findings(findings)
+
     segments = manifest.get("segments")
     if not isinstance(segments, list):
         findings.append(
@@ -83,8 +101,35 @@ def lint_manifest(
         )
         return _sorted_findings(findings)
 
-    for segment in segments:
-        seg_id = segment.get("id") or segment.get("slide_id") or "<unknown>"
+    if not segments:
+        findings.append(
+            LintFinding(
+                kind=_KIND_SCHEMA,
+                segment_id="<manifest>",
+                detail="segments list is empty (manifest must carry >=1 segment)",
+            )
+        )
+        return _sorted_findings(findings)
+
+    for idx, segment in enumerate(segments):
+        if not isinstance(segment, dict):
+            findings.append(
+                LintFinding(
+                    kind=_KIND_SCHEMA,
+                    segment_id=f"segments[{idx}]",
+                    detail=(
+                        f"segment must be a mapping, got "
+                        f"{type(segment).__name__}"
+                    ),
+                )
+            )
+            continue
+
+        seg_id = (
+            segment.get("id")
+            or segment.get("slide_id")
+            or f"segments[{idx}]"
+        )
 
         # §6.3 — legacy motion_asset key forbidden.
         if "motion_asset" in segment:
@@ -122,10 +167,23 @@ def lint_manifest(
         # §6.5-null + §6.5-mismatch — motion segments only.
         if visual_mode == "video":
             duration = segment.get("motion_duration_seconds")
-            receipt_duration = receipt_durations.get(seg_id)
             slide_id = segment.get("slide_id")
-            if slide_id and slide_id != seg_id and receipt_duration is None:
+            # Track which key we matched on so finding attribution can name
+            # the actual receipt-lookup key rather than always-seg_id.
+            receipt_lookup_key: str | None = None
+            receipt_duration = receipt_durations.get(seg_id)
+            if receipt_duration is not None:
+                receipt_lookup_key = seg_id
+            elif slide_id and slide_id != seg_id:
                 receipt_duration = receipt_durations.get(slide_id)
+                if receipt_duration is not None:
+                    receipt_lookup_key = slide_id
+
+            attribution = (
+                seg_id
+                if receipt_lookup_key is None or receipt_lookup_key == seg_id
+                else f"{seg_id} (matched receipt via slide_id={receipt_lookup_key!r})"
+            )
 
             if receipt_duration is None:
                 # Upstream Motion Gate receipt has no entry for this slide —
@@ -147,11 +205,37 @@ def lint_manifest(
                 findings.append(
                     LintFinding(
                         kind=_KIND_MISSING_DURATION,
-                        segment_id=seg_id,
+                        segment_id=attribution,
                         detail=(
                             f"motion segment has null motion_duration_seconds; "
                             f"Motion Gate receipt carries {receipt_duration}s — "
                             "carry it forward at Pass 2 emission"
+                        ),
+                    )
+                )
+            elif not isinstance(duration, (int, float)) or isinstance(duration, bool):
+                # String, bool, list, or any non-numeric type — cannot compare
+                # against the numeric receipt value. Surfaces as §6.5-null
+                # since the manifest's duration is functionally unusable.
+                findings.append(
+                    LintFinding(
+                        kind=_KIND_MISSING_DURATION,
+                        segment_id=attribution,
+                        detail=(
+                            f"motion_duration_seconds has non-numeric type "
+                            f"{type(duration).__name__} (value={duration!r}); "
+                            f"receipt carries {receipt_duration}s"
+                        ),
+                    )
+                )
+            elif math.isnan(duration) or math.isinf(duration):
+                findings.append(
+                    LintFinding(
+                        kind=_KIND_DURATION_MISMATCH,
+                        segment_id=attribution,
+                        detail=(
+                            f"motion_duration_seconds is {duration!r} (not a "
+                            f"finite number); receipt carries {receipt_duration}s"
                         ),
                     )
                 )
@@ -161,7 +245,7 @@ def lint_manifest(
                 findings.append(
                     LintFinding(
                         kind=_KIND_DURATION_MISMATCH,
-                        segment_id=seg_id,
+                        segment_id=attribution,
                         detail=(
                             f"motion_duration_seconds={duration} disagrees with "
                             f"Motion Gate receipt value {receipt_duration} "
@@ -176,7 +260,14 @@ def lint_manifest(
 def _load_manifest(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"manifest not found: {path}")
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if data is None:
+        raise yaml.YAMLError(f"manifest is empty: {path}")
+    if not isinstance(data, dict):
+        raise yaml.YAMLError(
+            f"manifest root must be a mapping, got {type(data).__name__}: {path}"
+        )
+    return data
 
 
 def _schema_errors(manifest: dict) -> list[LintFinding]:

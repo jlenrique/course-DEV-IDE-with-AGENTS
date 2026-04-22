@@ -83,21 +83,22 @@ def _guard_is_dormant() -> bool:
     return os.environ.get("MARCUS_DUALITY_GUARD_ACTIVE") != "1"
 
 
-@pytest.mark.skipif(
-    _guard_is_dormant(),
-    reason=(
-        "30-1 zero-test-edit guard is dormant (all 30-x stories closed); "
-        "set MARCUS_DUALITY_GUARD_ACTIVE=1 + update baseline/allowlists in "
-        "this file to re-arm for a future Marcus-duality refactor"
-    ),
-)
 def test_no_preexisting_test_files_modified_in_30_1() -> None:
     """AC-T.10 — ``git diff {baseline}..HEAD -- tests/`` contains no
     pre-existing file edits outside the allowlists.
 
     Dormant by default (see module docstring for re-arm procedure).
     Commit-range pin (not working-tree diff) — survives local dirty state.
+
+    Dormant check is re-evaluated at call time (not collection time) so
+    env vars set via fixtures or dynamic CI activation take effect.
     """
+    if _guard_is_dormant():
+        pytest.skip(
+            "30-1 zero-test-edit guard is dormant (all 30-x stories closed); "
+            "set MARCUS_DUALITY_GUARD_ACTIVE=1 + update baseline/allowlists in "
+            "this file to re-arm for a future Marcus-duality refactor"
+        )
     # Check baseline commit is reachable.
     reachable = subprocess.run(
         ["git", "-C", str(_REPO_ROOT), "cat-file", "-e", _PRE_30_1_BASELINE_COMMIT],

@@ -332,7 +332,7 @@ Stop if any dimension or G0 fails.
 
 ---
 
-## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)
+## 04A) Lesson Plan Coauthoring + Scope Lock
 [M→O]
 
 
@@ -403,7 +403,7 @@ When this lock succeeds, the HUD confirms the run constants are frozen for the a
 
 [M→self] Keep the lock boundary strict: no emission side effects should be recorded as complete until this lock transitions to success.
 
-## 4.75) Creative Directive Resolution (CD)
+## 4.75) Creative Directive Resolution
 [M→O]
 
 
@@ -545,7 +545,7 @@ Stop if any artifact fails contract rules.
 
 ---
 
-## 6.2) Cluster Prompt Engineering (Conditional)
+## 6.2) Cluster Prompt Engineering
 [M→O]
 
 
@@ -564,7 +564,7 @@ Gate rule:
 
 ---
 
-## 6.3) Cluster Dispatch Sequencing (Conditional)
+## 6.3) Cluster Dispatch Sequencing
 [M→O]
 
 
@@ -646,7 +646,7 @@ Stop on any validator or G3 failure.
 
 ---
 
-## 7.5) Cluster Coherence G2.5 Gate (Conditional)
+## 7.5) Cluster Coherence G2.5 Gate
 [M→O]
 
 
@@ -698,7 +698,7 @@ Fallback:
 
 ---
 
-## 07C) Storyboard A + Gate 2 Approval + Winner Authorization
+## 07C) Storyboard A + Gate 2 Approval
 [M→O]
 
 
@@ -960,6 +960,12 @@ Motion-specific rules:
 
 Rerun rule:
 - If Prompt 8 is being re-run after a partial or invalid Pass 2 attempt, restart at Prompt 8 itself once Gate 2 and Motion Gate remain valid; do not jump ahead to Storyboard B from stale Pass 2 artifacts.
+
+Pass 2 emission lint (fail-closed gate — story §7.1):
+- After Irene writes `[BUNDLE_PATH]/segment-manifest.yaml`, Marcus invokes `scripts/validators/pass_2_emission_lint.py --manifest [BUNDLE_PATH]/segment-manifest.yaml --motion-gate-receipt [BUNDLE_PATH]/motion-gate-receipt.json` before advancing to §08B Storyboard B.
+- Exit 0 → proceed. Exit 1 → lint reports per-segment findings (§6.3 legacy `motion_asset` key, §6.4 missing `visual_file` on non-null-visual-mode segment, §6.5-null missing `motion_duration_seconds`, §6.5-mismatch manifest value disagrees with Motion Gate receipt); block §08B, return the findings to Irene for re-emission, restart at §08 per the rerun rule.
+- Exit 2 → infrastructure error (missing manifest or receipt, malformed input); block §08B pending operator triage.
+- Authoring-time contract reference: `skills/bmad-agent-content-creator/references/pass-2-authoring-template.md`.
 
 ## 08B) Storyboard B + HIL Review
 [M→O]

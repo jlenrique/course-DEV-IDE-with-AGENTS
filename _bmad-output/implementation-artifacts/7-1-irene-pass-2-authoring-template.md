@@ -1,6 +1,6 @@
 # Story §7.1: Irene Pass 2 Authoring Template (Schema-Validated Emission + Fail-Closed Lint)
 
-**Status:** in-progress (opened 2026-04-22 via bmad-dev-story on sprint-1/pdg-3-and-parallel-opens; T1 landed — see Dev Agent Record)
+**Status:** review (2026-04-22 — all 13 T-tasks complete; 61 new tests green; full regression 2187 passed / 5 failed (all pre-existing on branch, unrelated to §7.1 — classified in Dev Agent Record); ready for `bmad-code-review`)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Irene Pass 2 contract hardening — likely future Epic 23-extension "Irene Output Discipline")
 **Sprint key:** `7-1-irene-pass-2-authoring-template`
@@ -99,16 +99,16 @@ So that **the three trial-#1 failure modes (§6.3 / §6.4 / §6.5) cannot recur 
 - [x] T1 — Harvest trial-#1 fixtures — as-emitted + Motion Gate receipt + minimal 2-segment canonical + 3 malformed variants (§6.3 / §6.4 / §6.5)
 - [x] T2 — Segment-manifest schema tightening (forbid `motion_asset`; require `visual_file` conditional on `visual_mode`; require `motion_duration_seconds` on motion segments)
 - [x] T3 — Schema version bump + `SCHEMA_CHANGELOG.md` entry
-- [ ] T4 — Pass 2 emission lint validator script (deterministic; Pydantic-based)
-- [ ] T5 — Upstream-reference cross-validation (Motion Gate receipt → manifest motion_duration_seconds)
-- [ ] T6 — Authoring template markdown (full schema + worked examples + legacy-key forbidden list)
-- [ ] T7 — Coordinate with Irene retrieval-intake sibling story for the 3rd worked example (retrieval-consuming segment)
-- [ ] T8 — Wire lint into v4.2 pack Pass 2 step (blocks §08 Storyboard B on fail)
-- [ ] T9 — Reference updates (pass-2-procedure.md pointer + Irene INDEX entry)
-- [ ] T10 — Test suite (AC-T.1-T.5 + regression fixtures)
-- [ ] T11 — Doc-parity lockstep test (AC-T.5) — may be combined with AC-T.1-T.4
-- [ ] T12 — Pipeline-integration smoke (AC-T.6 — manual or automated per green-light)
-- [ ] T(final) — Regression + pre-commit + review
+- [x] T4 — Pass 2 emission lint validator script (deterministic; Pydantic-based)
+- [x] T5 — Upstream-reference cross-validation (Motion Gate receipt → manifest motion_duration_seconds)
+- [x] T6 — Authoring template markdown (full schema + worked examples + legacy-key forbidden list)
+- [x] T7 — Coordinate with Irene retrieval-intake sibling story for the 3rd worked example (retrieval-consuming segment)
+- [x] T8 — Wire lint into v4.2 pack Pass 2 step (blocks §08 Storyboard B on fail)
+- [x] T9 — Reference updates (pass-2-procedure.md pointer + Irene INDEX entry)
+- [x] T10 — Test suite (AC-T.1-T.5 + regression fixtures)
+- [x] T11 — Doc-parity lockstep test (AC-T.5) — may be combined with AC-T.1-T.4
+- [x] T12 — Pipeline-integration smoke (AC-T.6 — manual or automated per green-light)
+- [x] T(final) — Regression + pre-commit + review
 
 ## Risks (spine)
 
@@ -316,3 +316,66 @@ Schema implementation choice: `additionalProperties: true` at both envelope and 
 Irene suite cumulative: 22 passed (14 fixture anchors from T1 + 8 schema from T2). Full regression deferred to T(final).
 
 **T-task status:** T1 [x], T2 [x], T3 [x]. Remaining: T4 lint validator, T5 Motion Gate receipt reader, T6 authoring template markdown, T7 retrieval-intake coordination (pointer only), T8 pack v4.2 integration, T9 pass-2-procedure pointer + Irene INDEX pointer, T10 AC-T.1-T.5 tests, T11 AC-T.5 doc-parity lockstep, T12 AC-T.6 pipeline smoke, T(final) regression + pre-commit + review.
+
+### 2026-04-22 — T4-T12 + T(final) (same session continuation; story → review)
+
+**T5 receipt reader landed.** `skills/bmad-agent-content-creator/scripts/motion_gate_receipt_reader.py`. Public API: `load_receipt(path)`, `read_motion_durations(path) -> dict[slide_id, seconds]`, `MotionGateReceiptError`. Schema discipline: rejects missing file / malformed JSON / missing gate_decision / unapproved gate / missing or invalid duration / duplicate slide_id. 11 unit tests green. **Path reconciliation:** Amelia rider specified `skills/bmad-agent-irene/scripts/...`; Irene's actual skill directory is `skills/bmad-agent-content-creator/` — reader landed there. Import via `skills.bmad_agent_content_creator.scripts.motion_gate_receipt_reader` through new `tests/conftest.py` entry (`_SKILL_SCRIPTS` registration of the dashed directory).
+
+**T4 lint validator landed.** `scripts/validators/pass_2_emission_lint.py`. Pure-function core `lint_manifest(manifest, receipt_durations) -> list[LintFinding]` plus thin CLI (`--manifest`, `--motion-gate-receipt`, `--skip-schema`). Finding kinds (closed set): `§6.3` (legacy key), `§6.4` (missing visual_file), `§6.5-null` (missing duration OR motion slide missing from receipt), `§6.5-mismatch` (manifest-vs-receipt disagreement > 0.001s tolerance), `schema` (fallback for JSON Schema errors not classified above). Exit codes: 0 clean / 1 violations / 2 infrastructure. Deterministic per AC-C.2 (no network, no clock, no randomness, no filesystem beyond inputs). 15 unit + CLI tests green.
+
+**T6 authoring template landed.** `skills/bmad-agent-content-creator/references/pass-2-authoring-template.md`. Canonical authoring-time contract with: full structural contract tables (envelope + segment + per-mode rules), legacy key ban list, two worked examples (static + motion — Paige firm ruling), retrieval-intake-consuming segment as pointer-only to `retrieval-intake-contract.md` (per D4 + Paige rulings), lint-invocation instructions, version history.
+
+**T7 coordination done (pointer-only).** §7.1 template points at `retrieval-intake-contract.md` for the intake-attached segment worked example (not duplicated). Intake sibling story owns that shape's worked example. Preserves SSOT + decouples §7.1 from intake-story slippage.
+
+**T8 pack v4.2 integration landed.** Template edit at `scripts/generators/v42/templates/sections/08-irene-pass-2-segment-manifest.md.j2` adds a "Pass 2 emission lint (fail-closed gate)" subsection before the rerun rule. Pack regenerated via `python -m scripts.generators.v42.render --manifest state/config/pipeline-manifest.yaml --output docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md`. L1 pipeline-manifest lockstep check PASS (trace at `reports/dev-coherence/2026-04-22-1316/check-pipeline-manifest-lockstep.PASS.yaml`). Classification: Tier-1 (patch) — added a step within §08; no new pipeline section introduced; no pack version bump. Dev-agent authority per CLAUDE.md pipeline-manifest-regime §Pack Versioning Policy.
+
+**T9 pointer updates landed.**
+- `skills/bmad-agent-content-creator/references/pass-2-procedure.md` — top-of-file callout box points at `pass-2-authoring-template.md` + lint script.
+- `_bmad/memory/bmad-agent-content-creator/INDEX.md` — Pass 2 section gains an authoring-template bullet.
+
+**T10 + T11 + T12 tests landed.**
+- `tests/irene/test_pass_2_emission_fixtures.py` (T1): 14 tests.
+- `tests/irene/test_segment_manifest_schema.py` (T2): 8 tests.
+- `tests/irene/test_motion_gate_receipt_reader.py` (T5): 11 tests.
+- `tests/irene/test_pass_2_emission_lint.py` (T4/T10): 15 tests (including parametrized per-variant kind-isolation).
+- `tests/irene/test_pass_2_authoring_template_doc_parity.py` (T11 AC-T.5): 8 tests — every schema-required field surfaces in the template prose; motion_asset legacy ban is explicit; schema_version 1.1 named; reader + lint script paths referenced; every visual_mode enum value named; retrieval-intake pointer present.
+- `tests/irene/test_pack_v4_2_lint_integration.py` (T12 AC-T.6): 5 tests — pack invokes lint; lint precedes §08B Storyboard B; all 3 finding kinds documented; all 3 exit codes documented; template↔pack lint-invocation parity.
+
+**Cumulative Irene suite: 61 passed.** Exceeds Murat's ≥12 collecting floor by 5×.
+
+**T(final) regression + pre-commit.**
+
+Full suite: **2187 passed / 5 failed** (floor ≥1220 — we are 967 tests above floor). Verified via stash-isolated run that all 5 failures exist at pre-§7.1 commit `01c6f64`; none caused by §7.1 work:
+
+| # | Test | Failure | Classification | Scope |
+|---|------|---------|---|---|
+| 1 | `test_30_1_zero_test_edits` | 30-1 allowlist doesn't permit Sprint #1 new test files | 30-1 allowlist needs Sprint #1 extension | Out of §7.1 scope — 30-1 contract concern |
+| 2 | `test_33_1a_verbatim_extraction` | Template prose drift for 02A | 33-1a fixture source out of sync | Out of §7.1 scope — 33-1a contract concern |
+| 3 | `test_motion_dry_run_preview_adds_marcus_motion_sequence` | Motion walk preview: 2 passed / 1 blocked vs expected 3 passed | Motion structural walk unrelated to §7.1 | Out of §7.1 scope — pre-existing motion-walk drift |
+| 4 | `test_marcus_skill_md_is_bmb_conformant` | Marcus SKILL.md at 83 lines vs 80 ceiling | Pre-existing BMB conformance drift | Out of §7.1 scope |
+| 5 | `test_wave_labels_covers_live_epic_ids` | Epic 34 not in WAVE_LABELS | Epic 34 proposed without updating progress_map | Out of §7.1 scope — follow-on for Epic 34 work |
+
+All 5 are eligible for bmad-code-review consideration as pre-existing drift; none block §7.1 closure. Recommend operator triage post-review.
+
+**Files landed this session (cumulative, §7.1)**
+
+- `state/config/schemas/segment-manifest.schema.json` (T2) — new, 141 lines
+- `_bmad-output/implementation-artifacts/SCHEMA_CHANGELOG.md` (T3) — entry added
+- `skills/bmad-agent-content-creator/scripts/motion_gate_receipt_reader.py` (T5) — new, 110 lines
+- `skills/bmad-agent-content-creator/references/pass-2-authoring-template.md` (T6) — new, 148 lines
+- `skills/bmad-agent-content-creator/references/pass-2-procedure.md` (T9) — pointer callout added
+- `_bmad/memory/bmad-agent-content-creator/INDEX.md` (T9) — authoring-template bullet added
+- `scripts/validators/__init__.py` (T4) — new package marker
+- `scripts/validators/pass_2_emission_lint.py` (T4) — new, 230 lines
+- `scripts/generators/v42/templates/sections/08-irene-pass-2-segment-manifest.md.j2` (T8) — lint-gate subsection added
+- `docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md` (T8) — regenerated from manifest + templates
+- `tests/conftest.py` (T5) — `_SKILL_SCRIPTS` extended for `bmad-agent-content-creator/scripts`
+- `tests/irene/test_pass_2_emission_fixtures.py` (T1) — 14 tests
+- `tests/irene/test_segment_manifest_schema.py` (T2) — 8 tests
+- `tests/irene/test_motion_gate_receipt_reader.py` (T5) — 11 tests
+- `tests/irene/test_pass_2_emission_lint.py` (T4+T10) — 15 tests
+- `tests/irene/test_pass_2_authoring_template_doc_parity.py` (T11) — 8 tests
+- `tests/irene/test_pack_v4_2_lint_integration.py` (T12) — 5 tests
+- `tests/fixtures/7-1-irene-pass-2-authoring-template/**` (T1) — 6 fixtures
+
+**Next step:** `bmad-code-review` on this story (recommended fresh-context session per BMAD convention). Findings triage per Sprint #1 discipline; story transitions `review` → `done` post-review.

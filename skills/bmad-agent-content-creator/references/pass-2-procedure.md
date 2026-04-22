@@ -5,6 +5,8 @@ description: Irene's Pass 2 procedure — perception enforcement, narration with
 
 # Pass 2 Procedure
 
+> **Structural contract for segment-manifest emission** lives at [`./pass-2-authoring-template.md`](./pass-2-authoring-template.md). Read it before writing the manifest. Covers the three §7.1 failure modes (§6.3 no `motion_asset` legacy key; §6.4 `visual_file` on every non-null-visual-mode segment; §6.5 `motion_duration_seconds` carried forward from Motion Gate receipt). Pass 2 output is linted at end of Pack v4.2 §08 via [`scripts/validators/pass_2_emission_lint.py`](../../../scripts/validators/pass_2_emission_lint.py); failing lint blocks §08B Storyboard B.
+
 Pass 2 begins after Gary generates slides and the operator approves them at HIL Gate 2. The context envelope includes approved `gary_slide_output`, may include prior `perception_artifacts` or `literal_visual_publish` staging receipts, and for motion-enabled runs includes `context_paths.motion_plan` / `motion_plan.yaml`.
 
 ## Intake

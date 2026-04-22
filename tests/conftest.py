@@ -125,6 +125,10 @@ _SKILL_SCRIPTS = [
         "skills.pre_flight_check.scripts",
         ROOT / "skills" / "pre-flight-check" / "scripts",
     ),
+    (
+        "skills.bmad_agent_content_creator.scripts",
+        ROOT / "skills" / "bmad-agent-content-creator" / "scripts",
+    ),
 ]
 
 

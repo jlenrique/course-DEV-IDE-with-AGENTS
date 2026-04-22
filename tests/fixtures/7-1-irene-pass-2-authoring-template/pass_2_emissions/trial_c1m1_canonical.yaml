@@ -1,0 +1,97 @@
+# Canonical 2-segment Pass 2 manifest demonstrating all three §7.1 durable fixes.
+# Derived from trial C1-M1-PRES-20260419B (narrative prose faithful to trial content)
+# with the three fix-on-the-fly dispositions applied at authoring time:
+#   §6.3 — motion_asset legacy key REMOVED; only motion_asset_path emitted
+#   §6.4 — visual_file populated on every segment with non-null visual_mode
+#   §6.5 — motion_duration_seconds carried forward from Motion Gate receipt
+#
+# Minimal shape (card-01 motion + card-02 static) covers the canonical static +
+# motion contrast. Full 14-segment trial-regression fixture is deferred to T2
+# where schema-driven generation is efficient.
+#
+# AC-T.3 regression contract: this fixture MUST pass the lint validator
+# unchanged. Any required field additions to the schema must also land here in
+# lockstep.
+
+schema_version: "1.1"
+run_id: C1-M1-PRES-20260419B
+generated_at_utc: "2026-04-20T07:30:00Z"
+generated_by: Irene Pass 2
+cluster_density: default
+narration_directive: z-pattern-literal-scan
+slide_echo_policy:
+  creative: paraphrase
+  literal-text: verbatim
+  literal-visual: verbatim
+  very_high_complexity_override: verbatim
+
+segments:
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-01
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-01
+    card_number: 1
+    cluster_id: c-u01
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    selected_template_id: emotional-arc
+    visual_mode: video
+    motion_type: video
+    motion_asset_path: motion/slide-01-motion.mp4
+    motion_duration_seconds: 5.041
+    visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_01.png
+    motion_status: approved
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: intro
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Watch the physician on screen. That pause — the weight behind the eyes,
+      the handheld device, the corridor pressing in around them — is not a
+      personal failure. It is a systems signal.
+    behavioral_intent: >
+      Establish the clinician-as-designer identity reframe.
+    master_behavioral_intent: >
+      Establish the innovation identity and emotional stakes of the dilemma.
+    narration_burden: heavy
+    double_dispatch_eligible: false
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-02
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-02
+    card_number: 2
+    cluster_id: c-u01
+    cluster_role: body
+    cluster_position: develop
+    narrative_arc: develop
+    selected_template_id: concept-anchor
+    visual_mode: static
+    motion_type: null
+    motion_asset_path: null
+    motion_duration_seconds: null
+    visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_02.png
+    motion_status: not_applicable
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: continuation
+    timing_role: support
+    content_density: medium
+    visual_detail_load: low
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.0
+    transition_buffer: 0.5
+    narration_text: >
+      Burnout is not a personal failure. It is a systems signal — and that
+      signal is an invitation to design.
+    behavioral_intent: >
+      Reframe burnout as systems signal; set up the designer-lens perspective.
+    master_behavioral_intent: >
+      Establish the innovation identity and emotional stakes of the dilemma.
+    narration_burden: medium
+    double_dispatch_eligible: false

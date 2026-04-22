@@ -1,0 +1,87 @@
+# Malformed variant exhibiting §6.3: duplicate motion_asset + motion_asset_path keys.
+# Derived from trial_c1m1_canonical.yaml with card-01 reintroducing the legacy
+# motion_asset key alongside motion_asset_path. Lint MUST reject.
+#
+# Trial provenance: this is the shape Irene Pass 2 actually emitted on card-01
+# in trial C1-M1-PRES-20260419B (see trial_c1m1_as_emitted.yaml lines 26-27).
+
+schema_version: "1.1"
+run_id: C1-M1-PRES-20260419B
+generated_at_utc: "2026-04-20T07:30:00Z"
+generated_by: Irene Pass 2
+cluster_density: default
+narration_directive: z-pattern-literal-scan
+slide_echo_policy:
+  creative: paraphrase
+  literal-text: verbatim
+  literal-visual: verbatim
+  very_high_complexity_override: verbatim
+
+segments:
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-01
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-01
+    card_number: 1
+    cluster_id: c-u01
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    selected_template_id: emotional-arc
+    visual_mode: video
+    motion_type: video
+    motion_asset: motion/slide-01-motion.mp4          # §6.3 VIOLATION — legacy key
+    motion_asset_path: motion/slide-01-motion.mp4
+    motion_duration_seconds: 5.041
+    visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_01.png
+    motion_status: approved
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: intro
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Watch the physician on screen.
+    behavioral_intent: >
+      Establish the clinician-as-designer identity reframe.
+    master_behavioral_intent: >
+      Establish the innovation identity and emotional stakes of the dilemma.
+    narration_burden: heavy
+    double_dispatch_eligible: false
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-02
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-02
+    card_number: 2
+    cluster_id: c-u01
+    cluster_role: body
+    cluster_position: develop
+    narrative_arc: develop
+    selected_template_id: concept-anchor
+    visual_mode: static
+    motion_type: null
+    motion_asset_path: null
+    motion_duration_seconds: null
+    visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_02.png
+    motion_status: not_applicable
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: continuation
+    timing_role: support
+    content_density: medium
+    visual_detail_load: low
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.0
+    transition_buffer: 0.5
+    narration_text: >
+      Burnout is not a personal failure.
+    behavioral_intent: >
+      Reframe burnout as systems signal.
+    master_behavioral_intent: >
+      Establish the innovation identity and emotional stakes of the dilemma.
+    narration_burden: medium
+    double_dispatch_eligible: false

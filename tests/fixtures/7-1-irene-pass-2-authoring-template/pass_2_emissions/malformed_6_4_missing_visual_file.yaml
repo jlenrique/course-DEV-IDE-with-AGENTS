@@ -1,0 +1,87 @@
+# Malformed variant exhibiting §6.4: visual_file absent on a segment with
+# non-null visual_mode. Derived from trial_c1m1_canonical.yaml with card-02
+# stripping visual_file. Lint MUST reject.
+#
+# Trial provenance: in trial C1-M1-PRES-20260419B, 13/14 segments were missing
+# visual_file at Pass 2 emission; §14 Compositor back-filled them from gates.
+# This fixture reproduces the emission-time gap on one static segment.
+
+schema_version: "1.1"
+run_id: C1-M1-PRES-20260419B
+generated_at_utc: "2026-04-20T07:30:00Z"
+generated_by: Irene Pass 2
+cluster_density: default
+narration_directive: z-pattern-literal-scan
+slide_echo_policy:
+  creative: paraphrase
+  literal-text: verbatim
+  literal-visual: verbatim
+  very_high_complexity_override: verbatim
+
+segments:
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-01
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-01
+    card_number: 1
+    cluster_id: c-u01
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    selected_template_id: emotional-arc
+    visual_mode: video
+    motion_type: video
+    motion_asset_path: motion/slide-01-motion.mp4
+    motion_duration_seconds: 5.041
+    visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_01.png
+    motion_status: approved
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: intro
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Watch the physician on screen.
+    behavioral_intent: >
+      Establish the clinician-as-designer identity reframe.
+    master_behavioral_intent: >
+      Establish the innovation identity and emotional stakes of the dilemma.
+    narration_burden: heavy
+    double_dispatch_eligible: false
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-02
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-02
+    card_number: 2
+    cluster_id: c-u01
+    cluster_role: body
+    cluster_position: develop
+    narrative_arc: develop
+    selected_template_id: concept-anchor
+    visual_mode: static                                 # non-null — requires visual_file
+    motion_type: null
+    motion_asset_path: null
+    motion_duration_seconds: null
+    # visual_file: INTENTIONALLY ABSENT — §6.4 VIOLATION
+    motion_status: not_applicable
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: continuation
+    timing_role: support
+    content_density: medium
+    visual_detail_load: low
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.0
+    transition_buffer: 0.5
+    narration_text: >
+      Burnout is not a personal failure.
+    behavioral_intent: >
+      Reframe burnout as systems signal.
+    master_behavioral_intent: >
+      Establish the innovation identity and emotional stakes of the dilemma.
+    narration_burden: medium
+    double_dispatch_eligible: false

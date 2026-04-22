@@ -1,0 +1,758 @@
+schema_version: "1.1"
+run_id: C1-M1-PRES-20260419B
+generated_at_utc: "2026-04-20T07:30:00Z"
+generated_by: Irene Pass 2
+cluster_density: default
+narration_directive: z-pattern-literal-scan
+slide_echo_policy:
+  creative: paraphrase
+  literal-text: verbatim
+  literal-visual: verbatim
+  very_high_complexity_override: verbatim
+
+segments:
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-01
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-01
+    card_number: 1
+    cluster_id: c-u01
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    cluster_interstitial_count: 1
+    selected_template_id: emotional-arc
+    visual_mode: video
+    motion_type: video
+    motion_asset: motion/slide-01-motion.mp4
+    motion_asset_path: motion/slide-01-motion.mp4
+    visual_file: gamma-export/apc-c1m1-tejal-20260419b-motion_slide_01.png
+    motion_status: approved
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: intro
+    timing_role: anchor
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: >
+      Anchor slide for the full module. Motion clip (5s) plays first; narration runs across
+      the clip and into the static slide frame. Medium content density — single identity
+      reframe, not a list. Visual detail load medium: split layout, one illustration,
+      legible title. Word budget 80 supports ~33s spoken plus clip dwell.
+    onset_delay: 0.0
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Watch the physician on screen. That pause — the weight behind the eyes, the handheld
+      device, the corridor pressing in around them — is not a personal failure. It is not a
+      verdict on your capacity — it is a systems signal. The National Academy of Medicine has
+      named this inflection point. Across medicine, across courses and careers, burnout is not
+      the end of the starting line. It is the beginning of it. You are not just an employee
+      within a healthcare system. You are a designer of it. The solution to that moment — to
+      the complexity, the overwhelm, the gap between clinical training and systemic dysfunction
+      — lies dormant in its most valuable asset. In you. This is not a dead end. This is where
+      we begin.
+    behavioral_intent: >
+      Establish the core identity reframe — from clinician-as-reactor to
+      clinician-as-designer — using the emotional register of the motion clip to ground
+      the opening conviction.
+    master_behavioral_intent: >
+      Establish the innovation identity and the emotional stakes of the dilemma.
+    isolation_target: clinician identity reframe — designer not reactor
+    narration_burden: heavy
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: motion-clip keyframes
+        description: Stressed physician in clinical corridor pausing under EHR complexity
+        narration_cue: >-
+          That pause — the weight behind the eyes, the handheld
+          device, the corridor pressing in around them — is not a personal failure.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-01
+      - element: slide-title
+        description: You Are a Designer of the System
+        narration_cue: >-
+          You are not just an employee within a healthcare system. You are a
+          designer of it.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-01
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-02
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-02
+    card_number: 2
+    cluster_id: c-u01
+    cluster_role: interstitial
+    cluster_position: tension
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-01
+    selected_template_id: emotional-arc
+    visual_mode: static
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: pivot
+    timing_role: transition
+    content_density: light
+    visual_detail_load: heavy
+    duration_rationale: >
+      Tension interstitial. Light content density — single pivot claim (burnout = signal).
+      Heavy visual detail load: two contrasting panels, illustration, callout box. Short
+      word budget (28) appropriate for pivot — emotional register shift, not exposition.
+    onset_delay: 0.5
+    dwell: 1.5
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      The National Academy of Medicine named this inflection point in 2019. Burnout is a
+      systems signal — not a verdict on you. That signal is this course's starting line.
+    behavioral_intent: >
+      Establish the innovation identity and the emotional stakes of the dilemma.
+    isolation_target: burnout reframed as systemic signal not personal failure
+    narration_burden: light
+    master_behavioral_intent: null
+    develop_type: tension
+    double_dispatch_eligible: false
+    visual_references:
+      - element: contrast-label
+        description: Clinical Reactor struck through alongside Systemic Innovator arrow
+        narration_cue: "Burnout is a systems signal — not a verdict on you."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-02
+      - element: bottom-callout
+        description: Teal callout bar affirming burnout as systems signal
+        narration_cue: "That signal is this course's starting line."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-02
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-03
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-03
+    card_number: 3
+    cluster_id: null
+    cluster_role: null
+    cluster_position: null
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    selected_template_id: null
+    visual_mode: static
+    fidelity: literal-text
+    slide_echo: verbatim
+    bridge_type: outro
+    timing_role: checkpoint
+    content_density: medium
+    visual_detail_load: light
+    duration_rationale: >
+      Singleton learning-objectives slide. Medium content density — five discrete objectives
+      with Bloom's verbs. Light visual load: clean numbered list, no imagery. Word budget 75
+      supports five-LO verbatim recitation with framing sentence and closing line.
+    onset_delay: 1.0
+    dwell: 2.0
+    cluster_gap: 0.0
+    transition_buffer: 1.0
+    narration_text: >
+      By the end of Part 1, five outcomes. Define the innovation mindset and correlate your
+      core clinical competencies to Design Thinking. Analyze the macro-economic and
+      structural trends — burnout, healthcare consumerism, technological acceleration — that
+      necessitate intrapreneurial physician leadership. Differentiate a superficial idea from
+      a rigorously vetted opportunity using Sandra Lam's Intrapreneurship Formula. Evaluate
+      systemic operational failures through root-cause analysis. And create your personal
+      innovation baseline: a SWOT analysis and an Opportunity Radar. Five objectives —
+      Bloom's ladder, from understand through create. Next, we'll put those objectives into
+      motion.
+    behavioral_intent: >
+      Orient learners to the full arc of Part 1 using the literal learning objective text,
+      ensuring they can self-monitor progress through each of the five outcomes.
+    isolation_target: null
+    narration_burden: null
+    master_behavioral_intent: null
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: LO-1
+        description: Define the Innovation Mindset card
+        narration_cue: >-
+          Define the innovation mindset and correlate your
+          core clinical competencies to Design Thinking.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-03
+      - element: LO-5
+        description: Create a Personal Innovation Baseline card
+        narration_cue: >-
+          create your personal
+          innovation baseline: a SWOT analysis and an Opportunity Radar.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-03
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-04
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-04
+    card_number: 4
+    cluster_id: c-u02
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    cluster_interstitial_count: 2
+    selected_template_id: deep-dive
+    visual_mode: static
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: intro
+    timing_role: concept-build
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: >
+      Cluster head establishing the three-course arc. Medium content density — three
+      waypoints with brief descriptions. Medium visual load: three-chevron diagram with
+      icons. Word budget 70 supports arc framing plus learner-positioning statement.
+    onset_delay: 0.5
+    dwell: 1.5
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Every innovator navigates the same arc — from recognizing a gap, to engineering a
+      response, to driving adoption at scale. This three-course series maps that arc across
+      three waypoints. Waypoint One is where you are now: Sparking Innovation — the gap is
+      named, the recognition is laid down right here, and the foundation begins. Course 1
+      delivers a tangible output — your executive one-pager: four institutional sections built
+      from evidence and ready for clinical review. Waypoint Two is Building the Solution.
+      Waypoint Three is Driving Impact. One arc. You are already standing at the beginning.
+    behavioral_intent: >
+      Frame the learner's position within the full three-course journey, activating a sense
+      of meaningful progress by confirming they are already at Waypoint One.
+    master_behavioral_intent: >
+      Position learner at Waypoint 1 of a proven three-course arc.
+    isolation_target: null
+    narration_burden: null
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: waypoint-diagram
+        description: Three-chevron sequence Sparking Innovation to Driving Impact
+        narration_cue: "This three-course series maps that arc across three waypoints."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-04
+      - element: waypoint-1
+        description: Waypoint 1 with lightbulb icon and you-are-here description
+        narration_cue: >-
+          Waypoint One is where you are now: Sparking Innovation — identifying
+          the gap and building the case.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-04
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-05
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-05
+    card_number: 5
+    cluster_id: c-u02
+    cluster_role: interstitial
+    cluster_position: establish
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-04
+    selected_template_id: deep-dive
+    visual_mode: static
+    fidelity: literal-visual
+    slide_echo: verbatim
+    bridge_type: none
+    timing_role: example
+    content_density: light
+    visual_detail_load: medium
+    duration_rationale: >
+      Interstitial scoping Course 1 within the arc. Light content density — single scope
+      confirmation. Medium visual load: split layout with content boxes. Short word budget
+      (18-24) — narration scopes and exits; visual does the work.
+    onset_delay: 0.5
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 0.8
+    narration_text: >
+      Course 1 — this course — is Waypoint 1: where the gap is named, the recognition
+      begins, and the foundation is laid right here, right now.
+    behavioral_intent: >
+      Position learner at Waypoint 1 of a proven three-course arc.
+    isolation_target: Course 1 scope within the three-waypoint arc
+    narration_burden: light
+    master_behavioral_intent: null
+    develop_type: establish
+    double_dispatch_eligible: false
+    visual_references:
+      - element: YOU-ARE-HERE-tag
+        description: Teal YOU ARE HERE positional tag
+        narration_cue: "Course 1 — this course — is Waypoint 1:"
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-05
+      - element: left-box-1
+        description: Recognize the Gap content box
+        narration_cue: "where the gap is named, the recognition begins"
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-05
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-06
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-06
+    card_number: 6
+    cluster_id: c-u02
+    cluster_role: interstitial
+    cluster_position: establish
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-04
+    selected_template_id: deep-dive
+    visual_mode: static
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: none
+    timing_role: example
+    content_density: light
+    visual_detail_load: medium
+    duration_rationale: >
+      Interstitial naming the program deliverable. Light content density — single
+      deliverable label with four section names. Medium visual load: 2x2 grid. Word budget
+      22-24 — confirm and exit; brevity is correct here.
+    onset_delay: 0.5
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      The tangible output of this arc: an executive one-pager — your clinical innovation
+      brief, built on evidence across four sections, ready for institutional review.
+    behavioral_intent: >
+      Position learner at Waypoint 1 of a proven three-course arc.
+    isolation_target: executive one-pager as the program's tangible deliverable
+    narration_burden: light
+    master_behavioral_intent: null
+    develop_type: establish
+    double_dispatch_eligible: false
+    visual_references:
+      - element: 2x2-grid
+        description: Four-section grid Problem Statement Opportunity Proposed Solution Evidence Base
+        narration_cue: "built on evidence across four sections"
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-06
+      - element: closing-callout
+        description: The one-pager is not a formality closing callout
+        narration_cue: "ready for institutional review."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-06
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-07
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-07
+    card_number: 7
+    cluster_id: c-u04
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    cluster_interstitial_count: 2
+    selected_template_id: evidence-build
+    visual_mode: static
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: cluster_boundary
+    timing_role: concept-build
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: >
+      Cluster boundary head introducing the four-archetype lineage. Medium content density —
+      four archetypes with inventor names and brief descriptors. Medium visual load:
+      four-column icon layout, legible text. Word budget 100 supports full four-archetype
+      survey including specific device/process exemplars and framing with the lineage close.
+    onset_delay: 0.5
+    dwell: 1.5
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Let's turn to the physician innovator lineage — a heritage that already belongs to you.
+      Before this course asks you to innovate, it asks you to recognize where you already
+      stand. Physician innovation is not new — it has a lineage, and four distinct archetypes.
+      Device innovators like Fogarty channeled surgical empathy and domain expertise — turned
+      a clinical observation of a patient in crisis into the balloon catheter.
+      Process innovators like Pronovost engineered a five-step checklist that cut ICU infection
+      rates to near zero, where others saw an irreducible limitation — the raw material was
+      already in their hands. Technology innovators like Bath filed a patent born from clinical
+      domain expertise that changed ophthalmology. And organizational innovators redesigned
+      entire systems from reactive sick care toward proactive health assurance. Your archetype
+      is already inside this lineage. Moving forward, we'll examine what each archetype built.
+    behavioral_intent: >
+      Activate prior clinical knowledge by connecting the learner's professional identity
+      to a recognized lineage of physician innovators — making innovation feel inherited,
+      not invented.
+    master_behavioral_intent: >
+      Connect learner identity to the physician innovator lineage before introducing
+      individual archetypes.
+    isolation_target: null
+    narration_burden: null
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: archetype-row
+        description: Four-column row Device Process Technology Organizational with icons
+        narration_cue: "four distinct shapes."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-07
+      - element: supertitle
+        description: The Lineage of Medical Innovation supertitle
+        narration_cue: "it has a lineage"
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-07
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-08
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-08
+    card_number: 8
+    cluster_id: c-u04
+    cluster_role: interstitial
+    cluster_position: establish
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-07
+    selected_template_id: evidence-build
+    visual_mode: static
+    fidelity: creative
+    slide_echo: verbatim
+    bridge_type: none
+    timing_role: evidence-walkthrough
+    content_density: heavy
+    visual_detail_load: heavy
+    duration_rationale: >
+      Heavy visual load — two complex technical infographics side by side (balloon catheter
+      schematic + safety checklist). Verbatim echo applied per complexity override: narration
+      stays close to the visible diagram captions. Dense visual detail justifies short word
+      budget (30-40) — infographics carry the content; narration annotates and closes with
+      the raw-material line.
+    onset_delay: 0.5
+    dwell: 3.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Fogarty saw a patient in crisis and turned that observation into the balloon catheter
+      — a device born from surgical empathy and domain expertise. Pronovost engineered a
+      five-step checklist that cut ICU infection rates to near zero. Your clinical domain
+      expertise is already the raw material.
+    behavioral_intent: >
+      Connect learner identity to the physician innovator lineage before introducing
+      individual archetypes.
+    isolation_target: >
+      Device and Process archetypes — Fogarty and Pronovost as clinical-observation-to-innovation
+      exemplars.
+    narration_burden: medium
+    master_behavioral_intent: null
+    develop_type: evidence
+    double_dispatch_eligible: false
+    visual_references:
+      - element: left-panel-catheter
+        description: Minimalist Balloon Catheter Schematic technical diagram
+        narration_cue: >-
+          Fogarty saw a patient in crisis and turned that observation into the balloon
+          catheter
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-08
+      - element: right-panel-checklist
+        description: Medical Safety Checklist numbered infographic
+        narration_cue: "Pronovost engineered a five-step checklist that cut ICU infection rates to near zero."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-08
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-09
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-09
+    card_number: 9
+    cluster_id: c-u04
+    cluster_role: interstitial
+    cluster_position: establish
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-07
+    selected_template_id: evidence-build
+    visual_mode: static
+    fidelity: creative
+    slide_echo: verbatim
+    bridge_type: none
+    timing_role: evidence-walkthrough
+    content_density: heavy
+    visual_detail_load: heavy
+    duration_rationale: >
+      Heavy visual load — laser surgery illustration and complex circular systems diagram.
+      Verbatim echo per complexity override. Dense visual detail justifies short word budget
+      (25-38): diagrams carry the archetype detail; narration provides the interpretive bridge
+      and closes with reflective prompt.
+    onset_delay: 0.5
+    dwell: 3.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Bath saw a technology gap where others saw a clinical limitation — and filed a patent
+      that changed ophthalmology. Organizational innovators redesigned entire systems from
+      reactive sick care to proactive health assurance. Your archetype is already in you.
+    behavioral_intent: >
+      Connect learner identity to the physician innovator lineage before introducing
+      individual archetypes.
+    isolation_target: >
+      Technology and Organizational archetypes — Bath and systems redesign as population-scale
+      exemplars.
+    narration_burden: light
+    master_behavioral_intent: null
+    develop_type: evidence
+    double_dispatch_eligible: false
+    visual_references:
+      - element: left-panel-laser
+        description: Cataract removal laser surgery illustration
+        narration_cue: "Bath saw a technology gap where others saw a clinical limitation"
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-09
+      - element: right-panel-systems
+        description: Sick Care to Health Assurance circular systems diagram
+        narration_cue: "redesigned entire systems from reactive sick care to proactive health assurance."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-09
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-10
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-10
+    card_number: 10
+    cluster_id: c-u05
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    cluster_interstitial_count: 1
+    selected_template_id: emotional-arc
+    visual_mode: static
+    fidelity: literal-text
+    slide_echo: verbatim
+    bridge_type: cluster_boundary
+    timing_role: framework-walkthrough
+    content_density: heavy
+    visual_detail_load: light
+    duration_rationale: >
+      Cluster boundary head introducing two foundational frameworks. Heavy content density —
+      both framework definitions must be conveyed precisely. Light visual load: clean
+      two-column typography. Word budget 95 supports verbatim definition delivery plus the
+      paired-dependency framing and forward application statement including the First
+      Principles chain reference.
+    onset_delay: 0.5
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      In this section, two frameworks anchor everything that follows. Growth Mindset —
+      Dweck's formulation: the belief that your capacity to innovate is a muscle built
+      through effort and critique, not a fixed trait. And Psychological Safety — Edmondson's
+      definition: a shared belief that the environment is safe for interpersonal risk-taking —
+      sharing half-baked ideas, critiquing peers, exposing systemic flaws. A growth mindset
+      cannot survive without psychological safety. As you progress through this clinical
+      course, these frameworks will be applied — along with a third framework, First Principles
+      Thinking — first: break every assumption down to its fundamental truths, then reason
+      upward to novel solutions. That chain from concept through process to outcome is the
+      engine this course gives you for every clinical problem you bring. Moving forward,
+      these conditions make your innovation work possible.
+    behavioral_intent: >
+      Establish the two foundational frameworks as inseparable paired conditions — growth
+      mindset as individual capacity, psychological safety as environmental requirement —
+      preparing learners for the collaborative demands of the program.
+    master_behavioral_intent: >
+      Establish Growth Mindset and Psychological Safety as the paired environmental
+      conditions for the program's collaborative demands.
+    isolation_target: null
+    narration_burden: null
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: left-box-growth-mindset
+        description: GROWTH MINDSET DWECK dark navy box with definition
+        narration_cue: >-
+          Growth Mindset — Dweck's formulation:
+          the belief that your capacity to innovate is a muscle built through effort and
+          critique, not a fixed trait.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-10
+      - element: right-box-psych-safety
+        description: PSYCHOLOGICAL SAFETY EDMONDSON outlined label with definition
+        narration_cue: >-
+          Psychological Safety — Edmondson's definition: a
+          shared belief that the environment is safe for interpersonal risk-taking
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-10
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-11
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-11
+    card_number: 11
+    cluster_id: c-u05
+    cluster_role: interstitial
+    cluster_position: establish
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-10
+    selected_template_id: emotional-arc
+    visual_mode: static
+    fidelity: literal-visual
+    slide_echo: verbatim
+    bridge_type: none
+    timing_role: framework-walkthrough
+    content_density: medium
+    visual_detail_load: medium
+    duration_rationale: >
+      Interstitial adding the third framework as pivot and forward application. Medium
+      content density — one framework definition plus a connecting application prompt.
+      Medium visual load: abstract chain diagram plus numbered list. Word budget 27-40
+      supports verbatim definition plus closing application bridge.
+    onset_delay: 0.5
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      First Principles Thinking is the third framework: break every assumption down to its
+      fundamental truths, then reason upward to novel solutions. Applied to your clinical
+      problem — that chain from concept through process to outcome — that is the engine
+      this course gives you.
+    behavioral_intent: >
+      Establish Growth Mindset and Psychological Safety as the paired environmental
+      conditions for the program's collaborative demands.
+    isolation_target: First Principles Thinking applied to the learner's clinical problem
+    narration_burden: medium
+    master_behavioral_intent: null
+    develop_type: establish
+    double_dispatch_eligible: false
+    visual_references:
+      - element: chain-diagram
+        description: CONCEPT PROCESS OUTCOME minimalist chain diagram
+        narration_cue: "that chain from concept through process to outcome"
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-11
+      - element: numbered-list-3
+        description: First Principles Thinking numbered list item 3
+        narration_cue: >-
+          break every assumption down to its
+          fundamental truths, then reason upward to novel solutions.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-11
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-12
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-12
+    card_number: 12
+    cluster_id: null
+    cluster_role: null
+    cluster_position: null
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    selected_template_id: null
+    visual_mode: static
+    fidelity: literal-visual
+    slide_echo: verbatim
+    bridge_type: none
+    timing_role: reflection
+    content_density: heavy
+    visual_detail_load: heavy
+    duration_rationale: >
+      Singleton literal-visual — full-frame APC Content Roadmap JPG. Heavy visual load:
+      extremely dense curriculum grid with three terms, multiple content rows, async/sync
+      layers, assessment row, module timeline. Narration purpose is orientation, not
+      full-read; visual silence permitted mid-segment for learner scan. Word budget 72-74
+      supports row-by-row Z-scan plus closing architecture statement.
+    onset_delay: 1.0
+    dwell: 4.0
+    cluster_gap: 0.0
+    transition_buffer: 1.0
+    narration_text: >
+      This is the complete arc of the Applied Physician Competency series — three courses,
+      across three terms. Innovation Mindset runs through all three. Product and Project
+      Management builds across the full year. Operating as a Leader develops alongside it.
+      Asynchronous and synchronous formats layer through each term, anchored by assessment
+      at every stage. Every topic in Part 1 occupies a specific position on this map. Keep
+      it in mind — this is the architecture of the full learning journey ahead of you.
+    behavioral_intent: >
+      Provide full-series orientation so learners understand how Part 1 content fits within
+      the larger curriculum — building the sense of a coherent, purposeful arc rather than
+      isolated modules.
+    isolation_target: null
+    narration_burden: null
+    master_behavioral_intent: null
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: column-headers
+        description: Three-term column structure across the curriculum grid
+        narration_cue: "three courses, across three terms."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-12
+      - element: row-structure
+        description: Row labels Innovation Mindset Product and Project Management Operating as a Leader
+        narration_cue: >-
+          Innovation Mindset runs through all three. Product and Project
+          Management builds across the full year. Operating as a Leader develops alongside it.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-12
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-13
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-13
+    card_number: 13
+    cluster_id: c-u07
+    cluster_role: head
+    cluster_position: establish
+    narrative_arc: establish
+    cluster_interstitial_count: 1
+    selected_template_id: zoom-and-return
+    visual_mode: static
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: intro
+    timing_role: summary
+    content_density: medium
+    visual_detail_load: light
+    duration_rationale: >
+      Cluster head synthesizing Part 1 across four pillars. Medium content density — four
+      conceptual pillars each with a brief interpretive sentence. Light visual load: clean
+      2x2 text grid. Word budget 85 supports paraphrase synthesis of all four panels with
+      ownership framing.
+    onset_delay: 0.5
+    dwell: 2.0
+    cluster_gap: 0.5
+    transition_buffer: 1.0
+    narration_text: >
+      Part 1 leaves you with four things. The gap — the friction and the near-miss you see
+      every day — is a signal, not background noise. It belongs to you. The mission — your
+      response to that signal is what defines the next chapter of your career. The journey
+      — every innovator walks the same arc: spark, build, drive. You are at the beginning
+      of a proven path, not alone in uncharted wilderness. And the mindset — the question
+      is not whether you have what it takes. It is whether you choose to use it. The
+      frameworks are set. Part 2 opens with your first active tool — the Opportunity
+      Diagnostic: scan the landscape, size the problem, pressure-test the gap. The diagnosis
+      begins now.
+    behavioral_intent: >
+      Synthesize the four conceptual pillars of Part 1 in a way that leaves learners with
+      a felt sense of ownership over each — Gap, Mission, Journey, Mindset — rather than
+      a list to be recalled.
+    master_behavioral_intent: >
+      Leave learners with felt ownership of all four Part 1 pillars as personal assets,
+      not abstract concepts.
+    isolation_target: null
+    narration_burden: null
+    develop_type: null
+    double_dispatch_eligible: false
+    visual_references:
+      - element: 2x2-synthesis-grid
+        description: Four synthesis panels The Gap The Mission The Journey The Mindset
+        narration_cue: "Part 1 leaves you with four things."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-13
+      - element: mindset-panel
+        description: The Mindset panel with choose-to-use-it closing text
+        narration_cue: >-
+          the question
+          is not whether you have what it takes. It is whether you choose to use it.
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-13
+
+  - id: apc-c1m1-tejal-20260419b-motion-card-14
+    slide_id: apc-c1m1-tejal-20260419b-motion-card-14
+    card_number: 14
+    cluster_id: c-u07
+    cluster_role: interstitial
+    cluster_position: develop
+    narrative_arc: null
+    cluster_interstitial_count: 0
+    parent_slide_id: apc-c1m1-tejal-20260419b-motion-card-13
+    selected_template_id: zoom-and-return
+    visual_mode: static
+    fidelity: creative
+    slide_echo: paraphrase
+    bridge_type: none
+    timing_role: call-to-action
+    content_density: light
+    visual_detail_load: medium
+    duration_rationale: >
+      Closing call-to-action. Light content density — forward-pull to Part 2, three tool
+      names, closing statement. Medium visual load: split layout with three content boxes
+      and large directional arrow. Word budget 25-27 is correct — brevity creates momentum.
+      Dwell extended for the arrow visual to land.
+    onset_delay: 0.5
+    dwell: 3.0
+    cluster_gap: 0.5
+    transition_buffer: 0.0
+    narration_text: >
+      Part 2 opens with your first active tool: the Opportunity Diagnostic. Pressure-test
+      the gap, size the problem, scan the landscape. The frameworks are set. The diagnosis
+      begins now.
+    behavioral_intent: >
+      Leave learners with felt ownership of all four Part 1 pillars as personal assets,
+      not abstract concepts.
+    isolation_target: Part 2 Opportunity Diagnostic as the forward-pull landing point
+    narration_burden: light
+    master_behavioral_intent: null
+    develop_type: deepen
+    double_dispatch_eligible: false
+    visual_references:
+      - element: three-tool-boxes
+        description: Opportunity Radar Problem Sizing Landscape Scan content boxes
+        narration_cue: "Pressure-test the gap, size the problem, scan the landscape."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-14
+      - element: forward-arrow
+        description: Large gold-to-teal chevron arrow pointing forward
+        narration_cue: "The diagnosis begins now."
+        perception_source: apc-c1m1-tejal-20260419b-motion-card-14

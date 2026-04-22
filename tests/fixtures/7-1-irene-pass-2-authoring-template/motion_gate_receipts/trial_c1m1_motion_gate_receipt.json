@@ -1,0 +1,54 @@
+{
+  "gate": "07F",
+  "gate_name": "Motion Gate",
+  "run_id": "C1-M1-PRES-20260419B",
+  "closed_at_utc": "2026-04-20T07:15:00Z",
+  "gate_decision": "approved",
+  "approved_by": "operator",
+  "non_static_slides": [
+    {
+      "slide_id": "apc-c1m1-tejal-20260419b-motion-card-01",
+      "card_number": 1,
+      "motion_type": "video",
+      "approved_asset_path": "motion/slide-01-motion.mp4",
+      "motion_source": "kling",
+      "model": "kling-v2-6",
+      "mode": "std",
+      "style": "K07-clinical-hallway-atmosphere",
+      "duration_seconds": 5.041,
+      "status": "approved",
+      "selection_rationale": "Operator selected slide-01-motion.mp4 (April 9 run, v2.6 std K07) over v3 beat-chain clips on emotional register grounds. Stressed physician with hurried background staff correctly matches S01 'The Modern Clinician's Dilemma' instructional tone. v3 beat-2 clip rejected — physician appeared serene, wrong affect for the dilemma framing."
+    }
+  ],
+  "static_slides": [
+    "apc-c1m1-tejal-20260419b-motion-card-02",
+    "apc-c1m1-tejal-20260419b-motion-card-03",
+    "apc-c1m1-tejal-20260419b-motion-card-04",
+    "apc-c1m1-tejal-20260419b-motion-card-05",
+    "apc-c1m1-tejal-20260419b-motion-card-06",
+    "apc-c1m1-tejal-20260419b-motion-card-07",
+    "apc-c1m1-tejal-20260419b-motion-card-08",
+    "apc-c1m1-tejal-20260419b-motion-card-09",
+    "apc-c1m1-tejal-20260419b-motion-card-10",
+    "apc-c1m1-tejal-20260419b-motion-card-11",
+    "apc-c1m1-tejal-20260419b-motion-card-12",
+    "apc-c1m1-tejal-20260419b-motion-card-13",
+    "apc-c1m1-tejal-20260419b-motion-card-14"
+  ],
+  "coverage": {
+    "total_authorized_slides": 14,
+    "video": 1,
+    "static": 13,
+    "animation": 0,
+    "all_non_static_approved": true,
+    "any_reset_to_static": false
+  },
+  "exploration_artifacts_on_disk": [
+    "motion/apc-c1m1-tejal-20260419b-motion-card-01_motion.mp4",
+    "motion/s01-beat-1-v3.mp4",
+    "motion/s01-beat-2-v3.mp4",
+    "motion/s01-beat-3-v3.mp4",
+    "motion/s01-beat-4-v3.mp4"
+  ],
+  "exploration_artifacts_status": "retained for reference; not in production assembly"
+}

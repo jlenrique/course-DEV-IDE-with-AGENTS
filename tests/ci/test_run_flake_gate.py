@@ -179,9 +179,10 @@ def test_run_outcome_signature_is_tuple_of_counts():
         deselected=2143,
         raw_tail="12 passed, 2143 deselected in 1.55s",
     )
-    # parser_recognized_summary defaults True; included in signature so
-    # crashes (unrecognized=False) cannot be confused with genuine greens.
-    assert outcome.signature() == (0, 12, 0, 0, 0, 0, 0, 2143, True)
+    # parser_recognized_summary defaults True; timed_out defaults False.
+    # Both included in signature so crashes (unrecognized=False) and
+    # timeouts cannot be confused with genuine greens.
+    assert outcome.signature() == (0, 12, 0, 0, 0, 0, 0, 2143, True, False)
 
 
 def test_run_outcome_signature_differs_on_exit_code():
@@ -227,17 +228,78 @@ def test_run_outcome_signature_distinguishes_crash_from_zero_green():
     assert crashed.signature() != clean.signature()
 
 
-def test_cli_rejects_runs_below_two(capsys):
-    """--runs 0 and --runs 1 are degenerate (no comparison possible).
+@pytest.mark.parametrize("runs_arg", ["0", "1", "-1"])
+def test_cli_rejects_runs_below_two(runs_arg):
+    """--runs 0, --runs 1, negative N are degenerate (no comparison possible).
     Parser should reject at the argparse layer so we don't silently
     short-circuit the gate."""
     import subprocess
 
     proc = subprocess.run(
-        [sys.executable, str(_WRAPPER_PATH), "--runs", "1"],
+        [sys.executable, str(_WRAPPER_PATH), "--runs", runs_arg],
         capture_output=True,
         text=True,
     )
     # argparse.error() exits with code 2.
     assert proc.returncode == 2
     assert "runs must be >= 2" in (proc.stderr + proc.stdout)
+
+
+# ---------------------------------------------------------------------------
+# Re-review coverage — multi-unit summary durations + timeout vs crash
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "summary_line, expected_passed",
+    [
+        # Sub-minute standard form.
+        ("12 passed in 1.55s", 12),
+        # Long-form with HH:MM:SS suffix (pytest emits for sessions >= 60s).
+        ("12 passed in 65.00s (0:01:05)", 12),
+        ("50 passed in 180.05s (0:03:00)", 50),
+        # Compact multi-unit format.
+        ("12 passed in 1m5s", 12),
+        ("12 passed in 1h2m3s", 12),
+    ],
+)
+def test_parse_summary_handles_multi_unit_pytest_durations(summary_line, expected_passed):
+    """pytest renders durations differently depending on length; the regex
+    must anchor all supported forms as authoritative summaries."""
+    stdout = f"some noise\n{summary_line}\n"
+    counts, recognized = run_flake_gate._parse_summary(stdout)
+    assert recognized is True, f"Failed to parse: {summary_line!r}"
+    assert counts["passed"] == expected_passed
+
+
+def test_timeout_signature_differs_from_signal_killed_signature():
+    """Timeout and signal-killed (which also yields exit_code 0 in certain
+    setups, or -1 on POSIX) must produce different signatures so flake
+    detection doesn't treat them as 'consistent' runs."""
+    timed_out = run_flake_gate.RunOutcome(
+        exit_code=0,
+        passed=0,
+        failed=0,
+        errors=0,
+        skipped=0,
+        xfailed=0,
+        xpassed=0,
+        deselected=0,
+        raw_tail="[timeout after 600s]",
+        parser_recognized_summary=False,
+        timed_out=True,
+    )
+    signal_killed = run_flake_gate.RunOutcome(
+        exit_code=-1,  # SIGHUP on POSIX
+        passed=0,
+        failed=0,
+        errors=0,
+        skipped=0,
+        xfailed=0,
+        xpassed=0,
+        deselected=0,
+        raw_tail="",
+        parser_recognized_summary=False,
+        timed_out=False,
+    )
+    assert timed_out.signature() != signal_killed.signature()

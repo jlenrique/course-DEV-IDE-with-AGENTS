@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review RE-REVIEW of story-7.1 (2026-04-22)
+
+- **`load_receipt()` consistency with hardened `read_motion_durations`** — the root-dict / type guards live inside `read_motion_durations` only; direct callers of `load_receipt` still receive unvalidated payloads. Non-blocking (direct callers are test-only today); promote guards into `load_receipt` for defense-in-depth when bandwidth permits.
+- **`re.search(r"no tests ran", line)` in flake gate is unanchored** — theoretical false-positive if a log line contains the substring alongside an `in <n>s` tail. Low-probability (`no tests ran` isn't common in non-summary lines), but anchor to line start for safety.
+- **Comment drift in flake-gate fail-closed message** — post-patch, `no tests ran` now returns `recognized=True`, so the "or no tests selected" phrase in the gate-failed message is stale. Minor operator-confusion risk.
+- **Attribution-when-id-equals-slide_id test coverage variant** — current test covers `id != slide_id` + receipt keyed on slide_id; the symmetric `id == slide_id` with slide_id-keyed receipt path exists but has no explicit test (the general canonical test covers it implicitly).
+
 ## Deferred from: code review of story-7.1-irene-pass-2-authoring-template (2026-04-22)
 
 - **Schema `additionalProperties: true` admits motion_asset typos/aliases** (`motion-asset`, `motionAsset`, `motion_assets`, etc.) — Paige's ban was scoped to the specific legacy key. A follow-on hardening story could enumerate a full alias blacklist or switch to `unevaluatedProperties: false` with explicit extras allowlist.

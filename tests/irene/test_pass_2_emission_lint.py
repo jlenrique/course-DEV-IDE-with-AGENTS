@@ -216,3 +216,127 @@ def test_each_malformed_variant_isolates_its_target_failure_kind(
     assert not missing, (
         f"Expected kinds {expected_kinds} to surface, missing {missing}. Got {kinds}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Re-review coverage — guards added in code-review patch wave
+# ---------------------------------------------------------------------------
+
+
+def test_lint_emits_schema_finding_on_non_dict_manifest_root():
+    findings = lint.lint_manifest("not-a-dict", {})
+    kinds = {f.kind for f in findings}
+    assert "schema" in kinds
+    assert any("root must be a mapping" in f.detail for f in findings)
+
+
+def test_lint_emits_schema_finding_on_empty_segments_list():
+    findings = lint.lint_manifest({"segments": []}, {})
+    kinds = {f.kind for f in findings}
+    assert "schema" in kinds
+    assert any("empty" in f.detail for f in findings)
+
+
+def test_lint_emits_schema_finding_on_non_dict_segment_entry():
+    findings = lint.lint_manifest({"segments": ["string-not-a-dict"]}, {})
+    kinds = {f.kind for f in findings}
+    assert "schema" in kinds
+    # Segment id should be index-based since the entry isn't even a dict.
+    assert any("segments[0]" in f.segment_id for f in findings)
+
+
+def test_lint_string_duration_surfaces_non_numeric_finding():
+    manifest = {
+        "segments": [
+            {
+                "id": "seg-1",
+                "slide_id": "seg-1",
+                "visual_mode": "video",
+                "motion_duration_seconds": "5.041",
+            }
+        ]
+    }
+    findings = lint.lint_manifest(manifest, {"seg-1": 5.041})
+    assert any(
+        f.kind == "§6.5-null" and "non-numeric" in f.detail for f in findings
+    )
+
+
+def test_lint_bool_duration_surfaces_non_numeric_finding():
+    """bool is a subclass of int in Python; guard must reject it explicitly."""
+    manifest = {
+        "segments": [
+            {
+                "id": "seg-1",
+                "slide_id": "seg-1",
+                "visual_mode": "video",
+                "motion_duration_seconds": True,
+            }
+        ]
+    }
+    findings = lint.lint_manifest(manifest, {"seg-1": 5.041})
+    assert any(
+        f.kind == "§6.5-null" and "bool" in f.detail for f in findings
+    )
+
+
+def test_lint_nan_duration_surfaces_mismatch_finding():
+    manifest = {
+        "segments": [
+            {
+                "id": "seg-1",
+                "slide_id": "seg-1",
+                "visual_mode": "video",
+                "motion_duration_seconds": float("nan"),
+            }
+        ]
+    }
+    findings = lint.lint_manifest(manifest, {"seg-1": 5.041})
+    assert any(
+        f.kind == "§6.5-mismatch" and "finite" in f.detail for f in findings
+    )
+
+
+def test_lint_attribution_note_lands_in_detail_not_segment_id():
+    """When id != slide_id and receipt is keyed on slide_id, the attribution
+    provenance goes in `detail` so `segment_id` remains a stable sort key."""
+    manifest = {
+        "segments": [
+            {
+                "id": "seg-A",
+                "slide_id": "slide-B",
+                "visual_mode": "video",
+                "visual_file": "gamma-export/seg-A.png",  # satisfy §6.4
+                "motion_duration_seconds": None,
+            }
+        ]
+    }
+    findings = lint.lint_manifest(manifest, {"slide-B": 5.041})
+    null_findings = [f for f in findings if f.kind == "§6.5-null"]
+    assert len(null_findings) == 1
+    f = null_findings[0]
+    assert f.segment_id == "seg-A"  # stable, no provenance note here
+    assert "slide_id='slide-B'" in f.detail
+
+
+def test_lint_findings_for_same_segment_sort_adjacently():
+    """Multiple findings for one segment should group together in the
+    sorted output; they would not if segment_id varied per-finding."""
+    # card-01 exhibits §6.3 + null motion_duration. Both findings must
+    # carry the same segment_id for adjacency.
+    manifest = _load("trial_c1m1_as_emitted.yaml")
+    durations = {"apc-c1m1-tejal-20260419b-motion-card-01": 5.041}
+    findings = lint.lint_manifest(manifest, durations)
+    card_01 = [
+        f for f in findings
+        if f.segment_id == "apc-c1m1-tejal-20260419b-motion-card-01"
+    ]
+    assert len(card_01) >= 2
+    # Find contiguous run of card-01 findings in the sorted list.
+    ids = [f.segment_id for f in findings]
+    first = ids.index("apc-c1m1-tejal-20260419b-motion-card-01")
+    last_idx = max(i for i, s in enumerate(ids) if s == "apc-c1m1-tejal-20260419b-motion-card-01")
+    run = ids[first : last_idx + 1]
+    assert all(s == "apc-c1m1-tejal-20260419b-motion-card-01" for s in run), (
+        f"card-01 findings are non-adjacent in sorted output: {ids}"
+    )

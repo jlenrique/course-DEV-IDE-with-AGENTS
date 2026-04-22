@@ -31,10 +31,17 @@ DEFAULT_RUNS = 3
 # this bound is itself a signal worth investigating.
 _RUN_TIMEOUT_SECONDS = 600
 # Pytest terminal-summary sentinel: authoritative summary line ends with
-# `in <seconds>s` (with optional minute/hour spans). Used to anchor the
-# regex to the real summary, not stray `"5 passed"` strings elsewhere in
-# stdout (tracebacks, log messages, assertion text).
-_SUMMARY_TAIL_RE = re.compile(r"\bin [\d.:]+s\b\s*$")
+# `in <duration>` where duration is one of:
+#   - "0.03s"                         (sub-minute, fractional seconds)
+#   - "65.00s (0:01:05)"              (long form with HH:MM:SS suffix)
+#   - "1m5s" / "1h2m3s"               (compact multi-unit when no seconds
+#                                      decimal; pytest emits this for
+#                                      sessions exceeding format_session_duration thresholds)
+# Used to anchor the regex to the real summary, not stray `"5 passed"`
+# strings elsewhere in stdout (tracebacks, log messages, assertion text).
+_SUMMARY_TAIL_RE = re.compile(
+    r"\bin (?:\d+h)?(?:\d+m)?[\d.]+s(?:\s*\([\d:]+\))?\s*$"
+)
 # Individual-count patterns (each optional). Parsed independently so we
 # don't require a fixed ordering or require `passed` to be present.
 _COUNT_PATTERNS: dict[str, re.Pattern[str]] = {
@@ -60,13 +67,21 @@ class RunOutcome:
     deselected: int
     raw_tail: str
     parser_recognized_summary: bool = True
+    # Distinct from exit_code because POSIX reports signal-killed processes
+    # as negative numbers (e.g. SIGHUP = -1), which would collide with an
+    # exit_code sentinel for "timed out." Thread timeout as its own flag so
+    # signal-killed and timed-out runs are never mistaken for one another
+    # in signature comparison.
+    timed_out: bool = False
 
     def signature(
         self,
-    ) -> tuple[int, int, int, int, int, int, int, int, bool]:
+    ) -> tuple[int, int, int, int, int, int, int, int, bool, bool]:
         # parser_recognized_summary is part of signature so "zero-tuple
         # because we couldn't parse any summary" is NOT confused with a
-        # genuine "0 passed" outcome.
+        # genuine "0 passed" outcome. timed_out is part of signature so
+        # a timeout is not confused with a signal-killed (same exit_code)
+        # or with a non-terminating parse failure.
         return (
             self.exit_code,
             self.passed,
@@ -77,6 +92,7 @@ class RunOutcome:
             self.xpassed,
             self.deselected,
             self.parser_recognized_summary,
+            self.timed_out,
         )
 
 
@@ -124,7 +140,7 @@ def _run_once(selector: str) -> RunOutcome:
     except subprocess.TimeoutExpired as exc:
         partial = exc.stdout or ""
         return RunOutcome(
-            exit_code=-1,
+            exit_code=0,  # intentionally 0; timed_out carries the signal
             passed=0,
             failed=0,
             errors=0,
@@ -137,6 +153,7 @@ def _run_once(selector: str) -> RunOutcome:
                 + "\n".join(partial.splitlines()[-3:] if partial else [])
             ),
             parser_recognized_summary=False,
+            timed_out=True,
         )
 
     counts, recognized = _parse_summary(proc.stdout)
@@ -198,13 +215,23 @@ def main() -> int:
     sig = outcomes[0]
 
     # Fail closed when we couldn't parse a summary on any run — a crash
-    # (segfault, import error, timeout) yields zero outcome counts that
-    # must never be confused with "3 consecutive green runs".
+    # (segfault, import error) or a timeout yields zero outcome counts
+    # that must never be confused with "3 consecutive green runs."
+    if sig.timed_out:
+        print(
+            f"\nGATE FAILED — pytest timed out on all {args.runs} runs "
+            f"(timeout={_RUN_TIMEOUT_SECONDS}s). Likely deadlock or "
+            f"hang in the test slice."
+        )
+        if sig.raw_tail:
+            print(f"tail: {sig.raw_tail}")
+        return 1
+
     if not sig.parser_recognized_summary:
         print(
             f"\nGATE FAILED — could not parse pytest terminal summary across "
-            f"{args.runs} runs (likely crash, timeout, or no tests selected). "
-            f"signature={sig.signature()}"
+            f"{args.runs} runs (likely crash, import error, or unexpected "
+            f"pytest output format). signature={sig.signature()}"
         )
         if sig.raw_tail:
             print(f"tail: {sig.raw_tail}")

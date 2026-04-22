@@ -168,8 +168,9 @@ def lint_manifest(
         if visual_mode == "video":
             duration = segment.get("motion_duration_seconds")
             slide_id = segment.get("slide_id")
-            # Track which key we matched on so finding attribution can name
-            # the actual receipt-lookup key rather than always-seg_id.
+            # Track which key we matched on so the finding detail can name
+            # the actual receipt-lookup key. segment_id remains stable (always
+            # seg_id) so all findings for the same segment sort adjacently.
             receipt_lookup_key: str | None = None
             receipt_duration = receipt_durations.get(seg_id)
             if receipt_duration is not None:
@@ -179,10 +180,10 @@ def lint_manifest(
                 if receipt_duration is not None:
                     receipt_lookup_key = slide_id
 
-            attribution = (
-                seg_id
+            lookup_note = (
+                ""
                 if receipt_lookup_key is None or receipt_lookup_key == seg_id
-                else f"{seg_id} (matched receipt via slide_id={receipt_lookup_key!r})"
+                else f" (matched receipt via slide_id={receipt_lookup_key!r})"
             )
 
             if receipt_duration is None:
@@ -205,11 +206,11 @@ def lint_manifest(
                 findings.append(
                     LintFinding(
                         kind=_KIND_MISSING_DURATION,
-                        segment_id=attribution,
+                        segment_id=seg_id,
                         detail=(
                             f"motion segment has null motion_duration_seconds; "
-                            f"Motion Gate receipt carries {receipt_duration}s — "
-                            "carry it forward at Pass 2 emission"
+                            f"Motion Gate receipt carries {receipt_duration}s"
+                            f"{lookup_note} — carry it forward at Pass 2 emission"
                         ),
                     )
                 )
@@ -220,11 +221,11 @@ def lint_manifest(
                 findings.append(
                     LintFinding(
                         kind=_KIND_MISSING_DURATION,
-                        segment_id=attribution,
+                        segment_id=seg_id,
                         detail=(
                             f"motion_duration_seconds has non-numeric type "
                             f"{type(duration).__name__} (value={duration!r}); "
-                            f"receipt carries {receipt_duration}s"
+                            f"receipt carries {receipt_duration}s{lookup_note}"
                         ),
                     )
                 )
@@ -232,10 +233,11 @@ def lint_manifest(
                 findings.append(
                     LintFinding(
                         kind=_KIND_DURATION_MISMATCH,
-                        segment_id=attribution,
+                        segment_id=seg_id,
                         detail=(
                             f"motion_duration_seconds is {duration!r} (not a "
-                            f"finite number); receipt carries {receipt_duration}s"
+                            f"finite number); receipt carries "
+                            f"{receipt_duration}s{lookup_note}"
                         ),
                     )
                 )
@@ -245,11 +247,12 @@ def lint_manifest(
                 findings.append(
                     LintFinding(
                         kind=_KIND_DURATION_MISMATCH,
-                        segment_id=attribution,
+                        segment_id=seg_id,
                         detail=(
                             f"motion_duration_seconds={duration} disagrees with "
                             f"Motion Gate receipt value {receipt_duration} "
                             f"(tolerance {_DURATION_TOLERANCE_SECONDS}s)"
+                            f"{lookup_note}"
                         ),
                     )
                 )

@@ -161,3 +161,112 @@ def test_read_motion_durations_accepts_empty_non_static_slides(tmp_path):
         encoding="utf-8",
     )
     assert read_motion_durations(static_only) == {}
+
+
+# ---------------------------------------------------------------------------
+# Re-review coverage — guards added in code-review patch wave
+# ---------------------------------------------------------------------------
+
+
+def test_read_motion_durations_non_dict_root_raises(tmp_path):
+    non_dict_root = tmp_path / "list_root.json"
+    non_dict_root.write_text(json.dumps(["not", "a", "dict"]), encoding="utf-8")
+    with pytest.raises(MotionGateReceiptError, match="root must be a JSON object"):
+        read_motion_durations(non_dict_root)
+
+
+def test_read_motion_durations_non_string_gate_decision_raises(tmp_path):
+    bad_gate = tmp_path / "bad_gate_type.json"
+    bad_gate.write_text(
+        json.dumps(
+            {
+                "run_id": "X",
+                "gate_decision": 123,  # not a string
+                "non_static_slides": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(MotionGateReceiptError, match="must be a string"):
+        read_motion_durations(bad_gate)
+
+
+def test_read_motion_durations_non_dict_entry_raises(tmp_path):
+    non_dict_entry = tmp_path / "non_dict_entry.json"
+    non_dict_entry.write_text(
+        json.dumps(
+            {
+                "run_id": "X",
+                "gate_decision": "approved",
+                "non_static_slides": ["slide-as-string"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(MotionGateReceiptError, match="must be a mapping"):
+        read_motion_durations(non_dict_entry)
+
+
+def test_read_motion_durations_empty_slide_id_raises(tmp_path):
+    empty_id = tmp_path / "empty_id.json"
+    empty_id.write_text(
+        json.dumps(
+            {
+                "run_id": "X",
+                "gate_decision": "approved",
+                "non_static_slides": [{"slide_id": "", "duration_seconds": 5.0}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(MotionGateReceiptError, match="non-empty string"):
+        read_motion_durations(empty_id)
+
+
+def test_read_motion_durations_non_string_slide_id_raises(tmp_path):
+    int_id = tmp_path / "int_id.json"
+    int_id.write_text(
+        json.dumps(
+            {
+                "run_id": "X",
+                "gate_decision": "approved",
+                "non_static_slides": [{"slide_id": 42, "duration_seconds": 5.0}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(MotionGateReceiptError, match="non-empty string"):
+        read_motion_durations(int_id)
+
+
+def test_read_motion_durations_bool_duration_raises(tmp_path):
+    """Explicit rejection of bool — isinstance(True, int) is True in Python
+    and True > 0 evaluates True, so without the guard bool would coerce to 1.0."""
+    bool_dur = tmp_path / "bool_dur.json"
+    bool_dur.write_text(
+        json.dumps(
+            {
+                "run_id": "X",
+                "gate_decision": "approved",
+                "non_static_slides": [{"slide_id": "s1", "duration_seconds": True}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(MotionGateReceiptError, match="invalid duration"):
+        read_motion_durations(bool_dur)
+
+
+def test_read_motion_durations_nan_or_infinity_raises(tmp_path):
+    """NaN and Infinity parse successfully via json.loads (they are JSON5
+    extensions allowed by the stdlib), but we MUST reject them to prevent
+    silent contract drift."""
+    for token, label in [("NaN", "NaN"), ("Infinity", "Infinity"), ("-Infinity", "-Infinity")]:
+        bad_dur = tmp_path / f"bad_{label}.json"
+        bad_dur.write_text(
+            '{"run_id":"X","gate_decision":"approved","non_static_slides":'
+            f'[{{"slide_id":"s1","duration_seconds":{token}}}]}}',
+            encoding="utf-8",
+        )
+        with pytest.raises(MotionGateReceiptError, match="invalid duration"):
+            read_motion_durations(bad_dur)

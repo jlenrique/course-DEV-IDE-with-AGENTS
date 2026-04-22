@@ -384,6 +384,20 @@ Three parallel reviewers (Blind Hunter + Edge Case Hunter + Acceptance Auditor) 
 
 All 19 patches applied this session. Story suite now **76 tests in tests/irene/ + tests/ci/ passing** (was 61). Full regression: **2193 passed / 4 failed / 5 skipped** — the same 4 pre-existing branch-drift failures that pre-dated §7.1, now classified in the Dev Agent Record for separate operator triage. Deferred items appended to `_bmad-output/maps/deferred-work.md` under a dedicated §7.1-code-review heading.
 
+### 2026-04-22 — bmad-code-review RE-REVIEW (same session; confirmed clean)
+
+Three parallel reviewers re-audited the 19-patch commit (`a68bc21..6bb69a8`). Triage: **4 PATCH applied / 3 DEFER / 4 NIT DISMISS / 0 MUST-FIX remaining.** Acceptance Auditor: 21/21 STILL SATISFIED; AC-B.6 promoted from PARTIAL → SATISFIED via tracked SKILL.md pointer.
+
+Re-review patches applied:
+- **`_SUMMARY_TAIL_RE` rejected pytest multi-unit duration formats** (`1h2m3s`, `65.00s (0:01:05)`, `1m5s`) — would have fail-closed legitimate long runs (regression I introduced in first patch wave). Extended regex to accept all pytest-emitted duration formats + 5 parametrized test cases covering them.
+- **Timeout `exit_code=-1` sentinel collided with signal-killed (SIGHUP=-1)** — both produced identical signatures, making the flake detector see "consistent" across genuinely-different failure modes. Replaced with distinct `timed_out: bool` flag on `RunOutcome`; signature tuple now includes it.
+- **Attribution string embedded in `segment_id` broke stable sort grouping** — two findings for the same segment could end up non-adjacent in output. Kept `segment_id=seg_id` stable; moved receipt-lookup-key provenance into `detail` via `lookup_note` suffix.
+- **Test coverage for new guard branches** — added 7 lint tests (non-dict root, empty segments, non-dict segment, string/bool/NaN duration, attribution-in-detail, adjacency-preservation) + 6 receipt-reader tests (non-dict root, non-str gate_decision, non-dict entry, empty/non-str slide_id, bool/NaN/Inf duration) + 5 flake-gate multi-unit duration tests + 2 timeout-vs-signal signature tests.
+
+Cumulative §7.1 + flake-gate test surface: **99 tests passing** (was 76 after first patch wave). Full regression: **2216 passed / 4 failed / 5 skipped.** Same 4 pre-existing branch failures; no new regression.
+
+Re-review remaining DEFER (3) + NIT DISMISS (4) appended to `_bmad-output/maps/deferred-work.md` under the re-review sub-section: `load_receipt` consistency with hardened `read_motion_durations`; "no tests ran" substring anchoring; comment drift in gate fail-closed message; attribution-when-id-equals-slide_id test coverage variant.
+
 ### Review Findings
 
 bmad-code-review layered pass completed 2026-04-22 (three parallel reviewers: Blind Hunter / Edge Case Hunter / Acceptance Auditor). Summary: **19 patch / 10 defer / 11 dismissed.** Acceptance Auditor: 21/21 spec criteria met. Triage ordered by severity.

@@ -44,6 +44,38 @@ def _sanitize_cluster_token(value: Any) -> str:
     return token or "unknown"
 
 
+def _count_words(text: str | None) -> int:
+    tokens = [token for token in str(text or "").replace("\n", " ").split(" ") if token]
+    return len(tokens)
+
+
+def _clip_text(text: str | None, *, max_chars: int = 180) -> str | None:
+    cleaned = " ".join(str(text or "").split()).strip()
+    if not cleaned:
+        return None
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return f"{cleaned[: max_chars - 3].rstrip()}..."
+
+
+def _transition_annotation(transition_scope: str) -> str:
+    if transition_scope == "within-cluster":
+        return "[TRANSITION: cut — no effect]"
+    if transition_scope == "cluster-boundary":
+        return "[TRANSITION: beat/pause — brief black or fade]"
+    return "[TRANSITION: manifest-default treatment]"
+
+
+def _pacing_guidance(transition_scope: str, bridge_type: str) -> str:
+    if transition_scope == "within-cluster":
+        return "maintain tight pacing — no pauses between slides"
+    if bridge_type == "cluster_boundary":
+        return "bridge audio covers the transition — no additional pause needed"
+    if transition_scope == "cluster-boundary":
+        return "insert 0.5-1.0s beat between clusters for cognitive reset"
+    return "maintain standard pacing for standalone flow"
+
+
 def sync_approved_visuals_to_assembly_bundle(
     manifest_path: str | Path,
     *,
@@ -241,10 +273,33 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
 
 def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
     """Build ordered timeline rows with cumulative start times."""
+    segments = manifest.get("segments", [])
+    cluster_interstitial_totals: dict[str, int] = {}
+    cluster_topics: dict[str, str] = {}
+    cluster_master_intents: dict[str, str] = {}
+    for segment in segments:
+        cluster_id = str(segment.get("cluster_id") or "").strip()
+        if not cluster_id:
+            continue
+        cluster_role = str(segment.get("cluster_role") or "").strip().lower()
+        if cluster_role == "interstitial":
+            cluster_interstitial_totals[cluster_id] = (
+                cluster_interstitial_totals.get(cluster_id, 0) + 1
+            )
+        cluster_topic = str(
+            segment.get("cluster_topic") or segment.get("narrative_arc") or ""
+        ).strip()
+        if cluster_topic and cluster_id not in cluster_topics:
+            cluster_topics[cluster_id] = cluster_topic
+        master_behavioral_intent = str(segment.get("master_behavioral_intent") or "").strip()
+        if master_behavioral_intent and cluster_id not in cluster_master_intents:
+            cluster_master_intents[cluster_id] = master_behavioral_intent
+
     current_start = 0.0
     rows: list[dict[str, Any]] = []
+    cluster_interstitial_seen: dict[str, int] = {}
     previous_cluster_id: str | None = None
-    for segment in manifest.get("segments", []):
+    for segment in segments:
         narration_duration = float(segment["narration_duration"])
         visual_duration = (
             float(segment["visual_duration"])
@@ -253,6 +308,7 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
         )
         cluster_id_raw = str(segment.get("cluster_id") or "").strip()
         cluster_id = cluster_id_raw or None
+        cluster_role = str(segment.get("cluster_role") or "none").strip().lower() or "none"
         if not rows:
             transition_scope = "start"
         elif previous_cluster_id and cluster_id and previous_cluster_id == cluster_id:
@@ -261,6 +317,28 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
             transition_scope = "flat"
         else:
             transition_scope = "cluster-boundary"
+
+        interstitial_position = None
+        interstitial_total = None
+        if cluster_id and cluster_role == "interstitial":
+            interstitial_position = cluster_interstitial_seen.get(cluster_id, 0) + 1
+            cluster_interstitial_seen[cluster_id] = interstitial_position
+            interstitial_total = cluster_interstitial_totals.get(cluster_id, interstitial_position)
+
+        cluster_topic = cluster_topics.get(cluster_id or "")
+        if cluster_id and cluster_role == "head":
+            topic = cluster_topic or "cluster topic"
+            cluster_label = f"[HEAD — Cluster {cluster_id}: \"{topic}\"]"
+        elif cluster_id and cluster_role == "interstitial":
+            interstitial_type = str(segment.get("interstitial_type") or "interstitial").strip()
+            isolation_target = str(segment.get("isolation_target") or "focus").strip()
+            cluster_label = (
+                f"[INTERSTITIAL {interstitial_position}/{interstitial_total} — "
+                f"{interstitial_type}: \"{isolation_target}\"]"
+            )
+        else:
+            cluster_label = "[STANDALONE]"
+
         motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
         motion_duration = (
             float(segment["motion_duration_seconds"])
@@ -268,6 +346,36 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
             else None
         )
         segment_duration = max(narration_duration, motion_duration or 0.0)
+
+        narration_text = str(segment.get("narration_text") or "")
+        word_count = _count_words(narration_text)
+        expected_audio_seconds = round((word_count * 60.0) / 150.0, 1) if word_count else None
+
+        bridge_type = str(segment.get("bridge_type") or "none").strip() or "none"
+        if cluster_role == "interstitial":
+            audio_note = "[AUDIO: VO segment, 10-16s]"
+        elif cluster_role == "head":
+            audio_note = "[AUDIO: VO segment, 32-56s]"
+        else:
+            audio_note = "[AUDIO: VO segment]"
+        boundary_audio_note = (
+            "[AUDIO: bridge VO, 15-20s]" if bridge_type == "cluster_boundary" else None
+        )
+
+        transition_annotation = _transition_annotation(transition_scope)
+        pacing_guidance = _pacing_guidance(transition_scope, bridge_type)
+        bridge_text = (
+            _clip_text(segment.get("narration_text"))
+            if bridge_type == "cluster_boundary"
+            else None
+        )
+
+        master_behavioral_intent = str(
+            segment.get("master_behavioral_intent")
+            or cluster_master_intents.get(cluster_id or "")
+            or "none"
+        ).strip() or "none"
+
         rows.append(
             {
                 "id": segment["id"],
@@ -286,11 +394,23 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
                 "motion_type": motion_type,
                 "motion_asset_path": segment.get("motion_asset_path"),
                 "motion_duration_seconds": motion_duration,
-                "bridge_type": segment.get("bridge_type") or "none",
+                "bridge_type": bridge_type,
                 "cluster_id": cluster_id,
-                "cluster_role": segment.get("cluster_role") or "none",
+                "cluster_role": cluster_role,
                 "cluster_position": segment.get("cluster_position") or "none",
+                "cluster_topic": cluster_topic or "",
+                "master_behavioral_intent": master_behavioral_intent,
+                "interstitial_type": segment.get("interstitial_type") or "",
+                "isolation_target": segment.get("isolation_target") or "",
+                "cluster_label": cluster_label,
                 "transition_scope": transition_scope,
+                "transition_annotation": transition_annotation,
+                "audio_note": audio_note,
+                "boundary_audio_note": boundary_audio_note,
+                "pacing_guidance": pacing_guidance,
+                "word_count": word_count,
+                "expected_audio_seconds": expected_audio_seconds,
+                "bridge_text": bridge_text,
             }
         )
         previous_cluster_id = cluster_id
@@ -316,11 +436,52 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
         f"- Total runtime: `{format_timestamp(total_runtime)}`",
         "- Track plan: `V1` visuals, `A1` narration, `A2` music, `A3` SFX",
         "",
-        "## Asset Inventory",
-        "",
-        "| Asset | Track | Segment | Path |",
-        "|-------|-------|---------|------|",
     ]
+
+    clusters: dict[str, list[dict[str, Any]]] = {}
+    cluster_order: list[str] = []
+    for row in rows:
+        cluster_id = row.get("cluster_id")
+        if not cluster_id:
+            continue
+        if cluster_id not in clusters:
+            clusters[cluster_id] = []
+            cluster_order.append(cluster_id)
+        clusters[cluster_id].append(row)
+
+    if cluster_order:
+        lines.extend(["## Cluster Overview", ""])
+        for cluster_id in cluster_order:
+            cluster_rows = clusters[cluster_id]
+            head = next(
+                (row for row in cluster_rows if row.get("cluster_role") == "head"),
+                cluster_rows[0],
+            )
+            topic = head.get("cluster_topic") or "cluster topic"
+            master_behavioral_intent = head.get("master_behavioral_intent") or "none"
+            interstitial_count = sum(
+                1 for row in cluster_rows if row.get("cluster_role") == "interstitial"
+            )
+            lines.extend(
+                [
+                    f"### Cluster {cluster_id}",
+                    f"- Header: `[HEAD — Cluster {cluster_id}: \"{topic}\"]`",
+                    f"- Master behavioral intent: `{master_behavioral_intent}`",
+                    f"- Interstitial count: `{interstitial_count}`",
+                    "- Within-cluster pacing: maintain tight pacing — no pauses between slides",
+                    "- Between-cluster pacing: insert 0.5-1.0s beat between clusters for cognitive reset",
+                    "",
+                ]
+            )
+
+    lines.extend(
+        [
+            "## Asset Inventory",
+            "",
+            "| Asset | Track | Segment | Path |",
+            "|-------|-------|---------|------|",
+        ]
+    )
     for row in rows:
         lines.append(f"| Narration | A1 | `{row['id']}` | `{row['narration_file']}` |")
         lines.append(f"| Visual | V1 | `{row['id']}` | `{row['visual_file']}` |")
@@ -333,20 +494,20 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
             "",
             "## Timeline Table",
             "",
-            "| Segment | Start | Narration | Visual | Transitions | Bridge / Cluster | Behavioral Intent |",
-            "|---------|-------|-----------|--------|-------------|------------------|-------------------|",
+            "| Segment | Start | Label | Narration | Visual | Transition Annotation | Audio Note | Bridge / Cluster | Behavioral Intent |",
+            "|---------|-------|-------|-----------|--------|-----------------------|------------|------------------|-------------------|",
         ]
     )
     for row in rows:
-        transitions = f"{row['transition_in']} -> {row['transition_out']}"
+        transitions = row.get("transition_annotation") or "[TRANSITION: manifest-default treatment]"
         bridge_cluster = (
             f"{row.get('bridge_type') or 'none'} / "
             f"{row.get('cluster_id') or 'standalone'}"
         )
         lines.append(
             f"| `{row['id']}` | `{format_timestamp(row['start'])}` | "
-            f"`{row['narration_duration']:.2f}s` | `{row['visual_duration']:.2f}s` | "
-            f"`{transitions}` | `{bridge_cluster}` | `{row.get('behavioral_intent') or 'none'}` |"
+            f"`{row.get('cluster_label')}` | `{row['narration_duration']:.2f}s` | `{row['visual_duration']:.2f}s` | "
+            f"`{transitions}` | `{row.get('audio_note')}` | `{bridge_cluster}` | `{row.get('behavioral_intent') or 'none'}` |"
         )
 
     lines.extend(["", "## Segment-by-Segment Assembly Instructions", ""])
@@ -357,14 +518,29 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
                 f"- Start at `{format_timestamp(row['start'])}`",
                 f"- Place `{row['narration_file']}` on `A1`",
                 f"- Set segment duration to `{row['segment_duration']:.2f}s`",
+                f"- Segment label: `{row.get('cluster_label')}`",
                 f"- Transition in/out: `{row['transition_in']}` / `{row['transition_out']}`",
-                f"- Transition scope: `{row.get('transition_scope')}`",
+                f"- Transition annotation: `{row.get('transition_annotation')}`",
                 f"- Bridge type: `{row.get('bridge_type') or 'none'}`",
                 f"- Cluster context: `{row.get('cluster_id') or 'standalone'} / {row.get('cluster_role') or 'none'} / {row.get('cluster_position') or 'none'}`",
+                f"- Master behavioral intent: `{row.get('master_behavioral_intent') or 'none'}`",
+                f"- Audio treatment: `{row.get('audio_note')}`",
                 f"- Behavioral intent: `{row.get('behavioral_intent') or 'none'}`",
                 f"- Intent note: {behavioral_note(row.get('behavioral_intent'))}",
+                f"- Pacing guidance: {row.get('pacing_guidance')}",
             ]
         )
+        if row.get("expected_audio_seconds") is not None:
+            lines.append(
+                f"- Audio estimate at 150 WPM: `{row.get('expected_audio_seconds'):.1f}s` (`{row.get('word_count')}` words)."
+            )
+        if row.get("boundary_audio_note"):
+            lines.append(f"- Boundary audio treatment: `{row.get('boundary_audio_note')}`")
+        if row.get("bridge_text"):
+            lines.append(
+                f"- Bridge text (synthesis + forward pull): "
+                f"`{row.get('bridge_text')}`"
+            )
         if row.get("motion_type") != "static" and row.get("motion_asset_path"):
             lines.append(
                 f"- Play `{row['motion_asset_path']}` on the video track for `{float(row['motion_duration_seconds']):.2f}s`, aligned to narration segment `{row['id']}`."

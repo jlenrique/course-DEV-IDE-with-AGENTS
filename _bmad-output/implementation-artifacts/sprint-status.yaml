@@ -52,7 +52,7 @@
 # - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-23  # 22-4 done; 24-1 assembly contract hardening reviewed, hardened, and closed to done.
+last_updated: 2026-04-23  # 22-4 and 24-1 done; 24-2 Descript guide enhancement implemented and moved to review.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -471,7 +471,7 @@ development_status:
   # MVP gate passed. Epic 23 complete — cluster-aware Pass 2 + G4 (19 criteria) + cadence shipped. Final downstream epic.
   epic-24: in-progress
   24-1-assembly-contract-hardening: done  # 2026-04-23: layered review completed (blind/edge/acceptance), collision hardening patch merged, validation green.
-  24-2-descript-assembly-guide-enhancement: ready-for-dev  # Blocked on: 24-1
+  24-2-descript-assembly-guide-enhancement: review  # 2026-04-23: implementation + validation complete; ready for layered bmad-code-review.
   24-3-elevenlabs-short-segment-handling: ready-for-dev  # Unblocked (Epic 23 done)
   24-4-regression-test-suite: ready-for-dev  # Blocked on: 24-1 + 24-3 (23-2 Epic 23 gate work complete)
   epic-24-retrospective: optional

@@ -19,6 +19,7 @@
 8. [API Client Anatomy](#api-client-anatomy)
 9. [Extension Guide: Adding New Capabilities](#extension-guide-adding-new-capabilities)
    - [Recipe 6: Adding a Retrieval Provider (Texas)](#recipe-6-adding-a-retrieval-provider-texas)
+    - [Recipe 7: Adding a Dispatch Edge (Marcus)](#recipe-7-adding-a-dispatch-edge-marcus)
 10. [Testing](#testing)
 11. [Coding Standards and Patterns](#coding-standards-and-patterns)
 12. [Project File Map](#project-file-map)
@@ -605,6 +606,14 @@ This is where you come in. The three-layer architecture means there are three di
 **Scope summary:** Subclass `RetrievalAdapter` under `skills/bmad-agent-texas/scripts/retrieval/`, declare a `PROVIDER_INFO: ClassVar[ProviderInfo]` so the directory auto-registers, implement the seven abstract methods (formulate_query, execute, apply_mechanical, apply_provider_scored, normalize, refine, identity_key), and parametrize `tests/contracts/test_retrieval_adapter_base.py` against your new adapter instead of copying test bodies.
 
 **Full recipe:** [docs/dev-guide/how-to-add-a-retrieval-provider.md](dev-guide/how-to-add-a-retrieval-provider.md) — SciteProvider is the living worked example.
+
+### Recipe 7: Adding a Dispatch Edge (Marcus)
+
+**When:** You are wiring a new Marcus-to-specialist boundary to the PR-R dispatch contract, or retrofitting an older boundary to emit standard envelope and receipt payloads.
+
+**Scope summary:** Extend `marcus.dispatch.contract` with a new `DispatchKind` only when needed, map it in `DISPATCH_KIND_TO_SPECIALIST`, add a registry row in `skills/bmad-agent-marcus/references/dispatch-registry.yaml`, then retrofit the boundary script to emit `dispatch.start` and `dispatch.end` with `build_dispatch_envelope(...)` and `build_dispatch_receipt(...)`. Keep retrofit additive: attach `dispatch_contract` while preserving existing payload shapes.
+
+**Full recipe:** [docs/dev-guide/how-to-add-a-dispatch-edge.md](dev-guide/how-to-add-a-dispatch-edge.md) — Irene Pass 2, Kira motion, and Texas retrieval are the current worked examples.
 
 ### Evaluator Design Requirements (Lessons from Story 3.1)
 

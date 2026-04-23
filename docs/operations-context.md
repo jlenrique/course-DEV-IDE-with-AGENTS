@@ -26,6 +26,7 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 - Cluster workflow: `docs/workflow/cluster-workflow.md`
 - A/B tuning loop: `docs/workflow/operator-script-v4.2-irene-ab-loop.md`
 - Artifact contract: `docs/workflow/trial-run-pass2-artifacts-contract.md`
+- Research knobs: `docs/research-knobs-guide.md`
 - Gate ownership: `docs/fidelity-gate-map.md`
 - Judgment boundaries: `docs/lane-matrix.md`
 
@@ -41,6 +42,8 @@ Purpose: compact high-signal context for production operations sessions. Use thi
 - If `MOTION_ENABLED` is enabled, Gate 2M and Motion Gate must both close before Irene Pass 2.
 - If `CLUSTER_DENSITY` is non-`none`, G1.5 (Cluster Plan Validation) must pass before cluster dispatch, and G2.5 (Cluster Coherence Validation) must pass after Gary cluster dispatch (G3) and before Storyboard A / HIL Gate 2.
 - If `EXPERIENCE_PROFILE` is set, Marcus must freeze the resolved `experience_profile` in `run-constants.yaml` and carry the resolved `narration_profile_controls` forward in the Pass 2 envelope before downstream narration work.
+- If `EVIDENCE_BOLSTER` is enabled in `run-constants.yaml`, Tracy corroborate runs in cross-validation mode (scite + consensus provider-hints), and `CONSENSUS_API_KEY` must be present; readiness/preflight fail closed when missing.
+- Naming boundary is strict: run-constants knob is `evidence_bolster`, intake runtime projection is `evidence_bolster_active`, Tracy action flag is `cross_validate`.
 - Storyboard B is required after Irene Pass 2 and before downstream audio/script finalization.
 
 ## Canonical Commands

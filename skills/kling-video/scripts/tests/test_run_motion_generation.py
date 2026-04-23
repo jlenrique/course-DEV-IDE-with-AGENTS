@@ -9,6 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 import yaml
+from marcus.dispatch.contract import DispatchEnvelope, DispatchReceipt
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "run_motion_generation.py"
 SPEC = importlib.util.spec_from_file_location("run_motion_generation", MODULE_PATH)
@@ -117,6 +118,13 @@ def test_runner_happy_path_submits_polls_validates_and_patches_plan(tmp_path: Pa
     assert row["provider_task_id"] == "task-123"
     assert (bundle / "motion-generation-slide-01.progress.json").exists()
     assert (bundle / "motion-generation-slide-01.json").exists()
+
+    dispatch_contract = result["dispatch_contract"]
+    validated_envelope = DispatchEnvelope.model_validate(dispatch_contract["envelope"])
+    validated_receipt = DispatchReceipt.model_validate(dispatch_contract["receipt"])
+    assert validated_envelope.dispatch_kind.value == "kira_motion"
+    assert validated_receipt.outcome.value == "complete"
+
     client.text_to_video.assert_called_once()
     assert "sound" not in client.text_to_video.call_args.kwargs
     client.wait_for_completion.assert_called_once_with(

@@ -96,7 +96,11 @@ def _append_locked(
 
 
 class _FakeBridge:
+    def __init__(self) -> None:
+        self.last_lesson_plan: dict[str, Any] | None = None
+
     def process_plan_locked(self, lesson_plan: dict[str, Any]) -> list[dict[str, Any]]:
+        self.last_lesson_plan = lesson_plan
         units = lesson_plan.get("units", [])
         if not units:
             return []
@@ -132,13 +136,29 @@ def test_emit_plan_lock_fanout_emits_gap_envelope_for_in_scope_gaps(tmp_path: Pa
 
 def test_emit_plan_lock_fanout_bridge_integration_populates_bridge_status(tmp_path: Path) -> None:
     dispatch, _ = _dispatch(tmp_path)
+    bridge = _FakeBridge()
     result = emit_plan_lock_fanout(
         _locked_plan(include_gap=True),
         dispatch=dispatch,
-        bridge=_FakeBridge(),
+        bridge=bridge,
     )
     assert result.bridge_results[0]["status"] == "success"
     assert result.envelopes[-1].bridge_status == "success"
+
+
+def test_emit_plan_lock_fanout_passes_evidence_bolster_to_bridge(tmp_path: Path) -> None:
+    dispatch, _ = _dispatch(tmp_path)
+    bridge = _FakeBridge()
+
+    emit_plan_lock_fanout(
+        _locked_plan(include_gap=True),
+        dispatch=dispatch,
+        bridge=bridge,
+        evidence_bolster=True,
+    )
+
+    assert bridge.last_lesson_plan is not None
+    assert bridge.last_lesson_plan["evidence_bolster"] is True
 
 
 def test_emit_plan_lock_fanout_computes_missing_digest(tmp_path: Path) -> None:

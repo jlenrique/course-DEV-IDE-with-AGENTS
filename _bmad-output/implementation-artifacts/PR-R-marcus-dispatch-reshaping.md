@@ -1,6 +1,6 @@
 # Story PR-R: Marcus Dispatch Reshaping (Pull-Request Standardization)
 
-**Status:** ready-for-dev (green-lit 2026-04-22 — D1/D2/D3 rulings applied below)
+**Status:** done (code review patch applied 2026-04-22)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Marcus infrastructure — likely future Epic 35+ "Marcus Dispatch Discipline")
 **Sprint key:** `PR-R-marcus-dispatch-reshaping`
@@ -84,15 +84,19 @@ So that **adding a new specialist OR a new dispatch variant (e.g., evidence-bols
 
 **Task order TBD at green-light. Proposed:** T1 envelope schema → T2 receipt schema → T3 error taxonomy → T4 `_classify_dispatch_kind` helper → T5 dev-guide Recipe-7 + how-to sharded file → **T6–T(5+N) per-edge retrofit (N = scope-bounded edge count)** → T(N+6) regression suite + pre-commit + lockstep.
 
-- [ ] T1 — Envelope schema Pydantic model + JSON schema + module-level import
-- [ ] T2 — Receipt schema Pydantic model + JSON schema
-- [ ] T3 — Error taxonomy enum + exception classes + module-prefix contract
-- [ ] T4 — `_classify_dispatch_kind` helper + unit tests
-- [ ] T5 — Dev-guide Recipe-7 + sharded `how-to-add-a-dispatch-edge.md`
-- [ ] T6 — Retrofit dispatch edge #1 (highest-churn — Irene Pass 2 proposed)
-- [ ] T7 — Retrofit dispatch edge #2 (Gary proposed)
-- [ ] T(N+6) — Retrofit scope bound at green-light (2 edges minimum, 6 edges maximum)
-- [ ] T(final) — Regression + pre-commit + review
+- [x] T1 — Envelope schema Pydantic model + JSON schema + module-level import
+- [x] T2 — Receipt schema Pydantic model + JSON schema
+- [x] T3 — Error taxonomy enum + exception classes + module-prefix contract
+- [x] T4 — `_classify_dispatch_kind` helper + unit tests
+- [x] T5 — Dev-guide Recipe-7 + sharded `how-to-add-a-dispatch-edge.md`
+- [x] T6 — Retrofit dispatch edge #1 (highest-churn — Irene Pass 2 proposed)
+- [x] T7 — Retrofit dispatch edge #2 (Kira motion dispatch)
+- [x] T(N+6) — Retrofit scope bound at green-light (Texas retrieval minimal confirmation)
+- [x] T(final) — Regression + pre-commit + review
+
+### Review Findings
+
+- [x] [Review][Patch] Texas runner import order breaks direct-path invocation from non-repo working directories [skills/bmad-agent-texas/scripts/run_wrangler.py:45]
 
 ## Risks (spine)
 

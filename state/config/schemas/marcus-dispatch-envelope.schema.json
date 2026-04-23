@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarcusDispatchContracts",
+  "type": "object",
+  "$defs": {
+    "DispatchKind": {
+      "type": "string",
+      "enum": [
+        "irene_pass2",
+        "kira_motion",
+        "texas_retrieval"
+      ]
+    },
+    "SpecialistId": {
+      "type": "string",
+      "enum": [
+        "irene",
+        "kira",
+        "texas"
+      ]
+    },
+    "DispatchOutcome": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "failed"
+      ]
+    },
+    "DispatchErrorKind": {
+      "type": "string",
+      "enum": [
+        "validation_failed",
+        "specialist_unavailable",
+        "timeout",
+        "contract_violation",
+        "internal_error"
+      ]
+    },
+    "DispatchError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "error_kind",
+        "message",
+        "error_detail"
+      ],
+      "properties": {
+        "error_kind": {
+          "$ref": "#/$defs/DispatchErrorKind"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_detail": {
+          "type": "object"
+        }
+      }
+    },
+    "DispatchEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "specialist_id",
+        "dispatch_kind",
+        "input_packet",
+        "context_refs",
+        "correlation_id",
+        "timestamp_utc"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "specialist_id": {
+          "$ref": "#/$defs/SpecialistId"
+        },
+        "dispatch_kind": {
+          "$ref": "#/$defs/DispatchKind"
+        },
+        "input_packet": {
+          "type": "object"
+        },
+        "context_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timestamp_utc": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "DispatchReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correlation_id",
+        "specialist_id",
+        "outcome",
+        "output_artifacts",
+        "diagnostics",
+        "duration_ms",
+        "timestamp_utc"
+      ],
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "specialist_id": {
+          "$ref": "#/$defs/SpecialistId"
+        },
+        "outcome": {
+          "$ref": "#/$defs/DispatchOutcome"
+        },
+        "output_artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "diagnostics": {
+          "type": "object"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp_utc": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

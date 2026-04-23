@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+import logging
 from pathlib import Path
 import sys
 from typing import Any
@@ -47,8 +48,17 @@ from motion_plan import (
     load_motion_plan,
     write_motion_plan,
 )
+from marcus.dispatch.contract import (
+    DispatchKind,
+    DispatchOutcome,
+    build_dispatch_envelope,
+    build_dispatch_receipt,
+    dispatch_end_log_fields,
+    dispatch_start_log_fields,
+)
 
 load_dotenv(PROJECT_ROOT / ".env")
+LOGGER = logging.getLogger(__name__)
 
 DEFAULT_POLL_INTERVAL = 10
 DEFAULT_MAX_ATTEMPTS = 90
@@ -369,6 +379,21 @@ def run_motion_generation_for_slide(
     if str(row.get("motion_type") or "").strip().lower() != "video":
         raise MotionGenerationError(f"slide {slide_id} is not designated as video")
 
+    dispatch_envelope = build_dispatch_envelope(
+        run_id=str(motion_plan.get("run_id") or "motion-run-unknown").strip(),
+        dispatch_kind=DispatchKind.KIRA_MOTION,
+        input_packet={
+            "slide_id": slide_id,
+            "motion_type": row.get("motion_type"),
+            "motion_duration_seconds": row.get("motion_duration_seconds"),
+        },
+        context_refs=[str(motion_plan_file), str(bundle)],
+    )
+    LOGGER.info(
+        "dispatch.start",
+        extra={"dispatch": dispatch_start_log_fields(dispatch_envelope)},
+    )
+
     receipts = _receipt_paths(bundle, row)
     try:
         _acquire_lock(receipts["lock"], slide_id=slide_id)
@@ -384,7 +409,31 @@ def run_motion_generation_for_slide(
                 "motion_status": row.get("motion_status"),
                 "provider_task_id": row.get("provider_task_id"),
             }
+            existing_receipt = build_dispatch_receipt(
+                correlation_id=dispatch_envelope.correlation_id,
+                specialist_id=dispatch_envelope.specialist_id,
+                outcome=DispatchOutcome.COMPLETE,
+                output_artifacts=[str(row.get("motion_asset_path") or "")]
+                if str(row.get("motion_asset_path") or "").strip()
+                else [],
+                diagnostics={"status": "existing"},
+                duration_ms=0,
+            )
+            existing["dispatch_contract"] = {
+                "envelope": dispatch_envelope.model_dump(mode="json"),
+                "receipt": existing_receipt.model_dump(mode="json"),
+            }
             _write_json(receipts["result"], existing)
+            LOGGER.info(
+                "dispatch.end",
+                extra={
+                    "dispatch": dispatch_end_log_fields(
+                        existing_receipt,
+                        run_id=dispatch_envelope.run_id,
+                        dispatch_kind=dispatch_envelope.dispatch_kind,
+                    )
+                },
+            )
             return existing
 
         if client is None:
@@ -419,6 +468,18 @@ def run_motion_generation_for_slide(
         downloaded = Path(client.download_video(video_url, output_path))
         validation = _validate_local_mp4(downloaded)
         receipt = _build_success_receipt(row, submission, completed, downloaded, validation)
+        dispatch_receipt = build_dispatch_receipt(
+            correlation_id=dispatch_envelope.correlation_id,
+            specialist_id=dispatch_envelope.specialist_id,
+            outcome=DispatchOutcome.COMPLETE,
+            output_artifacts=[str(downloaded), str(receipts["result"])],
+            diagnostics={"provider_status": receipt.get("provider_status")},
+            duration_ms=0,
+        )
+        receipt["dispatch_contract"] = {
+            "envelope": dispatch_envelope.model_dump(mode="json"),
+            "receipt": dispatch_receipt.model_dump(mode="json"),
+        }
         _write_json(receipts["progress"], {
             "status": "completed",
             "task_id": receipt["task_id"],
@@ -436,22 +497,55 @@ def run_motion_generation_for_slide(
             result_path=receipts["result"],
         )
         write_motion_plan(motion_plan_file, motion_plan)
+        LOGGER.info(
+            "dispatch.end",
+            extra={
+                "dispatch": dispatch_end_log_fields(
+                    dispatch_receipt,
+                    run_id=dispatch_envelope.run_id,
+                    dispatch_kind=dispatch_envelope.dispatch_kind,
+                )
+            },
+        )
         return receipt
     except Exception as exc:
         error_text = str(exc)
+        dispatch_receipt = build_dispatch_receipt(
+            correlation_id=dispatch_envelope.correlation_id,
+            specialist_id=dispatch_envelope.specialist_id,
+            outcome=DispatchOutcome.FAILED,
+            output_artifacts=[str(receipts["result"])],
+            diagnostics={"error": error_text},
+            duration_ms=0,
+        )
+        error_payload = {
+            "status": "error",
+            "slide_id": slide_id,
+            "error": error_text,
+            "generated_at_utc": _now_utc(),
+            "requested_audio_mode": "silent",
+            "api_audio_field": "omitted",
+            "dispatch_contract": {
+                "envelope": dispatch_envelope.model_dump(mode="json"),
+                "receipt": dispatch_receipt.model_dump(mode="json"),
+            },
+        }
         _write_json(
             receipts["result"],
-            {
-                "status": "error",
-                "slide_id": slide_id,
-                "error": error_text,
-                "generated_at_utc": _now_utc(),
-                "requested_audio_mode": "silent",
-                "api_audio_field": "omitted",
-            },
+            error_payload,
         )
         _patch_row_failure(motion_plan, row, error_text)
         write_motion_plan(motion_plan_file, motion_plan)
+        LOGGER.info(
+            "dispatch.end",
+            extra={
+                "dispatch": dispatch_end_log_fields(
+                    dispatch_receipt,
+                    run_id=dispatch_envelope.run_id,
+                    dispatch_kind=dispatch_envelope.dispatch_kind,
+                )
+            },
+        )
         raise
     finally:
         receipts["lock"].unlink(missing_ok=True)

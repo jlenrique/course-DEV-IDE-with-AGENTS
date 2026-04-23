@@ -105,3 +105,29 @@ def test_route_rejects_empty_packet_plan() -> None:
     with pytest.raises(ValueError, match="at least one plan unit"):
         route_step_04_gate_to_step_05(plan, intake_callable=intake)
 
+
+def test_route_forwards_evidence_bolster_to_facade() -> None:
+    class _FakeFacade:
+        def __init__(self) -> None:
+            self.kwargs: dict[str, object] | None = None
+
+        def run_4a(self, packet_plan, **kwargs):
+            self.kwargs = kwargs
+            return packet_plan.model_copy(update={"revision": 1, "digest": "digest-1"})
+
+    plan = _make_plan()
+
+    def intake(_state, _unit_id):
+        return _decision("in-scope"), "ratified"
+
+    facade = _FakeFacade()
+    route_step_04_gate_to_step_05(
+        plan,
+        intake_callable=intake,
+        facade=facade,
+        evidence_bolster=True,
+    )
+
+    assert facade.kwargs is not None
+    assert facade.kwargs["evidence_bolster"] is True
+

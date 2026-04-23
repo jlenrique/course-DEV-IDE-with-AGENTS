@@ -132,6 +132,65 @@ segments:
         assert "video track" in guide
         assert "Set segment duration to `5.00s`" in guide
 
+    def test_generate_assembly_guide_includes_cluster_and_bridge_context(self) -> None:
+        manifest = {
+            "lesson_id": "C1-M1-L1",
+            "title": "Clustered Assembly",
+            "segments": [
+                {
+                    "id": "seg-01",
+                    "narration_duration": 3.2,
+                    "narration_file": "course-content/staging/C1-M1-L1/audio/seg-01.mp3",
+                    "visual_file": "course-content/staging/C1-M1-L1/visuals/seg-01.jpg",
+                    "visual_duration": 3.2,
+                    "transition_in": "fade",
+                    "transition_out": "cross-dissolve",
+                    "behavioral_intent": "credible",
+                    "bridge_type": "cluster_boundary",
+                    "cluster_id": "c1",
+                    "cluster_role": "head",
+                    "cluster_position": "establish",
+                },
+                {
+                    "id": "seg-02",
+                    "narration_duration": 2.1,
+                    "narration_file": "course-content/staging/C1-M1-L1/audio/seg-02.mp3",
+                    "visual_file": "course-content/staging/C1-M1-L1/visuals/seg-02.jpg",
+                    "visual_duration": 2.1,
+                    "transition_in": "cut",
+                    "transition_out": "cut",
+                    "behavioral_intent": "credible",
+                    "bridge_type": "none",
+                    "cluster_id": "c1",
+                    "cluster_role": "interstitial",
+                    "cluster_position": "develop",
+                },
+                {
+                    "id": "seg-03",
+                    "narration_duration": 2.0,
+                    "narration_file": "course-content/staging/C1-M1-L1/audio/seg-03.mp3",
+                    "visual_file": "course-content/staging/C1-M1-L1/visuals/seg-03.jpg",
+                    "visual_duration": 2.0,
+                    "transition_in": "fade",
+                    "transition_out": "fade",
+                    "behavioral_intent": "clear-guidance",
+                    "bridge_type": "cluster_boundary",
+                },
+            ],
+        }
+
+        guide = MODULE.generate_assembly_guide(
+            manifest,
+            "course-content/staging/C1-M1-L1/manifest.yaml",
+        )
+
+        assert "Cluster context" in guide
+        assert "`c1 / head / establish`" in guide
+        assert "`c1 / interstitial / develop`" in guide
+        assert "Bridge type" in guide
+        assert "within-cluster" in guide
+        assert "cluster-boundary" in guide
+
 
 class TestValidation:
     def test_validate_manifest_raises_for_missing_fields(self) -> None:
@@ -268,4 +327,98 @@ segments:
         assert copied.read_bytes() == b"mp4-bytes"
 
         updated = MODULE.load_manifest(manifest_path)
-        assert updated["segments"][0]["motion_asset_path"] == "assembly-bundle/motion/slide-01_motion.mp4"
+        assert (
+            updated["segments"][0]["motion_asset_path"]
+            == "assembly-bundle/motion/slide-01_motion.mp4"
+        )
+
+    def test_sync_clusters_visuals_into_cluster_subdirectories(self, tmp_path: Path) -> None:
+        repo = tmp_path
+        (repo / ".git").mkdir()
+        remote = repo / "gary-export"
+        (remote / "c1").mkdir(parents=True)
+        (remote / "standalone").mkdir(parents=True)
+        (remote / "c1" / "head.png").write_bytes(b"head")
+        (remote / "c1" / "interstitial.png").write_bytes(b"interstitial")
+        (remote / "standalone" / "flat.png").write_bytes(b"flat")
+
+        bundle = repo / "assembly-bundle"
+        bundle.mkdir()
+        manifest_path = bundle / "manifest.yaml"
+        manifest_path.write_text(
+            """
+lesson_id: L1
+title: Test
+segments:
+  - id: seg-01
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-01.mp3
+    visual_file: gary-export/c1/head.png
+    cluster_id: c1
+    cluster_role: head
+  - id: seg-02
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-02.mp3
+    visual_file: gary-export/c1/interstitial.png
+    cluster_id: c1
+    cluster_role: interstitial
+  - id: seg-03
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-03.mp3
+    visual_file: gary-export/standalone/flat.png
+""".strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        MODULE.sync_approved_visuals_to_assembly_bundle(manifest_path, repo_root=repo)
+        updated = MODULE.load_manifest(manifest_path)
+        visuals = {
+            segment["id"]: segment["visual_file"] for segment in updated["segments"]
+        }
+
+        assert visuals["seg-01"].startswith("assembly-bundle/visuals/cluster_c1/")
+        assert visuals["seg-02"].startswith("assembly-bundle/visuals/cluster_c1/")
+        assert visuals["seg-03"].startswith("assembly-bundle/visuals/")
+        assert "/cluster_" not in visuals["seg-03"]
+
+    def test_sync_raises_on_cluster_visual_filename_collision(self, tmp_path: Path) -> None:
+        repo = tmp_path
+        (repo / ".git").mkdir()
+        remote = repo / "gary-export"
+        (remote / "c1-a").mkdir(parents=True)
+        (remote / "c1-b").mkdir(parents=True)
+        (remote / "c1-a" / "head.png").write_bytes(b"head-a")
+        (remote / "c1-b" / "head.png").write_bytes(b"head-b")
+
+        bundle = repo / "assembly-bundle"
+        bundle.mkdir()
+        manifest_path = bundle / "manifest.yaml"
+        manifest_path.write_text(
+            """
+lesson_id: L1
+title: Test
+segments:
+  - id: seg-01
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-01.mp3
+    visual_file: gary-export/c1-a/head.png
+    cluster_id: c1
+    cluster_role: head
+  - id: seg-02
+    narration_duration: 1.0
+    narration_file: assembly-bundle/audio/seg-02.mp3
+    visual_file: gary-export/c1-b/head.png
+    cluster_id: c1
+    cluster_role: interstitial
+""".strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        try:
+            MODULE.sync_approved_visuals_to_assembly_bundle(manifest_path, repo_root=repo)
+        except ValueError as exc:
+            assert "Refusing visual overwrite collision" in str(exc)
+        else:  # pragma: no cover
+            raise AssertionError("Expected collision failure")

@@ -3,6 +3,8 @@
 # dependencies = []
 # ///
 
+# ruff: noqa: E501
+
 """Generate a Descript Assembly Guide from a completed manifest."""
 
 from __future__ import annotations
@@ -34,6 +36,12 @@ def find_repo_root(start: Path) -> Path:
         "Could not locate repository root (no .git directory in parents of "
         f"{start}). Pass repo_root explicitly if working outside a git clone."
     )
+
+
+def _sanitize_cluster_token(value: Any) -> str:
+    token = "".join(ch if str(ch).isalnum() else "_" for ch in str(value or "").strip())
+    token = "_".join(part for part in token.split("_") if part)
+    return token or "unknown"
 
 
 def sync_approved_visuals_to_assembly_bundle(
@@ -70,7 +78,22 @@ def sync_approved_visuals_to_assembly_bundle(
         if not src.is_file():
             raise FileNotFoundError(f"Visual not found for {segment.get('id')}: {src}")
 
-        dest_file = dest_dir / src.name
+        cluster_id = str(segment.get("cluster_id") or "").strip()
+        if cluster_id:
+            cluster_dir = dest_dir / f"cluster_{_sanitize_cluster_token(cluster_id)}"
+            cluster_dir.mkdir(parents=True, exist_ok=True)
+            dest_file = cluster_dir / src.name
+        else:
+            dest_file = dest_dir / src.name
+        if (
+            dest_file.exists()
+            and dest_file.resolve() != src.resolve()
+            and dest_file.read_bytes() != src.read_bytes()
+        ):
+            raise ValueError(
+                "Refusing visual overwrite collision for "
+                f"segment {segment.get('id', '<unknown>')}: {dest_file}"
+            )
         if dest_file.resolve() != src.resolve():
             shutil.copy2(src, dest_file)
 
@@ -92,7 +115,21 @@ def sync_approved_visuals_to_assembly_bundle(
                 )
             motion_dir = (manifest_path.parent / motion_subdir).resolve()
             motion_dir.mkdir(parents=True, exist_ok=True)
-            dest_motion = motion_dir / src_motion.name
+            if cluster_id:
+                cluster_motion_dir = motion_dir / f"cluster_{_sanitize_cluster_token(cluster_id)}"
+                cluster_motion_dir.mkdir(parents=True, exist_ok=True)
+                dest_motion = cluster_motion_dir / src_motion.name
+            else:
+                dest_motion = motion_dir / src_motion.name
+            if (
+                dest_motion.exists()
+                and dest_motion.resolve() != src_motion.resolve()
+                and dest_motion.read_bytes() != src_motion.read_bytes()
+            ):
+                raise ValueError(
+                    "Refusing motion overwrite collision for "
+                    f"segment {segment.get('id', '<unknown>')}: {dest_motion}"
+                )
             if dest_motion.resolve() != src_motion.resolve():
                 shutil.copy2(src_motion, dest_motion)
             new_motion_rel = (dest_motion.relative_to(root)).as_posix()
@@ -120,9 +157,7 @@ def sync_approved_visuals_to_assembly_bundle(
                 f"{old!r} appears {occurrences} times in {manifest_path} (expected 1)."
             )
         text = text.replace(old, new)
-    if copies:
-        manifest_path.write_text(text, encoding="utf-8")
-    elif motion_copies:
+    if copies or motion_copies:
         manifest_path.write_text(text, encoding="utf-8")
 
     return {
@@ -208,6 +243,7 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
     """Build ordered timeline rows with cumulative start times."""
     current_start = 0.0
     rows: list[dict[str, Any]] = []
+    previous_cluster_id: str | None = None
     for segment in manifest.get("segments", []):
         narration_duration = float(segment["narration_duration"])
         visual_duration = (
@@ -215,6 +251,16 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
             if segment.get("visual_duration") is not None
             else narration_duration
         )
+        cluster_id_raw = str(segment.get("cluster_id") or "").strip()
+        cluster_id = cluster_id_raw or None
+        if not rows:
+            transition_scope = "start"
+        elif previous_cluster_id and cluster_id and previous_cluster_id == cluster_id:
+            transition_scope = "within-cluster"
+        elif previous_cluster_id is None and cluster_id is None:
+            transition_scope = "flat"
+        else:
+            transition_scope = "cluster-boundary"
         motion_type = str(segment.get("motion_type") or "static").strip().lower() or "static"
         motion_duration = (
             float(segment["motion_duration_seconds"])
@@ -240,8 +286,14 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
                 "motion_type": motion_type,
                 "motion_asset_path": segment.get("motion_asset_path"),
                 "motion_duration_seconds": motion_duration,
+                "bridge_type": segment.get("bridge_type") or "none",
+                "cluster_id": cluster_id,
+                "cluster_role": segment.get("cluster_role") or "none",
+                "cluster_position": segment.get("cluster_position") or "none",
+                "transition_scope": transition_scope,
             }
         )
+        previous_cluster_id = cluster_id
         current_start += segment_duration
     return rows
 
@@ -281,16 +333,20 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
             "",
             "## Timeline Table",
             "",
-            "| Segment | Start | Narration | Visual | Transitions | Behavioral Intent |",
-            "|---------|-------|-----------|--------|-------------|-------------------|",
+            "| Segment | Start | Narration | Visual | Transitions | Bridge / Cluster | Behavioral Intent |",
+            "|---------|-------|-----------|--------|-------------|------------------|-------------------|",
         ]
     )
     for row in rows:
         transitions = f"{row['transition_in']} -> {row['transition_out']}"
+        bridge_cluster = (
+            f"{row.get('bridge_type') or 'none'} / "
+            f"{row.get('cluster_id') or 'standalone'}"
+        )
         lines.append(
             f"| `{row['id']}` | `{format_timestamp(row['start'])}` | "
             f"`{row['narration_duration']:.2f}s` | `{row['visual_duration']:.2f}s` | "
-            f"`{transitions}` | `{row.get('behavioral_intent') or 'none'}` |"
+            f"`{transitions}` | `{bridge_cluster}` | `{row.get('behavioral_intent') or 'none'}` |"
         )
 
     lines.extend(["", "## Segment-by-Segment Assembly Instructions", ""])
@@ -302,6 +358,9 @@ def generate_assembly_guide(manifest: dict[str, Any], manifest_path: str | Path)
                 f"- Place `{row['narration_file']}` on `A1`",
                 f"- Set segment duration to `{row['segment_duration']:.2f}s`",
                 f"- Transition in/out: `{row['transition_in']}` / `{row['transition_out']}`",
+                f"- Transition scope: `{row.get('transition_scope')}`",
+                f"- Bridge type: `{row.get('bridge_type') or 'none'}`",
+                f"- Cluster context: `{row.get('cluster_id') or 'standalone'} / {row.get('cluster_role') or 'none'} / {row.get('cluster_position') or 'none'}`",
                 f"- Behavioral intent: `{row.get('behavioral_intent') or 'none'}`",
                 f"- Intent note: {behavioral_note(row.get('behavioral_intent'))}",
             ]

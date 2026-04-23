@@ -1,7 +1,7 @@
 # Story 24-1: Assembly Contract Hardening
 
 **Epic:** 24 - Assembly, Handoff & Regression Hardening
-**Status:** backlog
+**Status:** done (2026-04-23: layered review complete, findings triaged, validation green)
 **Sprint key:** `24-1-assembly-contract-hardening`
 **Added:** 2026-04-12
 **Depends on:** [23-1-cluster-aware-dual-channel-grounding.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/23-1-cluster-aware-dual-channel-grounding.md), [21-3-cluster-dispatch-sequencing.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/21-3-cluster-dispatch-sequencing.md)
@@ -46,26 +46,59 @@ So that the assembly bundle preserves cluster sequence and correctly pairs short
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Update assembly manifest processing
-  - [ ] 1.1: Verify manifest reader handles interstitial segment entries
-  - [ ] 1.2: Verify slide-to-audio mapping works with shorter interstitial audio
-  - [ ] 1.3: Verify manifest order is preserved through entire assembly chain
+- [x] Task 1: Update assembly manifest processing
+  - [x] 1.1: Verify manifest reader handles interstitial segment entries
+  - [x] 1.2: Verify slide-to-audio mapping works with shorter interstitial audio
+  - [x] 1.3: Verify manifest order is preserved through entire assembly chain
 
-- [ ] Task 2: Update asset management
-  - [ ] 2.1: Handle cluster-encoded PNG filenames from dispatch (21-3)
-  - [ ] 2.2: Bundle directory structure supports cluster grouping
-  - [ ] 2.3: sync-visuals treats interstitial PNGs identically to head PNGs
+- [x] Task 2: Update asset management
+  - [x] 2.1: Handle cluster-encoded PNG filenames from dispatch (21-3)
+  - [x] 2.2: Bundle directory structure supports cluster grouping
+  - [x] 2.3: sync-visuals treats interstitial PNGs identically to head PNGs
 
-- [ ] Task 3: Update assembly guide generation
-  - [ ] 3.1: Include cluster membership per slide in guide output
-  - [ ] 3.2: Include behavioral_intent and bridge_type per segment
-  - [ ] 3.3: Annotate within-cluster vs. cluster-boundary transitions
+- [x] Task 3: Update assembly guide generation
+  - [x] 3.1: Include cluster membership per slide in guide output
+  - [x] 3.2: Include behavioral_intent and bridge_type per segment
+  - [x] 3.3: Annotate within-cluster vs. cluster-boundary transitions
 
-- [ ] Task 4: Testing
-  - [ ] 4.1: Unit test: manifest processing with interstitial entries
-  - [ ] 4.2: Unit test: slide-to-audio mapping with short audio segments
-  - [ ] 4.3: Unit test: asset bundle directory structure
-  - [ ] 4.4: Regression: non-clustered assembly unchanged
+- [x] Task 4: Testing
+  - [x] 4.1: Unit test: manifest processing with interstitial entries
+  - [x] 4.2: Unit test: slide-to-audio mapping with short audio segments
+  - [x] 4.3: Unit test: asset bundle directory structure
+  - [x] 4.4: Regression: non-clustered assembly unchanged
+
+## Dev Agent Record
+
+### Completion Notes
+
+- Hardened compositor timeline/build contract with explicit cluster + bridge metadata per segment.
+- Added transition-scope classification (`start`, `within-cluster`, `cluster-boundary`, `flat`) so guide output now annotates within-cluster and boundary transitions.
+- Updated `sync-visuals` bundle behavior to group cluster assets into `visuals/cluster_<cluster_id>/` and `motion/cluster_<cluster_id>/` while keeping non-clustered assets in the flat structure.
+- Added fail-closed collision guards for cluster destination filenames so distinct assets cannot silently overwrite each other inside shared `cluster_<id>/` folders.
+- Preserved manifest-order iteration and one-slide-to-one-audio segment processing semantics.
+
+### Review Gate (bmad-code-review)
+
+- Blind Hunter: **PASS**, no concrete regressions found.
+- Edge Case Hunter: flagged path/collision edge risks; accepted one actionable item and remediated with overwrite-collision guards + regression test.
+- Acceptance Auditor: **PASS**, no acceptance-criteria violations.
+- Disposition: findings remediated or explicitly triaged; story eligible for formal closure.
+
+### Validation
+
+- `python -m pytest -q skills/compositor/scripts/tests/test_compositor_operations.py` → **14 passed**.
+- `python -m ruff check skills/compositor/scripts/compositor_operations.py skills/compositor/scripts/tests/test_compositor_operations.py` → **all checks passed**.
+
+## File List
+
+- `skills/compositor/scripts/compositor_operations.py`
+- `skills/compositor/scripts/tests/test_compositor_operations.py`
+- `_bmad-output/implementation-artifacts/24-1-assembly-contract-hardening.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+- 2026-04-23: Hardened assembly contract for clustered bundles (cluster-aware sync layout + bridge/cluster context in assembly guide), added regression tests, completed layered review triage, and promoted story to done.
 
 ## Dev Notes
 

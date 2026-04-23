@@ -139,7 +139,7 @@ def run_check(registry_path: Path = DEFAULT_REGISTRY_PATH) -> tuple[int, dict[st
 
 
 def _write_trace(payload: dict[str, Any], exit_code: int) -> Path:
-    ts = datetime.now(tz=UTC).strftime("%Y-%m-%d-%H%M")
+    ts = datetime.now(tz=UTC).strftime("%Y-%m-%d-%H%M%S-%f")
     trace_dir = REPORTS_ROOT / ts
     trace_dir.mkdir(parents=True, exist_ok=True)
     suffix = "PASS" if exit_code == 0 else "STRUCTURAL" if exit_code == 2 else "FAIL"

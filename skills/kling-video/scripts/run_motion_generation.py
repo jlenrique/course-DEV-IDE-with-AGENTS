@@ -398,7 +398,39 @@ def run_motion_generation_for_slide(
     try:
         _acquire_lock(receipts["lock"], slide_id=slide_id)
     except FileExistsError as exc:
-        raise MotionGenerationError(f"Another motion-generation runner is already active for {slide_id}") from exc
+        error_text = f"Another motion-generation runner is already active for {slide_id}"
+        dispatch_receipt = build_dispatch_receipt(
+            correlation_id=dispatch_envelope.correlation_id,
+            specialist_id=dispatch_envelope.specialist_id,
+            outcome=DispatchOutcome.FAILED,
+            output_artifacts=[str(receipts["result"])],
+            diagnostics={"error": error_text, "error_kind": "lock_exists"},
+            duration_ms=0,
+        )
+        error_payload = {
+            "status": "error",
+            "slide_id": slide_id,
+            "error": error_text,
+            "generated_at_utc": _now_utc(),
+            "requested_audio_mode": "silent",
+            "api_audio_field": "omitted",
+            "dispatch_contract": {
+                "envelope": dispatch_envelope.model_dump(mode="json"),
+                "receipt": dispatch_receipt.model_dump(mode="json"),
+            },
+        }
+        _write_json(receipts["result"], error_payload)
+        LOGGER.info(
+            "dispatch.end",
+            extra={
+                "dispatch": dispatch_end_log_fields(
+                    dispatch_receipt,
+                    run_id=dispatch_envelope.run_id,
+                    dispatch_kind=dispatch_envelope.dispatch_kind,
+                )
+            },
+        )
+        raise MotionGenerationError(error_text) from exc
 
     try:
         if _is_terminal_row(row, repo_root=repo_root):

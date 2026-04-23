@@ -62,6 +62,28 @@ class TestIreneTracyBridge:
         brief = mock_dispatcher.select_posture.call_args[0][0]
         assert brief["evidence_bolster"] is True
 
+    def test_process_plan_locked_treats_false_string_bolster_as_disabled(
+        self,
+        bridge,
+        mock_dispatcher,
+    ):
+        lesson_plan = {
+            "evidence_bolster": "false",
+            "units": [
+                {
+                    "id": "unit_1",
+                    "scope_decision": "in-scope",
+                    "identified_gaps": [{"type": "evidence", "description": "Need source check"}],
+                }
+            ],
+        }
+
+        results = bridge.process_plan_locked(lesson_plan)
+
+        assert len(results) == 1
+        brief = mock_dispatcher.select_posture.call_args[0][0]
+        assert brief["evidence_bolster"] is False
+
     def test_process_plan_locked_skips_out_of_scope_units(self, bridge, mock_dispatcher):
         lesson_plan = {
             "units": [
@@ -111,6 +133,22 @@ class TestIreneTracyBridge:
         mock_dispatcher.select_posture.assert_called_once()
         brief = mock_dispatcher.select_posture.call_args[0][0]
         assert brief["dial"] == "enrich"
+
+    def test_process_dials_treats_false_string_bolster_as_disabled(self, bridge, mock_dispatcher):
+        plan_unit = {
+            "id": "unit_2",
+            "scope_decision": "in-scope",
+            "evidence_bolster": "false",
+            "dials": {
+                "corroborate": {"endorsed": True},
+            },
+        }
+
+        results = bridge.process_dials(plan_unit)
+
+        assert len(results) == 1
+        brief = mock_dispatcher.select_posture.call_args[0][0]
+        assert brief["evidence_bolster"] is False
 
     def test_process_dials_skips_unendorsed(self, bridge, mock_dispatcher):
         plan_unit = {"dials": {"enrich": {"endorsed": False}}}

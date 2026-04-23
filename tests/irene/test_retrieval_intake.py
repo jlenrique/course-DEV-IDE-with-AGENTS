@@ -105,7 +105,26 @@ def test_convergence_mapping_unknown_partial_uses_fallback_when_bolster_inactive
     )
 
     phrase = resolve_convergence_narration(signal, evidence_bolster_active=False)
-    assert phrase == CONVERGENCE_NARRATION_PATTERNS["fallback"]
+    assert phrase == CONVERGENCE_NARRATION_PATTERNS["single_scite"]
+
+
+def test_convergence_mapping_dual_source_uses_single_source_when_bolster_inactive() -> None:
+    signal = ConvergenceSignal(
+        providers_agreeing=["scite", "consensus"],
+        providers_disagreeing=[],
+        single_source_only=[],
+    )
+
+    phrase = resolve_convergence_narration(signal, evidence_bolster_active=False)
+    assert phrase == CONVERGENCE_NARRATION_PATTERNS["single_scite"]
+
+
+def test_intake_rejects_windows_drive_relative_refs() -> None:
+    payload = _valid_intake_payload()
+    payload["suggested_resources_ref"] = "C:temp/suggested-resources.yaml"
+
+    with pytest.raises(ValidationError):
+        parse_irene_retrieval_intake(payload)
 
 
 def test_corroborate_intake_uses_dual_source_language_when_available() -> None:

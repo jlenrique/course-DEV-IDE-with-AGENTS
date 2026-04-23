@@ -62,7 +62,13 @@ class IreneRetrievalIntake(BaseModel):
             raise TypeError("reference paths must be strings")
         normalized = value.replace("\\", "/")
         path = Path(normalized)
-        if path.is_absolute() or ".." in path.parts:
+        first_part = path.parts[0] if path.parts else ""
+        if (
+            path.is_absolute()
+            or path.drive
+            or ":" in first_part
+            or ".." in path.parts
+        ):
             raise ValueError("reference paths must be workspace-relative")
         return normalized
 
@@ -97,6 +103,9 @@ def resolve_convergence_narration(
     evidence_bolster_active: bool,
 ) -> str:
     """Resolve the attribution phrase from convergence posture."""
+    if not evidence_bolster_active:
+        return CONVERGENCE_NARRATION_PATTERNS["single_scite"]
+
     if signal is None:
         return CONVERGENCE_NARRATION_PATTERNS["fallback"]
 

@@ -68,6 +68,39 @@ class TestPostureDispatcher:
         assert intent["cross_validate"] is True
         assert intent["provider_hints"] == ["scite", "consensus"]
 
+    def test_select_posture_treats_false_string_bolster_as_disabled(
+        self,
+        dispatcher,
+        mock_dispatcher,
+    ):
+        result = dispatcher.select_posture(
+            {
+                "dial": "corroborate",
+                "claim": "test-claim",
+                "source_context": "test-context",
+                "evidence_bolster": "false",
+            }
+        )
+
+        assert result["status"] == "success"
+        intent = mock_dispatcher.dispatch.call_args[0][0]
+        assert intent["cross_validate"] is False
+        assert intent["provider_hints"] == ["scite"]
+
+    def test_corroborate_propagates_dispatcher_failure_payload(self, mock_dispatcher):
+        mock_dispatcher.dispatch.return_value = {
+            "status": "failed",
+            "reason": "provider timeout",
+        }
+        dispatcher = PostureDispatcher(mock_dispatcher)
+
+        result = dispatcher.corroborate("claim", "context", evidence_bolster=True)
+
+        assert result["status"] == "failed"
+        assert result["posture"] == "corroborate"
+        assert result["reason"] == "provider timeout"
+        assert result["dispatcher_result"]["status"] == "failed"
+
     def test_gap_fill_not_implemented(self, dispatcher):
         """Test that gap_fill raises NotImplementedError."""
         with pytest.raises(NotImplementedError, match="Gap-Fill posture not implemented"):

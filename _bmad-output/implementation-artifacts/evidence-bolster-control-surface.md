@@ -100,6 +100,12 @@ So that **trial #2 executes the operator's locked research-capability scope dete
 - [x] T7 — Tests per AC-T.1 through AC-T.6
 - [ ] T(final) — Regression + pre-commit + review
 
+### Review Findings
+
+- [x] [Review][Patch] Parse evidence_bolster inputs strictly to avoid truthy string coercion in posture routing [skills/bmad_agent_tracy/scripts/posture_dispatcher.py:43]
+- [x] [Review][Patch] Propagate dispatcher-level failure payloads instead of coercing corroborate responses to success [skills/bmad_agent_tracy/scripts/posture_dispatcher.py:136]
+- [x] [Review][Patch] Parse lesson/unit evidence_bolster inputs strictly in Irene-Tracy bridge dispatch [skills/bmad_agent_tracy/scripts/irene_bridge.py:19]
+
 ## Dev Agent Record
 
 ### Completion Notes

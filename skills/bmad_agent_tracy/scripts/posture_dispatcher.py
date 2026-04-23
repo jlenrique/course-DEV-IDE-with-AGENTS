@@ -9,6 +9,18 @@ shape, success signal, failure mode.
 from typing import Any
 
 
+def _parse_bool_flag(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", ""}:
+            return False
+    return False
+
+
 class PostureDispatcher:
     """Dispatcher for Tracy's three research postures."""
 
@@ -40,7 +52,7 @@ class PostureDispatcher:
             return self.corroborate(
                 claim=str(brief.get("claim", "")),
                 source_context=str(brief.get("source_context", "")),
-                evidence_bolster=bool(brief.get("evidence_bolster", False)),
+                evidence_bolster=_parse_bool_flag(brief.get("evidence_bolster", False)),
             )
         if dial in {"gap_fill", "gap-fill"}:
             return self.gap_fill(
@@ -59,7 +71,7 @@ class PostureDispatcher:
             return self.corroborate(
                 claim=str(brief.get("claim", "")),
                 source_context=str(brief.get("source_context", "")),
-                evidence_bolster=bool(brief.get("evidence_bolster", False)),
+                evidence_bolster=_parse_bool_flag(brief.get("evidence_bolster", False)),
             )
         if gap_type == "missing_concept":
             return self.gap_fill(
@@ -121,6 +133,25 @@ class PostureDispatcher:
                     "source_context": source_context,
                     "evidence_bolster": evidence_bolster,
                 },
+            }
+
+        dispatcher_status = output.get("status")
+        if isinstance(dispatcher_status, str) and dispatcher_status.strip().lower() not in {
+            "",
+            "success",
+            "ok",
+        }:
+            reason = str(output.get("reason") or output.get("message") or "dispatcher failure")
+            return {
+                "status": "failed",
+                "posture": "corroborate",
+                "reason": reason,
+                "input": {
+                    "claim": claim,
+                    "source_context": source_context,
+                    "evidence_bolster": evidence_bolster,
+                },
+                "dispatcher_result": output,
             }
 
         sources_raw = output.get("sources")

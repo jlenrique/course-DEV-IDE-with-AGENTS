@@ -106,6 +106,8 @@ So that **every trial run's retrieval-augmented narration is deterministic (same
 - [x] [Review][Patch] Add negative schema tests for retrieval provenance edge cases [tests/irene/test_segment_manifest_schema.py:88]
 - [x] [Review][Patch] Align AC-B.5 examples with array-based `single_source_only` contract [_bmad-output/implementation-artifacts/irene-retrieval-intake.md:52]
 - [x] [Review][Patch] Sync sprint dependency prose with current status transitions [_bmad-output/implementation-artifacts/sprint-status.yaml:530]
+- [x] [Review][Patch] Reject Windows drive-relative refs in intake path validation to preserve workspace-relative contract [marcus/irene/intake.py:65]
+- [x] [Review][Patch] Enforce evidence_bolster_active in convergence narration mapping when intake data is present [marcus/irene/intake.py:94]
 
 ## Risks (spine)
 

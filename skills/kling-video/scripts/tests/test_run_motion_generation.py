@@ -224,6 +224,16 @@ def test_runner_rejects_duplicate_active_workers_for_same_slide(tmp_path: Path) 
             client=Mock(),
         )
 
+    receipt_path = bundle / "motion-generation-slide-01.json"
+    assert receipt_path.exists()
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["status"] == "error"
+    dispatch_contract = receipt["dispatch_contract"]
+    validated_envelope = DispatchEnvelope.model_validate(dispatch_contract["envelope"])
+    validated_receipt = DispatchReceipt.model_validate(dispatch_contract["receipt"])
+    assert validated_envelope.dispatch_kind.value == "kira_motion"
+    assert validated_receipt.outcome.value == "failed"
+
 
 def test_runner_fails_closed_on_empty_result_and_keeps_row_unresolved(tmp_path: Path) -> None:
     bundle = tmp_path / "bundle"

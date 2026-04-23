@@ -4,6 +4,18 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _parse_bool_flag(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", ""}:
+            return False
+    return False
+
+
 class IreneTracyBridge:
     """Bridge connecting Irene's lesson plan output to Tracy's research postures."""
 
@@ -16,7 +28,7 @@ class IreneTracyBridge:
         and automatically dispatch to Tracy.
         """
         results = []
-        evidence_bolster = bool(lesson_plan.get("evidence_bolster", False))
+        evidence_bolster = _parse_bool_flag(lesson_plan.get("evidence_bolster", False))
         units = lesson_plan.get("units") or []
         for unit in units:
             if not isinstance(unit, dict):
@@ -75,7 +87,7 @@ class IreneTracyBridge:
             if is_endorsed:
                 brief = {
                     "dial": dial_name,
-                    "evidence_bolster": bool(plan_unit.get("evidence_bolster", False)),
+                    "evidence_bolster": _parse_bool_flag(plan_unit.get("evidence_bolster", False)),
                     "target_element": plan_unit.get("id", ""),
                     "scope_decision": plan_unit.get("scope_decision", "in-scope"),
                 }

@@ -97,6 +97,8 @@ So that **adding a new specialist OR a new dispatch variant (e.g., evidence-bols
 ### Review Findings
 
 - [x] [Review][Patch] Texas runner import order breaks direct-path invocation from non-repo working directories [skills/bmad-agent-texas/scripts/run_wrangler.py:45]
+- [x] [Review][Patch] Emit failed dispatch receipt/end event when motion lock acquisition fails [skills/kling-video/scripts/run_motion_generation.py:393]
+- [x] [Review][Patch] Prevent lockstep trace overwrite collisions within same-minute reruns [scripts/validators/check_dispatch_registry_lockstep.py:142]
 
 ## Risks (spine)
 

@@ -768,6 +768,31 @@ def test_build_manifest_derives_cluster_groups_from_segment_metadata(tmp_path: P
     assert by_id["s-3"]["cluster_id"] is None
 
 
+def test_flatten_storyboard_sequence_preserves_order() -> None:
+    mod = _load_generate_module()
+    ordered = mod.flatten_storyboard_sequence(
+        [
+            {"slide_id": "s-1", "sequence": 1},
+            {"slide_id": "s-2", "sequence": 2},
+            {"slide_id": "s-3", "sequence": 3},
+        ]
+    )
+    assert [row["slide_id"] for row in ordered] == ["s-1", "s-2", "s-3"]
+
+
+def test_detect_transition_type_distinguishes_within_boundary_and_none() -> None:
+    mod = _load_generate_module()
+    head = {"slide_id": "s-1", "cluster_id": "c1"}
+    interstitial = {"slide_id": "s-2", "cluster_id": "c1"}
+    flat = {"slide_id": "s-3", "cluster_id": None}
+    flat_next = {"slide_id": "s-4", "cluster_id": None}
+
+    assert mod.detect_transition_type(None, head) is None
+    assert mod.detect_transition_type(head, interstitial) == "within_cluster"
+    assert mod.detect_transition_type(interstitial, flat) == "cluster_boundary"
+    assert mod.detect_transition_type(flat, flat_next) is None
+
+
 def test_storyboard_a_cluster_view_is_additive_and_opt_in_for_coherence_report(tmp_path: Path) -> None:
     mod = _load_generate_module()
     bundle = tmp_path / "bundle"
@@ -885,6 +910,14 @@ def test_storyboard_b_cluster_view_surfaces_script_context_and_transition_metada
     assert '.cluster-storyboard-b-summary' in html
     assert '.transition-divider--boundary' in html
     assert '.behavioral-intent-warning' in html
+    assert 'data-role="view-mode" data-view="cluster"' in html
+    assert 'data-role="view-mode" data-view="student"' in html
+    assert 'data-view-name="student" hidden' in html
+    assert 'Transition type: within cluster' in html
+    assert 'Transition type: cluster boundary' in html
+    assert 'Bridge text:' in html
+    assert 'student-duration-fill' in html
+    assert 'student-card--duration-outlier' in html
 
 
 def test_flat_storyboard_html_remains_without_cluster_controls(tmp_path: Path) -> None:
@@ -950,6 +983,9 @@ def test_non_clustered_storyboard_b_remains_flat_without_cluster_controls(tmp_pa
     assert '<details class="cluster-group"' not in html
     assert "Expand all clusters" not in html
     assert "Collapse all clusters" not in html
+    assert 'data-role="view-toggle"' not in html
+    assert 'data-view-name="cluster"' not in html
+    assert 'data-view-name="student"' not in html
     assert "Cluster timing summary" not in html
     assert '<div class="behavioral-intent-warning">' not in html
     assert "Flat storyboard narration for a non-clustered slide." in html

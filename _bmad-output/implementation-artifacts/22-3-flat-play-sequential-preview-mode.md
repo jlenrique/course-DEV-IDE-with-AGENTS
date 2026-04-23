@@ -1,7 +1,7 @@
 # Story 22-3: Flat-Play Sequential Preview Mode
 
 **Epic:** 22 - Storyboard & Review Adaptation
-**Status:** backlog
+**Status:** review
 **Sprint key:** `22-3-flat-play-sequential-preview-mode`
 **Added:** 2026-04-12
 **Depends on:** [22-1-storyboard-a-cluster-view.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/22-1-storyboard-a-cluster-view.md)
@@ -47,31 +47,31 @@ So that I can experience the pacing and flow as a student would, validating that
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement flat-play view renderer
-  - [ ] 1.1: Flatten clustered manifest into linear slide sequence
-  - [ ] 1.2: Render each slide with thumbnail + narration + duration
-  - [ ] 1.3: Strip cluster metadata from display (hide, don't delete from data)
+- [x] Task 1: Implement flat-play view renderer
+  - [x] 1.1: Flatten clustered manifest into linear slide sequence
+  - [x] 1.2: Render each slide with thumbnail + narration + duration
+  - [x] 1.3: Strip cluster metadata from display (hide, don't delete from data)
 
-- [ ] Task 2: Implement transition indicators
-  - [ ] 2.1: Detect within-cluster vs. cluster-boundary transitions from manifest
-  - [ ] 2.2: Render subtle divider for within-cluster
-  - [ ] 2.3: Render prominent divider for cluster-boundary with bridge text
+- [x] Task 2: Implement transition indicators
+  - [x] 2.1: Detect within-cluster vs. cluster-boundary transitions from manifest
+  - [x] 2.2: Render subtle divider for within-cluster
+  - [x] 2.3: Render prominent divider for cluster-boundary with bridge text
 
-- [ ] Task 3: Implement toggle control
-  - [ ] 3.1: Add toggle button to Storyboard B HTML
-  - [ ] 3.2: JavaScript to switch between cluster view and student view
-  - [ ] 3.3: Preserve scroll position on toggle
+- [x] Task 3: Implement toggle control
+  - [x] 3.1: Add toggle button to Storyboard B HTML
+  - [x] 3.2: JavaScript to switch between cluster view and student view
+  - [x] 3.3: Preserve scroll position on toggle
 
-- [ ] Task 4: Implement pacing visualization
-  - [ ] 4.1: Calculate cumulative running time per slide
-  - [ ] 4.2: Render running time counter alongside each slide
-  - [ ] 4.3: Highlight slides with outlier duration
+- [x] Task 4: Implement pacing visualization
+  - [x] 4.1: Calculate cumulative running time per slide
+  - [x] 4.2: Render running time counter alongside each slide
+  - [x] 4.3: Highlight slides with outlier duration
 
-- [ ] Task 5: Testing
-  - [ ] 5.1: Unit test: manifest flattening preserves order
-  - [ ] 5.2: Unit test: transition type detection (within-cluster vs. boundary)
-  - [ ] 5.3: Visual test: toggle between cluster and student views
-  - [ ] 5.4: Regression: non-clustered presentation shows flat view only (no toggle needed)
+- [x] Task 5: Testing
+  - [x] 5.1: Unit test: manifest flattening preserves order
+  - [x] 5.2: Unit test: transition type detection (within-cluster vs. boundary)
+  - [x] 5.3: Visual test: toggle between cluster and student views
+  - [x] 5.4: Regression: non-clustered presentation shows flat view only (no toggle needed)
 
 ## Dev Notes
 
@@ -91,3 +91,45 @@ This story adds the student-perspective preview. It does NOT modify the cluster 
 
 - [22-1-storyboard-a-cluster-view.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/22-1-storyboard-a-cluster-view.md) — Cluster view base
 - [epics-interstitial-clusters.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/planning-artifacts/epics-interstitial-clusters.md) — Story 22.3 definition
+
+## Dev Agent Record
+
+### Implementation Plan
+
+- Extend `generate-storyboard.py` with a flat-play student renderer only for clustered Storyboard B runs, while preserving existing non-clustered Storyboard B output as-is.
+- Add deterministic helper functions for flatten ordering, transition classification, duration/cumulative-time math, and outlier detection.
+- Add a JS view toggle that swaps pre-rendered cluster/student views in one HTML file and preserves scroll position.
+- Expand `test_generate_storyboard.py` with unit coverage for flatten/transition helpers plus Storyboard B student-view visual assertions and non-clustered regression checks.
+
+### Debug Log
+
+- 2026-04-23: Loaded full story spec and Storyboard generator implementation/tests before coding.
+- 2026-04-23: Implemented student-view rendering, transition markers, pacing track/cumulative timing, duration outlier highlighting, and Cluster View ↔ Student View toggle with scroll preservation.
+- 2026-04-23: Added helper tests for order-preserving flatten and transition detection; updated Storyboard B tests for toggle/student-view output and non-clustered no-toggle regression.
+- 2026-04-23: Ran targeted generator suites green after one compatibility adjustment to keep non-clustered Storyboard B in legacy flat layout.
+
+### Completion Notes
+
+- Storyboard B now supports a flat-play Student View for clustered presentations with:
+  - linear manifest-order slide playback,
+  - within-cluster vs. cluster-boundary transition indicators,
+  - bridge text excerpts at cluster boundaries,
+  - per-slide duration bar + cumulative running-time counters,
+  - outlier highlighting for segments outside the `$0.5\times$` to `$2.0\times$` average duration band.
+- Cluster view remains default and now toggles to student view in the same HTML document via vanilla JS controls.
+- Non-clustered Storyboard B remains single-view (no toggle), preserving existing downstream behavior.
+- Validation:
+  - `pytest skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py`
+  - `pytest skills/bmad-agent-marcus/scripts/tests/test_write_authorized_storyboard.py`
+  - Result: `65 passed`, `0 failed`.
+
+## File List
+
+- `_bmad-output/implementation-artifacts/22-3-flat-play-sequential-preview-mode.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `skills/bmad-agent-marcus/scripts/generate-storyboard.py`
+- `skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py`
+
+## Change Log
+
+- 2026-04-23: Implemented Storyboard B clustered student flat-play mode (toggle, transition markers, pacing visualization, outlier highlighting), added helper/test coverage, and moved story to `review`.

@@ -415,6 +415,45 @@ def _format_estimated_seconds(seconds: float | None) -> str:
     return f"{seconds:.1f}s"
 
 
+def _format_clock_seconds(seconds: float | None) -> str:
+    if seconds is None:
+        return "n/a"
+    total_seconds = max(0, int(round(seconds)))
+    minutes = total_seconds // 60
+    remaining = total_seconds % 60
+    return f"{minutes}:{remaining:02d}"
+
+
+def _duration_seconds_for_slide(slide: dict[str, Any], *, target_wpm: float) -> float | None:
+    narration_text = str(slide.get("narration_text") or "")
+    estimated = _estimate_narration_seconds(narration_text, target_wpm=target_wpm)
+    if estimated is not None:
+        return float(estimated)
+    runtime_target_seconds = slide.get("runtime_target_seconds")
+    if isinstance(runtime_target_seconds, (int, float)) and runtime_target_seconds > 0:
+        return float(runtime_target_seconds)
+    return None
+
+
+def flatten_storyboard_sequence(slides: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [slide for slide in slides if isinstance(slide, dict)]
+
+
+def detect_transition_type(
+    previous_slide: dict[str, Any] | None,
+    current_slide: dict[str, Any],
+) -> str | None:
+    if previous_slide is None:
+        return None
+    previous_cluster_id = _normalize_optional_string(previous_slide.get("cluster_id"))
+    current_cluster_id = _normalize_optional_string(current_slide.get("cluster_id"))
+    if previous_cluster_id is None and current_cluster_id is None:
+        return None
+    if previous_cluster_id and current_cluster_id and previous_cluster_id == current_cluster_id:
+        return "within_cluster"
+    return "cluster_boundary"
+
+
 def _excerpt_text(text: str, *, limit: int = 160) -> str:
     normalized = " ".join(str(text or "").split())
     if len(normalized) <= limit:
@@ -2208,6 +2247,120 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         )
         card_markup_by_row_id[str(slide.get("row_id") or "")] = slide_cards[-1]
 
+    flat_student_cards: list[str] = []
+    if storyboard_b_cluster_view:
+        student_sequence = flatten_storyboard_sequence(slides)
+        duration_values = [
+            duration
+            for duration in (
+                _duration_seconds_for_slide(slide, target_wpm=cluster_review_target_wpm)
+                for slide in student_sequence
+            )
+            if duration is not None and duration > 0
+        ]
+        average_duration = (
+            sum(duration_values) / len(duration_values)
+            if duration_values
+            else None
+        )
+        max_duration = max(duration_values) if duration_values else None
+        cumulative_seconds = 0.0
+        previous_slide: dict[str, Any] | None = None
+
+        for slide in student_sequence:
+            row_id_value = str(slide.get("row_id") or slide.get("slide_id") or "student-slide")
+            row_id = html.escape(row_id_value, quote=True)
+            issue_flags = slide.get("issue_flags") if isinstance(slide.get("issue_flags"), list) else []
+            issue_attr = html.escape(" ".join(str(flag) for flag in issue_flags), quote=True)
+            fidelity = html.escape(str(slide.get("fidelity") or "unknown"))
+            orientation = html.escape(str(slide.get("orientation") or "unknown"))
+            slide_id = html.escape(str(slide.get("slide_id") or ""))
+            title = html.escape(str(slide.get("display_title") or slide.get("slide_id") or ""))
+            narration_text = str(slide.get("narration_text") or "").strip()
+            behavioral_intent = html.escape(str(_normalize_optional_string(slide.get("behavioral_intent")) or "n/a"))
+            words = _word_count(narration_text)
+            duration_seconds = _duration_seconds_for_slide(slide, target_wpm=cluster_review_target_wpm)
+            if duration_seconds is not None and duration_seconds > 0:
+                cumulative_seconds += duration_seconds
+                cumulative_display = _format_clock_seconds(cumulative_seconds)
+            else:
+                cumulative_display = "n/a"
+
+            duration_text = _format_estimated_seconds(duration_seconds)
+            duration_fraction = (
+                (duration_seconds / max_duration) if (duration_seconds is not None and max_duration and max_duration > 0) else 0
+            )
+            duration_percent = f"{max(4.0, min(100.0, duration_fraction * 100.0)):.1f}" if duration_fraction > 0 else "4.0"
+
+            is_outlier = False
+            if average_duration and duration_seconds is not None and duration_seconds > 0:
+                is_outlier = duration_seconds > (average_duration * 2.0) or duration_seconds < (average_duration * 0.5)
+            outlier_badge = (
+                '<span class="badge badge-duration-outlier">duration outlier</span>'
+                if is_outlier
+                else ""
+            )
+
+            transition_markup = ""
+            transition_type = detect_transition_type(previous_slide, slide)
+            if transition_type is not None:
+                if transition_type == "within_cluster":
+                    transition_markup = (
+                        '<div class="student-transition student-transition--within">'
+                        '<strong>within cluster</strong>'
+                        '<span>Transition type: within cluster</span>'
+                        "</div>"
+                    )
+                else:
+                    bridge_source = narration_text or str(previous_slide.get("narration_text") or "") if previous_slide else narration_text
+                    bridge_excerpt = html.escape(_excerpt_text(bridge_source) or "Bridge text unavailable.")
+                    transition_markup = (
+                        '<div class="student-transition student-transition--boundary">'
+                        '<strong>cluster boundary</strong>'
+                        '<span>Transition type: cluster boundary</span>'
+                        f'<div class="student-transition-bridge"><strong>Bridge text:</strong> {bridge_excerpt}</div>'
+                        "</div>"
+                    )
+
+            narration_markup = (
+                f'<pre class="student-script">{html.escape(narration_text)}</pre>'
+                if narration_text
+                else '<div class="script-state">No narration available.</div>'
+            )
+
+            flat_student_cards.append(
+                f'{transition_markup}'
+                f'<article class="student-card{" student-card--duration-outlier" if is_outlier else ""}" '
+                f'id="student-{row_id}" data-role="slide-card" data-slide-id="{slide_id}" '
+                f'data-fidelity="{fidelity}" data-orientation="{orientation}" data-issues="{issue_attr}">'
+                '<header class="student-card-header">'
+                '<div>'
+                f'<h2 class="student-card-title">{title}</h2>'
+                f'<div class="student-card-subtitle">{slide_id}</div>'
+                '</div>'
+                '<div class="badge-row">'
+                f'<span class="badge">{words} words</span>'
+                f'<span class="badge">duration {html.escape(duration_text)}</span>'
+                f'<span class="badge">cumulative {html.escape(cumulative_display)}</span>'
+                f'<span class="badge">intent {behavioral_intent}</span>'
+                f'{outlier_badge}'
+                '</div>'
+                '</header>'
+                '<div class="student-card-body">'
+                '<section class="student-preview-panel">'
+                f'{_preview_markup(slide, size="card")}'
+                '</section>'
+                '<section class="student-script-panel">'
+                '<div class="student-duration-track">'
+                f'<div class="student-duration-fill" style="width: {duration_percent}%;"></div>'
+                '</div>'
+                f'{narration_markup}'
+                '</section>'
+                '</div>'
+                '</article>'
+            )
+            previous_slide = slide
+
     related_markup = ""
     if related_assets:
         related_rows: list[str] = []
@@ -2400,13 +2553,37 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
                 )
                 continue
             grouped_slide_cards.append(card_markup_by_row_id.get(str(slide.get("row_id") or ""), ""))
-        slides_markup = "\n".join(card for card in grouped_slide_cards if card) if grouped_slide_cards else '<div class="empty-state">No slides</div>'
+        cluster_slides_markup = "\n".join(card for card in grouped_slide_cards if card) if grouped_slide_cards else '<div class="empty-state">No slides</div>'
         cluster_controls_html = (
+            '<span data-role="cluster-controls">'
             '<button type="button" data-role="clusters-expand">Expand all clusters</button>'
             '<button type="button" data-role="clusters-collapse">Collapse all clusters</button>'
+            '</span>'
         )
     else:
-        slides_markup = "\n".join(slide_cards) if slide_cards else '<div class="empty-state">No slides</div>'
+        cluster_slides_markup = "\n".join(slide_cards) if slide_cards else '<div class="empty-state">No slides</div>'
+
+    view_toggle_html = ""
+    if storyboard_b_cluster_view:
+        view_toggle_html = (
+            '<div class="view-toggle" data-role="view-toggle">'
+            '<button type="button" class="active" data-role="view-mode" data-view="cluster">Cluster View</button>'
+            '<button type="button" data-role="view-mode" data-view="student">Student View</button>'
+            '</div>'
+        )
+
+    if storyboard_b_cluster_view:
+        student_markup = "\n".join(flat_student_cards) if flat_student_cards else '<div class="empty-state">No slides</div>'
+        slides_markup = (
+            '<div data-role="storyboard-view" data-view-name="cluster">'
+            f'{cluster_slides_markup}'
+            '</div>'
+            '<div data-role="storyboard-view" data-view-name="student" hidden>'
+            f'{student_markup}'
+            '</div>'
+        )
+    else:
+        slides_markup = cluster_slides_markup
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -2452,6 +2629,9 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .summary-panel dt {{ color: rgba(255,255,255,0.7); font-weight: 600; font-size: 0.88rem; }}
     .summary-panel dd {{ margin: 0; overflow-wrap: anywhere; font-size: 0.88rem; }}
     .toolbar {{ display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; box-shadow: var(--shadow); }}
+    .view-toggle {{ display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }}
+    .view-toggle button {{ border: 0; border-right: 1px solid var(--line); border-radius: 0; }}
+    .view-toggle button:last-child {{ border-right: 0; }}
     .toolbar input[type="search"] {{ min-width: 260px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font: inherit; }}
     .toolbar label {{ display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; color: var(--muted); }}
     .toolbar button {{ padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; font: inherit; }}
@@ -2477,6 +2657,23 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .badge-coherence-fail {{ background: #fde2e2; color: #9b1c1c; }}
     .badge-coherence-missing {{ background: #eef2f7; color: #475569; }}
     .slide-card-body {{ display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr); gap: 18px; padding: 18px 20px 20px; }}
+    .student-card {{ background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }}
+    .student-card + .student-card {{ margin-top: 14px; }}
+    .student-card--duration-outlier {{ border-left: 4px solid #d97706; }}
+    .student-card-header {{ display: flex; justify-content: space-between; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line); }}
+    .student-card-title {{ margin: 0; font-size: 1.02rem; }}
+    .student-card-subtitle {{ color: var(--muted); font-size: 0.88rem; margin-top: 4px; }}
+    .student-card-body {{ display: grid; grid-template-columns: minmax(240px, 360px) minmax(0, 1fr); gap: 14px; padding: 14px 16px 16px; }}
+    .student-duration-track {{ height: 10px; border-radius: 999px; background: #e5e7eb; overflow: hidden; margin-bottom: 12px; }}
+    .student-duration-fill {{ height: 100%; background: linear-gradient(90deg, #1b4e73, #3f83b6); }}
+    .student-script {{ white-space: pre-wrap; margin: 0; font: inherit; line-height: 1.55; background: #fafbfd; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }}
+    .student-transition {{ display: grid; gap: 4px; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; }}
+    .student-transition strong {{ font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; }}
+    .student-transition span {{ color: var(--muted); font-size: 0.86rem; }}
+    .student-transition--within {{ border-top: 1px solid #cbd5e1; padding-top: 12px; }}
+    .student-transition--boundary {{ background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fdba74; }}
+    .student-transition-bridge {{ font-size: 0.9rem; color: var(--ink); }}
+    .badge-duration-outlier {{ background: #fff3d6; color: #8a5300; }}
     .cluster-group {{ background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }}
     .cluster-group + .cluster-group {{ margin-top: 28px; }}
     .cluster-summary {{ list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 18px 20px; background: linear-gradient(135deg, #f8fbfd, #eef5fb); }}
@@ -2565,6 +2762,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
     .sr-only {{ position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }}
     @media (max-width: 980px) {{
       .summary-grid, .slide-card-body, .panel-grid {{ grid-template-columns: 1fr; }}
+    .student-card-body {{ grid-template-columns: 1fr; }}
       .slide-card-header {{ flex-direction: column; }}
       .cluster-summary {{ grid-template-columns: 1fr; }}
       .cluster-summary-meta {{ justify-content: flex-start; }}
@@ -2622,6 +2820,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       <button type="button" data-role="filter" data-filter="creative">Creative</button>
       <button type="button" data-role="filter" data-filter="literal-text">Literal-text</button>
       <button type="button" data-role="filter" data-filter="literal-visual">Literal-visual</button>
+    {view_toggle_html}
       <label class="{issue_label_class}"><input type="checkbox" id="issues-only" data-role="issues-only"{issue_checkbox_attrs} /> Show issues only</label>
       <button type="button" data-role="jump-next-issue"{issue_button_attrs}>{issue_button_label}</button>
       {cluster_controls_html}
@@ -2656,7 +2855,10 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       const nextIssueBtn = document.querySelector('[data-role="jump-next-issue"]');
       const expandClustersBtn = document.querySelector('[data-role="clusters-expand"]');
       const collapseClustersBtn = document.querySelector('[data-role="clusters-collapse"]');
+    const clusterControls = document.querySelector('[data-role="cluster-controls"]');
       const clusterGroups = Array.from(document.querySelectorAll('[data-role="cluster-group"]'));
+    const viewContainers = Array.from(document.querySelectorAll('[data-role="storyboard-view"]'));
+    const viewButtons = Array.from(document.querySelectorAll('[data-role="view-mode"]'));
       const dialog = document.getElementById('preview-dialog');
       const dialogImage = document.getElementById('dialog-image');
       const dialogTitle = document.getElementById('dialog-title');
@@ -2664,11 +2866,51 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       const dialogClose = document.getElementById('dialog-close');
       const actionableIssueCards = cards.filter(card => Boolean((card.getAttribute('data-issues') || '').trim()));
       let activeFilter = 'all';
+            let activeView = 'cluster';
+
+            function isCardVisibleInActiveView(card) {{
+                const viewContainer = card.closest('[data-role="storyboard-view"]');
+                if (!viewContainer) return true;
+                const viewName = viewContainer.getAttribute('data-view-name') || 'cluster';
+                return !viewContainer.hasAttribute('hidden') && viewName === activeView;
+            }}
+
+            function applyViewState() {{
+                const hasExplicitViews = viewContainers.length > 0;
+                if (!hasExplicitViews) return;
+                for (const container of viewContainers) {{
+                    const name = container.getAttribute('data-view-name') || 'cluster';
+                    if (name === activeView) container.removeAttribute('hidden');
+                    else container.setAttribute('hidden', 'hidden');
+                }}
+                for (const button of viewButtons) {{
+                    const selected = (button.getAttribute('data-view') || 'cluster') === activeView;
+                    button.classList.toggle('active', selected);
+                    button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+                }}
+                if (clusterControls) {{
+                    clusterControls.hidden = activeView !== 'cluster';
+                }}
+            }}
+
+            function setActiveView(nextView) {{
+                if (!nextView || nextView === activeView) return;
+                const previousScroll = window.scrollY;
+                activeView = nextView;
+                applyViewState();
+                applyFilters();
+                window.scrollTo({{ top: previousScroll, behavior: 'auto' }});
+            }}
 
       function applyFilters() {{
         const query = (searchBox?.value || '').toLowerCase().trim();
         const issues = Boolean(issuesOnly?.checked);
         for (const card of cards) {{
+                    const inActiveView = isCardVisibleInActiveView(card);
+                    if (!inActiveView) {{
+                        card.hidden = true;
+                        continue;
+                    }}
           const haystack = card.textContent.toLowerCase();
           const fidelity = card.getAttribute('data-fidelity') || '';
           const cardIssues = (card.getAttribute('data-issues') || '').trim();
@@ -2687,6 +2929,11 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         }});
       }}
       searchBox?.addEventListener('input', applyFilters);
+            for (const button of viewButtons) {{
+                button.addEventListener('click', () => {{
+                    setActiveView(button.getAttribute('data-view') || 'cluster');
+                }});
+            }}
       if (issuesOnly && actionableIssueCards.length === 0) {{
         issuesOnly.checked = false;
       }}
@@ -2699,7 +2946,7 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
       }});
       nextIssueBtn?.addEventListener('click', () => {{
         if (actionableIssueCards.length === 0) return;
-        const next = cards.find(card => !card.hidden && (card.getAttribute('data-issues') || '').trim());
+                const next = cards.find(card => !card.hidden && isCardVisibleInActiveView(card) && (card.getAttribute('data-issues') || '').trim());
         if (next) next.scrollIntoView({{behavior: 'smooth', block: 'center'}});
       }});
 
@@ -2727,6 +2974,11 @@ def render_index_html_v2(manifest: dict[str, Any]) -> str:
         const target = document.getElementById(window.location.hash.slice(1));
         if (target) target.scrollIntoView();
       }}
+            if (viewContainers.some(container => (container.getAttribute('data-view-name') || '') === 'student') &&
+                    !viewContainers.some(container => (container.getAttribute('data-view-name') || '') === 'cluster')) {{
+                activeView = 'student';
+            }}
+            applyViewState();
       applyFilters();
     }})();
   </script>

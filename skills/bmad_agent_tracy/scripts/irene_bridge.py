@@ -16,6 +16,7 @@ class IreneTracyBridge:
         and automatically dispatch to Tracy.
         """
         results = []
+        evidence_bolster = bool(lesson_plan.get("evidence_bolster", False))
         units = lesson_plan.get("units") or []
         for unit in units:
             if not isinstance(unit, dict):
@@ -30,6 +31,7 @@ class IreneTracyBridge:
                     continue
                 brief = {
                     "gap_type": gap.get("type"),
+                    "evidence_bolster": evidence_bolster,
                     "scope_decision": scope_decision,
                     "target_element": unit.get("id", ""),
                     "gap_description": gap.get("description", ""),
@@ -73,6 +75,7 @@ class IreneTracyBridge:
             if is_endorsed:
                 brief = {
                     "dial": dial_name,
+                    "evidence_bolster": bool(plan_unit.get("evidence_bolster", False)),
                     "target_element": plan_unit.get("id", ""),
                     "scope_decision": plan_unit.get("scope_decision", "in-scope"),
                 }

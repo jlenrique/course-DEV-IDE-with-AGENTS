@@ -1,6 +1,6 @@
 # Story: Irene Retrieval-Intake (Shape 3 Integration at Irene's Edge)
 
-**Status:** ready-for-dev (green-lit 2026-04-22 — D4 + riders applied below)
+**Status:** done (implementation landed 2026-04-22; party-mode initial review and bmad-code-review gates cleared)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Irene–Texas–Tracy integration — likely future Epic 23-extension or Epic 29+ "Irene Research Intake")
 **Sprint key:** `irene-retrieval-intake`
@@ -50,9 +50,9 @@ So that **every trial run's retrieval-augmented narration is deterministic (same
    - Log `known_losses: ["retrieval_empty_for_cluster_<id>"]` in `segment-manifest.yaml`.
    - NOT block Pass 2 completion (retrieval is augmentative, not blocking).
 5. **AC-B.5 — Convergence signal surfaces in narration language.** Natural-language rules map `convergence_signal` fields to cautious-vs-confident narration framing. Documented in `pass-2-procedure.md` §Retrieval intake with worked examples. Examples:
-   - `providers_agreeing: ["scite", "consensus"], single_source_only: false` → "Corroborated by multiple independent sources" / "Supported by peer-reviewed evidence and research synthesis".
-   - `providers_agreeing: ["scite"], single_source_only: true` → "According to scite.ai analysis" / "Per peer-reviewed citation context".
-   - `providers_agreeing: ["consensus"], single_source_only: true` → "Per Consensus research synthesis".
+   - `providers_agreeing: ["scite", "consensus"], single_source_only: []` → "Corroborated by multiple independent sources" / "Supported by peer-reviewed evidence and research synthesis".
+   - `providers_agreeing: ["scite"], single_source_only: ["scite"]` → "According to scite.ai analysis" / "Per peer-reviewed citation context".
+   - `providers_agreeing: ["consensus"], single_source_only: ["consensus"]` → "Per Consensus research synthesis".
 6. **AC-B.6 — Segment-manifest schema addition.** `segment-manifest.yaml` gains new optional field `retrieval_provenance: list[{source_id, providers, convergence_signal}]` per narration segment. Additive; backward-compatible with trial #1 manifests (empty list).
 
 ### Test (AC-T.*)
@@ -89,16 +89,23 @@ So that **every trial run's retrieval-augmented narration is deterministic (same
 
 ## Tasks / Subtasks (spine — expand at green-light)
 
-- [ ] T1 — Intake schema Pydantic model + JSON schema
-- [ ] T2 — Segment-manifest additive schema update + backward-compat test
-- [ ] T3 — Intake loader + posture discriminator module
-- [ ] T4 — Convergence→narration mapping table + unit tests
-- [ ] T5 — Pass 2 procedure doc §Retrieval intake section (Paige owns; Irene specialist countersigns semantics)
-- [ ] T6 — New reference `retrieval-intake-contract.md` (audience-segmented) — at green-light decide whether separate file or section in existing `retrieval-contract.md`
-- [ ] T7 — Corroborate-posture intake-to-narration test (v1 scope)
-- [ ] T8 — Empty-retrieval graceful-degradation test
-- [ ] T9 — Doc-parity lockstep test
-- [ ] T(final) — Regression + pre-commit + review
+- [x] T1 — Intake schema Pydantic model + JSON schema
+- [x] T2 — Segment-manifest additive schema update + backward-compat test
+- [x] T3 — Intake loader + posture discriminator module
+- [x] T4 — Convergence→narration mapping table + unit tests
+- [x] T5 — Pass 2 procedure doc §Retrieval intake section (Paige owns; Irene specialist countersigns semantics)
+- [x] T6 — New reference `retrieval-intake-contract.md` (audience-segmented) — at green-light decide whether separate file or section in existing `retrieval-contract.md`
+- [x] T7 — Corroborate-posture intake-to-narration test (v1 scope)
+- [x] T8 — Empty-retrieval graceful-degradation test
+- [x] T9 — Doc-parity lockstep test
+- [x] T(final) — Regression + pre-commit + review
+
+### Review Findings
+
+- [x] [Review][Patch] Harden retrieval provenance schema to constrain provider labels and contradictory convergence states [state/config/schemas/segment-manifest.schema.json:78]
+- [x] [Review][Patch] Add negative schema tests for retrieval provenance edge cases [tests/irene/test_segment_manifest_schema.py:88]
+- [x] [Review][Patch] Align AC-B.5 examples with array-based `single_source_only` contract [_bmad-output/implementation-artifacts/irene-retrieval-intake.md:52]
+- [x] [Review][Patch] Sync sprint dependency prose with current status transitions [_bmad-output/implementation-artifacts/sprint-status.yaml:530]
 
 ## Risks (spine)
 
@@ -222,6 +229,92 @@ AC-C.2 updated: contract doc is the SSOT for intake semantics; code references t
 - 📚 Paige: YELLOW → GREEN (after D4 + mapping ratified at party-mode)
 
 **Unanimous GREEN → dev-story cleared to start** at position 4.
+
+---
+
+## Implementation Update (2026-04-22)
+
+Implemented against corroborate-only v1 scope lock:
+
+- New runtime seam: `marcus/irene/intake.py` + package export at `marcus/irene/__init__.py`
+- New schema: `state/config/schemas/irene-retrieval-intake.schema.json`
+- Additive schema surface: `state/config/schemas/segment-manifest.schema.json` now includes optional `retrieval_provenance`
+- Procedure update: `skills/bmad-agent-content-creator/references/pass-2-procedure.md` now has `## Retrieval intake (corroborate-only v1)`
+- Contract update: `skills/bmad-agent-content-creator/references/retrieval-intake-contract.md` replaced placeholder with audience-segmented SSOT
+- New tests:
+   - `tests/irene/test_retrieval_intake.py`
+   - `tests/contracts/test_pass_2_procedure_parity.py`
+- Updated tests:
+   - `tests/irene/test_segment_manifest_schema.py`
+
+Focused validation run (all green):
+
+- `tests/irene/test_retrieval_intake.py` → 13 passed
+- `tests/irene/test_segment_manifest_schema.py` → 9 passed
+- `tests/contracts/test_pass_2_procedure_parity.py` → 3 passed
+- `tests/irene/test_pass_2_authoring_template_doc_parity.py` → 8 passed
+
+## Party-Mode Initial Implementation Review (2026-04-22)
+
+Round 1 (independent voices):
+
+- 🏗️ Winston: YELLOW
+- 💻 Amelia: RED
+- 🧪 Murat: RED
+- 📚 Paige: GREEN
+
+Round 1 blockers raised:
+
+- Unknown/partial convergence wording parity: runtime could emit scite-only phrasing where contract required fallback wording.
+- Malformed convergence payload handling: malformed `convergence_signal` on otherwise usable rows could raise validation error instead of fail-closed behavior.
+
+Remediation applied:
+
+- `marcus/irene/intake.py`
+   - unknown/partial convergence now deterministically maps to fallback phrase
+   - single-source scite/consensus phrasing now requires no disagreement signals
+   - malformed `convergence_signal` validation is handled gracefully (no crash)
+- `tests/irene/test_retrieval_intake.py`
+   - added explicit unknown/partial fallback test
+   - added malformed-convergence non-crash test
+   - tightened frozen-model assertion to `ValidationError`
+
+Focused rerun after remediation:
+
+- `33 passed, 0 failed` across intake/schema/procedure/doc-parity focused suites
+
+Follow-up mini-round after remediation:
+
+- 🏗️ Winston: GREEN
+- 💻 Amelia: GREEN
+- 🧪 Murat: GREEN
+
+Gate outcome:
+
+- Party-mode initial implementation review gate is **cleared** for this story.
+
+Pending closure gates:
+
+- none (bmad-code-review completed 2026-04-22)
+
+## Code-Review Gate (2026-04-22)
+
+- Layered review executed across Blind Hunter, Edge Case Hunter, and Acceptance Auditor.
+- Triage result:
+   - decision-needed: 0
+   - patch: 4
+   - defer: 0
+   - dismissed: 10
+- Patch actions applied:
+   - tightened retrieval provenance schema constraints for provider labels and convergence consistency
+   - added negative schema tests for unknown providers and contradictory convergence states
+   - aligned AC-B.5 examples with array-based `single_source_only` semantics
+   - synchronized sprint-status dependency prose with current story statuses
+- Focused validation after patches:
+   - `tests/irene/test_segment_manifest_schema.py`
+   - `tests/irene/test_retrieval_intake.py`
+   - `tests/contracts/test_pass_2_procedure_parity.py`
+   - result: 28 passed, 0 failed
 
 ---
 

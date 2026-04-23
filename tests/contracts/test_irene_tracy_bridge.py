@@ -42,6 +42,25 @@ class TestIreneTracyBridge:
         assert brief["gap_type"] == "enrichment"
         assert brief["scope_decision"] == "in-scope"
         assert brief["target_element"] == "unit_1"
+        assert brief["evidence_bolster"] is False
+
+    def test_process_plan_locked_propagates_evidence_bolster_flag(self, bridge, mock_dispatcher):
+        lesson_plan = {
+            "evidence_bolster": True,
+            "units": [
+                {
+                    "id": "unit_1",
+                    "scope_decision": "in-scope",
+                    "identified_gaps": [{"type": "evidence", "description": "Need source check"}],
+                }
+            ],
+        }
+
+        results = bridge.process_plan_locked(lesson_plan)
+
+        assert len(results) == 1
+        brief = mock_dispatcher.select_posture.call_args[0][0]
+        assert brief["evidence_bolster"] is True
 
     def test_process_plan_locked_skips_out_of_scope_units(self, bridge, mock_dispatcher):
         lesson_plan = {

@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bmad.local/schemas/irene-retrieval-intake.schema.json",
+  "title": "Irene retrieval intake (corroborate-only v1)",
+  "description": "Validated intake envelope consumed by Irene Pass 2 when Tracy/Texas retrieval artifacts are available.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "pass_2_cluster_id",
+    "suggested_resources_ref",
+    "intake_mode",
+    "evidence_bolster_active"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pass_2_cluster_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "suggested_resources_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Workspace-relative path to Tracy suggested-resources bundle for this cluster."
+    },
+    "extraction_report_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Optional workspace-relative path to extraction-report.yaml (retrieval-shape v1.1)."
+    },
+    "intake_mode": {
+      "type": "string",
+      "enum": [
+        "corroborate",
+        "embellish",
+        "gap_fill",
+        "mixed"
+      ]
+    },
+    "evidence_bolster_active": {
+      "type": "boolean",
+      "description": "Mirrors run-constant semantics: true means retrieval corroboration should be consumed by Pass 2 where available."
+    }
+  },
+  "$defs": {
+    "convergence_signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "providers_agreeing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "providers_disagreeing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "single_source_only": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "retrieval_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "providers"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "providers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "convergence_signal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/convergence_signal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

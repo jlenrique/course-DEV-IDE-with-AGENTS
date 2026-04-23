@@ -4,9 +4,14 @@ import json
 from importlib import util
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[4]
-SCRIPT_PATH = ROOT / "skills" / "bmad-agent-marcus" / "scripts" / "evaluate_cluster_template_selection.py"
+SCRIPT_PATH = (
+    ROOT
+    / "skills"
+    / "bmad-agent-marcus"
+    / "scripts"
+    / "evaluate_cluster_template_selection.py"
+)
 
 
 def _load_module():
@@ -36,14 +41,24 @@ def _write_bundle(
     authorized = {
         "slide_ids": [f"s-{i}" for i in range(1, slide_count + 1)],
         "authorized_slides": [
-            {"slide_id": f"s-{i}", "card_number": i, "file_path": f"slide-{i:02d}.png", "source_ref": f"src#{i}"}
+            {
+                "slide_id": f"s-{i}",
+                "card_number": i,
+                "file_path": f"slide-{i:02d}.png",
+                "source_ref": f"src#{i}",
+            }
             for i in range(1, slide_count + 1)
         ],
     }
     slides = []
     for i in range(1, slide_count + 1):
         role = "interstitial" if i <= interstitials else "head"
-        row = {"slide_id": f"s-{i}", "card_number": i, "cluster_role": role, "narration_status": "present"}
+        row = {
+            "slide_id": f"s-{i}",
+            "card_number": i,
+            "cluster_role": role,
+            "narration_status": "present",
+        }
         if include_selected_template_ids and cluster_groups > 0:
             row["selected_template_id"] = "deep-dive"
         slides.append(row)
@@ -137,7 +152,9 @@ def test_compare_fails_when_missing_assets_regress(tmp_path: Path) -> None:
     assert "candidate_missing_assets_exceed_baseline" in report["decision"]["reasons"]
 
 
-def test_compare_fails_when_cluster_template_plan_missing_for_clustered_candidate(tmp_path: Path) -> None:
+def test_compare_fails_when_cluster_template_plan_missing_for_clustered_candidate(
+    tmp_path: Path,
+) -> None:
     baseline = tmp_path / "baseline"
     candidate = tmp_path / "candidate"
     _write_bundle(
@@ -169,7 +186,9 @@ def test_compare_fails_when_cluster_template_plan_missing_for_clustered_candidat
     assert "cluster_groups_present_without_template_cluster_plan" in report["decision"]["reasons"]
 
 
-def test_compare_uses_template_plan_selected_ids_when_storyboard_ids_missing(tmp_path: Path) -> None:
+def test_compare_uses_template_plan_selected_ids_when_storyboard_ids_missing(
+    tmp_path: Path,
+) -> None:
     baseline = tmp_path / "baseline"
     candidate = tmp_path / "candidate"
     _write_bundle(

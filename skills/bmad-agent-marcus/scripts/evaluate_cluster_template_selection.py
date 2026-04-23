@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -56,15 +56,21 @@ def _extract_metrics(snapshot: dict[str, Any]) -> dict[str, Any]:
     authorized_slides = authorized.get("authorized_slides", [])
     storyboard_slides = storyboard.get("slides", [])
     review_meta = storyboard.get("review_meta", {})
-    cluster_groups = storyboard.get("cluster_groups", []) if isinstance(storyboard.get("cluster_groups"), list) else []
-    template_plan = envelope.get("cluster_template_plan") if isinstance(envelope.get("cluster_template_plan"), dict) else {}
-    template_clusters = template_plan.get("clusters", []) if isinstance(template_plan.get("clusters"), list) else []
+    cluster_groups_value = storyboard.get("cluster_groups", [])
+    cluster_groups = cluster_groups_value if isinstance(cluster_groups_value, list) else []
+
+    template_plan_value = envelope.get("cluster_template_plan")
+    template_plan = template_plan_value if isinstance(template_plan_value, dict) else {}
+
+    template_clusters_value = template_plan.get("clusters", [])
+    template_clusters = template_clusters_value if isinstance(template_clusters_value, list) else []
     selected_template_ids_by_cluster = (
         template_plan.get("selected_template_ids_by_cluster")
         if isinstance(template_plan.get("selected_template_ids_by_cluster"), dict)
         else {}
     )
-    envelope_rows = envelope.get("gary_slide_output") if isinstance(envelope.get("gary_slide_output"), list) else []
+    envelope_rows_value = envelope.get("gary_slide_output")
+    envelope_rows = envelope_rows_value if isinstance(envelope_rows_value, list) else []
 
     interstitial_count = 0
     narrated_count = 0
@@ -148,13 +154,22 @@ def compare_c1_m1_runs(
     if candidate_metrics["missing_asset_count"] > baseline_metrics["missing_asset_count"]:
         status = "fail"
         reasons.append("candidate_missing_assets_exceed_baseline")
-    if candidate_metrics["template_cluster_count"] == 0 and candidate_metrics["cluster_group_count"] > 0:
+    if (
+        candidate_metrics["template_cluster_count"] == 0
+        and candidate_metrics["cluster_group_count"] > 0
+    ):
         status = "fail"
         reasons.append("cluster_groups_present_without_template_cluster_plan")
-    if candidate_metrics["unique_selected_template_count"] == 0 and candidate_metrics["cluster_group_count"] > 0:
+    if (
+        candidate_metrics["unique_selected_template_count"] == 0
+        and candidate_metrics["cluster_group_count"] > 0
+    ):
         status = "fail"
         reasons.append("clustered_candidate_missing_selected_template_ids")
-    if candidate_metrics["narrated_slide_count"] < baseline_metrics["narrated_slide_count"] and status != "fail":
+    if (
+        candidate_metrics["narrated_slide_count"] < baseline_metrics["narrated_slide_count"]
+        and status != "fail"
+    ):
         status = "warn"
         reasons.append("candidate_narrated_slide_count_below_baseline")
     if not reasons:
@@ -163,7 +178,7 @@ def compare_c1_m1_runs(
     return {
         "artifact_version": 1,
         "artifact_type": "c1-m1-comparative-evaluation",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "lesson_id": lesson_id,
         "baseline": {
             "label": baseline_label,
@@ -188,7 +203,9 @@ def write_artifact(report: dict[str, Any], output_path: str | Path) -> Path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="C1-M1 baseline vs candidate comparative evaluation")
+    parser = argparse.ArgumentParser(
+        description="C1-M1 baseline vs candidate comparative evaluation"
+    )
     parser.add_argument("--lesson-id", default="C1-M1")
     parser.add_argument("--baseline-bundle", type=Path, required=True)
     parser.add_argument("--candidate-bundle", type=Path, required=True)
@@ -206,7 +223,16 @@ def main() -> int:
             candidate_bundle=args.candidate_bundle,
         )
         output_path = write_artifact(report, args.output)
-        print(json.dumps({"status": "ok", "output_path": str(output_path), "decision": report["decision"]}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "status": "ok",
+                    "output_path": str(output_path),
+                    "decision": report["decision"],
+                },
+                indent=2,
+            )
+        )
         return 0
     except Exception as exc:
         print(json.dumps({"status": "fail", "errors": [f"{type(exc).__name__}: {exc}"]}, indent=2))

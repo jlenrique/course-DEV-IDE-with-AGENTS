@@ -171,6 +171,18 @@ HEARTBEAT RESULTS: 3 connected, 1 failed, 3 skipped
         assert "ElevenLabs API" in names
         assert "Canvas LMS API" in names
 
+    def test_parse_separator_variants(self):
+        from skills.pre_flight_check.scripts.preflight_runner import parse_heartbeat_output
+
+        output = (
+            "PASS: Alpha API -- Connected\n"
+            "PASS: Beta API \u2014 Connected\n"
+            "PASS: Gamma API \u00e2\u20ac\u201d Connected\n"
+        )
+        results = parse_heartbeat_output(output)
+        names = {r["name"] for r in results}
+        assert names == {"Alpha API", "Beta API", "Gamma API"}
+
 
 # ---------------------------------------------------------------------------
 # AC #6: Readiness report classification

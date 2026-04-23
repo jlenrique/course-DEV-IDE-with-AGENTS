@@ -9,6 +9,9 @@ block_mode_trigger_paths:
 - scripts/utilities/run_hud.py
 - scripts/utilities/progress_map.py
 - marcus/orchestrator/workflow_runner.py
+- marcus/dispatch/contract.py
+- skills/bmad-agent-marcus/references/dispatch-registry.yaml
+- scripts/validators/check_dispatch_registry_lockstep.py
 - tests/test_run_hud.py
 - tests/test_progress_map.py
 - docs/workflow/production-prompt-pack-v4.2-*.md

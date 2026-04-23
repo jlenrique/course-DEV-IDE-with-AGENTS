@@ -64,13 +64,13 @@ anti_drift:
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
       - "## 04) Ingestion Quality Gate + Irene Packet"
-      - "## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)"
-      - "## 4.75) Creative Directive Resolution (CD)"
+      - "## 04A) Lesson Plan Coauthoring + Scope Lock"
+      - "## 4.75) Creative Directive Resolution"
     ordered: true
   - name: Creative directive resolution step
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
-      - "## 4.75) Creative Directive Resolution (CD)"
+      - "## 4.75) Creative Directive Resolution"
       - "creative-directive.yaml"
       - "narration_profile_controls"
     ordered: true
@@ -91,25 +91,25 @@ anti_drift:
   - name: Cluster prompt engineering step
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
-      - "## 6.2) Cluster Prompt Engineering (Conditional)"
+      - "## 6.2) Cluster Prompt Engineering"
       - "cluster_prompt_engineering.py"
     ordered: true
   - name: Cluster dispatch sequencing step
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
-      - "## 6.3) Cluster Dispatch Sequencing (Conditional)"
+      - "## 6.3) Cluster Dispatch Sequencing"
       - "cluster_dispatch_sequencing.py"
     ordered: true
   - name: Cluster coherence gate in motion prompt pack
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
-      - "## 7.5) Cluster Coherence G2.5 Gate (Conditional)"
+      - "## 7.5) Cluster Coherence G2.5 Gate"
       - "cluster_coherence_validation.py"
     ordered: true
   - name: Motion prompt-pack workflow sequence
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needles:
-      - "## 07C) Storyboard A + Gate 2 Approval + Winner Authorization"
+      - "## 07C) Storyboard A + Gate 2 Approval"
       - "## 07D) Gate 2M Motion Designation"
       - "## 07F) Motion Gate"
       - "Regenerate Storyboard B with script context before downstream audio finalization."
@@ -135,25 +135,25 @@ sequence_doc_parity:
   # produces a doc where needles are in the right order by construction).
   - stage: lesson-plan-coauthoring-04a
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 04A) Lesson Plan Coauthoring + Scope Lock (Marcus <-> HIL)"
+    needle: "## 04A) Lesson Plan Coauthoring + Scope Lock"
   - stage: lesson-plan-coauthoring-04a
     path: docs/workflow/production-operator-card-v4.md
     needle: "### 04A. Prompt 04A: Lesson Plan Coauthoring + Scope Lock"
   - stage: creative-directive
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 4.75) Creative Directive Resolution (CD)"
+    needle: "## 4.75) Creative Directive Resolution"
   - stage: cluster-prompt-engineering
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 6.2) Cluster Prompt Engineering (Conditional)"
+    needle: "## 6.2) Cluster Prompt Engineering"
   - stage: cluster-dispatch-sequencing
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 6.3) Cluster Dispatch Sequencing (Conditional)"
+    needle: "## 6.3) Cluster Dispatch Sequencing"
   - stage: cluster-coherence
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 7.5) Cluster Coherence G2.5 Gate (Conditional)"
+    needle: "## 7.5) Cluster Coherence G2.5 Gate"
   - stage: storyboard
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 07C) Storyboard A + Gate 2 Approval + Winner Authorization"
+    needle: "## 07C) Storyboard A + Gate 2 Approval"
   - stage: gate-2m
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
     needle: "## 07D) Gate 2M Motion Designation"
@@ -162,7 +162,7 @@ sequence_doc_parity:
     needle: "### 7D. Prompt 7D: Gate 2M Motion Designation"
   - stage: motion-gate
     path: docs/workflow/production-prompt-pack-v4.2-narrated-lesson-with-video-or-animation.md
-    needle: "## 7F) Motion Gate"
+    needle: "## 07F) Motion Gate"
   - stage: motion-gate
     path: docs/workflow/production-operator-card-v4.md
     needle: "### 7F. Prompt 7F: Motion Gate"

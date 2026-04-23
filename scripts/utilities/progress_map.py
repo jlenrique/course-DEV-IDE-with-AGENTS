@@ -161,6 +161,7 @@ WAVE_LABELS: dict[str, str] = {
     "31": "Tri-phasic Contract Primitives + Gates",
     "32": "Envelope Audit + Coverage Manifest",
     "33": "Pipeline Lockstep Substrate",
+    "34": "Parameter Snapshot & Profile Creation",
 }
 
 # ---------------------------------------------------------------------------

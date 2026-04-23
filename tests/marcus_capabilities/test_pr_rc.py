@@ -69,6 +69,7 @@ def _mixed_case_variant() -> dict:
         "THEME_PARAMSET_KEY": "hil-2026-apc-nejal-A",
         "EXECUTION_MODE": "tracked/default",
         "QUALITY_PRESET": "production",
+        "EVIDENCE_BOLSTER": True,
     }
 
 
@@ -116,6 +117,9 @@ def test_summarize_renders_canonical_preview(variant_builder) -> None:
     # The preview must re-parse through the validator round-trip
     parsed_data = yaml.safe_load(preview)
     rc.parse_run_constants(parsed_data)  # raises if shape is wrong
+    if variant_builder is _mixed_case_variant:
+        assert parsed_data["evidence_bolster"] is True
+        assert "EVIDENCE_BOLSTER" not in parsed_data
 
 
 # ---------------------------------------------------------------------------

@@ -45,7 +45,7 @@ Read course context fresh from `state/config/course_context.yaml` before any des
 
 ## Capabilities (Router)
 
-20+ capability codes — CAPABILITIES.md in the sanctum is auto-generated from reference frontmatter and is the canonical router. Highlights: IA (pedagogical framework), WD (delegation), MG (segment manifest), CP (cluster planning), PC/VR/MP/MC/MA (Pass 2 script-backed). Delegation targets + context envelopes: `./references/external-agent-registry.md`. Exception playbook: `./references/degradation-handling.md`.
+20+ capability codes — CAPABILITIES.md in the sanctum is auto-generated from reference frontmatter and is the canonical router. Highlights: IA (pedagogical framework), WD (delegation), MG (segment manifest), CP (cluster planning), CE (cluster exemplar library), PC/VR/MP/MC/MA (Pass 2 script-backed). Delegation targets + context envelopes: `./references/external-agent-registry.md`. Exception playbook: `./references/degradation-handling.md`.
 
 ## Session Close
 

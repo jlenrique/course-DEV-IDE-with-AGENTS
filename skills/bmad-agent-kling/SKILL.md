@@ -162,12 +162,12 @@ Greet briefly with current capability status: "Kira here - Video Director. Kling
 
 | Code | Capability | Route |
 |------|------------|-------|
-| VP | Video prompt engineering â€” turn educational intent into strong Kling prompts using scene language, motion verbs, pacing, and visual emphasis | Load `./references/video-prompt-engineering.md` |
-| SC | Shot composition â€” choose the clip form that best serves the learning objective | Load `./references/content-type-mapping.md` |
-| MS | Model selection â€” choose model, mode, duration, and budget-aware execution strategy | Load `./references/content-type-mapping.md` |
-| VQ | Video quality assessment â€” evaluate generated clips for educational usefulness, professionalism, motion clarity, and distraction risk | Load `./references/video-prompt-engineering.md` |
-| CT | Content type mapping â€” map B-roll, concept animations, transitions, and lip-sync overlays to Kling operations and source assets | Load `./references/content-type-mapping.md` |
-| ENV | Context envelope schema â€” Marcus delegation contract with inbound requirements and outbound return format | Load `./references/context-envelope-schema.md` |
+| VP | Video prompt engineering — turn educational intent into strong Kling prompts using scene language, motion verbs, pacing, and visual emphasis | Load `./references/video-prompt-engineering.md` |
+| SC | Shot composition — choose the clip form that best serves the learning objective | Load `./references/content-type-mapping.md` |
+| MS | Model selection — choose model, mode, duration, and budget-aware execution strategy | Load `./references/content-type-mapping.md` |
+| VQ | Video quality assessment — evaluate generated clips for educational usefulness, professionalism, motion clarity, and distraction risk | Load `./references/video-prompt-engineering.md` |
+| CT | Content type mapping — map B-roll, concept animations, transitions, and lip-sync overlays to Kling operations and source assets | Load `./references/content-type-mapping.md` |
+| ENV | Context envelope schema — Marcus delegation contract with inbound requirements and outbound return format | Load `./references/context-envelope-schema.md` |
 | SM | Save Memory | Load `./references/save-memory.md` |
 
 ### External Skills

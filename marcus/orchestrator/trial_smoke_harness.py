@@ -26,6 +26,7 @@ from marcus.lesson_plan.step_06_plan_lock_fanout import consume as consume_step_
 from marcus.lesson_plan.step_07_gap_dispatch import consume as consume_step_07
 from marcus.orchestrator.dispatch import dispatch_intake_pre_packet
 from marcus.orchestrator.workflow_runner import route_step_04_gate_to_step_05
+from scripts.utilities.run_constants import RunConstantsError, load_run_constants
 
 
 class SmokeStepStatus(str):
@@ -164,6 +165,18 @@ def _evaluate_trial_readiness_battery() -> TrialReadinessBattery:
     )
 
 
+def _evidence_bolster_from_bundle(bundle_dir: Path) -> bool:
+    run_constants_path = bundle_dir / "run-constants.yaml"
+    if not run_constants_path.is_file():
+        return False
+
+    try:
+        loaded = load_run_constants(bundle_dir)
+    except RunConstantsError:
+        return False
+    return loaded.evidence_bolster
+
+
 def run_trial_run_smoke_harness(
     bundle_dir: Path,
     *,
@@ -217,6 +230,7 @@ def run_trial_run_smoke_harness(
         packet_plan,
         intake_callable=intake_callable,
         log=target_log,
+        evidence_bolster=_evidence_bolster_from_bundle(bundle_dir),
     )
     steps.append(
         SmokeStepResult(

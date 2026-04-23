@@ -54,6 +54,7 @@ CANONICAL_REQUIRED_FIELDS = [
 CANONICAL_OPTIONAL_FIELDS = [
     "optional_context_assets",
     "requested_content_type",
+    "evidence_bolster",
     "double_dispatch",
     "motion_enabled",
     "motion_budget",
@@ -76,6 +77,7 @@ _UPPERCASE_TO_SNAKE = {
     "EXECUTION_MODE": "execution_mode",
     "QUALITY_PRESET": "quality_preset",
     "REQUESTED_CONTENT_TYPE": "requested_content_type",
+    "EVIDENCE_BOLSTER": "evidence_bolster",
     "MOTION_ENABLED": "motion_enabled",
     "DOUBLE_DISPATCH": "double_dispatch",
     "CLUSTER_DENSITY": "cluster_density",

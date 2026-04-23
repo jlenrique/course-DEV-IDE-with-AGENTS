@@ -15,12 +15,11 @@ import os
 import re
 import subprocess
 import sys
+import urllib.request
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
-
-import urllib.request
 
 # Add project root to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
@@ -164,8 +163,16 @@ def run_node_script(script_path: Path, cwd: Path) -> tuple[int, str, str]:
 
 # -- Heartbeat Output Parser --
 
-# Accept '--', a true em dash, and common mojibake form ('â€”') seen on some Windows setups.
-HEARTBEAT_PATTERN = re.compile(r"\s*(PASS|FAIL|SKIP):\s*(.+?)\s*(?:--|—|â€”)+\s*(.+)")
+# Accept '--', a true em dash, and CP1252-misread em dash
+# (see scripts/utilities/normalize_mojibake.py).
+_MALFORMED_EM_DASH = "\u00e2\u20ac\u201d"
+HEARTBEAT_PATTERN = re.compile(
+    r"\s*(PASS|FAIL|SKIP):\s*(.+?)\s*(?:--|"
+    + re.escape("\u2014")
+    + "|"
+    + re.escape(_MALFORMED_EM_DASH)
+    + r")+\s*(.+)"
+)
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;]*m")
 
 

@@ -64,7 +64,7 @@ class PlanLockFanoutResult(BaseModel):
     bridge_results: tuple[dict[str, Any], ...] = ()
 
 
-def _plan_dict_for_bridge(plan: LessonPlan) -> dict[str, Any]:
+def _plan_dict_for_bridge(plan: LessonPlan, *, evidence_bolster: bool) -> dict[str, Any]:
     """Map LessonPlan schema into IreneTracyBridge expected shape."""
     units: list[dict[str, Any]] = []
     for unit in plan.plan_units:
@@ -90,7 +90,10 @@ def _plan_dict_for_bridge(plan: LessonPlan) -> dict[str, Any]:
                 "identified_gaps": identified_gaps,
             }
         )
-    return {"units": units}
+    return {
+        "evidence_bolster": evidence_bolster,
+        "units": units,
+    }
 
 
 def _gap_envelopes_for_unit(
@@ -135,6 +138,7 @@ def emit_plan_lock_fanout(
     *,
     dispatch: Callable[[EventEnvelope], None],
     bridge: Any | None = None,
+    evidence_bolster: bool = False,
 ) -> PlanLockFanoutResult:
     """Emit step 05+ fanout envelopes after plan-lock.
 
@@ -169,7 +173,9 @@ def emit_plan_lock_fanout(
 
     if bridge is not None and in_scope_units:
         try:
-            raw = bridge.process_plan_locked(_plan_dict_for_bridge(locked_plan))
+            raw = bridge.process_plan_locked(
+                _plan_dict_for_bridge(locked_plan, evidence_bolster=evidence_bolster)
+            )
         except Exception as exc:
             # G6 B1 (party-mode 2026-04-19 follow-on): silent except-Exception
             # was diagnostically opaque. Bridge failures still produce empty

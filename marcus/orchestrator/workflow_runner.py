@@ -79,6 +79,7 @@ def route_step_04_gate_to_step_05(
     prior_declined_rationales: tuple[tuple[str, str], ...] = (),
     log: LessonPlanLog | None = None,
     tracy_bridge: Any | None = None,
+    evidence_bolster: bool = False,
 ) -> Step4AWorkflowResult:
     """Run the 4A loop and return the baton contract for step 05.
 
@@ -128,6 +129,7 @@ def route_step_04_gate_to_step_05(
         prior_declined_rationales=prior_declined_rationales,
         log=log,
         tracy_bridge=tracy_bridge,
+        evidence_bolster=evidence_bolster,
     )
     handoff = StepBatonHandoff(
         lesson_plan_revision=locked_plan.revision,

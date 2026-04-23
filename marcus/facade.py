@@ -118,6 +118,7 @@ class Facade:
         prior_declined_rationales: tuple[tuple[str, str], ...] = (),
         log: LessonPlanLog | None = None,
         tracy_bridge: Any | None = None,
+        evidence_bolster: bool = False,
     ) -> LessonPlan:
         """Drive the 4A conversation loop from an initial plan through plan-lock.
 
@@ -152,6 +153,8 @@ class Facade:
             tracy_bridge: Optional Irene→Tracy bridge adapter. When present,
                 plan-lock fanout auto-dispatches in-scope gaps through this
                 bridge and records fanout envelopes to the log.
+            evidence_bolster: Forwarded to Tracy bridge payloads so corroborate
+                posture can select cross-validation behavior at runtime.
 
         Returns:
             The locked :class:`LessonPlan` — ``revision`` bumped,
@@ -188,6 +191,7 @@ class Facade:
             locked_plan,
             dispatch=dispatch,
             bridge=tracy_bridge,
+            evidence_bolster=evidence_bolster,
         )
         return locked_plan
 

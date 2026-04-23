@@ -1,6 +1,6 @@
 # Story: Evidence-Bolster Control Surface (Research Knob Wiring)
 
-**Status:** review (2026-04-23: sibling intake dependency closed; final validation pack green)
+**Status:** done (2026-04-23: layered bmad-code-review clean; no actionable findings)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Research-capability operator control — likely future Epic 35+ "Research Knobs & Profiles")
 **Sprint key:** `evidence-bolster-control-surface`
@@ -105,6 +105,7 @@ So that **trial #2 executes the operator's locked research-capability scope dete
 - [x] [Review][Patch] Parse evidence_bolster inputs strictly to avoid truthy string coercion in posture routing [skills/bmad_agent_tracy/scripts/posture_dispatcher.py:43]
 - [x] [Review][Patch] Propagate dispatcher-level failure payloads instead of coercing corroborate responses to success [skills/bmad_agent_tracy/scripts/posture_dispatcher.py:136]
 - [x] [Review][Patch] Parse lesson/unit evidence_bolster inputs strictly in Irene-Tracy bridge dispatch [skills/bmad_agent_tracy/scripts/irene_bridge.py:19]
+- [x] [Review][Gate] bmad-code-review completed (blind + edge + acceptance layers); clean review with no actionable findings (2026-04-23)
 
 ## Dev Agent Record
 
@@ -174,6 +175,7 @@ So that **trial #2 executes the operator's locked research-capability scope dete
 ## Change Log
 
 - 2026-04-22: Resumed crash-interrupted story implementation; completed schema + hard-fail + propagation + corroborate branching + docs + targeted regression tests. Intake-layer consumption task remains open pending sibling story integration.
+- 2026-04-23: Sibling intake dependency closed, final validation pack confirmed (126 passed; ruff/pre-commit clean), layered bmad-code-review run completed clean, and story promoted to `done`.
 
 ## Risks (spine)
 

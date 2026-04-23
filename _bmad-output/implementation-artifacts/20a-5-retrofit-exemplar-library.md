@@ -1,7 +1,7 @@
 # Story 20a.5: Retrofit Exemplar Library
 
 **Epic:** 20A - Irene Cluster Intelligence - Design & Specification
-**Status:** review
+**Status:** done
 **Sprint key:** `20a-5-retrofit-exemplar-library`
 **Added:** 2026-04-11
 **Validated:** 2026-04-11
@@ -210,7 +210,7 @@ GPT-5.3-Codex
 
 ## Status
 
-review
+done
 
 ## Completion Status
 

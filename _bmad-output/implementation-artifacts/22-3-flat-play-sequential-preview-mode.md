@@ -1,7 +1,7 @@
 # Story 22-3: Flat-Play Sequential Preview Mode
 
 **Epic:** 22 - Storyboard & Review Adaptation
-**Status:** review
+**Status:** done
 **Sprint key:** `22-3-flat-play-sequential-preview-mode`
 **Added:** 2026-04-12
 **Depends on:** [22-1-storyboard-a-cluster-view.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/22-1-storyboard-a-cluster-view.md)
@@ -133,3 +133,4 @@ This story adds the student-perspective preview. It does NOT modify the cluster 
 ## Change Log
 
 - 2026-04-23: Implemented Storyboard B clustered student flat-play mode (toggle, transition markers, pacing visualization, outlier highlighting), added helper/test coverage, and moved story to `review`.
+- 2026-04-23: Review closeout complete; story status promoted to `done`.

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from marcus.dispatch.contract import DispatchEnvelope, DispatchReceipt
 
 from scripts.utilities.run_constants import resolve_experience_profile
 
@@ -200,6 +201,13 @@ def test_prepares_envelope_with_exact_motion_gate_asset_path(tmp_path: Path) -> 
     assert envelope["voice_direction_defaults"]["speed"] == 1.0
     assert "experience_profile" not in envelope
     assert "narration_profile_controls" not in envelope
+
+    contract = envelope["dispatch_contract"]
+    validated_envelope = DispatchEnvelope.model_validate(contract["envelope"])
+    assert validated_envelope.dispatch_kind.value == "irene_pass2"
+
+    validated_receipt = DispatchReceipt.model_validate(result["dispatch_contract"]["receipt"])
+    assert validated_receipt.outcome.value == "complete"
 
 
 def test_envelope_includes_visual_led_narration_profile_controls(tmp_path: Path) -> None:

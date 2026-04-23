@@ -156,6 +156,21 @@ def test_parse_invalid_double_dispatch_type() -> None:
         rc.parse_run_constants(raw)
 
 
+def test_evidence_bolster_absent_defaults_to_false() -> None:
+    parsed = rc.parse_run_constants(_MINIMAL_RAW)
+    assert parsed.evidence_bolster is False
+
+
+def test_evidence_bolster_true_parses() -> None:
+    parsed = rc.parse_run_constants({**_MINIMAL_RAW, "evidence_bolster": True})
+    assert parsed.evidence_bolster is True
+
+
+def test_evidence_bolster_non_bool_raises() -> None:
+    with pytest.raises(rc.RunConstantsError, match="evidence_bolster"):
+        rc.parse_run_constants({**_MINIMAL_RAW, "evidence_bolster": "true"})
+
+
 def test_parse_motion_budget_fields() -> None:
     raw = {
         "run_id": "a",

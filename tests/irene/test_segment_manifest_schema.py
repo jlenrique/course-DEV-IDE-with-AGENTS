@@ -62,6 +62,89 @@ def test_canonical_fixture_passes_schema(validator):
     )
 
 
+def test_schema_accepts_additive_retrieval_provenance_field(validator):
+    manifest = _load("trial_c1m1_canonical.yaml")
+    manifest["segments"][0]["retrieval_provenance"] = [
+        {
+            "source_id": "scite:support-101",
+            "providers": ["scite", "consensus"],
+            "convergence_signal": {
+                "providers_agreeing": ["scite", "consensus"],
+                "providers_disagreeing": [],
+                "single_source_only": [],
+            },
+        }
+    ]
+
+    errors = sorted(validator.iter_errors(manifest), key=lambda e: e.path)
+    assert not errors, (
+        "Schema must accept additive retrieval_provenance payloads while "
+        "preserving v1.1 backward compatibility. "
+        f"Errors: {[e.message for e in errors]}"
+    )
+
+
+def test_schema_rejects_unknown_retrieval_provider_name(validator):
+    manifest = _load("trial_c1m1_canonical.yaml")
+    manifest["segments"][0]["retrieval_provenance"] = [
+        {
+            "source_id": "scite:support-101",
+            "providers": ["scite", "semantic-scholar"],
+            "convergence_signal": {
+                "providers_agreeing": ["scite"],
+                "providers_disagreeing": [],
+                "single_source_only": ["scite"],
+            },
+        }
+    ]
+
+    errors = list(validator.iter_errors(manifest))
+    assert errors, "Schema must reject unknown retrieval provider labels"
+    assert _error_touches(errors, "semantic-scholar")
+
+
+def test_schema_rejects_contradictory_dual_and_single_source_signal(validator):
+    manifest = _load("trial_c1m1_canonical.yaml")
+    manifest["segments"][0]["retrieval_provenance"] = [
+        {
+            "source_id": "scite:support-101",
+            "providers": ["scite", "consensus"],
+            "convergence_signal": {
+                "providers_agreeing": ["scite", "consensus"],
+                "providers_disagreeing": [],
+                "single_source_only": ["scite"],
+            },
+        }
+    ]
+
+    errors = list(validator.iter_errors(manifest))
+    assert errors, (
+        "Schema must reject contradictory convergence signals where both "
+        "dual-source agreement and single-source-only are asserted"
+    )
+
+
+def test_schema_rejects_provider_marked_agreeing_and_disagreeing(validator):
+    manifest = _load("trial_c1m1_canonical.yaml")
+    manifest["segments"][0]["retrieval_provenance"] = [
+        {
+            "source_id": "scite:support-101",
+            "providers": ["scite"],
+            "convergence_signal": {
+                "providers_agreeing": ["scite"],
+                "providers_disagreeing": ["scite"],
+                "single_source_only": ["scite"],
+            },
+        }
+    ]
+
+    errors = list(validator.iter_errors(manifest))
+    assert errors, (
+        "Schema must reject convergence rows that place one provider in both "
+        "agreeing and disagreeing sets"
+    )
+
+
 def test_malformed_6_3_duplicate_motion_keys_fails_schema(validator):
     """§6.3 — motion_asset is a forbidden legacy key."""
     manifest = _load("malformed_6_3_duplicate_motion_keys.yaml")

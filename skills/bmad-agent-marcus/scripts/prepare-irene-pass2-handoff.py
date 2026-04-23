@@ -14,6 +14,7 @@ This helper is the canonical Marcus-side Prompt 8 preflight. It:
 from __future__ import annotations
 
 import argparse
+import logging
 import json
 import re
 import shutil
@@ -33,6 +34,15 @@ if str(SCRIPTS_DIR) not in sys.path:
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+from marcus.dispatch.contract import (  # noqa: E402
+    DispatchKind,
+    DispatchOutcome,
+    build_dispatch_envelope,
+    build_dispatch_receipt,
+    dispatch_end_log_fields,
+    dispatch_start_log_fields,
+)
 
 from cluster_template_planner import (  # noqa: E402
     build_cluster_template_plan,
@@ -77,6 +87,7 @@ GARY_CLUSTER_FIELDS = (
 RUNTIME_ROW_RE = re.compile(
     r"^\|\s*(?P<slide>\d+)\s*\|\s*(?P<target>\d+(?:\.\d+)?)\s*\|\s*(?P<cumulative>\d+:\d{2})\s*\|$"
 )
+LOGGER = logging.getLogger(__name__)
 
 
 def _utc_now() -> datetime:
@@ -797,6 +808,38 @@ def prepare_irene_pass2_handoff(
             "Detected non-authoritative motion leftovers for slide(s) currently treated as static"
         )
 
+    dispatch_envelope_contract = build_dispatch_envelope(
+        run_id=str(
+            dispatch_payload.get("run_id")
+            or authorized_storyboard.get("run_id")
+            or f"pass2-{_timestamp_slug(ts)}"
+        ).strip(),
+        dispatch_kind=DispatchKind.IRENE_PASS2,
+        input_packet={
+            "double_dispatch": double_dispatch,
+            "motion_enabled": motion_enabled,
+            "authorized_slide_count": len(gary_slide_output),
+        },
+        context_refs=[
+            str(authorized_path),
+            str(dispatch_path),
+            *(
+                [str(motion_plan_path)]
+                if motion_plan_path.is_file()
+                else []
+            ),
+            *(
+                [str(operator_directives_path)]
+                if operator_directives_path.is_file()
+                else []
+            ),
+        ],
+    )
+    LOGGER.info(
+        "dispatch.start",
+        extra={"dispatch": dispatch_start_log_fields(dispatch_envelope_contract)},
+    )
+
     if errors:
         receipt = {
             "status": "fail",
@@ -807,7 +850,29 @@ def prepare_irene_pass2_handoff(
             "approved_motion_assets": approved_assets,
             "non_authoritative_motion_leftovers": non_authoritative_motion_leftovers,
         }
+        dispatch_receipt_contract = build_dispatch_receipt(
+            correlation_id=dispatch_envelope_contract.correlation_id,
+            specialist_id=dispatch_envelope_contract.specialist_id,
+            outcome=DispatchOutcome.FAILED,
+            output_artifacts=[str(receipt_path)],
+            diagnostics={"errors": errors, "warnings": warnings},
+            duration_ms=0,
+        )
+        receipt["dispatch_contract"] = {
+            "envelope": dispatch_envelope_contract.model_dump(mode="json"),
+            "receipt": dispatch_receipt_contract.model_dump(mode="json"),
+        }
         receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+        LOGGER.info(
+            "dispatch.end",
+            extra={
+                "dispatch": dispatch_end_log_fields(
+                    dispatch_receipt_contract,
+                    run_id=dispatch_envelope_contract.run_id,
+                    dispatch_kind=dispatch_envelope_contract.dispatch_kind,
+                )
+            },
+        )
         return receipt
 
     archive_dir = None
@@ -896,13 +961,39 @@ def prepare_irene_pass2_handoff(
             "approved_motion_assets": approved_assets,
             "non_authoritative_motion_leftovers": non_authoritative_motion_leftovers,
         }
+        dispatch_receipt_contract = build_dispatch_receipt(
+            correlation_id=dispatch_envelope_contract.correlation_id,
+            specialist_id=dispatch_envelope_contract.specialist_id,
+            outcome=DispatchOutcome.FAILED,
+            output_artifacts=[str(receipt_path)],
+            diagnostics={"errors": errors, "warnings": warnings},
+            duration_ms=0,
+        )
+        receipt["dispatch_contract"] = {
+            "envelope": dispatch_envelope_contract.model_dump(mode="json"),
+            "receipt": dispatch_receipt_contract.model_dump(mode="json"),
+        }
         receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+        LOGGER.info(
+            "dispatch.end",
+            extra={
+                "dispatch": dispatch_end_log_fields(
+                    dispatch_receipt_contract,
+                    run_id=dispatch_envelope_contract.run_id,
+                    dispatch_kind=dispatch_envelope_contract.dispatch_kind,
+                )
+            },
+        )
         return receipt
     literal_visual_publish = dispatch_payload.get("literal_visual_publish")
     if isinstance(literal_visual_publish, dict):
         envelope["literal_visual_publish"] = literal_visual_publish
     if motion_enabled:
         envelope["motion_perception_artifacts"] = []
+
+    envelope["dispatch_contract"] = {
+        "envelope": dispatch_envelope_contract.model_dump(mode="json")
+    }
 
     envelope_path.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
@@ -922,7 +1013,33 @@ def prepare_irene_pass2_handoff(
         "errors": [],
         "next_action": "delegate-irene-pass2",
     }
+    dispatch_receipt_contract = build_dispatch_receipt(
+        correlation_id=dispatch_envelope_contract.correlation_id,
+        specialist_id=dispatch_envelope_contract.specialist_id,
+        outcome=DispatchOutcome.COMPLETE,
+        output_artifacts=[
+            str(envelope_path),
+            str(receipt_path),
+            *expected_outputs,
+        ],
+        diagnostics={"warnings": warnings, "errors": []},
+        duration_ms=0,
+    )
+    receipt["dispatch_contract"] = {
+        "envelope": dispatch_envelope_contract.model_dump(mode="json"),
+        "receipt": dispatch_receipt_contract.model_dump(mode="json"),
+    }
     receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+    LOGGER.info(
+        "dispatch.end",
+        extra={
+            "dispatch": dispatch_end_log_fields(
+                dispatch_receipt_contract,
+                run_id=dispatch_envelope_contract.run_id,
+                dispatch_kind=dispatch_envelope_contract.dispatch_kind,
+            )
+        },
+    )
     return receipt
 
 

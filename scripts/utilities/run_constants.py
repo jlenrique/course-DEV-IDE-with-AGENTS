@@ -57,6 +57,7 @@ class RunConstants:
     theme_paramset_key: str
     execution_mode: str
     quality_preset: str
+    evidence_bolster: bool = False
     double_dispatch: bool = False
     motion_enabled: bool = False
     motion_budget: MotionBudget | None = None
@@ -250,9 +251,12 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
     theme_params = _require_non_empty_str(data, "theme_paramset_key")
     execution_mode = _normalize_execution_mode(_require_non_empty_str(data, "execution_mode"))
     quality = _require_non_empty_str(data, "quality_preset").lower()
+    raw_evidence_bolster = data.get("evidence_bolster", False)
     raw_double_dispatch = data.get("double_dispatch", False)
     raw_motion_enabled = data.get("motion_enabled", False)
     raw_motion_budget = data.get("motion_budget")
+    if not isinstance(raw_evidence_bolster, bool):
+        raise RunConstantsError("evidence_bolster must be a boolean when present")
     if not isinstance(raw_double_dispatch, bool):
         raise RunConstantsError("double_dispatch must be a boolean when present")
     if not isinstance(raw_motion_enabled, bool):
@@ -354,6 +358,7 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         theme_paramset_key=theme_params,
         execution_mode=execution_mode,
         quality_preset=quality,
+        evidence_bolster=raw_evidence_bolster,
         double_dispatch=raw_double_dispatch,
         motion_enabled=raw_motion_enabled,
         motion_budget=motion_budget,

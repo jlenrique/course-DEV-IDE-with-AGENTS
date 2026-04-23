@@ -75,6 +75,14 @@
         "visual_file": {
           "type": "string",
           "minLength": 1
+        },
+        "retrieval_provenance": {
+          "type": "array",
+          "minItems": 1,
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/retrieval_provenance"
+          }
         }
       },
       "additionalProperties": true,
@@ -130,6 +138,202 @@
           }
         }
       ]
+    },
+    "provider_name": {
+      "type": "string",
+      "enum": ["scite", "consensus"]
+    },
+    "convergence_signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providers_agreeing",
+        "providers_disagreeing",
+        "single_source_only"
+      ],
+      "properties": {
+        "providers_agreeing": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/provider_name"
+          }
+        },
+        "providers_disagreeing": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/provider_name"
+          }
+        },
+        "single_source_only": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/provider_name"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "not": {
+            "allOf": [
+              {
+                "properties": {
+                  "providers_agreeing": {
+                    "contains": {
+                      "const": "scite"
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "providers_disagreeing": {
+                    "contains": {
+                      "const": "scite"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "not": {
+            "allOf": [
+              {
+                "properties": {
+                  "providers_agreeing": {
+                    "contains": {
+                      "const": "consensus"
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "providers_disagreeing": {
+                    "contains": {
+                      "const": "consensus"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "providers_agreeing": {
+                "allOf": [
+                  {
+                    "contains": {
+                      "const": "scite"
+                    }
+                  },
+                  {
+                    "contains": {
+                      "const": "consensus"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "providers_disagreeing": {
+                "maxItems": 0
+              },
+              "single_source_only": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "single_source_only": {
+                "contains": {
+                  "const": "scite"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "providers_agreeing": {
+                "contains": {
+                  "const": "scite"
+                },
+                "maxItems": 1
+              },
+              "providers_disagreeing": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "single_source_only": {
+                "contains": {
+                  "const": "consensus"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "providers_agreeing": {
+                "contains": {
+                  "const": "consensus"
+                },
+                "maxItems": 1
+              },
+              "providers_disagreeing": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "retrieval_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "providers"],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "providers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/provider_name"
+          }
+        },
+        "convergence_signal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/convergence_signal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
     }
   }
 }

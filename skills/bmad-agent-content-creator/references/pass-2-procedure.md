@@ -13,6 +13,28 @@ Pass 2 begins after Gary generates slides and the operator approves them at HIL 
 
 Pass 2 intake also consumes `narration_profile_controls` (11 keys from the Creative Director's creative directive, resolved into `state/config/narration-script-parameters.yaml` by the CD→resolver pipeline). These controls shape narration density, bridging weight, rhetorical register, and arc awareness. Read them from the active narration-script-parameters and apply them alongside bridge cadence and cluster word budgets.
 
+## Retrieval intake (corroborate-only v1)
+
+When retrieval artifacts are present, consume the Irene intake envelope before writing cluster narration. Required intake keys are `run_id`, `pass_2_cluster_id`, `suggested_resources_ref`, `intake_mode`, and `evidence_bolster_active`; `extraction_report_ref` is optional but expected in retrieval-enabled runs.
+
+Scope lock for this version:
+
+- Intake mode support is bounded to corroboration behavior (`intake_mode: corroborate`, or corroboration branch within `mixed`).
+- The additive output field on a segment is `retrieval_provenance`.
+- Full shape and worked examples live in [`./retrieval-intake-contract.md`](./retrieval-intake-contract.md).
+
+Convergence-to-language mapping:
+
+- Dual-source convergence (scite + consensus agreeing): `Corroborated by multiple independent sources, with support from peer-reviewed citation context and synthesis evidence.`
+- Single-source convergence (scite only): `According to scite.ai citation-context analysis.`
+- Single-source convergence (consensus only): `Per Consensus research synthesis.`
+- Unknown or partial convergence: `According to available retrieval evidence.`
+
+Graceful degradation rule:
+
+- If the suggested-resources payload is empty for the cluster, or extraction rows yield no usable retrieval provenance, emit narration without intake phrasing and append `retrieval_empty_for_cluster_<cluster_id>` to `known_losses`.
+- `evidence_bolster_active` governs whether corroboration phrasing is expected to appear when valid intake exists; it does not override empty-retrieval fail-closed behavior.
+
 ## Step 0 — Mandatory Perception Contract (Story 13.1)
 
 Before any narration work, enforce the perception contract via `./scripts/perception_contract.py::enforce_perception_contract(envelope)`. This validates `perception_artifacts` presence, generates them inline via the image sensory bridge if absent, retries LOW-confidence slides once, and escalates persistent LOW to Marcus. Narration MUST NOT begin until this returns `status: "ready"` or Marcus authorizes proceeding despite LOW confidence.

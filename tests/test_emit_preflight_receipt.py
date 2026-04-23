@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from scripts.utilities import emit_preflight_receipt as receipt_module
+from scripts.utilities import app_session_readiness as readiness_module
 from scripts.utilities.emit_preflight_receipt import emit_preflight_receipt
 from scripts.utilities.file_helpers import project_root
 from scripts.utilities.workflow_policy import DEFAULT_WORKFLOW_POLICY, load_workflow_policy
@@ -208,3 +209,29 @@ def test_main_rejects_cached_session_receipt_with_wrong_root(
     assert json.loads(output.read_text(encoding="utf-8")) == live_report
     captured = capsys.readouterr().out
     assert "cache missing, unreadable, or stale" in captured.lower()
+
+
+def test_main_returns_exit_30_for_missing_bolster_credentials(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    output = tmp_path / "bundle" / "preflight-results.json"
+    report = {
+        "overall_status": "fail",
+        "checks": [
+            {
+                "name": "bundle_run_constants",
+                "status": "fail",
+                "detail": readiness_module.EVIDENCE_BOLSTER_MISSING_KEY_REASON,
+                "resolution": "set key",
+            }
+        ],
+        "root": str(project_root().resolve()),
+        "timestamp": "now",
+    }
+    monkeypatch.setattr(receipt_module, "run_readiness", lambda **_: report)
+
+    rc = receipt_module.main(["--output", str(output)])
+
+    assert rc == 30
+    assert json.loads(output.read_text(encoding="utf-8"))["overall_status"] == "fail"

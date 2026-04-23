@@ -14,7 +14,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.utilities.app_session_readiness import run_readiness
+from scripts.utilities.app_session_readiness import (
+    has_evidence_bolster_key_failure,
+    run_readiness,
+)
 from scripts.utilities.file_helpers import project_root
 from scripts.utilities.workflow_policy import load_workflow_policy
 
@@ -143,6 +146,8 @@ def main(argv: list[str] | None = None) -> int:
     args.output.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
 
     print(f"Preflight receipt written to {args.output}")
+    if has_evidence_bolster_key_failure(receipt):
+        return 30
     return 0
 
 

@@ -19,9 +19,18 @@ class TestPostureDispatcher:
     """Test the PostureDispatcher class."""
 
     @pytest.fixture
-    def dispatcher(self):
+    def mock_dispatcher(self):
         """Create a mock dispatcher."""
         mock_dispatcher = Mock()
+        mock_dispatcher.dispatch.return_value = {
+            "sources": ["source1"],
+            "classification": "supporting",
+            "confidence_score": 0.8,
+        }
+        return mock_dispatcher
+
+    @pytest.fixture
+    def dispatcher(self, mock_dispatcher):
         return PostureDispatcher(mock_dispatcher)
 
     def test_embellish_not_implemented(self, dispatcher):
@@ -29,10 +38,35 @@ class TestPostureDispatcher:
         with pytest.raises(NotImplementedError, match="Embellish posture not implemented"):
             dispatcher.embellish("target", "examples")
 
-    def test_corroborate_not_implemented(self, dispatcher):
-        """Test that corroborate raises NotImplementedError."""
-        with pytest.raises(NotImplementedError, match="Corroborate posture not implemented"):
-            dispatcher.corroborate("claim", "context")
+    def test_corroborate_dispatches_scite_only_when_bolster_disabled(
+        self,
+        dispatcher,
+        mock_dispatcher,
+    ):
+        """Default corroborate path uses scite-only single-provider retrieval."""
+        result = dispatcher.corroborate("claim", "context")
+
+        assert result["status"] == "success"
+        assert result["posture"] == "corroborate"
+        assert result["output"]["classification"] == "supporting"
+        assert result["output"]["evidence_found"] is True
+
+        intent = mock_dispatcher.dispatch.call_args[0][0]
+        assert intent["cross_validate"] is False
+        assert intent["provider_hints"] == ["scite"]
+
+    def test_corroborate_enables_cross_validation_when_bolster_enabled(
+        self,
+        dispatcher,
+        mock_dispatcher,
+    ):
+        """Evidence bolster path requests scite+consensus cross-validation."""
+        result = dispatcher.corroborate("claim", "context", evidence_bolster=True)
+
+        assert result["status"] == "success"
+        intent = mock_dispatcher.dispatch.call_args[0][0]
+        assert intent["cross_validate"] is True
+        assert intent["provider_hints"] == ["scite", "consensus"]
 
     def test_gap_fill_not_implemented(self, dispatcher):
         """Test that gap_fill raises NotImplementedError."""

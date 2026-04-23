@@ -42,6 +42,31 @@ def _setup_minimal_runtime(root: Path, *, create_db: bool) -> None:
         init_database(root / "state" / "runtime" / "coordination.db")
 
 
+def _write_bundle_run_constants(
+    root: Path,
+    *,
+    bundle_name: str = "b1",
+    evidence_bolster: bool = False,
+) -> Path:
+    bundle = root / "track" / bundle_name
+    bundle.mkdir(parents=True)
+    (root / "primary.pdf").write_text("x", encoding="utf-8")
+    rc_data = {
+        "run_id": "RC-1",
+        "lesson_slug": "b1-lesson",
+        "bundle_path": f"track/{bundle_name}",
+        "primary_source_file": str((root / "primary.pdf").resolve()),
+        "optional_context_assets": [],
+        "theme_selection": "t",
+        "theme_paramset_key": "p",
+        "execution_mode": "tracked/default",
+        "quality_preset": "production",
+        "evidence_bolster": evidence_bolster,
+    }
+    (bundle / "run-constants.yaml").write_text(yaml.safe_dump(rc_data), encoding="utf-8")
+    return bundle
+
+
 def _check_by_name(report: dict[str, object], name: str) -> dict[str, object]:
     checks = report["checks"]
     assert isinstance(checks, list)
@@ -65,21 +90,55 @@ def test_run_readiness_happy_path(tmp_path: Path) -> None:
 
 def test_run_readiness_validates_run_constants_when_bundle_dir_set(tmp_path: Path) -> None:
     _setup_minimal_runtime(tmp_path, create_db=True)
-    bundle = tmp_path / "track" / "b1"
-    bundle.mkdir(parents=True)
-    (tmp_path / "primary.pdf").write_text("x", encoding="utf-8")
-    rc_data = {
-        "run_id": "RC-1",
-        "lesson_slug": "b1-lesson",
-        "bundle_path": "track/b1",
-        "primary_source_file": str((tmp_path / "primary.pdf").resolve()),
-        "optional_context_assets": [],
-        "theme_selection": "t",
-        "theme_paramset_key": "p",
-        "execution_mode": "tracked/default",
-        "quality_preset": "production",
-    }
-    (bundle / "run-constants.yaml").write_text(yaml.safe_dump(rc_data), encoding="utf-8")
+    bundle = _write_bundle_run_constants(tmp_path)
+
+    report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
+
+    check = _check_by_name(report, "bundle_run_constants")
+    assert check["status"] == "pass"
+    assert "evidence_bolster: false" in check["detail"]
+    assert report["overall_status"] == "pass"
+
+
+def test_run_readiness_fails_when_evidence_bolster_enabled_without_consensus_key(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _setup_minimal_runtime(tmp_path, create_db=True)
+    bundle = _write_bundle_run_constants(tmp_path, evidence_bolster=True)
+    monkeypatch.delenv("CONSENSUS_API_KEY", raising=False)
+
+    report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
+
+    check = _check_by_name(report, "bundle_run_constants")
+    assert check["status"] == "fail"
+    assert "CONSENSUS_API_KEY" in check["detail"]
+    assert report["overall_status"] == "fail"
+
+
+def test_run_readiness_allows_evidence_bolster_when_consensus_key_present(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _setup_minimal_runtime(tmp_path, create_db=True)
+    bundle = _write_bundle_run_constants(tmp_path, evidence_bolster=True)
+    monkeypatch.setenv("CONSENSUS_API_KEY", "test-key")
+
+    report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
+
+    check = _check_by_name(report, "bundle_run_constants")
+    assert check["status"] == "pass"
+    assert "evidence_bolster: true" in check["detail"]
+    assert report["overall_status"] == "pass"
+
+
+def test_run_readiness_allows_missing_consensus_key_when_bolster_disabled(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _setup_minimal_runtime(tmp_path, create_db=True)
+    bundle = _write_bundle_run_constants(tmp_path, evidence_bolster=False)
+    monkeypatch.delenv("CONSENSUS_API_KEY", raising=False)
 
     report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
 
@@ -241,6 +300,31 @@ def test_main_returns_exit_2_for_warn_in_strict_mode(
 
     rc = readiness.main(["--strict", "--json-only"])
     assert rc == 2
+
+
+def test_main_returns_exit_30_for_missing_bolster_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        readiness,
+        "run_readiness",
+        lambda root=None, with_preflight=False, motion_enabled=False, bundle_dir=None: {
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "root": "x",
+            "overall_status": "fail",
+            "checks": [
+                {
+                    "name": "bundle_run_constants",
+                    "status": "fail",
+                    "detail": readiness.EVIDENCE_BOLSTER_MISSING_KEY_REASON,
+                    "resolution": "set key",
+                }
+            ],
+        },
+    )
+
+    rc = readiness.main(["--json-only"])
+    assert rc == 30
 
 
 def test_run_readiness_passes_motion_enabled_to_preflight(

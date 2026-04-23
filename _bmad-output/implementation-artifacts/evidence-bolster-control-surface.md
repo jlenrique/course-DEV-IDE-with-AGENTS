@@ -1,6 +1,6 @@
 # Story: Evidence-Bolster Control Surface (Research Knob Wiring)
 
-**Status:** ready-for-dev (green-lit 2026-04-22 — D5/D6 + riders applied below)
+**Status:** in-progress (implementation resumed 2026-04-22; T5 remains coordinated with sibling intake story)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Research-capability operator control — likely future Epic 35+ "Research Knobs & Profiles")
 **Sprint key:** `evidence-bolster-control-surface`
@@ -91,14 +91,79 @@ So that **trial #2 executes the operator's locked research-capability scope dete
 
 ## Tasks / Subtasks (spine — expand at green-light)
 
-- [ ] T1 — Run-constants schema additive field + validator update
-- [ ] T2 — PR-RC capability flag-read + trial-open log line
-- [ ] T3 — Marcus propagation (via envelope if PR-R landed, else ad-hoc payload)
-- [ ] T4 — Tracy corroborate branching (cross-val when true, single when false)
+- [x] T1 — Run-constants schema additive field + validator update
+- [x] T2 — PR-RC capability flag-read + trial-open log line
+- [x] T3 — Marcus propagation (via envelope if PR-R landed, else ad-hoc payload)
+- [x] T4 — Tracy corroborate branching (cross-val when true, single when false)
 - [ ] T5 — Irene retrieval-intake flag receipt (coordinated with sibling story)
-- [ ] T6 — Operator docs (3-parameter distinction + evidence-bolster semantics + run-constants example YAML)
-- [ ] T7 — Tests per AC-T.1 through AC-T.6
+- [x] T6 — Operator docs (3-parameter distinction + evidence-bolster semantics + run-constants example YAML)
+- [x] T7 — Tests per AC-T.1 through AC-T.6
 - [ ] T(final) — Regression + pre-commit + review
+
+## Dev Agent Record
+
+### Completion Notes
+
+- Added canonical `evidence_bolster` run-constants parsing with default `false` and strict boolean validation.
+- Added readiness/preflight hard-fail contract for `evidence_bolster=true` with missing `CONSENSUS_API_KEY`; exit code `30` now emitted by readiness and preflight receipt CLIs for this condition.
+- Threaded bolster flag through Marcus fanout payloads into Irene->Tracy bridge briefs and Tracy corroborate posture dispatch intent.
+- Implemented Tracy corroborate posture intent branching:
+   - bolster off -> single-provider hint (`scite`)
+   - bolster on -> cross-validation + provider hints (`scite`, `consensus`)
+- Added operator docs at `docs/research-knobs-guide.md` and pointer + invariant note in `docs/operations-context.md`.
+- Added doc-parity test coverage and propagation contract tests.
+- Remaining coordinated item: T5 intake-layer consumption (`evidence_bolster_active`) is owned by sibling intake story and is intentionally left open.
+
+### Validation
+
+- Targeted tests passed: 117 passed, 0 failed.
+
+### Party-Mode Integration Review (2026-04-22)
+
+- Round participants: Winston (Architect), Amelia (Dev), Murat (QA), Paige (Tech Writer).
+- Vote snapshot:
+   - Winston: Approve with conditions (explicit tracking of deferred intake-layer coupling + provider-hints policy line).
+   - Amelia: Approve (implementation complete for this story boundary; sibling intake remains separate scope).
+   - Murat: Approve (no must-fix in current scope; intake consumption deferred to sibling gate).
+   - Paige: Changes Requested (terminology/contract clarity between `evidence_bolster` and `evidence_bolster_active` before status promotion).
+- Gate outcome for now: keep story status `in-progress`; do not promote until terminology/consumer-boundary clarity is accepted in follow-up.
+
+### Party-Mode Integration Review Round 2 (2026-04-22)
+
+- Delta reviewed: docs and parity-contract clarifications landed for canonical boundary naming (`evidence_bolster` vs `evidence_bolster_active` vs `cross_validate`) plus provider-strategy policy line and operations invariant update.
+- Validation snapshot: focused suite 107 passed, 0 failed.
+- Vote snapshot:
+   - Winston: Approve (prior architecture hold condition satisfied).
+   - Murat: Approve with conditional note to keep dependency discipline on sibling T5 closure.
+   - Paige: Approve (prior terminology changes-requested concern closed).
+- Gate interpretation: terminology/contract hold is cleared. Story can advance to review gate, but remains `in-progress` until sibling intake-layer T5 dependency is closed per sprint sequencing.
+
+## File List
+
+- `scripts/utilities/run_constants.py`
+- `scripts/marcus_capabilities/pr_rc.py`
+- `scripts/utilities/app_session_readiness.py`
+- `scripts/utilities/emit_preflight_receipt.py`
+- `skills/bmad_agent_tracy/scripts/posture_dispatcher.py`
+- `skills/bmad_agent_tracy/scripts/irene_bridge.py`
+- `marcus/orchestrator/fanout.py`
+- `marcus/facade.py`
+- `marcus/orchestrator/workflow_runner.py`
+- `marcus/orchestrator/trial_smoke_harness.py`
+- `docs/operations-context.md`
+- `docs/research-knobs-guide.md`
+- `tests/test_run_constants.py`
+- `tests/test_app_session_readiness.py`
+- `tests/test_emit_preflight_receipt.py`
+- `tests/contracts/test_tracy_postures.py`
+- `tests/contracts/test_irene_tracy_bridge.py`
+- `tests/test_marcus_plan_lock_fanout.py`
+- `tests/test_marcus_workflow_runner_32_1.py`
+- `tests/contracts/test_evidence_bolster_doc_parity.py`
+
+## Change Log
+
+- 2026-04-22: Resumed crash-interrupted story implementation; completed schema + hard-fail + propagation + corroborate branching + docs + targeted regression tests. Intake-layer consumption task remains open pending sibling story integration.
 
 ## Risks (spine)
 

@@ -34,6 +34,10 @@ REQUIRED_DB_TABLES = {
     "observability_events",
 }
 
+EVIDENCE_BOLSTER_MISSING_KEY_REASON = (
+    "evidence_bolster=true requires CONSENSUS_API_KEY to be set in the environment"
+)
+
 
 @dataclass
 class CheckResult:
@@ -265,7 +269,7 @@ def _check_bundle_run_constants(root: Path, bundle_dir: Path | None) -> CheckRes
     try:
         from scripts.utilities.run_constants import RunConstantsError, load_run_constants
 
-        load_run_constants(bpath, root=root, verify_paths_exist=False)
+        loaded = load_run_constants(bpath, root=root, verify_paths_exist=False)
     except RunConstantsError as exc:
         return CheckResult(
             name="bundle_run_constants",
@@ -274,12 +278,44 @@ def _check_bundle_run_constants(root: Path, bundle_dir: Path | None) -> CheckRes
             resolution="Repair run-constants.yaml or correct --bundle-dir relative to repo root.",
         )
 
+    if loaded.evidence_bolster and not os.environ.get("CONSENSUS_API_KEY", "").strip():
+        return CheckResult(
+            name="bundle_run_constants",
+            status="fail",
+            detail=EVIDENCE_BOLSTER_MISSING_KEY_REASON,
+            resolution=(
+                "Set CONSENSUS_API_KEY before booting with evidence_bolster=true, "
+                "or set evidence_bolster=false in run-constants.yaml."
+            ),
+        )
+
     return CheckResult(
         name="bundle_run_constants",
         status="pass",
-        detail="run-constants.yaml present and valid for this bundle path",
+        detail=(
+            "run-constants.yaml present and valid for this bundle path; "
+            f"evidence_bolster: {str(loaded.evidence_bolster).lower()}"
+        ),
         resolution="",
     )
+
+
+def has_evidence_bolster_key_failure(report: dict[str, Any]) -> bool:
+    """Return True when readiness failed because bolster credentials are missing."""
+    checks = report.get("checks")
+    if not isinstance(checks, list):
+        return False
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        if check.get("name") != "bundle_run_constants":
+            continue
+        if check.get("status") != "fail":
+            continue
+        detail = check.get("detail")
+        if isinstance(detail, str) and EVIDENCE_BOLSTER_MISSING_KEY_REASON in detail:
+            return True
+    return False
 
 
 def _check_import_sanity(root: Path) -> CheckResult:
@@ -511,6 +547,8 @@ def main(argv: list[str] | None = None) -> int:
         print(format_summary(report))
 
     if report["overall_status"] == "fail":
+        if has_evidence_bolster_key_failure(report):
+            return 30
         return 1
     if args.strict and report["overall_status"] == "warn":
         return 2

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import yaml
 
-from scripts.utilities import emit_preflight_receipt as receipt_module
 from scripts.utilities import app_session_readiness as readiness_module
+from scripts.utilities import emit_preflight_receipt as receipt_module
 from scripts.utilities.emit_preflight_receipt import emit_preflight_receipt
 from scripts.utilities.file_helpers import project_root
 from scripts.utilities.workflow_policy import DEFAULT_WORKFLOW_POLICY, load_workflow_policy

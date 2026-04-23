@@ -1,6 +1,6 @@
 # Story: Evidence-Bolster Control Surface (Research Knob Wiring)
 
-**Status:** in-progress (implementation resumed 2026-04-22; T5 remains coordinated with sibling intake story)
+**Status:** review (2026-04-23: sibling intake dependency closed; final validation pack green)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Research-capability operator control — likely future Epic 35+ "Research Knobs & Profiles")
 **Sprint key:** `evidence-bolster-control-surface`
@@ -95,10 +95,10 @@ So that **trial #2 executes the operator's locked research-capability scope dete
 - [x] T2 — PR-RC capability flag-read + trial-open log line
 - [x] T3 — Marcus propagation (via envelope if PR-R landed, else ad-hoc payload)
 - [x] T4 — Tracy corroborate branching (cross-val when true, single when false)
-- [ ] T5 — Irene retrieval-intake flag receipt (coordinated with sibling story)
+- [x] T5 — Irene retrieval-intake flag receipt (coordinated with sibling story)
 - [x] T6 — Operator docs (3-parameter distinction + evidence-bolster semantics + run-constants example YAML)
 - [x] T7 — Tests per AC-T.1 through AC-T.6
-- [ ] T(final) — Regression + pre-commit + review
+- [x] T(final) — Regression + pre-commit + review
 
 ### Review Findings
 
@@ -118,11 +118,14 @@ So that **trial #2 executes the operator's locked research-capability scope dete
    - bolster on -> cross-validation + provider hints (`scite`, `consensus`)
 - Added operator docs at `docs/research-knobs-guide.md` and pointer + invariant note in `docs/operations-context.md`.
 - Added doc-parity test coverage and propagation contract tests.
-- Remaining coordinated item: T5 intake-layer consumption (`evidence_bolster_active`) is owned by sibling intake story and is intentionally left open.
+- Closed coordinated intake item: sibling `irene-retrieval-intake` story is now done and the `evidence_bolster_active` intake seam is live.
+- Final validation pack (2026-04-23): focused regression 126 passed, 0 failed; ruff clean on scope files; pre-commit hooks clean.
 
 ### Validation
 
-- Targeted tests passed: 117 passed, 0 failed.
+- Targeted tests passed: 126 passed, 0 failed.
+- Ruff check on scoped files: passed.
+- Pre-commit hooks on scoped files: passed.
 
 ### Party-Mode Integration Review (2026-04-22)
 
@@ -142,7 +145,7 @@ So that **trial #2 executes the operator's locked research-capability scope dete
    - Winston: Approve (prior architecture hold condition satisfied).
    - Murat: Approve with conditional note to keep dependency discipline on sibling T5 closure.
    - Paige: Approve (prior terminology changes-requested concern closed).
-- Gate interpretation: terminology/contract hold is cleared. Story can advance to review gate, but remains `in-progress` until sibling intake-layer T5 dependency is closed per sprint sequencing.
+- Gate interpretation: terminology/contract hold is cleared and sibling intake dependency is closed; story advances to `review`.
 
 ## File List
 
@@ -150,6 +153,7 @@ So that **trial #2 executes the operator's locked research-capability scope dete
 - `scripts/marcus_capabilities/pr_rc.py`
 - `scripts/utilities/app_session_readiness.py`
 - `scripts/utilities/emit_preflight_receipt.py`
+- `marcus/irene/intake.py`
 - `skills/bmad_agent_tracy/scripts/posture_dispatcher.py`
 - `skills/bmad_agent_tracy/scripts/irene_bridge.py`
 - `marcus/orchestrator/fanout.py`

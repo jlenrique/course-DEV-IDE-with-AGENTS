@@ -137,7 +137,7 @@ def _parse_slide_mode_proportions(raw: Any) -> dict[str, float] | None:
     parsed: dict[str, float] = {}
     for key in SLIDE_MODE_KEYS:
         value = raw.get(key)
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if isinstance(value, bool) or not isinstance(value, int | float):
             raise RunConstantsError(
                 f"slide_mode_proportions.{key} must be numeric; got {type(value).__name__}"
             )
@@ -326,13 +326,15 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         if not isinstance(raw_motion_budget, dict):
             raise RunConstantsError("motion_budget must be an object when present")
         max_credits = raw_motion_budget.get("max_credits")
-        if not isinstance(max_credits, (int, float)) or float(max_credits) <= 0:
+        if not isinstance(max_credits, int | float) or float(max_credits) <= 0:
             raise RunConstantsError(
                 "motion_budget.max_credits must be a positive number when present"
             )
         model_preference = raw_motion_budget.get("model_preference", "std")
         if not isinstance(model_preference, str):
-            raise RunConstantsError("motion_budget.model_preference must be a string when present")
+            raise RunConstantsError(
+                "motion_budget.model_preference must be a string when present"
+            )
         normalized_preference = model_preference.strip().lower()
         if normalized_preference not in ALLOWED_MOTION_MODEL_PREFERENCES:
             raise RunConstantsError(
@@ -345,7 +347,8 @@ def parse_run_constants(data: dict[str, Any]) -> RunConstants:
         )
     elif raw_motion_enabled:
         raise RunConstantsError(
-            "motion_enabled requires an explicit motion_budget with max_credits and model_preference"
+            "motion_enabled requires an explicit motion_budget with "
+            "max_credits and model_preference"
         )
 
     return RunConstants(

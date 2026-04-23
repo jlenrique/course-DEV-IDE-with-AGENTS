@@ -160,7 +160,7 @@ class PostureDispatcher:
         if classification not in {"supporting", "contrasting", "mentioning"}:
             classification = "mentioning"
         confidence_raw = output.get("confidence_score", 0.0)
-        confidence = float(confidence_raw) if isinstance(confidence_raw, (int, float)) else 0.0
+        confidence = float(confidence_raw) if isinstance(confidence_raw, int | float) else 0.0
         confidence = max(0.0, min(1.0, confidence))
 
         return {

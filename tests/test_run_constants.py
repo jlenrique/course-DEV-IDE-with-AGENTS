@@ -247,7 +247,10 @@ def test_motion_enabled_requires_explicit_budget() -> None:
         "quality_preset": "draft",
         "motion_enabled": True,
     }
-    with pytest.raises(rc.RunConstantsError, match="motion_enabled requires an explicit motion_budget"):
+    with pytest.raises(
+        rc.RunConstantsError,
+        match="motion_enabled requires an explicit motion_budget",
+    ):
         rc.parse_run_constants(raw)
 
 
@@ -507,7 +510,10 @@ def test_resolve_experience_profile_requires_cluster_density(tmp_path: Path) -> 
         rc.resolve_experience_profile("visual-led", profiles_path=profiles_path)
 
 
-def test_resolve_experience_profile_uses_repo_stable_default_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_resolve_experience_profile_uses_repo_stable_default_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     monkeypatch.chdir(tmp_path)
     resolved = rc.resolve_experience_profile("visual-led")
     assert resolved["cluster_density"] == "default"
@@ -537,7 +543,10 @@ def test_experience_profile_valid_value_populates_dataclass() -> None:
     parsed = rc.parse_run_constants({**_MINIMAL_RAW, "experience_profile": "visual-led"})
     assert parsed.experience_profile == "visual-led"
     assert parsed.cluster_density == "default"
-    assert parsed.slide_mode_proportions == rc.resolve_experience_profile("visual-led")["slide_mode_proportions"]
+    assert (
+        parsed.slide_mode_proportions
+        == rc.resolve_experience_profile("visual-led")["slide_mode_proportions"]
+    )
 
 
 def test_experience_profile_text_led_populates_rich_cluster_density() -> None:

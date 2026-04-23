@@ -169,6 +169,39 @@ def test_compare_fails_when_cluster_template_plan_missing_for_clustered_candidat
     assert "cluster_groups_present_without_template_cluster_plan" in report["decision"]["reasons"]
 
 
+def test_compare_uses_template_plan_selected_ids_when_storyboard_ids_missing(tmp_path: Path) -> None:
+    baseline = tmp_path / "baseline"
+    candidate = tmp_path / "candidate"
+    _write_bundle(
+        baseline,
+        slide_count=2,
+        missing_assets=0,
+        cluster_groups=0,
+        interstitials=0,
+        include_template_plan=False,
+        include_selected_template_ids=False,
+    )
+    _write_bundle(
+        candidate,
+        slide_count=2,
+        missing_assets=0,
+        cluster_groups=1,
+        interstitials=1,
+        include_template_plan=True,
+        include_selected_template_ids=False,
+    )
+
+    report = mod.compare_c1_m1_runs(
+        lesson_id="C1-M1",
+        baseline_bundle=baseline,
+        candidate_bundle=candidate,
+    )
+
+    assert report["candidate"]["metrics"]["unique_selected_template_count"] == 1
+    assert "clustered_candidate_missing_selected_template_ids" not in report["decision"]["reasons"]
+    assert report["decision"]["status"] == "pass"
+
+
 def test_write_artifact_persists_json(tmp_path: Path) -> None:
     baseline = tmp_path / "baseline"
     candidate = tmp_path / "candidate"

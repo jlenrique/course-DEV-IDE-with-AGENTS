@@ -59,10 +59,18 @@ def _extract_metrics(snapshot: dict[str, Any]) -> dict[str, Any]:
     cluster_groups = storyboard.get("cluster_groups", []) if isinstance(storyboard.get("cluster_groups"), list) else []
     template_plan = envelope.get("cluster_template_plan") if isinstance(envelope.get("cluster_template_plan"), dict) else {}
     template_clusters = template_plan.get("clusters", []) if isinstance(template_plan.get("clusters"), list) else []
+    selected_template_ids_by_cluster = (
+        template_plan.get("selected_template_ids_by_cluster")
+        if isinstance(template_plan.get("selected_template_ids_by_cluster"), dict)
+        else {}
+    )
+    envelope_rows = envelope.get("gary_slide_output") if isinstance(envelope.get("gary_slide_output"), list) else []
 
     interstitial_count = 0
     narrated_count = 0
     selected_template_ids: set[str] = set()
+
+    # Primary source: storyboard slide rows.
     for slide in storyboard_slides:
         if not isinstance(slide, dict):
             continue
@@ -73,6 +81,26 @@ def _extract_metrics(snapshot: dict[str, Any]) -> dict[str, Any]:
         selected_template = str(slide.get("selected_template_id") or "").strip()
         if selected_template:
             selected_template_ids.add(selected_template)
+
+    # Secondary source: pass2 envelope rows (present before storyboard persistence updates).
+    for row in envelope_rows:
+        if not isinstance(row, dict):
+            continue
+        selected_template = str(row.get("selected_template_id") or "").strip()
+        if selected_template:
+            selected_template_ids.add(selected_template)
+
+    # Fallback source: cluster template plan metadata.
+    for row in template_clusters:
+        if not isinstance(row, dict):
+            continue
+        selected_template = str(row.get("selected_template_id") or "").strip()
+        if selected_template:
+            selected_template_ids.add(selected_template)
+    for selected_template in selected_template_ids_by_cluster.values():
+        template_id = str(selected_template or "").strip()
+        if template_id:
+            selected_template_ids.add(template_id)
 
     return {
         "authorized_slide_count": len([s for s in authorized_slides if isinstance(s, dict)]),

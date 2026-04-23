@@ -1,0 +1,52 @@
+{
+  "artifact_version": 1,
+  "artifact_type": "c1-m1-comparative-evaluation",
+  "generated_at_utc": "2026-04-23T04:43:54.558926+00:00",
+  "lesson_id": "C1-M1",
+  "baseline": {
+    "label": "baseline",
+    "bundle_path": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\staging\\tracked\\source-bundles\\apc-c1m1-tejal-20260406-motion",
+    "metrics": {
+      "authorized_slide_count": 10,
+      "storyboard_slide_count": 10,
+      "cluster_group_count": 0,
+      "template_cluster_count": 0,
+      "interstitial_slide_count": 0,
+      "narrated_slide_count": 10,
+      "missing_asset_count": 0,
+      "double_dispatch_enabled": false,
+      "unique_selected_template_count": 0
+    }
+  },
+  "candidate": {
+    "label": "candidate",
+    "bundle_path": "C:\\Users\\juanl\\Documents\\GitHub\\course-DEV-IDE-with-AGENTS\\course-content\\staging\\tracked\\source-bundles\\apc-c1m1-tejal-20260419b-motion",
+    "metrics": {
+      "authorized_slide_count": 14,
+      "storyboard_slide_count": 14,
+      "cluster_group_count": 5,
+      "template_cluster_count": 5,
+      "interstitial_slide_count": 7,
+      "narrated_slide_count": 14,
+      "missing_asset_count": 0,
+      "double_dispatch_enabled": false,
+      "unique_selected_template_count": 4
+    }
+  },
+  "delta": {
+    "authorized_slide_count": 4,
+    "storyboard_slide_count": 4,
+    "cluster_group_count": 5,
+    "template_cluster_count": 5,
+    "interstitial_slide_count": 7,
+    "narrated_slide_count": 4,
+    "missing_asset_count": 0,
+    "unique_selected_template_count": 4
+  },
+  "decision": {
+    "status": "pass",
+    "reasons": [
+      "no_regression_detected_on_minimal_metrics"
+    ]
+  }
+}

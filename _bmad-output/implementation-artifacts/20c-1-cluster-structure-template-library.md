@@ -1,7 +1,7 @@
 # Story 20c-1: Cluster Structure Template Library
 
 **Epic:** 20c - Cluster Intelligence Expansion & Iteration
-**Status:** in-progress
+**Status:** review
 **Sprint key:** `20c-1-cluster-structure-template-library`
 **Added:** 2026-04-12
 **Depends on:** [20a-1-cluster-decision-criteria.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/20a-1-cluster-decision-criteria.md), [20a-2-interstitial-brief-specification-standard.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/20a-2-interstitial-brief-specification-standard.md), [20b-1-irene-pass1-cluster-planning-implementation.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/20b-1-irene-pass1-cluster-planning-implementation.md)
@@ -73,15 +73,15 @@ Additional templates may emerge during iteration. The library is extensible.
   - [x] 2.2: For each template: purpose, best_for, avoid_when, pacing_profile
   - [x] 2.3: Validate sequences against interstitial type vocabulary and position rules
 
-- [ ] Task 3: Integrate into Irene's reference system
+- [x] Task 3: Integrate into Irene's reference system
   - [x] 3.1: Add cluster-templates.yaml to Irene's references directory
   - [x] 3.2: Update Irene's SKILL.md to load template library during cluster planning
-  - [ ] 3.3: Update cluster planning logic to select templates (not just types)
+  - [x] 3.3: Update cluster planning logic to select templates (not just types)
 
-- [ ] Task 4: Testing and validation
+- [x] Task 4: Testing and validation
   - [x] 4.1: YAML schema validation tests
   - [x] 4.2: Validate each template produces valid manifest entries
-  - [ ] 4.3: Run Irene against C1-M1 with template library — compare output to ad-hoc clustering
+  - [x] 4.3: Run Irene against C1-M1 with template library — compare output to ad-hoc clustering
 
 ## Slice 1 Completion Notes (Wave 2 kickoff)
 
@@ -95,8 +95,22 @@ Additional templates may emerge during iteration. The library is extensible.
 - Updated Irene cluster-planning reference loading:
   - `skills/bmad-agent-content-creator/SKILL.md` now includes `cluster-templates.yaml` in CP reference set.
 - Deferred to next slice:
-  - Runtime cluster planning selection logic (20c-1 Task 3.3 / 20c-2 coupling)
-  - C1-M1 iterative run comparison loop
+  - Weight/signal refinement across additional profile-driven runs (follow-on under 20c-2)
+
+## Slice 2 Completion Notes (runtime integration + C1-M1 evidence)
+
+- Confirmed runtime template-selection integration at handoff seam:
+  - `skills/bmad-agent-marcus/scripts/cluster_template_planner.py`
+  - `skills/bmad-agent-marcus/scripts/prepare-irene-pass2-handoff.py`
+- Hardened comparative evaluator to read selected template IDs from pass2 envelope metadata
+  (storyboard + `cluster_template_plan` sources):
+  - `skills/bmad-agent-marcus/scripts/evaluate_cluster_template_selection.py`
+- Added regression coverage for envelope-derived template IDs:
+  - `skills/bmad-agent-marcus/scripts/tests/test_evaluate_cluster_template_selection.py`
+- C1-M1 comparison artifact generated:
+  - `_bmad-output/test-artifacts/20c-1-eval/c1-m1-comparative-eval.json`
+- Latest C1-M1 candidate (`apc-c1m1-tejal-20260419b-motion`) now evaluates `pass`
+  against ad-hoc baseline (`apc-c1m1-tejal-20260406-motion`) on minimal regression metrics.
 
 ## Dev Notes
 

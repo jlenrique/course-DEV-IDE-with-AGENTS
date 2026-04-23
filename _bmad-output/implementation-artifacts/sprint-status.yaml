@@ -52,7 +52,7 @@
 # - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-23  # Review queue cleared: 20a-5 and 22-3 promoted from review to done.
+last_updated: 2026-04-23  # 20c-1 moved to review after runtime template-selection integration + C1-M1 comparative eval.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -78,7 +78,7 @@ story_location: _bmad-output/implementation-artifacts
 #   A/B trials skipped; clustering quality validated through profile-driven runs.
 #
 #   STATUS (2026-04-15):
-#   - 20c-1  Template Library .................. IN-PROGRESS (Slice 1 done: 10 templates; runtime selection integration pending)
+#   - 20c-1  Template Library .................. REVIEW (Slices 1-2 complete: template library + runtime integration + C1-M1 comparative eval)
 #   - 20c-2  Template Selection ................ DONE (Slices 1-5: selector, bridge, hydration, fail-closed, evaluator)
 #   - 20c-3  Static Density Configs ............ DONE (COMPRESSED implementation; formally reviewed clean and profile-driven via canonical registry)
 #
@@ -429,7 +429,7 @@ development_status:
   # mature together through extreme-profile runs against C1-M1.
   # 20c-4/5/6 deferred until profile runs reveal specific gaps.
   epic-20c: in-progress
-  20c-1-cluster-structure-template-library: in-progress  # Wave 2A: slice 1 done (10 templates); runtime selection integration pending
+  20c-1-cluster-structure-template-library: review  # Wave 2A: slices 1-2 complete (template library + runtime integration + C1-M1 comparative eval)
   20c-2-content-aware-template-selection-logic: done  # Wave 2A: slices 1-5 complete (selector, bridge, hydration, fail-closed, evaluator)
   20c-4-master-arc-cluster-arc-composition: deferred  # Deferred: return after profile runs validate clustering quality
   20c-5-presentation-architect-agent: deferred  # Deferred: Pax — when complexity justifies

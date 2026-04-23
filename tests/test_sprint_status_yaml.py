@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 import yaml
 
@@ -62,7 +62,7 @@ def test_cluster_story_statuses_match_sprint_status() -> None:
         "20a-2-interstitial-brief-specification-standard": "done",
         "20a-3-cluster-narrative-arc-schema": "done",
         "20a-4-operator-cluster-density-controls": "done",
-        "20a-5-retrofit-exemplar-library": "ready-for-dev",
+        "20a-5-retrofit-exemplar-library": "done",
         "20b-1-irene-pass1-cluster-planning-implementation": "done",
     }
     story_paths = {

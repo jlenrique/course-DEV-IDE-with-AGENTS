@@ -298,6 +298,48 @@ segments:
         assert "[STANDALONE]" in guide
         assert "[HEAD — Cluster" not in guide
 
+    def test_generate_assembly_guide_normalizes_bridge_type_case(self) -> None:
+        manifest = {
+            "lesson_id": "C1-M1-L1",
+            "title": "Bridge Case",
+            "segments": [
+                {
+                    "id": "seg-01",
+                    "narration_duration": 3.0,
+                    "narration_text": "Cluster intro.",
+                    "narration_file": "course-content/staging/C1-M1-L1/audio/seg-01.mp3",
+                    "visual_file": "course-content/staging/C1-M1-L1/visuals/seg-01.jpg",
+                    "visual_duration": 3.0,
+                    "transition_in": "fade",
+                    "transition_out": "fade",
+                    "behavioral_intent": "credible",
+                    "cluster_id": "c1",
+                    "cluster_role": "head",
+                    "cluster_position": "establish",
+                },
+                {
+                    "id": "seg-02",
+                    "narration_duration": 3.0,
+                    "narration_text": "Boundary bridge narration keeps continuity.",
+                    "narration_file": "course-content/staging/C1-M1-L1/audio/seg-02.mp3",
+                    "visual_file": "course-content/staging/C1-M1-L1/visuals/seg-02.jpg",
+                    "visual_duration": 3.0,
+                    "transition_in": "fade",
+                    "transition_out": "fade",
+                    "behavioral_intent": "credible",
+                    "bridge_type": "CLUSTER_BOUNDARY",
+                },
+            ],
+        }
+
+        guide = MODULE.generate_assembly_guide(
+            manifest,
+            "course-content/staging/C1-M1-L1/manifest.yaml",
+        )
+
+        assert "[AUDIO: bridge VO, 15-20s]" in guide
+        assert "bridge audio covers the transition — no additional pause needed" in guide
+
 
 class TestValidation:
     def test_validate_manifest_raises_for_missing_fields(self) -> None:

@@ -35,8 +35,18 @@ REQUIRED_DB_TABLES = {
 }
 
 EVIDENCE_BOLSTER_MISSING_KEY_REASON = (
-    "evidence_bolster=true requires CONSENSUS_API_KEY to be set in the environment"
+    "evidence_bolster=true requires Consensus credentials in the environment "
+    "(CONSENSUS_API_KEY or CONSENSUS_USER_NAME + CONSENSUS_PASSWORD)"
 )
+
+
+def _has_consensus_auth_env() -> bool:
+    api_key = os.environ.get("CONSENSUS_API_KEY", "").strip()
+    if api_key:
+        return True
+    username = os.environ.get("CONSENSUS_USER_NAME", "").strip()
+    password = os.environ.get("CONSENSUS_PASSWORD", "").strip()
+    return bool(username and password)
 
 
 @dataclass
@@ -278,13 +288,14 @@ def _check_bundle_run_constants(root: Path, bundle_dir: Path | None) -> CheckRes
             resolution="Repair run-constants.yaml or correct --bundle-dir relative to repo root.",
         )
 
-    if loaded.evidence_bolster and not os.environ.get("CONSENSUS_API_KEY", "").strip():
+    if loaded.evidence_bolster and not _has_consensus_auth_env():
         return CheckResult(
             name="bundle_run_constants",
             status="fail",
             detail=EVIDENCE_BOLSTER_MISSING_KEY_REASON,
             resolution=(
-                "Set CONSENSUS_API_KEY before booting with evidence_bolster=true, "
+                "Set CONSENSUS_API_KEY, or both CONSENSUS_USER_NAME and "
+                "CONSENSUS_PASSWORD, before booting with evidence_bolster=true, "
                 "or set evidence_bolster=false in run-constants.yaml."
             ),
         )

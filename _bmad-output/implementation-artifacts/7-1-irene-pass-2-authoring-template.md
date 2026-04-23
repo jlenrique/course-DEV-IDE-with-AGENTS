@@ -3,7 +3,7 @@
 **Status:** done (2026-04-22 — all 13 T-tasks complete; bmad-code-review complete, 19 patches applied + 10 deferred; full regression 2193 passed / 4 failed, 4 failures pre-existing on branch unrelated to §7.1)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Irene Pass 2 contract hardening — likely future Epic 23-extension "Irene Output Discipline")
-**Sprint key:** `7-1-irene-pass-2-authoring-template`
+**Sprint key:** `27-7-1-irene-pass-2-authoring-template`
 **Sprint:** Sprint #1 (1 of 5 — opens POSITION 1 per D7 sequencing; trial-#2 blocker)
 **Priority:** **HIGH** — "single highest-friction step in the pipeline this run" per trial reproducibility report §7.1 (2026-04-21).
 **Points:** **3 pts firm** (ratified at green-light: 2 worked examples per Paige; cross-artifact fixture + happy-path atom per Murat; upstream-reference cross-validation retained per AC-B.3)

@@ -6,6 +6,7 @@ refinement monotonicity, and adapter exception-boundary guards.
 
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,8 @@ def _load_fixture(name: str) -> dict[str, Any]:
 @pytest.fixture(autouse=True)
 def _consensus_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CONSENSUS_API_KEY", "consensus-token")
+    monkeypatch.delenv("CONSENSUS_USER_NAME", raising=False)
+    monkeypatch.delenv("CONSENSUS_PASSWORD", raising=False)
 
 
 def _intent_search(
@@ -119,6 +122,29 @@ def test_consensus_execute_passes_bearer_header() -> None:
         provider.execute(query)
         header = rsps.calls[0].request.headers.get("Authorization")
         assert header == "Bearer consensus-token"
+
+
+def test_consensus_execute_passes_basic_header_when_api_key_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CONSENSUS_API_KEY", raising=False)
+    monkeypatch.setenv("CONSENSUS_USER_NAME", "consensus-user")
+    monkeypatch.setenv("CONSENSUS_PASSWORD", "consensus-pass")
+
+    provider = ConsensusProvider()
+    query = provider.formulate_query(_intent_search(mechanical={"min_results": 1}))
+    with responses.RequestsMock() as rsps:
+        rsps.post(
+            CONSENSUS_MCP_URL,
+            json=jsonrpc_response(result=_load_fixture("search_happy.json")),
+        )
+        provider.execute(query)
+        header = rsps.calls[0].request.headers.get("Authorization")
+
+    assert header is not None and header.startswith("Basic ")
+    token = header.split(" ", 1)[1]
+    decoded = base64.b64decode(token.encode("utf-8")).decode("utf-8")
+    assert decoded == "consensus-user:consensus-pass"
 
 
 def test_consensus_execute_returns_parsed_list() -> None:

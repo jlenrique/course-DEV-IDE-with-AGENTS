@@ -3,7 +3,7 @@
 **Status:** done (2026-04-23: layered bmad-code-review clean; no actionable findings)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Research-capability operator control — likely future Epic 35+ "Research Knobs & Profiles")
-**Sprint key:** `evidence-bolster-control-surface`
+**Sprint key:** `27-evidence-bolster-control-surface`
 **Sprint:** Sprint #1 (3 of 5 — opens position 3 per D7 sequencing)
 **Points:** **2 pts firm** (ratified at green-light: one bool + three-seam wiring + hard-fail credential check)
 **Depends on:** 27-2 (done — scite cross-val partner); 27-2.5 (ready-for-dev — Consensus cross-val partner); Irene retrieval-intake (sibling Sprint #1 story — provides the `evidence_bolster_active` flag's intake destination). Implicit dependency on 28-2 Tracy three-modes (done — corroborate posture is the knob's dispatch target).

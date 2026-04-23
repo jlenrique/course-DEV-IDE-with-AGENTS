@@ -107,12 +107,15 @@ def test_run_readiness_fails_when_evidence_bolster_enabled_without_consensus_key
     _setup_minimal_runtime(tmp_path, create_db=True)
     bundle = _write_bundle_run_constants(tmp_path, evidence_bolster=True)
     monkeypatch.delenv("CONSENSUS_API_KEY", raising=False)
+    monkeypatch.delenv("CONSENSUS_USER_NAME", raising=False)
+    monkeypatch.delenv("CONSENSUS_PASSWORD", raising=False)
 
     report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
 
     check = _check_by_name(report, "bundle_run_constants")
     assert check["status"] == "fail"
     assert "CONSENSUS_API_KEY" in check["detail"]
+    assert "CONSENSUS_USER_NAME" in check["detail"]
     assert report["overall_status"] == "fail"
 
 
@@ -132,6 +135,24 @@ def test_run_readiness_allows_evidence_bolster_when_consensus_key_present(
     assert report["overall_status"] == "pass"
 
 
+def test_run_readiness_allows_evidence_bolster_with_consensus_basic_auth(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _setup_minimal_runtime(tmp_path, create_db=True)
+    bundle = _write_bundle_run_constants(tmp_path, evidence_bolster=True)
+    monkeypatch.delenv("CONSENSUS_API_KEY", raising=False)
+    monkeypatch.setenv("CONSENSUS_USER_NAME", "user@example.com")
+    monkeypatch.setenv("CONSENSUS_PASSWORD", "secret")
+
+    report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
+
+    check = _check_by_name(report, "bundle_run_constants")
+    assert check["status"] == "pass"
+    assert "evidence_bolster: true" in check["detail"]
+    assert report["overall_status"] == "pass"
+
+
 def test_run_readiness_allows_missing_consensus_key_when_bolster_disabled(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -139,6 +160,8 @@ def test_run_readiness_allows_missing_consensus_key_when_bolster_disabled(
     _setup_minimal_runtime(tmp_path, create_db=True)
     bundle = _write_bundle_run_constants(tmp_path, evidence_bolster=False)
     monkeypatch.delenv("CONSENSUS_API_KEY", raising=False)
+    monkeypatch.delenv("CONSENSUS_USER_NAME", raising=False)
+    monkeypatch.delenv("CONSENSUS_PASSWORD", raising=False)
 
     report = readiness.run_readiness(root=tmp_path, bundle_dir=bundle)
 

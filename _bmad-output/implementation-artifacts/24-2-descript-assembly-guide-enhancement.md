@@ -1,7 +1,7 @@
 # Story 24-2: Descript Assembly Guide Enhancement
 
 **Epic:** 24 - Assembly, Handoff & Regression Hardening
-**Status:** review (2026-04-23: implementation + validation complete)
+**Status:** done (2026-04-23: layered review complete, findings triaged, validation green)
 **Sprint key:** `24-2-descript-assembly-guide-enhancement`
 **Added:** 2026-04-12
 **Depends on:** [24-1-assembly-contract-hardening.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/24-1-assembly-contract-hardening.md)
@@ -80,10 +80,18 @@ So that the human operator in Descript knows exactly which slides form a cluster
 - Added transition annotations and pacing guidance derived from manifest sequence state (`within-cluster`, `cluster-boundary`, `flat`) plus `bridge_type` handling.
 - Added audio treatment guidance with fixed cluster bands (`10-16s`, `32-56s`, `15-20s`) and computed per-segment 150 WPM duration estimates from `narration_text`.
 - Enhanced guide rendering with a cluster overview section that surfaces cluster-level `master_behavioral_intent`, plus boundary bridge text snippets for synthesis/forward-pull transitions.
+- Hardened bridge guidance classification by normalizing `bridge_type` values to lowercase before applying boundary annotations and pacing rules.
+
+### Review Gate (bmad-code-review)
+
+- Blind Hunter: returned broad speculative risks; triaged as non-blocking or out-of-scope noise.
+- Edge Case Hunter: surfaced one actionable hardening item (`bridge_type` case sensitivity); remediated with normalization + regression test.
+- Acceptance Auditor: **PASS**, no acceptance-criteria violations.
+- Disposition: 1 patch applied, remaining findings dismissed as non-actionable for this story.
 
 ### Validation
 
-- `python -m pytest -q skills/compositor/scripts/tests/test_compositor_operations.py` → **16 passed**.
+- `python -m pytest -q skills/compositor/scripts/tests/test_compositor_operations.py` → **17 passed**.
 - `python -m ruff check skills/compositor/scripts/compositor_operations.py skills/compositor/scripts/tests/test_compositor_operations.py` → **all checks passed**.
 
 ## File List
@@ -95,7 +103,8 @@ So that the human operator in Descript knows exactly which slides form a cluster
 
 ## Change Log
 
-- 2026-04-23: Implemented Descript guide cluster labels, transition/audio annotations, pacing guidance, 150-WPM audio estimates, and regression/unit coverage; promoted story to review.
+- 2026-04-23: Implemented Descript guide cluster labels, transition/audio annotations, pacing guidance, and 150-WPM estimates with regression coverage; promoted story to review.
+- 2026-04-23: Completed layered code review, applied case-normalization hardening for `bridge_type`, and promoted story to done.
 
 ## Dev Notes
 

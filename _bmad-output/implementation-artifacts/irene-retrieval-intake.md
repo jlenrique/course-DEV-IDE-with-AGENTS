@@ -3,7 +3,7 @@
 **Status:** done (implementation landed 2026-04-22; party-mode initial review and bmad-code-review gates cleared)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Irene–Texas–Tracy integration — likely future Epic 23-extension or Epic 29+ "Irene Research Intake")
-**Sprint key:** `irene-retrieval-intake`
+**Sprint key:** `27-irene-retrieval-intake`
 **Sprint:** Sprint #1 (4 of 5 — opens position 4 per D7 sequencing)
 **Points:** **3 pts firm** (ratified at green-light: corroborate-only v1 per operator 2026-04-22 lock + D4 new file + Amelia import-time traps closed)
 **Depends on:** 28-1/28-2/28-3 (all done); 28-3 IreneTracyBridge provides the OUTBOUND dispatch edge — this story closes the INBOUND intake edge. Implicit dependency on 27-2.5 (once Consensus lands, cross-validated results become part of intake).

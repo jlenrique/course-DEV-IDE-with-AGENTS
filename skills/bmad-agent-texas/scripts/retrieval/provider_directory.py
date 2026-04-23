@@ -168,7 +168,11 @@ _RETRIEVAL_SHAPE_PLACEHOLDERS: tuple[ProviderInfo, ...] = (
         shape="retrieval",
         status="ratified",
         capabilities=["evidence-synthesis", "meta-analysis", "cross-validation-partner-to-scite"],
-        auth_env_vars=["CONSENSUS_API_KEY"],
+        auth_env_vars=[
+            "CONSENSUS_API_KEY",
+            "CONSENSUS_USER_NAME",
+            "CONSENSUS_PASSWORD",
+        ],
         spec_ref="_bmad-output/implementation-artifacts/epic-27-texas-intake-expansion.md",
         notes=(
             "Epic 27 Story 27-2.5 ratified-stub, 3 pts. Operator-directed "

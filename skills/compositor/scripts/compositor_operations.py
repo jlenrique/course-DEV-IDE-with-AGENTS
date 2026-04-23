@@ -351,7 +351,9 @@ def build_timeline_rows(manifest: dict[str, Any]) -> list[dict[str, Any]]:
         word_count = _count_words(narration_text)
         expected_audio_seconds = round((word_count * 60.0) / 150.0, 1) if word_count else None
 
-        bridge_type = str(segment.get("bridge_type") or "none").strip() or "none"
+        bridge_type = (
+            str(segment.get("bridge_type") or "none").strip().lower() or "none"
+        )
         if cluster_role == "interstitial":
             audio_note = "[AUDIO: VO segment, 10-16s]"
         elif cluster_role == "head":

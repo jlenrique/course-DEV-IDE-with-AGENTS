@@ -7,6 +7,7 @@ and identity-key semantics for cross-validation with scite.
 
 from __future__ import annotations
 
+import os
 from typing import Any, ClassVar
 
 from .base import RetrievalAdapter
@@ -20,11 +21,19 @@ from .mcp_client import MCPClient, MCPServerConfig
 from .normalize import build_texas_row, coerce_authors
 from .refinement_registry import drop_filters_in_order, get_strategy
 
-CONSENSUS_MCP_URL = "https://api.consensus.app/mcp"
-"""Consensus MCP endpoint (fixed constant; no env lookup at import time)."""
+CONSENSUS_MCP_URL = os.environ.get("CONSENSUS_MCP_URL", "https://mcp.consensus.app/mcp")
+"""Consensus MCP endpoint. Override via `CONSENSUS_MCP_URL` for local testing."""
 
-CONSENSUS_AUTH_ENV_VARS: tuple[str, ...] = ("CONSENSUS_API_KEY",)
-"""Bearer auth env var names resolved lazily by MCPClient."""
+CONSENSUS_API_KEY_ENV_VAR = "CONSENSUS_API_KEY"
+CONSENSUS_BASIC_AUTH_ENV_VARS: tuple[str, str] = (
+    "CONSENSUS_USER_NAME",
+    "CONSENSUS_PASSWORD",
+)
+CONSENSUS_AUTH_ENV_VARS: tuple[str, ...] = (
+    CONSENSUS_API_KEY_ENV_VAR,
+    *CONSENSUS_BASIC_AUTH_ENV_VARS,
+)
+"""Accepted Consensus auth env vars. Runtime prefers bearer, then basic."""
 
 _HONORED_CRITERIA: frozenset[str] = frozenset(
     {
@@ -47,6 +56,26 @@ CONSENSUS_REFINEMENT_KEY_ORDER: tuple[str, ...] = (
 
 _CONSENSUS_TOOL_SEARCH = "search"
 _CONSENSUS_TOOL_PAPER = "paper_metadata"
+
+
+def _consensus_auth_config() -> tuple[list[str], str]:
+    """Resolve Consensus auth mode lazily at call time.
+
+    Order:
+    1. Bearer token via CONSENSUS_API_KEY
+    2. HTTP Basic via CONSENSUS_USER_NAME + CONSENSUS_PASSWORD
+    """
+    api_key = os.environ.get(CONSENSUS_API_KEY_ENV_VAR, "").strip()
+    if api_key:
+        return [CONSENSUS_API_KEY_ENV_VAR], "bearer"
+
+    username = os.environ.get(CONSENSUS_BASIC_AUTH_ENV_VARS[0], "").strip()
+    password = os.environ.get(CONSENSUS_BASIC_AUTH_ENV_VARS[1], "").strip()
+    if username and password:
+        return list(CONSENSUS_BASIC_AUTH_ENV_VARS), "basic"
+
+    # Keep legacy behavior/error surface when nothing is configured.
+    return [CONSENSUS_API_KEY_ENV_VAR], "bearer"
 
 
 def _mode_from_intent(intent: RetrievalIntent) -> str:
@@ -90,7 +119,7 @@ class ConsensusProvider(RetrievalAdapter):
             "cross-validation-partner-to-scite",
             "study-design-tagging",
         ],
-        auth_env_vars=["CONSENSUS_API_KEY"],
+        auth_env_vars=list(CONSENSUS_AUTH_ENV_VARS),
         spec_ref="_bmad-output/implementation-artifacts/27-2.5-consensus-adapter.md",
         notes=(
             "Consensus.app retrieval adapter for deterministic search + "
@@ -113,10 +142,11 @@ class ConsensusProvider(RetrievalAdapter):
     def _client(self) -> MCPClient:
         """Instantiate MCPClient lazily so auth env is resolved at call time."""
         if self._mcp_client is None:
+            auth_env, auth_style = _consensus_auth_config()
             config = MCPServerConfig(
                 url=self._mcp_url,
-                auth_env=list(CONSENSUS_AUTH_ENV_VARS),
-                auth_style="bearer",
+                auth_env=auth_env,
+                auth_style=auth_style,
             )
             self._mcp_client = MCPClient({self.PROVIDER_INFO.id: config})
         return self._mcp_client

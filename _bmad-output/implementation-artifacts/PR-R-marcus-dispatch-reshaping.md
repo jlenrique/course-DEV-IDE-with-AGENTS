@@ -3,7 +3,7 @@
 **Status:** done (code review patch applied 2026-04-22)
 **Created:** 2026-04-22
 **Epic:** Sprint #1 standalone story (Marcus infrastructure — likely future Epic 35+ "Marcus Dispatch Discipline")
-**Sprint key:** `PR-R-marcus-dispatch-reshaping`
+**Sprint key:** `27-pr-r-marcus-dispatch-reshaping`
 **Sprint:** Sprint #1 (5 of 5 — opens LAST per D7 ruling)
 **Points:** **5 pts firm** (ratified at green-light: 3 edges from D1 + L1 check from D3 = 5 pts)
 **Depends on:** None hard at T0. Benefits from 27-2.5 + retrieval-intake + evidence-bolster landing first per D7 sequencing (real consumer shapes inform the generalization).

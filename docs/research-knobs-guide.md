@@ -32,7 +32,7 @@ Provider strategy policy (v1):
 
 Safety gate:
 
-- If evidence_bolster is true, CONSENSUS_API_KEY must be present in environment.
+- If evidence_bolster is true, Consensus credentials must be present in environment: CONSENSUS_API_KEY or CONSENSUS_USER_NAME + CONSENSUS_PASSWORD.
 - APP readiness and preflight receipt fail closed when key is missing.
 
 ## Runtime Propagation Path
@@ -54,7 +54,7 @@ Safety gate:
 
 Exit semantics:
 
-- Missing CONSENSUS_API_KEY with evidence_bolster=true returns exit code 30.
+- Missing Consensus credentials (CONSENSUS_API_KEY or CONSENSUS_USER_NAME + CONSENSUS_PASSWORD) with evidence_bolster=true returns exit code 30.
 
 ## Authoring Rules
 

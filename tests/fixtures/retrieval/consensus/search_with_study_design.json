@@ -1,0 +1,19 @@
+{
+  "papers": [
+    {
+      "doi": "10.1000/consensus-design",
+      "consensus_paper_id": "cp-design",
+      "title": "Intervention with Meta-Analysis Evidence",
+      "authors": ["Gina Hall"],
+      "publication_date": "2024-05-22",
+      "year": 2024,
+      "venue": "Clinical Reviews",
+      "abstract": "Meta-analysis indicates measurable benefit.",
+      "consensus_score": 0.91,
+      "study_design_tag": "meta-analysis",
+      "sample_size": 1000,
+      "evidence_strength": "strong",
+      "consensus_url": "https://consensus.app/papers/cp-design"
+    }
+  ]
+}

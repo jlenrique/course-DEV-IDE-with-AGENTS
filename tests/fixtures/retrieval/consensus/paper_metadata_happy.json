@@ -1,0 +1,15 @@
+{
+  "doi": "10.1000/consensus-paper",
+  "consensus_paper_id": "cp-paper",
+  "title": "Direct DOI Metadata Lookup",
+  "authors": ["Eve Stone", "F. Kumar"],
+  "publication_date": "2021-10-05",
+  "year": 2021,
+  "venue": "Evidence Synthesis",
+  "abstract": "Metadata payload for DOI-direct retrieval.",
+  "consensus_score": 0.74,
+  "study_design_tag": "review",
+  "sample_size": 240,
+  "evidence_strength": "moderate",
+  "consensus_url": "https://consensus.app/papers/cp-paper"
+}

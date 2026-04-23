@@ -14,6 +14,10 @@ Cross-validation is a DISTINCT code path from single-provider even at N=1
 
 from __future__ import annotations
 
+import json
+
+import pytest
+import responses
 from retrieval import (
     AcceptanceCriteria,
     AdapterFactory,
@@ -22,7 +26,11 @@ from retrieval import (
     RetrievalIntent,
     dispatch,
 )
+from retrieval.consensus_provider import CONSENSUS_MCP_URL
 from retrieval.fake_provider import FakeProvider, make_fake_provider_class, make_row
+from retrieval.scite_provider import SCITE_MCP_URL
+
+from tests._helpers.mcp_fixtures import jsonrpc_response
 
 
 def _build_two_provider_fixtures():
@@ -229,3 +237,189 @@ def test_cross_validation_non_doi_identity_extractor() -> None:
     ann = _all_annotations(results)
     assert "yt:1" in ann
     assert ann["yt:1"].single_source_only == ["_yt_test"]
+
+
+@pytest.fixture
+def _live_provider_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Credentials used by real adapters under synthetic HTTP fixtures."""
+    monkeypatch.setenv("SCITE_USER_NAME", "scite-user")
+    monkeypatch.setenv("SCITE_PASSWORD", "scite-pass")
+    monkeypatch.setenv("CONSENSUS_API_KEY", "consensus-token")
+
+
+def _scite_search_payload(papers: list[dict[str, object]]) -> dict[str, object]:
+    return {"papers": papers}
+
+
+def _consensus_search_payload(papers: list[dict[str, object]]) -> dict[str, object]:
+    return {"papers": papers}
+
+
+def test_cross_validate_real_scite_consensus_fanout_and_merge(
+    _live_provider_env: None,
+) -> None:
+    intent = RetrievalIntent(
+        intent="sleep evidence",
+        provider_hints=[
+            ProviderHint(provider="scite", params={"mode": "search"}),
+            ProviderHint(provider="consensus", params={"mode": "search"}),
+        ],
+        cross_validate=True,
+        acceptance_criteria=AcceptanceCriteria(mechanical={"min_results": 1}),
+    )
+
+    scite_papers = [
+        {
+            "doi": "10.shared/1",
+            "scite_paper_id": "sp-1",
+            "title": "Shared DOI from scite",
+            "authors": ["A"],
+            "year": 2024,
+            "publication_date": "2024-01-01",
+            "venue": "Nature",
+            "abstract": "shared",
+            "supporting_count": 12,
+            "contradicting_count": 1,
+            "mentioning_count": 5,
+            "cited_by_count": 30,
+            "scite_report_url": "https://scite.ai/reports/sp-1",
+        },
+        {
+            "doi": "10.scite/2",
+            "scite_paper_id": "sp-2",
+            "title": "Scite-only DOI",
+            "authors": ["B"],
+            "year": 2023,
+            "publication_date": "2023-06-01",
+            "venue": "bioRxiv",
+            "abstract": "scite only",
+            "supporting_count": 4,
+            "contradicting_count": 0,
+            "mentioning_count": 2,
+            "cited_by_count": 8,
+            "scite_report_url": "https://scite.ai/reports/sp-2",
+        },
+    ]
+    consensus_papers = [
+        {
+            "doi": "10.shared/1",
+            "consensus_paper_id": "cp-1",
+            "title": "Shared DOI from consensus",
+            "authors": ["C"],
+            "publication_date": "2024-02-01",
+            "year": 2024,
+            "venue": "Evidence Journal",
+            "abstract": "shared",
+            "consensus_score": 0.81,
+            "study_design_tag": "meta-analysis",
+            "sample_size": 220,
+            "evidence_strength": "strong",
+            "consensus_url": "https://consensus.app/papers/cp-1",
+        },
+        {
+            "doi": "10.consensus/3",
+            "consensus_paper_id": "cp-3",
+            "title": "Consensus-only DOI",
+            "authors": ["D"],
+            "publication_date": "2022-05-01",
+            "year": 2022,
+            "venue": "Synthesis Review",
+            "abstract": "consensus only",
+            "consensus_score": 0.62,
+            "study_design_tag": "cohort",
+            "sample_size": 150,
+            "evidence_strength": "moderate",
+            "consensus_url": "https://consensus.app/papers/cp-3",
+        },
+    ]
+
+    with responses.RequestsMock() as rsps:
+        rsps.post(
+            SCITE_MCP_URL,
+            json=jsonrpc_response(result=_scite_search_payload(scite_papers)),
+        )
+        rsps.post(
+            CONSENSUS_MCP_URL,
+            json=jsonrpc_response(result=_consensus_search_payload(consensus_papers)),
+        )
+        results = dispatch(intent)
+
+        assert len(rsps.calls) == 2
+        call_bodies = [json.loads(call.request.body) for call in rsps.calls]
+        tool_names = {body["params"]["name"] for body in call_bodies}
+        assert tool_names == {"search"}
+
+    assert isinstance(results, list)
+    assert len(results) == 2
+    assert {r.provider for r in results} == {"scite", "consensus"}
+
+    ann = _all_annotations(results)
+    assert set(ann["10.shared/1"].providers_agreeing) == {"scite", "consensus"}
+    assert ann["10.shared/1"].single_source_only == []
+    assert ann["10.scite/2"].single_source_only == ["scite"]
+    assert ann["10.consensus/3"].single_source_only == ["consensus"]
+
+
+def test_cross_validate_convergence_signal_structural_not_semantic(
+    _live_provider_env: None,
+) -> None:
+    """Shared DOI means structural convergence even when semantics diverge."""
+    intent = RetrievalIntent(
+        intent="sleep evidence",
+        provider_hints=[
+            ProviderHint(provider="scite", params={"mode": "search"}),
+            ProviderHint(provider="consensus", params={"mode": "search"}),
+        ],
+        cross_validate=True,
+        acceptance_criteria=AcceptanceCriteria(mechanical={"min_results": 1}),
+    )
+
+    scite_papers = [
+        {
+            "doi": "10.shared/sem",
+            "scite_paper_id": "sp-sem",
+            "title": "Shared DOI semantic split",
+            "authors": ["A"],
+            "year": 2024,
+            "publication_date": "2024-03-01",
+            "venue": "Nature",
+            "abstract": "semantic split",
+            "supporting_count": 50,
+            "contradicting_count": 2,
+            "mentioning_count": 5,
+            "cited_by_count": 100,
+            "scite_report_url": "https://scite.ai/reports/sp-sem",
+        }
+    ]
+    consensus_papers = [
+        {
+            "doi": "10.shared/sem",
+            "consensus_paper_id": "cp-sem",
+            "title": "Shared DOI semantic split",
+            "authors": ["B"],
+            "publication_date": "2024-03-02",
+            "year": 2024,
+            "venue": "Evidence Journal",
+            "abstract": "semantic split",
+            "consensus_score": 0.30,
+            "study_design_tag": "weak",
+            "sample_size": 40,
+            "evidence_strength": "weak",
+            "consensus_url": "https://consensus.app/papers/cp-sem",
+        }
+    ]
+
+    with responses.RequestsMock() as rsps:
+        rsps.post(
+            SCITE_MCP_URL,
+            json=jsonrpc_response(result=_scite_search_payload(scite_papers)),
+        )
+        rsps.post(
+            CONSENSUS_MCP_URL,
+            json=jsonrpc_response(result=_consensus_search_payload(consensus_papers)),
+        )
+        results = dispatch(intent)
+
+    ann = _all_annotations(results)
+    signal = ann["10.shared/sem"]
+    assert set(signal.providers_agreeing) == {"scite", "consensus"}

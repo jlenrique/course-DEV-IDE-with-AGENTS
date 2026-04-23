@@ -1,0 +1,50 @@
+{
+  "papers": [
+    {
+      "doi": "10.1000/consensus-a",
+      "consensus_paper_id": "cp-a",
+      "title": "Melatonin and Sleep Outcomes",
+      "authors": ["Alice Smith", "Bob Lee"],
+      "publication_date": "2024-01-15",
+      "year": 2024,
+      "venue": "Sleep Medicine",
+      "abstract": "Melatonin improves sleep onset latency in adults.",
+      "consensus_score": 0.88,
+      "study_design_tag": "meta-analysis",
+      "sample_size": 520,
+      "evidence_strength": "strong",
+      "consensus_url": "https://consensus.app/papers/cp-a",
+      "license": "cc-by"
+    },
+    {
+      "doi": "10.1000/consensus-b",
+      "consensus_paper_id": "cp-b",
+      "title": "Caffeine Timing and Sleep Quality",
+      "authors": ["Cara Ng"],
+      "publication_date": "2023-07-01",
+      "year": 2023,
+      "venue": "Journal of Sleep Research",
+      "abstract": "Late caffeine intake worsens sleep quality.",
+      "consensus_score": 0.67,
+      "study_design_tag": "cohort",
+      "sample_size": 180,
+      "evidence_strength": "moderate",
+      "consensus_url": "https://consensus.app/papers/cp-b"
+    },
+    {
+      "doi": "10.1000/consensus-c",
+      "consensus_paper_id": "cp-c",
+      "title": "Bedroom Light Exposure and Circadian Rhythm",
+      "authors": ["Diego Park"],
+      "publication_date": "2022-03-12",
+      "year": 2022,
+      "venue": "Chronobiology International",
+      "abstract": "Evening light exposure delays circadian rhythm.",
+      "consensus_score": 0.52,
+      "study_design_tag": "rct",
+      "sample_size": 96,
+      "evidence_strength": "moderate",
+      "consensus_url": "https://consensus.app/papers/cp-c"
+    }
+  ]
+}

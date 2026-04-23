@@ -1,6 +1,6 @@
 # Epic 27: Texas Intake Surface Expansion
 
-**Status:** in-progress (27-0 / 27-1 / 27-2 done; 27-2.5 next on critical path; 27-3..27-7 ratified-stubs)
+**Status:** in-progress (27-0 / 27-1 / 27-2 / 27-2.5 done; 27-3..27-7 ratified-stubs)
 **Created:** 2026-04-17
 **Driver:** Close the DOCX contract drift from the 2026-04-17 APC C1-M1 trial AND expand Texas's intake surface to new provider types the HIL operator + Tracy will dispatch against in future runs.
 
@@ -42,14 +42,14 @@ Previously tracked as "texas-visual-source-gap-backlog" stub at [`_bmad-output/i
 | **27-0** | **Retrieval Foundation — Shape 3-Disciplined contract + dispatcher + cross-validation merger + Provider Directory (operator amendment)** | 5 | **FOUNDATION — unblocked 27-2, 27-2.5, 27-3, 27-4, 28-1** | **done** (closed BMAD-clean 2026-04-18 after party-mode green-light + bmad-code-review layered pass; +70 collecting tests; 1106/2/0 suite; ruff clean) |
 | **27-1** | DOCX provider wiring (contract drift fix) | 2 | done — **locator-shape provider; does NOT depend on 27-0** | **done** (closed 2026-04-17 — python-docx 1.2.0 wired; Tejal cross-val 100% key-term coverage; AC-S6 pilot lockstep test landed) |
 | **27-2** | scite.ai adapter (retrieval-shape; first consumer of 27-0) + **deferred 27-0 cascade** (AC-B.7 dispatcher wiring, dev-guide.md "how to add a provider", AC-T.7 log-stream parity tests, dual-emit writer, parametrized schema-compliance) | 5 | 2nd retrieval-shape story; **unblocks Epic 28 Tracy pilot** | **done** (BMAD-closed 2026-04-18, commit `883f742` — SciteProvider shipped; 15 PATCH applied inc. 2 HIGH-confidence correctness bugs; regression 1149/2/0/2; unblocks 28-1 + 27-2.5) |
-| **27-2.5** | Consensus adapter (retrieval-shape; cross-validation partner to scite) | 3 | parallel after 27-2 — enables scite+Consensus cross-validation | **ratified-stub — UNBLOCKED 2026-04-18** (soft-blocked on 27-2 for cross-val demo); opened per operator directive ("use one service's findings to confirm or supplement another's") |
+| **27-2.5** | Consensus adapter (retrieval-shape; cross-validation partner to scite) | 3 | parallel after 27-2 — enables scite+Consensus cross-validation | **done** (BMAD-closed 2026-04-22 — ConsensusProvider shipped with cross-validation integration; flake gate 3/3 converged; full regression and scoped pre-commit green; party-mode + layered code-review closure complete) |
 | **27-3** | Image provider (retrieval-shape via sensory-bridges) | 3 | parallel after 27-0 + sensory-bridge integration | ratified-stub (reshapes to retrieval-shape per 27-0 contract) |
 | **27-4** | YouTube provider (retrieval-shape; video + audio + transcript tri-output) | 5 | parallel after 27-0 | ratified-stub (reshapes to retrieval-shape per 27-0 contract) |
 | **27-5** | Notion MCP provider | 3 | parallel after 27-0 | ratified-stub (**locator-shape** — keeps existing directive shape; no foundation dependency at CLI level, but routes through dispatcher internally) |
 | **27-6** | Box provider | 2 | parallel after 27-0 | ratified-stub (**locator-shape**) |
 | **27-7** | Playwright MCP provider | 3 | parallel after 27-0 | ratified-stub (**locator-shape**) |
 
-**Total: 31 points.** Critical path: **27-1 (done) → 27-0 (done) → 27-2 (done) → 27-2.5 (Consensus, next) → unblocks Epic 28.**
+**Total: 31 points.** Critical path segment for Epic 28 unblock is complete: **27-1 (done) → 27-0 (done) → 27-2 (done) → 27-2.5 (done)**.
 
 **Shape classification per Round 3 consensus** (see [27-0-retrieval-foundation.md](./27-0-retrieval-foundation.md) for full detail):
 - **Retrieval-shape** (intent + acceptance-criteria + provider_hints): 27-2 scite, 27-2.5 Consensus, 27-3 image, 27-4 YouTube.
@@ -76,7 +76,7 @@ Both shapes internally route through 27-0's dispatcher (Shape 3-Disciplined AC-B
                      per 27-0's Shape 3-Disciplined contract
 ```
 
-**Critical path for Epic 28 unblock**: 27-1 (done) → **27-0 (done)** → **27-2 (done)** → **27-2.5 (Consensus — next)** → 28-1.
+**Critical path for Epic 28 unblock**: 27-1 (done) → **27-0 (done)** → **27-2 (done)** → **27-2.5 (done)** → 28-1.
 
 ## AC Spine — Cross-Cutting Acceptance Criteria
 

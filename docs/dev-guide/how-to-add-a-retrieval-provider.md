@@ -239,6 +239,29 @@ to gate on, consider whether it belongs in `declare_honored_criteria`
 first, or as a new mechanical predicate the dispatcher evaluates
 (`min_results` is currently the only one).
 
+### Cross-validation in practice
+
+Cross-validation is where retrieval adapters graduate from "works alone" to
+"works as a corroboration partner." The dispatcher does the fan-out/merge;
+your adapter's responsibility is providing a stable `identity_key(row)`.
+
+Rules that prevent subtle breakage:
+
+- Treat `identity_key` as a contract, not a convenience. Prefer globally
+  stable identifiers (DOI for scholarly sources, canonical URL/video ID for
+  media sources), then define deterministic fallbacks.
+- Keep `convergence_signal` interpretation structural. If two providers return
+  the same identity key, they converged structurally even when their semantic
+  interpretations differ.
+- Do not add semantic arbitration logic to Texas. Put that in Tracy's
+  downstream semantic pass where context and rubric live.
+- Test with at least one overlapping ID and one provider-unique ID so your
+  suite covers both corroborated and single-source branches.
+
+Story 27-2.5 (Consensus) is the model extension of Story 27-2 (Scite): both
+adapters keep independent provider semantics but converge through DOI identity
+in the shared dispatcher path.
+
 ## 10. Documentation — where things land
 
 - **Your adapter's per-provider metadata fields** → document in

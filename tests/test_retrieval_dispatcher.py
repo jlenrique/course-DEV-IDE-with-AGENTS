@@ -279,3 +279,48 @@ def test_dispatcher_scite_single_provider_integration(
     for row in r.rows:
         assert "scite" in row.provider_metadata
         assert "doi" in row.provider_metadata["scite"]
+
+
+def test_dispatcher_consensus_single_provider_integration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AC-T.4 — dispatch(consensus_intent) with HTTP-layer mocking.
+
+    Exercises the same end-to-end single-provider path used by scite, but with
+    bearer-auth ConsensusProvider wiring and consensus metadata normalization.
+    """
+    import responses as _responses
+    from retrieval.consensus_provider import CONSENSUS_MCP_URL, ConsensusProvider
+
+    from tests._helpers.mcp_fixtures import jsonrpc_response
+
+    monkeypatch.setenv("CONSENSUS_API_KEY", "test-token")
+
+    fixture_path = (
+        Path(__file__).parent
+        / "fixtures"
+        / "retrieval"
+        / "consensus"
+        / "search_happy.json"
+    )
+    search_result = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    adapter = ConsensusProvider()
+    intent = RetrievalIntent(
+        intent="sleep hygiene studies",
+        provider_hints=[ProviderHint(provider="consensus")],
+        acceptance_criteria=AcceptanceCriteria(mechanical={"min_results": 1}),
+    )
+
+    with _responses.RequestsMock() as rsps:
+        rsps.post(CONSENSUS_MCP_URL, json=jsonrpc_response(result=search_result))
+        r = dispatch(intent, factory=AdapterFactory({"consensus": adapter}))
+
+    assert isinstance(r, ProviderResult)
+    assert r.provider == "consensus"
+    assert r.acceptance_met is True
+    assert r.iterations_used == 1
+    assert len(r.rows) == 3
+    for row in r.rows:
+        assert "consensus" in row.provider_metadata
+        assert "consensus_paper_id" in row.provider_metadata["consensus"]

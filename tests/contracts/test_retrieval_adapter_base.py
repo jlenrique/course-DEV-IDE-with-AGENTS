@@ -18,6 +18,7 @@ from typing import Any
 
 import pytest
 from retrieval.base import RetrievalAdapter
+from retrieval.consensus_provider import ConsensusProvider
 from retrieval.contracts import (
     AcceptanceCriteria,
     ProviderHint,
@@ -134,10 +135,65 @@ def _make_scite_harness() -> AdapterHarness:
     )
 
 
+def _make_consensus_harness() -> AdapterHarness:
+    """Build a ConsensusProvider for provider-agnostic contract coverage."""
+    adapter = ConsensusProvider()
+    intent = RetrievalIntent(
+        intent="sleep hygiene adults",
+        provider_hints=[ProviderHint(provider="consensus")],
+        acceptance_criteria=AcceptanceCriteria(
+            mechanical={"min_results": 1},
+            provider_scored={"consensus_score_min": 0.5},
+        ),
+    )
+    raw_sample: list[Any] = [
+        {
+            "doi": "10.2/a",
+            "consensus_paper_id": "cp-a",
+            "title": "Paper A",
+            "publication_date": "2024-01-01",
+            "consensus_score": 0.8,
+            "study_design_tag": "meta-analysis",
+            "sample_size": 120,
+        },
+        {
+            "doi": "10.2/b",
+            "consensus_paper_id": "cp-b",
+            "title": "Paper B",
+            "publication_date": "2023-01-01",
+            "consensus_score": 0.4,
+            "study_design_tag": "cohort",
+            "sample_size": 60,
+        },
+    ]
+    known_row = TexasRow(
+        source_id="fallback-src",
+        provider="consensus",
+        provider_metadata={"consensus": {"doi": "10.42/consensus-known"}},
+    )
+    return AdapterHarness(
+        adapter=adapter,
+        intent=intent,
+        raw_sample=raw_sample,
+        known_identity_row=known_row,
+        known_identity_value="10.42/consensus-known",
+        expected_honored_keys={
+            "date_range",
+            "min_results",
+            "exclude_ids",
+            "license_allow",
+            "consensus_score_min",
+            "study_design_allow",
+            "sample_size_min",
+        },
+    )
+
+
 # Parametrization target — adapters land here as they ship.
 ADAPTER_FACTORIES: list[tuple[str, Any]] = [
     ("fake", _make_fake_harness),
     ("scite", _make_scite_harness),
+    ("consensus", _make_consensus_harness),
 ]
 
 

@@ -21,7 +21,7 @@ from retrieval import get_provider, list_providers
         # lines 265-273 (registered-first, placeholder-second). Every future
         # retrieval-shape story will flip its row here the same way.
         ("scite", "retrieval", "ready"),
-        ("consensus", "retrieval", "ratified"),
+        ("consensus", "retrieval", "ready"),
         ("image", "retrieval", "ratified"),
         ("youtube", "retrieval", "ratified"),
         ("openai_chatgpt", "retrieval", "backlog"),

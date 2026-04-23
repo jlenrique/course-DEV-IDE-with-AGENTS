@@ -55,6 +55,13 @@ _REPO_ROOT = _THIS_DIR.parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+from marcus.dispatch.contract import (  # noqa: E402
+    DispatchKind,
+    DispatchOutcome,
+    build_dispatch_envelope,
+    build_dispatch_receipt,
+)
+
 # Load Texas library modules by path (the hyphenated parent path blocks import).
 from scripts.utilities.skill_module_loader import load_module_from_path  # noqa: E402
 
@@ -108,6 +115,14 @@ _STATUS_TO_EXIT = {
     "complete_with_warnings": EXIT_COMPLETE_WITH_WARNINGS,
     "blocked": EXIT_BLOCKED,
 }
+
+
+def _to_dispatch_outcome(overall_status: str) -> DispatchOutcome:
+    if overall_status == "complete":
+        return DispatchOutcome.COMPLETE
+    if overall_status == "complete_with_warnings":
+        return DispatchOutcome.PARTIAL
+    return DispatchOutcome.FAILED
 
 # extractor_used string per provider, for provenance clarity in the report.
 # Used as the fallback when the SourceRecord.kind from _fetch_source does not
@@ -1540,6 +1555,33 @@ def _write_result_envelope(
         "artifacts": [p.relative_to(bundle_dir).as_posix() for p in artifact_paths],
         "bundle_manifest_path": "manifest.json",
     }
+    dispatch_artifacts = [p.relative_to(bundle_dir).as_posix() for p in artifact_paths]
+    dispatch_envelope = build_dispatch_envelope(
+        run_id=run_id,
+        dispatch_kind=DispatchKind.TEXAS_RETRIEVAL,
+        input_packet={
+            "directive_shape": "locator",
+            "materials_count": len(materials),
+        },
+        context_refs=dispatch_artifacts,
+        correlation_id=f"{run_id}-texas-retrieval",
+    )
+    dispatch_receipt = build_dispatch_receipt(
+        correlation_id=dispatch_envelope.correlation_id,
+        specialist_id=dispatch_envelope.specialist_id,
+        outcome=_to_dispatch_outcome(overall_status),
+        output_artifacts=dispatch_artifacts,
+        diagnostics={
+            "status": overall_status,
+            "materials_count": len(materials),
+            "blocking_issues_count": len(blocking_issues),
+        },
+        duration_ms=0,
+    )
+    envelope["dispatch_contract"] = {
+        "envelope": dispatch_envelope.model_dump(mode="json"),
+        "receipt": dispatch_receipt.model_dump(mode="json"),
+    }
     path = bundle_dir / "result.yaml"
     path.write_text(
         yaml.safe_dump(envelope, sort_keys=False, default_flow_style=False),
@@ -1826,6 +1868,34 @@ def _write_retrieval_result_envelope(
         ),
         "errors_count": sum(1 for o in outcomes if o.error_kind is not None),
         "artifacts": [p.relative_to(bundle_dir).as_posix() for p in artifact_paths],
+    }
+    dispatch_artifacts = [p.relative_to(bundle_dir).as_posix() for p in artifact_paths]
+    dispatch_envelope = build_dispatch_envelope(
+        run_id=run_id,
+        dispatch_kind=DispatchKind.TEXAS_RETRIEVAL,
+        input_packet={
+            "directive_shape": "retrieval",
+            "dispatches_count": len(outcomes),
+        },
+        context_refs=dispatch_artifacts,
+        correlation_id=f"{run_id}-texas-retrieval",
+    )
+    dispatch_receipt = build_dispatch_receipt(
+        correlation_id=dispatch_envelope.correlation_id,
+        specialist_id=dispatch_envelope.specialist_id,
+        outcome=_to_dispatch_outcome(overall_status),
+        output_artifacts=dispatch_artifacts,
+        diagnostics={
+            "status": overall_status,
+            "dispatches_count": len(outcomes),
+            "rows_total": envelope["rows_total"],
+            "errors_count": envelope["errors_count"],
+        },
+        duration_ms=0,
+    )
+    envelope["dispatch_contract"] = {
+        "envelope": dispatch_envelope.model_dump(mode="json"),
+        "receipt": dispatch_receipt.model_dump(mode="json"),
     }
     if blocking_issues:
         envelope["blocking_issues"] = blocking_issues

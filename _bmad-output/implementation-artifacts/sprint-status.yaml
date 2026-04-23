@@ -52,7 +52,7 @@
 # - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-23  # evidence-bolster-control-surface promoted to done after clean layered bmad-code-review.
+last_updated: 2026-04-23  # 22-4 storyboard generation/publish updates validated and promoted to done.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -455,7 +455,7 @@ development_status:
   22-1-storyboard-a-cluster-view: done  # Wave 1 closure: additive cluster view + flat-path compatibility verified (2026-04-12, test_generate_storyboard green)
   22-2-storyboard-b-cluster-view-with-script-context: done  # BMAD done 2026-04-15: clustered Storyboard B script context implemented, reviewed clean, and closure recorded in story artifact.
   22-3-flat-play-sequential-preview-mode: done  # Closed from review queue after implementation + review verification.
-  22-4-storyboard-generation-script-publish-updates: ready-for-dev  # Blocked on: 22-3
+  22-4-storyboard-generation-script-publish-updates: done  # Retroactive closure sync 2026-04-23: implementation validated (42 storyboard tests passed), publish/self-containment checks confirmed.
   epic-22-retrospective: optional
 
   # === EPIC 23: Irene Pass 2 Cluster-Aware Narration (Added 2026-04-11) ===

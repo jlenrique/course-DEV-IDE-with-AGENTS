@@ -1,7 +1,7 @@
 # Story 22-4: Storyboard Generation Script & Publish Updates
 
 **Epic:** 22 - Storyboard & Review Adaptation
-**Status:** backlog
+**Status:** done (2026-04-23: implementation already present; validated and synchronized)
 **Sprint key:** `22-4-storyboard-generation-script-publish-updates`
 **Added:** 2026-04-12
 **Depends on:** [22-1-storyboard-a-cluster-view.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/22-1-storyboard-a-cluster-view.md), [22-3-flat-play-sequential-preview-mode.md](C:/Users/juanl/Documents/GitHub/course-DEV-IDE-with-AGENTS/_bmad-output/implementation-artifacts/22-3-flat-play-sequential-preview-mode.md)
@@ -49,31 +49,54 @@ So that both local generation and published snapshots support the full cluster r
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Update generate-storyboard.py manifest reading
-  - [ ] 1.1: Read cluster_id, cluster_role, cluster_position from manifest
-  - [ ] 1.2: Group entries by cluster_id (null = standalone)
-  - [ ] 1.3: Sort clusters per manifest order
+- [x] Task 1: Update generate-storyboard.py manifest reading
+  - [x] 1.1: Read cluster_id, cluster_role, cluster_position from manifest
+  - [x] 1.2: Group entries by cluster_id (null = standalone)
+  - [x] 1.3: Sort clusters per manifest order
 
-- [ ] Task 2: Integrate 22-1/22-2/22-3 outputs into generation
-  - [ ] 2.1: Cluster HTML templates for Storyboard A (collapsible, headers, coherence badges)
-  - [ ] 2.2: Narration panel templates for Storyboard B (script, timing, intent)
-  - [ ] 2.3: Flat-play toggle template with embedded JavaScript
+- [x] Task 2: Integrate 22-1/22-2/22-3 outputs into generation
+  - [x] 2.1: Cluster HTML templates for Storyboard A (collapsible, headers, coherence badges)
+  - [x] 2.2: Narration panel templates for Storyboard B (script, timing, intent)
+  - [x] 2.3: Flat-play toggle template with embedded JavaScript
 
-- [ ] Task 3: Update publish routine
-  - [ ] 3.1: Ensure GitHub Pages publish includes all CSS and JavaScript inline
-  - [ ] 3.2: Verify collapsible elements work in published static HTML
-  - [ ] 3.3: Verify flat-play toggle works in published static HTML
+- [x] Task 3: Update publish routine
+  - [x] 3.1: Ensure GitHub Pages publish includes all CSS and JavaScript inline
+  - [x] 3.2: Verify collapsible elements work in published static HTML
+  - [x] 3.3: Verify flat-play toggle works in published static HTML
 
-- [ ] Task 4: Graceful degradation
-  - [ ] 4.1: Generate without coherence scores if report missing
-  - [ ] 4.2: Generate Storyboard A only if narration not yet available
-  - [ ] 4.3: Generate non-clustered storyboard if no cluster data in manifest
+- [x] Task 4: Graceful degradation
+  - [x] 4.1: Generate without coherence scores if report missing
+  - [x] 4.2: Generate Storyboard A only if narration not yet available
+  - [x] 4.3: Generate non-clustered storyboard if no cluster data in manifest
 
-- [ ] Task 5: Testing
-  - [ ] 5.1: Unit test: cluster grouping from manifest
-  - [ ] 5.2: Unit test: graceful degradation (missing coherence report, missing narration)
-  - [ ] 5.3: Integration test: full generate → publish cycle for clustered presentation
-  - [ ] 5.4: Regression: non-clustered generation unchanged (34/34 existing tests pass)
+- [x] Task 5: Testing
+  - [x] 5.1: Unit test: cluster grouping from manifest
+  - [x] 5.2: Unit test: graceful degradation (missing coherence report, missing narration)
+  - [x] 5.3: Integration test: full generate → publish cycle for clustered presentation
+  - [x] 5.4: Regression: non-clustered generation unchanged (34/34 existing tests pass)
+
+## Dev Agent Record
+
+### Completion Notes
+
+- Story implementation was already present in `generate-storyboard.py` and its test suite; this pass validated and synchronized story/sprint tracking.
+- Cluster-aware grouping, Storyboard A/B rendering, flat-play controls, publish snapshot behavior, and graceful degradation paths are covered in the existing implementation and tests.
+- Publish self-containment check: no external CDN references found in the generator output template source.
+
+### Validation
+
+- `python -m pytest -q skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py` → **42 passed**.
+- `Select-String` scan for `cdn` in `skills/bmad-agent-marcus/scripts/generate-storyboard.py` → **0 matches**.
+
+## File List
+
+- `skills/bmad-agent-marcus/scripts/generate-storyboard.py`
+- `skills/bmad-agent-marcus/scripts/tests/test_generate_storyboard.py`
+- `_bmad-output/implementation-artifacts/22-4-storyboard-generation-script-publish-updates.md`
+
+## Change Log
+
+- 2026-04-23: Validated existing 22-4 implementation (42 passing storyboard tests), confirmed self-contained publish contract, and synchronized story status/tasks to `done`.
 
 ## Dev Notes
 

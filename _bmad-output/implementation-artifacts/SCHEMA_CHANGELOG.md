@@ -7,6 +7,68 @@ Per semver-for-schemas:
 - **Minor (1.X)** — additive only: new optional fields with v1.0-compatible defaults, new enum values that don't break old consumers.
 - **Patch (1.0.X)** — docs / clarifications / typo fixes; no machine-readable change.
 
+## Sprint #2 Reading-Path Repertoire v1.2 - 2026-04-24 - Story perception-reading-path-repertoire
+
+**Type:** Additive (minor) — new optional `reading_path` sub-object on the segment-manifest envelope AND per-segment; new enum registry + classifier + lint shape checks. Schema envelope `schema_version` stays at `"1.1"` because the new sub-object is OPTIONAL — Sprint-1 7-1 canonical fixtures are preserved byte-identical (AC-8 regression).
+
+**Reason for introduction:** Sprint-1 trial C1-M1-PRES-20260419B established the on-the-fly convention `narration_directive: z-pattern-literal-scan`. This produced strong narration on Z-friendly artifacts but struggled on non-Z sources (centered hero graphics, top-down spines, multi-column layouts, 2×2 matrices). Sprint 2 promotes the convention to a **closed 7-pattern enum** with a classifier + narration-grammar riders.
+
+**Shapes and contracts pinned:**
+
+- `state/config/schemas/segment-manifest.schema.json`:
+  - Envelope: new optional `reading_path` property (`$ref: #/$defs/reading_path`). New optional `narration_directive` property typed `string | null` for backward compatibility.
+  - Per-segment: new optional `reading_path` property for per-segment override.
+  - New `$defs/reading_path` — closed enum of 7 patterns + confidence (0.0–1.0) + evidence dict + fallback bool.
+- `state/config/reading-path-patterns.yaml` — new enum registry (single source of truth). Per-pattern: description, canonical_scan, when_it_applies, evidence_keys, narration_cadence, lint_enforcement.
+- `scripts/utilities/reading_path_classifier.py` — new shared classifier. Deterministic heuristic in v1 (no LLM dep in critical path). Returns `ReadingPathClassification` with `hil_posture: auto|surface|pause` per Sally confidence-gated HIL rider (≥0.85 auto / 0.70–0.85 surface / <0.70 pause with top-2 candidates).
+- `scripts/validators/pass_2_emission_lint.py` — new `_KIND_READING_PATH_WARN` + `_KIND_READING_PATH_FAIL` finding kinds. Pattern-aware narration-cadence shape checks per the grammar riders. `sequence_numbered` is fail-closed (Murat rider); all 6 other patterns warning-level. CLI exit-code logic partitions blockers from warnings — warnings do not fail the gate.
+- `skills/bmad-agent-content-creator/references/pass-2-authoring-template.md` — new "Reading-path repertoire (Sprint 2)" section with 7-row enum table (≤250 lines per Paige consolidation rider).
+- `skills/bmad-agent-content-creator/references/pass-2-grammar-riders-examples.md` — new companion file with 7 per-pattern worked examples + parity-discipline notes.
+
+**Semantics pinned:**
+
+- **Backward compatibility (AC-8):** lint normalizes legacy `narration_directive: z-pattern-literal-scan` → `reading_path.pattern: z_pattern` with `fallback: false` at validation time. Sprint-1 7-1 canonical + as-emitted fixtures are preserved byte-identical; no file edits.
+- **Classifier fallback (AC-2):** when no pattern scores ≥ FALLBACK_BELOW (0.60), classifier returns `pattern: z_pattern` with `fallback: true`. Preserves current behavior as the floor.
+- **Sequence_numbered fail-closed (Murat):** ordinal-marker absence on a `sequence_numbered` classification is a contract violation — lint emits `reading-path-fail` and the exit code is 1.
+- **Three-way parity (Paige D3):** enum registry YAML ↔ JSON Schema enum ↔ template enum table ↔ companion examples headings are all asserted in lockstep by `tests/contracts/test_reading_path_parity.py`.
+- **Sally HIL gating:** classifier output carries `hil_posture` — Marcus landing-point summaries show `surface` band, pause/prompt on `pause` band. Patterns are invisible to operator by default, learnable on demand.
+
+**Migration:** N/A (additive only). Existing manifests without `reading_path` continue to validate; lint normalizes the legacy free-text directive as documented.
+
+## Sprint #2 Image Intake v1.0 - 2026-04-24 - Story 27-3 Image Provider
+
+**Type:** Additive — new provider, new `SourceRecord.kind`, new `source_type` key in expected-words floor, new directive role values.
+
+**Reason for introduction:** Tejal-trial preflight (2026-04-17) exposed that `.jpg`/`.png` sources dropped into a Texas directive with `provider: local_file` fell through to `read_text_file()` and produced binary-decode errors. Story 27-3 lands a first-class `provider: image` intake surface so operators can route image sources (roadmap diagrams, slide exports, photographed whiteboards) through Texas's manifest + fidelity chain.
+
+**Shapes and contracts pinned:**
+
+- `skills/bmad-agent-texas/scripts/run_wrangler.py::_SUPPORTED_PROVIDERS` extended with `"image"`.
+- `_PROVIDER_SOURCE_TYPE["image"] = "image"`.
+- `_EXTRACTOR_LABELS["image"] = "sensory_bridges_image"` and `_EXTRACTOR_LABELS_BY_KIND["image_source"] = "sensory_bridges_image"`.
+- `_ERROR_KIND_TO_KNOWN_LOSSES` extended with four image tokens: `image_fetch_failed`, `image_decode_failed`, `image_ocr_failed`, `image_vision_unavailable`.
+- `extraction_validator._WORDS_PER_PAGE["image"] = 60` (completeness floor for image-sourced synthetic bodies).
+- Directive-role enum extended to accept `visual-primary` and `visual-supplementary` in addition to `primary` / `validation` / `supplementary`. `visual-primary` counts toward the "at least one primary" requirement so an image can anchor a directive.
+- `skills/sensory-bridges/scripts/image_to_agent.py` — new bridge exposing:
+  - `BRIDGE_VERSION = "image-intake/1.0"` (provenance string carried in `SourceRecord.note`).
+  - `SUPPORTED_SUFFIXES = frozenset({".jpg", ".jpeg", ".png", ".webp"})`.
+  - `ImageAnalyzer` Protocol with `analyze(path) -> ImagePerception`.
+  - `VisionLLMAnalyzer` v1 stub raising `ImageVisionAPIError` (live vision in follow-on 27-3b).
+  - Typed error taxonomy (`ImageError` base, `ImageFetchError`, `ImageDecodeError`, `ImageOCRFailureError`, `ImageVisionAPIError`).
+  - `wrangle_local_image(path, *, analyzer=None) -> (title, body, SourceRecord)`.
+  - Synthetic markdown body sections: H1 title, `## Caption`, `## Detected text (OCR)`, `## Visual elements`, `## Layout`, `## Tier classification` (with `visual_structural_fidelity`, `visual_completeness`, `confidence`, `bridge_version` labels).
+- `skills/bmad-agent-texas/references/transform-registry.md` — new `## Image (intake via sensory-bridges)` section with explicit `Known Limitations` narrative (the "known_losses column" clarification).
+- `tests/contracts/test_transform_registry_lockstep.py::LOCKSTEP_EXEMPTIONS` gains `"image (intake via sensory-bridges)"` entry (image is fetch+perception, not a text extractor).
+
+**Semantics pinned:**
+
+- AC-4 no schema bifurcation: image sources reuse `ExtractionReport.structural_fidelity` and `completeness_ratio` fields with image-specific assessment logic (in `image_to_agent.assess_image_fidelity`). The new labels `visual_structural_fidelity` and `visual_completeness` are semantic labels embedded in the body's `## Tier classification` footer, NOT new schema fields.
+- Rejection mode pinned to "classify-as-FAILED" (not hard-exit) — image failures produce a `QualityTier.FAILED` outcome with structured `known_losses`, consistent with DOCX-malformed handling from Story 27-1.
+- SourceRecord shape: `kind="image_source"`, `ref="image://<sha256-prefix>"`, `note` carrying sha256, suffix, size, dimensions, fidelity, perceived_words, confidence, and bridge_version.
+- DI seam: `run_wrangler._fetch_source` reads `src["_image_analyzer"]` so harnesses can inject analyzer implementations without a schema change. Unset defaults to `VisionLLMAnalyzer`.
+
+**Migration:** N/A (additive only). Existing directives without `provider: image` rows are unaffected; the new role values are additive to the enum.
+
 ## Sprint #1 Segment Manifest v1.1 - 2026-04-22 - Story §7.1 Irene Pass 2 Authoring Template
 
 **Type:** Initial authoritative schema (no predecessor JSON Schema file; `schema_version: "1.1"` has been emitted in manifests by convention, now pinned as a contract).

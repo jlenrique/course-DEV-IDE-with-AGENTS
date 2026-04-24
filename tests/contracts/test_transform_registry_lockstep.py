@@ -127,6 +127,36 @@ LOCKSTEP_EXEMPTIONS: dict[str, str] = {
         "(PPTX, XLSX/CSV, SRT/VTT, Scanned PDFs via OCR, Images via Vision API); "
         "no code expected until promotion to its own registry section"
     ),
+    # Story 27-6: Box is a fetch layer that resolves Box IDs to local files,
+    # then dispatches to the existing format-specific extractors (PDF, DOCX,
+    # MD, text). It does not produce its own extraction output; the lockstep
+    # contract does not apply. End-to-end Box routing is covered by
+    # tests/test_box_provider.py.
+    "box (fetch layer)": (
+        "fetch-layer provider — resolves Box file ID / shared link to a "
+        "local file, then delegates extraction to the suffix-matched "
+        "wrangle_local_* extractor (wrangle_local_pdf / wrangle_local_docx "
+        "/ wrangle_local_md / read_text_file). No dedicated extraction "
+        "method by design; Box provenance flows through SourceRecord "
+        "kind='box_file' with item_id/size/modified_at enrichment. "
+        "Integration path proved by tests/test_box_provider.py."
+    ),
+    # Story 27-3: Image intake is a fetch+perception pipeline, not a text
+    # extractor. The registry's Priority-1 method names the image bridge
+    # helper (sensory-bridges image_to_agent.wrangle_local_image) which
+    # delegates vision/OCR to a pluggable ImageAnalyzer Protocol and returns
+    # a synthetic markdown body — no dedicated `wrangle_local_*` extractor
+    # function matches the pattern this test enforces for text formats.
+    # Integration path proved by tests/test_image_provider.py.
+    "image (intake via sensory-bridges)": (
+        "intake+perception provider — routes image bytes through an "
+        "ImageAnalyzer Protocol to produce a synthetic markdown body plus "
+        "SourceRecord kind='image_source'. No static text-extractor "
+        "function maps; the analyzer backend is pluggable (FakeImageAnalyzer "
+        "in tests, VisionLLMAnalyzer stub in v1 production, live vision in "
+        "follow-on Story 27-3b). End-to-end routing proved by "
+        "tests/test_image_provider.py."
+    ),
 }
 
 

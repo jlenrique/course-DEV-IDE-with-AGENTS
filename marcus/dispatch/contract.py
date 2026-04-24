@@ -4,43 +4,63 @@ PR-R contract scope (v1):
 - Irene Pass 2 dispatch
 - Kira motion dispatch
 - Texas retrieval dispatch
+
+Sprint 2 extension (additive):
+- Wanda podcast capability dispatches (episode, dialogue, summary, music-bed,
+  chapter markers, audio-assembly handoff) — leaf specialist, no orchestrator
+  surface touched.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class DispatchKind(str, Enum):
+class DispatchKind(StrEnum):
     """Closed dispatch-kind enum (triple-layer reject on unknown values)."""
 
     IRENE_PASS2 = "irene_pass2"
     KIRA_MOTION = "kira_motion"
     TEXAS_RETRIEVAL = "texas_retrieval"
+    # Sprint 2 — Wanda podcast capability edges (leaf specialist; additive).
+    WANDA_PODCAST_EPISODE = "wanda_podcast_episode"
+    WANDA_PODCAST_DIALOGUE = "wanda_podcast_dialogue"
+    WANDA_AUDIO_SUMMARY = "wanda_audio_summary"
+    WANDA_MUSIC_BED_APPLY = "wanda_music_bed_apply"
+    WANDA_CHAPTER_MARKERS_EMIT = "wanda_chapter_markers_emit"
+    WANDA_AUDIO_ASSEMBLY_HANDOFF = "wanda_audio_assembly_handoff"
 
 
-class SpecialistId(str, Enum):
-    """Closed specialist IDs for PR-R in-scope edges."""
+class SpecialistId(StrEnum):
+    """Closed specialist IDs."""
 
     IRENE = "irene"
     KIRA = "kira"
     TEXAS = "texas"
+    # Sprint 2.
+    WANDA = "wanda"
 
 
 DISPATCH_KIND_TO_SPECIALIST: Mapping[DispatchKind, SpecialistId] = {
     DispatchKind.IRENE_PASS2: SpecialistId.IRENE,
     DispatchKind.KIRA_MOTION: SpecialistId.KIRA,
     DispatchKind.TEXAS_RETRIEVAL: SpecialistId.TEXAS,
+    DispatchKind.WANDA_PODCAST_EPISODE: SpecialistId.WANDA,
+    DispatchKind.WANDA_PODCAST_DIALOGUE: SpecialistId.WANDA,
+    DispatchKind.WANDA_AUDIO_SUMMARY: SpecialistId.WANDA,
+    DispatchKind.WANDA_MUSIC_BED_APPLY: SpecialistId.WANDA,
+    DispatchKind.WANDA_CHAPTER_MARKERS_EMIT: SpecialistId.WANDA,
+    DispatchKind.WANDA_AUDIO_ASSEMBLY_HANDOFF: SpecialistId.WANDA,
 }
 
 
-class DispatchOutcome(str, Enum):
+class DispatchOutcome(StrEnum):
     """Dispatch completion posture."""
 
     COMPLETE = "complete"
@@ -48,7 +68,7 @@ class DispatchOutcome(str, Enum):
     FAILED = "failed"
 
 
-class DispatchErrorKind(str, Enum):
+class DispatchErrorKind(StrEnum):
     """Pinned dispatch error taxonomy (AC-B.3)."""
 
     VALIDATION_FAILED = "validation_failed"
@@ -192,6 +212,14 @@ _KIND_ALIASES: Mapping[str, DispatchKind] = {
     "kira_motion": DispatchKind.KIRA_MOTION,
     "texas-retrieval": DispatchKind.TEXAS_RETRIEVAL,
     "texas_retrieval": DispatchKind.TEXAS_RETRIEVAL,
+    # Sprint 2: Wanda capability aliases. Hyphen and underscore variants both
+    # accepted so operator directives don't need to care about delimiter style.
+    "wanda-podcast-episode": DispatchKind.WANDA_PODCAST_EPISODE,
+    "wanda-podcast-dialogue": DispatchKind.WANDA_PODCAST_DIALOGUE,
+    "wanda-audio-summary": DispatchKind.WANDA_AUDIO_SUMMARY,
+    "wanda-music-bed-apply": DispatchKind.WANDA_MUSIC_BED_APPLY,
+    "wanda-chapter-markers-emit": DispatchKind.WANDA_CHAPTER_MARKERS_EMIT,
+    "wanda-audio-assembly-handoff": DispatchKind.WANDA_AUDIO_ASSEMBLY_HANDOFF,
 }
 
 

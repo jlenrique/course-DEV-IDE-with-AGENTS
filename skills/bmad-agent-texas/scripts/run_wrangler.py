@@ -134,6 +134,7 @@ _EXTRACTOR_LABELS: dict[str, str] = {
     "url": "requests+html_to_text",
     "notion": "notion_client",
     "playwright_html": "playwright_file",
+    "image": "sensory_bridges_image",
 }
 
 # extractor_used string per SourceRecord.kind — preferred lookup because it
@@ -146,6 +147,7 @@ _EXTRACTOR_LABELS_BY_KIND: dict[str, str] = {
     "local_md": "markdown_unescape",
     "notion_page": "notion_client",
     "playwright_saved_html": "playwright_file",
+    "image_source": "sensory_bridges_image",
 }
 
 # Provider -> default source_type passed into the validator's expected-words heuristic.
@@ -157,6 +159,7 @@ _PROVIDER_SOURCE_TYPE: dict[str, str] = {
     "url": "html",
     "notion": "notion",
     "playwright_html": "html",
+    "image": "image",
 }
 
 
@@ -233,6 +236,7 @@ _SUPPORTED_PROVIDERS: frozenset[str] = frozenset(
         "notion_mcp",  # Story 27-5: MCP-mediated fetch, project-scope stdio
         "playwright_html",
         "box",
+        "image",  # Story 27-3: image intake via sensory-bridges image_to_agent
     }
 )
 
@@ -317,10 +321,20 @@ def _load_directive(path: Path) -> dict[str, Any]:
                 raise DirectiveError(
                     f"sources[{i}] missing required field: {required}"
                 )
-        if src["role"] not in ("primary", "validation", "supplementary"):
+        # Story 27-3: visual-primary / visual-supplementary accepted for image
+        # sources so operator can flag an image as the source of truth for a
+        # learning-objective chain (visual-primary) vs. illustrative
+        # (visual-supplementary). Text-source roles unchanged.
+        if src["role"] not in (
+            "primary",
+            "validation",
+            "supplementary",
+            "visual-primary",
+            "visual-supplementary",
+        ):
             raise DirectiveError(
-                f"sources[{i}].role must be primary|validation|supplementary, "
-                f"got {src['role']!r}"
+                f"sources[{i}].role must be primary|validation|supplementary"
+                f"|visual-primary|visual-supplementary, got {src['role']!r}"
             )
         ref_id = src["ref_id"]
         if not isinstance(ref_id, str) or not ref_id.strip():
@@ -368,11 +382,15 @@ def _load_directive(path: Path) -> dict[str, Any]:
                     )
 
     # Require at least one primary so downstream consumers always receive content.
+    # Story 27-3: `visual-primary` also satisfies the primary-presence check —
+    # an operator can anchor a learning-objective chain entirely on a visual
+    # source (e.g., a roadmap image) without a text-role companion.
     roles = [s["role"] for s in sources]
-    if "primary" not in roles:
+    if not any(r in ("primary", "visual-primary") for r in roles):
         raise DirectiveError(
-            "Directive has no role: primary source; extraction cannot produce "
-            "extracted.md without at least one primary"
+            "Directive has no role: primary (or visual-primary) source; "
+            "extraction cannot produce extracted.md without at least one "
+            "primary-class role"
         )
 
     # Annotate directive with its shape for the run() dispatch branch.
@@ -678,7 +696,72 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
         title, body, rec = _source_ops.wrangle_box_file(locator)
         return title, body, rec
 
+    # Story 27-3: Image intake via sensory-bridges. The wrangle_local_image
+    # helper lives in skills/sensory-bridges/scripts/image_to_agent.py (loaded
+    # lazily below to keep the runner import graph shallow). An analyzer can
+    # be injected via src['_image_analyzer'] for trials / harness scenarios;
+    # in production, the v1 VisionLLMAnalyzer stub surfaces remediation
+    # pointing at the live-vision follow-on story. The SourceRecord returned
+    # here carries kind='image_source' — the SourceRecord type is the
+    # source_wrangler_operations.SourceRecord dataclass, adapted below.
+    if provider == "image":
+        title, body, rec = _wrangle_image_via_bridge(
+            locator, analyzer=src.get("_image_analyzer")
+        )
+        return title, body, rec
+
     raise ValueError(f"Unsupported provider: {provider!r}")
+
+
+def _wrangle_image_via_bridge(
+    locator: str,
+    *,
+    analyzer: Any | None = None,
+) -> tuple[str, str, Any]:
+    """Dispatch image intake to the sensory-bridges helper.
+
+    Isolated in its own function so the import of the hyphenated
+    sensory-bridges path happens lazily — consistent with how
+    `_fetch_source` keeps other heavy extractors out of the top-level
+    import graph. Adapts the helper's local SourceRecord dataclass to the
+    canonical `source_wrangler_operations.SourceRecord` the runner carries.
+    """
+    import importlib.util
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    # Resolve the image bridge by file path — the sensory-bridges dir is
+    # hyphenated so `from skills.sensory_bridges...` is unreliable across
+    # execution contexts (script vs. pytest vs. module). This mirrors the
+    # load_module_from_path pattern used at the top of this file. Cache the
+    # loaded module in sys.modules so dataclass introspection (which walks
+    # sys.modules for the defining-class module) resolves correctly on
+    # subsequent calls within the same process.
+    module_name = "texas_image_bridge"
+    cached = _sys.modules.get(module_name)
+    if cached is not None:
+        bridge = cached
+    else:
+        here = _Path(__file__).resolve()
+        bridge_path = (
+            here.parents[2]
+            / "sensory-bridges"
+            / "scripts"
+            / "image_to_agent.py"
+        )
+        spec = importlib.util.spec_from_file_location(module_name, bridge_path)
+        assert spec is not None and spec.loader is not None
+        bridge = importlib.util.module_from_spec(spec)
+        _sys.modules[module_name] = bridge
+        spec.loader.exec_module(bridge)
+
+    title, body, local_rec = bridge.wrangle_local_image(locator, analyzer=analyzer)
+    rec = _source_ops.SourceRecord(
+        kind=local_rec.kind,
+        ref=local_rec.ref,
+        note=local_rec.note,
+    )
+    return title, body, rec
 
 
 # ---------------------------------------------------------------------------
@@ -832,6 +915,20 @@ def _classify_fetch_error(exc: BaseException) -> str:
         and type(exc).__module__.startswith("docx.")
     ):
         return "docx_extraction_failed"
+    # Story 27-3: image-intake typed errors. Identified by class-name prefix
+    # to avoid importing the image bridge into the runner module-load path
+    # (the bridge is loaded lazily in _wrangle_image_via_bridge). The four
+    # subclasses each map to a dedicated error_kind so downstream consumers
+    # can act on fetch-vs-decode-vs-OCR-vs-vision distinctions.
+    class_name = type(exc).__name__
+    if class_name == "ImageFetchError":
+        return "image_fetch_failed"
+    if class_name == "ImageDecodeError":
+        return "image_decode_failed"
+    if class_name == "ImageOCRFailureError":
+        return "image_ocr_failed"
+    if class_name == "ImageVisionAPIError":
+        return "image_vision_unavailable"
     # Missing file is a common shape — surface cleanly.
     if isinstance(exc, FileNotFoundError):
         return "fetch_failed"
@@ -847,6 +944,14 @@ def _classify_fetch_error(exc: BaseException) -> str:
 # there but unreadable as DOCX" apart from "generic fetch failed."
 _ERROR_KIND_TO_KNOWN_LOSSES: dict[str, list[str]] = {
     "docx_extraction_failed": ["docx_open_failed"],
+    # Story 27-3: image-intake failure tokens. Each is distinct so the
+    # retrospective / operator triage paths can partition image failures by
+    # root cause (bad path vs corrupt header vs blank-image vs no-vision-API)
+    # without parsing error messages.
+    "image_fetch_failed": ["image_fetch_failed"],
+    "image_decode_failed": ["image_decode_failed"],
+    "image_ocr_failed": ["image_ocr_failed"],
+    "image_vision_unavailable": ["image_vision_unavailable"],
 }
 
 

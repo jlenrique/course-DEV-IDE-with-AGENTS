@@ -42,6 +42,11 @@ _KIND_MISSING_VISUAL = "§6.4"
 _KIND_MISSING_DURATION = "§6.5-null"
 _KIND_DURATION_MISMATCH = "§6.5-mismatch"
 _KIND_SCHEMA = "schema"
+# Sprint 2 — reading-path repertoire shape checks. Warning-level for 6 of 7
+# patterns (Murat rider); sequence_numbered is fail-closed because ordinal-
+# marker absence on that classification is a structural contract violation.
+_KIND_READING_PATH_WARN = "reading-path-warn"
+_KIND_READING_PATH_FAIL = "reading-path-fail"
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,243 @@ class LintFinding:
 def _sorted_findings(findings: list[LintFinding]) -> list[LintFinding]:
     """Stable order: (segment_id, kind, detail)."""
     return sorted(findings, key=lambda f: (f.segment_id, f.kind, f.detail))
+
+
+# Sprint 2 — reading-path pattern shape checks. Each returns a finding-kind
+# when the narration does not show the expected cadence signal, else None.
+# The pattern→check mapping below is the declarative surface; the checks are
+# simple substring heuristics in v1, with room for smarter analysis in a
+# follow-on (e.g., POS-tagged detection of compare/contrast connectives).
+
+
+_COMPARE_CONTRAST_TOKENS = (
+    "compared to",
+    "contrast",
+    "whereas",
+    "whilst",
+    "on the other hand",
+    "vs",
+    "versus",
+    "by contrast",
+    "different from",
+    "in comparison",
+)
+_ORDINAL_TOKENS = (
+    "first",
+    "second",
+    "third",
+    "fourth",
+    "next",
+    "then",
+    "finally",
+    "step 1",
+    "step 2",
+    "step 3",
+    "step a",
+    "step b",
+    "step c",
+)
+_COLUMN_BRIDGE_TOKENS = (
+    "in the next column",
+    "moving to the right",
+    "the adjacent column",
+    "the column beside",
+    "moving rightward",
+    "in the column to the right",
+    "across the columns",
+)
+_ORBIT_RETURN_TOKENS = (
+    "returning to the center",
+    "back to the hero",
+    "circling back",
+    "center again",
+    "back to the main",
+    "returning to the heart",
+)
+_SPINE_CADENCE_TOKENS = (
+    "next item",
+    "continuing down",
+    "further down",
+    "proceeding through",
+    "step by step",
+    "in order",
+)
+_EVIDENCE_DRILL_TOKENS = (
+    "evidence",
+    "drill into",
+    "as shown",
+    "note the",
+    "data shows",
+    "marked on the",
+    "callout",
+)
+_Z_SWEEP_TOKENS = (
+    "headline",
+    "body",
+    "visual",
+    "call to action",
+    "cta",
+    "top-left",
+    "bottom-right",
+)
+
+
+def _narration_contains_any(narration: str, tokens: tuple[str, ...]) -> bool:
+    if not narration:
+        return False
+    lower = narration.lower()
+    return any(tok in lower for tok in tokens)
+
+
+def _check_reading_path_pattern(
+    segment_id: str,
+    pattern: str,
+    narration: str,
+    evidence: dict | None,
+) -> list[LintFinding]:
+    """Return warning-or-fail findings per the pattern's narration-grammar rider.
+
+    Narration-grammar riders (from pass-2-grammar-riders-examples.md):
+      - z_pattern: four-beat sweep tokens (warning-level)
+      - f_pattern: drill-down on evidence markers (warning-level)
+      - center_out: orbit-return-to-hero (warning-level)
+      - top_down: spine-item cadence (warning-level)
+      - multi_column: column-boundary bridges (warning-level)
+      - grid_quadrant: compare/contrast connectives (warning-level)
+      - sequence_numbered: ordinal markers (FAIL-CLOSED per Murat rider)
+    """
+    findings: list[LintFinding] = []
+    if not narration:
+        return findings
+
+    if pattern == "sequence_numbered":
+        if not _narration_contains_any(narration, _ORDINAL_TOKENS):
+            findings.append(
+                LintFinding(
+                    kind=_KIND_READING_PATH_FAIL,
+                    segment_id=segment_id,
+                    detail=(
+                        "sequence_numbered classification requires ordinal "
+                        "markers in narration (first/second/third/next/step N). "
+                        "Fail-closed per Murat rider — ordinal-marker absence "
+                        "is a contract violation, not a warning."
+                    ),
+                )
+            )
+        return findings
+
+    # Warning-level patterns
+    if pattern == "grid_quadrant" and not _narration_contains_any(
+        narration, _COMPARE_CONTRAST_TOKENS
+    ):
+        findings.append(
+            LintFinding(
+                kind=_KIND_READING_PATH_WARN,
+                segment_id=segment_id,
+                detail=(
+                    "grid_quadrant narration should contain compare/contrast "
+                    "connectives (whereas / versus / in contrast / etc.)"
+                ),
+            )
+        )
+    elif pattern == "multi_column" and not _narration_contains_any(
+        narration, _COLUMN_BRIDGE_TOKENS
+    ):
+        findings.append(
+            LintFinding(
+                kind=_KIND_READING_PATH_WARN,
+                segment_id=segment_id,
+                detail=(
+                    "multi_column narration should contain column-boundary "
+                    "bridges (in the next column / moving to the right / etc.)"
+                ),
+            )
+        )
+    elif pattern == "center_out" and not _narration_contains_any(
+        narration, _ORBIT_RETURN_TOKENS
+    ):
+        findings.append(
+            LintFinding(
+                kind=_KIND_READING_PATH_WARN,
+                segment_id=segment_id,
+                detail=(
+                    "center_out narration should return to the hero near the "
+                    "end of the scan (returning to the center / back to the "
+                    "hero / circling back)"
+                ),
+            )
+        )
+    elif pattern == "top_down" and not _narration_contains_any(
+        narration, _SPINE_CADENCE_TOKENS
+    ):
+        findings.append(
+            LintFinding(
+                kind=_KIND_READING_PATH_WARN,
+                segment_id=segment_id,
+                detail=(
+                    "top_down narration should show cadence at spine-item "
+                    "boundaries (next item / continuing down / step by step)"
+                ),
+            )
+        )
+    elif pattern == "f_pattern" and not _narration_contains_any(
+        narration, _EVIDENCE_DRILL_TOKENS
+    ):
+        findings.append(
+            LintFinding(
+                kind=_KIND_READING_PATH_WARN,
+                segment_id=segment_id,
+                detail=(
+                    "f_pattern narration should drill down on evidence markers "
+                    "(evidence / as shown / note the / data shows)"
+                ),
+            )
+        )
+    elif pattern == "z_pattern" and not _narration_contains_any(
+        narration, _Z_SWEEP_TOKENS
+    ):
+        # Z-pattern is the default; token set is generous on purpose.
+        findings.append(
+            LintFinding(
+                kind=_KIND_READING_PATH_WARN,
+                segment_id=segment_id,
+                detail=(
+                    "z_pattern narration should trace the four-beat sweep "
+                    "(headline / body / visual / CTA — or explicit spatial tokens)"
+                ),
+            )
+        )
+    return findings
+
+
+def _resolve_segment_pattern(manifest: dict, segment: dict) -> tuple[str, str] | None:
+    """Resolve the effective reading_path.pattern for a segment.
+
+    Returns ``(pattern, source)`` or None. ``source`` is one of:
+      - "segment" — segment-level structured reading_path
+      - "envelope" — envelope-level structured reading_path
+      - "legacy" — normalized from free-text narration_directive (Sprint-1)
+
+    The lint uses ``source`` to decide whether to run the pattern-aware shape
+    check. Legacy-resolved patterns skip the check so Sprint-1 fixtures remain
+    lint-clean (AC-8 byte-identical regression). Structured patterns (either
+    envelope or segment level) trigger the full check.
+    """
+    # Try segment-level structured block first.
+    seg_rp = segment.get("reading_path")
+    if isinstance(seg_rp, dict) and isinstance(seg_rp.get("pattern"), str):
+        return seg_rp["pattern"], "segment"
+    # Envelope structured block.
+    env_rp = manifest.get("reading_path")
+    if isinstance(env_rp, dict) and isinstance(env_rp.get("pattern"), str):
+        return env_rp["pattern"], "envelope"
+    # Legacy free-text normalization (Sprint 1 convention).
+    directive = manifest.get("narration_directive")
+    if isinstance(directive, str):
+        normalized = directive.strip().lower()
+        if normalized in ("z-pattern-literal-scan", "z_pattern_literal_scan", "z-pattern"):
+            return "z_pattern", "legacy"
+    return None
 
 
 def lint_manifest(
@@ -257,6 +499,26 @@ def lint_manifest(
                     )
                 )
 
+        # Sprint 2 — reading-path pattern shape check. Resolves pattern via
+        # (segment-level > envelope > legacy directive normalization) and
+        # emits warning (or fail-closed for sequence_numbered) when narration
+        # does not show the expected cadence tokens. Legacy-resolved patterns
+        # (Sprint-1 free-text `narration_directive`) skip the check so
+        # existing fixtures stay lint-clean (AC-8 byte-identical regression).
+        resolved = _resolve_segment_pattern(manifest, segment)
+        if resolved is not None:
+            pattern, source = resolved
+            if source != "legacy":
+                narration = segment.get("narration_text") or ""
+                findings.extend(
+                    _check_reading_path_pattern(
+                        segment_id=seg_id,
+                        pattern=pattern,
+                        narration=str(narration),
+                        evidence=segment.get("reading_path", {}).get("evidence"),
+                    )
+                )
+
     return _sorted_findings(findings)
 
 
@@ -371,10 +633,18 @@ def run_cli(argv: list[str] | None = None) -> int:
         print("Pass 2 emission lint: CLEAN")
         return 0
 
-    print(f"Pass 2 emission lint: {len(findings)} finding(s)")
-    for finding in _sorted_findings(findings):
+    # Sprint 2: reading-path WARNINGS do not fail the gate; reading-path FAILs
+    # and all §6.x / schema findings do. Partition for clarity in CLI output.
+    warnings_only = {_KIND_READING_PATH_WARN}
+    blockers = [f for f in findings if f.kind not in warnings_only]
+    warns = [f for f in findings if f.kind in warnings_only]
+
+    print(
+        f"Pass 2 emission lint: {len(blockers)} blocker(s), {len(warns)} warning(s)"
+    )
+    for finding in _sorted_findings(blockers + warns):
         print("  " + finding.format_line())
-    return 1
+    return 1 if blockers else 0
 
 
 if __name__ == "__main__":

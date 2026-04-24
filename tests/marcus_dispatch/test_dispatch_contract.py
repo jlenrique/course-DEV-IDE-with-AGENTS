@@ -101,4 +101,15 @@ def test_schema_file_has_required_defs() -> None:
 def test_generated_schema_contains_closed_dispatch_kind_enum() -> None:
     generated = dump_contract_schemas()
     enum_values = generated["$defs"]["DispatchKind"]["enum"]
-    assert enum_values == ["irene_pass2", "kira_motion", "texas_retrieval"]
+    # PR-R v1 edges + Sprint 2 Wanda additive extension (6 capability cards).
+    assert enum_values == [
+        "irene_pass2",
+        "kira_motion",
+        "texas_retrieval",
+        "wanda_podcast_episode",
+        "wanda_podcast_dialogue",
+        "wanda_audio_summary",
+        "wanda_music_bed_apply",
+        "wanda_chapter_markers_emit",
+        "wanda_audio_assembly_handoff",
+    ]

@@ -33,6 +33,14 @@
       "items": {
         "$ref": "#/$defs/segment"
       }
+    },
+    "reading_path": {
+      "description": "Sprint 2 perception reading-path repertoire — envelope-level default pattern (Story perception-reading-path-repertoire). Optional in schema v1.1 for byte-identical backward compatibility with Sprint 1 7-1 fixtures; normalized from free-text 'narration_directive' at lint time when absent.",
+      "$ref": "#/$defs/reading_path"
+    },
+    "narration_directive": {
+      "description": "Free-text narration-directive hint (Sprint 1 convention). Sprint 2 adds the structured `reading_path` companion; the lint validator normalizes 'z-pattern-literal-scan' → reading_path.pattern='z_pattern' at validation time.",
+      "type": ["string", "null"]
     }
   },
   "additionalProperties": true,
@@ -83,6 +91,10 @@
           "items": {
             "$ref": "#/$defs/retrieval_provenance"
           }
+        },
+        "reading_path": {
+          "description": "Per-segment reading-path override. Optional; when absent, the envelope-level reading_path applies.",
+          "$ref": "#/$defs/reading_path"
         }
       },
       "additionalProperties": true,
@@ -332,6 +344,40 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "reading_path": {
+      "description": "Sprint 2 reading-path repertoire sub-object. Closed enum of 7 patterns + classifier confidence + evidence details + fallback flag. Story perception-reading-path-repertoire. See state/config/reading-path-patterns.yaml for per-pattern canonical-scan descriptions.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pattern"],
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "enum": [
+            "z_pattern",
+            "f_pattern",
+            "center_out",
+            "top_down",
+            "multi_column",
+            "grid_quadrant",
+            "sequence_numbered"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Per-pattern structured evidence (populated by classifier)."
+        },
+        "fallback": {
+          "type": "boolean",
+          "description": "True when the classifier fell back to z_pattern below the confidence threshold."
         }
       }
     }

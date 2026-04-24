@@ -80,6 +80,30 @@ The ban is declarative in the schema (`not: {required: [motion_asset]}`). Any fu
 
 ---
 
+## Reading-path repertoire (Sprint 2)
+
+The Sprint-1 convention `narration_directive: z-pattern-literal-scan` is now one of seven structured patterns in the **reading-path repertoire**. The envelope (or a per-segment override) carries a `reading_path` sub-object with `{pattern, confidence, evidence, fallback}`. Registry: [reading-path-patterns.yaml](../../../state/config/reading-path-patterns.yaml). Schema: `reading_path` sub-object in [segment-manifest.schema.json](../../../state/config/schemas/segment-manifest.schema.json). Narration-grammar worked examples: [pass-2-grammar-riders-examples.md](./pass-2-grammar-riders-examples.md).
+
+### Enum (closed)
+
+| Pattern | Narration cadence | Lint |
+|---|---|---|
+| `z_pattern` | four-beat-sweep (headline / body / visual / CTA) | warning |
+| `f_pattern` | drill-down at evidence markers | warning |
+| `center_out` | establish-orbit-return-to-hero | warning |
+| `top_down` | spine-item boundary cadence | warning |
+| `multi_column` | column-boundary bridges | warning |
+| `grid_quadrant` | compare/contrast connectives | warning |
+| `sequence_numbered` | ordinal markers (first/second/next/step N) | **fail-closed** |
+
+`sequence_numbered` is the only pattern with fail-closed lint in v1 (Murat Sprint-2 ruling) — ordinal-marker absence on that classification is a contract violation.
+
+### Envelope vs. per-segment
+
+The envelope's `reading_path` is the default for every segment. A segment may override by emitting its own `reading_path` sub-object. Backward-compatibility: when neither is present, the lint normalizes free-text `narration_directive: z-pattern-literal-scan` → `reading_path.pattern: "z_pattern"` with `fallback: false` at validation time (preserving byte-identical Sprint-1 fixtures).
+
+---
+
 ## Worked example: static segment
 
 ```yaml

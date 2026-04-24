@@ -1,0 +1,93 @@
+# Reading-Path Pattern Registry — Sprint 2
+# Story: perception-reading-path-repertoire
+# Schema version: segment-manifest 1.1 + reading_path sub-object
+#
+# This registry is the single source of truth for the 7-pattern enum. The
+# segment-manifest JSON Schema mirrors the enum explicitly; the 3-way parity
+# test (Paige D3 rider) asserts:
+#   registry enum ↔ schema enum ↔ template-heading enum
+# stay in lockstep.
+
+schema_version: "1.0"
+registry_version: "2026-04-24"
+patterns:
+  - pattern: z_pattern
+    description: Quadrant-balanced layouts with headline, body text, visual, CTA.
+    canonical_scan: top-left → top-right → bottom-left → bottom-right
+    when_it_applies: Default — quadrant-balanced slides.
+    evidence_keys:
+      - has_headline
+      - has_visual_zone
+      - has_cta_zone
+      - has_body_text
+    narration_cadence: four-beat-sweep
+    lint_enforcement: warning
+
+  - pattern: f_pattern
+    description: Text-heavy handouts, reference docs, dense prose columns.
+    canonical_scan: left-column top-down → selective right-side scan on evidence markers
+    when_it_applies: Left-rail text dominance; right-side evidence markers present.
+    evidence_keys:
+      - left_column_word_count
+      - evidence_markers
+      - right_side_density
+    narration_cadence: drill-down-at-evidence-markers
+    lint_enforcement: warning
+
+  - pattern: center_out
+    description: Hero graphic with orbital annotations; central concept with radial supports.
+    canonical_scan: establish-hero → orbit-annotations clockwise → return-to-hero
+    when_it_applies: Single dominant central visual with 2+ radial/orbital labels.
+    evidence_keys:
+      - hero_visual_centroid
+      - annotation_count
+      - annotation_angles
+    narration_cadence: establish-orbit-return
+    lint_enforcement: warning
+
+  - pattern: top_down
+    description: Vertical spine; ordered lists; process ladders.
+    canonical_scan: single sweep top-to-bottom following spine
+    when_it_applies: Vertical list layout, process-step ladder, hierarchical spine.
+    evidence_keys:
+      - spine_items
+      - vertical_alignment_ratio
+      - list_markers
+    narration_cadence: spine-item-boundary-cadence
+    lint_enforcement: warning
+
+  - pattern: multi_column
+    description: 2-4 column layouts where each column is self-contained.
+    canonical_scan: column-major — each column top-to-bottom before advancing right
+    when_it_applies: 2-4 parallel columns with self-contained content per column.
+    evidence_keys:
+      - column_count
+      - column_boundaries
+      - per_column_headers
+    narration_cadence: column-boundary-bridges
+    lint_enforcement: warning
+
+  - pattern: grid_quadrant
+    description: 2×2 or 3×3 matrices (comparison frameworks, decision grids).
+    canonical_scan: declared sweep order (row-major default; column-major if axis labels demand)
+    when_it_applies: 2×2 or 3×3 matrix with explicit axis labels or quadrant frames.
+    evidence_keys:
+      - axis_labels
+      - quadrant_count
+      - sweep_preference
+    narration_cadence: compare-contrast-connectives
+    lint_enforcement: warning
+
+  - pattern: sequence_numbered
+    description: Explicit ordinal markers (1→2→3, Step A → Step B) override spatial inference.
+    canonical_scan: follow ordinal order, ignore spatial layout
+    when_it_applies: Numbered or lettered ordinal markers are visible.
+    evidence_keys:
+      - ordinal_markers
+      - ordinal_system
+      - spatial_layout_conflict
+    # Murat rider: sequence_numbered is the ONLY pattern with fail-closed lint
+    # in v1 — ordinal-marker absence on a sequence_numbered classification is a
+    # contract violation, not a warning.
+    narration_cadence: ordinal-marker-references
+    lint_enforcement: fail_closed

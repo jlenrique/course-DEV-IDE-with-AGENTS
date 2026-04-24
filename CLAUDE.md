@@ -21,7 +21,7 @@ For **course-content production**, orchestration, or anything that sounds like a
 
 **Why Marcus first:** Once Marcus is correctly embodied and has loaded his skill + sanctum, he routes work using his references (for example `skills/bmad-agent-marcus/references/specialist-registry.yaml`) and conversation protocols. That keeps a single point of contact and avoids fragmented cold-start guesses about which specialist to impersonate.
 
-For full session ramp (docs, handoff, deferred inventory), the operator may also use [`bmad-session-protocol-session-START.md`](bmad-session-protocol-session-START.md); Marcus activation still applies when production is in scope.
+For full session ramp (docs, handoff, deferred inventory), the canonical Session-START protocol is [`skills/bmad-agent-cora/references/session-start-protocol.md`](skills/bmad-agent-cora/references/session-start-protocol.md) (Cora owns the SS/SW contract; the legacy `bmad-session-protocol-session-START.md` was relocated to operator-local gitignored state in commit `797476f`). Marcus activation still applies when production is in scope.
 
 ## BMAD sprint governance
 

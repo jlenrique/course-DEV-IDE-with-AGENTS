@@ -127,6 +127,20 @@ LOCKSTEP_EXEMPTIONS: dict[str, str] = {
         "(PPTX, XLSX/CSV, SRT/VTT, Scanned PDFs via OCR, Images via Vision API); "
         "no code expected until promotion to its own registry section"
     ),
+    # Story 27-6: Box is a fetch layer that resolves Box IDs to local files,
+    # then dispatches to the existing format-specific extractors (PDF, DOCX,
+    # MD, text). It does not produce its own extraction output; the lockstep
+    # contract does not apply. End-to-end Box routing is covered by
+    # tests/test_box_provider.py.
+    "box (fetch layer)": (
+        "fetch-layer provider — resolves Box file ID / shared link to a "
+        "local file, then delegates extraction to the suffix-matched "
+        "wrangle_local_* extractor (wrangle_local_pdf / wrangle_local_docx "
+        "/ wrangle_local_md / read_text_file). No dedicated extraction "
+        "method by design; Box provenance flows through SourceRecord "
+        "kind='box_file' with item_id/size/modified_at enrichment. "
+        "Integration path proved by tests/test_box_provider.py."
+    ),
 }
 
 

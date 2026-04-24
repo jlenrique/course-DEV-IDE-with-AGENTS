@@ -223,7 +223,7 @@ class DirectiveError(Exception):
 
 
 _SUPPORTED_PROVIDERS: frozenset[str] = frozenset(
-    {"local_file", "pdf", "docx", "md", "url", "notion", "playwright_html"}
+    {"local_file", "pdf", "docx", "md", "url", "notion", "playwright_html", "box"}
 )
 
 
@@ -633,6 +633,16 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
             locator,
             source_url=src.get("source_url"),
         )
+        return title, body, rec
+
+    # Story 27-6: Box fetch layer. Resolves a Box file ID or shared link to a
+    # local file and dispatches to the suffix-appropriate extractor within
+    # wrangle_box_file. Box is not itself a format — the local file that comes
+    # out still routes through wrangle_local_pdf / wrangle_local_docx /
+    # wrangle_local_md / read_text_file. See source_wrangler_operations.py
+    # for the provider implementation.
+    if provider == "box":
+        title, body, rec = _source_ops.wrangle_box_file(locator)
         return title, body, rec
 
     raise ValueError(f"Unsupported provider: {provider!r}")

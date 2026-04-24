@@ -48,6 +48,14 @@ Extraction method hierarchy per source type. For each format, methods are listed
 | 2 | Playwright MCP | Dynamic/JS-heavy pages | Slower; requires browser context |
 | 3 | Playwright save + offline extract | Auth-walled pages | Operator must authenticate first |
 
+## Box (fetch layer)
+
+| Priority | Method | When to Use | Known Limitations |
+|----------|--------|-------------|-------------------|
+| 1 | `boxsdk` developer-token fetch → local file → format extractor | Default for Box-hosted content | Requires `BOX_DEVELOPER_TOKEN` env var; developer tokens expire after 60 minutes; folder-level fetch is deferred to a follow-on story (file-level only in v1); OAuth2 refresh / JWT auth are future work |
+
+> **Implementation cross-reference** (Story 27-6): Box is a **fetch-layer** provider, not a format handler — it resolves a Box file ID or shared-link URL to a local file via `wrangle_box_file()` in `skills/bmad-agent-texas/scripts/source_wrangler_operations.py`, then dispatches the downloaded file through the existing suffix-based extractors (`wrangle_local_pdf` for `.pdf`, `wrangle_local_docx` for `.docx`, `wrangle_local_md` for `.md`, `read_text_file` for plain text). The `box` provider branch in `run_wrangler._fetch_source` calls `wrangle_box_file(locator)` and returns its `(title, body, SourceRecord)` tuple. Auth failures (missing or expired `BOX_DEVELOPER_TOKEN`, 401/403 from Box) raise `BoxAuthError` with operator-facing remediation text that names the env var, the Box developer-console URL, and the re-run step. Rate-limit (429), not-found (404), and permission (403-class resolvable-but-unauthorized) failures surface as typed `BoxRateLimitError` / `BoxNotFoundError` / `BoxPermissionError` — each distinct so downstream error classification can act on the auth-vs-availability axis. Since Box itself does not produce extraction output (the underlying PDF/DOCX/MD does), the transform-registry lockstep test exempts Box via `LOCKSTEP_EXEMPTIONS`; end-to-end routing is proved separately by `tests/test_box_provider.py`.
+
 ## Future (Placeholder)
 
 These formats are not yet supported but are anticipated:

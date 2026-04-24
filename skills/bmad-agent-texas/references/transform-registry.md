@@ -40,6 +40,8 @@ Extraction method hierarchy per source type. For each format, methods are listed
 | 2 | Playwright page save | When API access fails | Requires browser automation |
 | 3 | Exported PDF/HTML | When operator provides a manual export | May lose database/embedded content |
 
+> **Implementation cross-reference** (Story 27-5): Two concrete provider forms exist for Notion: (a) **legacy direct-REST** via `provider: notion` — wired through `wrangle_notion_page()` using `scripts/api_clients/notion_client.py`; kept for backwards compatibility; (b) **MCP-mediated** via `provider: notion_mcp` — wired through `wrangle_notion_mcp_page()` using a harness-injected `NotionMCPFetcher`. New directives SHOULD prefer `notion_mcp`. **Scope binding (Amelia rider + user memory `project_notion_mcp_dual_config`):** Texas-headless runs MUST use the **project-scope stdio** Notion MCP (not the user-scope hosted one). The `notion_mcp` provider enforces this via `expected_scope="project"` with a `NotionMCPAuthError` on scope mismatch. **Permission-denied case (Sally UX rider — the Tejal-trial 2026-04-17 blocker):** when the MCP integration is not granted access to a page, `NotionMCPPermissionError` surfaces operator-facing remediation text that walks through the Notion UI step-by-step (open page → `•••` → Connections → Add connections → select project-scope integration → re-run). The remediation template lives in `_notion_mcp_permission_remediation()` and is asserted literally by `tests/test_notion_mcp_provider.py`. Legacy `notion` path and `notion_mcp` path are disjoint: `_SUPPORTED_PROVIDERS` lists both; the dispatch branches in `run_wrangler._fetch_source` are independent.
+
 ## HTML / URL
 
 | Priority | Method | When to Use | Known Limitations |

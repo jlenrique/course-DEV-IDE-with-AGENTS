@@ -223,7 +223,17 @@ class DirectiveError(Exception):
 
 
 _SUPPORTED_PROVIDERS: frozenset[str] = frozenset(
-    {"local_file", "pdf", "docx", "md", "url", "notion", "playwright_html", "box"}
+    {
+        "local_file",
+        "pdf",
+        "docx",
+        "md",
+        "url",
+        "notion",  # legacy direct REST API path (deprecated; prefer notion_mcp)
+        "notion_mcp",  # Story 27-5: MCP-mediated fetch, project-scope stdio
+        "playwright_html",
+        "box",
+    }
 )
 
 
@@ -620,11 +630,34 @@ def _fetch_source(src: dict[str, Any]) -> tuple[str, str, Any]:
 
     if provider == "notion":
         # wrangle_notion_page returns (title, markdown_body, page_id).
+        # LEGACY direct-REST path — kept for backwards compatibility. Prefer
+        # provider='notion_mcp' (Story 27-5) for new directives.
         title, body, page_id = _source_ops.wrangle_notion_page(locator)
         rec = _source_ops.SourceRecord(
             kind="notion_page",
             ref=locator,
             note=f"notion page_id={page_id}",
+        )
+        return title, body, rec
+
+    if provider == "notion_mcp":
+        # Story 27-5: MCP-mediated Notion fetch. The harness must supply a
+        # NotionMCPFetcher via src['_mcp_fetcher'] (out-of-band injection
+        # keyed with a leading underscore so directive schemas don't see it).
+        # In live runs, Marcus resolves the page via the project-scope stdio
+        # Notion MCP server and passes the pre-fetched result via the
+        # fetcher. In tests, a fake fetcher is injected.
+        mcp_fetcher = src.get("_mcp_fetcher")
+        if mcp_fetcher is None:
+            raise ValueError(
+                "provider 'notion_mcp' requires a NotionMCPFetcher injected "
+                "via src['_mcp_fetcher']. The runtime harness (Marcus) is "
+                "responsible for pre-fetching via the project-scope stdio "
+                "Notion MCP and providing the fetcher. See Story 27-5."
+            )
+        expected_scope = src.get("_mcp_expected_scope", "project")
+        title, body, rec = _source_ops.wrangle_notion_mcp_page(
+            locator, fetcher=mcp_fetcher, expected_scope=expected_scope
         )
         return title, body, rec
 

@@ -897,6 +897,151 @@ class BoxSDKFetcher(BoxFetcher):
         return locator.strip()
 
 
+# ---------------------------------------------------------------------------
+# Notion MCP fetch-layer provider (Story 27-5)
+#
+# Distinct from the legacy `notion` provider (which uses scripts/api_clients/
+# notion_client.py against Notion's direct REST API). The MCP-mediated path
+# leverages the harness-loaded MCP server so auth, rate-limiting, and block
+# traversal are primitives provided by the server, not reimplemented here.
+#
+# Architecture (Winston green-light ruling): the Python adapter does NOT call
+# MCP directly. The runtime harness (Marcus or test fixture) resolves the
+# Notion page via the MCP call `mcp__claude_ai_Notion__notion-fetch` and
+# provides the resulting markdown content to `wrangle_notion_mcp_page` via
+# the NotionMCPFetcher Protocol. This keeps the Python runner free of
+# MCP-transport concerns and preserves LangGraph portability.
+#
+# Scope binding (Amelia rider + user memory): Texas-headless runs MUST use
+# the project-scope stdio Notion MCP (not the user-scope hosted one). The
+# provider surfaces `scope` on NotionFetchResult so the scope can be
+# asserted at the runner's dispatch boundary.
+#
+# Sally UX rider (non-negotiable): when a page is not shared with the
+# project-scope Notion integration (the exact Tejal-trial 2026-04-17
+# blocker), the provider raises NotionMCPPermissionError with remediation
+# text that walks the operator through the Notion Connections UI in
+# literal string form. The test suite asserts on verbatim substrings.
+# ---------------------------------------------------------------------------
+
+
+class NotionMCPError(Exception):
+    """Base class for Notion MCP provider errors."""
+
+    def __init__(self, message: str, *, remediation: str | None = None) -> None:
+        super().__init__(message)
+        self.remediation = remediation
+
+    def __str__(self) -> str:  # pragma: no cover - trivial
+        base = super().__str__()
+        if self.remediation:
+            return f"{base}\n\n{self.remediation}"
+        return base
+
+
+class NotionMCPAuthError(NotionMCPError):
+    """Raised when the Notion MCP integration token is missing/invalid."""
+
+
+class NotionMCPNotFoundError(NotionMCPError):
+    """Raised when a Notion page ID or URL cannot be resolved."""
+
+
+class NotionMCPPermissionError(NotionMCPError):
+    """Raised when the MCP integration is not granted access to a page.
+
+    This is the Tejal-trial 2026-04-17 blocker. Remediation text MUST walk
+    the operator through the Notion UI step by step — tested literally.
+    """
+
+
+@dataclass(frozen=True)
+class NotionFetchResult:
+    """Result of resolving a Notion page via MCP.
+
+    `markdown_body` is the page content in Markdown form (the Notion MCP
+    server's notion-fetch tool returns rich-text with block structure; the
+    harness is responsible for converting to Markdown before handoff).
+    `scope` is "project" for Texas-headless runs, "user" for Tracy-IDE runs.
+    """
+
+    page_id: str
+    page_title: str
+    markdown_body: str
+    scope: str  # "project" | "user"
+    last_edited_time: str
+    last_edited_by: str
+    parent_path: str
+
+
+class NotionMCPFetcher:
+    """Protocol-style base class for Notion MCP fetch implementations."""
+
+    def fetch_page(self, page_locator: str) -> NotionFetchResult:
+        raise NotImplementedError
+
+
+def _notion_mcp_permission_remediation(
+    page_title: str, page_id: str, integration_name: str = "[your project-scope integration]"
+) -> str:
+    """Produce the Tejal-trial remediation text for permission-denied.
+
+    Extracted as a pure function so the test suite can assert the literal
+    substrings without invoking the fetcher. Any edit to this template
+    MUST be accompanied by a test update.
+    """
+    return (
+        f"Notion page '{page_title}' ({page_id}) is not shared with the "
+        f"project-scope Notion integration used by Texas-headless.\n"
+        f"Remediation (in Notion UI):\n"
+        f"  1. Open the page in Notion.\n"
+        f"  2. Click the '...' menu in the top-right.\n"
+        f"  3. Select 'Connections' → 'Add connections'.\n"
+        f"  4. Select {integration_name}.\n"
+        f"  5. Re-run the directive.\n"
+        f"If you intended to use the user-scope integration (Tracy-IDE), "
+        f"change the directive provider to 'notion' (legacy) or route "
+        f"through the Tracy-IDE session."
+    )
+
+
+def wrangle_notion_mcp_page(
+    page_locator: str,
+    *,
+    fetcher: NotionMCPFetcher,
+    expected_scope: str = "project",
+) -> tuple[str, str, SourceRecord]:
+    """Fetch a Notion page via MCP and return (title, body, provenance).
+
+    :param page_locator: Notion page ID or URL.
+    :param fetcher: NotionMCPFetcher implementation (DI — no default).
+    :param expected_scope: Must match `result.scope` or the fetcher's scope
+        is rejected via NotionMCPAuthError (the scope-binding rider).
+    :raises NotionMCPAuthError: Missing/invalid token OR scope mismatch.
+    :raises NotionMCPPermissionError: Integration not granted for page.
+    :raises NotionMCPNotFoundError: Page ID cannot be resolved.
+    """
+    result = fetcher.fetch_page(page_locator)
+    if result.scope != expected_scope:
+        raise NotionMCPAuthError(
+            f"Notion MCP scope mismatch: expected {expected_scope!r}, got "
+            f"{result.scope!r}. Texas-headless runs must use the project-"
+            f"scope stdio Notion MCP (not the user-scope hosted one)."
+        )
+    note = (
+        f"notion_mcp page_id={result.page_id} scope={result.scope} "
+        f"last_edited_time={result.last_edited_time} "
+        f"last_edited_by={result.last_edited_by} "
+        f"parent_path={result.parent_path}"
+    )
+    rec = SourceRecord(
+        kind="notion_mcp_page",
+        ref=f"notion_mcp://{result.page_id}",
+        note=note,
+    )
+    return result.page_title, result.markdown_body, rec
+
+
 def _map_boxsdk_error(exc: Exception, locator: str) -> BoxError:
     """Translate a raw boxsdk exception into a typed Box* error.
 

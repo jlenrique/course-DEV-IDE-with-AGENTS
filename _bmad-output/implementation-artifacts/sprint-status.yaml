@@ -1,5 +1,5 @@
 # generated: 2026-03-25
-# last_updated: 2026-04-22 WRAPUP (Motion-walk drift remediation 6→0 criticals + Sprint #1 locked + Epic 34 proposed. Motion structural walk: 6 pack-vs-walk-spec marker mismatches fixed via pack heading updates + walk-spec needle alignment; all three workflows (standard, motion, cluster) READY. Full-repo coherence sweep: L1 deterministic 5 findings → 1 remediated + 2 fixed + 2 staged for specialist routing; L2 agentic gated on L1 clean (now unblocked). Sprint #1 locked at ~24–30pts across 7 stories: 27-2 + 27-2.5 + 28-1 + PR-R + Irene-retrieval + evidence-bolster + §7.1 Irene Pass 2 template (HIGH). Research capability: full cross-validation (scite+Consensus) + evidence-bolster knob only. Epic 34: Creative-treatment experimentation + profile curation, 5 stories, backlog pending Sprint #1 close, Dan curator. Session artifacts: reports/dev-coherence/2026-04-22-0236/ trace + evidence + briefs; user memory refreshed; next-session-start-here.md + SESSION-HANDOFF.md updated; motion-walk commit a1461d1 staged.)
+# last_updated: 2026-04-22 WRAPUP (Motion-walk drift remediation 6→0 criticals + Sprint #1 locked + Epic 34 proposed. Motion structural walk: 6 pack-vs-walk-spec marker mismatches fixed via pack heading updates + walk-spec needle alignment; all three workflows (standard, motion, cluster) READY. Full-repo coherence sweep: L1 deterministic 5 findings → 1 remediated + 2 fixed + 2 staged for specialist routing; L2 agentic gated on L1 clean (now unblocked). Sprint #1 locked at ~24–30pts across 7 stories: 27-2 + 27-2.5 + 28-1 + PR-R + Irene-retrieval + evidence-bolster + §7.1 Irene Pass 2 template (HIGH). Research capability: full cross-validation (scite+Consensus) + evidence-bolster knob only. Epic 34: Creative-treatment experimentation + profile curation, 5 stories; Dan curator. 2026-04-23 doc pass: Sprint #1 stories marked `done` in this file; Epic 34 header updated — pre-dev no longer blocked on “Sprint #1 still open.” Session artifacts: reports/dev-coherence/2026-04-22-0236/ trace + evidence + briefs; user memory refreshed; next-session-start-here.md + SESSION-HANDOFF.md updated; motion-walk commit a1461d1 staged.)
 # project: course-DEV-IDE-with-AGENTS
 # project_key: NOKEY
 # tracking_system: file-system
@@ -52,7 +52,7 @@
 # - Set story key to `done` here only after the above — this file is authoritative for status.
 
 generated: 2026-03-25
-last_updated: 2026-04-23  # 22-4, 24-1, and 24-2 done; 24-2 closed after layered review plus bridge_type case-normalization hardening.
+last_updated: 2026-04-23  # 22-4, 24-1, and 24-2 done; 24-2 closed after layered review plus bridge_type case-normalization hardening. Epic 34 gate text aligned: Sprint #1 complete in tracker; Epic 34 backlog is unblocked on Sprint #1—expand specs + party-mode when opening.
 project: course-DEV-IDE-with-AGENTS
 project_key: NOKEY
 tracking_system: file-system
@@ -688,8 +688,12 @@ development_status:
   # === EPIC 34: Creative-Treatment Experimentation & Profile Curation (PROPOSED 2026-04-22) ===
   # Proposed during WRAPUP session 2026-04-22 in response to user request for mid-run parameter
   # experimentation + profile freezing. Scoped with 5 stories; Dan (curator) + operator team.
-  # Gate: Deferred pending Sprint #1 completion. Re-expand and party-mode green-light once
-  # Sprint #1 (27-2/27-2.5/28-1/PR-R/Irene-retrieval/evidence-bolster + §7.1 template) closes.
+  # Gate (2026-04-23): Sprint #1 scope is complete in this tracker — 27-2-scite-ai-provider,
+  # 27-2.5-consensus-adapter, 28-1-tracy-reshape-charter, 27-pr-r-marcus-dispatch-reshaping,
+  # 27-irene-retrieval-intake, 27-evidence-bolster-control-surface,
+  # 27-7-1-irene-pass-2-authoring-template are all `done`. Epic 34 is not blocked on a still-open
+  # Sprint #1; it remains `backlog` until this epic’s specs are re-expanded and party-mode
+  # green-lights pre-dev.
   #
   # NARRATIVE: User requested ability to experiment with various parameter settings during a
   # trial run and, if results are positive, "freeze" them into a named creative treatment profile
@@ -697,14 +701,15 @@ development_status:
   # style, emotional_variability, pace_variability on eleven_multilingual_v2). Epic 34 formalizes
   # mid-run parameter capture + profile persistence + Dan-curated experience-profiles.yaml updates.
   #
-  # 5-STORY OUTLINE (deferred; details to be expanded next sprint):
+  # 5-STORY OUTLINE (backlog; expand details + party-mode when Epic 34 is opened for dev):
   #   34-1 Capture & snapshot mid-run parameters (intake callable → snapshot YAML)
   #   34-2 Profile creation + naming workflow (operator workflow, Dan curation gate)
   #   34-3 Experience-profiles.yaml persistence (append/merge named profile)
   #   34-4 Resolver integration (profile-selection updated; new profiles immediately available)
   #   34-5 Trial-run validation (smoke test new profiles in next trial cycle)
   #
-  # PARTY CONSENSUS PENDING: Trigger per Epic 34 pre-dev gate.
+  # PARTY CONSENSUS: Run Epic 34 pre-dev party-mode when the epic moves from backlog to
+  # ready-for-dev (Sprint #1 prerequisite to Epic 34 is satisfied in this file as of 2026-04-23).
   epic-34: backlog
   34-1-parameter-snapshot-capture: backlog
   34-2-profile-creation-workflow: backlog

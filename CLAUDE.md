@@ -103,3 +103,14 @@ Closeout hygiene remains mandatory:
 - update `sprint-status.yaml` first
 - update `next-session-start-here.md` second
 - update any top-level plan or status line that would otherwise drift
+
+## Project entry and rapid closeout audit
+
+At session start, read [START_HERE.md](START_HERE.md) for the six resource groups,
+including Agents, and follow the mapped project-specific protocols. Before closing
+any meaningful session, perform its rapid currency AND quality audit on affected
+resources and known gaps. Record evidence, context-sensitive recommendations,
+tool availability/prerequisites/fallbacks and next action in the existing handoff
+or closing response. Update authoritative resources first; refresh START_HERE only
+when its map changes. Do not claim an unperformed check or assume another host's
+clone or runtime is synchronized. This supplements, not replaces, existing rules.
